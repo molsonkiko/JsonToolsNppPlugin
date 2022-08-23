@@ -89,7 +89,7 @@ namespace JSON_Viewer.Forms
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            string help_url = "https://github.com/molsonkiko/JSON-Tools/tree/main/docs/json-to-csv.md";
+            string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin/tree/main/docs/json-to-csv.md";
             try
             {
                 var ps = new ProcessStartInfo(help_url)

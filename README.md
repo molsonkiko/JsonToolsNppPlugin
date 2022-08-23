@@ -1,9 +1,11 @@
-# JSON-Tools
+# JsonToolsNppPlugin
 Miscellaneous tools for working with JSON in Notepad++.
+
+__FUNCTIONALITY NOT YET PORTED OVER. DO NOT USE__
 
 Any issues, feel free to email me at mjolsonsfca@gmail.com.
 
-[Read the docs.](https://github.com/molsonkiko/JSON-Tools/blob/main/docs/README.md)
+[Read the docs.](/docs/README.md)
 
 Includes:
 1. a JSON parser that includes the line number of each JSON node (see JsonParser.cs, JNode.cs). 2-4x slower than Python's standard library JSON parser.
@@ -33,4 +35,4 @@ Includes:
 
 ## Requirements
 
-The algorithms in this package are derived from [my standalone .NET 6.0 Json-Tools app](https://github.com/molsonkiko/JSON-Tools). That app is perfectly functional and indeed more performant than this plugin, but you can't run it on your computer without the .NET 6.0 runtime installed.
+The algorithms in this package are derived from [my standalone .NET 6.0 JsonToolsNppPlugin app](https://github.com/molsonkiko/JsonToolsNppPlugin). That app is perfectly functional and indeed more performant than this plugin, but you can't run it on your computer without the .NET 6.0 runtime installed.

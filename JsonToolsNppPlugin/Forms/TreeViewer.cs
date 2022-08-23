@@ -55,7 +55,7 @@ namespace JSON_Viewer.Forms
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            string help_url = "https://github.com/molsonkiko/JSON-Tools/tree/main/docs";
+            string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin/tree/main/docs";
             try
             {
                 var ps = new ProcessStartInfo(help_url)
