@@ -1,0 +1,33 @@
+{
+"a": false,
+"b": "3",
+"6": 7,
+"9": "ball",
+"jub":
+      {
+      "uy":
+            [
+            1,
+            2,
+            NaN
+            ],
+      "yu":
+            [
+                  [
+                  6,
+                        {
+                        "y": "b",
+                        "m8": 9
+                        }
+                  ],
+            null
+            ],
+      "status": "jubar"
+      },
+"9\"a\"": 2,
+"blutentharst":
+      [
+      "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
+      true
+      ]
+}

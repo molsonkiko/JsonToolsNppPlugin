@@ -1,0 +1,49 @@
+{
+"$schema": "https://json-schema.org/draft/2020-12/schema",
+"items":
+    {
+    "properties":
+        {
+        "cities":
+            {
+            "type": "string"
+            },
+        "contaminated":
+            {
+            "type": "boolean"
+            },
+        "date":
+            {
+            "type": "string"
+            },
+        "names":
+            {
+            "type": "string"
+            },
+        "nums":
+            {
+            "type": "number"
+            },
+        "subzone":
+            {
+            "type": "string"
+            },
+        "zone":
+            {
+            "type": "integer"
+            }
+        },
+    "required":
+        [
+        "cities",
+        "contaminated",
+        "date",
+        "names",
+        "nums",
+        "subzone",
+        "zone"
+        ],
+    "type": "object"
+    },
+"type": "array"
+}

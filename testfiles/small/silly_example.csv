@@ -1,0 +1,14 @@
+cities,contaminated,date,names,nums,subzone,zone
+BUS,TRUE,,Bluds,nan,a,1
+BUS,FALSE,,Bluds,nan,b,1
+BUS,FALSE,,Bluds,nan,c,1
+FUDG,TRUE,2020-12-13T00:00:00,dfsd,0.5,c,2
+FUDG,FALSE,2020-12-13T00:00:00,dfsd,0.5,d,2
+FUDG,FALSE,2020-12-13T00:00:00,dfsd,0.5,e,2
+FUDG,FALSE,2020-12-13T00:00:00,dfsd,0.5,g,2
+GOLAR,TRUE,,qere,1.2,f,3
+GOLAR,TRUE,,qere,1.2,h,3
+"q,tun",FALSE,,flodt,3.4,q,4
+YUNOB,TRUE,2014-10-17T00:00:00,Kjond,4.6,w,5
+YUNOB,FALSE,2014-10-17T00:00:00,Kjond,4.6,z,5
+MOKJI,TRUE,2017-05-11T00:00:00,Unyir,7,i,6

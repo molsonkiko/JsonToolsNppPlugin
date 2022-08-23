@@ -1,0 +1,5 @@
+﻿County,api_url
+Alameda,"https://api.weather.gov/points/37.68333333333334,-121.92500000000001"
+San Francisco,"https://api.weather.gov/points/37.75833333333334,-122.43333333333334"
+San Mateo,"https://api.weather.gov/points/37.400000000000006,-122.3"
+Sonoma,"https://api.weather.gov/points/38.46666666666667,-122.94166666666666"

@@ -1,0 +1,124 @@
+{
+	"CSV Lint plug-in": "v0.4.5.2",
+	"File": "silly_example.csv",
+	"Date": "06-Aug-2022 08:42",
+	"JSONdata":[
+		{
+			"nums": "nan",
+			"names": "Bluds",
+			"cities": "BUS",
+			"date": "",
+			"zone": 1,
+			"subzone": "a",
+			"contaminated": "TRUE"
+		},
+		{
+			"nums": "nan",
+			"names": "Bluds",
+			"cities": "BUS",
+			"date": "",
+			"zone": 1,
+			"subzone": "b",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": "nan",
+			"names": "Bluds",
+			"cities": "BUS",
+			"date": "",
+			"zone": 1,
+			"subzone": "c",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 0.5,
+			"names": "dfsd",
+			"cities": "FUDG",
+			"date": "2020-12-13T00:00:00",
+			"zone": 2,
+			"subzone": "c",
+			"contaminated": "TRUE"
+		},
+		{
+			"nums": 0.5,
+			"names": "dfsd",
+			"cities": "FUDG",
+			"date": "2020-12-13T00:00:00",
+			"zone": 2,
+			"subzone": "d",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 0.5,
+			"names": "dfsd",
+			"cities": "FUDG",
+			"date": "2020-12-13T00:00:00",
+			"zone": 2,
+			"subzone": "e",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 0.5,
+			"names": "dfsd",
+			"cities": "FUDG",
+			"date": "2020-12-13T00:00:00",
+			"zone": 2,
+			"subzone": "g",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 1.2,
+			"names": "qere",
+			"cities": "GOLAR",
+			"date": "",
+			"zone": 3,
+			"subzone": "f",
+			"contaminated": "TRUE"
+		},
+		{
+			"nums": 1.2,
+			"names": "qere",
+			"cities": "GOLAR",
+			"date": "",
+			"zone": 3,
+			"subzone": "h",
+			"contaminated": "TRUE"
+		},
+		{
+			"nums": 3.4,
+			"names": "flodt",
+			"cities": "q,tun",
+			"date": "",
+			"zone": 4,
+			"subzone": "q",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 4.6,
+			"names": "Kjond",
+			"cities": "YUNOB",
+			"date": "2014-10-17T00:00:00",
+			"zone": 5,
+			"subzone": "w",
+			"contaminated": "TRUE"
+		},
+		{
+			"nums": 4.6,
+			"names": "Kjond",
+			"cities": "YUNOB",
+			"date": "2014-10-17T00:00:00",
+			"zone": 5,
+			"subzone": "z",
+			"contaminated": "FALSE"
+		},
+		{
+			"nums": 7,
+			"names": "Unyir",
+			"cities": "MOKJI",
+			"date": "2017-05-11T00:00:00",
+			"zone": 6,
+			"subzone": "i",
+			"contaminated": "TRUE"
+		}
+	]
+}

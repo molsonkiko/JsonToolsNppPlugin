@@ -1,0 +1,1656 @@
+﻿/*
+A library of built-in functions for the RemesPath query language.
+*/
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace JSON_Viewer.JSONViewer
+{
+    /// <summary>
+    /// Binary operators, e.g., +, -, *, ==
+    /// </summary>
+    public class Binop
+    {
+        private Func<JNode, JNode, JNode> Function { get; }
+        public float precedence;
+        public string name;
+
+        public Binop(Func<JNode, JNode, JNode> function, float precedence, string name)
+        {
+            Function = function;
+            this.precedence = precedence;
+            this.name = name;
+        }
+
+        public override string ToString() 
+        { 
+            return $"Binop(\"{this.name}\")";
+        }
+
+        public JNode Call(JNode left, JNode right)
+        {
+            if (left is CurJson && right is CurJson)
+            {
+                JNode ResolvedBinop(JNode json)
+                {
+                    return Function(((CurJson)left).function(json), ((CurJson)right).function(json));
+                }
+                return new CurJson(Dtype.UNKNOWN, ResolvedBinop);
+            }
+            if (right is CurJson)
+            {
+                JNode ResolvedBinop(JNode json)
+                {
+                    return Function(left, ((CurJson)right).function(json));
+                }
+                return new CurJson(Dtype.UNKNOWN, ResolvedBinop);
+            }
+            if (left is CurJson)
+            {
+                JNode ResolvedBinop(JNode json)
+                {
+                    return Function(((CurJson)left).function(json), right);
+                }
+                return new CurJson(Dtype.UNKNOWN, ResolvedBinop);
+            }
+            return Function(left, right);
+        }
+
+        public static JNode Add(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (atype == Dtype.INT && btype == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(aval) + Convert.ToInt64(bval), Dtype.INT, 0);
+            }
+            if (atype == Dtype.FLOAT || btype == Dtype.FLOAT)
+            {
+                return new JNode(Convert.ToDouble(aval) + Convert.ToDouble(bval), Dtype.FLOAT, 0);
+            }
+            if (atype == Dtype.STR && btype == Dtype.STR)
+            {
+                return new JNode(Convert.ToString(aval) + Convert.ToString(bval), Dtype.STR, 0);
+            }
+            throw new RemesPathException($"Can't add objects of types {atype} and {btype}");
+        }
+
+        public static JNode Sub(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (atype == Dtype.INT && btype == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(aval) - Convert.ToInt64(bval), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToDouble(aval) - Convert.ToDouble(bval), Dtype.FLOAT, 0);
+        }
+
+        public static JNode Mul(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (atype == Dtype.INT && btype == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToDouble(aval) * Convert.ToDouble(bval), Dtype.FLOAT, 0);
+        }
+
+        public static JNode Divide(JNode a, JNode b)
+        {
+            return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b.value), Dtype.FLOAT, 0);
+        }
+
+        public static JNode FloorDivide(JNode a, JNode b)
+        {
+            return new JNode(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value)), Dtype.INT, 0);
+        }
+
+        public static JNode Pow(JNode a, JNode b)
+        {
+            return new JNode(Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
+        }
+
+        /// <summary>
+        /// -a.value**b.value
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static JNode NegPow(JNode a, JNode b)
+        {
+            return new JNode(-Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
+        }
+
+        public static JNode Mod(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (atype == Dtype.INT && btype == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(aval) % Convert.ToInt64(bval), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToDouble(aval) % Convert.ToDouble(bval), Dtype.FLOAT, 0);
+        }
+
+        public static JNode BitWiseOR(JNode a, JNode b)
+        {
+            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(a.value) | Convert.ToInt64(b.value), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToBoolean(a.value) || Convert.ToBoolean(b.value), Dtype.BOOL, 0);
+        }
+
+        public static JNode BitWiseXOR(JNode a, JNode b)
+        {
+            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(a.value) ^ Convert.ToInt64(b.value), Dtype.INT, 0);
+            }
+            return new JNode((bool)a.value ^ (bool)b.value, Dtype.BOOL, 0);
+        }
+
+        public static JNode BitWiseAND(JNode a, JNode b)
+        {
+            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            {
+                return new JNode(Convert.ToInt64(a.value) & Convert.ToInt64(b.value), Dtype.INT, 0);
+            }
+            return new JNode((bool)a.value && (bool)b.value, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// Returns a boolean JNode with value true if node's string value contains the pattern sub.value.<br></br>
+        /// E.g. HasPattern(JNode("abc"), JNode("ab+")) -> JNode(true)
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="sub"></param>
+        /// <returns></returns>
+        public static JNode HasPattern(JNode node, JNode sub)
+        {
+            string s = (string)node.value;
+            if (sub.type == Dtype.STR)
+            {
+                return new JNode(Regex.IsMatch(s, (string)sub.value), Dtype.BOOL, 0);
+            }
+            return new JNode((((JRegex)sub).regex).IsMatch(s), Dtype.BOOL, 0);
+        }
+
+        public static JNode LessThan(JNode a, JNode b)
+        {
+            return new JNode(a.LessThan(b), Dtype.BOOL, 0);
+        }
+
+        public static JNode GreaterThan(JNode a, JNode b)
+        {
+            return new JNode(a.GreaterThan(b), Dtype.BOOL, 0);
+        }
+
+        public static JNode GreaterThanOrEqual(JNode a, JNode b)
+        {
+            return new JNode(a.GreaterEquals(b), Dtype.BOOL, 0);
+        }
+
+        public static JNode LessThanOrEqual(JNode a, JNode b)
+        {
+            return new JNode(a.LessEquals(b), Dtype.BOOL, 0);
+        }
+
+        public static JNode IsEqual(JNode a, JNode b)
+        {
+            return new JNode(a.Equals(b), Dtype.BOOL, 0);
+        }
+
+        public static JNode IsNotEqual(JNode a, JNode b)
+        {
+            return new JNode(!a.Equals(b), Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// Not strictly a binop, because it has no return value.<br></br>
+        /// Implements the -= operator for two JNodes, both with type = Dtype.INT or Dtype.FLOAT,<br></br>
+        /// So MinusEquals(JNode(3), JNode(0.5))<br></br>
+        /// converts the first JNode's type from Dtype.INT to Dtype.FLOAT and sets its value to 2.5.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        public static void MinusEquals(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) - Convert.ToDouble(bval);
+                a.type = Dtype.FLOAT;
+            }
+            else if (atype == Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) - Convert.ToDouble(bval);
+            }
+            else
+            {
+                a.value = Convert.ToInt64(aval) - Convert.ToInt64(bval);
+            }
+        }
+
+        /// <summary>
+        /// See documentation for Binop.MinusEquals, except this implements +=
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        public static void PlusEquals(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) + Convert.ToDouble(bval);
+                a.type = Dtype.FLOAT;
+            }
+            else if (atype == Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) + Convert.ToDouble(bval);
+            }
+            else
+            {
+                a.value = Convert.ToInt64(aval) + Convert.ToInt64(bval);
+            }
+        }
+
+        /// <summary>
+        /// See documentation for MinusEquals, except this implements *=
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        public static void TimesEquals(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) * Convert.ToDouble(bval);
+                a.type = Dtype.FLOAT;
+            }
+            else if (atype == Dtype.FLOAT)
+            {
+                a.value = Convert.ToDouble(aval) * Convert.ToDouble(bval);
+            }
+            else
+            {
+                a.value = Convert.ToInt64(aval) * Convert.ToInt64(bval);
+            }
+        }
+
+        /// <summary>
+        /// Implements in-place exponentiation of a JNode by another JNode.<br></br>
+        /// This always changes the type of JNode a to Dtype.FLOAT.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        public static void PowEquals(JNode a, JNode b)
+        {
+            object? aval = a.value; object? bval = b.value;
+            Dtype atype = a.type; Dtype btype = b.type;
+            a.value = Math.Pow(Convert.ToDouble(aval), Convert.ToDouble(bval));
+            a.type = Dtype.FLOAT;
+        }
+
+        public static Dictionary<string, Binop> BINOPS = new Dictionary<string, Binop>
+        {
+            ["&"] = new Binop(BitWiseAND, 0, "&"),
+            ["|"] = new Binop(BitWiseOR, 0, "|"),
+            ["^"] = new Binop(BitWiseXOR, 0, "^"),
+            ["=~"] = new Binop(HasPattern, 1, "=~"),
+            ["=="] = new Binop(IsEqual, 1, "=="),
+            ["!="] = new Binop(IsNotEqual, 1, "!="),
+            ["<"] = new Binop(LessThan, 1, "<"),
+            [">"] = new Binop(GreaterThan, 1, ">"),
+            [">="] = new Binop(GreaterThanOrEqual, 1, ">="),
+            ["<="] = new Binop(LessThanOrEqual, 1, "<="),
+            ["+"] = new Binop(Add, 2, "+"),
+            ["-"] = new Binop(Sub, 2, "-"),
+            ["//"] = new Binop(FloorDivide, 3, "//"),
+            ["%"] =  new Binop(Mod, 3, "%"),
+            ["*"] = new Binop(Mul, 3, "*"),
+            ["/"] = new Binop(Divide, 3, "/"),
+            // precedence of unary minus (e.g., 2 * -5) is between division's precedence
+            // exponentiation's precedence
+            ["**"] = new Binop(Pow, 5, "**"),
+        };
+
+        public static HashSet<string> BOOLEAN_BINOPS = new HashSet<string> { "==", ">", "<", "=~", "!=", ">=", "<=" };
+
+        public static HashSet<string> BITWISE_BINOPS = new HashSet<string> { "^", "&", "|" };
+
+        public static HashSet<string> FLOAT_RETURNING_BINOPS = new HashSet<string> { "/", "**" };
+
+        public static HashSet<string> POLYMORPHIC_BINOPS = new HashSet<string> { "%", "+", "-", "*" };
+    }
+
+
+    public class BinopWithArgs
+    {
+        public Binop binop;
+        public object left;
+        public object right;
+
+        public BinopWithArgs(Binop binop, object left, object right)
+        {
+            this.binop = binop;
+            this.left = left;
+            this.right = right;
+        }
+
+        public JNode Call()
+        {
+            if (left is BinopWithArgs)
+            {
+                left = ((BinopWithArgs)left).Call();
+            }
+            if (right is BinopWithArgs)
+            {
+                right = ((BinopWithArgs)right).Call();
+            }
+            return binop.Call((JNode)left, (JNode)right);
+        }
+    }
+
+
+    /// <summary>
+    /// functions with arguments in parens, e.g. mean(x), index(arr, elt), sort_by(arr, key, reverse)
+    /// </summary>
+    public class ArgFunction
+    {
+        private Func<JNode[], JNode> Function { get; }
+        private Dtype[] Input_types;
+        public string name;
+        public Dtype type;
+        public byte max_args;
+        public byte min_args;
+        public bool is_vectorized;
+
+        public ArgFunction(Func<JNode[], JNode> function,
+            string name,
+            Dtype type,
+            byte min_args,
+            byte max_args,
+            bool is_vectorized,
+            Dtype[] input_types)
+        {
+            Function = function;
+            this.name = name;
+            this.type = type;
+            this.max_args = max_args;
+            this.min_args = min_args;
+            this.is_vectorized = is_vectorized;
+            this.Input_types = input_types;
+        }
+
+        public Dtype[] input_types()
+        {
+            var intypes = new Dtype[Input_types.Length];
+            for (int i = 0; i < intypes.Length; i++)
+            {
+                intypes[i] = Input_types[i];
+            }
+            return intypes;
+        }
+
+        public JNode Call(JNode[] args)
+        {
+            return Function(args);
+        }
+        
+        public override string ToString()
+        {
+            return $"ArgFunction({name}, {type})";
+        }
+
+        #region NON_VECTORIZED_ARG_FUNCTIONS
+
+        /// <summary>
+        /// First arg is any JNode.<br></br>
+        /// Second arg is a JObject or JArray.<br></br>
+        /// Returns:<br></br>
+        /// If second arg is a JObject, returns true if first arg is a key in second arg.<br></br>
+        ///     The first arg must have string value if second arg is JObject.<br></br>
+        /// If second arg is a JArray, returns true if first arg is equal to any element in second arg.<br></br>
+        /// Examples:<br></br>
+        /// In(2, [1, 2, 3]) returns true.<br></br>
+        /// In(4, [1, 2, 3]) returns false.<br></br>
+        /// In("a", {"a": 1, "b": 2}) returns true.<br></br>
+        /// In("c", {"a": 1, "b": 2}) returns false.<br></br>
+        /// In(1, {"a": 1, "b": 2}) will throw an error because 1 is not a string.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode In(JNode[] args)
+        {
+            JNode elt = args[0];
+            JNode itbl = args[1];
+            if (itbl is JArray)
+            {
+                foreach (JNode node in ((JArray)itbl).children)
+                {
+                    if (node.CompareTo(elt) == 0)
+                    {
+                        return new JNode(true, Dtype.BOOL, 0);
+                    }
+                }
+                return new JNode(false, Dtype.BOOL, 0);
+            }
+            if (!(elt.value is string))
+            {
+                throw new RemesPathException("'in' function first argument must be string if second argument is an object.");
+            }
+            bool itbl_has_key = ((JObject)itbl).children.ContainsKey((string)elt.value);
+            return new JNode(itbl_has_key, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// Assuming first arg is a dictionary or list, return the number of elements it contains.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Len(JNode[] args)
+        {
+            var itbl = args[0];
+            if (itbl is JArray)
+            {
+                return new JNode(Convert.ToInt64(((JArray)itbl).Length), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToInt64(((JObject)itbl).Length), Dtype.INT, 0);
+        }
+
+        /// <summary>
+        /// Assumes args has one element, a list of numbers. Returns the sum, cast to a double.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Sum(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            double tot = 0;
+            foreach (JNode child in itbl.children)
+            {
+                tot += Convert.ToDouble(child.value);
+            }
+            return new JNode(tot, Dtype.FLOAT, 0);
+        }
+
+        /// <summary>
+        /// Assumes args has one element, a list of numbers. Returns the arithmetic mean of that list.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Mean(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            double tot = 0;
+            foreach (JNode child in itbl.children)
+            {
+                tot += Convert.ToDouble(child.value);
+            }
+            return new JNode(tot / itbl.Length, Dtype.FLOAT, 0);
+        }
+
+        /// <summary>
+        /// "Flattens" nested lists by adding all the elements of lists at depth 1 to a single
+        /// list.<br></br>
+        /// Example: Flatten({{1,2},3,{4,{5}}}) = {1,2,3,4,{5}}<br></br> 
+        /// (except input is an array with one List<object?> and output is a List<object?>)<br></br>
+        /// In the above example, everything at depth 0 is still at depth 0, and everything else
+        /// has its depth reduced by 1.
+        /// </summary>
+        /// <param name="args">an array containng a single List<object?></param>
+        /// <returns>List<object?> containing the flattened result</returns>
+        public static JNode Flatten(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var iterations = (long?)args[1].value;
+            JArray flat;
+            if (iterations is null || iterations == 1)
+            {
+                flat = new JArray(0, new List<JNode>());
+                foreach (JNode child in itbl.children)
+                {
+                    if (child is JArray)
+                    {
+                        foreach (JNode grandchild in ((JArray)child).children)
+                        {
+                            flat.children.Add(grandchild);
+                        }
+                    }
+                    else
+                    {
+                        flat.children.Add(child);
+                    }
+                }
+                return flat;
+            }
+            flat = itbl;
+            JNode jnull = new JNode(null, Dtype.NULL, 0);
+            for (int ii = 0; ii < iterations; ii++)
+            {
+                flat = (JArray)Flatten(new JNode[] { flat, jnull });
+            }
+            return flat;
+        }
+
+        /// <summary>
+        /// first arg should be List&lt;object?&gt;, second arg should be object?,
+        /// optional third arg should be bool.<br></br>
+        /// If second arg (elt) is in first arg (itbl), return the index in itbl where
+        /// elt first occurs.<br></br>
+        /// If a third arg (reverse) is true, then instead return the index
+        /// of the final occurence of elt in itbl.<br></br>
+        /// If elt does not occur in itbl, throw a KeyNotFoundException.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public static JNode Index(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var elt = args[1];
+            var reverse = args[2].value;
+            
+            if (reverse != null && (bool)reverse == true)
+            {
+                for (int ii = itbl.Length - 1; ii >= 0; ii--)
+                {
+                    if (itbl.children[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
+                }
+                throw new KeyNotFoundException($"Element {elt} not found in the array {itbl}");
+            }
+            for (int ii = 0; ii < itbl.Length; ii++)
+            {
+                if (itbl.children[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
+            }
+            throw new KeyNotFoundException($"Element {elt} not found in the array {itbl}");
+        }
+
+        /// <summary>
+        /// Assumes args has one element, a list of numbers. Returns the largest number in the list,
+        /// cast to a double.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Max(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            JNode biggest = new JNode(double.NegativeInfinity, Dtype.FLOAT, 0);
+            foreach (JNode child in itbl.children)
+            {
+                if (Convert.ToDouble(child.value) > Convert.ToDouble(biggest.value)) { biggest = child; }
+            }
+            return biggest;
+        }
+
+        /// <summary>
+        /// Assumes args has one element, a list of numbers. Returns the smallest number in the list,
+        /// cast to a double.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Min(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            JNode smallest = new JNode(double.PositiveInfinity, Dtype.FLOAT, 0);
+            foreach (JNode child in itbl.children)
+            {
+                if (Convert.ToDouble(child.value) < Convert.ToDouble(smallest.value)) { smallest = child; }
+            }
+            return smallest;
+        }
+
+
+        public static JNode Sorted(JNode[] args)
+        {
+            var sorted = new JArray(0, new List<JNode>());
+            sorted.children.AddRange(((JArray)args[0]).children);
+            var reverse = args[1].value;
+            sorted.children.Sort();
+            if (reverse != null && (bool)reverse)
+            {
+                sorted.children.Reverse();
+            }
+            return sorted;
+        }
+
+        public static JNode SortBy(JNode[] args)
+        {
+            var arr = (JArray)args[0];
+            var sorted = new JArray(0, new List<JNode>());
+            var key = args[1].value;
+            var reverse = args[2].value;
+            if (key is string)
+            {
+                string kstr = (string)key;
+                foreach (JNode elt in arr.children.OrderBy(x => ((JObject)x).children[kstr]))
+                {
+                    sorted.children.Add(elt);
+                }
+            }
+            else
+            {
+                int kint = Convert.ToInt32(key);
+                foreach (JNode elt in arr.children.OrderBy(x => ((JArray)x).children[kint]))
+                {
+                    sorted.children.Add(elt);
+                }
+            }
+            if (reverse != null && (bool)reverse)
+            {
+                sorted.children.Reverse();
+            }
+            return sorted;
+        }
+
+        public static JNode MaxBy(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var key = args[1].value;
+            if (itbl.Length == 0) return new JNode(null, Dtype.NULL, 0);
+            if (key is string)
+            {
+                string keystr = (string)key;
+                JObject max = (JObject)itbl.children[0];
+                for (int ii = 1; ii < itbl.children.Count; ii++)
+                {
+                    JObject x = (JObject)itbl.children[ii];
+                    if (x.children[keystr].CompareTo(max.children[keystr]) > 0)
+                    {
+                        max = x;
+                    }
+                }
+                return max;
+            }
+            else
+            {
+                int kint = Convert.ToInt32(key);
+                JArray max = (JArray)itbl.children[0];
+                for (int ii = 1; ii < itbl.children.Count; ii++)
+                {
+                    JArray x = (JArray)itbl.children[ii];
+                    JNode xval = x.children[kint];
+                    if (x.children[kint].CompareTo(max.children[kint]) > 0)
+                    {
+                        max = x;
+                    }
+                }
+                return max;
+            }
+        }
+
+        public static JNode MinBy(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var key = args[1].value;
+            if (itbl.Length == 0) return new JNode(null, Dtype.NULL, 0);
+            if (key is string)
+            {
+                string keystr = (string)key;
+                JObject min = (JObject)itbl.children[0];
+                for (int ii = 1; ii < itbl.children.Count; ii++)
+                {
+                    JObject x = (JObject)itbl.children[ii];
+                    if (x.children[keystr].CompareTo(min.children[keystr]) < 0)
+                    {
+                        min = x;
+                    }
+                }
+                return min;
+            }
+            else
+            {
+                int kint = Convert.ToInt32(key);
+                JArray min = (JArray)itbl.children[0];
+                for (int ii = 1; ii < itbl.children.Count; ii++)
+                {
+                    JArray x = (JArray)itbl.children[ii];
+                    JNode xval = x.children[kint];
+                    if (x.children[kint].CompareTo(min.children[kint]) < 0)
+                    {
+                        min = x;
+                    }
+                }
+                return min;
+            }
+        }
+
+        /// <summary>
+        /// Three args, one required.<br></br>
+        /// If only first arg provided: return all integers in [0, args[0])<br></br>
+        /// If first and second arg provided: return all integers in [args[0], args[1])<br></br>
+        /// If all three args provided: return all integers from args[0] to args[1],
+        ///     incrementing by args[2] each time.<br></br>
+        /// EXAMPLES:<br></br>
+        /// Range(3) -> List&lt;long&gt;({0, 1, 2})<br></br>
+        /// Range(3, 7) -> List&lt;long&gt;({3, 4, 5, 6})<br></br>
+        /// Range(10, 4, -2) -> List&lt;long&gt;({10, 8, 6})
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Range(JNode[] args)
+        {
+            var start = (long?)args[0].value;
+            var end = (long?)args[1].value;
+            var step = (long?)args[2].value;
+            var nums = new JArray(0, new List<JNode>());
+            if (start == null)
+            {
+                throw new RemesPathException("First argument for range function cannot be null.");
+            }
+            if (step == 0)
+            {
+                throw new RemesPathException("Can't have a step size of 0 for the range function");
+            }
+            if (end == null && start > 0)
+            {
+                for (long ii = 0; ii < start; ii++)
+                {
+                    nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                }
+            }
+            else if (step == null && start < end)
+            {
+                for (long ii = start.Value; ii < end; ii++)
+                {
+                    nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                }
+            }
+            else
+            {
+                if (start > end && step < 0)
+                {
+                    for (long ii = start.Value; ii > end; ii += step.Value)
+                    {
+                        nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                    }
+                }
+                else if (start < end && step > 0)
+                {
+                    for (long ii = start.Value; ii < end; ii += step.Value)
+                    {
+                        nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                    }
+                }
+            }
+            return nums;
+        }
+
+        public static JNode Values(JNode[] args)
+        {
+            var vals = new JArray(0, new List<JNode>());
+            vals.children.AddRange(((JObject)args[0]).children.Values);
+            return vals;
+        }
+
+        public static JNode Keys(JNode[] args)
+        {
+            var ks = new JArray(0, new List<JNode>());
+            foreach (string s in ((JObject)args[0]).children.Keys)
+            {
+                ks.children.Add(new JNode(s, Dtype.STR, 0));
+            }
+            return ks;
+        }
+
+        /// <summary>
+        /// Takes a single JObject as argument.
+        /// Returns an array of 2-arrays, 
+        /// where the first element of each subarray is the key
+        /// and the second element is the value.
+        /// Example:
+        /// Items({"a": 1, "b": 2, "c": 3}) = [["a", 1], ["b", 2], ["c", 3]]
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Items(JNode[] args)
+        {
+            var its = new List<JNode>();
+            foreach ((string k, JNode v) in ((JObject)args[0]).children)
+            {
+                JNode knode = new JNode(k, Dtype.STR, 0);
+                var subarr = new List<JNode>();
+                subarr.Add(knode);
+                subarr.Add(v);
+                its.Add(new JArray(0, subarr));
+            }
+            return new JArray(0, its);
+        }
+
+        public static JNode Unique(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var is_sorted = args[1].value;
+            var uniq = new HashSet<object?>();
+            foreach (JNode val in itbl.children)
+            {
+                uniq.Add(val.value);
+            }
+            var uniq_list = new List<JNode>();
+            foreach (object? val in uniq)
+            {
+                uniq_list.Add(ObjectsToJNode(val));
+            }
+            if (is_sorted != null && (bool)is_sorted)
+            {
+                uniq_list.Sort();
+            }
+            return new JArray(0, uniq_list);
+        }
+
+        /// <summary>
+        /// The first arg (itbl) must be a list containing only numbers.<br></br>
+        /// The second arg (qtile) to be a double in [0,1].<br></br>
+        /// Returns the qtile^th quantile of itbl, as a double.<br></br>
+        /// So Quantile(x, 0.5) returns the median, Quantile(x, 0.75) returns the 75th percentile, and so on.<br></br>
+        /// Uses linear interpolation if the index found is not an integer.<br></br>
+        /// For example, suppose that the 60th percentile is at index 6.6, and elements 6 and 7 are 8 and 10.<br></br>
+        /// Then the returned value is 0.6*10 + 0.4*8 = 9.2
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Quantile(JNode[] args)
+        {
+            var sorted = new List<double>();
+            foreach (JNode node in ((JArray)args[0]).children)
+            {
+                sorted.Add(Convert.ToDouble(node.value));
+            }
+            double quantile = Convert.ToDouble(args[1].value);
+            sorted.Sort();
+            if (sorted.Count == 0)
+            {
+                throw new RemesPathException("Cannot find quantiles of an empty array");
+            }
+            if (sorted.Count == 1)
+            {
+                return new JNode(sorted[0], Dtype.FLOAT, 0);
+            }
+            double ind = quantile * (sorted.Count - 1);
+            int lower_ind = Convert.ToInt32(Math.Floor(ind));
+            double weighted_avg;
+            double lower_val = sorted[lower_ind];
+            if (ind != lower_ind)
+            {
+                
+                double upper_val = sorted[lower_ind + 1];
+                double frac_upper = ind - lower_ind;
+                weighted_avg = upper_val * frac_upper + lower_val * (1 - frac_upper);
+            }
+            else
+            {
+                weighted_avg = lower_val;
+            }
+            return new JNode(weighted_avg, Dtype.FLOAT, 0);
+        }
+
+        /// <summary>
+        /// args[0] should be a list of objects.<br></br>
+        /// Finds an array of sub-arrays, where each sub-array is an element-count pair, where the count is of that element in args[0].<br></br>
+        /// EXAMPLES:
+        /// ValueCounts(JArray({1, "a", 2, "a", 1})) ->
+        /// JArray(JArray({"a", 2}), JArray({1, 2}), JArray({2, 1}))
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode ValueCounts(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            var uniqs = new Dictionary<object, long>();
+            foreach (JNode elt in itbl.children)
+            {
+                object? val = elt.value;
+                if (val == null)
+                {
+                    throw new RemesPathException("Can't count occurrences of objects with null values");
+                }
+                uniqs.TryAdd(val, 0);
+                uniqs[val]++;
+            }
+            var uniq_arr = new JArray(0, new List<JNode>());
+            foreach ((object elt, long ct) in uniqs)
+            {
+                JArray elt_ct = new JArray(0, new List<JNode>());
+                elt_ct.children.Add(ObjectsToJNode(elt));
+                elt_ct.children.Add(new JNode(ct, Dtype.INT, 0));
+                uniq_arr.children.Add(elt_ct);
+            }
+            return uniq_arr;
+        }
+
+        public static JNode StringJoin(JNode[] args)
+        {
+            string sep = (string)args[0].value;
+            var itbl = (JArray)args[1];
+            var sb = new StringBuilder();
+            sb.Append((string)itbl.children[0].value);
+            for (int ii = 1; ii < itbl.Length; ii++)
+            {
+                sb.Append(sep);
+                sb.Append((string)itbl.children[ii].value);
+            }
+            return new JNode(sb.ToString(), Dtype.STR, 0);
+        }
+
+        /// <summary>
+        /// First arg (itbl) must be a JArray containing only other JArrays or only other JObjects.<br></br>
+        /// Second arg (key) must be a JNode with a long value or a JNode with a string value.<br></br>
+        /// Returns a new JObject where each entry in itbl is grouped into a separate JArray under the stringified form
+        /// of the value associated with key/index key in itbl.<br></br>
+        /// EXAMPLE<br></br>
+        /// GroupBy([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar") returns:<br></br>
+        /// {"a": [{"foo": 1, "bar": "a"}, {"foo": 3, "bar": "a"}], "b": [{"foo": 2, "bar": "b"}]}
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static JNode GroupBy(JNode[] args)
+        {
+            var itbl = (JArray)args[0];
+            object? key = args[1].value;
+            if (!(key is string || key is long))
+            {
+                throw new ArgumentException("The GroupBy function can only group by string keys or int indices");
+            }
+            var gb = new Dictionary<string, JNode>();
+            string vstr;
+            if (key is long)
+            {
+                int ikey = Convert.ToInt32(key);
+                foreach (JNode node in itbl.children)
+                {
+                    JArray subobj = (JArray)node;
+                    JNode val = subobj.children[ikey];
+                    vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
+                    if (!gb.TryAdd(vstr, new JArray(0, new List<JNode> { subobj })))
+                    {
+                        ((JArray)gb[vstr]).children.Add(subobj);
+                    }
+                }
+            }
+            else
+            {
+                string skey = (string)key;
+                foreach (JNode node in itbl.children)
+                {
+                    JObject subobj = (JObject)node;
+                    JNode val = subobj.children[skey];
+                    vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
+                    if (!gb.TryAdd(vstr, new JArray(0, new List<JNode> { subobj })))
+                    {
+                        ((JArray)gb[vstr]).children.Add(subobj);
+                    }
+                }
+            }
+            return new JObject(0, gb);
+        }
+
+        ///// <summary>
+        ///// Like GroupBy, the first argument is a JArray containing only JObjects or only JArrays, and the second arg is a string or int.<br></br>
+        ///// The third argument is a function of the current JSON, e.g., sum(@[:].foo).
+        ///// Returns a JObject mapping each distinct stringified value at the key^th index/key of each subobject in the original iterable
+        ///// to the specified aggregation function of all of those iterables.<br></br>
+        ///// EXAMPLE<br></br>
+        ///// AggBy([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar", sum(@[:].foo)) returns <br></br>
+        ///// {"a": 4.0, "b": 2.0}
+        ///// </summary>
+        ///// <param name="args"></param>
+        ///// <returns></returns>
+        //public static JNode AggBy(JNode[] args)
+        //{
+        //    JObject gb = (JObject)GroupBy(args.Slice(":2").ToArray());
+        //    CurJson fun = (CurJson)args[2];
+        //    var aggs = new Dictionary<string, JNode>();
+        //    foreach ((string key, JNode subitbl) in gb.children)
+        //    {
+        //        aggs[key] = fun.function(subitbl);
+        //    }
+        //    return new JObject(0, aggs);
+        //}
+
+        /// <summary>
+        /// Takes 2-6 JArrays as arguments. They must be of equal length.
+        /// Returns: one JArray in which the i^th element is an array containing the i^th elements of the input arrays.
+        /// Example:
+        /// Zip([1,2],["a", "b"], [true, false]) = [[1, "a", true], [2, "b", false]]
+        /// </summary>
+        public static JNode Zip(JNode[] args)
+        {
+            int first_len = ((JArray)args[0]).Length;
+            List<JArray> arrs = new List<JArray>();
+            foreach (JNode arg in args)
+            {
+                if (arg is JArray) arrs.Add((JArray)arg);
+            }
+            // check equal lengths
+            foreach (JArray arr in arrs)
+            {
+                if (arr.Length != first_len)
+                {
+                    throw new RemesPathException("The `zip` function expects all input arrays to have equal length");
+                }
+            }
+            var rst = new List<JNode>();
+            // zip them together
+            for (int ii = 0; ii < first_len; ii++)
+            {
+                List<JNode> subarr = new List<JNode>();
+                foreach (JArray arr in arrs)
+                {
+                    subarr.Add(arr.children[ii]);
+                }
+                rst.Add(new JArray(0, subarr));
+            }
+            return new JArray(0, rst);
+        }
+
+        /// <summary>
+        /// Expects one argument:
+        /// A JArray of 2-entry JArrays where:
+        /// the first entry of each subarray is a string and the second entry is anything.
+        /// Returns:
+        /// A JObject where every first entry is a key and every second entry is the corresponding value.
+        /// Example:
+        /// Dict([["a", 1], ["b", 2], ["c", 3]]) = {"a": 1, "b": 2, "c": 3}
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Dict(JNode[] args)
+        {
+            JArray pairs = (JArray)args[0];
+            Dictionary<string, JNode> rst = new Dictionary<string, JNode>();
+            for (int ii = 0; ii < pairs.Length; ii++)
+            {
+                JArray pair = (JArray)pairs.children[ii];
+                JNode key = pair.children[0];
+                JNode val = pair.children[1];
+                if (!(key.value is string)) throw new RemesPathException("The Dict function's first argument must be an array of all strings");
+                rst[(string)key.value] = val;
+            }
+            return new JObject(0, rst);
+        }
+
+        #endregion
+        #region VECTORIZED_ARG_FUNCTIONS
+        /// <summary>
+        /// Length of a string
+        /// </summary>
+        /// <param name="node">string</param>
+        public static JNode StrLen(JNode[] args)
+        {
+            JNode node = args[0];
+            if (node.type != Dtype.STR)
+            {
+                throw new RemesPathException("StrLen only works for strings");
+            }
+            return new JNode(Convert.ToInt64(((string)node.value).Length), Dtype.INT, 0);
+        }
+
+        /// <summary>
+        /// Returns a string made by joining one string to itself n times.<br></br>
+        /// Thus StrMul("ab", 3) -> "ababab"
+        /// </summary>
+        /// <param name="node">string</param>
+        /// <param name="n">number of times to repeat s</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static JNode StrMul(JNode[] args)
+        {
+            JNode node = args[0];
+            JNode n = args[1];
+            string s = (string)node.value;
+            var sb = new StringBuilder();
+            for (int i = 0; i < Convert.ToInt32(n.value); i++)
+            {
+                sb.Append(s);
+            }
+            return new JNode(sb.ToString(), Dtype.STR, 0);
+        }
+
+        /// <summary>
+        /// Return a JNode of type = Dtype.INT with value equal to the number of ocurrences of 
+        /// pattern or substring sub in node.value.<br></br>
+        /// So StrCount(JNode("ababa", Dtype.STR, 0), Regex("a?ba")) -> JNode(2, Dtype.INT, 0)
+        /// because "a?ba" matches "aba" starting at position 0 and "ba" starting at position 3.
+        /// </summary>
+        /// <param name="node">a string in which to find pattern/substring sub</param>
+        /// <param name="sub">a substring or Regex pattern</param>
+        public static JNode StrCount(JNode[] args)
+        {
+            JNode node = args[0];
+            JNode sub = args[1];
+            string s = (string)node.value;
+            int ct;
+            if (sub.type == Dtype.REGEX)
+            {
+                ct = (((JRegex)sub).regex).Matches(s).Count;
+                
+            }
+            else
+            {
+                ct = Regex.Matches(s, (string)sub.value).Count;
+            }
+            return new JNode(Convert.ToInt64(ct), Dtype.INT, 0);
+        }
+
+        /// <summary>
+        /// Get a List<object?> containing all non-overlapping occurrences of regex pattern pat in
+        /// string node
+        /// </summary>
+        /// <param name="node">string</param>
+        /// <param name="sub">substring or Regex pattern to be found within node</param>
+        /// <returns></returns>
+        public static JNode StrFind(JNode[] args)
+        {
+            JNode node = args[0];
+            JNode pat = args[1];
+            Regex rex = (pat as JRegex).regex;
+            MatchCollection results = rex.Matches((string)node.value);
+            var result_list = new List<JNode>();
+            foreach (Match match in results)
+            {
+                result_list.Add(new JNode(match.Value, Dtype.STR, 0));
+            }
+            return new JArray(0, result_list);
+        }
+
+        public static JNode StrSplit(JNode[] args)
+        {
+            JNode node = args[0];
+            JNode sep = args[1];
+            string s = (string)node.value;
+            string[] parts = (sep.type == Dtype.STR) ? Regex.Split(s, (string)sep.value) : ((JRegex)sep).regex.Split(s);
+            var out_nodes = new List<JNode>();
+            foreach (string part in parts)
+            {
+                out_nodes.Add(new JNode(part, Dtype.STR, 0));
+            }
+            return new JArray(0, out_nodes);
+        }
+
+        public static JNode StrLower(JNode[] args)
+        {
+            return new JNode(((string)args[0].value).ToLower(), Dtype.STR, 0);
+        }
+
+        public static JNode StrUpper(JNode[] args)
+        {
+            return new JNode(((string)args[0].value).ToUpper(), Dtype.STR, 0);
+        }
+
+        public static JNode StrStrip(JNode[] args)
+        {
+            return new JNode(((string)args[0].value).Trim(), Dtype.STR, 0);
+        }
+
+        public static JNode StrSlice(JNode[] args)
+        {
+            string s = (string)args[0].value;
+            JNode slicer_or_int = args[1];
+            if (slicer_or_int is JSlicer)
+            {
+                return new JNode(s.Slice(((JSlicer)slicer_or_int).slicer), Dtype.STR, 0);
+            }
+            int index = Convert.ToInt32(slicer_or_int.value);
+            // allow negative indices for consistency with slicing syntax
+            index = index < s.Length ? index : s.Length + index;
+            return new JNode(s.Substring(index, 1), Dtype.STR, 0);            
+        }
+
+        /// <summary>
+        /// Replaces all instances of string to_replace with string repl in the string value
+        /// of JNode node
+        /// </summary>
+         /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
+        public static JNode StrSub(JNode[] args)
+        {
+            JNode node = args[0];
+            JNode to_replace = args[1];
+            JNode repl = args[2];
+            string val = (string)node.value;
+            if (to_replace.type == Dtype.STR)
+            {
+                return new JNode(Regex.Replace(val, (string)to_replace.value, (string)repl.value), Dtype.STR, 0);
+            }
+            return new JNode(((JRegex)to_replace).regex.Replace(val, (string)repl.value), Dtype.STR, 0);
+        }
+
+        /// <summary>
+        /// returns true is x is string
+        /// </summary>
+        public static JNode IsStr(JNode[] args)
+        {
+            return new JNode(args[0].type == Dtype.STR, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// returns true is x is long, double, or bool
+        /// </summary>
+        public static JNode IsNum(JNode[] args)
+        {
+            return new JNode((args[0].type & (Dtype.INT | Dtype.FLOAT | Dtype.BOOL)) != 0, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// returns true if x is JObject or JArray
+        /// </summary>
+        public static JNode IsExpr(JNode[] args)
+        {
+            return new JNode((args[0].type & Dtype.ARR_OR_OBJ) != 0, Dtype.BOOL, 0);
+        }
+
+        public static JNode IsNull(JNode[] args)
+        {
+            return new JNode(args[0].type == Dtype.NULL, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// if first arg is true, returns second arg. Else returns first arg.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode IfElse(JNode[] args)
+        {
+            return (bool)args[0].value ? args[1] : args[2];
+        }
+
+        public static JNode Log(JNode[] args)
+        {
+            double num = Convert.ToDouble(args[0].value);
+            object? Base = args[1].value;
+            if (Base == null)
+            {
+                return new JNode(Math.Log(num), Dtype.FLOAT, 0);
+            }
+            return new JNode(Math.Log(num, Convert.ToDouble(Base)), Dtype.FLOAT, 0);
+        }
+
+        public static JNode Log2(JNode[] args)
+        {
+            return new JNode(Math.Log2(Convert.ToDouble(args[0].value)), Dtype.FLOAT, 0);
+        }
+
+        public static JNode Abs(JNode[] args)
+        {
+            JNode val = args[0];
+            if (val.type == Dtype.INT)
+            {
+                return new JNode(Math.Abs(Convert.ToInt64(val.value)), Dtype.INT, 0);
+            }
+            else if (val.type == Dtype.FLOAT)
+            {
+                return new JNode(Math.Abs(Convert.ToDouble(val.value)), Dtype.FLOAT, 0);
+            }
+            throw new ArgumentException("Abs can only be called on ints and floats");
+        }
+
+        public static JNode IsNa(JNode[] args)
+        {
+            return new JNode(double.IsNaN(Convert.ToDouble(args[0].value)), Dtype.BOOL, 0);
+        }
+
+        public static JNode ToStr(JNode[] args)
+        {
+            JNode val = args[0];
+            if (val.type == Dtype.STR)
+            {
+                return new JNode(val.value, Dtype.STR, 0);
+            }
+            return new JNode(val.ToString(), Dtype.STR, 0);
+        }
+
+        public static JNode ToFloat(JNode[] args)
+        {
+            JNode val = args[0];
+            if (val.type == Dtype.STR)
+            {
+                return new JNode(double.Parse((string)val.value), Dtype.FLOAT, 0);
+            }
+            return new JNode(Convert.ToDouble(val.value), Dtype.FLOAT, 0);
+        }
+
+        public static JNode ToInt(JNode[] args)
+        {
+            JNode val = args[0];
+            if (val.type == Dtype.STR)
+            {
+                return new JNode(long.Parse((string)val.value), Dtype.INT, 0);
+            }
+            return new JNode(Convert.ToInt64(val.value), Dtype.INT, 0);
+        }
+
+        /// <summary>
+        /// If val is an int/long, return val because rounding does nothing to an int/long.<br></br>
+        /// If val is a double:<br></br>
+        ///     - if sigfigs is null, return val rounded to the nearest long.<br></br>
+        ///     - else return val rounded to nearest double with sigfigs decimal places<br></br>
+        /// If val's value is any other type, throw an ArgumentException
+        /// </summary>
+        public static JNode Round(JNode[] args)
+        {
+            JNode val = args[0];
+            JNode sigfigs = args[1];
+            if (val.type == Dtype.INT)
+            {
+                return new JNode(val.value, Dtype.INT, 0);
+            }
+            else if (val.type == Dtype.FLOAT)
+            {
+                if (sigfigs == null)
+                {
+                    return new JNode(Convert.ToInt64(Math.Round(Convert.ToDouble(val.value))), Dtype.INT, 0);
+                }
+                return new JNode(Math.Round(Convert.ToDouble(val.value), Convert.ToInt32(sigfigs.value)), Dtype.FLOAT, 0);
+            }
+            throw new ArgumentException("Cannot round non-float, non-integer numbers");            
+        }
+
+        public static JNode Not(JNode[] args)
+        {
+            return new JNode(!Convert.ToBoolean(args[0].value), Dtype.BOOL, 0);
+        }
+
+        public static JNode Uminus(JNode[] args)
+        {
+            JNode val = args[0];
+            if (val.type == Dtype.INT)
+            {
+                return new JNode(-Convert.ToInt64(val.value), Dtype.INT, 0);
+            }
+            if (val.type == Dtype.FLOAT)
+            {
+                return new JNode(-Convert.ToDouble(val.value), Dtype.FLOAT, 0);
+            }
+            throw new RemesPathException("Unary '-' can only be applied to ints and floats");
+        }
+
+        #endregion
+
+        public static JNode ObjectsToJNode(object? obj)
+        {
+            if (obj == null)
+            {
+                return new JNode(null, Dtype.NULL, 0);
+            }
+            if (obj is long)
+            {
+                return new JNode(Convert.ToInt64(obj), Dtype.INT, 0);
+            }
+            if (obj is double)
+            {
+                return new JNode((double)obj, Dtype.FLOAT, 0);
+            }
+            if (obj is string)
+            {
+                return new JNode((string)obj, Dtype.STR, 0);
+            }
+            if (obj is bool)
+            {
+                return new JNode((bool)obj, Dtype.BOOL, 0);
+            }
+            if (obj is List<object?>)
+            {
+                var nodes = new List<JNode>();
+                foreach (object? child in (List<object?>)obj)
+                {
+                    nodes.Add(ObjectsToJNode(child));
+                }
+                return new JArray(0, nodes);
+            }
+            else if (obj is Dictionary<string, object?>)
+            {
+                var nodes = new Dictionary<string, JNode>();
+                foreach ((string key, object? val) in (Dictionary<string, object?>)obj)
+                {
+                    nodes[key] = ObjectsToJNode(val);
+                }
+                return new JObject(0, nodes);
+            }
+            throw new ArgumentException("Cannot convert any objects to JNode except null, long, double, bool, string, List<object?>, or Dictionary<string, object?");
+        }
+
+        /// <summary>
+        /// Recursively extract the values from a JNode, converting JArrays into lists of objects,
+        /// JObjects into Dictionaries mapping strings to objects, and everything else to its value.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public static object? JNodeToObjects(JNode node)
+        {
+            // if it's not an obj, arr, or unknown, just return its value
+            if ((node.type & Dtype.ITERABLE) == 0)
+            {
+                return node.value;
+            }
+            if (node.type == Dtype.UNKNOWN)
+            {
+                return (CurJson)node;
+            }
+            if (node.type == Dtype.OBJ)
+            {
+                var dic = new Dictionary<string, object?>();
+                foreach ((string key, JNode val) in ((JObject)node).children)
+                {
+                    dic[key] = JNodeToObjects(val);
+                }
+                return dic;
+            }
+            var arr = new List<object?>();
+            foreach (JNode val in ((JArray)node).children)
+            {
+                arr.Add(JNodeToObjects(val));
+            }
+            return arr;
+        }
+
+        // VectorizeArgFunction used to be here, but it's not necessary now that I reimplemented all the
+        // vectorized ArgFunctions to take JNode[] as arguments
+
+        public static Dictionary<string, ArgFunction> FUNCTIONS =
+        new Dictionary<string, ArgFunction>
+        {
+            // non-vectorized functions
+            ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.INT }),
+            ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
+            ["in"] = new ArgFunction(In, "in", Dtype.BOOL, 2, 2, false, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE, Dtype.ITERABLE }),
+            ["index"] = new ArgFunction(Index, "index", Dtype.INT, 2, 3, false, new Dtype[] {Dtype.ITERABLE, Dtype.SCALAR, Dtype.BOOL}),
+            ["items"] = new ArgFunction(Items, "items", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN }),
+            ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
+            ["len"] = new ArgFunction(Len, "len", Dtype.INT, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
+            ["max"] = new ArgFunction(Max, "max", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
+            ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
+            ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.FLOAT}),
+            ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
+            ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR | Dtype.UNKNOWN}),
+            ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.BOOL }),
+            ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
+            ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
+            ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
+            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 6, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
+            //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
+            // vectorized functions
+            ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.SCALAR | Dtype.ITERABLE}),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE, Dtype.ITERABLE | Dtype.SCALAR, Dtype.ITERABLE | Dtype.SCALAR}),
+            ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["is_str"] = new ArgFunction(IsStr, "is_str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["isna"] = new ArgFunction(IsNa, "isna", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["log"] = new ArgFunction(Log, "log", Dtype.FLOAT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.FLOAT_OR_INT}),
+            ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["__UMINUS__"] = new ArgFunction(Uminus, "-", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["not"] = new ArgFunction(Not, "not", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.BOOL | Dtype.ITERABLE}),
+            ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
+            ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
+            ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
+            ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT}),
+            ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
+            ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
+            ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR}),
+            ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE})
+        };
+    }
+
+
+    public class ArgFunctionWithArgs
+    {
+        public ArgFunction function;
+        public JNode[] args;
+
+        public ArgFunctionWithArgs(ArgFunction function, JNode[] args)
+        {
+            this.function = function;
+            this.args = args;
+        }
+
+        public JNode Call()
+        {
+            return function.Call(args);
+        }
+    }
+
+
+    /// <summary>
+    /// A stand-in for an object that is a function of the user's input.
+    /// This can take on any value, including a scalar (e.g., len(@) is CurJson of type Dtype.INT).
+    /// The Function field must take any object or null as input and return an object of the type reflected
+    /// in the CurJson's type field.
+    /// So for example, a CurJson node standing in for len(@) would be initialized as follows:
+    /// CurJson(Dtype.INT, obj => obj.Length)
+    /// </summary>
+    public class CurJson : JNode
+    {
+        public Func<JNode, JNode> function;
+        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
+        {
+            this.function = function;
+        }
+
+        /// <summary>
+        /// A CurJson node that simply stands in for the current json itself (represented by @)
+        /// Its function is the identity function.
+        /// </summary>
+        public CurJson() : base(null, Dtype.UNKNOWN, 0)
+        {
+            function = Identity;
+        }
+
+        public JNode Identity(JNode obj)
+        {
+            return obj;
+        }
+    }
+
+    class BinopTester
+    {
+        public static void Test()
+        {
+            JsonParser jsonParser = new JsonParser();
+            JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
+            var testcases = new (JNode x, JNode y, Binop bop, JNode desired, string msg)[]
+            {
+                (jsonParser.Parse("1"), jsonParser.Parse("3"), Binop.BINOPS["-"], jsonParser.Parse("-2"), "subtraction of ints"),
+                (jsonParser.Parse("2.5"), jsonParser.Parse("5"), Binop.BINOPS["/"], jsonParser.Parse("0.5"), "division of float by int"),
+                (jsonParser.Parse("\"a\""), jsonParser.Parse("\"b\""), Binop.BINOPS["+"], jsonParser.Parse("\"ab\""), "addition of strings"),
+                (jsonParser.Parse("3"), jsonParser.Parse("4"), Binop.BINOPS[">="], jfalse, "comparison ge"),
+                (jsonParser.Parse("7"), jsonParser.Parse("9"), Binop.BINOPS["<"], jtrue, "comparison lt"),
+                (jsonParser.Parse("\"abc\""), jsonParser.Parse("\"ab+\""), Binop.BINOPS["=~"], jtrue, "has_pattern"),
+            };
+            int tests_failed = 0;
+            int ii = 0;
+            foreach ((JNode x, JNode y, Binop bop, JNode desired, string msg) in testcases)
+            {
+                JNode output = bop.Call(x, y);
+                string str_desired = desired.ToString();
+                string str_output = output.ToString();
+                if (str_desired != str_output)
+                {
+
+                    tests_failed++;
+                    Console.WriteLine(String.Format("Test {0} (input \"{1}({2}, {3})\", {4}) failed:\n" +
+                                                    "Expected\n{5}\nGot\n{6}",
+                                                    ii+1, bop, x.ToString(), y.ToString(), msg, str_desired, str_output));
+                }
+                ii++;
+            }
+            ii = testcases.Length;
+            Console.WriteLine($"Failed {tests_failed} tests.");
+            Console.WriteLine($"Passed {ii - tests_failed} tests.");
+        }
+    }
+
+    class ArgFunctionTester
+    {
+        public static void Test()
+        {
+            JsonParser jsonParser = new JsonParser();
+            JNode jtrue = jsonParser.Parse("true");
+            JNode jfalse = jsonParser.Parse("false");
+            var testcases = new (JNode[] args, ArgFunction f, JNode desired)[]
+            {
+                (new JNode[]{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0)),
+                (new JNode[]{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]")),
+                (new JNode[]{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]")),
+                (new JNode[]{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0)),
+                //(new JNode[]{jsonParser.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 3, \"b\": 1}]"), new JNode("b", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["min_by"], jsonParser.Parse("{\"a\": 3, \"b\": 1}")),
+                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]")}, ArgFunction.FUNCTIONS["s_len"], jsonParser.Parse("[2, 3, 0]")),
+                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JNode("a", Dtype.STR, 0), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
+                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JRegex(new Regex(@"a+")), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
+                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JSlicer(new int?[] {1, null, -1})}, ArgFunction.FUNCTIONS["s_slice"], jsonParser.Parse("[\"ba\", \"cb\", \"\"]")),
+                //(new JNode[]{jsonParser.Parse("{\"a\": \"2\", \"b\": \"1.5\"}")}, ArgFunction.FUNCTIONS["float"], jsonParser.Parse("{\"a\": 2.0, \"b\": 1.5}")),
+                //(new JNode[]{jsonParser.Parse("{\"a\": \"a\", \"b\": \"b\"}"), new JNode(3, Dtype.INT, 0)}, ArgFunction.FUNCTIONS["s_mul"], jsonParser.Parse("{\"a\": \"aaa\", \"b\": \"bbb\"}"))
+            };
+            int tests_failed = 0;
+            int ii = 0;
+            foreach ((JNode[] args, ArgFunction f, JNode desired) in testcases)
+            {
+                JNode output = f.Call(args);
+                var sb = new StringBuilder();
+                sb.Append('{');
+                int argnum = 0;
+                while (argnum < args.Length)
+                {
+                    sb.Append(args[argnum++].ToString());
+                    if (argnum < (args.Length - 1)) { sb.Append(", "); }
+                }
+                sb.Append('}');
+                string argstrings = sb.ToString();
+                string str_desired = desired.ToString();
+                string str_output = output.ToString();
+                if (str_desired != str_output)
+                {
+
+                    tests_failed++;
+                    Console.WriteLine(String.Format("Test {0} (input \"{1}({2}) failed:\nExpected\n{3}\nGot\n{4}",
+                                                    ii+1, f, argstrings, str_desired, str_output));
+                }
+                ii++;
+            }
+            ii = testcases.Length;
+            Console.WriteLine($"Failed {tests_failed} tests.");
+            Console.WriteLine($"Passed {ii - tests_failed} tests.");
+        }
+    }
+}

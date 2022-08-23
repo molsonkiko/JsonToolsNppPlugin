@@ -1,0 +1,47 @@
+[
+    {
+    "cities": "BUS",
+    "contaminated": true,
+    "date": "",
+    "names": "Bluds",
+    "nums": NaN,
+    "subzone": "a",
+    "zone": 1
+    },
+    {
+    "cities": "BUS",
+    "contaminated": false,
+    "date": "",
+    "names": "Bluds",
+    "nums": NaN,
+    "subzone": "c",
+    "zone": 1
+    },
+    {
+    "cities": "FUDG",
+    "contaminated": true,
+    "date": "2020-12-13 12:00:00.00",
+    "names": "dfsd",
+    "nums": 0.5,
+    "subzone": "c",
+    "zone": 2
+    },
+    {
+    "cities": "FUDG",
+    "contaminated": false,
+    "date": "2020-12-13 12:00:00.00",
+    "names": "dfsd",
+    "nums": 0.5,
+    "subzone": "e",
+    "zone": 2
+    },
+    {
+    "cities": "YUNOB",
+    "contaminated": true,
+    "date": "2014-10-17 12:00:00.00",
+    "names": "Kjond",
+    "nums": 4.6,
+    "subzone": "w",
+    "zone": 5
+    }
+]

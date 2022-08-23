@@ -1,0 +1,1 @@
+['singlequoted string', {"a": 'also singlequoted'}]

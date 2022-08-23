@@ -1,0 +1,141 @@
+# Converting JSON to CSVs #
+This app uses an [algorithm](https://github.com/molsonkiko/JSON-Tools/blob/main/JSONViewer/JsonTabularize.cs) based on analysis of a JSON iterable's [schema](https://github.com/molsonkiko/JSON-Tools/blob/main/JSONViewer/JsonSchema.cs) to attempt to convert it into a table.
+
+At present, four [strategies](#strategies) for making a table are supported.
+
+# Options #
+1. __The Key Separator (*keysep*) is a character that joins together the path to a value.__ In `Full Recursive` and `Default` modes, the algorithm recursively searches for child keys and indices, and uses the path as a column name instead of a key.
+
+For example, we might have 
+
+```json
+{"b": [{"a": [1, 2, 3]}]}
+```
+which can be tabularized, but requires recursive search from key `b` to the first array to key `a` in the sub-object, yielding the path
+`["b", "a"]`.
+
+ So with keysep = `'.'`, we get the output
+```
+b.a
+1
+2
+3
+```
+
+and with keysep = `'_'`, we get
+```
+b_a
+1
+2
+3
+```
+
+2. __The *Delimiter in output file*__ (one of `'\t'`, `','`, or `'|'`) is the character used to separate the fields in the output file. By default this is `','`, so you output a CSV. `'\t'` would result in a TSV (tab-separated variables).
+
+3. __Convert booleans to integers__ takes all instances of `true` and `false` and replaces them with `1` and `0`, respectively. Can be useful sometimes.
+
+# Strategies #
+## Default ##
+Drills down into nested JSON until it finds one of the following:
+* an array of arrays of scalars
+* an array of same-format objects with scalar values
+* an object with at least one key that maps to arrays of scalars
+
+The emitted table will then have all the scalar values along the path to the table, as well as the table itself.
+* For example, something that's already tabular, like
+```json
+{"a": 1, "b": [1, 2, 3], "c": ["a", "b", "c"]}
+```
+will be tabularized to
+```
+a,b,c
+1,1,a
+1,2,b
+1,3,c
+```
+
+* But it can drill down to find the tabular part of this JSON:
+```json
+[{"a": 1, "b": [1, 2, 3], "c": {"d": "y"}}, {"a": 2, "b": [4, 5, 6], "c": {"d": "z"}}]
+```
+will be tabularized to
+```
+a,b,c.d
+1,1,y
+1,2,y
+1,3,y
+2,4,z
+2,5,z
+2,6,z
+```
+
+## Full recursive ##
+If the JSON is an array of objects or an array of arrays, recursively search each sub-object or sub-array, adding new columns to the emitted table for each path to a terminal node.
+
+If the JSON is not an array, throw an error.
+
+This can make tables with *a lot of columns*, as shown in this example:
+```json
+[{"a": 1, "b": [1, 2, 3], "c": {"d": "y"}}, {"a": 2, "b": [4, 5, 6], "c": {"d": "z"}}]
+```
+will be tabularized to
+```
+a,b.col1,b.col2,b.col3,c.d
+1,1,2,3,y
+2,4,5,6,z
+```
+
+## No recursion ##
+If the JSON is one of the following:
+* an array of arrays of scalars
+* an array of same-format objects with scalar values
+* an object with at least one key that maps to arrays of scalars
+
+make a table containing all the rows. No recursive search will be done - the *entire JSON* must match this specification.
+
+* For example, 
+```json
+{"a": 1, "b": [1, 2, 3], "c": ["a", "b", "c"]}
+```
+will be tabularized to
+```
+a,b,c
+1,1,a
+1,2,b
+1,3,c
+```
+* But
+```json
+[{"a": 1, "b": [1, 2, 3]}, {"a": 2, "b": [4, 5, 6]}]
+```
+will NOT be tabularized because it is an array of objects that don't contain all scalars.
+
+## Stringify iterables ##
+
+This approach is similar to NO_RECURSION, but instead of refusing to run if it encounters
+non-scalars in the table, it stringifies them.
+
+This strategy might be useful if you want to partially deconstruct your JSON so that some fields are their own columns and more complex deeply nested fields are left as JSON, which an RDBMS like [PostgreSQL](https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-json/) can convert into a JSON column type.
+
+For example, consider
+```json
+[{"a": 1, "b": [1, 2, 3], "c": {"d": "y"}}, {"a": 2, "b": [4, 5, 6], "c": {"d": "z"}}]
+```
+This will be tabularized to
+```
+a,b,c
+1,"[1, 2, 3]",{"d": "y"}
+2,"[4, 5, 6]",{"d": "z"}
+```
+Meanwhile,
+```json
+{"a": 1, "b": [1, 2, 3], "c": ["a", "b", "c"]}
+```
+will be tabularized to
+```
+a,b,c
+1,1,a
+1,2,b
+1,3,c
+```
+which is the same behavior as the `No recursion` and `Default` strategies.

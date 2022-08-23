@@ -1,0 +1,63 @@
+The following language specification is in pseudo-Backus-Naur form.
+Please let me know if there are any logical inconsistencies in this language specification.
+_________________________________________
+expr ::= json (ws indexer_list)? projection?
+projection ::= object_projection | array_projection
+object_projection ::= l_curlybrace ws key_value_pair ws (comma ws key_value_pair ws)* r_curlybrace
+array_projection ::= l_curlybrace ws expr_function ws (comma ws expr_function ws)* r_curlybrace
+l_curlybrace ::= "{"
+r_curlybrace ::= "}"
+key_value_pair ::= string ws colon ws expr_function
+json ::= cur_json | json_string
+cur_json ::= "@"
+indexer_list ::= double_dot_indexer? indexer+
+indexer ::= dot single_varname
+            | l_squarebrace ws boolean_index ws r_squarebrace
+            | l_squarebrace ws varname_list ws r_squarebrace
+            | l_squarebrace ws slicer_list ws r_squarebrace
+double_dot_indexer ::= dot single_varname
+                        | dot dot l_squarebrace ws boolean_index ws r_squarebrace
+                        | dot dot l_squarebrace ws varname_list ws r_squarebrace
+                        | dot dot l_squarebrace ws slicer_list ws r_squarebrace
+l_squarebrace ::= "["
+r_squarebrace ::= "]"
+expr_function ::= expr
+                  | (expr | scalar_function) ws binop ws expr
+                  | expr ws binop ws (expr | scalar_function)
+                  | expr_arg_function
+                  | lparen expr_function rparen
+scalar_function ::= scalar
+                    | scalar_function ws binop ws scalar_function
+                    | scalar_arg_function
+                    | lparen scalar_function rparen
+boolean_index ::= expr_function
+expr_arg_function ::= unquoted_string ws lparen ws expr_function ws (comma ws (expr_function | scalar_function) ws)* rparen
+scalar_arg_function ::= unquoted_string ws lparen ws scalar_function ws (comma ws scalar_function ws)* rparen
+single_varname ::= varname | star
+slicer_list ::= star | slicer ws (comma ws slicer ws)*
+star ::= "*"
+varname_list ::= varname ws (comma ws varname ws)*
+slicer ::= int | int? colon int? colon int?
+scalar ::= quoted_string | num | regex | constant
+varname ::= string | regex
+string ::= quoted_string | unquoted_string
+regex ::= g quoted_string
+json_string ::= j quoted_string
+quoted_string ::= backtick ascii_char* backtick ; "`" inside the string must be escaped by "\\"; see the BACKTICK_STRING_REGEX below
+unquoted_string ::= "[a-zA-Z_][a-zA-Z_0-9]*"
+ascii_char ::= "[\x00-\xff]"
+num ::= int dec_part? exp_part?
+int ::= "(-?(?:0|[1-9]\d*))"
+dec_part ::= "(\.\d+)"
+exp_part ::= "([eE][-+]?\d+)?"
+constant ::= bool | "Infinity" | null | "NaN" | "-Infinity"
+null ::= "null"
+bool ::= "true" | "false"
+ws ::= "[ \t\n\r]*"
+binop ::= "&" | "|" | "^" | "=~" | "[=><!]=" | "<" | ">" | "+" | "-"
+          | "/" | "//" | star | star star | "in"
+colon ::= ":"
+comma ::= ","
+dot ::= "."
+g ::= "g"
+j ::= "j"

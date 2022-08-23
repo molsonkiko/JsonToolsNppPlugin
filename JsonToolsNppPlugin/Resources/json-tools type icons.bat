@@ -1,0 +1,8 @@
+magick "array type icon.png" "array type icon.ico"
+magick "bool type icon.png" "bool type icon.ico"
+magick "date type icon.png" "date type icon.ico"
+magick "float type icon.png" "float type icon.ico"
+magick "int type icon.png" "int type icon.ico"
+magick "object type icon.png" "object type icon.ico"
+magick "string type icon.png" "string type icon.ico"
+magick "null type icon.png" "null type icon.ico"
