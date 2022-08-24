@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace JSON_Viewer.Infrastructure
+namespace JSON_Tools.Utils
 {
     /// <summary>
     /// Manages application settings

@@ -8,9 +8,31 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using JSON_Tools.Utils;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
+    #region DATA_HOLDER_STRUCTS
+    public struct Key_Node
+    {
+        public object obj;
+        public JNode node;
+
+        public Key_Node(object obj, JNode node)
+        {
+            this.obj = obj;
+            this.node = node;
+        }
+    }
+
+    public struct Obj_Pos
+    {
+        public object obj;
+        public int pos;
+
+        public Obj_Pos(object obj, int pos) { this.obj = obj; this.pos = pos; }
+    }
+    #endregion DATA_HOLDER_STRUCTS
     /// <summary>
     /// an exception thrown when trying to use a boolean index of unequal length<br></br>
     /// or when trying to apply a binary operator to two objects with different sets of keys<br></br>
@@ -44,7 +66,7 @@ namespace JSON_Viewer.JSONViewer
         /// <param name="query"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public JNode? Check(string query)
+        public JNode Check(string query)
         {
             if (cache.TryGetValue(query, out JNode existing_result))
             {
@@ -117,9 +139,9 @@ namespace JSON_Viewer.JSONViewer
     /// </summary>
     public class Projection : Indexer
     {
-        public Func<JNode, IEnumerable<(object, JNode)>> proj_func;
+        public Func<JNode, IEnumerable<Key_Node>> proj_func;
 
-        public Projection(Func<JNode, IEnumerable<(object, JNode)>> proj_func)
+        public Projection(Func<JNode, IEnumerable<Key_Node>> proj_func)
         {
             this.proj_func = proj_func;
         }
@@ -144,7 +166,7 @@ namespace JSON_Viewer.JSONViewer
         /// <summary>
         /// An enumerator that yields JNodes from a JArray or JObject
         /// </summary>
-        public Func<JNode, IEnumerable<(object, JNode)>> idxr;
+        public Func<JNode, IEnumerable<Key_Node>> idxr;
         /// <summary>
         /// rather than making a JObject or JArray to contain a single selection from a parent<br></br>
         /// (e.g., when selecting a single key or a single index), we will just return that one element as a scalar.<br></br>
@@ -155,13 +177,16 @@ namespace JSON_Viewer.JSONViewer
         /// is an array or object projection made by the {foo: @[0], bar: @[1]} type syntax.
         /// </summary>
         public bool is_projection;
+        /// <summary>
+        /// is an object
+        /// </summary>
         public bool is_dict;
         /// <summary>
         /// involves recursive search
         /// </summary>
         public bool is_recursive;
 
-        public IndexerFunc(Func<JNode, IEnumerable<(object, JNode)>> idxr, bool has_one_option, bool is_projection, bool is_dict, bool is_recursive)
+        public IndexerFunc(Func<JNode, IEnumerable<Key_Node>> idxr, bool has_one_option, bool is_projection, bool is_dict, bool is_recursive)
         {
             this.idxr = idxr;
             this.has_one_option = has_one_option;
@@ -189,6 +214,12 @@ namespace JSON_Viewer.JSONViewer
     /// </summary>
     public class RemesParser
     {
+        public static RemesPathLexer lexer = new RemesPathLexer();
+        /// <summary>
+        /// A LRU cache mapping queries to compiled results that the parser can check against
+        /// to save time on parsing.<br></br>
+        /// May not be used if parsing is really fast and so caching is unnecessary 
+        /// </summary>
         public QueryCache cache;
 
         /// <summary>
@@ -210,10 +241,10 @@ namespace JSON_Viewer.JSONViewer
         {
             //// turns out compiling queries is very fast (tens of microseconds for a simple query),
             //// so caching old queries doesn't save much time
-            // JNode? old_result = cache.Check(query);
+            // JNode old_result = cache.Check(query);
             // if (old_result != null) { return old_result; }
-            List<object> toks = RemesPathLexer.Tokenize(query);
-            (JNode result, _) = ParseExprOrScalarFunc(toks, 0);
+            List<object> toks = lexer.Tokenize(query);
+            JNode result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
             //cache.Add(query, result);
             return result;
         }
@@ -239,21 +270,22 @@ namespace JSON_Viewer.JSONViewer
         public static string INDEXER_STARTERS = ".[{";
 
         #region INDEXER_FUNCTIONS
-        private Func<JNode, IEnumerable<(object key, JNode node)>> ApplyMultiIndex(object inds, bool is_varname_list, bool is_recursive = false)
+        private Func<JNode, IEnumerable<Key_Node>> ApplyMultiIndex(object inds, bool is_varname_list, bool is_recursive = false)
         {
             if (inds is CurJson)
             {
-                IEnumerable<(object, JNode)> multi_idx_func(JNode x)
+                IEnumerable<Key_Node> multi_idx_func(JNode x)
                 {
                     return ApplyMultiIndex(((CurJson)inds).function(x), is_varname_list, is_recursive)(x);
                 }
+                return multi_idx_func;
             }
             var children = (List<object>)inds;
             if (is_varname_list)
             {
                 if (is_recursive)
                 {
-                    IEnumerable<(object, JNode)> multi_idx_func(JNode x, string path, HashSet<string> paths_visited)
+                    IEnumerable<Key_Node> multi_idx_func(JNode x, string path, HashSet<string> paths_visited)
                     {
                         if (x is JArray)
                         {
@@ -262,9 +294,9 @@ namespace JSON_Viewer.JSONViewer
                             JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
-                                foreach ((object k, JNode v) in multi_idx_func(xarr.children[ii], path + ',' + ii.ToString(), paths_visited))
+                                foreach (Key_Node kv in multi_idx_func(xarr.children[ii], path + ',' + ii.ToString(), paths_visited))
                                 {
-                                    yield return (k, v);
+                                    yield return kv;
                                 }
                             }
                         }
@@ -279,20 +311,19 @@ namespace JSON_Viewer.JSONViewer
                                 {
                                     string strv = (string)v;
                                     if (path == "") path = strv;
-                                    foreach ((string k, JNode val) in xobj.children)
+                                    foreach (string k in xobj.children.Keys)
                                     {
+                                        JNode val = xobj.children[k];
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (k == strv)
                                         {
-                                            if (!paths_visited.Contains(newpath)) yield return (0, val);
+                                            if (!paths_visited.Contains(newpath)) yield return new Key_Node(0, val);
                                             paths_visited.Add(newpath);
                                         }
                                         else
                                         {
-                                            foreach ((_, JNode subval) in multi_idx_func(val, newpath, paths_visited))
-                                            {
-                                                yield return (0, subval);
-                                            }
+                                            foreach (Key_Node ono in multi_idx_func(val, newpath, paths_visited))
+                                                yield return ono;
                                         }
                                     }
                                 }
@@ -300,19 +331,20 @@ namespace JSON_Viewer.JSONViewer
                                 {
                                     Regex regv = (Regex)v;
                                     if (path == "") path = regv.ToString();
-                                    foreach ((string k, JNode val) in xobj.children)
+                                    foreach (string k in xobj.children.Keys)
                                     {
+                                        JNode val = xobj.children[k];
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (regv.IsMatch(k))
                                         {
-                                            if (!paths_visited.Contains(newpath)) yield return (0, val);
+                                            if (!paths_visited.Contains(newpath)) yield return new Key_Node(0, val);
                                             paths_visited.Add(newpath);
                                         }
                                         else
                                         {
-                                            foreach ((_, JNode subval) in multi_idx_func(val, newpath, paths_visited))
+                                            foreach (Key_Node ono in multi_idx_func(val, newpath, paths_visited))
                                             {
-                                                yield return (0, subval);
+                                                yield return new Key_Node(0, ono.node);
                                             }
                                         }
                                     }
@@ -324,7 +356,7 @@ namespace JSON_Viewer.JSONViewer
                 }
                 else
                 {
-                    IEnumerable<(object, JNode)> multi_idx_func(JNode x)
+                    IEnumerable<Key_Node> multi_idx_func(JNode x)
                     {
                         var xobj = (JObject)x;
                         foreach (object v in children)
@@ -334,14 +366,14 @@ namespace JSON_Viewer.JSONViewer
                                 string vstr = (string)v;
                                 if (xobj.children.TryGetValue(vstr, out JNode val))
                                 {
-                                    yield return (vstr, val);
+                                    yield return new Key_Node(vstr, val);
                                 }
                             }
                             else
                             {
-                                foreach ((string vstr, JNode val) in ApplyRegexIndex(xobj, (Regex)v))
+                                foreach (Key_Node ono in ApplyRegexIndex(xobj, (Regex)v))
                                 {
-                                    yield return (vstr, val);
+                                    yield return ono;
                                 }
                             }
                         }
@@ -357,7 +389,7 @@ namespace JSON_Viewer.JSONViewer
                     // decide whether to implement recursive search for slices and indices
                     throw new NotImplementedException("Recursive search for array indices and slices is not implemented");
                 }
-                IEnumerable<(object, JNode)> multi_idx_func(JNode x)
+                IEnumerable<Key_Node> multi_idx_func(JNode x)
                 {
                     JArray xarr = (JArray)x;
                     foreach (object ind in children)
@@ -367,7 +399,7 @@ namespace JSON_Viewer.JSONViewer
                             // it's a slice, so yield all the JNodes in that slice
                             foreach (JNode subind in xarr.children.LazySlice((int?[])ind))
                             {
-                                yield return (0, subind);
+                                yield return new Key_Node(0, subind);
                             }
                         }
                         else
@@ -375,7 +407,7 @@ namespace JSON_Viewer.JSONViewer
                             int ii = Convert.ToInt32(ind);
                             if (ii >= xarr.Length) { continue; }
                             // allow negative indices for consistency with how slicers work
-                            yield return (0, xarr.children[ii >= 0 ? ii : ii + xarr.Length]);
+                            yield return new Key_Node(0, xarr.children[ii >= 0 ? ii : ii + xarr.Length]);
                         }
                     }
                 }
@@ -383,20 +415,21 @@ namespace JSON_Viewer.JSONViewer
             }
         }
 
-        private IEnumerable<(string key, JNode val)> ApplyRegexIndex(JObject obj, Regex regex)
+        private IEnumerable<Key_Node> ApplyRegexIndex(JObject obj, Regex regex)
         {
-            foreach ((string ok, JNode val) in obj.children)
+            foreach (string ok in obj.children.Keys)
             {
+                JNode val = obj.children[ok];
                 if (regex.IsMatch(ok))
                 {
-                    yield return (ok, val);
+                    yield return new Key_Node(ok, val);
                 }
             }
         }
 
-        private Func<JNode, IEnumerable<(object key, JNode node)>> ApplyBooleanIndex(JNode inds)
+        private Func<JNode, IEnumerable<Key_Node>> ApplyBooleanIndex(JNode inds)
         {
-            IEnumerable<(object key, JNode node)> bool_idxr_func(JNode x)
+            IEnumerable<Key_Node> bool_idxr_func(JNode x)
             {
                 JNode newinds = inds;
                 if (inds is CurJson)
@@ -412,9 +445,10 @@ namespace JSON_Viewer.JSONViewer
                     {
                         if (x.type == Dtype.OBJ)
                         {
-                            foreach ((string key, JNode val) in ((JObject)x).children)
+                            JObject xobj = (JObject)x;
+                            foreach (string key in xobj.children.Keys)
                             {
-                                yield return (key, val);
+                                yield return new Key_Node(key, xobj.children[key]);
                             }
                         }
                         else if (x.type == Dtype.ARR)
@@ -422,7 +456,7 @@ namespace JSON_Viewer.JSONViewer
                             JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
-                                yield return (ii, xarr.children[ii]);
+                                yield return new Key_Node(ii, xarr.children[ii]);
                             }
                         }
                     }
@@ -437,8 +471,9 @@ namespace JSON_Viewer.JSONViewer
                     {
                         throw new VectorizedArithmeticException($"bool index length {iobj.Length} does not match object/array length {xobj.Length}.");
                     }
-                    foreach ((string key, JNode xval) in xobj.children)
+                    foreach (string key in xobj.children.Keys)
                     {
+                        JNode xval = xobj.children[key];
                         bool i_has_key = iobj.children.TryGetValue(key, out JNode ival);
                         if (i_has_key)
                         {
@@ -448,7 +483,7 @@ namespace JSON_Viewer.JSONViewer
                             }
                             if ((bool)ival.value)
                             {
-                                yield return (key, xval);
+                                yield return new Key_Node(key, xval);
                             }
                         }
                     }
@@ -472,7 +507,7 @@ namespace JSON_Viewer.JSONViewer
                         }
                         if ((bool)ival.value)
                         {
-                            yield return (ii, xval);
+                            yield return new Key_Node(ii, xval);
                         }
                     }
                     yield break;
@@ -481,42 +516,44 @@ namespace JSON_Viewer.JSONViewer
             return bool_idxr_func;
         }
 
-        private IEnumerable<(object key, JNode val)> ApplyStarIndexer(JNode x)
+        private IEnumerable<Key_Node> ApplyStarIndexer(JNode x)
         {
             if (x.type == Dtype.OBJ)
             {
                 var xobj = (JObject)x;
-                foreach ((string key, JNode val) in xobj.children)
+                foreach (string key in xobj.children.Keys)
                 {
-                    yield return (key, val);
+                    yield return new Key_Node(key, xobj.children[key]);
                 }
                 yield break;
             }
             var xarr = (JArray)x;
             for (int ii = 0; ii < xarr.Length; ii++)
             {
-                yield return (ii, xarr.children[ii]);
+                yield return new Key_Node(ii, xarr.children[ii]);
             }
         }
 
         /// <summary>
-        /// return null if x is not an object or array<br></br>
-        /// If it is an object or array, return true if its length is 0. 
+        /// return 2 if x is not an object or array<br></br>
+        /// If it is an object or array:<br></br> 
+        /// return 1 if its length is 0.<br></br>
+        /// else return 0.
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
-        private static bool? ObjectOrArrayEmpty(JNode x)
+        private static int ObjectOrArrayEmpty(JNode x)
         {
-            if (x.type == Dtype.OBJ) { return ((JObject)x).Length == 0; }
-            if (x.type == Dtype.ARR) { return ((JArray)x).Length == 0; }
-            return null;
+            if (x.type == Dtype.OBJ) { return (((JObject)x).Length == 0) ? 1 : 0; }
+            if (x.type == Dtype.ARR) { return (((JArray)x).Length == 0) ? 1 : 0; }
+            return 2;
         }
 
         private Func<JNode, JNode> ApplyIndexerList(List<IndexerFunc> indexers)
         {
-            JNode idxr_list_func(JNode obj, List<IndexerFunc> indexers)
+            JNode idxr_list_func(JNode obj, List<IndexerFunc> idxrs)
             {
-                IndexerFunc ix = indexers[0];
+                IndexerFunc ix = idxrs[0];
                 var inds = ix.idxr(obj).GetEnumerator();
                 // IEnumerator<T>.MoveNext returns a bool indicating if the enumerator has passed the end of the collection
                 if (!inds.MoveNext())
@@ -528,7 +565,12 @@ namespace JSON_Viewer.JSONViewer
                     }
                     return new JArray(0, new List<JNode>());
                 }
-                (object k1, JNode v1) = inds.Current;
+                Key_Node k1v1 = inds.Current;
+                object k1 = k1v1.obj;
+                JNode v1 = k1v1.node;
+                Key_Node kv;
+                object k;
+                JNode v;
                 bool is_dict = (ix.is_dict || k1 is string) && !ix.is_recursive;
                 var arr = new List<JNode>();
                 var dic = new Dictionary<string, JNode>();
@@ -545,8 +587,8 @@ namespace JSON_Viewer.JSONViewer
                         dic[(string)k1] = v1;
                         while (inds.MoveNext())
                         {
-                            (object k, JNode v) = inds.Current;
-                            dic[(string)k] = v;
+                            kv = inds.Current;
+                            dic[(string)kv.obj] = kv.node;
                         }
                         return new JObject(0, dic);
                     }
@@ -554,12 +596,13 @@ namespace JSON_Viewer.JSONViewer
                     arr.Add(v1);
                     while (inds.MoveNext())
                     {
-                        (_, JNode v) = inds.Current;
-                        arr.Add(v);
+                        arr.Add(inds.Current.node);
                     }
                     return new JArray(0, arr);
                 }
-                var remaining_idxrs = indexers.TakeLast(indexers.Count - 1).ToList();
+                var remaining_idxrs = new List<IndexerFunc>();
+                for (int ii = 1; ii < indexers.Count; ii++)
+                    remaining_idxrs.Add(indexers[ii]);
                 if (ix.is_projection)
                 {
                     if (is_dict)
@@ -568,8 +611,8 @@ namespace JSON_Viewer.JSONViewer
                         dic[(string)k1] = v1;
                         while (inds.MoveNext())
                         {
-                            (object k, JNode v) = inds.Current;
-                            dic[(string)k] = v;
+                            kv = inds.Current;
+                            dic[(string)kv.obj] = kv.node;
                         }
                         // recursively search this projection using the remaining indexers
                         return idxr_list_func(new JObject(0, dic), remaining_idxrs);
@@ -578,8 +621,7 @@ namespace JSON_Viewer.JSONViewer
                     arr.Add(v1);
                     while (inds.MoveNext())
                     {
-                        (_, JNode v) = inds.Current;
-                        arr.Add(v);
+                        arr.Add(inds.Current.node);
                     }
                     return idxr_list_func(new JArray(0, arr), remaining_idxrs);
                 }
@@ -588,20 +630,21 @@ namespace JSON_Viewer.JSONViewer
                 {
                     return v1_subdex;
                 }
-                bool? is_empty = ObjectOrArrayEmpty(v1_subdex);
+                int is_empty = ObjectOrArrayEmpty(v1_subdex);
                 if (is_dict)
                 {
                     dic = new Dictionary<string, JNode>();
-                    if (!is_empty.HasValue || !is_empty.Value)
+                    if (is_empty != 1)
                     {
                         dic[(string)k1] = v1_subdex;
                     }
                     while (inds.MoveNext())
                     {
-                        (object k, JNode v) = inds.Current;
+                        k = inds.Current.obj;
+                        v = inds.Current.node;
                         JNode subdex = idxr_list_func(v, remaining_idxrs);
                         is_empty = ObjectOrArrayEmpty(subdex);
-                        if (!is_empty.HasValue || !is_empty.Value)
+                        if (is_empty != 1)
                         {
                             dic[(string)k] = subdex;
                         }
@@ -610,16 +653,16 @@ namespace JSON_Viewer.JSONViewer
                 }
                 // obj is a list iterator
                 arr = new List<JNode>();
-                if (!is_empty.HasValue || !is_empty.Value)
+                if (is_empty != 1)
                 {
                     arr.Add(v1_subdex);
                 }
                 while (inds.MoveNext())
                 {
-                    (_, JNode v) = inds.Current;
+                    v = inds.Current.node;
                     JNode subdex = idxr_list_func(v, remaining_idxrs);
                     is_empty = ObjectOrArrayEmpty(subdex);
-                    if (!is_empty.HasValue || !is_empty.Value)
+                    if (is_empty != 1)
                     {
                         arr.Add(subdex);
                     }
@@ -633,15 +676,15 @@ namespace JSON_Viewer.JSONViewer
         #region BINOP_FUNCTIONS
         private JNode BinopTwoJsons(Binop b, JNode left, JNode right)
         {
-            if (ObjectOrArrayEmpty(right) == null)
+            if (ObjectOrArrayEmpty(right) == 2)
             {
-                if (ObjectOrArrayEmpty(left) == null)
+                if (ObjectOrArrayEmpty(left) == 2)
                 {
                     return b.Call(left, right);
                 }
                 return BinopJsonScalar(b, left, right);
             }
-            if (ObjectOrArrayEmpty(left) == null)
+            if (ObjectOrArrayEmpty(left) == 2)
             {
                 return BinopScalarJson(b, left, right);
             }
@@ -654,8 +697,9 @@ namespace JSON_Viewer.JSONViewer
                 {
                     throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
                 }
-                foreach ((string key, JNode right_val) in robj.children)
+                foreach (string key in robj.children.Keys)
                 {
+                    JNode right_val = robj.children[key];
                     bool left_has_key = lobj.children.TryGetValue(key, out JNode left_val);
                     if (!left_has_key)
                     {
@@ -685,9 +729,9 @@ namespace JSON_Viewer.JSONViewer
             {
                 var dic = new Dictionary<string, JNode>();
                 var lobj = (JObject)left;
-                foreach ((string key, JNode left_val) in lobj.children)
+                foreach (string key in lobj.children.Keys)
                 {
-                    dic[key] = b.Call(left_val, right);
+                    dic[key] = b.Call(lobj.children[key], right);
                 }
                 return new JObject(0, dic);
             }
@@ -706,9 +750,9 @@ namespace JSON_Viewer.JSONViewer
             {
                 var dic = new Dictionary<string, JNode>();
                 var robj = (JObject)right;
-                foreach ((string key, JNode right_val) in robj.children)
+                foreach (string key in robj.children.Keys)
                 {
-                    dic[key] = b.Call(left, right_val);
+                    dic[key] = b.Call(left, robj.children[key]);
                 }
                 return new JObject(0, dic);
             }
@@ -952,9 +996,9 @@ namespace JSON_Viewer.JSONViewer
                             {
                                 var dic = new Dictionary<string, JNode>();
                                 var otbl = (JObject)itbl;
-                                foreach ((string key, JNode val) in otbl.children)
+                                foreach (string key in otbl.children.Keys)
                                 {
-                                    all_args[0] = val;
+                                    all_args[0] = otbl.children[key];
                                     dic[key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
@@ -994,9 +1038,9 @@ namespace JSON_Viewer.JSONViewer
                             {
                                 var dic = new Dictionary<string, JNode>();
                                 var otbl = (JObject)itbl;
-                                foreach ((string key, JNode val) in otbl.children)
+                                foreach (string key in otbl.children.Keys)
                                 {
-                                    all_args[0] = val;
+                                    all_args[0] = otbl.children[key];
                                     dic[key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
@@ -1033,9 +1077,9 @@ namespace JSON_Viewer.JSONViewer
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
                             }
-                            foreach ((string key, JNode val) in xobj.children)
+                            foreach (string key in xobj.children.Keys)
                             {
-                                all_args[0] = val;
+                                all_args[0] = xobj.children[key];
                                 dic[key] = func.function.Call(all_args);
                             }
                             return new JObject(0, dic);
@@ -1091,9 +1135,9 @@ namespace JSON_Viewer.JSONViewer
                     {
                         var xobj = (JObject)x;
                         var dic = new Dictionary<string, JNode>();
-                        foreach ((string key, JNode val) in xobj.children)
+                        foreach (string key in xobj.children.Keys)
                         {
-                            all_args[0] = val;
+                            all_args[0] = xobj.children[key];
                             dic[key] = func.function.Call(all_args);
                         }
                         return new JObject(0, dic);
@@ -1179,28 +1223,28 @@ namespace JSON_Viewer.JSONViewer
         #endregion
         #region PARSER_FUNCTIONS
 
-        private static object? PeekNextToken(List<object> toks, int ii)
+        private static object PeekNextToken(List<object> toks, int pos)
         {
-            if (ii + 1 >= toks.Count) { return null; }
-            return toks[ii + 1];
+            if (pos + 1 >= toks.Count) { return null; }
+            return toks[pos + 1];
         }
 
-        private (JSlicer, int ii) ParseSlicer(List<object> toks, int ii, int? first_num)
+        private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num)
         {
             var slicer = new int?[3];
             int slots_filled = 0;
             int? last_num = first_num;
-            while (ii < toks.Count)
+            while (pos < toks.Count)
             {
-                object t = toks[ii];
+                object t = toks[pos];
                 if (t is char)
                 {
                     char tval = (char)t;
                     if (tval == ':')
                     {
-                        slicer[slots_filled++] = last_num;
+                        slicer[slots_filled++] = (int)last_num;
                         last_num = null;
-                        ii++;
+                        pos++;
                         continue;
                     }
                     else if (EXPR_FUNC_ENDERS.Contains(tval))
@@ -1210,15 +1254,16 @@ namespace JSON_Viewer.JSONViewer
                 }
                 try
                 {
-                    JNode numtok;
-                    (numtok, ii) = ParseExprOrScalarFunc(toks, ii);
+                    Obj_Pos npo = ParseExprOrScalarFunc(toks, pos);
+                    JNode numtok = (JNode)npo.obj;
+                    pos = npo.pos;
                     if (numtok.type != Dtype.INT)
                     {
                         throw new ArgumentException();
                     }
                     last_num = Convert.ToInt32(numtok.value);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     throw new RemesPathException("Found non-integer while parsing a slicer");
                 }
@@ -1229,7 +1274,7 @@ namespace JSON_Viewer.JSONViewer
             }
             slicer[slots_filled++] = last_num;
             slicer = slicer.Take(slots_filled).ToArray();
-            return (new JSlicer(slicer), ii);
+            return new Obj_Pos(new JSlicer(slicer), pos);
         }
 
         private static object GetSingleIndexerListValue(JNode ind)
@@ -1244,10 +1289,10 @@ namespace JSON_Viewer.JSONViewer
             }
         }
 
-        private (Indexer indexer, int ii) ParseIndexer(List<object> toks, int ii)
+        private Obj_Pos ParseIndexer(List<object> toks, int pos)
         {
-            object t = toks[ii];
-            object? nt;
+            object t = toks[pos];
+            object nt;
             if (!(t is char))
             {
                 throw new RemesPathException("Expected delimiter at the start of indexer");
@@ -1256,13 +1301,13 @@ namespace JSON_Viewer.JSONViewer
             List<object> children = new List<object>();
             if (d == '.')
             {
-                nt = PeekNextToken(toks, ii);
+                nt = PeekNextToken(toks, pos);
                 if (nt != null)
                 {
                     if (nt is Binop && ((Binop)nt).name == "*")
                     {
                         // it's a '*' indexer, which means select all keys/indices
-                        return (new StarIndexer(), ii + 2);
+                        return new Obj_Pos(new StarIndexer(), pos + 2);
                     }
                     JNode jnt = (JNode)nt;
                     if ((jnt.type & Dtype.STR_OR_REGEX) == 0)
@@ -1278,35 +1323,35 @@ namespace JSON_Viewer.JSONViewer
                     {
                         children.Add(jnt.value);
                     }
-                    return (new VarnameList(children), ii + 2);
+                    return new Obj_Pos(new VarnameList(children), pos + 2);
                 }
             }
             else if (d == '{')
             {
-                return ParseProjection(toks, ii+1);
+                return ParseProjection(toks, pos+1);
             }
             else if (d != '[')
             {
                 throw new RemesPathException("Indexer must start with '.' or '[' or '{'");
             }
-            Indexer? indexer = null;
-            object? last_tok = null;
+            Indexer indexer = null;
+            object last_tok = null;
             JNode jlast_tok;
             Dtype last_type = Dtype.UNKNOWN;
-            t = toks[++ii];
+            t = toks[++pos];
             if (t is Binop && ((Binop)t).name == "*")
             {
                 // it was '*', indicating a star indexer
-                nt = PeekNextToken(toks, ii);
+                nt = PeekNextToken(toks, pos);
                 if (nt is char && (char)nt  == ']')
                 {
-                    return (new StarIndexer(), ii + 2);
+                    return new Obj_Pos(new StarIndexer(), pos + 2);
                 }
                 throw new RemesPathException("Unacceptable first token '*' for indexer list");
             }
-            while (ii < toks.Count)
+            while (pos < toks.Count)
             {
-                t = toks[ii];
+                t = toks[pos];
                 if (t is char)
                 {
                     d = (char)t;
@@ -1343,7 +1388,7 @@ namespace JSON_Viewer.JSONViewer
                             throw new RemesPathException("Cannot have indexers with a mix of ints/slicers and " +
                                                          "strings/regexes");
                         }
-                        return (indexer, ii + 1);
+                        return new Obj_Pos(indexer, pos + 1);
                     }
                     if (d == ',')
                     {
@@ -1365,13 +1410,15 @@ namespace JSON_Viewer.JSONViewer
                         children.Add(GetSingleIndexerListValue((JNode)last_tok));
                         last_tok = null;
                         last_type = Dtype.UNKNOWN;
-                        ii++;
+                        pos++;
                     }
                     else if (d == ':')
                     {
                         if (last_tok == null)
                         {
-                            (last_tok, ii) = ParseSlicer(toks, ii, null);
+                            Obj_Pos opo = ParseSlicer(toks, pos, null);
+                            last_tok = opo.obj;
+                            pos = opo.pos;
                         }
                         else if (last_tok is JNode)
                         {
@@ -1381,7 +1428,9 @@ namespace JSON_Viewer.JSONViewer
                                 throw new RemesPathException($"Expected token other than ':' after {jlast_tok} " +
                                                              $"in an indexer");
                             }
-                            (last_tok, ii) = ParseSlicer(toks, ii, Convert.ToInt32(jlast_tok.value));
+                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlast_tok.value));
+                            last_tok = opo.obj;
+                            pos = opo.pos;
                         }
                         else
                         {
@@ -1401,21 +1450,23 @@ namespace JSON_Viewer.JSONViewer
                 else
                 {
                     // it's a new token of some sort
-                    (last_tok, ii) = ParseExprOrScalarFunc(toks, ii);
+                    Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                    last_tok = opo.obj;
+                    pos = opo.pos;
                     last_type = ((JNode)last_tok).type;
                 }
             }
             throw new RemesPathException("Unterminated indexer");
         }
 
-        private (JNode node, int ii) ParseExprOrScalar(List<object> toks, int ii)
+        private Obj_Pos ParseExprOrScalar(List<object> toks, int pos)
         {
             if (toks.Count == 0)
             {
                 throw new RemesPathException("Empty query");
             }
-            object t = toks[ii];
-            JNode? last_tok = null;
+            object t = toks[pos];
+            JNode last_tok = null;
             if (t is Binop)
             {
                 throw new RemesPathException($"Binop {(Binop)t} without appropriate left operand");
@@ -1425,11 +1476,11 @@ namespace JSON_Viewer.JSONViewer
                 char d = (char)t;
                 if (d != '(')
                 {
-                    throw new RemesPathException($"Invalid token {d} at position {ii}");
+                    throw new RemesPathException($"Invalid token {d} at position {pos}");
                 }
                 int unclosed_parens = 1;
                 List<object> subquery = new List<object>();
-                for (int end = ii + 1; end < toks.Count; end++)
+                for (int end = pos + 1; end < toks.Count; end++)
                 {
                     object subtok = toks[end];
                     if (subtok is char)
@@ -1443,8 +1494,8 @@ namespace JSON_Viewer.JSONViewer
                         {
                             if (--unclosed_parens == 0)
                             {
-                                (last_tok, _) = ParseExprOrScalarFunc(subquery, 0);
-                                ii = end + 1;
+                                last_tok = (JNode)ParseExprOrScalarFunc(subquery, 0).obj;
+                                pos = end + 1;
                                 break;
                             }
                         }
@@ -1454,12 +1505,14 @@ namespace JSON_Viewer.JSONViewer
             }
             else if (t is ArgFunction)
             {
-                (last_tok, ii) = ParseArgFunction(toks, ii+1, (ArgFunction)t);
+                Obj_Pos opo = ParseArgFunction(toks, pos+1, (ArgFunction)t);
+                last_tok = (JNode)opo.obj;
+                pos = opo.pos;
             }
             else
             {
                 last_tok = (JNode)t;
-                ii++;
+                pos++;
             }
             if (last_tok == null)
             {
@@ -1469,27 +1522,28 @@ namespace JSON_Viewer.JSONViewer
             {
                 // the last token is an iterable, so now we look for indexers that slice it
                 var idxrs = new List<IndexerFunc>();
-                object? nt = PeekNextToken(toks, ii - 1);
-                object? nt2, nt3;
+                object nt = PeekNextToken(toks, pos - 1);
+                object nt2, nt3;
                 while (nt != null && nt is char && INDEXER_STARTERS.Contains((char)nt))
                 {
-                    nt2 = PeekNextToken(toks, ii);
+                    nt2 = PeekNextToken(toks, pos);
                     bool is_recursive = false;
                     if (nt2 is char && (char)nt2 == '.' && (char)nt == '.')
                     {
                         is_recursive = true;
-                        nt3 = PeekNextToken(toks, ii + 1);
-                        ii += (nt3 is char && (char)nt3 == '[') ? 2 : 1;
+                        nt3 = PeekNextToken(toks, pos + 1);
+                        pos += (nt3 is char && (char)nt3 == '[') ? 2 : 1;
                     }
-                    Indexer cur_idxr;
-                    (cur_idxr, ii) = ParseIndexer(toks, ii);
-                    nt = PeekNextToken(toks, ii - 1);
+                    Obj_Pos opo= ParseIndexer(toks, pos);
+                    Indexer cur_idxr = (Indexer)opo.obj;
+                    pos = opo.pos;
+                    nt = PeekNextToken(toks, pos - 1);
                     bool is_varname_list = cur_idxr is VarnameList;
                     bool has_one_option = false;
                     bool is_projection = false;
                     if (is_varname_list || cur_idxr is SlicerList)
                     {
-                        List<object>? children = null;
+                        List<object> children = null;
                         if (is_varname_list)
                         {
                             children = ((VarnameList)cur_idxr).children;
@@ -1511,18 +1565,18 @@ namespace JSON_Viewer.JSONViewer
                                 has_one_option = true;
                             }
                         }
-                        Func<JNode, IEnumerable<(object, JNode)>> idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
+                        Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
                         idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_varname_list, is_recursive));
                     }
                     else if (cur_idxr is BooleanIndex)
                     {
                         object boodex_fun = ((BooleanIndex)cur_idxr).value;
-                        Func<JNode, IEnumerable<(object, JNode)>> idx_func = ApplyBooleanIndex((JNode)boodex_fun);
+                        Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyBooleanIndex((JNode)boodex_fun);
                         idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_varname_list, is_recursive));
                     }
                     else if (cur_idxr is Projection)
                     {
-                        Func<JNode, IEnumerable<(object, JNode)>> proj_func = ((Projection)cur_idxr).proj_func;
+                        Func<JNode, IEnumerable<Key_Node>> proj_func = ((Projection)cur_idxr).proj_func;
                         idxrs.Add(new IndexerFunc(proj_func, false, true, false, false));
                     }
                     else
@@ -1540,47 +1594,47 @@ namespace JSON_Viewer.JSONViewer
                         {
                             return ApplyIndexerList(idxrs)(lcur.function(inp));
                         }
-                        return (new CurJson(lcur.type, idx_func), ii);
+                        return new Obj_Pos(new CurJson(lcur.type, idx_func), pos);
                     }
                     if (last_tok is JObject)
                     {
-                        return (ApplyIndexerList(idxrs)((JObject)last_tok), ii);
+                        return new Obj_Pos(ApplyIndexerList(idxrs)((JObject)last_tok), pos);
                     }
-                    return (ApplyIndexerList(idxrs)((JArray)last_tok), ii);
+                    return new Obj_Pos(ApplyIndexerList(idxrs)((JArray)last_tok), pos);
                 }
             }
-            return (last_tok, ii);
+            return new Obj_Pos(last_tok, pos);
         }
 
-        private (JNode node, int ii) ParseExprOrScalarFunc(List<object> toks, int ii)
+        private Obj_Pos ParseExprOrScalarFunc(List<object> toks, int pos)
         {
-            object? curtok = null;
-            object? nt = PeekNextToken(toks, ii);
+            object curtok = null;
+            object nt = PeekNextToken(toks, pos);
             // most common case is a single JNode followed by the end of the query or an expr func ender
             // e.g., in @[0,1,2], all of 0, 1, and 2 are immediately followed by an expr func ender
             // and in @.foo.bar the bar is followed by EOF
             // MAKE THE COMMON CASE FAST!
             if (nt == null || (nt is char && EXPR_FUNC_ENDERS.Contains((char)nt)))
             {
-                curtok = toks[ii];
+                curtok = toks[pos];
                 if (!(curtok is JNode))
                 {
                     throw new RemesPathException($"Invalid token {curtok} where JNode expected");
                 }
-                return ((JNode)curtok, ii + 1);
+                return new Obj_Pos((JNode)curtok, pos + 1);
             }
             bool uminus = false;
-            object? left_tok = null;
-            object? left_operand = null;
+            object left_tok = null;
+            object left_operand = null;
             float left_precedence = float.MinValue;
             BinopWithArgs root = null;
             BinopWithArgs leaf = null;
             object[] children = new object[2];
             Binop func;
-            while (ii < toks.Count)
+            while (pos < toks.Count)
             {
                 left_tok = curtok;
-                curtok = toks[ii];
+                curtok = toks[pos];
                 if (curtok is char && EXPR_FUNC_ENDERS.Contains((char)curtok))
                 {
                     if (left_tok == null)
@@ -1644,7 +1698,7 @@ namespace JSON_Viewer.JSONViewer
                         }
                         left_precedence = func.precedence;
                     }
-                    ii++;
+                    pos++;
                 }
                 else
                 {
@@ -1652,10 +1706,12 @@ namespace JSON_Viewer.JSONViewer
                     {
                         throw new RemesPathException("Can't have two iterables or scalars unseparated by a binop");
                     }
-                    (left_operand, ii) = ParseExprOrScalar(toks, ii);
+                    Obj_Pos opo = ParseExprOrScalar(toks, pos);
+                    left_operand = opo.obj;
+                    pos = opo.pos;
                     if (uminus)
                     {
-                        nt = PeekNextToken(toks, ii - 1);
+                        nt = PeekNextToken(toks, pos - 1);
                         if (!(nt != null && nt is Binop && ((Binop)nt).name == "**"))
                         {
                             // applying unary minus to this expr/scalar has higher precedence than everything except
@@ -1678,30 +1734,32 @@ namespace JSON_Viewer.JSONViewer
             {
                 throw new RemesPathException("Null return from ParseExprOrScalar");
             }
-            return ((JNode)left_operand, ii);
+            return new Obj_Pos((JNode)left_operand, pos);
         }
 
-        private (JNode node, int ii) ParseArgFunction(List<object> toks, int ii, ArgFunction fun)
+        private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun)
         {
-            object t = toks[ii];
+            object t = toks[pos];
             if (!(t is char && (char)t == '('))
             {
                 throw new RemesPathException($"Function {fun.name} must have parens surrounding arguments");
             }
-            ii++;
+            pos++;
             int arg_num = 0;
             Dtype[] intypes = fun.input_types();
             JNode[] args = new JNode[fun.max_args];
-            JNode? cur_arg = null;
-            while (ii < toks.Count)
+            JNode cur_arg = null;
+            while (pos < toks.Count)
             {
-                t = toks[ii];
+                t = toks[pos];
                 Dtype type_options = intypes[arg_num];
                 try
                 {
                     try
                     {
-                        (cur_arg, ii) = ParseExprOrScalarFunc(toks, ii);
+                        Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                        cur_arg = (JNode)opo.obj;
+                        pos = opo.pos;
                     }
                     catch
                     {
@@ -1709,7 +1767,7 @@ namespace JSON_Viewer.JSONViewer
                     }
                     if ((Dtype.SLICE & type_options) != 0)
                     {
-                        object? nt = PeekNextToken(toks, ii - 1);
+                        object nt = PeekNextToken(toks, pos - 1);
                         if (nt is char && (char)nt == ':')
                         {
                             int? first_num;
@@ -1721,7 +1779,9 @@ namespace JSON_Viewer.JSONViewer
                             {
                                 first_num = Convert.ToInt32(cur_arg.value);
                             }
-                            (cur_arg, ii) = ParseSlicer(toks, ii, first_num);
+                            Obj_Pos opo = ParseSlicer(toks, pos, first_num);
+                            cur_arg = (JNode)opo.obj;
+                            pos = opo.pos;
                         }
                     }
                     if (cur_arg == null || (cur_arg.type & type_options) == 0)
@@ -1736,7 +1796,7 @@ namespace JSON_Viewer.JSONViewer
                     throw new RemesPathException($"For arg {arg_num} of function {fun.name}, expected argument of type "
                                                  + $"in {type_options}, instead threw exception {ex}.");
                 }
-                t = toks[ii];
+                t = toks[pos];
                 bool comma = false;
                 bool close_paren = false;
                 if (t is char)
@@ -1760,7 +1820,7 @@ namespace JSON_Viewer.JSONViewer
                                                  $"({fun.min_args} - {fun.max_args} args)");
                 }
                 args[arg_num++] = cur_arg;
-                ii++;
+                pos++;
                 if (close_paren)
                 {
                     var withargs = new ArgFunctionWithArgs(fun, args);
@@ -1769,22 +1829,23 @@ namespace JSON_Viewer.JSONViewer
                         // fill the remaining args with null nodes; alternatively we could have ArgFunctions use JNode?[] instead of JNode[]
                         args[arg2] = new JNode(null, Dtype.NULL, 0);
                     }
-                    return (ApplyArgFunction(withargs), ii);
+                    return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }
             }
             throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} "
                                          + $"({fun.min_args} - {fun.max_args} args)");
         }
 
-        private (Indexer proj, int ii) ParseProjection(List<object> toks, int ii)
+        private Obj_Pos ParseProjection(List<object> toks, int pos)
         {
-            var children = new List<(object, JNode)>();
+            var children = new List<Key_Node>();
             bool is_object_proj = false;
-            while (ii < toks.Count)
+            while (pos < toks.Count)
             {
-                JNode key;
-                (key, ii) = ParseExprOrScalarFunc(toks, ii);
-                object? nt = PeekNextToken(toks, ii - 1);
+                Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                JNode key = (JNode)opo.obj;
+                pos = opo.pos;
+                object nt = PeekNextToken(toks, pos - 1);
                 if (nt is char)
                 {
                     char nd = (char)nt;
@@ -1796,11 +1857,12 @@ namespace JSON_Viewer.JSONViewer
                         }
                         if (key.type == Dtype.STR)
                         {
-                            JNode val;
-                            (val, ii) = ParseExprOrScalarFunc(toks, ii + 1);
-                            children.Add(((string)key.value, val));
+                            opo = ParseExprOrScalarFunc(toks, pos + 1);
+                            JNode val = (JNode)opo.obj;
+                            pos = opo.pos;
+                            children.Add(new Key_Node((string)key.value, val));
                             is_object_proj = true;
-                            nt = PeekNextToken(toks, ii - 1);
+                            nt = PeekNextToken(toks, pos - 1);
                             if (!(nt is char))
                             {
                                 throw new RemesPathException("Key-value pairs in projection must be delimited by ',' and projections must end with '}'.");
@@ -1815,18 +1877,20 @@ namespace JSON_Viewer.JSONViewer
                     else
                     {
                         // it's an array projection
-                        children.Add((0, key));
+                        children.Add(new Key_Node(0, key));
                     }
                     if (nd == '}')
                     {
-                        IEnumerable<(object, JNode)> proj_func(JNode obj)
+                        IEnumerable<Key_Node> proj_func(JNode obj)
                         {
-                            foreach((object k, JNode v) in children)
+                            foreach(Key_Node kv in children)
                             {
-                                yield return (k, (v is CurJson) ? ((CurJson)v).function(obj) : v); 
+                                object k = kv.obj;
+                                JNode v = kv.node;
+                                yield return new Key_Node(k, (v is CurJson) ? ((CurJson)v).function(obj) : v); 
                             }
                         }
-                        return (new Projection(proj_func), ii + 1);
+                        return new Obj_Pos(new Projection(proj_func), pos + 1);
                     }
                     if (nd != ',')
                     {
@@ -1837,7 +1901,7 @@ namespace JSON_Viewer.JSONViewer
                 {
                     throw new RemesPathException("Values or key-value pairs in a projection must be comma-delimited");
                 }
-                ii++;
+                pos++;
             }
             throw new RemesPathException("Unterminated projection");
         }
@@ -1899,35 +1963,38 @@ namespace JSON_Viewer.JSONViewer
         public static void Test()
         {
             int[] onetofive = new int[] { 1, 2, 3, 4, 5 };
-            var testcases = new (int[] input, int? start, int? stop, int? stride, int[] desired)[]
+            var testcases = new object[][]
             {
-                (onetofive, 2, null, null, new int[]{1, 2}),
-                (onetofive, null, null, null, onetofive),
-                (onetofive, null, 1, null, new int[]{1}),
-                (onetofive, 1, 3, null, new int[]{2, 3}),
-                (onetofive, 1, 4, 2, new int[]{2, 4}),
-                (onetofive, 2, null, -1, new int[]{3, 2, 1}),
-                (onetofive, 4, 1, -2, new int[]{5, 3}),
-                (onetofive, 1, null, 3, new int[]{2, 5}),
-                (onetofive, 4, 2, -1, new int[]{5, 4}),
-                (onetofive, -3, null, null, new int[]{1,2}),
-                (onetofive, -4, -1, null, new int[]{2,3,4}),
-                (onetofive, -4, null, 2, new int[]{2, 4}),
-                (onetofive, null, -3, null, new int[]{1,2}),
-                (onetofive, -3, null, 1, new int[]{3,4,5}),
-                (onetofive, -3, null, -1, new int[]{3,2,1}),
-                (onetofive, -1, 1, -2, new int[]{5, 3}),
-                (onetofive, 1, -1, null, new int[]{2,3,4}),
-                (onetofive, -4, 4, null, new int[]{2,3,4}),
-                (onetofive, -4, 4, 2, new int[]{2, 4}),
-                (onetofive, 2, -2, 2, new int[]{3}),
-                (onetofive, -4, null, -2, new int[]{2}),
-                (onetofive, 2, 1, null, new int[]{ })
+                new object[]{ onetofive, 2, null, null, new int[]{1, 2} },
+                new object[]{ onetofive, null, null, null, onetofive },
+                new object[]{ onetofive, null, 1, null, new int[]{1} },
+                new object[]{ onetofive, 1, 3, null, new int[]{2, 3} },
+                new object[]{ onetofive, 1, 4, 2, new int[]{2, 4} },
+                new object[]{ onetofive, 2, null, -1, new int[]{3, 2, 1} },
+                new object[]{ onetofive, 4, 1, -2, new int[]{5, 3} },
+                new object[]{ onetofive, 1, null, 3, new int[]{2, 5} },
+                new object[]{ onetofive, 4, 2, -1, new int[]{5, 4} },
+                new object[]{ onetofive, -3, null, null, new int[]{1,2} },
+                new object[]{ onetofive, -4, -1, null, new int[]{2,3,4} },
+                new object[]{ onetofive, -4, null, 2, new int[]{2, 4} },
+                new object[]{ onetofive, null, -3, null, new int[]{1,2} },
+                new object[]{ onetofive, -3, null, 1, new int[]{3,4,5} },
+                new object[]{ onetofive, -3, null, -1, new int[]{3,2,1} },
+                new object[]{ onetofive, -1, 1, -2, new int[]{5, 3} },
+                new object[]{ onetofive, 1, -1, null, new int[]{2,3,4} },
+                new object[]{ onetofive, -4, 4, null, new int[]{2,3,4} },
+                new object[]{ onetofive, -4, 4, 2, new int[]{2, 4} },
+                new object[]{ onetofive, 2, -2, 2, new int[]{3} },
+                new object[]{ onetofive, -4, null, -2, new int[]{2} },
+                new object[]{ onetofive, 2, 1, null, new int[]{ } }
             };
+            //(int[] input, int start, int stop, int stride, int[] desired)
             int tests_failed = 0;
             int ii = 0;
-            foreach ((int[] input, int? start, int? stop, int? stride, int[] desired) in testcases)
+            foreach (object[] stuff in testcases)
             {
+                int[] input = (int[])stuff[0], desired = (int[])stuff[4];
+                int start = (int)stuff[1], stop = (int)stuff[2], stride = (int)stuff[3];
                 int[] output = (int[])input.Slice(start, stop, stride);
                 // verify that it works for both arrays and Lists, because both implement IList
                 List<int> list_output = (List<int>)(new List<int>(input)).Slice(start, stop, stride);
@@ -1977,39 +2044,42 @@ namespace JSON_Viewer.JSONViewer
                 }
                 ii++;
             }
-            var str_testcases = new (int[] input, string slicer, int[] desired)[]
+            var str_testcases = new object[][]
             {
-                (onetofive, "2", new int[]{1, 2}),
-                (onetofive, ":", onetofive),
-                (onetofive, ":1", new int[]{1}),
-                (onetofive, "1:3", new int[]{2, 3}),
-                (onetofive, "1::3", new int[]{2, 5}),
-                (onetofive, "1:4:2", new int[]{2, 4}),
-                (onetofive, "2::-1", new int[]{3, 2, 1}),
-                (onetofive, "4:1:-2", new int[]{5, 3}),
-                (onetofive, "1::3", new int[]{2, 5}),
-                (onetofive, "4:2:-1", new int[]{5, 4}),
-                (onetofive, "-3", new int[]{1,2}),
-                (onetofive, "-4:-1", new int[]{2,3,4}),
-                (onetofive, "-4::2", new int[]{2, 4}),
-                (onetofive, ":-3", new int[]{1,2}),
-                (onetofive, "-3::1", new int[]{3,4,5}),
-                (onetofive, "-3:", new int[]{3,4,5}),
-                (onetofive, "-3::-1", new int[]{3,2,1}),
-                (onetofive, "-1:1:-2", new int[]{5, 3}),
-                (onetofive, "1:-1", new int[]{2,3,4}),
-                (onetofive, "-4:4", new int[]{2,3,4}),
-                (onetofive, "-4:4:2", new int[]{2, 4}),
-                (onetofive, "2:-2:2", new int[]{3}),
-                (onetofive, "3::5", new int[]{4}),
-                (onetofive, "5:", new int[]{ }),
-                (onetofive, "3:8", new int[]{4, 5}),
-                (onetofive, "-2:15", new int[]{4,5})
+                new object[]{ onetofive, "2", new int[]{1, 2} },
+                new object[]{ onetofive, ":", onetofive },
+                new object[]{ onetofive, ":1", new int[]{1} },
+                new object[]{ onetofive, "1:3", new int[]{2, 3} },
+                new object[]{ onetofive, "1::3", new int[]{2, 5} },
+                new object[]{ onetofive, "1:4:2", new int[]{2, 4} },
+                new object[]{ onetofive, "2::-1", new int[]{3, 2, 1} },
+                new object[]{ onetofive, "4:1:-2", new int[]{5, 3} },
+                new object[]{ onetofive, "1::3", new int[]{2, 5} },
+                new object[]{ onetofive, "4:2:-1", new int[]{5, 4} },
+                new object[]{ onetofive, "-3", new int[]{1,2} },
+                new object[]{ onetofive, "-4:-1", new int[]{2,3,4} },
+                new object[]{ onetofive, "-4::2", new int[]{2, 4} },
+                new object[]{ onetofive, ":-3", new int[]{1,2} },
+                new object[]{ onetofive, "-3::1", new int[]{3,4,5} },
+                new object[]{ onetofive, "-3:", new int[]{3,4,5} },
+                new object[]{ onetofive, "-3::-1", new int[]{3,2,1} },
+                new object[]{ onetofive, "-1:1:-2", new int[]{5, 3} },
+                new object[]{ onetofive, "1:-1", new int[]{2,3,4} },
+                new object[]{ onetofive, "-4:4", new int[]{2,3,4} },
+                new object[]{ onetofive, "-4:4:2", new int[]{2, 4} },
+                new object[]{ onetofive, "2:-2:2", new int[]{3} },
+                new object[]{ onetofive, "3::5", new int[]{4} },
+                new object[]{ onetofive, "5:", new int[]{ } },
+                new object[]{ onetofive, "3:8", new int[]{4, 5} },
+                new object[]{ onetofive, "-2:15", new int[]{4,5} }
             };
             // test string slicer
-            foreach ((int[] input, string slicer, int[] desired) in str_testcases)
+            foreach (object[] inp_sli_desired in str_testcases)
             {
-                int[] output = (int[])input.Slice(slicer);
+                int[] inp = (int[])inp_sli_desired[0];
+                string slicer = (string)inp_sli_desired[1];
+                int[] desired = (int[])inp_sli_desired[2];
+                int[] output = (int[])inp.Slice(slicer);
                 var sb_desired = new StringBuilder();
                 sb_desired.Append('{');
                 foreach (int desired_value in desired)
@@ -2034,7 +2104,7 @@ namespace JSON_Viewer.JSONViewer
                     tests_failed++;
                     Console.WriteLine(String.Format("Test {0} ({1}.Slice(\"{2}\")) failed:\n" +
                                                     "Expected\n{3}\nGot\n{4}",
-                                                    ii+1, input, slicer, str_desired, str_output));
+                                                    ii+1, inp, slicer, str_desired, str_output));
                 }
                 ii++;
             }
@@ -2046,6 +2116,18 @@ namespace JSON_Viewer.JSONViewer
 
     public class RemesParserTester
     {
+        public struct Query_DesiredResult
+        {
+            public string query;
+            public string desired_result;
+
+            public Query_DesiredResult(string query, string desired_result)
+            {
+                this.query = query;
+                this.desired_result = desired_result;
+            }
+        }
+
         public static void Test()
         {
             JsonParser jsonParser = new JsonParser();
@@ -2054,173 +2136,173 @@ namespace JSON_Viewer.JSONViewer
                                            "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}");
             RemesParser remesparser = new RemesParser();
             Console.WriteLine($"The queried JSON in the RemesParser tests is:{foo.ToString()}");
-            var testcases = new (string query, string desired_result)[]
+            var testcases = new Query_DesiredResult[]
             {
                 // binop precedence tests
-                ("2 - 4 * 3.5", "-12.0"),
-                ("2 / 3 - 4 * 5 ** 1", "-58/3"),
-                ("5 ** (6 - 2)", "625.0"),
+                new Query_DesiredResult("2 - 4 * 3.5", "-12.0"),
+                new Query_DesiredResult("2 / 3 - 4 * 5 ** 1", "-58/3"),
+                new Query_DesiredResult("5 ** (6 - 2)", "625.0"),
                 // binop two jsons, binop json scalar, binop scalar json tests
-                ("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
-                ("@.foo[0] + j`[3.0, 4.0, 5.0]`", "[3.0, 5.0, 7.0]"),
-                ("j`[0, 1, 2]` + @.foo[1]", "[3.0, 5.0, 7.0]"),
-                ("1 + @.foo[0]", "[1, 2, 3]"),
-                ("@.foo[0] + 1", "[1, 2, 3]"),
-                ("1 + j`[0, 1, 2]`", "[1, 2, 3]"),
-                ("j`[0, 1, 2]` + 1", "[1, 2, 3]"),
-                ("`a` + str(range(3))", "[\"a0\", \"a1\", \"a2\"]"),
-                ("str(range(3)) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
-                ("str(@.foo[0]) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
-                ("`a` + str(@.foo[0])", "[\"a0\", \"a1\", \"a2\"]"),
+                new Query_DesiredResult("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
+                new Query_DesiredResult("@.foo[0] + j`[3.0, 4.0, 5.0]`", "[3.0, 5.0, 7.0]"),
+                new Query_DesiredResult("j`[0, 1, 2]` + @.foo[1]", "[3.0, 5.0, 7.0]"),
+                new Query_DesiredResult("1 + @.foo[0]", "[1, 2, 3]"),
+                new Query_DesiredResult("@.foo[0] + 1", "[1, 2, 3]"),
+                new Query_DesiredResult("1 + j`[0, 1, 2]`", "[1, 2, 3]"),
+                new Query_DesiredResult("j`[0, 1, 2]` + 1", "[1, 2, 3]"),
+                new Query_DesiredResult("`a` + str(range(3))", "[\"a0\", \"a1\", \"a2\"]"),
+                new Query_DesiredResult("str(range(3)) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
+                new Query_DesiredResult("str(@.foo[0]) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
+                new Query_DesiredResult("`a` + str(@.foo[0])", "[\"a0\", \"a1\", \"a2\"]"),
                 // uminus tests
-                ("-j`[1]`", "[-1]"),
-                ("-j`[1,2]`**-3", "[-1.0, -1/8]"),
-                ("-@.foo[2]", "[-6.0, -7.0, -8.0]"),
-                ("2/--3", "2/3"),
+                new Query_DesiredResult("-j`[1]`", "[-1]"),
+                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -1/8]"),
+                new Query_DesiredResult("-@.foo[2]", "[-6.0, -7.0, -8.0]"),
+                new Query_DesiredResult("2/--3", "2/3"),
                 // indexing tests
-                ("@.baz", "\"z\""),
-                ("@.foo[0]", "[0, 1, 2]"),
-                ("@[g`^b`]", "{\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\"}"),
-                ("@.foo[1][@ > 3.5]", "[4.0, 5.0]"),
-                ("@.foo[-2:]", "[[3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
-                ("@.foo[:3:2]", "[[0, 1, 2], [6.0, 7.0, 8.0]]"),
-                ("@[foo, jub]", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], \"jub\": []}"),
-                ("@[foo, jub][2]", "{\"foo\": [6.0, 7.0, 8.0]}"),
-                ("@[foo][0][0,2]", "[0, 2]"),
-                ("@[foo][0][0, 2:]", "[0, 2]"),
-                ("@[foo][0][2:, 0]", "[2, 0]"),
-                ("@[foo][0][0, 2:, 1] ", "[0, 2, 1]"),
-                ("@[foo][0][:1, 2:]", "[0, 2]"),
-                ("@[foo][0][0, 2:4]", "[0, 2]"),
-                ("@[foo][0][3:, 0]", "[0]"),
-                ("@.*", foo.ToString()),
-                ("@.foo[*]", "[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
-                ("@.foo[:2][2*@[0] >= @[1]]", "[[3.0, 4.0, 5.0]]"),
-                ("@.foo[-1]", "[6.0, 7.0, 8.0]"),
-                ("@.g`[a-z]oo`", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]}"),
+                new Query_DesiredResult("@.baz", "\"z\""),
+                new Query_DesiredResult("@.foo[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("@[g`^b`]", "{\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\"}"),
+                new Query_DesiredResult("@.foo[1][@ > 3.5]", "[4.0, 5.0]"),
+                new Query_DesiredResult("@.foo[-2:]", "[[3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
+                new Query_DesiredResult("@.foo[:3:2]", "[[0, 1, 2], [6.0, 7.0, 8.0]]"),
+                new Query_DesiredResult("@[foo, jub]", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], \"jub\": []}"),
+                new Query_DesiredResult("@[foo, jub][2]", "{\"foo\": [6.0, 7.0, 8.0]}"),
+                new Query_DesiredResult("@[foo][0][0,2]", "[0, 2]"),
+                new Query_DesiredResult("@[foo][0][0, 2:]", "[0, 2]"),
+                new Query_DesiredResult("@[foo][0][2:, 0]", "[2, 0]"),
+                new Query_DesiredResult("@[foo][0][0, 2:, 1] ", "[0, 2, 1]"),
+                new Query_DesiredResult("@[foo][0][:1, 2:]", "[0, 2]"),
+                new Query_DesiredResult("@[foo][0][0, 2:4]", "[0, 2]"),
+                new Query_DesiredResult("@[foo][0][3:, 0]", "[0]"),
+                new Query_DesiredResult("@.*", foo.ToString()),
+                new Query_DesiredResult("@.foo[*]", "[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
+                new Query_DesiredResult("@.foo[:2][2*@[0] >= @[1]]", "[[3.0, 4.0, 5.0]]"),
+                new Query_DesiredResult("@.foo[-1]", "[6.0, 7.0, 8.0]"),
+                new Query_DesiredResult("@.g`[a-z]oo`", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]}"),
                 // ufunction tests
-                ("len(@)", ((JObject)foo).Length.ToString()),
-                ("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
-                ("in(1, @.foo[0])", "true"),
-                ("in(4.0, @.foo[0])", "false"),
-                ("in(`foo`, @)", "true"),
-                ("in(`fjdkfjdkuren`, @)", "false"),
-                ("range(2, len(@)) * 3", "[6, 9, 12, 15, 18, 21]"),
-                ("sort_by(@.foo, 0, true)[:2]", "[[6.0, 7.0, 8.0], [3.0, 4.0, 5.0]]"),
-                ("mean(flatten(@.foo[0]))", "1.0"),
-                ("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
-                ("flatten(@.guzo, 2)", "[1, 2, 3]"),
-                ("min_by(@.foo, 1)", "[0, 1, 2]"),
-                ("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"),
-                ("isna(@.foo[0])", "[false, false, false]"),
-                ("s_slice(@.bar.b, 2)", "[\"g\", \"h\"]"),
-                ("s_slice(@.bar.b, ::2)", "[\"ag\", \"bh\"]"),
-                ("str(@.foo[2])", "[\"6.0\", \"7.0\", \"8.0\"]"),
-                ("int(@.foo[1])", "[3, 4, 5]"),
-                ("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
-                ("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
-                ("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
-                ("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
-                ("s_join(`\t`, @.bar.b)", "\"a`g\tbah\""),
-                ("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
-                ("unique(@.foo[0], true)", "[0, 1, 2]"),
-                ("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
-                ("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
-                ("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
-                ("float(@.foo[0])[:1]", "[0.0]"),
-                ("not(is_expr(values(@.bar)))", "[true, false]"),
-				("round(@.foo[0] * 1.66)", "[0, 2, 3]"),
-				("round(@.foo[0] * 1.66, 1)", "[0.0, 1.7, 3.3]"),
-                ("round(@.foo[0] * 1.66, 2)", "[0.0, 1.66, 3.32]"),
-                ("s_find(@.bar.b, g`[a-z]+`)", "[[\"a\", \"g\"], [\"bah\"]]"),
-                ("s_count(@.bar.b, `a`)", "[1, 1]"),
-                ("s_count(@.bar.b, g`[a-z]`)", "[2, 3]"),
-                ("ifelse(@.foo[0] > quantile(@.foo[0], 0.5), `big`, `small`)", "[\"small\", \"small\", \"big\"]"),
-                ("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
-                ("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
-                ("s_strip(` a dog!\t`)", "\"a dog!\""),
-                ("log(@.foo[0] + 1)", $"[0.0, {Math.Log(2)}, {Math.Log(3)}]"),
-                ("log2(@.foo[1])", $"[{Math.Log2(3)}, 2.0, {Math.Log2(5)}]"),
-                ("abs(j`[-1, 0, 1]`)", "[1, 0, 1]"),
-                ("is_str(@.bar.b)", "[true, true]"),
-                ("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
-                ("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
-                ("group_by(@.foo, 0)", "{\"0\": [[0, 1, 2]], \"3.0\": [[3.0, 4.0, 5.0]], \"6.0\": [[6.0, 7.0, 8.0]]}"),
-                ("group_by(j`[{\"foo\": 1, \"bar\": \"a\"}, {\"foo\": 2, \"bar\": \"b\"}, {\"foo\": 3, \"bar\": \"b\"}]`, bar).*{`sum`: sum(@[:].foo), `count`: len(@)}", "{\"a\": {\"sum\": 1.0, \"count\": 1}, \"b\": {\"sum\": 5.0, \"count\": 2}}"),
+                new Query_DesiredResult("len(@)", ((JObject)foo).Length.ToString()),
+                new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
+                new Query_DesiredResult("in(1, @.foo[0])", "true"),
+                new Query_DesiredResult("in(4.0, @.foo[0])", "false"),
+                new Query_DesiredResult("in(`foo`, @)", "true"),
+                new Query_DesiredResult("in(`fjdkfjdkuren`, @)", "false"),
+                new Query_DesiredResult("range(2, len(@)) * 3", "[6, 9, 12, 15, 18, 21]"),
+                new Query_DesiredResult("sort_by(@.foo, 0, true)[:2]", "[[6.0, 7.0, 8.0], [3.0, 4.0, 5.0]]"),
+                new Query_DesiredResult("mean(flatten(@.foo[0]))", "1.0"),
+                new Query_DesiredResult("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
+                new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
+                new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
+                new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"),
+                new Query_DesiredResult("isna(@.foo[0])", "[false, false, false]"),
+                new Query_DesiredResult("s_slice(@.bar.b, 2)", "[\"g\", \"h\"]"),
+                new Query_DesiredResult("s_slice(@.bar.b, ::2)", "[\"ag\", \"bh\"]"),
+                new Query_DesiredResult("str(@.foo[2])", "[\"6.0\", \"7.0\", \"8.0\"]"),
+                new Query_DesiredResult("int(@.foo[1])", "[3, 4, 5]"),
+                new Query_DesiredResult("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
+                new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
+                new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
+                new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
+                new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\tbah\""),
+                new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
+                new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
+                new Query_DesiredResult("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
+                new Query_DesiredResult("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
+                new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
+                new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
+                new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
+				new Query_DesiredResult("round(@.foo[0] * 1.66)", "[0, 2, 3]"),
+				new Query_DesiredResult("round(@.foo[0] * 1.66, 1)", "[0.0, 1.7, 3.3]"),
+                new Query_DesiredResult("round(@.foo[0] * 1.66, 2)", "[0.0, 1.66, 3.32]"),
+                new Query_DesiredResult("s_find(@.bar.b, g`[a-z]+`)", "[[\"a\", \"g\"], [\"bah\"]]"),
+                new Query_DesiredResult("s_count(@.bar.b, `a`)", "[1, 1]"),
+                new Query_DesiredResult("s_count(@.bar.b, g`[a-z]`)", "[2, 3]"),
+                new Query_DesiredResult("ifelse(@.foo[0] > quantile(@.foo[0], 0.5), `big`, `small`)", "[\"small\", \"small\", \"big\"]"),
+                new Query_DesiredResult("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
+                new Query_DesiredResult("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
+                new Query_DesiredResult("s_strip(` a dog!\t`)", "\"a dog!\""),
+                new Query_DesiredResult("log(@.foo[0] + 1)", $"[0.0, {Math.Log(2)}, {Math.Log(3)}]"),
+                new Query_DesiredResult("log2(@.foo[1])", $"[{Math.Log(3, 2)}, 2.0, {Math.Log(5, 2)}]"),
+                new Query_DesiredResult("abs(j`[-1, 0, 1]`)", "[1, 0, 1]"),
+                new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
+                new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
+                new Query_DesiredResult("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
+                new Query_DesiredResult("group_by(@.foo, 0)", "{\"0\": [[0, 1, 2]], \"3.0\": [[3.0, 4.0, 5.0]], \"6.0\": [[6.0, 7.0, 8.0]]}"),
+                new Query_DesiredResult("group_by(j`[{\"foo\": 1, \"bar\": \"a\"}, {\"foo\": 2, \"bar\": \"b\"}, {\"foo\": 3, \"bar\": \"b\"}]`, bar).*{`sum`: sum(@[:].foo), `count`: len(@)}", "{\"a\": {\"sum\": 1.0, \"count\": 1}, \"b\": {\"sum\": 5.0, \"count\": 2}}"),
                 //("agg_by(@.foo, 0, sum(flatten(@)))", "{\"0\": 3.0, \"3.0\": 11.0, \"6.0\": 21.0}"),
-                ("index(j`[1,3,2,3,1]`, max(j`[1,3,2,3,1]`), true)", "3"),
-                ("index(@.foo[0], min(@.foo[0]))", "0"),
-                ("zip(j`[1,2,3]`, j`[\"a\", \"b\", \"c\"]`)", "[[1, \"a\"], [2, \"b\"], [3, \"c\"]]"),
-                ("zip(@.foo[0], @.foo[1], @.foo[2], j`[-20, -30, -40]`)", "[[0, 3.0, 6.0, -20], [1, 4.0, 7.0, -30], [2, 5.0, 8.0, -40]]"),
-                ("dict(zip(keys(@.bar), j`[1, 2]`))", "{\"a\": 1, \"b\": 2}"),
-                ("dict(items(@))", foo.ToString()),
-                ("dict(j`[[\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"a\": 1, \"b\": 2, \"c\": 3}"),
-                ("items(j`{\"a\": 1, \"b\": 2, \"c\": 3}`)", "[[\"a\", 1], [\"b\", 2], [\"c\", 3]]"),
-                ("isnull(@.foo)", "[false, false, false]"),
-                ("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
+                new Query_DesiredResult("index(j`[1,3,2,3,1]`, max(j`[1,3,2,3,1]`), true)", "3"),
+                new Query_DesiredResult("index(@.foo[0], min(@.foo[0]))", "0"),
+                new Query_DesiredResult("zip(j`[1,2,3]`, j`[\"a\", \"b\", \"c\"]`)", "[[1, \"a\"], [2, \"b\"], [3, \"c\"]]"),
+                new Query_DesiredResult("zip(@.foo[0], @.foo[1], @.foo[2], j`[-20, -30, -40]`)", "[[0, 3.0, 6.0, -20], [1, 4.0, 7.0, -30], [2, 5.0, 8.0, -40]]"),
+                new Query_DesiredResult("dict(zip(keys(@.bar), j`[1, 2]`))", "{\"a\": 1, \"b\": 2}"),
+                new Query_DesiredResult("dict(items(@))", foo.ToString()),
+                new Query_DesiredResult("dict(j`[[\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"a\": 1, \"b\": 2, \"c\": 3}"),
+                new Query_DesiredResult("items(j`{\"a\": 1, \"b\": 2, \"c\": 3}`)", "[[\"a\", 1], [\"b\", 2], [\"c\", 3]]"),
+                new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
+                new Query_DesiredResult("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
                     "[0, 0, 0, 0, 0, 0, 1, 0, 0]"),
-                ("range(-10)", "[]"),
-                ("range(-3, -5, -1)", "[-3, -4]"),
-                ("range(2, 19, -5)", "[]"),
-                ("range(2, 19, 5)", "[2, 7, 12, 17]"),
-                ("range(3)", "[0, 1, 2]"),
-                ("range(3, 5)", "[3, 4]"),
-                ("range(-len(@))", "[]"),
-                ("range(0, -len(@))", "[]"),
-                ("range(0, len(@) - len(@))", "[]"),
-                ("range(0, -len(@) + len(@))", "[]"), 
+                new Query_DesiredResult("range(-10)", "[]"),
+                new Query_DesiredResult("range(-3, -5, -1)", "[-3, -4]"),
+                new Query_DesiredResult("range(2, 19, -5)", "[]"),
+                new Query_DesiredResult("range(2, 19, 5)", "[2, 7, 12, 17]"),
+                new Query_DesiredResult("range(3)", "[0, 1, 2]"),
+                new Query_DesiredResult("range(3, 5)", "[3, 4]"),
+                new Query_DesiredResult("range(-len(@))", "[]"),
+                new Query_DesiredResult("range(0, -len(@))", "[]"),
+                new Query_DesiredResult("range(0, len(@) - len(@))", "[]"),
+                new Query_DesiredResult("range(0, -len(@) + len(@))", "[]"), 
                 // uminus'd CurJson appears to be causing problems with other arithmetic binops as the second arg to the range function
-                ("range(0, -len(@) - len(@))", "[]"),
-                ("range(0, -len(@) * len(@))", "[]"),
-                ("range(0, 5, -len(@))", "[]"),
-                ("-len(@) + len(@)", "0"), // see if binops of uminus'd CurJson are also causing problems when they're not the second arg to the range function
-                ("-len(@) * len(@)", (-(((JObject)foo).Length * ((JObject)foo).Length)).ToString()),
-                ("abs(-len(@) + len(@))", "0"), // see if other functions (not just range) of binops of uminus'd CurJson cause problems
-                ("range(0, abs(-len(@) + len(@)))", "[]"),
-                ("range(0, -abs(-len(@) + len(@)))", "[]"),
+                new Query_DesiredResult("range(0, -len(@) - len(@))", "[]"),
+                new Query_DesiredResult("range(0, -len(@) * len(@))", "[]"),
+                new Query_DesiredResult("range(0, 5, -len(@))", "[]"),
+                new Query_DesiredResult("-len(@) + len(@)", "0"), // see if binops of uminus'd CurJson are also causing problems when they're not the second arg to the range function
+                new Query_DesiredResult("-len(@) * len(@)", (-(((JObject)foo).Length * ((JObject)foo).Length)).ToString()),
+                new Query_DesiredResult("abs(-len(@) + len(@))", "0"), // see if other functions (not just range) of binops of uminus'd CurJson cause problems
+                new Query_DesiredResult("range(0, abs(-len(@) + len(@)))", "[]"),
+                new Query_DesiredResult("range(0, -abs(-len(@) + len(@)))", "[]"),
                 // parens tests
-                ("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
-                ("(@.foo)[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
+                new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
                 // projection tests
-                ("@{@.jub, @.quz}", "[[], {}]"),
-                ("@.foo{foo: @[0], bar: @[1][:2]}", "{\"foo\": [0, 1, 2], \"bar\": [3.0, 4.0]}"),
-                ("sorted(flatten(@.guzo, 2)){`min`: @[0], `max`: @[-1], `tot`: sum(@)}", "{\"min\": 1, \"max\": 3, \"tot\": 6}"),
-                ("(@.foo[:]{`max`: max(@), `min`: min(@)})[0]", "{\"max\": 2.0, \"min\": 0.0}"),
-                ("len(@.foo[:]{blah: 1})", "3"),
-                ("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
-                ("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
+                new Query_DesiredResult("@{@.jub, @.quz}", "[[], {}]"),
+                new Query_DesiredResult("@.foo{foo: @[0], bar: @[1][:2]}", "{\"foo\": [0, 1, 2], \"bar\": [3.0, 4.0]}"),
+                new Query_DesiredResult("sorted(flatten(@.guzo, 2)){`min`: @[0], `max`: @[-1], `tot`: sum(@)}", "{\"min\": 1, \"max\": 3, \"tot\": 6}"),
+                new Query_DesiredResult("(@.foo[:]{`max`: max(@), `min`: min(@)})[0]", "{\"max\": 2.0, \"min\": 0.0}"),
+                new Query_DesiredResult("len(@.foo[:]{blah: 1})", "3"),
+                new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
+                new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 // recursive search
-                ("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
-                ("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
-                ("@..`7`[0].foo", "[2]"),
-                ("@._..`0`", "[0]"),
-                ("@.bar..[a, b]", "[false, [\"a`g\", \"bah\"]]"),
-                ("@.bar..c", "{}"),
-                ("@.bar..[a, c]", "[false]"),
-                ("@.`7`..foo", "[2]"),
+                new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
+                new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
+                new Query_DesiredResult("@..`7`[0].foo", "[2]"),
+                new Query_DesiredResult("@._..`0`", "[0]"),
+                new Query_DesiredResult("@.bar..[a, b]", "[false, [\"a`g\", \"bah\"]]"),
+                new Query_DesiredResult("@.bar..c", "{}"),
+                new Query_DesiredResult("@.bar..[a, c]", "[false]"),
+                new Query_DesiredResult("@.`7`..foo", "[2]"),
             };
             int ii = 0;
             int tests_failed = 0;
             JNode result;
-            foreach ((string query, string desired_result_str) in testcases)
+            foreach (Query_DesiredResult qd in testcases)
             {
                 ii++;
-                JNode desired_result = jsonParser.Parse(desired_result_str);
+                JNode jdesired_result = jsonParser.Parse(qd.desired_result);
                 try
                 {
-                    result = remesparser.Search(query, foo);
+                    result = remesparser.Search(qd.query, foo);
                 }
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    Console.WriteLine($"Expected remesparser.Search({query}, foo) to return {desired_result.ToString()}, but instead threw" +
+                    Console.WriteLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (result.type != desired_result.type || !result.Equals(desired_result))
+                if (result.type != jdesired_result.type || !result.Equals(jdesired_result))
                 {
                     tests_failed++;
-                    Console.WriteLine($"Expected remesparser.Search({query}, foo) to return {desired_result.ToString()}, " +
+                    Console.WriteLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }
@@ -2232,75 +2314,6 @@ namespace JSON_Viewer.JSONViewer
 
     public class RemesPathBenchmarker
     {
-        public static (JNode json, int len, long[] times) LoadJsonAndTime(string fname, int num_trials = 8)
-        {
-            JsonParser jsonParser = new JsonParser();
-            Stopwatch watch = new Stopwatch();
-            string jsonstr = File.ReadAllText(fname);
-            int len = jsonstr.Length;
-            long[] times = new long[num_trials];
-            JNode json = new JNode(null, Dtype.NULL, 0);
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                json = jsonParser.Parse(jsonstr);
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                times[ii] = t;
-            }
-            return (json, len, times);
-        }
-
-        public static (JNode json, long[] times, long compile_time) TimeRemesPathQuery(JNode json, string query, int num_trials = 8)
-        {
-            Stopwatch watch = new Stopwatch();
-            long[] times = new long[num_trials];
-            RemesParser parser = new RemesParser();
-            JNode result = new JNode(null, Dtype.NULL, 0);
-            watch.Start();
-            Func<JNode, JNode> query_func = ((CurJson)parser.Compile(query)).function;
-            watch.Stop();
-            long compile_time = watch.Elapsed.Ticks;
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                result = query_func(json);
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                times[ii] = t;
-            }
-            return (result, times, compile_time);
-        }
-
-        public static (double mu, double sd) GetMeanAndSd(long[] times)
-        {
-            double mu = 0;
-            foreach (int t in times) { mu += t; }
-            mu /= times.Length;
-            double sd = 0;
-            foreach (int t in times)
-            {
-                double diff = t - mu;
-                sd += diff * diff;
-            }
-            sd = Math.Sqrt(sd / times.Length);
-            return (mu, sd);
-        }
-
-        public static double ConvertTicks(double ticks, string new_unit = "ms", int sigfigs = 3)
-        {
-            switch (new_unit)
-            {
-                case "ms": return Math.Round(ticks / 1e4, 3);
-                case "s": return Math.Round(ticks / 1e7, 3);
-                case "ns": return Math.Round(ticks * 100, 3);
-                case "mus": return Math.Round(ticks / 10, 3);
-                default: throw new ArgumentException("Time unit must be s, mus, ms, or ns");
-            }
-        }
-
         /// <summary>
         /// Repeatedly parse the JSON of a large file (big_random.json, about 1MB, containing nested arrays, dicts,
         /// with ints, floats and strings as scalars)<br></br>
@@ -2316,31 +2329,95 @@ namespace JSON_Viewer.JSONViewer
         /// </summary>
         /// <param name="query"></param>
         /// <param name="num_trials"></param>
-        public static void BenchmarkBigFile(string query, int num_trials = 8)
+        public static void Benchmark(string query, string fname, int num_trials = 8)
         {
-            (JNode json, int len, long[] load_times) = LoadJsonAndTime(@"C:\Users\mjols\Documents\csharp\JSON_Viewer_cmd\testfiles\big_random.json", num_trials);
+            // setup
+            JsonParser jsonParser = new JsonParser();
+            Stopwatch watch = new Stopwatch();
+            string jsonstr = File.ReadAllText(fname);
+            int len = jsonstr.Length;
+            long[] load_times = new long[num_trials];
+            JNode json = new JNode(null, Dtype.NULL, 0);
+            // benchmark time to load json
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                json = jsonParser.Parse(jsonstr);
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                load_times[ii] = t;
+            }
+            // display loading results
             string json_preview = json.ToString().Slice(":300") + "\n...";
             Console.WriteLine($"Preview of json: {json_preview}");
-            (double mu_load, double sd_load) = GetMeanAndSd(load_times);
-            Console.WriteLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mu_load)} +/- {ConvertTicks(sd_load)} ms over {load_times.Length} trials");
+            double[] mu_sd = GetMeanAndSd(load_times);
+            Console.WriteLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mu_sd[0])} +/- {ConvertTicks(mu_sd[1])} " +
+                $"ms over {load_times.Length} trials");
             var load_times_str = new string[load_times.Length];
             for (int ii = 0; ii < load_times.Length; ii++)
             {
                 load_times_str[ii] = (load_times[ii] / 10000).ToString();
             }
-            Console.WriteLine($"Load times (ms): {String.Join(',', load_times_str)}");
-            (JNode result, long[] times, long compile_time) = TimeRemesPathQuery(json, query, num_trials);
-            (double mu, double sd) = GetMeanAndSd(times);
+            Console.WriteLine($"Load times (ms): {String.Join(", ", load_times_str)}");
+            // time remespath query
+            long[] query_times = new long[num_trials];
+            RemesParser parser = new RemesParser();
+            JNode result = new JNode(null, Dtype.NULL, 0);
+            watch.Start();
+            Func<JNode, JNode> query_func = ((CurJson)parser.Compile(query)).function;
+            watch.Stop();
+            long compile_time = watch.Elapsed.Ticks;
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                result = query_func(json);
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                query_times[ii] = t;
+            }
+            // display querying results
+            mu_sd = GetMeanAndSd(query_times);
+            double mu = mu_sd[0];
+            double sd = mu_sd[1];
             Console.WriteLine($"Compiling query \"{query}\" took {ConvertTicks(compile_time)} ms (one-time cost b/c caching)");
             Console.WriteLine($"To run query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {load_times.Length} trials");
-            var query_times_str = new string[times.Length];
-            for (int ii = 0; ii < times.Length; ii++)
+            var query_times_str = new string[query_times.Length];
+            for (int ii = 0; ii < query_times.Length; ii++)
             {
-                query_times_str[ii] = Math.Round(times[ii] / 1e4, 3).ToString();
+                query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString();
             }
-            Console.WriteLine($"Query times (ms): {String.Join(',', query_times_str)}");
+            Console.WriteLine($"Query times (ms): {String.Join(", ", query_times_str)}");
             string result_preview = result.ToString().Slice(":300") + "\n...";
             Console.WriteLine($"Preview of result: {result_preview}");
+        }
+
+        public static double[] GetMeanAndSd(long[] times)
+        {
+            double mu = 0;
+            foreach (int t in times) { mu += t; }
+            mu /= times.Length;
+            double sd = 0;
+            foreach (int t in times)
+            {
+                double diff = t - mu;
+                sd += diff * diff;
+            }
+            sd = Math.Sqrt(sd / times.Length);
+            return new double[] { mu, sd };
+        }
+
+        public static double ConvertTicks(double ticks, string new_unit = "ms", int sigfigs = 3)
+        {
+            switch (new_unit)
+            {
+                case "ms": return Math.Round(ticks / 1e4, 3);
+                case "s": return Math.Round(ticks / 1e7, 3);
+                case "ns": return Math.Round(ticks * 100, 3);
+                case "mus": return Math.Round(ticks / 10, 3);
+                default: throw new ArgumentException("Time unit must be s, mus, ms, or ns");
+            }
         }
     }
     #endregion

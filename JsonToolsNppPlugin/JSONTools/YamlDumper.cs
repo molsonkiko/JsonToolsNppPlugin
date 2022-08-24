@@ -3,10 +3,11 @@ Reads a JSON document and outputs YAML that can be serialized back to
 equivalent (or very nearly equivalent) JSON.
 */
 using System;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
     public class YamlDumper
     {
@@ -126,11 +127,11 @@ namespace JSON_Viewer.JSONViewer
             if (double.TryParse(strv, out double d))
             {
                 // k is a number
-                switch (d)
-                {
-                    case double.PositiveInfinity: return ".inf";
-                    case double.NegativeInfinity: return "-.inf";
-                }
+                //switch (d)
+                //{
+                //    case double.PositiveInfinity: return ".inf";
+                //    case double.NegativeInfinity: return "-.inf";
+                //}
                 if (double.IsNaN(d))
                 {
                     return ".nan";
@@ -233,17 +234,17 @@ namespace JSON_Viewer.JSONViewer
 
     public class YamlDumperTester
     {
-        public static int MyUnitTest((string, string, string)[] testcases)
+        public static int MyUnitTest(string[][] testcases)
         {
             JsonParser jsonParser = new JsonParser();
             int tests_failed = 0;
             YamlDumper yamlDumper = new YamlDumper();
             for (int ii = 0; ii < testcases.Length; ii++)
             {
-                var input = testcases[ii].Item1;
+                var input = testcases[ii][0];
                 JNode json = jsonParser.Parse(input);
-                var correct = testcases[ii].Item2;
-                var description = testcases[ii].Item3;
+                var correct = testcases[ii][1];
+                var description = testcases[ii][2];
                 var result = yamlDumper.Dump(json, 2);
                 if (correct != result)
                 {
@@ -263,55 +264,42 @@ Got
 
         public static void Test()
         {
-            (string, string, string)[] tests = {
+            string[][] tests = {
 				// space at end of key
-				("{\"adogDOG! \": \"dog\"}", "\"adogDOG! \": dog\n",
-                            "space at end of key"),
-                ("{\" adogDOG!\": \"dog\"}", "\" adogDOG!\": dog\n",
-                             "space at start of key"),
+				new string[]{ "{\"adogDOG! \": \"dog\"}", "\"adogDOG! \": dog\n",
+                            "space at end of key" },
+                new string[]{ "{\" adogDOG!\": \"dog\"}", "\" adogDOG!\": dog\n",
+                             "space at start of key" },
 				// space inside key
-				("{\"a dog DOG!\": \"dog\"}", "\"a dog DOG!\": dog\n",
-                            "space inside key"),
+				new string[]{ "{\"a dog DOG!\": \"dog\"}", "\"a dog DOG!\": dog\n",
+                            "space inside key" },
 				// stringified nums as keys
-				("{\"9\": 9}", "'9': 9\n", "stringified num as key"),
+				new string[]{ "{\"9\": 9}", "'9': 9\n", "stringified num as key" },
 				//
-				("{\"9\": \"9\"}", "'9': '9'\n", "stringified num as val"),
-                ("{\"9a\": \"9a\", \"a9.2\": \"a9.2\"}", "9a: 9a\na9.2: a9.2\n",
-                             "partially stringified nums as vals"),
-                ("{\"a\\\"b'\": \"bub\\\"ar\"}", "a\"b': \"bub\\\"ar\"\n",
-                            "singlequotes and doublequotes inside key"),
-                ("{\"a\": \"big\\nbad\\ndog\"}", "a: \"big\\nbad\\ndog\"\n",
-                            "values containing newlines"),
-                ("{\"a\": \" big \"}", "a: \" big \"\n",
-                            "leading or ending space in dict value"),
-                ("[\" big \"]", "- \" big \"\n",
-                            "leading or ending space in array value"),
-                ("\"a \"", "\"a \"\n", "scalar string"),
-                ("9", "9\n", "scalar int"),
-                ("-940.3", "-940.3\n", "scalar float"),
-                ("[true, false]", "- True\n- False\n", "scalar bools"),
-                ("[null, Infinity, -Infinity, NaN]",
-                             "- null\n- .inf\n- -.inf\n- .nan\n",
-                             "null, +/-infinity, NaN"),
+				new string[] { "{\"9\": \"9\"}", "'9': '9'\n", "stringified num as val" },
+                new string[] { "{\"9a\": \"9a\", \"a9.2\": \"a9.2\"}", "9a: 9a\na9.2: a9.2\n", "partially stringified nums as vals" },
+                new string[] { "{\"a\\\"b'\": \"bub\\\"ar\"}", "a\"b': \"bub\\\"ar\"\n", "singlequotes and doublequotes inside key" },
+                new string[] { "{\"a\": \"big\\nbad\\ndog\"}", "a: \"big\\nbad\\ndog\"\n", "values containing newlines" },
+                new string[] { "{\"a\": \" big \"}", "a: \" big \"\n", "leading or ending space in dict value" },
+                new string[] { "[\" big \"]", "- \" big \"\n", "leading or ending space in array value" },
+                new string[] { "\"a \"", "\"a \"\n", "scalar string" },
+                new string[] { "9", "9\n", "scalar int" },
+                new string[] { "-940.3", "-940.3\n", "scalar float" },
+                new string[] { "[true, false]", "- True\n- False\n", "scalar bools" },
+                new string[] { "[null, Infinity, -Infinity, NaN]", "- null\n- .inf\n- -.inf\n- .nan\n", "null, +/-infinity, NaN" },
                 // in the below case, there's actually a bit of an error;
                 // it is better to dump the float 2.0 as '2.0', but this algorithm dumps it
                 // as an integer.
                 // So there's some room for improvement here
-                ("{\"a\": [[1, 2.0], { \"3\": [\"5\"]}], \"2\": 6}",
+                new string[]{ "{\"a\": [[1, 2.0], { \"3\": [\"5\"]}], \"2\": 6}",
                              "a:\n  -\n    - 1\n    - 2.0\n  -\n    '3':\n      - '5'\n'2': 6\n",
-                             "nested iterables"),
-                ("{\"a\": \"a: b\"}", "a: \"a: b\"\n", "value contains colon"),
-                ("{\"a: b\": \"a\"}", "\"a: b\": a\n", "key contains colon"),
-                ("{\"a\": \"RT @blah: MondayMo\\\"r\'ing\"}",
-                            "a: \'RT @blah: MondayMo\"r\'\'ing\'\n",
-                            "Value contains quotes and colon"),
-                ("{\"a\": \"a\\n\'big\'\\ndog\"}", "a: \"a\\n\'big\'\\ndog\"\n",
-                             "Value contains quotes and newline"),
-                ("{\"a\": \"RT @blah: MondayMo\\nring\"}",
-                             "a: \"RT @blah: MondayMo\\nring\"\n",
-                             "value contains newline and colon"),
-                ("{\"\\\"a: 'b'\": \"a\"}", "\'\"a: \'\'b\'\'\': a\n",
-                            "key contains quotes and colon")
+                             "nested iterables" },
+                new string[] { "{\"a\": \"a: b\"}", "a: \"a: b\"\n", "value contains colon" },
+                new string[] { "{\"a: b\": \"a\"}", "\"a: b\": a\n", "key contains colon" },
+                new string[] { "{\"a\": \"RT @blah: MondayMo\\\"r\'ing\"}", "a: \'RT @blah: MondayMo\"r\'\'ing\'\n", "Value contains quotes and colon" },
+                new string[] { "{\"a\": \"a\\n\'big\'\\ndog\"}", "a: \"a\\n\'big\'\\ndog\"\n", "Value contains quotes and newline" },
+                new string[] { "{\"a\": \"RT @blah: MondayMo\\nring\"}", "a: \"RT @blah: MondayMo\\nring\"\n", "value contains newline and colon" },
+                new string[] { "{\"\\\"a: 'b'\": \"a\"}", "\'\"a: \'\'b\'\'\': a\n", "key contains quotes and colon" }
             };
             MyUnitTest(tests);
         }

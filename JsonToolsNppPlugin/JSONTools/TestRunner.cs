@@ -6,9 +6,11 @@ Redirecting this output to a text file allows the creation of a new YAML file.
 */
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
+using JSON_Tools.Utils;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
 	public class TestRunner
 	{
@@ -74,7 +76,8 @@ Testing RemesPath parser and compiler
 Performance tests for JsonParser and RemesPath
 =========================
 ");
-                RemesPathBenchmarker.BenchmarkBigFile("@[@[:].z =~ `(?i)[a-z]{5}`]", 14);
+                string big_random_fname = "../../testfiles/big_random.json";
+                RemesPathBenchmarker.Benchmark("@[@[:].z =~ `(?i)[a-z]{5}`]", big_random_fname, 14);
                 // because Visual Studio runs a whole bunch of other things in the background
                 // when I build my project, the benchmarking suite
                 // makes my code seem way slower than it actually is when it's running unhindered.
@@ -95,18 +98,18 @@ Testing JSON parser's linter functionality
 =========================
 ");
                 JsonParserTester.TestLinter();
-                Console.WriteLine(@"=========================
-Testing JSON grepper's file reading ability
-=========================
-");
-                JsonGrepperTester.TestFnames();
+//                Console.WriteLine(@"=========================
+//Testing JSON grepper's file reading ability
+//=========================
+//");
+//                JsonGrepperTester.TestFnames();
             }
             else
             {
                 JsonParser jsonParser = new JsonParser();
                 string out_type = args[0].ToLower();
                 // Slice extension method from JsonPath module
-                string fname = String.Join(' ', args.Slice("1:"));
+                string fname = string.Join(" ", args.Slice("1:").ToArray());
                 StreamReader streamReader = new StreamReader(fname);
                 string jsonstr = streamReader.ReadToEnd();
                 JNode json = jsonParser.Parse(jsonstr);

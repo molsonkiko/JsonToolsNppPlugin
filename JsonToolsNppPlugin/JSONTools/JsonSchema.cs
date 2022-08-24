@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
     /// <summary>
     /// This class generates a minimalist <a href="https://json-schema.org/">JSON schema</a> for a JSON object.<br></br>
@@ -256,11 +256,12 @@ namespace JSON_Viewer.JSONViewer
             {
                 JObject oobj = (JObject)obj;
                 var props = new Dictionary<string, object>();
-                foreach ((string k, JNode v) in oobj.children)
+                foreach (string k in oobj.children.Keys)
                 {
-                    props[k] = BuildSchema(v);
+                    props[k] = BuildSchema(oobj.children[k]);
                 }
-                schema.TryAdd("required", new HashSet<string>(oobj.children.Keys));
+                if (!schema.ContainsKey("required"))
+                    schema["required"] = new HashSet<string>(oobj.children.Keys);
                 schema["properties"] = props;
             }
             return schema;
@@ -296,9 +297,9 @@ namespace JSON_Viewer.JSONViewer
             if (schema is Dictionary<string, object>)
             {
                 var kids = new Dictionary<string, JNode>();
-                foreach ((string k, object v) in (Dictionary<string, object>)schema)
+                foreach (KeyValuePair<string, object> kv in (Dictionary<string, object>)schema)
                 {
-                    kids[k] = SchemaToJNode(v);
+                    kids[kv.Key] = SchemaToJNode(kv.Value);
                 }
                 return new JObject(0, kids);
             }
@@ -330,7 +331,8 @@ namespace JSON_Viewer.JSONViewer
         public JNode GetSchema(JNode obj)
         {
             var schema = new Dictionary<string, object>(BASE_SCHEMA);
-            foreach ((string k, object v) in BuildSchema(obj)) { schema[k] = v; }
+            foreach (KeyValuePair<string, object> kv in BuildSchema(obj))
+                schema[kv.Key] = kv.Value;
             return SchemaToJNode(schema);
         }
     }
@@ -341,12 +343,12 @@ namespace JSON_Viewer.JSONViewer
         {
             JsonParser jsonParser = new JsonParser();
             JsonSchemaMaker sch_maker = new JsonSchemaMaker();
-            (string inp, string desired_out)[] testcases = new (string inp, string desired_out)[]
+            string[][] testcases = new string[][]
             {
-                ("[1, \"1\"]", "{\"type\": \"array\", \"items\": {\"type\": [\"integer\", \"string\"]}}"),
-                ("{\"a\": 1}", "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"integer\"}}, \"required\": [\"a\"]}"),
-                ("[{\"a\": 1, \"b\": \"w\", \"c\": 1.0}, " +
-                "{\"a\": \"2\", \"b\": \"v\"}]", 
+                new string[]{ "[1, \"1\"]", "{\"type\": \"array\", \"items\": {\"type\": [\"integer\", \"string\"]}}" },
+                new string[]{ "{\"a\": 1}", "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"integer\"}}, \"required\": [\"a\"]}" },
+                new string[]{ "[{\"a\": 1, \"b\": \"w\", \"c\": 1.0}, " +
+                "{\"a\": \"2\", \"b\": \"v\"}]",
                     "{\"type\": \"array\", " +
                     "\"items\": " +
                         "{\"type\": \"object\", " +
@@ -357,8 +359,9 @@ namespace JSON_Viewer.JSONViewer
                             "}," +
                          "\"required\": [\"a\", \"b\"]" +
                          "}" +
-                     "}"),
-                ("[[1, 2.0, {\"a\": 1}]]", 
+                     "}"
+                },
+                new string[]{"[[1, 2.0, {\"a\": 1}]]",
                     "{" +
                     "\"type\": \"array\"," +
                     "\"items\": " +
@@ -379,8 +382,9 @@ namespace JSON_Viewer.JSONViewer
                                 "]" +
                             "}" +
                         "}" +
-                    "}"),
-                ("[" +
+                    "}"
+                },
+                new string[]{"[" +
                     "{" +
                         "\"a\": 3" +
                     "}," +
@@ -462,19 +466,22 @@ namespace JSON_Viewer.JSONViewer
                             "\"a\"" +
                         "]" +
                     "}" +
-                "}"), // nested JSON object schema
+                "}"
+                }, // nested JSON object schema
             };
             int ii = 0;
             int tests_failed = 0;
             JObject base_schema_j = (JObject)sch_maker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
-            foreach ((string inp, string desired_out) in testcases)
+            foreach (string[] test in testcases)
             {
+                string inp = test[0];
+                string desired_out = test[1];
                 ii++;
                 JNode jinp = jsonParser.Parse(inp);
                 JObject desired_schema = (JObject)jsonParser.Parse(desired_out);
-                foreach ((string k, JNode v) in base_schema_j.children)
+                foreach (string k in base_schema_j.children.Keys)
                 {
-                    desired_schema.children[k] = v;
+                    desired_schema.children[k] = base_schema_j.children[k];
                 }
                 string desired_sch_str = desired_schema.ToString();
                 JNode schema = new JNode(null, Dtype.NULL, 0);
@@ -489,7 +496,7 @@ namespace JSON_Viewer.JSONViewer
                             Console.WriteLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead got\n{schema.ToString()}");
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         // probably because of something like trying to compare an array to a non-array
                         tests_failed++;

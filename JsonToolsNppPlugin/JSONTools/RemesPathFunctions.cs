@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using JSON_Tools.Utils;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
     /// <summary>
     /// Binary operators, e.g., +, -, *, ==
@@ -61,7 +62,7 @@ namespace JSON_Viewer.JSONViewer
 
         public static JNode Add(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (atype == Dtype.INT && btype == Dtype.INT)
             {
@@ -80,7 +81,7 @@ namespace JSON_Viewer.JSONViewer
 
         public static JNode Sub(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (atype == Dtype.INT && btype == Dtype.INT)
             {
@@ -91,7 +92,7 @@ namespace JSON_Viewer.JSONViewer
 
         public static JNode Mul(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (atype == Dtype.INT && btype == Dtype.INT)
             {
@@ -128,7 +129,7 @@ namespace JSON_Viewer.JSONViewer
 
         public static JNode Mod(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (atype == Dtype.INT && btype == Dtype.INT)
             {
@@ -221,7 +222,7 @@ namespace JSON_Viewer.JSONViewer
         /// <param name="b"></param>
         public static void MinusEquals(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
             {
@@ -245,7 +246,7 @@ namespace JSON_Viewer.JSONViewer
         /// <param name="b"></param>
         public static void PlusEquals(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
             {
@@ -269,7 +270,7 @@ namespace JSON_Viewer.JSONViewer
         /// <param name="b"></param>
         public static void TimesEquals(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
             {
@@ -294,7 +295,7 @@ namespace JSON_Viewer.JSONViewer
         /// <param name="b"></param>
         public static void PowEquals(JNode a, JNode b)
         {
-            object? aval = a.value; object? bval = b.value;
+            object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
             a.value = Math.Pow(Convert.ToDouble(aval), Convert.ToDouble(bval));
             a.type = Dtype.FLOAT;
@@ -503,12 +504,12 @@ namespace JSON_Viewer.JSONViewer
         /// "Flattens" nested lists by adding all the elements of lists at depth 1 to a single
         /// list.<br></br>
         /// Example: Flatten({{1,2},3,{4,{5}}}) = {1,2,3,4,{5}}<br></br> 
-        /// (except input is an array with one List<object?> and output is a List<object?>)<br></br>
+        /// (except input is an array with one List<object> and output is a List<object>)<br></br>
         /// In the above example, everything at depth 0 is still at depth 0, and everything else
         /// has its depth reduced by 1.
         /// </summary>
-        /// <param name="args">an array containng a single List<object?></param>
-        /// <returns>List<object?> containing the flattened result</returns>
+        /// <param name="args">an array containng a single List<object></param>
+        /// <returns>List<object> containing the flattened result</returns>
         public static JNode Flatten(JNode[] args)
         {
             var itbl = (JArray)args[0];
@@ -543,7 +544,7 @@ namespace JSON_Viewer.JSONViewer
         }
 
         /// <summary>
-        /// first arg should be List&lt;object?&gt;, second arg should be object?,
+        /// first arg should be List&lt;object&gt;, second arg should be object,
         /// optional third arg should be bool.<br></br>
         /// If second arg (elt) is in first arg (itbl), return the index in itbl where
         /// elt first occurs.<br></br>
@@ -584,7 +585,8 @@ namespace JSON_Viewer.JSONViewer
         public static JNode Max(JNode[] args)
         {
             var itbl = (JArray)args[0];
-            JNode biggest = new JNode(double.NegativeInfinity, Dtype.FLOAT, 0);
+            double neginf = 1d; // double.NegativeInfinity
+            JNode biggest = new JNode(neginf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
                 if (Convert.ToDouble(child.value) > Convert.ToDouble(biggest.value)) { biggest = child; }
@@ -601,7 +603,8 @@ namespace JSON_Viewer.JSONViewer
         public static JNode Min(JNode[] args)
         {
             var itbl = (JArray)args[0];
-            JNode smallest = new JNode(double.PositiveInfinity, Dtype.FLOAT, 0);
+            double inf = 1d; // double.PositiveInfinity
+            JNode smallest = new JNode(inf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
                 if (Convert.ToDouble(child.value) < Convert.ToDouble(smallest.value)) { smallest = child; }
@@ -815,8 +818,10 @@ namespace JSON_Viewer.JSONViewer
         public static JNode Items(JNode[] args)
         {
             var its = new List<JNode>();
-            foreach ((string k, JNode v) in ((JObject)args[0]).children)
+            JObject obj = (JObject)args[0];
+            foreach (string k in obj.children.Keys)
             {
+                JNode v = obj.children[k];
                 JNode knode = new JNode(k, Dtype.STR, 0);
                 var subarr = new List<JNode>();
                 subarr.Add(knode);
@@ -830,13 +835,13 @@ namespace JSON_Viewer.JSONViewer
         {
             var itbl = (JArray)args[0];
             var is_sorted = args[1].value;
-            var uniq = new HashSet<object?>();
+            var uniq = new HashSet<object>();
             foreach (JNode val in itbl.children)
             {
                 uniq.Add(val.value);
             }
             var uniq_list = new List<JNode>();
-            foreach (object? val in uniq)
+            foreach (object val in uniq)
             {
                 uniq_list.Add(ObjectsToJNode(val));
             }
@@ -908,17 +913,19 @@ namespace JSON_Viewer.JSONViewer
             var uniqs = new Dictionary<object, long>();
             foreach (JNode elt in itbl.children)
             {
-                object? val = elt.value;
+                object val = elt.value;
                 if (val == null)
                 {
                     throw new RemesPathException("Can't count occurrences of objects with null values");
                 }
-                uniqs.TryAdd(val, 0);
+                if (!uniqs.ContainsKey(val))
+                    uniqs[val] = 0;
                 uniqs[val]++;
             }
             var uniq_arr = new JArray(0, new List<JNode>());
-            foreach ((object elt, long ct) in uniqs)
+            foreach (object elt in uniqs.Keys)
             {
+                long ct = uniqs[elt];
                 JArray elt_ct = new JArray(0, new List<JNode>());
                 elt_ct.children.Add(ObjectsToJNode(elt));
                 elt_ct.children.Add(new JNode(ct, Dtype.INT, 0));
@@ -956,7 +963,7 @@ namespace JSON_Viewer.JSONViewer
         public static JNode GroupBy(JNode[] args)
         {
             var itbl = (JArray)args[0];
-            object? key = args[1].value;
+            object key = args[1].value;
             if (!(key is string || key is long))
             {
                 throw new ArgumentException("The GroupBy function can only group by string keys or int indices");
@@ -971,9 +978,13 @@ namespace JSON_Viewer.JSONViewer
                     JArray subobj = (JArray)node;
                     JNode val = subobj.children[ikey];
                     vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
-                    if (!gb.TryAdd(vstr, new JArray(0, new List<JNode> { subobj })))
+                    if (gb.ContainsKey(vstr))
                     {
                         ((JArray)gb[vstr]).children.Add(subobj);
+                    }
+                    else
+                    {
+                        gb[vstr] = new JArray(0, new List<JNode> { subobj });
                     }
                 }
             }
@@ -985,9 +996,13 @@ namespace JSON_Viewer.JSONViewer
                     JObject subobj = (JObject)node;
                     JNode val = subobj.children[skey];
                     vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
-                    if (!gb.TryAdd(vstr, new JArray(0, new List<JNode> { subobj })))
+                    if (gb.ContainsKey(vstr))
                     {
                         ((JArray)gb[vstr]).children.Add(subobj);
+                    }
+                    else
+                    {
+                        gb[vstr] = new JArray(0, new List<JNode> { subobj });
                     }
                 }
             }
@@ -1143,7 +1158,7 @@ namespace JSON_Viewer.JSONViewer
         }
 
         /// <summary>
-        /// Get a List<object?> containing all non-overlapping occurrences of regex pattern pat in
+        /// Get a List<object> containing all non-overlapping occurrences of regex pattern pat in
         /// string node
         /// </summary>
         /// <param name="node">string</param>
@@ -1266,7 +1281,7 @@ namespace JSON_Viewer.JSONViewer
         public static JNode Log(JNode[] args)
         {
             double num = Convert.ToDouble(args[0].value);
-            object? Base = args[1].value;
+            object Base = args[1].value;
             if (Base == null)
             {
                 return new JNode(Math.Log(num), Dtype.FLOAT, 0);
@@ -1276,7 +1291,7 @@ namespace JSON_Viewer.JSONViewer
 
         public static JNode Log2(JNode[] args)
         {
-            return new JNode(Math.Log2(Convert.ToDouble(args[0].value)), Dtype.FLOAT, 0);
+            return new JNode(Math.Log(Convert.ToDouble(args[0].value), 2), Dtype.FLOAT, 0);
         }
 
         public static JNode Abs(JNode[] args)
@@ -1375,7 +1390,7 @@ namespace JSON_Viewer.JSONViewer
 
         #endregion
 
-        public static JNode ObjectsToJNode(object? obj)
+        public static JNode ObjectsToJNode(object obj)
         {
             if (obj == null)
             {
@@ -1397,25 +1412,26 @@ namespace JSON_Viewer.JSONViewer
             {
                 return new JNode((bool)obj, Dtype.BOOL, 0);
             }
-            if (obj is List<object?>)
+            if (obj is List<object>)
             {
                 var nodes = new List<JNode>();
-                foreach (object? child in (List<object?>)obj)
+                foreach (object child in (List<object>)obj)
                 {
                     nodes.Add(ObjectsToJNode(child));
                 }
                 return new JArray(0, nodes);
             }
-            else if (obj is Dictionary<string, object?>)
+            else if (obj is Dictionary<string, object>)
             {
                 var nodes = new Dictionary<string, JNode>();
-                foreach ((string key, object? val) in (Dictionary<string, object?>)obj)
+                var dobj = (Dictionary<string, object>)obj;
+                foreach (string key in dobj.Keys)
                 {
-                    nodes[key] = ObjectsToJNode(val);
+                    nodes[key] = ObjectsToJNode(dobj[key]);
                 }
                 return new JObject(0, nodes);
             }
-            throw new ArgumentException("Cannot convert any objects to JNode except null, long, double, bool, string, List<object?>, or Dictionary<string, object?");
+            throw new ArgumentException("Cannot convert any objects to JNode except null, long, double, bool, string, List<object>, or Dictionary<string, object");
         }
 
         /// <summary>
@@ -1424,7 +1440,7 @@ namespace JSON_Viewer.JSONViewer
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static object? JNodeToObjects(JNode node)
+        public static object JNodeToObjects(JNode node)
         {
             // if it's not an obj, arr, or unknown, just return its value
             if ((node.type & Dtype.ITERABLE) == 0)
@@ -1437,14 +1453,15 @@ namespace JSON_Viewer.JSONViewer
             }
             if (node.type == Dtype.OBJ)
             {
-                var dic = new Dictionary<string, object?>();
-                foreach ((string key, JNode val) in ((JObject)node).children)
+                var dic = new Dictionary<string, object>();
+                JObject onode = (JObject)node;
+                foreach (string key in onode.children.Keys)
                 {
-                    dic[key] = JNodeToObjects(val);
+                    dic[key] = JNodeToObjects(onode.children[key]);
                 }
                 return dic;
             }
-            var arr = new List<object?>();
+            var arr = new List<object>();
             foreach (JNode val in ((JArray)node).children)
             {
                 arr.Add(JNodeToObjects(val));
@@ -1569,19 +1586,22 @@ namespace JSON_Viewer.JSONViewer
         {
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
-            var testcases = new (JNode x, JNode y, Binop bop, JNode desired, string msg)[]
+            var testcases = new object[][]
             {
-                (jsonParser.Parse("1"), jsonParser.Parse("3"), Binop.BINOPS["-"], jsonParser.Parse("-2"), "subtraction of ints"),
-                (jsonParser.Parse("2.5"), jsonParser.Parse("5"), Binop.BINOPS["/"], jsonParser.Parse("0.5"), "division of float by int"),
-                (jsonParser.Parse("\"a\""), jsonParser.Parse("\"b\""), Binop.BINOPS["+"], jsonParser.Parse("\"ab\""), "addition of strings"),
-                (jsonParser.Parse("3"), jsonParser.Parse("4"), Binop.BINOPS[">="], jfalse, "comparison ge"),
-                (jsonParser.Parse("7"), jsonParser.Parse("9"), Binop.BINOPS["<"], jtrue, "comparison lt"),
-                (jsonParser.Parse("\"abc\""), jsonParser.Parse("\"ab+\""), Binop.BINOPS["=~"], jtrue, "has_pattern"),
+                new object[]{ jsonParser.Parse("1"), jsonParser.Parse("3"), Binop.BINOPS["-"], jsonParser.Parse("-2"), "subtraction of ints" },
+                new object[]{ jsonParser.Parse("2.5"), jsonParser.Parse("5"), Binop.BINOPS["/"], jsonParser.Parse("0.5"), "division of float by int" },
+                new object[]{ jsonParser.Parse("\"a\""), jsonParser.Parse("\"b\""), Binop.BINOPS["+"], jsonParser.Parse("\"ab\""), "addition of strings" },
+                new object[]{ jsonParser.Parse("3"), jsonParser.Parse("4"), Binop.BINOPS[">="], jfalse, "comparison ge" },
+                new object[]{ jsonParser.Parse("7"), jsonParser.Parse("9"), Binop.BINOPS["<"], jtrue, "comparison lt" },
+                new object[]{ jsonParser.Parse("\"abc\""), jsonParser.Parse("\"ab+\""), Binop.BINOPS["=~"], jtrue, "has_pattern" },
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach ((JNode x, JNode y, Binop bop, JNode desired, string msg) in testcases)
+            foreach (object[] test in testcases)
             {
+                JNode x = (JNode)test[0], y = (JNode)test[1], desired = (JNode)test[3];
+                Binop bop = (Binop)test[2];
+                string msg = (string)test[4];
                 JNode output = bop.Call(x, y);
                 string str_desired = desired.ToString();
                 string str_output = output.ToString();
@@ -1608,12 +1628,12 @@ namespace JSON_Viewer.JSONViewer
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true");
             JNode jfalse = jsonParser.Parse("false");
-            var testcases = new (JNode[] args, ArgFunction f, JNode desired)[]
+            var testcases = new object[][]
             {
-                (new JNode[]{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0)),
-                (new JNode[]{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]")),
-                (new JNode[]{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]")),
-                (new JNode[]{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0)),
+                new object[]{ new JNode[]{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
+                new object[]{ new JNode[]{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
+                new object[]{ new JNode[]{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
+                new object[]{ new JNode[]{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
                 //(new JNode[]{jsonParser.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 3, \"b\": 1}]"), new JNode("b", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["min_by"], jsonParser.Parse("{\"a\": 3, \"b\": 1}")),
                 //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]")}, ArgFunction.FUNCTIONS["s_len"], jsonParser.Parse("[2, 3, 0]")),
                 //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JNode("a", Dtype.STR, 0), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
@@ -1624,8 +1644,11 @@ namespace JSON_Viewer.JSONViewer
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach ((JNode[] args, ArgFunction f, JNode desired) in testcases)
+            foreach (object[] test in testcases)
             {
+                JNode[] args = (JNode[])test[0];
+                ArgFunction f = (ArgFunction)test[1];
+                JNode desired = (JNode)test[2];
                 JNode output = f.Call(args);
                 var sb = new StringBuilder();
                 sb.Append('{');

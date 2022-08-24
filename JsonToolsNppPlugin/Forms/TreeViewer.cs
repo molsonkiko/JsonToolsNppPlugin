@@ -8,8 +8,10 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Linq;
+using Kbg.NppPluginNET.PluginInfrastructure;
+using NppPluginNET.PluginInfrastructure;
 using JSON_Viewer.JSONViewer;
-using JSON_Viewer.Infrastructure;
+using JSON_Viewer.Tools;
 
 namespace JSON_Viewer.Forms
 {

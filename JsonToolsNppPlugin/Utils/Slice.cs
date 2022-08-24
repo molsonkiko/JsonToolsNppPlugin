@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.Utils
 {
     public static class SliceExtensions
     {
@@ -25,7 +25,7 @@ namespace JSON_Viewer.JSONViewer
         {
             int len = (source is T[]) ? ((T[])source).Length : ((List<T>)source).Count;
             int ind;
-            if (stride == 0)
+            if ((int)stride == 0)
             {
                 throw new ArgumentException("The stride parameter of a slice must be a non-zero integer");
             }
@@ -40,7 +40,7 @@ namespace JSON_Viewer.JSONViewer
                 stop = temp;
                 start = 0;
             }
-            else if (stride == null || stride > 0)
+            else if (stride == null || (int)stride > 0)
             {
                 if (start == null) { start = 0; }
                 if (stop == null) { stop = len; }
@@ -77,8 +77,8 @@ namespace JSON_Viewer.JSONViewer
                     }
                 }
             }
-            istop = (stop < 0) ? len + (int)stop : (stop > len ? len : (int)stop);
-            istart = (start < 0) ? len + (int)start : (int)start;
+            istop = ((int)stop < 0) ? len + (int)stop : ((int)stop > len ? len : (int)stop);
+            istart = ((int)start < 0) ? len + (int)start : (int)start;
             istride = (stride == null) ? 1 : (int)stride;
             if (istart >= len && istop >= len)
             {
@@ -167,7 +167,7 @@ namespace JSON_Viewer.JSONViewer
         /// <summary>
         /// Allows use of Python-style slices, except that these create a copy of the sliced object rather than a view.<br></br>
         /// For higher performance at the cost of only producing an iterator and not a new iterable, use LazySlice.<br></br>
-        /// See the documentation for LazySlice with three int? arguments.
+        /// See the documentation for LazySlice with three int arguments.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
@@ -184,7 +184,7 @@ namespace JSON_Viewer.JSONViewer
             IList<T> res;
             int source_len = len;
             int ind;
-            if (stride == 0)
+            if (stride != null && (int)stride == 0)
             {
                 throw new ArgumentException("The stride parameter of a slice must be a non-zero integer");
             }
@@ -199,7 +199,7 @@ namespace JSON_Viewer.JSONViewer
                 stop = temp;
                 start = 0;
             }
-            else if (stride == null || stride > 0)
+            else if (stride == null || (int)stride > 0)
             {
                 if (start == null) { start = 0; }
                 if (stop == null) { stop = len; }
@@ -253,8 +253,8 @@ namespace JSON_Viewer.JSONViewer
                 }
             }
             // make sure the start isn't higher than
-            istop = (stop < 0) ? len + (int)stop : (stop > len ? len : (int)stop);
-            istart = (start < 0) ? len + (int)start : (int)start;
+            istop = ((int)stop < 0) ? len + (int)stop : ((int)stop > len ? len : (int)stop);
+            istart = ((int)start < 0) ? len + (int)start : (int)start;
             istride = (stride == null) ? 1 : (int)stride;
             if (istart >= len && istop >= len)
             {
@@ -328,7 +328,7 @@ namespace JSON_Viewer.JSONViewer
         /// <summary>
         /// Allows use of Python-style slices, except that these create a copy of the sliced object rather than a view.<br></br>
         /// For higher performance at the cost of only producing an iterator and not a new iterable, use LazySlice.<br></br>
-        /// See the documentation for LazySlice with three int? arguments.
+        /// See the documentation for LazySlice with three int arguments.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
@@ -361,7 +361,7 @@ namespace JSON_Viewer.JSONViewer
             return new string((char[])source.ToCharArray().Slice(slicer));
         }
 
-        public static string Slice(this string source, int? start, int? stop, int? stride)
+        public static string Slice(this string source, int start, int stop, int stride)
         {
             return new string((char[])source.ToCharArray().Slice(start, stop, stride));
         }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Text;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
     public class RemesLexerException : Exception
     {
@@ -51,16 +51,12 @@ Syntax error at position 3: Number with two decimal points
 
     public class RemesPathLexer
     {
-        //public static readonly Regex MASTER_REGEX = new Regex(
-        //@"(&|\||\^|\+|-|/{1,2}|\*{1,2}|%|" + // most arithmetic and bitwise operators
-        //@"[=!]=|[><]=?|=~|" + // comparison operators
-        //@"[gj]?`(?:[^`]|(?<=\\)`)*(?<!\\)`|" + // backtick string with optional g or j prefix
-        //                                       // all '`' in the string must be escaped by '\\'
-        //@"\[|\]|\(|\)|\{|\}|" + // close/open parens, squarebrackets and curly brackets
-        //@"(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][-+]?\\d+)?|" + // numbers with optional exponent and decimal point
-        //@",|:|\.{1,2}|@|" + // commas, colons, periods, double dots, '@'
-        //@"[a-zA-Z_][a-zA-Z_0-9]*)", // unquoted string
-        //RegexOptions.Compiled);
+        /// <summary>
+        /// position in query string
+        /// </summary>
+        public int ii = 0;
+
+        public RemesPathLexer() { }
 
         // note that '-' sign is not part of this num regex. That's because '-' is its own token and is handled
         // separately from numbers
@@ -69,36 +65,29 @@ Syntax error at position 3: Number with two decimal points
                 @"([eE][-+]?\d+)?$", // optional scientific notation
                 RegexOptions.Compiled);
 
-        //public static readonly HashSet<string> DELIMITERS = new HashSet<string>
-        //    {",", "[", "]", "(", ")", "{", "}", ".", ":", ".."};
+        public static readonly HashSet<char> DELIMITERS = new HashSet<char> { ',', '[', ']', '(', ')', '{', '}', '.', ':'  };
 
-        public static readonly string DELIMITERS = ",[](){}.:";
+        public static readonly HashSet<char> BINOP_START_CHARS = new HashSet<char> {'!', '%', '&', '*', '+', '-', '/', '<', '=', '>', '^', '|', };
 
-        public static readonly string BINOP_START_CHARS = "!%&*+-/<=>^|";
+        public static readonly HashSet<char> WHITESPACE = new HashSet<char> { ' ', '\t', '\r', '\n' };
 
-        public static readonly string WHITESPACE = " \t\r\n";
-
-        public static readonly Dictionary<string, object?> CONSTANTS = new Dictionary<string, object?>
+        public static readonly Dictionary<string, object> CONSTANTS = new Dictionary<string, object>
         {
             ["null"] = null,
-            ["NaN"] = double.NaN,
-            ["Infinity"] = double.PositiveInfinity,
+            //["NaN"] = double.NaN,
+            //["Infinity"] = double.PositiveInfinity,
             ["true"] = true,
             ["false"] = false
         };
 
-        public RemesPathLexer()
-        {
-        }
-
-        public static (JNode num, int ii) ParseNumber(string q, int ii)
+        public JNode ParseNumber(string q)
         {
             StringBuilder sb = new StringBuilder();
             // parsed tracks which portions of a number have been parsed.
-            // So if the int part has been parsed, it will be "i".
-            // If the int and decimal point parts have been parsed, it will be "id".
-            // If the int, decimal point, and scientific notation parts have been parsed, it will be "ide"
-            string parsed = "i";
+            // So if the int part has been parsed, it will be 1.
+            // If the int and decimal point parts have been parsed, it will be 3.
+            // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
+            int parsed = 1;
             char c;
             while (ii < q.Length)
             {
@@ -110,21 +99,21 @@ Syntax error at position 3: Number with two decimal points
                 }
                 else if (c == '.')
                 {
-                    if (parsed != "i")
+                    if (parsed != 1)
                     {
                         throw new RemesLexerException(ii, q, "Number with two decimal points");
                     }
-                    parsed = "id";
+                    parsed = 3;
                     sb.Append('.');
                     ii++;
                 }
                 else if (c == 'e' || c == 'E')
                 {
-                    if (parsed.Contains('e'))
+                    if ((parsed & 4) != 0)
                     {
                         break;
                     }
-                    parsed += 'e';
+                    parsed += 4;
                     sb.Append('e');
                     if (ii < q.Length - 1)
                     {
@@ -141,14 +130,14 @@ Syntax error at position 3: Number with two decimal points
                     break;
                 }
             }
-            if (parsed == "i")
+            if (parsed == 1)
             {
-                return (new JNode(long.Parse(sb.ToString()), Dtype.INT, 0), ii);
+                return new JNode(long.Parse(sb.ToString()), Dtype.INT, 0);
             }
-            return (new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, 0), ii);
+            return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, 0);
         }
 
-        public static (JNode s, int ii) ParseQuotedString(string q, int ii)
+        public JNode ParseQuotedString(string q)
         {
             bool escaped = false;
             char c;
@@ -159,7 +148,7 @@ Syntax error at position 3: Number with two decimal points
                 if (c == '`')
                 {
                     if (!escaped) {
-                        return (new JNode(sb.ToString(), Dtype.STR, 0), ii);
+                        return new JNode(sb.ToString(), Dtype.STR, 0);
                     }
                     sb.Append(c);
                     escaped = false;
@@ -186,7 +175,7 @@ Syntax error at position 3: Number with two decimal points
         /// <param name="q"></param>
         /// <param name="ii"></param>
         /// <returns></returns>
-        public static (object s, int ii) ParseUnquotedString(string q, int ii)
+        public object ParseUnquotedString(string q)
         {
             char c = q[ii++];
             StringBuilder sb = new StringBuilder();
@@ -207,35 +196,35 @@ Syntax error at position 3: Number with two decimal points
             string uqs = sb.ToString();
             if (CONSTANTS.ContainsKey(uqs))
             {
-                object? con = CONSTANTS[uqs];
+                object con = CONSTANTS[uqs];
                 if (con == null)
                 {
-                    return (new JNode(null, Dtype.NULL, 0), ii);
+                    return new JNode(null, Dtype.NULL, 0);
                 }
                 else if (con is double)
                 {
-                    return (new JNode((double)con, Dtype.FLOAT, 0), ii);
+                    return new JNode((double)con, Dtype.FLOAT, 0);
                 }
                 else
                 {
-                    return (new JNode((bool)con, Dtype.BOOL, 0), ii);
+                    return new JNode((bool)con, Dtype.BOOL, 0);
                 }
             }
             else if (Binop.BINOPS.ContainsKey(uqs))
             {
-                return (Binop.BINOPS[uqs], ii);
+                return Binop.BINOPS[uqs];
             }
             else if (ArgFunction.FUNCTIONS.ContainsKey(uqs))
             {
-                return (ArgFunction.FUNCTIONS[uqs], ii);
+                return ArgFunction.FUNCTIONS[uqs];
             }
             else
             {
-                return (new JNode(uqs, Dtype.STR, 0), ii);
+                return new JNode(uqs, Dtype.STR, 0);
             }
         }
 
-        public static (Binop bop, int ii) ParseBinop(string q, int ii)
+        public Binop ParseBinop(string q)
         {
             char c;
             string bs = "";
@@ -251,14 +240,14 @@ Syntax error at position 3: Number with two decimal points
                 bs = newbs;
                 ii++;
             }
-            return (Binop.BINOPS[bs], ii);
+            return Binop.BINOPS[bs];
         }
 
-        public static List<object> Tokenize(string q)
+        public List<object> Tokenize(string q)
         {
             JsonParser jsonParser = new JsonParser();
             var tokens = new List<object>();
-            int ii = 0;
+            ii = 0;
             char c;
             JNode quoted_string;
             object unquoted_string;
@@ -280,7 +269,8 @@ Syntax error at position 3: Number with two decimal points
                 else if (c >= '0' && c <= '9')
                 {
                     object curtok;
-                    (curtok, ii) = ParseNumber(q, ii-1);
+                    ii--;
+                    curtok = ParseNumber(q);
                     tokens.Add(curtok);
                 }
                 else if (DELIMITERS.Contains(c))
@@ -325,12 +315,14 @@ Syntax error at position 3: Number with two decimal points
                 {
                     if (q[ii] == '`')
                     {
-                        (quoted_string, ii) = ParseQuotedString(q, ii+1);
+                        ii++;
+                        quoted_string = ParseQuotedString(q);
                         tokens.Add(new JRegex(new Regex((string)quoted_string.value)));
                     }
                     else
                     {
-                        (unquoted_string, ii) = ParseUnquotedString(q, ii-1);
+                        ii--;
+                        unquoted_string = ParseUnquotedString(q);
                         tokens.Add(unquoted_string);
                     }
                 }
@@ -338,28 +330,32 @@ Syntax error at position 3: Number with two decimal points
                 {
                     if (q[ii] == '`')
                     {
-                        (quoted_string, ii) = ParseQuotedString(q, ii+1);
+                        ii++;
+                        quoted_string = ParseQuotedString(q);
                         tokens.Add(jsonParser.Parse((string)quoted_string.value));
                     }
                     else
                     {
-                        (unquoted_string, ii) = ParseUnquotedString(q, ii-1);
+                        ii--;
+                        unquoted_string = ParseUnquotedString(q);
                         tokens.Add(unquoted_string);
                     }
                 }
                 else if (c == '`')
                 {
-                    (quoted_string, ii) = ParseQuotedString(q, ii);
+                    quoted_string = ParseQuotedString(q);
                     tokens.Add(quoted_string);
                 }
                 else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'))
                 {
-                    (unquoted_string, ii) = ParseUnquotedString(q, ii-1);
+                    ii--;
+                    unquoted_string = ParseUnquotedString(q);
                     tokens.Add(unquoted_string);
                 }
                 else if (BINOP_START_CHARS.Contains(c))
                 {
-                    (bop, ii) = ParseBinop(q, ii-1);
+                    ii--;
+                    bop = ParseBinop(q);
                     tokens.Add(bop);
                 }
                 else
@@ -388,30 +384,35 @@ Syntax error at position 3: Number with two decimal points
         public static void Test()
         {
             JsonParser jsonParser = new JsonParser();
-            var testcases = new (string input, List<object?> desired, string msg)[]
+            RemesPathLexer lexer = new RemesPathLexer();
+            double inf = 1d;// double.PositiveInfinity;
+            var testcases = new object[][]
             {
-                ("@ + 2", new List<object?>(new object?[]{new CurJson(), Binop.BINOPS["+"], (long)2}), "cur_json binop scalar"),
-                ("2.5 7e5 3.2e4 ", new List<object?>(new object?[]{2.5, 7e5, 3.2e4}), "all float formats"),
-                ("abc_2 `ab\\`c`", new List<object?>(new object?[]{"abc_2", "ab`c"}), "unquoted and quoted strings"),
-                ("len(null, Infinity)", new List<object?>(new object?[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', Double.PositiveInfinity, ')'}), "arg function, constants, delimiters"),
-                ("j`[1,\"a\\`\"]`", new List<object?>(new object?[]{jsonParser.Parse("[1,\"a`\"]")}), "json string"),
-                ("g`a?[b\\`]`", new List<object?>(new object?[]{new Regex(@"a?[b`]") }), "regex"),
-                (" - /", new List<object?>(new object?[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops"),
-                (". []", new List<object?>(new object?[]{'.', '[', ']'}), "more delimiters"),
-                ("3blue", new List<object?>(new object?[]{(long)3, "blue"}), "number immediately followed by string"),
-                ("2.5+-2", new List<object?>(new object?[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], (long)2}), "number binop binop number, no whitespace"),
-                ("`a`+@", new List<object?>(new object?[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace"),
-                ("== in =~", new List<object?>(new object?[]{Binop.BINOPS["=="], ArgFunction.FUNCTIONS["in"], Binop.BINOPS["=~"]}), "two-character binops and argfunction in"),
-                ("@[1,2]/3", new List<object?>(new object?[]{new CurJson(), '[', (long)1, ',', (long)2, ']', Binop.BINOPS["/"], (long)3}), "numbers and delimiters then binop number, no whitespace"),
-                ("2 <=3!=", new List<object?>(new object?[]{(long)2, Binop.BINOPS["<="], (long)3, Binop.BINOPS["!="]}), "binop where a substring is also a binop")
+                new object[] { "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], (long)2}), "cur_json binop scalar" },
+                new object[] { "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" },
+                new object[] { "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" },
+                new object[] { "len(null, Infinity)", new List<object>(new object[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', inf, ')'}), "arg function, constants, delimiters" },
+                new object[] { "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" },
+                new object[] { "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" },
+                new object[] { " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" },
+                new object[] { ". []", new List<object>(new object[]{'.', '[', ']'}), "more delimiters" },
+                new object[] { "3blue", new List<object>(new object[]{(long)3, "blue"}), "number immediately followed by string" },
+                new object[] { "2.5+-2", new List<object>(new object[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], (long)2}), "number binop binop number, no whitespace" },
+                new object[] { "`a`+@", new List<object>(new object[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace" },
+                new object[] { "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], ArgFunction.FUNCTIONS["in"], Binop.BINOPS["=~"]}), "two-character binops and argfunction in" },
+                new object[] { "@[1,2]/3", new List<object>(new object[]{new CurJson(), '[', (long)1, ',', (long)2, ']', Binop.BINOPS["/"], (long)3}), "numbers and delimiters then binop number, no whitespace" },
+                new object[] { "2 <=3!=", new List < object >(new object[] {(long) 2, Binop.BINOPS["<="],(long) 3, Binop.BINOPS["!="] }), "!=" } 
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach ((string input, List<object?> desired, string msg) in testcases)
+            foreach (object[] test in testcases)
             {
-                List<object> output = RemesPathLexer.Tokenize(input);
+                //(string input, List<object> desired, string msg)
+                string input = (string)test[0], msg = (string)test[2];
+                List<object> desired = (List<object>)test[1];
+                List<object> output = lexer.Tokenize(input);
                 var sb_desired = new StringBuilder();
-                foreach (object? desired_value in desired)
+                foreach (object desired_value in desired)
                 {
                     if (desired_value is int || desired_value is long || desired_value is double || desired_value is string || desired_value == null)
                     {
@@ -429,7 +430,7 @@ Syntax error at position 3: Number with two decimal points
                 }
                 string str_desired = sb_desired.ToString();
                 var sb_output = new StringBuilder();
-                foreach (object? value in output)
+                foreach (object value in output)
                 {
                     if (value is JNode && !(value is CurJson))
                     {
@@ -457,7 +458,7 @@ Syntax error at position 3: Number with two decimal points
             {
                 try
                 {
-                    RemesPathLexer.Tokenize(paren);
+                    lexer.Tokenize(paren);
                     Console.WriteLine($"Test {ii} failed, expected exception due to unmatched '{paren}'");
                     tests_failed++;
                 }
@@ -467,7 +468,7 @@ Syntax error at position 3: Number with two decimal points
             ii++;
             try
             {
-                RemesPathLexer.Tokenize("1.5.2");
+                lexer.Tokenize("1.5.2");
                 tests_failed++;
                 Console.WriteLine($"Test {ii} failed, expected exception due to number with two decimal points");
             }

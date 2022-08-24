@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace JSON_Viewer.JSONViewer
+namespace JSON_Tools.JSON_Tools
 {
 	public enum JsonTabularizerStrategy
     {
@@ -338,7 +338,7 @@ namespace JSON_Viewer.JSONViewer
 				// it's an array; we'll search recursively at each index for tables
 				var items = (Dictionary<string, object>)schema["items"];
 				List<object> newpath = new List<object>(path);
-				newpath.Add(double.PositiveInfinity);
+				newpath.Add(1d); // should add double.PositiveInfinity
 				if (items.TryGetValue("anyOf", out object anyof))
                 {
 					List<object> danyof = (List<object>)anyof;
@@ -355,7 +355,7 @@ namespace JSON_Viewer.JSONViewer
             }
 			// it's a dict; we'll search recursively beneath each key for tables
 			var props = (Dictionary<string, object>)schema["properties"];
-			foreach ((string k, object v) in props)
+			foreach (string k in props.Keys)
             {
 				List<object> newpath = new List<object>(path);
 				newpath.Add(k);
@@ -381,16 +381,18 @@ namespace JSON_Viewer.JSONViewer
 		/// <param name="key_sep"></param>
 		/// <returns></returns>
 		/// <exception cref="ArgumentException"></exception>
-		private Dictionary<string, JNode> ResolveHang(Dictionary<string, JNode> hanging_row, char key_sep = '.')
+		private Dictionary<string, JNode> ResolveHang(Dictionary<string, JNode> hanging_row, string key_sep = ".")
         {
 			var result = new Dictionary<string, JNode>();
-			foreach ((string k, JNode v) in hanging_row)
+			foreach (string k in hanging_row.Keys)
             {
+				JNode v = hanging_row[k];
 				if (v is JObject)
                 {
 					var dv = (JObject)v;
-					foreach ((string subk, JNode subv) in dv.children)
+					foreach (string subk in dv.children.Keys)
                     {
+						JNode subv = dv.children[subk];
 						string new_key = $"{k}{key_sep}{subk}";
 						if (result.ContainsKey(new_key))
                         {
@@ -407,7 +409,7 @@ namespace JSON_Viewer.JSONViewer
 			return result;
         }
 
-		private string FormatKey(string key, string super_key, char key_sep = '.')
+		private string FormatKey(string key, string super_key, string key_sep = ".")
         {
 			return super_key.Length == 0 ? key : $"{super_key}{key_sep}{key}";
         }
@@ -417,7 +419,7 @@ namespace JSON_Viewer.JSONViewer
 									   Dictionary<string, JNode> rest_of_row, 
 									   List<JNode> result, 
 									   List<string> super_keylist, 
-									   char key_sep)
+									   string key_sep)
         {
 			string super_key = string.Join(key_sep, super_keylist);
 			Func<string, string> keyformat = (string x) => FormatKey(x, super_key, key_sep);
@@ -428,13 +430,14 @@ namespace JSON_Viewer.JSONViewer
 				foreach (object rec in aobj.children)
                 {
 					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
-					foreach ((string k, JNode v) in ((JObject)rec).children)
+					JObject orec = (JObject)rec;
+					foreach (string k in orec.children.Keys)
                     {
-						newrec[keyformat(k)] = v;
+						newrec[keyformat(k)] = orec.children[k];
                     }
-					foreach ((string k, JNode v) in rest_of_row)
+					foreach (string k in rest_of_row.Keys)
                     {
-						newrec[k] = v;
+						newrec[k] = rest_of_row[k];
                     }
 					result.Add(new JObject(0, newrec));
                 }
@@ -447,8 +450,9 @@ namespace JSON_Viewer.JSONViewer
 				Dictionary<string, JArray> arr_dict = new Dictionary<string, JArray>();
 				Dictionary<string, JNode> not_arr_dict = new Dictionary<string, JNode>();
 				int len_arr = 0;
-				foreach ((string k, JNode v) in oobj.children)
+				foreach (string k in oobj.children.Keys)
                 {
+					JNode v = oobj.children[k];
 					if (v is JArray)
                     {
 						JArray varr = (JArray)v;
@@ -464,14 +468,15 @@ namespace JSON_Viewer.JSONViewer
 				for (int ii = 0; ii < len_arr; ii++)
                 {
 					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
-					foreach ((string k, JArray v) in arr_dict)
+					foreach (string k in arr_dict.Keys)
                     {
+						JArray v = arr_dict[k];
 						// if one array is longer than others, the missing values from the short rows are filled by
 						// empty strings
 						newrec[keyformat(k)] = ii >= v.Length ? new JNode("", Dtype.STR, 0) : v.children[ii];
                     }
-					foreach ((string k, JNode v) in not_arr_dict) { newrec[k] = v; }
-					foreach ((string k, JNode v) in rest_of_row) { newrec[k] = v; }
+					foreach (string k in not_arr_dict.Keys) { JNode v = not_arr_dict[k]; newrec[k] = v; }
+					foreach (string k in rest_of_row.Keys) { JNode v = rest_of_row[k]; newrec[k] = v; }
 					result.Add(new JObject(0, newrec));
                 }
             }
@@ -482,9 +487,9 @@ namespace JSON_Viewer.JSONViewer
 				foreach (JNode arr in aobj.children)
                 {
 					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
-					foreach ((string k, JNode v) in rest_of_row)
+					foreach (string k in rest_of_row.Keys)
                     {
-						newrec[k] = v;
+						newrec[k] = rest_of_row[k];
                     }
 					List<JNode> children = ((JArray)arr).children;
 					for (int ii = 0; ii < children.Count; ii++)
@@ -518,7 +523,7 @@ namespace JSON_Viewer.JSONViewer
 									List<JNode> result, 
 									Dictionary<string, JNode> rest_of_row,
 									List<string> super_keylist, 
-									char key_sep)
+									string key_sep)
         {
 			List<string> new_super_keylist = new List<string>(super_keylist);
 			Dictionary<string, JNode> new_rest_of_row = new Dictionary<string, JNode>(rest_of_row);
@@ -541,14 +546,17 @@ namespace JSON_Viewer.JSONViewer
 					string new_key = (string)tab_path.children[depth].value;
 					string super_key = string.Join(key_sep, new_super_keylist);
 					Dictionary<string, JNode> children = ((JObject)obj).children;
-					foreach ((string k, JNode v) in children)
+					foreach (string k in children.Keys)
 					{
+						JNode v = children[k];
 						if (k == new_key) continue;
 						string newk = FormatKey(k, super_key, key_sep);
 						if (v.type == Dtype.OBJ)
 						{
-							foreach ((string subk, JNode subv) in ((JObject)v).children)
+							JObject ov = (JObject)v;
+							foreach (string subk in ov.children.Keys)
 							{
+								JNode subv = ov.children[subk];
 								// add hanging scalar dicts to rest_of_row
 								if ((subv.type & Dtype.ARR_OR_OBJ) == 0)
 								{
@@ -578,7 +586,7 @@ namespace JSON_Viewer.JSONViewer
 		/// <param name="key_sep"></param>
 		/// <param name="rest_of_row"></param>
 		/// <param name="super_keylist"></param>
-		private void FlattenSingleRow_FULL_RECURSIVE(JNode row, char key_sep, Dictionary<string, JNode> rest_of_row, List<string> super_keylist)
+		private void FlattenSingleRow_FULL_RECURSIVE(JNode row, string key_sep, Dictionary<string, JNode> rest_of_row, List<string> super_keylist)
         {
 			string super_key = string.Join(key_sep, super_keylist);
 			Func<string, string> keyformat = (string x) => FormatKey(x, super_key, key_sep);
@@ -604,8 +612,9 @@ namespace JSON_Viewer.JSONViewer
             else if (row is JObject)
             {
 				JObject orow = (JObject)row;
-				foreach ((string key, JNode child) in orow.children)
+				foreach (string key in orow.children.Keys)
 				{
+					JNode child = orow.children[key];
 					if (child is JArray || child is JObject)
 					{
 						List<string> new_super_keylist = new List<string>(super_keylist);
@@ -634,7 +643,7 @@ namespace JSON_Viewer.JSONViewer
 		/// <param name="key_sep"></param>
 		private void BuildTableHelper_FULL_RECURSIVE(JNode obj,
 												List<JNode> result,
-												char key_sep = '.')
+												string key_sep = ".")
         {
 			foreach (JNode child in ((JArray)obj).children)
             {
@@ -681,8 +690,9 @@ namespace JSON_Viewer.JSONViewer
 				else if (child is JObject)
 				{
 					JObject ochild = (JObject)child;
-					foreach ((string key, JNode subchild) in ochild.children)
+					foreach (string key in ochild.children.Keys)
 					{
+						JNode subchild = ochild.children[key];
 						if (subchild is JArray || subchild is JObject)
 						{
 							row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); //.Replace("\"", "\\\""), Dtype.STR, 0);
@@ -697,7 +707,7 @@ namespace JSON_Viewer.JSONViewer
 			}
 		}
 
-		public JArray BuildTable(JNode obj, Dictionary<string, object> schema, char key_sep = '.')
+		public JArray BuildTable(JNode obj, Dictionary<string, object> schema, string key_sep = ".")
         {
 			JsonParser jsonParser = new JsonParser();
 			List<JNode> result = new List<JNode>();
@@ -742,9 +752,12 @@ namespace JSON_Viewer.JSONViewer
 				{
 					throw new ArgumentException($"This JSON contains {tab_paths.Count} possible tables, and BuildTable doesn't know how to proceed.");
 				}
-				foreach ((string pathstr, JsonFormat clsname) in tab_paths)
+				foreach (string pathstr in tab_paths.Keys)
 				{
-					(path, _, _) = jsonParser.ParseArray(pathstr, 0, 0);
+					JsonFormat clsname = tab_paths[pathstr];
+					jsonParser.ii = 0;
+					jsonParser.line_num = 0;
+					path = jsonParser.ParseArray(pathstr);
 					cls = clsname;
 				}
 				BuildTableHelper_DEFAULT(obj, cls, 0, path, result, new Dictionary<string, JNode>(), new List<string>(), key_sep);
@@ -783,7 +796,7 @@ namespace JSON_Viewer.JSONViewer
 			return outval;
         }
 
-		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[]? header = null, bool bools_as_ints = false)
+		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false)
         {
 			// allow the user to supply their own column order. If they don't, just alphabetically sort colnames
 			if (header == null)
@@ -865,9 +878,9 @@ namespace JSON_Viewer.JSONViewer
     {
 		public static void Test()
 		{
-			var testcases = new (string inp, string desired_out, char key_sep)[]
+			var testcases = new string[][]
 			{
-				(
+				new string[] {
 				"[" +
 					"{" +
 						"\"a\": 1," +
@@ -904,9 +917,9 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": 2, \"b\": \"bar\", \"c.d\": 3, \"c.e\": \"c\"}," +
 					"{\"a\": 2, \"b\": \"bar\", \"c.d\": 4, \"c.e\": \"d\"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{\"6\": 7," +
  "\"9\": \"ball\"," +
  "\"9a\": 2," +
@@ -917,9 +930,9 @@ namespace JSON_Viewer.JSONViewer
 		 "\"uy\": [1, 2, NaN]," +
 		 "\"yu\": [[6, {\"m8\": 9, \"y\": \"b\"}], null]}}", // bad irregular JSON that can't be tabularized
 				"[]", // no table possible
-				'.'
-				),
-				(
+				"."
+				},
+				new string[]{
 				"[" +
 					"{" +
 						"\"name\": \"foo\"," +
@@ -967,9 +980,9 @@ namespace JSON_Viewer.JSONViewer
 						"\"players.at-bats\": 3" +
 					"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{\"leagues\": [" +
 					"{" +
 					"\"league\": \"American\"," +
@@ -1023,9 +1036,9 @@ namespace JSON_Viewer.JSONViewer
 						"\"leagues.teams.players.at-bats\": 3" +
 					"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"[" +
 					"[1, 2, \"a\"]," +
 					"[2, 3, \"b\"]" +
@@ -1034,9 +1047,9 @@ namespace JSON_Viewer.JSONViewer
 					"{\"col1\": 1, \"col2\": 2, \"col3\": \"a\"}," +
 					"{\"col1\": 2, \"col2\": 3, \"col3\": \"b\"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{\"a\": [" +
 						"{" +
 							"\"name\": \"blah\"," +
@@ -1061,9 +1074,9 @@ namespace JSON_Viewer.JSONViewer
 						"\"a.rows.col3\": \"a\"" +
 					"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"[" +
 					"{\"a\": 1, \"b\": \"a\"}," +
 					"{\"a\": \"2\", \"b\": \"b\"}," +
@@ -1074,9 +1087,9 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": \"2\", \"b\": \"b\"}," +
 					"{\"a\": 3., \"b\": \"c\"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{" +
 					"\"f\": {\"g\": 1}," +
 					"\"g\": 2.0," +
@@ -1107,9 +1120,9 @@ namespace JSON_Viewer.JSONViewer
 						"\"g\": 2.0" +
 					"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{" +
 					"\"a\": {\"b\": 2, \"c\": \"b\"}," +
 					"\"d\": [" +
@@ -1131,9 +1144,9 @@ namespace JSON_Viewer.JSONViewer
 					"\"d.col2\": 4" +
 					"}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"[" +
 					"{\"a\": 1, \"b\": 2}," +
 					"{\"a\": 3, \"b\": 4}" +
@@ -1142,9 +1155,9 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": 1, \"b\": 2}," +
 					"{\"a\": 3, \"b\": 4}" +
 				"]",
-				'.'
-				),
-				(
+				"."
+				},
+				new string[] {
 				"{\"stuff\": [" +
 					"{" +
 						"\"name\": \"blah\"," +
@@ -1201,9 +1214,9 @@ namespace JSON_Viewer.JSONViewer
 						"\"stuff_substuff_c_e\": \"f\"" +
 					"}" +
 				"]",
-				'_'
-				),
-				(
+				"_"
+				},
+				new string[] {
 				"[" +
 					"{" +
 						"\"a\": 1," +
@@ -1224,9 +1237,9 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": 1, \"b\": \"foo\", \"c/d\": 1, \"c/e\": \"a\"}," +
 					"{\"a\": 2, \"b\": \"bar\", \"c/d\": 3, \"c/e\": \"c\"}" +
 				"]",
-				'/'
-				),
-				(
+				"/"
+				},
+				new string[] {
 				"{\"a\": [[1, 2], [3, 4]], \"b\": \"a\"}",
 				"[" +
 					"{" +
@@ -1240,30 +1253,33 @@ namespace JSON_Viewer.JSONViewer
 						"\"b\": \"a\"" +
 					"}" +
 				"]",
-				'+'
-				),
-				(
+				"+"
+				},
+				new string[] {
 				"[" +
 					"{\"a\": 1, \"b\": [1], \"c\": {\"d\": \"y\"}}," +
-                    "{\"a\": true, \"b\": [7, 8]}," +
-                    "{\"a\": false, \"b\": [9]}" +
-                "]", // missing keys and mixed types for the same key in an object
+					"{\"a\": true, \"b\": [7, 8]}," +
+					"{\"a\": false, \"b\": [9]}" +
+				"]", // missing keys and mixed types for the same key in an object
 				"[" +
 					"{\"a\": 1, \"b\": 1, \"c.d\": \"y\"}," +
 					"{\"a\": true, \"b\": 7}," +
 					"{\"a\": true, \"b\": 8}," +
 					"{\"a\": false, \"b\": 9}" +
 				"]",
-				'.'
-				)
+				"."
+				}
 			};
 			JsonParser jsonParser = new JsonParser();
 			JsonTabularizer tabularizer = new JsonTabularizer();
 			JsonSchemaMaker schema_maker = new JsonSchemaMaker();
 			int tests_failed = 0;
 			int ii = 0;
-			foreach ((string inp, string desired_out, char key_sep) in testcases)
+			foreach (string[] test in testcases)
 			{
+				string inp = test[0];
+				string desired_out = test[1];
+				string key_sep = test[2];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
@@ -1282,7 +1298,7 @@ namespace JSON_Viewer.JSONViewer
 							Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
 						}
 					}
-					catch (Exception ex)
+					catch
 					{
 						tests_failed++;
 						Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -1298,18 +1314,18 @@ namespace JSON_Viewer.JSONViewer
 			// TEST CSV CREATION
 			JsonParser fancyParser = new JsonParser(true);
 
-			var csv_testcases = new (string inp, string desired_out, char delim, char quote_char, string[]? header, bool bools_as_ints)[]
+			var csv_testcases = new object[][]
 			{
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '"', null, false),
-				(
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '"', null, false },
+				new object[] {
 				"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"d\": 4}, {\"a\": 1, \"b\": 2}]",
 				"a,b,c,d\n" + // test missing entries in some rows
 				"1,2,3,\n" +
 				"2,3,,4\n" +
 				"1,2,,\n",
 				',', '"', null, false
-				),
-				(
+				},
+				new object[] {
 				"[" +
 					"{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
 					"{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
@@ -1318,61 +1334,63 @@ namespace JSON_Viewer.JSONViewer
 				"1\t[1, 2, 3]\t{\"d\": \"y\"}\n" +
 				"2\t[4, 5, 6]\t{\"d\": \"z\"}\n",
 				'\t', '"', null, false
-				),
-				("[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
+				},
+				new object[] { "[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
 				"a,b\n,1.0\nblah,NaN\n",
 				',', '"', null, false
-				),
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '"', null, false),
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '\'', null, false),
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '\'', null, false),
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\na,1\nb,2\n", ',', '"', new string[]{"b", "a"}, false),
-				("[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\na\t1\nb\t2\n", '\t', '"', new string[]{"b", "a"}, false),
-				("[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,\"a,b\"\n2,c\n", ',', '"', null, false),
-				("[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,'a,b'\n2,c\n", ',', '\'', null, false), // delims in values
-				("[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\n1,a\n2,b\n", ',', '"', null, false),
-				("[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\n1,a\n2,b\n", ',', '\'', null, false),
-				("[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
-				"b,\"a,b\"\na,1\nb,2\n", 
+				},
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '"', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '\'', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '\'', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\na,1\nb,2\n", ',', '"', new string[]{"b", "a"}, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\na\t1\nb\t2\n", '\t', '"', new string[]{"b", "a"}, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,\"a,b\"\n2,c\n", ',', '"', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,'a,b'\n2,c\n", ',', '\'', null, false }, // delims in values
+				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\n1,a\n2,b\n", ',', '"', null, false },
+				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\n1,a\n2,b\n", ',', '\'', null, false },
+				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
+				"b,\"a,b\"\na,1\nb,2\n",
 				',', '"', new string[]{"b", "a,b"}, false
-				),
-				("[{\"a\tb\": 1, \"b\": \"a\"}, {\"a\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
+				},
+				new object[] { "[{\"a\tb\": 1, \"b\": \"a\"}, {\"a\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
 				"a\\tb\tb\n1\ta\n2\tb\n",
-				'\t', '"', null, false),
-				("[{\"a\": 1, \"b\": \"a\tb\"}, {\"a\": 2, \"b\": \"c\"}]", 
-				"a\tb\n1\t\"a\tb\"\n2\tc\n", 
-				'\t', '"', null, false),
-				("[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]", 
-				"a\n1\n2\n3\n", 
-				',', '"', null, false),
-				("[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]", 
-				"a|b|c\n1|2|3\n2|3|4\n3|4|5\n", 
-				'|', '"', null, false),
-				("[{\"date\": \"1999-01-03\", \"cost\": 100.5, \"num\": 13}, {\"date\": \"2000-03-15\", \"cost\": 157.0, \"num\": 17}]",
+				'\t', '"', null, false
+				},
+				new object[] { "[{\"a\": 1, \"b\": \"a\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
+				"a\tb\n1\t\"a\tb\"\n2\tc\n",
+				'\t', '"', null, false
+				},
+				new object[]{"[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]",
+				"a\n1\n2\n3\n",
+				',', '"', null, false},
+				new object[]{"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]",
+				"a|b|c\n1|2|3\n2|3|4\n3|4|5\n",
+				'|', '"', null, false},
+				new object[]{"[{\"date\": \"1999-01-03\", \"cost\": 100.5, \"num\": 13}, {\"date\": \"2000-03-15\", \"cost\": 157.0, \"num\": 17}]",
 				"cost,date,num\n100.5,1999-01-03,13\n157.0,2000-03-15,17\n", // dates
-				',', '"', null, false),
-				("[{\"date\": \"1999-01-03 07:03:29\", \"cost\": 100.5, \"num\": 13}]",
+				',', '"', null, false},
+				new object[]{"[{\"date\": \"1999-01-03 07:03:29\", \"cost\": 100.5, \"num\": 13}]",
 				"cost,date,num\n100.5,1999-01-03 07:03:29,13\n", // datetimes
-				',', '"', null, false),
-				("[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
-                "{\"name\": \"\\\"Fjordlak the Deranged\\\"\", \"phone number\": \"blo-od4-blud\"}]", // internal quote chars
+				',', '"', null, false },
+				new object[]{"[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
+				"{\"name\": \"\\\"Fjordlak the Deranged\\\"\", \"phone number\": \"blo-od4-blud\"}]", // internal quote chars
 				"name,phone number\n\"Dr. Blutentharst\",420-997-1043\n\"Fjordlak the Deranged\",blo-od4-blud\n",
-				',', '"', null, false),
-				("[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
+				',', '"', null, false},
+				new object[]{"[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
 				"a,b\nnew\\nline,1\n",
 				',', '"', null, false
-				),
-				(
+				},
+				new object[]{
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints false
 				"a,b\ntrue,foo\nfalse,bar\n",
 				',', '"', null, false
-				),
-				(
+				},
+				new object[]{
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints true
 				"a,b\n1,foo\n0,bar\n",
 				',', '"', null, true
-				),
-				(
+				},
+				new object[]{
 				"[" +
 					"{\"a\": 1, \"b\": 1, \"c.d\": \"y\"}," +
 					"{\"a\": true, \"b\": 7}," +
@@ -1381,14 +1399,20 @@ namespace JSON_Viewer.JSONViewer
 				"]", // missing keys
 				"a,b,c.d\n1,1,y\ntrue,7,\ntrue,8,\nfalse,9,\n",
 				',', '"', null, false
-				)
+				}
 			};
-			foreach ((string inp, string desired_out, char delim, char quote_char, string[]? header, bool bools_as_ints) in csv_testcases)
+			foreach (object[] test in csv_testcases)
 			{
+				string inp = (string)test[0];
+				string desired_out = (string)test[1];
+				char delim = (char)test[2];
+				char quote_char = (char)test[3];
+				string[] header = (string[])test[4];
+				bool bools_as_ints = (bool)test[5];
 				ii++;
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
-				string head_str = header == null ? "null" : '[' + string.Join(',', header) + ']';
+				string head_str = header == null ? "null" : '[' + string.Join(", ", header) + ']';
 				string base_message = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str})\nto return\n{desired_out}\n";
 				try
 				{
@@ -1417,9 +1441,9 @@ namespace JSON_Viewer.JSONViewer
 			}
 			// TEST NO_RECURSION setting
 			var no_recursion_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.NO_RECURSION);
-			var no_recursion_testcases = new (string inp, string desired_out)[]
+			var no_recursion_testcases = new string[][]
 			{
-				(
+				new string[]{
 				"[" +
 					"{\"a\": 1, \"b\": 2}," +
 					"{\"a\": 3, \"b\": 4}" +
@@ -1428,44 +1452,46 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": 1, \"b\": 2}," +
 					"{\"a\": 3, \"b\": 4}" +
 				"]"
-				),
-				(
+				},
+				new string[]{
 				"[" +
 					"[1, 2.5, \"a\"]," +
-                    "[2, 3.5, \"b\"]" +
-                "]", // array of arrays
+					"[2, 3.5, \"b\"]" +
+				"]", // array of arrays
 				"[" +
 					"{\"col1\": 1, \"col2\": 2.5, \"col3\": \"a\"}," +
-                    "{\"col1\": 2, \"col2\": 3.5, \"col3\": \"b\"}" +
-                "]"
-				),
-				(
+					"{\"col1\": 2, \"col2\": 3.5, \"col3\": \"b\"}" +
+				"]"
+				},
+				new string[]{
 				"{\"a\": [1,2,3], " +
 					"\"b\": [0.0, 0.5, 1.0], " +
 					"\"c\": [\"a\", \"b\", \"c\"]" +
-                "}", // dict mapping to lists
+				"}", // dict mapping to lists
 				"[" +
 					"{\"a\": 1, \"b\": 0.0, \"c\": \"a\"}," +
 					"{\"a\": 2, \"b\": 0.5, \"c\": \"b\"}," +
 					"{\"a\": 3, \"b\": 1.0, \"c\": \"c\"}" +
 				"]"
-				),
-				(
+				},
+				new string[]{
 				"{\"a\": [1,2,3], " +
 					"\"b\": [0.0, 0.5, 1.0], " +
 					"\"c\": [\"a\", \"b\", \"c\"]," +
-                    "\"d\": \"hang\"" +
+					"\"d\": \"hang\"" +
 				"}", // dict with hanging scalars and lists
 				"[" +
 					"{\"a\": 1, \"b\": 0.0, \"c\": \"a\", \"d\": \"hang\"}," +
 					"{\"a\": 2, \"b\": 0.5, \"c\": \"b\", \"d\": \"hang\"}," +
 					"{\"a\": 3, \"b\": 1.0, \"c\": \"c\", \"d\": \"hang\"}" +
 				"]"
-				),
+				},
 			};
 
-			foreach ((string inp, string desired_out) in no_recursion_testcases)
+			foreach (string[] test in no_recursion_testcases)
 			{
+				string inp = test[0];
+				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
@@ -1484,7 +1510,7 @@ namespace JSON_Viewer.JSONViewer
 							Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
 						}
 					}
-					catch (Exception ex)
+					catch
 					{
 						tests_failed++;
 						Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -1499,9 +1525,9 @@ namespace JSON_Viewer.JSONViewer
 
 			// TEST FULL_RECURSIVE setting
 			var full_recursive_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.FULL_RECURSIVE);
-			var full_recursive_testcases = new (string inp, string desired_out)[]
+			var full_recursive_testcases = new string[][]
 			{
-				(
+				new string[]{
 				"[" +
 					"[1, 2.5, \"a\"]," +
 					"[2, 3.5, \"b\"]" +
@@ -1510,20 +1536,22 @@ namespace JSON_Viewer.JSONViewer
 					"{\"col1\": 1, \"col2\": 2.5, \"col3\": \"a\"}," +
 					"{\"col1\": 2, \"col2\": 3.5, \"col3\": \"b\"}" +
 				"]"
-				),
-				(
+				},
+				new string[]{
 				"[" +
 					"{\"a\": 1, \"b\": [1, 2, 3], \"c\": {\"d\": [\"y\"]}, \"e\": \"scal\"}, " +
 					"{\"a\": 2, \"b\": [4, 5, 6], \"c\": {\"d\": [\"z\"]}, \"e\": \"scal2\"}" +
-                "]", // array of deep-nested objects
+				"]", // array of deep-nested objects
 				"[" +
 					"{\"a\": 1, \"b.col1\": 1, \"b.col2\": 2, \"b.col3\": 3, \"c.d.col1\": \"y\", \"e\": \"scal\"}," +
 					"{\"a\": 2, \"b.col1\": 4, \"b.col2\": 5, \"b.col3\": 6, \"c.d.col1\": \"z\", \"e\": \"scal2\"}" +
 				"]"
-				),
+				},
 			};
-			foreach ((string inp, string desired_out) in full_recursive_testcases)
+			foreach (string[] test in full_recursive_testcases)
 			{
+				string inp = test[0];
+				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
@@ -1542,7 +1570,7 @@ namespace JSON_Viewer.JSONViewer
 							Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
 						}
 					}
-					catch (Exception ex)
+					catch
 					{
 						tests_failed++;
 						Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -1557,9 +1585,9 @@ namespace JSON_Viewer.JSONViewer
 
 			// TEST STRINGIFY_ITERABLES setting
 			var stringify_iterables_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.STRINGIFY_ITERABLES);
-			var stringify_iterables_testcases = new (string inp, string desired_out)[]
+			var stringify_iterables_testcases = new string[][]
 			{
-				(
+				new string[]{
 				"[" +
 					"[1, 2.5, \"a\"]," +
 					"[2, 3.5, \"b\"]" +
@@ -1568,8 +1596,8 @@ namespace JSON_Viewer.JSONViewer
 					"{\"col1\": 1, \"col2\": 2.5, \"col3\": \"a\"}," +
 					"{\"col1\": 2, \"col2\": 3.5, \"col3\": \"b\"}" +
 				"]"
-				),
-				(
+				},
+				new string[]{
 				"[" +
 					"{\"a\": 1, \"b\": [1, 2, 3], \"c\": {\"d\": \"y\"}}, " +
 					"{\"a\": 2, \"b\": [4, 5, 6], \"c\": {\"d\": \"z\"}}" +
@@ -1578,26 +1606,27 @@ namespace JSON_Viewer.JSONViewer
 					"{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
 					"{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
 				"]"
-				),
-				(
+				},
+				new string[]{
 				"[" +
 					"{\"foo\": \"bar\", \"baz\": " +
 						"{\"retweet_count\": 5, \"retweeted\": false, " +
 						"\"source\": \"<a href=\\\"http://twitter.com/download/android\\\" rel=\\\"nofollow\\\">Twitter for Android</a>\"}" +
-                    "}" +
+					"}" +
 				"]", // TODO: find best way to handle stringify_iterables with literal quote chars in string in stringified object
 				"[" +
 					"{\"foo\": \"bar\", \"baz\": " +
 						"\"{\\\"retweet_count\\\": 5, \\\"retweeted\\\": false, " +
 						"\\\"source\\\": \\\"<a href=\\\\\\\"http://twitter.com/download/android\\\\\\\" rel=\\\\\\\"nofollow\\\\\\\">Twitter for Android</a>\\\"}\"" +
-                    "}" +
+					"}" +
 				"]"
-				),
-				
+				},
 		};
 
-			foreach ((string inp, string desired_out) in stringify_iterables_testcases)
+			foreach (string[] test in stringify_iterables_testcases)
 			{
+				string inp = test[0];
+				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
@@ -1616,7 +1645,7 @@ namespace JSON_Viewer.JSONViewer
 							Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
 						}
 					}
-					catch (Exception ex)
+					catch
 					{
 						tests_failed++;
 						Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
