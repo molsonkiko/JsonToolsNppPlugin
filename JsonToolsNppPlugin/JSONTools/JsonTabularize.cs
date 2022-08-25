@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -135,6 +136,7 @@ namespace JSON_Tools.JSON_Tools
 				else throw new ArgumentException("The output format of the JsonTabularizer must be one of REC, SQR, or TAB");
             }
         }
+
 		public JsonTabularizer(JsonTabularizerStrategy strategy = JsonTabularizerStrategy.DEFAULT) // ,
 							   // JsonFormat output_format = JsonFormat.REC)
 							   // don't worry about output_format, because other output formats aren't supported
@@ -319,9 +321,9 @@ namespace JSON_Tools.JSON_Tools
 				JArray patharr = new JArray(0, new List<JNode>());
 				foreach (object node in path)
                 {
-					if (node is double && double.IsInfinity((double)node))
+					if (node is int && (int)node == 0)
                     {
-						patharr.children.Add(new JNode((double)node, Dtype.FLOAT, 0));
+						patharr.children.Add(new JNode(0, Dtype.FLOAT, 0));
                     }
                     else
                     {
@@ -338,7 +340,9 @@ namespace JSON_Tools.JSON_Tools
 				// it's an array; we'll search recursively at each index for tables
 				var items = (Dictionary<string, object>)schema["items"];
 				List<object> newpath = new List<object>(path);
-				newpath.Add(1d); // should add double.PositiveInfinity
+				// use 0 as a placeholder for all indices in arrays
+				// the important thing is that it's not a string
+				newpath.Add(0);
 				if (items.TryGetValue("anyOf", out object anyof))
                 {
 					List<object> danyof = (List<object>)anyof;

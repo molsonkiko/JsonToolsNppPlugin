@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Text;
+using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -74,8 +75,8 @@ Syntax error at position 3: Number with two decimal points
         public static readonly Dictionary<string, object> CONSTANTS = new Dictionary<string, object>
         {
             ["null"] = null,
-            //["NaN"] = double.NaN,
-            //["Infinity"] = double.PositiveInfinity,
+            ["NaN"] = NanInf.nan,
+            ["Infinity"] = NanInf.inf,
             ["true"] = true,
             ["false"] = false
         };
@@ -385,13 +386,12 @@ Syntax error at position 3: Number with two decimal points
         {
             JsonParser jsonParser = new JsonParser();
             RemesPathLexer lexer = new RemesPathLexer();
-            double inf = 1d;// double.PositiveInfinity;
             var testcases = new object[][]
             {
                 new object[] { "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], (long)2}), "cur_json binop scalar" },
                 new object[] { "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" },
                 new object[] { "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" },
-                new object[] { "len(null, Infinity)", new List<object>(new object[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', inf, ')'}), "arg function, constants, delimiters" },
+                new object[] { "len(null, Infinity)", new List<object>(new object[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" },
                 new object[] { "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" },
                 new object[] { "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" },
                 new object[] { " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" },

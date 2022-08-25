@@ -585,8 +585,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Max(JNode[] args)
         {
             var itbl = (JArray)args[0];
-            double neginf = 1d; // double.NegativeInfinity
-            JNode biggest = new JNode(neginf, Dtype.FLOAT, 0);
+            JNode biggest = new JNode(NanInf.neginf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
                 if (Convert.ToDouble(child.value) > Convert.ToDouble(biggest.value)) { biggest = child; }
@@ -603,8 +602,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Min(JNode[] args)
         {
             var itbl = (JArray)args[0];
-            double inf = 1d; // double.PositiveInfinity
-            JNode smallest = new JNode(inf, Dtype.FLOAT, 0);
+            JNode smallest = new JNode(NanInf.inf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
                 if (Convert.ToDouble(child.value) < Convert.ToDouble(smallest.value)) { smallest = child; }

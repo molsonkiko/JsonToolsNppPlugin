@@ -195,6 +195,7 @@
     <Compile Include="JSONTools\RemesPathLexer.cs" />
     <Compile Include="JSONTools\TestRunner.cs" />
     <Compile Include="JSONTools\YamlDumper.cs" />
+    <Compile Include="Utils\NanInf.cs" />
     <Compile Include="Utils\Settings.cs" />
     <Compile Include="Utils\Slice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

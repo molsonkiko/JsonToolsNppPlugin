@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -120,16 +121,10 @@ namespace JSON_Tools.JSON_Tools
             this.allow_datetimes = allow_datetimes;
             this.allow_nan_inf = allow_nan_inf;
             if (linting) lint = new List<JsonLint>();
-            //this.escape_map = ESCAPE_MAP;
         }
 
         #endregion
         #region HELPER_METHODS
-
-        //public static bool IsWhiteSpace(char c)
-        //{
-        //    return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
-        //}
 
         private void ConsumeWhiteSpace(string inp)
         {
@@ -726,7 +721,7 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint("-Infinity is not part of the original JSON specification", ii, line_num, cur_c));
                     }
                     ii += 9;
-                    return new JNode(1d, Dtype.FLOAT, line_num); // should return -inf
+                    return new JNode(NanInf.neginf, Dtype.FLOAT, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with '-' to be negative number",
                                               next_c, ii+1);
@@ -761,7 +756,7 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint("NaN is not part of the original JSON specification", ii, line_num, cur_c));
                     }
                     ii += 3;
-                    return new JNode(0d, Dtype.FLOAT, line_num); // should return NaN
+                    return new JNode(NanInf.nan, Dtype.FLOAT, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with 'N' to be NaN", next_c, ii+1);
             }
@@ -779,11 +774,7 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint("Infinity is not part of the original JSON specification", ii, line_num, cur_c));
                     }
                     ii += 8;
-                    //double nan = double.NaN;
-                    //double neginf = double.NegativeInfinity;
-                    double inf = 1d; // double.PositiveInfinity;
-                    //if (nan == inf || inf == neginf) { }
-                    return new JNode(inf, Dtype.FLOAT, line_num); // should return inf
+                    return new JNode(NanInf.inf, Dtype.FLOAT, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with 'I' to be Infinity",
                                               next_c, ii+1);

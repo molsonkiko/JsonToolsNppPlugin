@@ -5,10 +5,6 @@ namespace JSON_Tools.Utils
 {
     public static class SliceExtensions
     {
-        // TODO: Replace these slices with code copy-pasted from
-        // https://github.com/henon/SliceAndDice/blob/master/src/SliceAndDice/Shape.cs
-        // Those slices are better because (a) they are more versatile and (b) THEY ARE VIEWS RATHER THAN MEM-COPIERS
-
         /// <summary>
         /// Allows the use of Python-style slices, where start, stop, and stride must be declared as individual paramters.<br></br>
         /// Thus e.g. arr.Slice(2, null, -1) is just like arr[slice(2, None, -1)] in Python.<br></br>

@@ -123,7 +123,7 @@ namespace Kbg.Demo.Namespace
             PluginBase.SetCommand(4, "Current Full Path", insertCurrentFullPath, new ShortcutKey(false, true, false, Keys.F));
             PluginBase.SetCommand(5, "Current File Name", insertCurrentFileName);
             PluginBase.SetCommand(6, "Current Directory", insertCurrentDirectory);
-            PluginBase.SetCommand(7, "Date && Time - short format", insertShortDateTime);
+            PluginBase.SetCommand(7, "print nan and inf", printNanInf);
             PluginBase.SetCommand(8, "Date && Time - long format", insertLongDateTime);
 
             PluginBase.SetCommand(9, "Close HTML/XML tag automatically", checkInsertHtmlCloseTag, new ShortcutKey(false, true, false, Keys.Q), doCloseTag);
@@ -204,6 +204,11 @@ The current scroll ratio is {Math.Round(scrollPercentage, 2)}%.
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+        }
+
+        static void printNanInf()
+        {
+            MessageBox.Show($"inf = {NanInf.inf}\nneginf = {NanInf.neginf}\nnan = {NanInf.nan}");
         }
 
         static void helloFX()

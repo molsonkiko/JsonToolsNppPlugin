@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -127,11 +128,8 @@ namespace JSON_Tools.JSON_Tools
             if (double.TryParse(strv, out double d))
             {
                 // k is a number
-                //switch (d)
-                //{
-                //    case double.PositiveInfinity: return ".inf";
-                //    case double.NegativeInfinity: return "-.inf";
-                //}
+                if (d == NanInf.inf) return ".inf";
+                if (d == NanInf.neginf) return "-.inf";
                 if (double.IsNaN(d))
                 {
                     return ".nan";
