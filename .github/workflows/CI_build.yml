@@ -1,0 +1,37 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-2019
+    strategy:
+      max-parallel: 4
+      matrix:
+        build_configuration: [Release, Debug]
+        build_platform: [x64, x86]
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.3
+
+    - name: MSBuild of solution
+      run: msbuild JsonToolsSolution.sln /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /m /verbosity:minimal
+
+    - name: Archive artifacts for x64
+      if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
+      uses: actions/upload-artifact@v3
+      with:
+          name: plugin_dll_x64
+          path: JsonToolsNppPlugin\bin\${{ matrix.build_configuration }}-x64\JsonTools.dll
+
+    - name: Archive artifacts for x86
+      if: matrix.build_platform == 'x86' && matrix.build_configuration == 'Release'
+      uses: actions/upload-artifact@v3
+      with:
+          name: plugin_dll_x86
+          path: JsonToolsNppPlugin\bin\${{ matrix.build_configuration }}\JsonTools.dll
+

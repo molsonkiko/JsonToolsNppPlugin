@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JsonToolsNppPlugin) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of weeks.
+This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JSON-Tools) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of weeks.
 
 1. A tree view for JSON (see the docs for what it will look like)
 2. RemesPath query language for pandas-style querying of JSON. Similar in concept to [JMESPath](https://jmespath.org/), but with added functionality including regular expressions and recursive search. Query execution speed appears to be comparable to Python's pandas.
