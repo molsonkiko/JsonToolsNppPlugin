@@ -33,6 +33,6 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
 
 Go to the [Releases page](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) to see past releases.
 
-[Download latest 32-bit version](/JsonToolsNppPlugin/Release_x86.zip)
+[Download latest 32-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x86.zip)
 
-[Download latest 64-bit version](/JsonToolsNppPlugin/Release_x64.zip)
+[Download latest 64-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x64.zip)
