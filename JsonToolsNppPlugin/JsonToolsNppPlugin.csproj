@@ -132,9 +132,6 @@
       <Link>PluginInfrastructure\UnmanagedExports.cs</Link>
     </Compile> -->
     <!-- forms -->
-    <Compile Include="Forms\frmGoToLine.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <!-- <Compile Include="Forms\GrepperForm.Designer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -168,9 +165,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Forms\frmGoToLine.designer.cs">
-      <DependentUpon>frmGoToLine.cs</DependentUpon>
-    </Compile>
     <!-- <Compile Include="Forms\GrepperForm.Designer.cs">
       <DependentUpon>Forms\GrepperForm.Designer.cs</DependentUpon>
     </Compile>
@@ -193,8 +187,17 @@
     <Compile Include="JSONTools\RemesPath.cs" />
     <Compile Include="JSONTools\RemesPathFunctions.cs" />
     <Compile Include="JSONTools\RemesPathLexer.cs" />
-    <Compile Include="JSONTools\TestRunner.cs" />
+    <Compile Include="Tests\Benchmarker.cs" />
+    <Compile Include="Tests\JsonGrepperTests.cs" />
+    <Compile Include="Tests\JsonParserTests.cs" />
+    <Compile Include="Tests\JsonSchemaTests.cs" />
+    <Compile Include="Tests\JsonTabularizerTests.cs" />
+    <Compile Include="Tests\RemesPathTests.cs" />
+    <Compile Include="Tests\SliceTests.cs" />
+    <Compile Include="Tests\TestRunner.cs" />
     <Compile Include="JSONTools\YamlDumper.cs" />
+    <Compile Include="Tests\YamlDumperTests.cs" />
+    <Compile Include="Utils\Misc.cs" />
     <Compile Include="Utils\NanInf.cs" />
     <Compile Include="Utils\Settings.cs" />
     <Compile Include="Utils\Slice.cs" />
@@ -208,10 +211,6 @@
   </ItemGroup>
   <ItemGroup>
     <!-- resx files -->
-    <EmbeddedResource Include="Forms\frmGoToLine.resx">
-      <DependentUpon>frmGoToLine.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <SubType>Designer</SubType>
       <Generator>ResXFileCodeGenerator</Generator>
@@ -267,6 +266,9 @@
     <None Include="Resources\null type icon.PNG" />
     <None Include="Resources\object type icon.PNG" />
     <None Include="Resources\string type icon.PNG" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Forms\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildProjectDirectory)\PluginInfrastructure\DllExport\NppPlugin.DllExport.targets" />

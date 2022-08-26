@@ -151,12 +151,13 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                     while (ii < inp.Length)
                     {
-                        cur_c = inp[ii++];
+                        cur_c = inp[ii];
                         if (cur_c == '\n')
                         {
                             ConsumeWhiteSpace(inp);
-                            return;
+                            break;
                         }
+                        ii++;
                     }
                 }
                 else if (next_c == '*')
@@ -172,8 +173,8 @@ namespace JSON_Tools.JSON_Tools
                             if (inp[ii] == '/')
                             {
                                 comment_ended = true;
-                                ii += 1;
-                                return;
+                                ii++;
+                                break;
                             }
                         }
                     }
@@ -195,6 +196,7 @@ namespace JSON_Tools.JSON_Tools
                     lint.Add(new JsonLint("JavaScript comments are not part of the original JSON specification", ii, line_num, '/'));
                 }
                 ConsumeComment(inp);
+                return;
             }
             throw new JsonParserException("JavaScript comments are not part of the original JSON specification", inp[ii], ii);
         }
@@ -208,24 +210,25 @@ namespace JSON_Tools.JSON_Tools
         private int ParseHexadecimal(string inp, int length)
         {
             var sb = new StringBuilder();
-            for ( ; ii < ii + length && ii < inp.Length; ii++)
+            int end = ii + length > inp.Length ? inp.Length : ii + length;
+            for ( ; ii < end; ii++)
             {
                 sb.Append(inp[ii]);
             }
             string s = sb.ToString();
-            // Console.WriteLine($"hex of length {length} = {s}, will go to char {inp[index + length - 1]}");
+            // Npp.AddText($"hex of length {length} = {s}, will go to char {inp[index + length - 1]}");
             int charval;
             try
             {
                 charval = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
-                ii += length - 1;
+                ii = end - 1;
                 return charval;
                 // the -1 is because ParseString increments by 1 after every escaped sequence anyway
             }
             catch
             {
                 throw new JsonParserException("Could not find valid hexadecimal of length " + length,
-                                              inp[ii + length], ii + length);
+                                              inp[end - 1], end - 1);
             }
         }
 
@@ -290,15 +293,15 @@ namespace JSON_Tools.JSON_Tools
         /// </exception>
         public JNode ParseString(string inp, char quote_char = '"')
         {
-            ii++;
+            int start = ii++;
             char cur_c;
             StringBuilder sb = new StringBuilder();
             while (true)
             {
                 if (ii == inp.Length)
                 {
-                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp[ii], ii);
-                    lint.Add(new JsonLint($"Unterminated string literal starting at position {ii}", ii, line_num, inp[ii]));
+                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp[ii - 1], ii - 1);
+                    lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii - 1, line_num, inp[ii - 1]));
                     break;
                 }
                 cur_c = inp[ii];
@@ -307,7 +310,7 @@ namespace JSON_Tools.JSON_Tools
                     // internal newlines are not allowed in JSON strings
                     if (lint == null) throw new JsonParserException("Unterminated string literal", cur_c, ii);
                     line_num++;
-                    lint.Add(new JsonLint($"String literal starting at position {ii} contains newline", ii, line_num, inp[ii]));
+                    lint.Add(new JsonLint($"String literal starting at position {start} contains newline", ii, line_num, inp[ii]));
                 }
                 if (cur_c == quote_char)
                 {
@@ -318,7 +321,7 @@ namespace JSON_Tools.JSON_Tools
                     if (ii == inp.Length - 2)
                     {
                         if (lint == null) throw new JsonParserException("Unterminated string literal", cur_c, ii);
-                        lint.Add(new JsonLint($"Unterminated string literal starting at position {ii}", ii, line_num, inp[ii]));
+                        lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii, line_num, inp[ii]));
                         break;
                     }
                     char next_char = inp[ii + 1];
@@ -347,10 +350,9 @@ namespace JSON_Tools.JSON_Tools
                         }
                         catch (Exception e)
                         {
-                            if (lint != null && e is JsonParserException)
+                            if (lint != null && e is JsonParserException je)
                             {
-                                JsonParserException je = (JsonParserException)e;
-                                lint.Add(new JsonLint($"Invalid hexadecimal starting at {ii}", je.Pos, line_num, je.Cur_char));
+                                lint.Add(new JsonLint($"Invalid hexadecimal ending at {ii}", je.Pos, line_num, je.Cur_char));
                                 ii = je.Pos;
                                 break;
                             }
@@ -444,6 +446,7 @@ namespace JSON_Tools.JSON_Tools
                     // fractions are part of the JSON language specification
                     double numer = double.Parse(sb.ToString());
                     JNode denom_node;
+                    ii++;
                     denom_node = ParseNumber(q);
                     double denom = Convert.ToDouble(denom_node.value);
                     return new JNode(numer / denom, Dtype.FLOAT, line_num);
@@ -510,7 +513,7 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint("Comma after last element of array", ii, line_num, cur_c));
                     }
                     JArray arr = new JArray(start_line_num, children);
-                    // Console.WriteLine("Returning array " + arr.ToString());
+                    // Npp.AddText("Returning array " + arr.ToString());
                     ii++;
                     return arr;
                 }
@@ -539,7 +542,7 @@ namespace JSON_Tools.JSON_Tools
                     already_seen_comma = false;
                     JNode new_obj;
                     new_obj = ParseSomething(inp);
-                    // Console.WriteLine("\nobj = "+new_obj.ToString());
+                    // Npp.AddText("\nobj = "+new_obj.ToString());
                     children.Add(new_obj);
                 }
             }
@@ -599,7 +602,8 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint("Comma after last key-value pair of object", ii, line_num, cur_c));
                     }
                     JObject obj = new JObject(start_line_num, children);
-                    // Console.WriteLine("Returning array " + obj.ToString());
+                    // Npp.AddText("Returning array " + obj.ToString());
+                    ii++;
                     return obj;
                 }
                 else if (cur_c == ']')
@@ -612,6 +616,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     lint.Add(new JsonLint("Tried to terminate object with ']'", ii, line_num, cur_c));
                     JObject obj = new JObject(start_line_num, children);
+                    ii++;
                     return obj;
                 }
                 else if (cur_c == '"' 
@@ -647,10 +652,11 @@ namespace JSON_Tools.JSON_Tools
                         lint.Add(new JsonLint($"No ':' between key {children.Count} and value {children.Count} of object", ii, line_num, cur_c));
                         ii--;
                     }
+                    ii++;
                     ConsumeWhiteSpace(inp);
                     if (inp[ii] == '/') MaybeConsumeComment(inp);
                     JNode new_obj = ParseSomething(inp);
-                    // Console.WriteLine($"\nkey = {child_key}, obj = {new_obj.ToString()}");
+                    // Npp.AddText($"\nkey = {child_key}, obj = {new_obj.ToString()}");
                     children.Add(child_key, new_obj);
                     already_seen_comma = false;
                 }
@@ -838,395 +844,6 @@ namespace JSON_Tools.JSON_Tools
             }
         }
     }
-        #endregion
-        #region TEST_FUNCTIONS
-
-    public class JsonParserTester
-    {
-        public static void Test()
-        {
-            JsonParser parser = new JsonParser();
-            // includes:
-            // 1. hex
-            // 2. all other backslash escape sequences
-            // 3. Empty arrays and objects
-            // 4. empty strings
-            // 5. space before and after commas
-            // 6. no space between comma and next value
-            // 7. space before colon and variable space after colon
-            // 8. hex and escape sequences in keys
-            // 9. all special scalars (nan, null, inf, -inf, true, false)
-            // 10. all forms of whitespace
-            string NL = Environment.NewLine;
-            string example = "{\"a\":[-1, true, {\"b\" :  0.5, \"c\": \"\\uae77\"},null],\n"
-                    + "\"a\\u10ff\":[true, false, NaN, Infinity,-Infinity, {},\t\"\\u043ea\", []], "
-                    + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]} ";
-            string norm_example = "{\"a\": [-1, true, {\"b\": 0.5, \"c\": \"\\uae77\"}, null], "
-                    + "\"a\\u10ff\": [true, false, NaN, Infinity, -Infinity, {}, \"\\u043ea\", []], "
-                    + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]}";
-            string pprint_example = "{" +
-                                    NL + "\"a\":" +
-                                    NL + "    [" +
-                                    NL + "    -1," +
-                                    NL + "    true," +
-                                    NL + "        {" +
-                                    NL + "        \"b\": 0.5," +
-                                    NL + "        \"c\": \"\\uae77\"" +
-                                    NL + "        }," +
-                                    NL + "    null" +
-                                    NL + "    ]," +
-                                    NL + "\"a\\u10ff\":" +
-                                    NL + "    [" +
-                                    NL + "    true," +
-                                    NL + "    false," +
-                                    NL + "    NaN," +
-                                    NL + "    Infinity," +
-                                    NL + "    -Infinity," +
-                                    NL + "        {" +
-                                    NL + "        }," +
-                                    NL + "    \"\\u043ea\"," +
-                                    NL + "        [" +
-                                    NL + "        ]" +
-                                    NL + "    ]," +
-                                    NL + "\"back'slas\\\"h\":" +
-                                    NL + "    [" +
-                                    NL + "    \"\\\"'\\f\\n\\b\\t/\"," +
-                                    NL + "    -0.5," +
-                                    NL + "    23," +
-                                    NL + "    \"\"" +
-                                    NL + "    ]" +
-                                    NL + "}";
-            var testcases = new string[][]
-            {
-                new string[]{ example, norm_example, pprint_example, "general parsing" },
-                new string[] { "1/2", "0.5", "0.5", "fractions" },
-                new string[] { "[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" },
-                new string[] { "\"abc\"", "\"abc\"", "\"abc\"", "scalar string" },
-                new string[] { "1", "1", "1", "scalar int" },
-                new string[] { "-1.0", "-1.0", "-1.0", "negative scalar float" },
-                new string[] { "3.5", "3.5", "3.5", "scalar float" },
-                new string[] { "-4", "-4", "-4", "negative scalar int" },
-                new string[] { "[{\"FullName\":\"C:\\\\123467756\\\\Z\",\"LastWriteTimeUtc\":\"\\/Date(1600790697130)\\/\"}," +
-                            "{\"FullName\":\"C:\\\\123467756\\\\Z\\\\B\",\"LastWriteTimeUtc\":\"\\/Date(1618852147285)\\/\"}]",
-                             "[{\"FullName\": \"C:\\\\123467756\\\\Z\", \"LastWriteTimeUtc\": \"/Date(1600790697130)/\"}, " +
-                            "{\"FullName\": \"C:\\\\123467756\\\\Z\\\\B\", \"LastWriteTimeUtc\": \"/Date(1618852147285)/\"}]",
-                             "[" +
-                             NL + "    {" +
-                             NL + "    \"FullName\": \"C:\\\\123467756\\\\Z\"," +
-                             NL + "    \"LastWriteTimeUtc\": \"/Date(1600790697130)/\"" +
-                             NL + "    }," +
-                             NL + "    {" +
-                             NL + "    \"FullName\": \"C:\\\\123467756\\\\Z\\\\B\"," +
-                             NL + "    \"LastWriteTimeUtc\": \"/Date(1618852147285)/\"" +
-                             NL + "    }" +
-                             NL + "]",
-                             "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" },
-            };
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (string[] test in testcases)
-            {
-                //(string input, string norm_input, string pprint_desired, string msg)
-                string input = test[0], norm_input = test[1], pprint_desired = test[2], msg = test[3];
-                JNode json = parser.Parse(input);
-                string norm_str_out = json.ToString();
-                string pprint_out = json.PrettyPrint(4);
-                if (norm_str_out != norm_input)
-                {
-                    tests_failed++;
-                    Console.WriteLine(String.Format(@"Test {0} ({1}) failed:
-Expected
-{2}
-Got
-{3} ",
-                                     ii + 1, msg, norm_input, norm_str_out));
-                }
-                ii++;
-                if (pprint_out != pprint_desired)
-                {
-                    tests_failed++;
-                    Console.WriteLine(String.Format(@"Test {0} (pretty-print {1}) failed:
-Expected
-{2}
-Got
-{3} ",
-                                     ii + 1, msg, pprint_desired, pprint_out));
-                }
-                ii++;
-            }
-
-            string objstr = "{\"a\": [1, 2, 3], \"b\": {}, \"c\": [], \"d\": 3}";
-            JObject obj = (JObject)parser.Parse(objstr);
-            string pp = obj.PrettyPrint();
-            string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers();
-            ii++;
-            if (pp != pp_ch_line)
-            {
-                tests_failed++;
-                Console.WriteLine(String.Format(@"Test {0} failed:
-Expected PrettyPrintAndChangeLineNumbers({1}) to return
-{2}
-instead got
-{3}",
-                                                ii + 1, objstr, pp, pp_ch_line));
-            }
-
-            var keylines = new object[][]
-            {
-                new object[]{"a", 2 },
-                new object[]{ "b", 8 },
-                new object[]{ "c", 11 },
-                new object[]{"d", 13 }
-            };
-            foreach (object[] kl in keylines)
-            {
-                string key = (string)kl[0];
-                int expected_line = (int)kl[1];
-                ii++;
-                int true_line = obj.children[key].line_num;
-                if (true_line != expected_line)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"After PrettyPrintAndChangeLineNumbers({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
-                }
-            }
-
-            string tostr = obj.ToString();
-            string tostr_ch_line = obj.ToStringAndChangeLineNumbers();
-            ii++;
-            if (tostr != tostr_ch_line)
-            {
-                tests_failed++;
-                Console.WriteLine(String.Format(@"Test {0} failed:
-Expected ToStringAndChangeLineNumbers({1}) to return
-{2}
-instead got
-{3}",
-                                                ii+1, objstr, tostr, tostr_ch_line));
-            }
-            foreach (object[] kl in keylines)
-            {
-                string key = (string)kl[0];
-                ii++;
-                int true_line = obj.children[key].line_num;
-                if (true_line != 0)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"After ToStringAndChangeLineNumbers({objstr}), expected the line of child {key} to be 0, got {true_line}.");
-                }
-            }
-
-            // test if the parser correctly counts line numbers in nested JSON
-            JObject pp_obj = (JObject)parser.Parse(pp_ch_line);
-            foreach (object[] kl in keylines)
-            {
-                string key = (string)kl[0];
-                int expected_line = (int)kl[1];
-                int true_line = pp_obj.children[key].line_num;
-                if (true_line != expected_line)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"After PrettyPrintAndChangeLineNumbers({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
-                }
-            }
-
-            var equality_testcases = new object[][]
-            {
-                new object[] { "1", "2", false },
-                new object[] { "1", "1", true },
-                new object[] { "2.5e3", "2.5e3", true },
-                new object[] { "2.5e3", "2.2e3", false },
-                new object[] { "\"a\"", "\"a\"", true },
-                new object[] { "\"a\"", "\"b\"", false },
-                new object[] { "[[1, 2], [3, 4]]", "[[1,2],[3,4]]", true },
-                new object[] { "[1, 2, 3, 4]", "[[1,2], [3,4]]", false },
-                new object[] { "{\"a\": 1, \"b\": Infinity, \"c\": 0.5}", "{\"b\": Infinity, \"a\": 1, \"c\": 1/2}", true },
-                new object[] { "[\"z\\\"\"]", "[\"z\\\"\"]", true },
-                new object[] { "{}", "{" + NL + "   }", true },
-                new object[] { "[]", "[ ]", true },
-                new object[] { "[]", "[1, 2]", false }
-            };
-            foreach (object[] test in equality_testcases)
-            {
-                string astr = (string)test[0];
-                string bstr = (string)test[1];
-                bool a_equals_b = (bool)test[2];
-                ii++;
-                JNode a = parser.Parse(astr);
-                JNode b = parser.Parse(bstr);
-                bool result = a.Equals(b);
-                if (result != a_equals_b)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"Expected {a.ToString()} == {b.ToString()} to be {a_equals_b}, but it was called {result}");
-                }
-            }
-
-
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-
-        public static void TestSpecialParserSettings()
-        {
-            JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true);
-            var testcases = new object[][]
-            {
-                new object[]{ "{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}") },
-                new object[]{ @"[1,
-/* this is a
-multiline comment
-*/
-2]",
-                    simpleparser.Parse("[1, 2]")
-                },
-                new object[]{ "\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0) },
-                new object[]{ "\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0) },
-                new object[]{ "\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0) }, // bad date- month too high
-                new object[]{ "\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0) }, // bad datetime- hour too high
-                new object[]{ "\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0) }, // bad date- has space at end
-                new object[]{ "['abc', 2, '1999-01-03']", // single-quoted strings 
-                    new JArray(0, new List<JNode>(new JNode[]{new JNode("abc", Dtype.STR, 0),
-                                                          new JNode(Convert.ToInt64(2), Dtype.INT, 0),
-                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))},
-                new object[]{ "{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
-                    simpleparser.Parse("{\"a\": \"1\", \"b\": 2}") },
-                new object[]{ @"{'a':
-                  // one comment
-                  // wow, another single-line comment?
-                  // go figure
-                  [2]}",
-                simpleparser.Parse("{\"a\": [2]}")},
-                new object[]{ "{'a': [ /* internal comment */ 2 ]}", simpleparser.Parse("{\"a\": [2]}") },
-                new object[]{ "[1, 2] // trailing comment", simpleparser.Parse("[1, 2]") },
-                new object[]{ "// the comments return!\n[2]", simpleparser.Parse("[2]") },
-                new object[]{ @"
-                  /* multiline comment 
-                   */
-                  /* followed by another multiline comment */
-                 // followed by a single line comment 
-                 /* and then a multiline comment */ 
-                 [1, 2]
-                 /* and one last multiline comment */", simpleparser.Parse("[1, 2]") }
-            };
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (object[] test in testcases)
-            {
-                string inp = (string)test[0];
-                JNode desired_out = (JNode)test[1];
-                ii++;
-                JNode result = new JNode(null, Dtype.NULL, 0);
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out.ToString()}\n";
-                try
-                {
-                    result = parser.Parse(inp);
-                    try
-                    {
-                        if (!desired_out.Equals(result))
-                        {
-                            tests_failed++;
-                            Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
-                        }
-                    }
-                    catch
-                    {
-                        tests_failed++;
-                        Console.WriteLine($"{base_message}Instead returned\n{result.ToString()}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"{base_message}Instead threw exception\n{ex}");
-                }
-            }
-
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-
-        public static void TestLinter()
-        {
-            JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true, true);
-            var testcases = new object[][]
-            {
-                new object[]{ "[1, 2]", "[1, 2]", new string[]{ } }, // syntactically valid JSON
-                new object[]{ "[1 2]", "[1, 2]", new string[]{"No comma between array members" } },
-                new object[]{ "[1, , 2]", "[1, 2]", new string[]{$"Two consecutive commas after element 0 of array"} },
-                new object[]{ "[1, 2,]", "[1, 2]", new string[]{"Comma after last element of array"} },
-                new object[]{ "[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"} },
-                new object[]{ "{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"} },
-                new object[]{ "{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" } },
-                new object[]{ "[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"} },
-                new object[]{ "[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
-                    new string[]{ "NaN is not part of the original JSON specification",
-                                  "-Infinity is not part of the original JSON specification",
-                                  "Infinity is not part of the original JSON specification" } },
-                new object[]{ "{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
-                                                         "String literal starting at position 1 contains newline",
-                                                         "Comma after last element of array",
-                                                         "Tried to terminate an array with '}'",
-                                                         "Comma after last key-value pair of object",
-                                                         "Tried to terminate object with ']'"} },
-            };
-
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (object[] test in testcases)
-            {
-                string inp = (string)test[0], desired_out = (string)test[1];
-                string[] expected_lint = (string[])test[2];
-                ii++;
-                JNode jdesired = simpleparser.Parse(desired_out);
-                JNode result = new JNode(null, Dtype.NULL, 0);
-                string expected_lint_str = "[" + string.Join(", ", expected_lint) + "]";
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
-                try
-                {
-                    result = parser.Parse(inp);
-                    if (parser.lint == null)
-                    {
-                        tests_failed++;
-                        Console.WriteLine(base_message + "Lint was null");
-                        continue;
-                    }
-                    StringBuilder lint_sb = new StringBuilder();
-                    lint_sb.Append('[');
-                    for (int jj = 0; jj < parser.lint.Count; jj++)
-                    {
-                        lint_sb.Append(parser.lint[jj].message);
-                        if (jj < parser.lint.Count - 1) lint_sb.Append(", ");
-                    }
-                    lint_sb.Append("]");
-                    string lint_str = lint_sb.ToString();
-                    try
-                    {
-                        if (!jdesired.Equals(result) || lint_str != expected_lint_str)
-                        {
-                            tests_failed++;
-                            Console.WriteLine($"{base_message}Instead returned\n{result.ToString()} and had lint {lint_str}");
-                        }
-                    }
-                    catch
-                    {
-                        tests_failed++;
-                        Console.WriteLine($"{base_message}Instead returned\n{result.ToString()} and had lint {lint_str}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"{base_message}Instead threw exception\n{ex}");
-                }
-            }
-
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-
-        #endregion
-    }
+    #endregion
+        
 }

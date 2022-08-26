@@ -3,7 +3,6 @@ A query language for JSON.
 */
 using System;
 using System.Collections.Generic;
-using System.Diagnostics; // for Stopwatch class
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -294,7 +293,7 @@ namespace JSON_Tools.JSON_Tools
                             JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
-                                foreach (Key_Node kv in multi_idx_func(xarr.children[ii], path + ',' + ii.ToString(), paths_visited))
+                                foreach (Key_Node kv in multi_idx_func(xarr[ii], path + ',' + ii.ToString(), paths_visited))
                                 {
                                     yield return kv;
                                 }
@@ -313,7 +312,7 @@ namespace JSON_Tools.JSON_Tools
                                     if (path == "") path = strv;
                                     foreach (string k in xobj.children.Keys)
                                     {
-                                        JNode val = xobj.children[k];
+                                        JNode val = xobj[k];
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (k == strv)
                                         {
@@ -333,7 +332,7 @@ namespace JSON_Tools.JSON_Tools
                                     if (path == "") path = regv.ToString();
                                     foreach (string k in xobj.children.Keys)
                                     {
-                                        JNode val = xobj.children[k];
+                                        JNode val = xobj[k];
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (regv.IsMatch(k))
                                         {
@@ -407,7 +406,7 @@ namespace JSON_Tools.JSON_Tools
                             int ii = Convert.ToInt32(ind);
                             if (ii >= xarr.Length) { continue; }
                             // allow negative indices for consistency with how slicers work
-                            yield return new Key_Node(0, xarr.children[ii >= 0 ? ii : ii + xarr.Length]);
+                            yield return new Key_Node(0, xarr[ii >= 0 ? ii : ii + xarr.Length]);
                         }
                     }
                 }
@@ -419,7 +418,7 @@ namespace JSON_Tools.JSON_Tools
         {
             foreach (string ok in obj.children.Keys)
             {
-                JNode val = obj.children[ok];
+                JNode val = obj[ok];
                 if (regex.IsMatch(ok))
                 {
                     yield return new Key_Node(ok, val);
@@ -448,7 +447,7 @@ namespace JSON_Tools.JSON_Tools
                             JObject xobj = (JObject)x;
                             foreach (string key in xobj.children.Keys)
                             {
-                                yield return new Key_Node(key, xobj.children[key]);
+                                yield return new Key_Node(key, xobj[key]);
                             }
                         }
                         else if (x.type == Dtype.ARR)
@@ -456,7 +455,7 @@ namespace JSON_Tools.JSON_Tools
                             JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
-                                yield return new Key_Node(ii, xarr.children[ii]);
+                                yield return new Key_Node(ii, xarr[ii]);
                             }
                         }
                     }
@@ -473,7 +472,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     foreach (string key in xobj.children.Keys)
                     {
-                        JNode xval = xobj.children[key];
+                        JNode xval = xobj[key];
                         bool i_has_key = iobj.children.TryGetValue(key, out JNode ival);
                         if (i_has_key)
                         {
@@ -499,8 +498,8 @@ namespace JSON_Tools.JSON_Tools
                     }
                     for (int ii = 0; ii < xarr.Length; ii++)
                     {
-                        JNode ival = iarr.children[ii];
-                        JNode xval = xarr.children[ii];
+                        JNode ival = iarr[ii];
+                        JNode xval = xarr[ii];
                         if (ival.type != Dtype.BOOL)
                         {
                             throw new VectorizedArithmeticException("bool index contains non-booleans");
@@ -523,14 +522,14 @@ namespace JSON_Tools.JSON_Tools
                 var xobj = (JObject)x;
                 foreach (string key in xobj.children.Keys)
                 {
-                    yield return new Key_Node(key, xobj.children[key]);
+                    yield return new Key_Node(key, xobj[key]);
                 }
                 yield break;
             }
             var xarr = (JArray)x;
             for (int ii = 0; ii < xarr.Length; ii++)
             {
-                yield return new Key_Node(ii, xarr.children[ii]);
+                yield return new Key_Node(ii, xarr[ii]);
             }
         }
 
@@ -699,7 +698,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 foreach (string key in robj.children.Keys)
                 {
-                    JNode right_val = robj.children[key];
+                    JNode right_val = robj[key];
                     bool left_has_key = lobj.children.TryGetValue(key, out JNode left_val);
                     if (!left_has_key)
                     {
@@ -718,7 +717,7 @@ namespace JSON_Tools.JSON_Tools
             }
             for (int ii = 0; ii < rarr.Length; ii++)
             {
-                arr.Add(b.Call(larr.children[ii], rarr.children[ii]));
+                arr.Add(b.Call(larr[ii], rarr[ii]));
             }
             return new JArray(0, arr);
         }
@@ -731,7 +730,7 @@ namespace JSON_Tools.JSON_Tools
                 var lobj = (JObject)left;
                 foreach (string key in lobj.children.Keys)
                 {
-                    dic[key] = b.Call(lobj.children[key], right);
+                    dic[key] = b.Call(lobj[key], right);
                 }
                 return new JObject(0, dic);
             }
@@ -739,7 +738,7 @@ namespace JSON_Tools.JSON_Tools
             var larr = (JArray)left;
             for (int ii = 0; ii < larr.Length; ii++)
             {
-                arr.Add(b.Call(larr.children[ii], right));
+                arr.Add(b.Call(larr[ii], right));
             }
             return new JArray(0, arr);
         }
@@ -752,7 +751,7 @@ namespace JSON_Tools.JSON_Tools
                 var robj = (JObject)right;
                 foreach (string key in robj.children.Keys)
                 {
-                    dic[key] = b.Call(left, robj.children[key]);
+                    dic[key] = b.Call(left, robj[key]);
                 }
                 return new JObject(0, dic);
             }
@@ -760,7 +759,7 @@ namespace JSON_Tools.JSON_Tools
             var rarr = (JArray)right;
             for (int ii = 0; ii < rarr.Length; ii++)
             {
-                arr.Add(b.Call(left, rarr.children[ii]));
+                arr.Add(b.Call(left, rarr[ii]));
             }
             return new JArray(0, arr);
         }
@@ -998,7 +997,7 @@ namespace JSON_Tools.JSON_Tools
                                 var otbl = (JObject)itbl;
                                 foreach (string key in otbl.children.Keys)
                                 {
-                                    all_args[0] = otbl.children[key];
+                                    all_args[0] = otbl[key];
                                     dic[key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
@@ -1040,7 +1039,7 @@ namespace JSON_Tools.JSON_Tools
                                 var otbl = (JObject)itbl;
                                 foreach (string key in otbl.children.Keys)
                                 {
-                                    all_args[0] = otbl.children[key];
+                                    all_args[0] = otbl[key];
                                     dic[key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
@@ -1079,7 +1078,7 @@ namespace JSON_Tools.JSON_Tools
                             }
                             foreach (string key in xobj.children.Keys)
                             {
-                                all_args[0] = xobj.children[key];
+                                all_args[0] = xobj[key];
                                 dic[key] = func.function.Call(all_args);
                             }
                             return new JObject(0, dic);
@@ -1137,7 +1136,7 @@ namespace JSON_Tools.JSON_Tools
                         var dic = new Dictionary<string, JNode>();
                         foreach (string key in xobj.children.Keys)
                         {
-                            all_args[0] = xobj.children[key];
+                            all_args[0] = xobj[key];
                             dic[key] = func.function.Call(all_args);
                         }
                         return new JObject(0, dic);
@@ -1956,469 +1955,4 @@ namespace JSON_Tools.JSON_Tools
         }
         #endregion
     }
-
-    #region TEST_CLASSES
-    public class SliceTester
-    {
-        public static void Test()
-        {
-            int[] onetofive = new int[] { 1, 2, 3, 4, 5 };
-            var testcases = new object[][]
-            {
-                new object[]{ onetofive, 2, null, null, new int[]{1, 2} },
-                new object[]{ onetofive, null, null, null, onetofive },
-                new object[]{ onetofive, null, 1, null, new int[]{1} },
-                new object[]{ onetofive, 1, 3, null, new int[]{2, 3} },
-                new object[]{ onetofive, 1, 4, 2, new int[]{2, 4} },
-                new object[]{ onetofive, 2, null, -1, new int[]{3, 2, 1} },
-                new object[]{ onetofive, 4, 1, -2, new int[]{5, 3} },
-                new object[]{ onetofive, 1, null, 3, new int[]{2, 5} },
-                new object[]{ onetofive, 4, 2, -1, new int[]{5, 4} },
-                new object[]{ onetofive, -3, null, null, new int[]{1,2} },
-                new object[]{ onetofive, -4, -1, null, new int[]{2,3,4} },
-                new object[]{ onetofive, -4, null, 2, new int[]{2, 4} },
-                new object[]{ onetofive, null, -3, null, new int[]{1,2} },
-                new object[]{ onetofive, -3, null, 1, new int[]{3,4,5} },
-                new object[]{ onetofive, -3, null, -1, new int[]{3,2,1} },
-                new object[]{ onetofive, -1, 1, -2, new int[]{5, 3} },
-                new object[]{ onetofive, 1, -1, null, new int[]{2,3,4} },
-                new object[]{ onetofive, -4, 4, null, new int[]{2,3,4} },
-                new object[]{ onetofive, -4, 4, 2, new int[]{2, 4} },
-                new object[]{ onetofive, 2, -2, 2, new int[]{3} },
-                new object[]{ onetofive, -4, null, -2, new int[]{2} },
-                new object[]{ onetofive, 2, 1, null, new int[]{ } }
-            };
-            //(int[] input, int start, int stop, int stride, int[] desired)
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (object[] stuff in testcases)
-            {
-                int[] input = (int[])stuff[0], desired = (int[])stuff[4];
-                int start = (int)stuff[1], stop = (int)stuff[2], stride = (int)stuff[3];
-                int[] output = (int[])input.Slice(start, stop, stride);
-                // verify that it works for both arrays and Lists, because both implement IList
-                List<int> list_output = (List<int>)(new List<int>(input)).Slice(start, stop, stride);
-                var sb_desired = new StringBuilder();
-                sb_desired.Append('{');
-                foreach (int desired_value in desired)
-                {
-                    sb_desired.Append(desired_value.ToString());
-                    sb_desired.Append(", ");
-                }
-                sb_desired.Append('}');
-                string str_desired = sb_desired.ToString();
-                var sb_output = new StringBuilder();
-                sb_output.Append('{');
-                foreach (int value in output)
-                {
-                    sb_output.Append(value.ToString());
-                    sb_output.Append(", ");
-                }
-                sb_output.Append('}');
-                string str_output = sb_output.ToString();
-                if (str_output != str_desired)
-                {
-
-                    tests_failed++;
-                    Console.WriteLine(String.Format("Test {0} ({1}.Slice({2}, {3}, {4})) failed:\n" +
-                                                    "Expected\n{5}\nGot\n{6}",
-                                                    ii+1, input, start, stop, stride, str_desired, str_output));
-                }
-                ii++;
-                var sb_list_output = new StringBuilder();
-                sb_list_output.Append('{');
-                foreach (int value in list_output)
-                {
-                    sb_list_output.Append(value.ToString());
-                    sb_list_output.Append(", ");
-                }
-                sb_list_output.Append('}');
-                string str_list_output = sb_list_output.ToString();
-                if (str_list_output != str_desired)
-                {
-
-                    tests_failed++;
-                    Console.WriteLine(String.Format("Test {0} ({1}.Slice({2}, {3}, {4})) failed:\n" +
-                                                    "Expected\n{5}\nGot\n{6}",
-                                                    ii+1, input, start, stop, stride, str_desired, str_list_output));
-                }
-                ii++;
-            }
-            var str_testcases = new object[][]
-            {
-                new object[]{ onetofive, "2", new int[]{1, 2} },
-                new object[]{ onetofive, ":", onetofive },
-                new object[]{ onetofive, ":1", new int[]{1} },
-                new object[]{ onetofive, "1:3", new int[]{2, 3} },
-                new object[]{ onetofive, "1::3", new int[]{2, 5} },
-                new object[]{ onetofive, "1:4:2", new int[]{2, 4} },
-                new object[]{ onetofive, "2::-1", new int[]{3, 2, 1} },
-                new object[]{ onetofive, "4:1:-2", new int[]{5, 3} },
-                new object[]{ onetofive, "1::3", new int[]{2, 5} },
-                new object[]{ onetofive, "4:2:-1", new int[]{5, 4} },
-                new object[]{ onetofive, "-3", new int[]{1,2} },
-                new object[]{ onetofive, "-4:-1", new int[]{2,3,4} },
-                new object[]{ onetofive, "-4::2", new int[]{2, 4} },
-                new object[]{ onetofive, ":-3", new int[]{1,2} },
-                new object[]{ onetofive, "-3::1", new int[]{3,4,5} },
-                new object[]{ onetofive, "-3:", new int[]{3,4,5} },
-                new object[]{ onetofive, "-3::-1", new int[]{3,2,1} },
-                new object[]{ onetofive, "-1:1:-2", new int[]{5, 3} },
-                new object[]{ onetofive, "1:-1", new int[]{2,3,4} },
-                new object[]{ onetofive, "-4:4", new int[]{2,3,4} },
-                new object[]{ onetofive, "-4:4:2", new int[]{2, 4} },
-                new object[]{ onetofive, "2:-2:2", new int[]{3} },
-                new object[]{ onetofive, "3::5", new int[]{4} },
-                new object[]{ onetofive, "5:", new int[]{ } },
-                new object[]{ onetofive, "3:8", new int[]{4, 5} },
-                new object[]{ onetofive, "-2:15", new int[]{4,5} }
-            };
-            // test string slicer
-            foreach (object[] inp_sli_desired in str_testcases)
-            {
-                int[] inp = (int[])inp_sli_desired[0];
-                string slicer = (string)inp_sli_desired[1];
-                int[] desired = (int[])inp_sli_desired[2];
-                int[] output = (int[])inp.Slice(slicer);
-                var sb_desired = new StringBuilder();
-                sb_desired.Append('{');
-                foreach (int desired_value in desired)
-                {
-                    sb_desired.Append(desired_value.ToString());
-                    sb_desired.Append(", ");
-                }
-                sb_desired.Append('}');
-                string str_desired = sb_desired.ToString();
-                var sb_output = new StringBuilder();
-                sb_output.Append('{');
-                foreach (int value in output)
-                {
-                    sb_output.Append(value.ToString());
-                    sb_output.Append(", ");
-                }
-                sb_output.Append('}');
-                string str_output = sb_output.ToString();
-                if (str_output != str_desired)
-                {
-
-                    tests_failed++;
-                    Console.WriteLine(String.Format("Test {0} ({1}.Slice(\"{2}\")) failed:\n" +
-                                                    "Expected\n{3}\nGot\n{4}",
-                                                    ii+1, inp, slicer, str_desired, str_output));
-                }
-                ii++;
-            }
-
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-    }
-
-    public class RemesParserTester
-    {
-        public struct Query_DesiredResult
-        {
-            public string query;
-            public string desired_result;
-
-            public Query_DesiredResult(string query, string desired_result)
-            {
-                this.query = query;
-                this.desired_result = desired_result;
-            }
-        }
-
-        public static void Test()
-        {
-            JsonParser jsonParser = new JsonParser();
-            JNode foo = jsonParser.Parse("{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
-                                           "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
-                                           "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}");
-            RemesParser remesparser = new RemesParser();
-            Console.WriteLine($"The queried JSON in the RemesParser tests is:{foo.ToString()}");
-            var testcases = new Query_DesiredResult[]
-            {
-                // binop precedence tests
-                new Query_DesiredResult("2 - 4 * 3.5", "-12.0"),
-                new Query_DesiredResult("2 / 3 - 4 * 5 ** 1", "-58/3"),
-                new Query_DesiredResult("5 ** (6 - 2)", "625.0"),
-                // binop two jsons, binop json scalar, binop scalar json tests
-                new Query_DesiredResult("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
-                new Query_DesiredResult("@.foo[0] + j`[3.0, 4.0, 5.0]`", "[3.0, 5.0, 7.0]"),
-                new Query_DesiredResult("j`[0, 1, 2]` + @.foo[1]", "[3.0, 5.0, 7.0]"),
-                new Query_DesiredResult("1 + @.foo[0]", "[1, 2, 3]"),
-                new Query_DesiredResult("@.foo[0] + 1", "[1, 2, 3]"),
-                new Query_DesiredResult("1 + j`[0, 1, 2]`", "[1, 2, 3]"),
-                new Query_DesiredResult("j`[0, 1, 2]` + 1", "[1, 2, 3]"),
-                new Query_DesiredResult("`a` + str(range(3))", "[\"a0\", \"a1\", \"a2\"]"),
-                new Query_DesiredResult("str(range(3)) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
-                new Query_DesiredResult("str(@.foo[0]) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
-                new Query_DesiredResult("`a` + str(@.foo[0])", "[\"a0\", \"a1\", \"a2\"]"),
-                // uminus tests
-                new Query_DesiredResult("-j`[1]`", "[-1]"),
-                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -1/8]"),
-                new Query_DesiredResult("-@.foo[2]", "[-6.0, -7.0, -8.0]"),
-                new Query_DesiredResult("2/--3", "2/3"),
-                // indexing tests
-                new Query_DesiredResult("@.baz", "\"z\""),
-                new Query_DesiredResult("@.foo[0]", "[0, 1, 2]"),
-                new Query_DesiredResult("@[g`^b`]", "{\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\"}"),
-                new Query_DesiredResult("@.foo[1][@ > 3.5]", "[4.0, 5.0]"),
-                new Query_DesiredResult("@.foo[-2:]", "[[3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
-                new Query_DesiredResult("@.foo[:3:2]", "[[0, 1, 2], [6.0, 7.0, 8.0]]"),
-                new Query_DesiredResult("@[foo, jub]", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], \"jub\": []}"),
-                new Query_DesiredResult("@[foo, jub][2]", "{\"foo\": [6.0, 7.0, 8.0]}"),
-                new Query_DesiredResult("@[foo][0][0,2]", "[0, 2]"),
-                new Query_DesiredResult("@[foo][0][0, 2:]", "[0, 2]"),
-                new Query_DesiredResult("@[foo][0][2:, 0]", "[2, 0]"),
-                new Query_DesiredResult("@[foo][0][0, 2:, 1] ", "[0, 2, 1]"),
-                new Query_DesiredResult("@[foo][0][:1, 2:]", "[0, 2]"),
-                new Query_DesiredResult("@[foo][0][0, 2:4]", "[0, 2]"),
-                new Query_DesiredResult("@[foo][0][3:, 0]", "[0]"),
-                new Query_DesiredResult("@.*", foo.ToString()),
-                new Query_DesiredResult("@.foo[*]", "[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
-                new Query_DesiredResult("@.foo[:2][2*@[0] >= @[1]]", "[[3.0, 4.0, 5.0]]"),
-                new Query_DesiredResult("@.foo[-1]", "[6.0, 7.0, 8.0]"),
-                new Query_DesiredResult("@.g`[a-z]oo`", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]}"),
-                // ufunction tests
-                new Query_DesiredResult("len(@)", ((JObject)foo).Length.ToString()),
-                new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
-                new Query_DesiredResult("in(1, @.foo[0])", "true"),
-                new Query_DesiredResult("in(4.0, @.foo[0])", "false"),
-                new Query_DesiredResult("in(`foo`, @)", "true"),
-                new Query_DesiredResult("in(`fjdkfjdkuren`, @)", "false"),
-                new Query_DesiredResult("range(2, len(@)) * 3", "[6, 9, 12, 15, 18, 21]"),
-                new Query_DesiredResult("sort_by(@.foo, 0, true)[:2]", "[[6.0, 7.0, 8.0], [3.0, 4.0, 5.0]]"),
-                new Query_DesiredResult("mean(flatten(@.foo[0]))", "1.0"),
-                new Query_DesiredResult("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
-                new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
-                new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
-                new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"),
-                new Query_DesiredResult("isna(@.foo[0])", "[false, false, false]"),
-                new Query_DesiredResult("s_slice(@.bar.b, 2)", "[\"g\", \"h\"]"),
-                new Query_DesiredResult("s_slice(@.bar.b, ::2)", "[\"ag\", \"bh\"]"),
-                new Query_DesiredResult("str(@.foo[2])", "[\"6.0\", \"7.0\", \"8.0\"]"),
-                new Query_DesiredResult("int(@.foo[1])", "[3, 4, 5]"),
-                new Query_DesiredResult("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
-                new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
-                new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
-                new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
-                new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\tbah\""),
-                new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
-                new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
-                new Query_DesiredResult("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
-                new Query_DesiredResult("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
-                new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
-                new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
-                new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
-				new Query_DesiredResult("round(@.foo[0] * 1.66)", "[0, 2, 3]"),
-				new Query_DesiredResult("round(@.foo[0] * 1.66, 1)", "[0.0, 1.7, 3.3]"),
-                new Query_DesiredResult("round(@.foo[0] * 1.66, 2)", "[0.0, 1.66, 3.32]"),
-                new Query_DesiredResult("s_find(@.bar.b, g`[a-z]+`)", "[[\"a\", \"g\"], [\"bah\"]]"),
-                new Query_DesiredResult("s_count(@.bar.b, `a`)", "[1, 1]"),
-                new Query_DesiredResult("s_count(@.bar.b, g`[a-z]`)", "[2, 3]"),
-                new Query_DesiredResult("ifelse(@.foo[0] > quantile(@.foo[0], 0.5), `big`, `small`)", "[\"small\", \"small\", \"big\"]"),
-                new Query_DesiredResult("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
-                new Query_DesiredResult("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
-                new Query_DesiredResult("s_strip(` a dog!\t`)", "\"a dog!\""),
-                new Query_DesiredResult("log(@.foo[0] + 1)", $"[0.0, {Math.Log(2)}, {Math.Log(3)}]"),
-                new Query_DesiredResult("log2(@.foo[1])", $"[{Math.Log(3, 2)}, 2.0, {Math.Log(5, 2)}]"),
-                new Query_DesiredResult("abs(j`[-1, 0, 1]`)", "[1, 0, 1]"),
-                new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
-                new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
-                new Query_DesiredResult("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
-                new Query_DesiredResult("group_by(@.foo, 0)", "{\"0\": [[0, 1, 2]], \"3.0\": [[3.0, 4.0, 5.0]], \"6.0\": [[6.0, 7.0, 8.0]]}"),
-                new Query_DesiredResult("group_by(j`[{\"foo\": 1, \"bar\": \"a\"}, {\"foo\": 2, \"bar\": \"b\"}, {\"foo\": 3, \"bar\": \"b\"}]`, bar).*{`sum`: sum(@[:].foo), `count`: len(@)}", "{\"a\": {\"sum\": 1.0, \"count\": 1}, \"b\": {\"sum\": 5.0, \"count\": 2}}"),
-                //("agg_by(@.foo, 0, sum(flatten(@)))", "{\"0\": 3.0, \"3.0\": 11.0, \"6.0\": 21.0}"),
-                new Query_DesiredResult("index(j`[1,3,2,3,1]`, max(j`[1,3,2,3,1]`), true)", "3"),
-                new Query_DesiredResult("index(@.foo[0], min(@.foo[0]))", "0"),
-                new Query_DesiredResult("zip(j`[1,2,3]`, j`[\"a\", \"b\", \"c\"]`)", "[[1, \"a\"], [2, \"b\"], [3, \"c\"]]"),
-                new Query_DesiredResult("zip(@.foo[0], @.foo[1], @.foo[2], j`[-20, -30, -40]`)", "[[0, 3.0, 6.0, -20], [1, 4.0, 7.0, -30], [2, 5.0, 8.0, -40]]"),
-                new Query_DesiredResult("dict(zip(keys(@.bar), j`[1, 2]`))", "{\"a\": 1, \"b\": 2}"),
-                new Query_DesiredResult("dict(items(@))", foo.ToString()),
-                new Query_DesiredResult("dict(j`[[\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"a\": 1, \"b\": 2, \"c\": 3}"),
-                new Query_DesiredResult("items(j`{\"a\": 1, \"b\": 2, \"c\": 3}`)", "[[\"a\", 1], [\"b\", 2], [\"c\", 3]]"),
-                new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
-                new Query_DesiredResult("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
-                    "[0, 0, 0, 0, 0, 0, 1, 0, 0]"),
-                new Query_DesiredResult("range(-10)", "[]"),
-                new Query_DesiredResult("range(-3, -5, -1)", "[-3, -4]"),
-                new Query_DesiredResult("range(2, 19, -5)", "[]"),
-                new Query_DesiredResult("range(2, 19, 5)", "[2, 7, 12, 17]"),
-                new Query_DesiredResult("range(3)", "[0, 1, 2]"),
-                new Query_DesiredResult("range(3, 5)", "[3, 4]"),
-                new Query_DesiredResult("range(-len(@))", "[]"),
-                new Query_DesiredResult("range(0, -len(@))", "[]"),
-                new Query_DesiredResult("range(0, len(@) - len(@))", "[]"),
-                new Query_DesiredResult("range(0, -len(@) + len(@))", "[]"), 
-                // uminus'd CurJson appears to be causing problems with other arithmetic binops as the second arg to the range function
-                new Query_DesiredResult("range(0, -len(@) - len(@))", "[]"),
-                new Query_DesiredResult("range(0, -len(@) * len(@))", "[]"),
-                new Query_DesiredResult("range(0, 5, -len(@))", "[]"),
-                new Query_DesiredResult("-len(@) + len(@)", "0"), // see if binops of uminus'd CurJson are also causing problems when they're not the second arg to the range function
-                new Query_DesiredResult("-len(@) * len(@)", (-(((JObject)foo).Length * ((JObject)foo).Length)).ToString()),
-                new Query_DesiredResult("abs(-len(@) + len(@))", "0"), // see if other functions (not just range) of binops of uminus'd CurJson cause problems
-                new Query_DesiredResult("range(0, abs(-len(@) + len(@)))", "[]"),
-                new Query_DesiredResult("range(0, -abs(-len(@) + len(@)))", "[]"),
-                // parens tests
-                new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
-                new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
-                // projection tests
-                new Query_DesiredResult("@{@.jub, @.quz}", "[[], {}]"),
-                new Query_DesiredResult("@.foo{foo: @[0], bar: @[1][:2]}", "{\"foo\": [0, 1, 2], \"bar\": [3.0, 4.0]}"),
-                new Query_DesiredResult("sorted(flatten(@.guzo, 2)){`min`: @[0], `max`: @[-1], `tot`: sum(@)}", "{\"min\": 1, \"max\": 3, \"tot\": 6}"),
-                new Query_DesiredResult("(@.foo[:]{`max`: max(@), `min`: min(@)})[0]", "{\"max\": 2.0, \"min\": 0.0}"),
-                new Query_DesiredResult("len(@.foo[:]{blah: 1})", "3"),
-                new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
-                new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
-                // recursive search
-                new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
-                new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
-                new Query_DesiredResult("@..`7`[0].foo", "[2]"),
-                new Query_DesiredResult("@._..`0`", "[0]"),
-                new Query_DesiredResult("@.bar..[a, b]", "[false, [\"a`g\", \"bah\"]]"),
-                new Query_DesiredResult("@.bar..c", "{}"),
-                new Query_DesiredResult("@.bar..[a, c]", "[false]"),
-                new Query_DesiredResult("@.`7`..foo", "[2]"),
-            };
-            int ii = 0;
-            int tests_failed = 0;
-            JNode result;
-            foreach (Query_DesiredResult qd in testcases)
-            {
-                ii++;
-                JNode jdesired_result = jsonParser.Parse(qd.desired_result);
-                try
-                {
-                    result = remesparser.Search(qd.query, foo);
-                }
-                catch (Exception ex)
-                {
-                    tests_failed++;
-                    Console.WriteLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, but instead threw" +
-                                      $" an exception:\n{ex}");
-                    continue;
-                }
-                if (result.type != jdesired_result.type || !result.Equals(jdesired_result))
-                {
-                    tests_failed++;
-                    Console.WriteLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
-                                      $"but instead got {result.ToString()}.");
-                }
-            }
-
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-    }
-
-    public class RemesPathBenchmarker
-    {
-        /// <summary>
-        /// Repeatedly parse the JSON of a large file (big_random.json, about 1MB, containing nested arrays, dicts,
-        /// with ints, floats and strings as scalars)<br></br>
-        /// Also repeatedly run a Remespath query on the JSON.<br></br>
-        /// MOST RECENT RESULTS:<br></br>
-        /// To convert JSON string of size 975068 into JNode took 185.589 +/- 53.713 ms over 14 trials
-        /// Load times(ms): 214,175,222,181,267,248,229,171,175,248,139,121,114,87
-        /// Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" took 0.056 ms(one-time cost b/c caching)
-        /// To run query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 1.854 +/- 3.915 ms over 14 trials
-        /// Query times(ms) : 1.718,1.709,1.024,0.92,0.836,0.756,15.882,0.666,0.438,0.385,0.386,0.364,0.41,0.454<br></br>
-        /// For reference, the Python standard library JSON parser is about 10x FASTER than JsonParser.Parse,<br></br>
-        /// and my Python remespath implementation is 10-30x SLOWER than this remespath implementation.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="num_trials"></param>
-        public static void Benchmark(string query, string fname, int num_trials = 8)
-        {
-            // setup
-            JsonParser jsonParser = new JsonParser();
-            Stopwatch watch = new Stopwatch();
-            string jsonstr = File.ReadAllText(fname);
-            int len = jsonstr.Length;
-            long[] load_times = new long[num_trials];
-            JNode json = new JNode(null, Dtype.NULL, 0);
-            // benchmark time to load json
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                json = jsonParser.Parse(jsonstr);
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                load_times[ii] = t;
-            }
-            // display loading results
-            string json_preview = json.ToString().Slice(":300") + "\n...";
-            Console.WriteLine($"Preview of json: {json_preview}");
-            double[] mu_sd = GetMeanAndSd(load_times);
-            Console.WriteLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mu_sd[0])} +/- {ConvertTicks(mu_sd[1])} " +
-                $"ms over {load_times.Length} trials");
-            var load_times_str = new string[load_times.Length];
-            for (int ii = 0; ii < load_times.Length; ii++)
-            {
-                load_times_str[ii] = (load_times[ii] / 10000).ToString();
-            }
-            Console.WriteLine($"Load times (ms): {String.Join(", ", load_times_str)}");
-            // time remespath query
-            long[] query_times = new long[num_trials];
-            RemesParser parser = new RemesParser();
-            JNode result = new JNode(null, Dtype.NULL, 0);
-            watch.Start();
-            Func<JNode, JNode> query_func = ((CurJson)parser.Compile(query)).function;
-            watch.Stop();
-            long compile_time = watch.Elapsed.Ticks;
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                result = query_func(json);
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                query_times[ii] = t;
-            }
-            // display querying results
-            mu_sd = GetMeanAndSd(query_times);
-            double mu = mu_sd[0];
-            double sd = mu_sd[1];
-            Console.WriteLine($"Compiling query \"{query}\" took {ConvertTicks(compile_time)} ms (one-time cost b/c caching)");
-            Console.WriteLine($"To run query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {load_times.Length} trials");
-            var query_times_str = new string[query_times.Length];
-            for (int ii = 0; ii < query_times.Length; ii++)
-            {
-                query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString();
-            }
-            Console.WriteLine($"Query times (ms): {String.Join(", ", query_times_str)}");
-            string result_preview = result.ToString().Slice(":300") + "\n...";
-            Console.WriteLine($"Preview of result: {result_preview}");
-        }
-
-        public static double[] GetMeanAndSd(long[] times)
-        {
-            double mu = 0;
-            foreach (int t in times) { mu += t; }
-            mu /= times.Length;
-            double sd = 0;
-            foreach (int t in times)
-            {
-                double diff = t - mu;
-                sd += diff * diff;
-            }
-            sd = Math.Sqrt(sd / times.Length);
-            return new double[] { mu, sd };
-        }
-
-        public static double ConvertTicks(double ticks, string new_unit = "ms", int sigfigs = 3)
-        {
-            switch (new_unit)
-            {
-                case "ms": return Math.Round(ticks / 1e4, 3);
-                case "s": return Math.Round(ticks / 1e7, 3);
-                case "ns": return Math.Round(ticks * 100, 3);
-                case "mus": return Math.Round(ticks / 10, 3);
-                default: throw new ArgumentException("Time unit must be s, mus, ms, or ns");
-            }
-        }
-    }
-    #endregion
 }

@@ -1,5 +1,6 @@
 ﻿// NPP plugin platform for .Net v0.91.57 by Kasper B. Graversen etc.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
@@ -9,71 +10,72 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Kbg.Demo.Namespace.Properties;
 using Kbg.NppPluginNET.PluginInfrastructure;
-using NppPluginNET.PluginInfrastructure;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 //using JSON_Viewer.Forms;
+using JSON_Tools.Tests;
 using static Kbg.NppPluginNET.PluginInfrastructure.Win32;
 
-namespace Kbg.NppPluginNET
-{
+//namespace Kbg.NppPluginNET
+//{
     /// <summary>
     /// Integration layer as the demo app uses the pluginfiles as soft-links files.
     /// This is different to normal plugins that would use the project template and get the files directly.
     /// </summary>
-    class Main
-    {
-        static internal void CommandMenuInit()
-        {
-            Kbg.Demo.Namespace.Main.CommandMenuInit();
-        }
+    //class Main
+    //{
+    //    static internal void CommandMenuInit()
+    //    {
+    //        Kbg.Demo.Namespace.Main.CommandMenuInit();
+    //    }
 
-        static internal void PluginCleanUp()
-        {
-            Kbg.Demo.Namespace.Main.PluginCleanUp();
-        }
+    //    static internal void PluginCleanUp()
+    //    {
+    //        Kbg.Demo.Namespace.Main.PluginCleanUp();
+    //    }
 
-        static internal void SetToolBarIcon()
-        {
-            Kbg.Demo.Namespace.Main.SetToolBarIcon();
-        }
+    //    static internal void SetToolBarIcon()
+    //    {
+    //        Kbg.Demo.Namespace.Main.SetToolBarIcon();
+    //    }
 
-        public static void OnNotification(ScNotification notification)
-        {
-            if (notification.Header.Code == (uint)SciMsg.SCN_CHARADDED)
-            {
-                Kbg.Demo.Namespace.Main.doInsertHtmlCloseTag((char)notification.Character);
-            }
-        }
+    //    internal static string PluginName { get { return Kbg.Demo.Namespace.Main.PluginName; }}
+    //}
+//}
 
-        internal static string PluginName { get { return Kbg.Demo.Namespace.Main.PluginName; }}
-    }
-}
-
-namespace Kbg.Demo.Namespace
+namespace Kbg.NppPluginNET
 {
     class Main
     {
         #region " Fields "
         internal const string PluginName = "JsonTools";
         static string iniFilePath = null;
-        static string sectionName = "Insert Extension";
-        static string keyName = "doCloseTag";
-        static bool doCloseTag = false;
-        static string sessionFilePath = @"C:\text.session";
-        static frmGoToLine frmGoToLine = null;
-        static internal int idFrmGotToLine = -1;
+        static string sectionName = "Format JSON";
+        static string keyName = "LoadJson";
+        static bool shouldLoadJson = false;
+        //static string sessionFilePath = @"C:\text.session";
+        // json tools related things
+        public static Settings settings = new Settings();
+        public static JsonParser jsonParser = new JsonParser(settings.allow_datetimes,
+                                                            settings.allow_singlequoted_str,
+                                                            settings.allow_javascript_comments,
+                                                            settings.linting,
+                                                            false,
+                                                            settings.allow_nan_inf);
+        public static RemesParser remesParser = new RemesParser();
+        public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
+        public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
+        public static Dictionary<string, JNode> jsons = new Dictionary<string, JNode>();
+        public static Dictionary<string, DateTime> modtimes = new Dictionary<string, DateTime>();
 
         // toolbar icons
-        static Bitmap tbBmp = Properties.Resources.star;
-        static Bitmap tbBmp_tbTab = Properties.Resources.star_bmp;
-        static Icon tbIco = Properties.Resources.star_black_ico;
-        static Icon tbIcoDM = Properties.Resources.star_white_ico;
+        static Bitmap tbBmp = Resources.star;
+        static Bitmap tbBmp_tbTab = Resources.star_bmp;
+        static Icon tbIco = Resources.star_black_ico;
+        static Icon tbIcoDM = Resources.star_white_ico;
         static Icon tbIcon = null;
-
-        static IScintillaGateway editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
-        static INotepadPPGateway notepad = new NotepadPPGateway();
         #endregion
 
         #region " Startup/CleanUp "
@@ -102,7 +104,7 @@ namespace Kbg.Demo.Namespace
             iniFilePath = Path.Combine(iniFilePath, PluginName + ".ini");
 
             // get the parameter value from plugin config
-            doCloseTag = (Win32.GetPrivateProfileInt(sectionName, keyName, 0, iniFilePath) != 0);
+            //shouldLoadJson = Win32.GetPrivateProfileInt(sectionName, keyName, 0, iniFilePath) != 0;
 
             // with function :
             // SetCommand(int index,                            // zero based number to indicate the order of command
@@ -111,50 +113,17 @@ namespace Kbg.Demo.Namespace
             //            ShortcutKey *shortcut,                // optional. Define a shortcut to trigger this command
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
-            PluginBase.SetCommand(0, "Hello (with FX)", helloFX);
-            PluginBase.SetCommand(1, "What is Notepad++?", WhatIsNpp);
-            PluginBase.SetCommand(2, "Documentation", docs);
+            PluginBase.SetCommand(0, "Documentation", docs);
+            // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
+            PluginBase.SetCommand(1, "Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
+            PluginBase.SetCommand(2, "Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
+            PluginBase.SetCommand(3, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J));
 
             // Here you insert a separator
-            PluginBase.SetCommand(3, "---", null);
+            PluginBase.SetCommand(4, "---", null);
 
-            // Shortcut :
-            // Following makes the command bind to the shortcut Alt-F
-            PluginBase.SetCommand(4, "Current Full Path", insertCurrentFullPath, new ShortcutKey(false, true, false, Keys.F));
-            PluginBase.SetCommand(5, "Current File Name", insertCurrentFileName);
-            PluginBase.SetCommand(6, "Current Directory", insertCurrentDirectory);
-            PluginBase.SetCommand(7, "print nan and inf", printNanInf);
-            PluginBase.SetCommand(8, "Date && Time - long format", insertLongDateTime);
-
-            PluginBase.SetCommand(9, "Close HTML/XML tag automatically", checkInsertHtmlCloseTag, new ShortcutKey(false, true, false, Keys.Q), doCloseTag);
-
-            PluginBase.SetCommand(10, "---", null);
-
-            PluginBase.SetCommand(11, "Get Json file names", getFileNamesDemo);
-            PluginBase.SetCommand(12, "Get Session File Names Demo", getSessionFileNamesDemo);
-            PluginBase.SetCommand(13, "Save Current Session Demo", saveCurrentSessionDemo);
-
-            PluginBase.SetCommand(14, "---", null);
-
-            PluginBase.SetCommand(15, "Dockable Dialog Demo", DockableDlgDemo); idFrmGotToLine = 15;
-
-            PluginBase.SetCommand(16, "---", null);
-
-            PluginBase.SetCommand(17, "Print Scroll and Row Information", PrintScrollInformation);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        static void PrintScrollInformation()
-        {
-            ScrollInfo scrollInfo = editor.GetScrollInfo(ScrollInfoMask.SIF_RANGE | ScrollInfoMask.SIF_TRACKPOS | ScrollInfoMask.SIF_PAGE, ScrollInfoBar.SB_VERT);
-            var scrollRatio = (double)scrollInfo.nTrackPos / (scrollInfo.nMax - scrollInfo.nPage);
-            var scrollPercentage = Math.Min(scrollRatio, 1) * 100;
-            editor.ReplaceSel($@"The maximum row in the current document was {scrollInfo.nMax+1}.
-A maximum of {scrollInfo.nPage} rows is visible at a time.
-The current scroll ratio is {Math.Round(scrollPercentage, 2)}%.
-");
+            PluginBase.SetCommand(5, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(6, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
         }
 
         static internal void SetToolBarIcon()
@@ -172,22 +141,71 @@ The current scroll ratio is {Math.Round(scrollPercentage, 2)}%.
             Marshal.StructureToPtr(tbIcons, pTbIcons, false);
 
             // call Notepad++ api
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_ADDTOOLBARICON_FORDARKMODE, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, pTbIcons);
+            //Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_ADDTOOLBARICON_FORDARKMODE, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, pTbIcons);
 
             // release pointer
             Marshal.FreeHGlobal(pTbIcons);
         }
 
+        public static void OnNotification(ScNotification notification)
+        {
+            uint code = notification.Header.Code;
+            // This method is invoked whenever something is happening in notepad++
+            // use eg. as
+            // if (code == (uint)NppMsg.NPPN_xxx)
+            // { ... }
+            // or
+            //
+            // if (code == (uint)SciMsg.SCNxxx)
+            // { ... }
+
+            // changing tabs
+            //if ((code == (uint)NppMsg.NPPN_BUFFERACTIVATED) ||
+            //    (code == (uint)NppMsg.NPPN_LANGCHANGED))
+            //{
+            //    Main.LoadJson();
+            //}
+
+            //// when closing a file
+            //if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
+            //{
+            //    Main.RemoveJson();
+            //}
+
+            //if (code > int.MaxValue) // windows messages
+            //{
+            //    int wm = -(int)code;
+            //    // leaving previous tab
+            //    if (wm == 0x22A && sShouldResetCaretBack) // =554 WM_MDI_SETACTIVE
+            //    {
+            //        // set caret line to default on file change
+            //        sShouldResetCaretBack = false;
+            //        var editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
+            //        editor.SetCaretLineBackAlpha(sAlpha);// Alpha.NOALPHA); // default
+            //        editor.SetCaretLineBack(sCaretLineColor);
+            //    }
+            //}
+        }
+
+        //static void LoadJson()
+        //{
+        //    string fname = GetCurrentPath();
+        //    if (jsons.ContainsKey(fname))
+        //    {
+        //        DateTime modtime = modtimes[fname];
+        //    }
+        //}
+
         static internal void PluginCleanUp()
         {
-            Win32.WritePrivateProfileString(sectionName, keyName, doCloseTag ? "1" : "0", iniFilePath);
+            Win32.WritePrivateProfileString(sectionName, keyName, shouldLoadJson ? "1" : "0", iniFilePath);
         }
         #endregion
 
         #region " Menu functions "
         static void docs()
         {
-            string help_url = "https://github.com/molsonkiko/JsonToolsPlugin/tree/main/docs";
+            string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin";
             try
             {
                 var ps = new ProcessStartInfo(help_url)
@@ -206,214 +224,78 @@ The current scroll ratio is {Math.Round(scrollPercentage, 2)}%.
             }
         }
 
-        static void printNanInf()
+        static JNode TryParseJson()
         {
-            MessageBox.Show($"inf = {NanInf.inf}\nneginf = {NanInf.neginf}\nnan = {NanInf.nan}");
-        }
-
-        static void helloFX()
-        {
-            docs();
-            new Thread(callbackHelloFX).Start();
-        }
-
-        static void callbackHelloFX()
-        {
-            int currentZoomLevel = editor.GetZoom();
-            int i = currentZoomLevel;
-            for (int j = 0 ; j < 4 ; j++)
-            {    
-                for ( ; i >= -10; i--)
-                {
-                    editor.SetZoom(i);
-                    Thread.Sleep(30);
-                }
-                Thread.Sleep(100);
-                for ( ; i <= 20 ; i++)
-                {
-                    Thread.Sleep(30);
-                    editor.SetZoom(i);
-                }
-                Thread.Sleep(100);
-            }
-            for ( ; i >= currentZoomLevel ; i--)
+            int len = Npp.editor.GetLength();
+            string fname = GetCurrentPath();
+            string text = Npp.editor.GetText(len);
+            JNode json = new JNode(null, Dtype.NULL, 0);
+            try
             {
-                Thread.Sleep(30);
-                editor.SetZoom(i);
+                json = jsonParser.Parse(text);
             }
-        }
-
-        static void WhatIsNpp()
-        {
-            string text2display = "Notepad++ is a free (as in \"free speech\" and also as in \"free beer\") " +
-                "source code editor and Notepad replacement that supports several languages.\n" +
-                "Running in the MS Windows environment, its use is governed by GPL License.\n\n" +
-                "Based on a powerful editing component Scintilla, Notepad++ is written in C++ and " +
-                "uses pure Win32 API and STL which ensures a higher execution speed and smaller program size.\n" +
-                "By optimizing as many routines as possible without losing user friendliness, Notepad++ is trying " +
-                "to reduce the world carbon dioxide emissions. When using less CPU power, the PC can throttle down " +
-                "and reduce power consumption, resulting in a greener environment.";
-            new Thread(new ParameterizedThreadStart(callbackWhatIsNpp)).Start(text2display);
-        }
-
-        static void callbackWhatIsNpp(object data)
-        {
-            string text2display = (string)data;
-            notepad.FileNew();
-            string new_file_name = getCurrentPath(NppMsg.FULL_CURRENT_PATH);
-
-            Random srand = new Random(DateTime.Now.Millisecond);
-            int rangeMin = 0;
-            int rangeMax = 125;
-            for (int i = 0; i < text2display.Length; i++)
+            catch (Exception e)
             {
-                Thread.Sleep(srand.Next(rangeMin, rangeMax) + 30);
-                // stop adding new text if the user closes or switches out of the new file.
-                // otherwise you get this obnoxious addition of text to existing files.
-                string selected_file_name = getCurrentPath(NppMsg.FULL_CURRENT_PATH);
-                if (selected_file_name != new_file_name) break;
-                editor.AppendTextAndMoveCursor(text2display[i].ToString());
+                MessageBox.Show($"Could not parse the document because of error\n{e}",
+                                "Error while trying to parse JSON",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return null;
             }
-        }
-
-        static void insertCurrentFullPath()
-        {
-            editor.ReplaceSel(getCurrentPath(NppMsg.FULL_CURRENT_PATH));
-        }
-        static void insertCurrentFileName()
-        {
-            editor.ReplaceSel(getCurrentPath(NppMsg.FILE_NAME));
-        }
-        static void insertCurrentDirectory()
-        {
-            editor.ReplaceSel(getCurrentPath(NppMsg.CURRENT_DIRECTORY));
-        }
-        static string getCurrentPath(NppMsg which)
-        {
-            NppMsg msg = NppMsg.NPPM_GETFULLCURRENTPATH;
-            if (which == NppMsg.FILE_NAME)
-                msg = NppMsg.NPPM_GETFILENAME;
-            else if (which == NppMsg.CURRENT_DIRECTORY)
-                msg = NppMsg.NPPM_GETCURRENTDIRECTORY;
-
-            StringBuilder path = new StringBuilder(Win32.MAX_PATH);
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) msg, 0, path);
-
-            return path.ToString();
-        }
-
-        static void insertShortDateTime()
-        {
-            insertDateTime(false);
-        }
-        static void insertLongDateTime()
-        {
-            insertDateTime(true);
-        }
-        static void insertDateTime(bool longFormat)
-        {
-            string dateTime = string.Format("{0} {1}", DateTime.Now.ToShortTimeString(), longFormat ? DateTime.Now.ToLongDateString() : DateTime.Now.ToShortDateString());
-            editor.ReplaceSel(dateTime);
-        }
-
-        static void checkInsertHtmlCloseTag()
-        {
-            PluginBase.CheckMenuItemToggle(9, ref doCloseTag); // 9 = menu item index
-        }
-
-        static Regex XmlTagRegex = new Regex(@"[\._\-:\w]", RegexOptions.Compiled);
-
-        static internal void doInsertHtmlCloseTag(char newChar)
-        {
-            LangType docType = LangType.L_TEXT;
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETCURRENTLANGTYPE, 0, ref docType);
-            bool isDocTypeHTML = (docType == LangType.L_HTML || docType == LangType.L_XML || docType == LangType.L_PHP);
-
-            if (!doCloseTag || !isDocTypeHTML)
-                return;
-
-            if (newChar != '>')
-                return;
-
-            int bufCapacity = 512;
-            var pos = editor.GetCurrentPos();
-            int currentPos = pos;
-            int beginPos = currentPos - (bufCapacity - 1);
-            int startPos = (beginPos > 0) ? beginPos : 0;
-            int size = currentPos - startPos;
-
-            if (size < 3)
-                return;
-
-            using (TextRange tr = new TextRange(startPos, currentPos, bufCapacity))
+            if (jsonParser.lint != null && jsonParser.lint.Count > 0)
             {
-                editor.GetTextRange(tr);
-                string buf = tr.lpstrText;
-
-                if (buf[size - 2] == '/')
-                    return;
-
-                int pCur = size - 2;
-                while ((pCur > 0) && (buf[pCur] != '<') && (buf[pCur] != '>'))
-                    pCur--;
-
-                if (buf[pCur] == '<')
+                fname_lints[fname] = jsonParser.lint.ToArray();
+                string msg = $"There were {jsonParser.lint.Count} syntax errors in the document. Would you like to see them?";
+                if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                    == DialogResult.Yes)
                 {
-                    pCur++;
-
-                    var insertString = new StringBuilder("</");
-
-                    while (XmlTagRegex.IsMatch(buf[pCur].ToString()))
+                    Npp.notepad.FileNew();
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
+                    foreach (JsonLint lint in jsonParser.lint)
                     {
-                        insertString.Append(buf[pCur]);
-                        pCur++;
+                        sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.cur_char}): {lint.message}");
                     }
-                    insertString.Append('>');
-
-                    if (insertString.Length > 3)
-                    {
-                        editor.BeginUndoAction();
-                        editor.ReplaceSel(insertString.ToString());
-                        editor.SetSel(pos, pos);
-                        editor.EndUndoAction();
-                    }
+                    Npp.AddLine(sb.ToString());
                 }
             }
+            Npp.notepad.OpenFile(fname);
+            return json;
         }
 
-        static void getFileNamesDemo()
+        static void PrettyPrintJson()
         {
-            int nbFile = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETNBOPENFILES, 0, 0);
-            MessageBox.Show(nbFile.ToString(), "Number of opened files:");
-
-            using (ClikeStringArray cStrArray = new ClikeStringArray(nbFile, Win32.MAX_PATH))
-            {
-                if (Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETOPENFILENAMES, cStrArray.NativePointer, nbFile) != IntPtr.Zero)
-                    foreach (string file in cStrArray.ManagedStringsUnicode) MessageBox.Show(file);
-            }
+            JNode json = TryParseJson();
+            if (json == null) return;
+            Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers());
+            Npp.notepad.SetCurrentLanguage(LangType.L_JSON);
         }
-        static void getSessionFileNamesDemo()
+
+        static void CompressJson()
         {
-            int nbFile = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETNBSESSIONFILES, 0, sessionFilePath);
-
-            if (nbFile < 1)
-            {
-                MessageBox.Show("Please modify \"sessionFilePath\" in \"Demo.cs\" in order to point to a valid session file", "Error");
-                return;
-            }
-            MessageBox.Show(nbFile.ToString(), "Number of session files:");
-
-            using (ClikeStringArray cStrArray = new ClikeStringArray(nbFile, Win32.MAX_PATH))
-            {
-                if (Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETSESSIONFILES, cStrArray.NativePointer, sessionFilePath) != IntPtr.Zero)
-                    foreach (string file in cStrArray.ManagedStringsUnicode) MessageBox.Show(file);
-            }
+            JNode json = TryParseJson();
+            if (json == null) return;
+            Npp.editor.SetText(json.ToStringAndChangeLineNumbers());
+            Npp.notepad.SetCurrentLanguage(LangType.L_JSON);
         }
-        static void saveCurrentSessionDemo()
+
+        //form opening stuff
+        static void OpenJsonTree()
         {
-            string sessionPath = Marshal.PtrToStringUni(Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SAVECURRENTSESSION, 0, sessionFilePath));
-            if (!string.IsNullOrEmpty(sessionPath))
-                MessageBox.Show(sessionPath, "Saved Session File :", MessageBoxButtons.OK);
+            MessageBox.Show("This is supposed to open the JSON tree", "feature not yet implemented");
+        }
+
+        static void OpenSettings()
+        {
+            settings.ShowDialog();
+            jsonParser.allow_nan_inf = settings.allow_nan_inf;
+            jsonParser.allow_datetimes = settings.allow_datetimes;
+            jsonParser.allow_javascript_comments = settings.allow_javascript_comments;
+            jsonParser.allow_singlequoted_str = settings.allow_singlequoted_str;
+            if (settings.linting)
+            {
+                jsonParser.lint = new List<JsonLint>();
+            }
         }
 
         static void DockableDlgDemo()
@@ -422,54 +304,88 @@ The current scroll ratio is {Math.Round(scrollPercentage, 2)}%.
             // 
             // This demonstration shows you how to do a dockable dialog.
             // You can create your own non dockable dialog - in this case you don't nedd this demonstration.
-            if (frmGoToLine == null)
-            {
-                frmGoToLine = new frmGoToLine(editor);
+            Form frmGoToLine = null;
+            //if (frmGoToLine == null)
+            //{
+            //    frmGoToLine = new frmGoToLine(Npp.editor);
 
-                using (Bitmap newBmp = new Bitmap(16, 16))
-                {
-                    Graphics g = Graphics.FromImage(newBmp);
-                    ColorMap[] colorMap = new ColorMap[1];
-                    colorMap[0] = new ColorMap();
-                    colorMap[0].OldColor = Color.Fuchsia;
-                    colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
-                    ImageAttributes attr = new ImageAttributes();
-                    attr.SetRemapTable(colorMap);
-                    g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
-                    tbIcon = Icon.FromHandle(newBmp.GetHicon());
-                }
+            //    using (Bitmap newBmp = new Bitmap(16, 16))
+            //    {
+            //        Graphics g = Graphics.FromImage(newBmp);
+            //        ColorMap[] colorMap = new ColorMap[1];
+            //        colorMap[0] = new ColorMap();
+            //        colorMap[0].OldColor = Color.Fuchsia;
+            //        colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
+            //        ImageAttributes attr = new ImageAttributes();
+            //        attr.SetRemapTable(colorMap);
+            //        g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+            //        tbIcon = Icon.FromHandle(newBmp.GetHicon());
+            //    }
                 
-                NppTbData _nppTbData = new NppTbData();
-                _nppTbData.hClient = frmGoToLine.Handle;
-                _nppTbData.pszName = "Go To Line #";
-                // the dlgDlg should be the index of funcItem where the current function pointer is in
-                // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
-                _nppTbData.dlgID = idFrmGotToLine;
-                // define the default docking behaviour
-                _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
-                _nppTbData.hIconTab = (uint)tbIcon.Handle;
-                _nppTbData.pszModuleName = PluginName;
-                IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
-                Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
+            //    NppTbData _nppTbData = new NppTbData();
+            //    _nppTbData.hClient = frmGoToLine.Handle;
+            //    _nppTbData.pszName = "Go To Line #";
+            //    // the dlgDlg should be the index of funcItem where the current function pointer is in
+            //    // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
+            //    _nppTbData.dlgID = idFrmGotToLine;
+            //    // define the default docking behaviour
+            //    _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
+            //    _nppTbData.hIconTab = (uint)tbIcon.Handle;
+            //    _nppTbData.pszModuleName = PluginName;
+            //    IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+            //    Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
 
-                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
-                // Following message will toogle both menu item state and toolbar button
-                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
-            }
-            else
+            //    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
+            //    // Following message will toogle both menu item state and toolbar button
+            //    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
+            //}
+            //else
+            //{
+            //    if (!frmGoToLine.Visible)
+            //    {
+            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMSHOW, 0, frmGoToLine.Handle);
+            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
+            //    }
+            //    else
+            //    {
+            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMHIDE, 0, frmGoToLine.Handle);
+            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 0);
+            //    }
+            //}
+            //frmGoToLine.textBox1.Focus();
+        }
+
+        // misc
+        /// <summary>
+        /// input is one of "full", "dir", "file"<br></br>
+        /// if "full", get full path to current file<br></br>
+        /// if "dir", get directory of current file<br></br>
+        /// if "file", get filename of current file
+        /// </summary>
+        /// <param name="which"></param>
+        /// <returns></returns>
+        static string GetCurrentPath(string type = "full")
+        {
+            NppMsg msg = NppMsg.NPPM_GETFULLCURRENTPATH;
+            switch (type)
             {
-                if (!frmGoToLine.Visible)
-                {
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMSHOW, 0, frmGoToLine.Handle);
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
-                }
-                else
-                {
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMHIDE, 0, frmGoToLine.Handle);
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 0);
-                }
+                case "full": break;
+                case "dir": msg = NppMsg.NPPM_GETCURRENTDIRECTORY; break;
+                case "file": msg = NppMsg.NPPM_GETFILENAME; break;
+                default: throw new ArgumentException("Argument to getCurrentPath must be one of 'full', 'dir', or 'file'");
             }
-            frmGoToLine.textBox1.Focus();
+
+            StringBuilder path = new StringBuilder(Win32.MAX_PATH);
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)msg, 0, path);
+
+            return path.ToString();
+        }
+
+        static DateTime LastSavedTime(string fname)
+        {
+            DateTime now = DateTime.Now;
+            //NppMsg msg = NppMsg.
+            return now;
         }
         #endregion
     }

@@ -43,16 +43,6 @@ namespace JSON_Viewer.Forms
         public TreeViewer()
         {
             InitializeComponent();
-            settings = new Settings();
-            jsonParser = new JsonParser(settings.allow_datetimes,
-                                        settings.allow_singlequoted_str,
-                                        settings.allow_javascript_comments,
-                                        settings.linting,
-                                        false,
-                                        settings.allow_nan_inf);
-            remesParser = new RemesParser();
-            schemaMaker = new JsonSchemaMaker();
-            fname_lints = new Dictionary<string, JsonLint[]>();
         }
 
         private void DocsButton_Click(object sender, EventArgs e)

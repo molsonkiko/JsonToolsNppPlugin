@@ -2516,7 +2516,10 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <summary>Set up the key words used by the lexer. (Scintilla feature 4005)</summary>
         unsafe void SetKeyWords(int keyWordSet, string keyWords);
 
-        /// <summary>Set the lexing language of the document based on string name. (Scintilla feature 4006)</summary>
+        /// <summary>Set the lexing language of the document based on string name. (Scintilla feature 4006)<br></br>
+        /// NOTE! This function does not seem to do anything as of 08/25/2022.<br></br>
+        /// Use INotepadNPPGateWay.SetCurrentLanguage instead.
+        /// </summary>
         unsafe void SetLexerLanguage(string language);
 
         /// <summary>Load a lexer library (dll / so). (Scintilla feature 4007)</summary>

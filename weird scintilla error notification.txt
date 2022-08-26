@@ -1,0 +1,4 @@
+notify(SCNotification *notification):
+  notification->nmhdr.code == 1002
+  notification->nmhdr.hwndFrom == 00000000003A07EC
+  notification->nmhdr.idFrom == 0

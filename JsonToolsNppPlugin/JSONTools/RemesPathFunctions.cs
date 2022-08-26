@@ -10,6 +10,7 @@ using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
+    #region BINOPS
     /// <summary>
     /// Binary operators, e.g., +, -, *, ==
     /// </summary>
@@ -360,7 +361,7 @@ namespace JSON_Tools.JSON_Tools
             return binop.Call((JNode)left, (JNode)right);
         }
     }
-
+    #endregion
 
     /// <summary>
     /// functions with arguments in parens, e.g. mean(x), index(arr, elt), sort_by(arr, key, reverse)
@@ -565,13 +566,13 @@ namespace JSON_Tools.JSON_Tools
             {
                 for (int ii = itbl.Length - 1; ii >= 0; ii--)
                 {
-                    if (itbl.children[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
+                    if (itbl[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
                 }
                 throw new KeyNotFoundException($"Element {elt} not found in the array {itbl}");
             }
             for (int ii = 0; ii < itbl.Length; ii++)
             {
-                if (itbl.children[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
+                if (itbl[ii].CompareTo(elt) == 0) { return new JNode(Convert.ToInt64(ii), Dtype.INT, 0); }
             }
             throw new KeyNotFoundException($"Element {elt} not found in the array {itbl}");
         }
@@ -661,11 +662,11 @@ namespace JSON_Tools.JSON_Tools
             if (key is string)
             {
                 string keystr = (string)key;
-                JObject max = (JObject)itbl.children[0];
+                JObject max = (JObject)itbl[0];
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
-                    JObject x = (JObject)itbl.children[ii];
-                    if (x.children[keystr].CompareTo(max.children[keystr]) > 0)
+                    JObject x = (JObject)itbl[ii];
+                    if (x[keystr].CompareTo(max[keystr]) > 0)
                     {
                         max = x;
                     }
@@ -675,12 +676,12 @@ namespace JSON_Tools.JSON_Tools
             else
             {
                 int kint = Convert.ToInt32(key);
-                JArray max = (JArray)itbl.children[0];
+                JArray max = (JArray)itbl[0];
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
-                    JArray x = (JArray)itbl.children[ii];
-                    JNode xval = x.children[kint];
-                    if (x.children[kint].CompareTo(max.children[kint]) > 0)
+                    JArray x = (JArray)itbl[ii];
+                    JNode xval = x[kint];
+                    if (x[kint].CompareTo(max[kint]) > 0)
                     {
                         max = x;
                     }
@@ -697,11 +698,11 @@ namespace JSON_Tools.JSON_Tools
             if (key is string)
             {
                 string keystr = (string)key;
-                JObject min = (JObject)itbl.children[0];
+                JObject min = (JObject)itbl[0];
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
-                    JObject x = (JObject)itbl.children[ii];
-                    if (x.children[keystr].CompareTo(min.children[keystr]) < 0)
+                    JObject x = (JObject)itbl[ii];
+                    if (x[keystr].CompareTo(min[keystr]) < 0)
                     {
                         min = x;
                     }
@@ -711,12 +712,12 @@ namespace JSON_Tools.JSON_Tools
             else
             {
                 int kint = Convert.ToInt32(key);
-                JArray min = (JArray)itbl.children[0];
+                JArray min = (JArray)itbl[0];
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
-                    JArray x = (JArray)itbl.children[ii];
-                    JNode xval = x.children[kint];
-                    if (x.children[kint].CompareTo(min.children[kint]) < 0)
+                    JArray x = (JArray)itbl[ii];
+                    JNode xval = x[kint];
+                    if (x[kint].CompareTo(min[kint]) < 0)
                     {
                         min = x;
                     }
@@ -819,7 +820,7 @@ namespace JSON_Tools.JSON_Tools
             JObject obj = (JObject)args[0];
             foreach (string k in obj.children.Keys)
             {
-                JNode v = obj.children[k];
+                JNode v = obj[k];
                 JNode knode = new JNode(k, Dtype.STR, 0);
                 var subarr = new List<JNode>();
                 subarr.Add(knode);
@@ -937,11 +938,11 @@ namespace JSON_Tools.JSON_Tools
             string sep = (string)args[0].value;
             var itbl = (JArray)args[1];
             var sb = new StringBuilder();
-            sb.Append((string)itbl.children[0].value);
+            sb.Append((string)itbl[0].value);
             for (int ii = 1; ii < itbl.Length; ii++)
             {
                 sb.Append(sep);
-                sb.Append((string)itbl.children[ii].value);
+                sb.Append((string)itbl[ii].value);
             }
             return new JNode(sb.ToString(), Dtype.STR, 0);
         }
@@ -974,7 +975,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (JNode node in itbl.children)
                 {
                     JArray subobj = (JArray)node;
-                    JNode val = subobj.children[ikey];
+                    JNode val = subobj[ikey];
                     vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
                     if (gb.ContainsKey(vstr))
                     {
@@ -992,7 +993,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (JNode node in itbl.children)
                 {
                     JObject subobj = (JObject)node;
-                    JNode val = subobj.children[skey];
+                    JNode val = subobj[skey];
                     vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
                     if (gb.ContainsKey(vstr))
                     {
@@ -1059,7 +1060,7 @@ namespace JSON_Tools.JSON_Tools
                 List<JNode> subarr = new List<JNode>();
                 foreach (JArray arr in arrs)
                 {
-                    subarr.Add(arr.children[ii]);
+                    subarr.Add(arr[ii]);
                 }
                 rst.Add(new JArray(0, subarr));
             }
@@ -1083,9 +1084,9 @@ namespace JSON_Tools.JSON_Tools
             Dictionary<string, JNode> rst = new Dictionary<string, JNode>();
             for (int ii = 0; ii < pairs.Length; ii++)
             {
-                JArray pair = (JArray)pairs.children[ii];
-                JNode key = pair.children[0];
-                JNode val = pair.children[1];
+                JArray pair = (JArray)pairs[ii];
+                JNode key = pair[0];
+                JNode val = pair[1];
                 if (!(key.value is string)) throw new RemesPathException("The Dict function's first argument must be an array of all strings");
                 rst[(string)key.value] = val;
             }
@@ -1455,7 +1456,7 @@ namespace JSON_Tools.JSON_Tools
                 JObject onode = (JObject)node;
                 foreach (string key in onode.children.Keys)
                 {
-                    dic[key] = JNodeToObjects(onode.children[key]);
+                    dic[key] = JNodeToObjects(onode[key]);
                 }
                 return dic;
             }
@@ -1575,103 +1576,6 @@ namespace JSON_Tools.JSON_Tools
         public JNode Identity(JNode obj)
         {
             return obj;
-        }
-    }
-
-    class BinopTester
-    {
-        public static void Test()
-        {
-            JsonParser jsonParser = new JsonParser();
-            JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
-            var testcases = new object[][]
-            {
-                new object[]{ jsonParser.Parse("1"), jsonParser.Parse("3"), Binop.BINOPS["-"], jsonParser.Parse("-2"), "subtraction of ints" },
-                new object[]{ jsonParser.Parse("2.5"), jsonParser.Parse("5"), Binop.BINOPS["/"], jsonParser.Parse("0.5"), "division of float by int" },
-                new object[]{ jsonParser.Parse("\"a\""), jsonParser.Parse("\"b\""), Binop.BINOPS["+"], jsonParser.Parse("\"ab\""), "addition of strings" },
-                new object[]{ jsonParser.Parse("3"), jsonParser.Parse("4"), Binop.BINOPS[">="], jfalse, "comparison ge" },
-                new object[]{ jsonParser.Parse("7"), jsonParser.Parse("9"), Binop.BINOPS["<"], jtrue, "comparison lt" },
-                new object[]{ jsonParser.Parse("\"abc\""), jsonParser.Parse("\"ab+\""), Binop.BINOPS["=~"], jtrue, "has_pattern" },
-            };
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (object[] test in testcases)
-            {
-                JNode x = (JNode)test[0], y = (JNode)test[1], desired = (JNode)test[3];
-                Binop bop = (Binop)test[2];
-                string msg = (string)test[4];
-                JNode output = bop.Call(x, y);
-                string str_desired = desired.ToString();
-                string str_output = output.ToString();
-                if (str_desired != str_output)
-                {
-
-                    tests_failed++;
-                    Console.WriteLine(String.Format("Test {0} (input \"{1}({2}, {3})\", {4}) failed:\n" +
-                                                    "Expected\n{5}\nGot\n{6}",
-                                                    ii+1, bop, x.ToString(), y.ToString(), msg, str_desired, str_output));
-                }
-                ii++;
-            }
-            ii = testcases.Length;
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
-        }
-    }
-
-    class ArgFunctionTester
-    {
-        public static void Test()
-        {
-            JsonParser jsonParser = new JsonParser();
-            JNode jtrue = jsonParser.Parse("true");
-            JNode jfalse = jsonParser.Parse("false");
-            var testcases = new object[][]
-            {
-                new object[]{ new JNode[]{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
-                new object[]{ new JNode[]{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
-                new object[]{ new JNode[]{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
-                new object[]{ new JNode[]{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
-                //(new JNode[]{jsonParser.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 3, \"b\": 1}]"), new JNode("b", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["min_by"], jsonParser.Parse("{\"a\": 3, \"b\": 1}")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]")}, ArgFunction.FUNCTIONS["s_len"], jsonParser.Parse("[2, 3, 0]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JNode("a", Dtype.STR, 0), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JRegex(new Regex(@"a+")), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JSlicer(new int?[] {1, null, -1})}, ArgFunction.FUNCTIONS["s_slice"], jsonParser.Parse("[\"ba\", \"cb\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("{\"a\": \"2\", \"b\": \"1.5\"}")}, ArgFunction.FUNCTIONS["float"], jsonParser.Parse("{\"a\": 2.0, \"b\": 1.5}")),
-                //(new JNode[]{jsonParser.Parse("{\"a\": \"a\", \"b\": \"b\"}"), new JNode(3, Dtype.INT, 0)}, ArgFunction.FUNCTIONS["s_mul"], jsonParser.Parse("{\"a\": \"aaa\", \"b\": \"bbb\"}"))
-            };
-            int tests_failed = 0;
-            int ii = 0;
-            foreach (object[] test in testcases)
-            {
-                JNode[] args = (JNode[])test[0];
-                ArgFunction f = (ArgFunction)test[1];
-                JNode desired = (JNode)test[2];
-                JNode output = f.Call(args);
-                var sb = new StringBuilder();
-                sb.Append('{');
-                int argnum = 0;
-                while (argnum < args.Length)
-                {
-                    sb.Append(args[argnum++].ToString());
-                    if (argnum < (args.Length - 1)) { sb.Append(", "); }
-                }
-                sb.Append('}');
-                string argstrings = sb.ToString();
-                string str_desired = desired.ToString();
-                string str_output = output.ToString();
-                if (str_desired != str_output)
-                {
-
-                    tests_failed++;
-                    Console.WriteLine(String.Format("Test {0} (input \"{1}({2}) failed:\nExpected\n{3}\nGot\n{4}",
-                                                    ii+1, f, argstrings, str_desired, str_output));
-                }
-                ii++;
-            }
-            ii = testcases.Length;
-            Console.WriteLine($"Failed {tests_failed} tests.");
-            Console.WriteLine($"Passed {ii - tests_failed} tests.");
         }
     }
 }

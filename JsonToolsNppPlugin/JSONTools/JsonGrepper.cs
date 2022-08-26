@@ -54,7 +54,7 @@ namespace JSON_Tools.JSON_Tools
 				string json_str = file_info.OpenText().ReadToEnd();
                 try
                 {
-					fname_jsons.children[fname] = json_parser.Parse(json_str);
+					fname_jsons[fname] = json_parser.Parse(json_str);
 					if (json_parser.lint != null && json_parser.lint.Count > 0)
 					{
 						fname_lints[fname] = json_parser.lint.LazySlice(":").ToArray();
@@ -131,7 +131,7 @@ namespace JSON_Tools.JSON_Tools
 		//		string json = jsons[ii];
 		//		try
   //              {
-		//			fname_jsons.children[url] = json_parser.Parse(json);
+		//			fname_jsons[url] = json_parser.Parse(json);
 		//			if (json_parser.lint != null && json_parser.lint.Count > 0)
   //                  {
 		//				fname_lints[url] = json_parser.lint.LazySlice(":").ToArray();
@@ -156,92 +156,4 @@ namespace JSON_Tools.JSON_Tools
 			fname_lints.Clear();
         }
 	}
-
-	//public class JsonGrepperTester
- //   {
-	//	public static DirectoryInfo smalldir = new DirectoryInfo(@"C:\Users\mjols\Documents\csharp\JSON_Viewer_cmd\testfiles\small");
-	//	public static JsonParser jparser = new JsonParser();
-	//	public static RemesParser rparser = new RemesParser();
-	//	private static JsonGrepper grepper = new JsonGrepper(new JsonParser());
-
-	//	public static void TestFnames()
- //       {
-	//		JObject all_jsons = new JObject(0, new Dictionary<string, JNode>());
-	//		foreach (FileInfo f in smalldir.GetFiles())
- //           {
-	//			string jsontxt = File.ReadAllText(f.FullName);
-	//			try
-	//			{
-	//				all_jsons.children[f.FullName] = jparser.Parse(jsontxt);
-	//			}
-	//			catch { }
-	//		}
-	//		DirectoryInfo subdir = new DirectoryInfo($"{smalldir.FullName}\\subsmall");
-	//		foreach (FileInfo f in subdir.GetFiles())
- //           {
-	//			string jsontxt = File.ReadAllText(f.FullName);
- //               try
- //               {
-	//				all_jsons.children[f.FullName] = jparser.Parse(jsontxt);
-	//			}
- //               catch { }
-	//		}
- //           var testcases = new (string search_pattern, bool recursive, JNode desired_files)[]
- //           {
- //               ("*.json", false, rparser.Search("keys(@)[@ =~ `.json$` & not(@ =~ `subsmall`)]", all_jsons)), // fnames not containing submall but ending in .json
-	//			("*.ipynb", false, rparser.Search("keys(@)[@ =~ `ipynb$` & not(@ =~ `subsmall`)]", all_jsons)), // fnames not containing subsmall but ending in .ipynb
-	//			("*.json", true, rparser.Search("keys(@)[@ =~ `json$`]", all_jsons)), // fnames ending in .json
-	//			("*.txt", true, rparser.Search("keys(@)[@ =~ `txt$`]", all_jsons)), // fnames ending in .txt
- //           };
-	//		// test string slicer
-	//		int tests_failed = 0;
-	//		int ii = 0;
- //           foreach ((string search_pattern, bool recursive, JNode desired_files) in testcases)
- //           {
-	//			grepper.Reset();
-	//			grepper.ReadJsonFiles(smalldir.FullName, recursive, search_pattern);
-	//			JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
-	//			((JArray)found_files).children.Sort();
-	//			((JArray)desired_files).children.Sort();
- //               if (found_files.ToString() != desired_files.ToString())
- //               {
- //                   tests_failed++;
- //                   Console.WriteLine(String.Format("Test {0} (grepper.ReadJsonFiles({1}, {2}, {3})) failed:\n" +
- //                                                   "Expected to find files\n{4}\nGot files\n{5}",
- //                                                   ii + 1, subdir.FullName, recursive, search_pattern, desired_files.PrettyPrint(), found_files.PrettyPrint()));
- //               }
- //               ii++;
- //           }
-
-	//		// test nonstandard JsonParser settings for the grepper
-	//		grepper.json_parser.allow_javascript_comments = true;
-	//		grepper.json_parser.allow_singlequoted_str = true;
-	//		string json_subdir_name = subdir.FullName.Replace("\\", "\\\\");
-
-	//		var special_testcases = new (string search_pattern, JNode desired_files)[]
-	//		{
-	//			("*comment*.txt", jparser.Parse($"[\"{json_subdir_name}\\\\comment_json_as_txt.txt\"]")),
-	//			("*singlequote*.txt", jparser.Parse($"[\"{json_subdir_name}\\\\singlequote_json_as_txt.txt\"]")),
-	//		};
-	//		foreach ((string search_pattern, JNode desired_files) in special_testcases)
-	//		{
-	//			grepper.Reset();
-	//			grepper.ReadJsonFiles(subdir.FullName, false, search_pattern);
-	//			JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
-	//			((JArray)found_files).children.Sort();
-	//			((JArray)desired_files).children.Sort();
-	//			if (found_files.ToString() != desired_files.ToString())
-	//			{
-	//				tests_failed++;
-	//				Console.WriteLine(String.Format("Test {0} (grepper.ReadJsonFiles({1}, {2}, {3})) failed:\n" +
-	//												"Expected to find files\n{4}\nGot files\n{5}",
-	//												ii + 1, subdir.FullName, false, search_pattern, desired_files.PrettyPrint(), found_files.PrettyPrint()));
-	//			}
-	//			ii++;
-	//		}
-
-	//		Console.WriteLine($"Failed {tests_failed} tests.");
- //           Console.WriteLine($"Passed {ii - tests_failed} tests.");
- //       }
-    //}
 }

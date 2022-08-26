@@ -357,6 +357,17 @@ namespace JSON_Tools.JSON_Tools
             this.children = children;
         }
 
+        /// <summary>
+        /// return the JNode associated with key
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public JNode this[string key]
+        {
+            get { return children[key]; }
+            set { children[key] = value; }
+        }
+
         /// <inheritdoc/>
         public override string ToString(bool sort_keys = true)
         {
@@ -523,6 +534,17 @@ namespace JSON_Tools.JSON_Tools
             this.children = children;
         }
 
+        /// <summary>
+        /// return the JNode associated with index
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public JNode this[int index]
+        {
+            get { return children[index]; }
+            set { children[index] = value; }
+        }
+
         /// <inheritdoc/>
         public override string ToString(bool sort_keys = true)
         {
@@ -637,7 +659,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Returns true if and only if other is a JArray such that 
-        /// other.children[i] == this.children[i] for all i &#60; this.Length.<br></br>
+        /// other[i] == this[i] for all i &#60; this.Length.<br></br>
         /// Throws an ArgumentException if other is not a JArray.
         /// </summary>
         /// <param name="other">Another JArray</param>
@@ -657,7 +679,7 @@ namespace JSON_Tools.JSON_Tools
             for (int ii = 0; ii < children.Count; ii++)
             {
                 JNode val = children[ii];
-                JNode othval = otharr.children[ii];
+                JNode othval = otharr[ii];
                 if (!val.Equals(othval))
                 {
                     return false;
