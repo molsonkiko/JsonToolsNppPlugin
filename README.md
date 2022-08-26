@@ -1,4 +1,7 @@
 # JsonToolsNppPlugin
+
+[![Continuous Integration](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml/badge.svg)](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml)
+
 Miscellaneous tools for working with JSON in Notepad++.
 
 Any issues, feel free to email me at mjolsonsfca@gmail.com.
@@ -25,3 +28,11 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
 [View past changes.](/CHANGELOG.md)
 
 ![JSON file with syntax errors before and after use of JSON tools](/jsontools%20before%20after.PNG)
+
+## Downloads ##
+
+Go to the [Releases page](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) to see past releases.
+
+[Download latest 32-bit version](/JsonToolsNppPlugin/Release_x86.zip)
+
+[Download latest 64-bit version](/JsonToolsNppPlugin/Release_x64.zip)
