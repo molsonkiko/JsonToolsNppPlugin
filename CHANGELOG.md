@@ -22,20 +22,17 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
-- Reduce slowness of removing selected files by not refreshing
-	entire TreeViews when they're removed.
 - Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
 - Add RemesPath functions:
 	- for converting JSON to tabular form
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
-- Add multithreading for parsing of JSON strings returned by API requests and files found by grepping.
+- When multiple files/API responses are found by grepping or API requests,
+	use multiple threads to parse documents in parallel.
  
 ### To Be Fixed
 
-- A whole bunch of problems with RemesPath that were caused by refactoring the code from .NET 6.0 to .NET 4.0.
-- PrettyPrintAndChangeLineNumbers doesn't currently give the right line numbers
 - Some error messages incorrectly give the length of the document as the position of the error rather than where the error actually occurred.
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think.
 - JsonTabularizer has several bugs originating from the porting from .NET 4.0.
