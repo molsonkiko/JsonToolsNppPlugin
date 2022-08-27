@@ -10,6 +10,8 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 * recursive search for keys
 * SQL-like group_by capabilities
 
+The formal description of the language in pseudo-Backus-Naur form is in ["RemesPath language spec.txt"](/docs/RemesPath%20language%20spec.txt). I'm not 100% sure this is a formally valid language spec, though.
+
 ## Indexing and selecting keys ##
 
 1. `@` selects the entirety of an object or array.

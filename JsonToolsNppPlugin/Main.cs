@@ -14,7 +14,7 @@ using Kbg.Demo.Namespace.Properties;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-//using JSON_Viewer.Forms;
+using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using static Kbg.NppPluginNET.PluginInfrastructure.Win32;
 
@@ -67,8 +67,7 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
-        public static Dictionary<string, JNode> jsons = new Dictionary<string, JNode>();
-        public static Dictionary<string, DateTime> modtimes = new Dictionary<string, DateTime>();
+        public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
         // toolbar icons
         static Bitmap tbBmp = Resources.star;
@@ -76,6 +75,10 @@ namespace Kbg.NppPluginNET
         static Icon tbIco = Resources.star_black_ico;
         static Icon tbIcoDM = Resources.star_white_ico;
         static Icon tbIcon = null;
+
+        // fields related to forms
+        static internal int jsonTreeId = -1;
+        static internal int remesPathWindowId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -117,13 +120,13 @@ namespace Kbg.NppPluginNET
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
             PluginBase.SetCommand(1, "Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(2, "Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J));
-
             // Here you insert a separator
-            PluginBase.SetCommand(4, "---", null);
-
-            PluginBase.SetCommand(5, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(6, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
+            PluginBase.SetCommand(3, "---", null);
+            PluginBase.SetCommand(4, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
+            PluginBase.SetCommand(5, "Query JSON with RemesPath", OpenRemesPathWindow); remesPathWindowId = 5;
+            PluginBase.SetCommand(6, "---", null);
+            PluginBase.SetCommand(7, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(8, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
         }
 
         static internal void SetToolBarIcon()
@@ -167,10 +170,10 @@ namespace Kbg.NppPluginNET
             //}
 
             //// when closing a file
-            //if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
-            //{
-            //    Main.RemoveJson();
-            //}
+            if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
+            {
+                fname_jsons.Remove(Npp.GetCurrentPath());
+            }
 
             //if (code > int.MaxValue) // windows messages
             //{
@@ -186,15 +189,6 @@ namespace Kbg.NppPluginNET
             //    }
             //}
         }
-
-        //static void LoadJson()
-        //{
-        //    string fname = GetCurrentPath();
-        //    if (jsons.ContainsKey(fname))
-        //    {
-        //        DateTime modtime = modtimes[fname];
-        //    }
-        //}
 
         static internal void PluginCleanUp()
         {
@@ -227,7 +221,7 @@ namespace Kbg.NppPluginNET
         static JNode TryParseJson()
         {
             int len = Npp.editor.GetLength();
-            string fname = GetCurrentPath();
+            string fname = Npp.GetCurrentPath();
             string text = Npp.editor.GetText(len);
             JNode json = new JNode(null, Dtype.NULL, 0);
             try
@@ -257,9 +251,10 @@ namespace Kbg.NppPluginNET
                         sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.cur_char}): {lint.message}");
                     }
                     Npp.AddLine(sb.ToString());
+                    Npp.notepad.OpenFile(fname);
                 }
             }
-            Npp.notepad.OpenFile(fname);
+            fname_jsons[fname] = json;
             return json;
         }
 
@@ -280,9 +275,9 @@ namespace Kbg.NppPluginNET
         }
 
         //form opening stuff
-        static void OpenJsonTree()
+        static void OpenRemesPathWindow()
         {
-            MessageBox.Show("This is supposed to open the JSON tree", "feature not yet implemented");
+            MessageBox.Show("This is supposed to open the RemesPath query window", "remespath querying not yet implemented");
         }
 
         static void OpenSettings()
@@ -298,94 +293,64 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        static void DockableDlgDemo()
+        static void OpenJsonTree()
         {
             // Dockable Dialog Demo
             // 
             // This demonstration shows you how to do a dockable dialog.
             // You can create your own non dockable dialog - in this case you don't nedd this demonstration.
-            Form frmGoToLine = null;
-            //if (frmGoToLine == null)
-            //{
-            //    frmGoToLine = new frmGoToLine(Npp.editor);
-
-            //    using (Bitmap newBmp = new Bitmap(16, 16))
-            //    {
-            //        Graphics g = Graphics.FromImage(newBmp);
-            //        ColorMap[] colorMap = new ColorMap[1];
-            //        colorMap[0] = new ColorMap();
-            //        colorMap[0].OldColor = Color.Fuchsia;
-            //        colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
-            //        ImageAttributes attr = new ImageAttributes();
-            //        attr.SetRemapTable(colorMap);
-            //        g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
-            //        tbIcon = Icon.FromHandle(newBmp.GetHicon());
-            //    }
-                
-            //    NppTbData _nppTbData = new NppTbData();
-            //    _nppTbData.hClient = frmGoToLine.Handle;
-            //    _nppTbData.pszName = "Go To Line #";
-            //    // the dlgDlg should be the index of funcItem where the current function pointer is in
-            //    // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
-            //    _nppTbData.dlgID = idFrmGotToLine;
-            //    // define the default docking behaviour
-            //    _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
-            //    _nppTbData.hIconTab = (uint)tbIcon.Handle;
-            //    _nppTbData.pszModuleName = PluginName;
-            //    IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
-            //    Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
-
-            //    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
-            //    // Following message will toogle both menu item state and toolbar button
-            //    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
-            //}
-            //else
-            //{
-            //    if (!frmGoToLine.Visible)
-            //    {
-            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMSHOW, 0, frmGoToLine.Handle);
-            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 1);
-            //    }
-            //    else
-            //    {
-            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_DMMHIDE, 0, frmGoToLine.Handle);
-            //        Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, 0);
-            //    }
-            //}
-            //frmGoToLine.textBox1.Focus();
-        }
-
-        // misc
-        /// <summary>
-        /// input is one of "full", "dir", "file"<br></br>
-        /// if "full", get full path to current file<br></br>
-        /// if "dir", get directory of current file<br></br>
-        /// if "file", get filename of current file
-        /// </summary>
-        /// <param name="which"></param>
-        /// <returns></returns>
-        static string GetCurrentPath(string type = "full")
-        {
-            NppMsg msg = NppMsg.NPPM_GETFULLCURRENTPATH;
-            switch (type)
+            JNode json = TryParseJson();
+            if (json == null) return;
+            TreeViewer treeViewer = null;
+            if (treeViewer == null)
             {
-                case "full": break;
-                case "dir": msg = NppMsg.NPPM_GETCURRENTDIRECTORY; break;
-                case "file": msg = NppMsg.NPPM_GETFILENAME; break;
-                default: throw new ArgumentException("Argument to getCurrentPath must be one of 'full', 'dir', or 'file'");
+                treeViewer = new TreeViewer();
+
+                using (Bitmap newBmp = new Bitmap(16, 16))
+                {
+                    Graphics g = Graphics.FromImage(newBmp);
+                    ColorMap[] colorMap = new ColorMap[1];
+                    colorMap[0] = new ColorMap();
+                    colorMap[0].OldColor = Color.Fuchsia;
+                    colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
+                    ImageAttributes attr = new ImageAttributes();
+                    attr.SetRemapTable(colorMap);
+                    g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                    tbIcon = Icon.FromHandle(newBmp.GetHicon());
+                }
+
+                NppTbData _nppTbData = new NppTbData();
+                _nppTbData.hClient = treeViewer.Handle;
+                _nppTbData.pszName = "Json Tree View";
+                // the dlgDlg should be the index of funcItem where the current function pointer is in
+                // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
+                _nppTbData.dlgID = jsonTreeId;
+                // define the default docking behaviour
+                _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
+                _nppTbData.hIconTab = (uint)tbIcon.Handle;
+                _nppTbData.pszModuleName = PluginName;
+                IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+                Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
+
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
+                // Following message will toogle both menu item state and toolbar button
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             }
-
-            StringBuilder path = new StringBuilder(Win32.MAX_PATH);
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)msg, 0, path);
-
-            return path.ToString();
-        }
-
-        static DateTime LastSavedTime(string fname)
-        {
-            DateTime now = DateTime.Now;
-            //NppMsg msg = NppMsg.
-            return now;
+            else
+            {
+                if (!treeViewer.Visible)
+                {
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMSHOW, 0, treeViewer.Handle);
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
+                }
+                else
+                {
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMHIDE, 0, treeViewer.Handle);
+                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 0);
+                }
+            }
+            treeViewer.JsonTreePopulate(json);
+            treeViewer.Focus();
         }
         #endregion
     }

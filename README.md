@@ -22,6 +22,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
     * non-string key in object
     * `]` closing an object or `}` closing an array
 4. Get a report of all the syntax errors in the document (`linting` must be active).
+5. Open a drop-down tree view of the document. Clicking on a node in the tree navigates to the corresponding line in the document.
 
 [Read the docs.](/docs/README.md) Many of the features in the docs are not yet implemented, though.
 
@@ -36,3 +37,9 @@ Go to the [Releases page](https://github.com/molsonkiko/JsonToolsNppPlugin/relea
 [Download latest 32-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x86.zip)
 
 [Download latest 64-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x64.zip)
+
+## Acknowledgments ##
+
+* [Kasper B. Graverson](https://github.com/kbilsted) for creating the [plugin pack](https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net) that this is based on.
+* [Bas de Reuver](https://github.com/BdR76) for making the excellent [CSVLint](https://github.com/BdR76/CSVLint) plugin that I've consulted extensively in writing the code.
+* And of course, Don Ho for creating [Notepad++](https://notepad-plus-plus.org/)!

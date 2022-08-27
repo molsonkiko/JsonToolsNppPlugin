@@ -32,5 +32,37 @@ namespace JSON_Tools.Utils
             editor.AppendTextAndMoveCursor(inp);
             editor.AppendTextAndMoveCursor(System.Environment.NewLine);
         }
+
+        /// <summary>
+        /// input is one of 'p', 'd', 'f'<br></br>
+        /// if 'p', get full path to current file (default)<br></br>
+        /// if 'd', get directory of current file<br></br>
+        /// if 'f', get filename of current file
+        /// </summary>
+        /// <param name="which"></param>
+        /// <returns></returns>
+        public static string GetCurrentPath(char which = 'p')
+        {
+            NppMsg msg = NppMsg.NPPM_GETFULLCURRENTPATH;
+            switch (which)
+            {
+                case 'p': break;
+                case 'd': msg = NppMsg.NPPM_GETCURRENTDIRECTORY; break;
+                case 'f': msg = NppMsg.NPPM_GETFILENAME; break;
+                default: throw new ArgumentException("GetCurrentPath argument must be one of 'p', 'd', 'f'");
+            }
+
+            StringBuilder path = new StringBuilder(Win32.MAX_PATH);
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)msg, 0, path);
+
+            return path.ToString();
+        }
+
+        //public static DateTime LastSavedTime(string fname)
+        //{
+        //    DateTime now = DateTime.Now;
+        //    //NppMsg msg = NppMsg.
+        //    return now;
+        //}
     }
 }

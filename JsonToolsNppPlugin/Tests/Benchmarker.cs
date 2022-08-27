@@ -46,7 +46,15 @@ namespace JSON_Tools.Tests
             {
                 watch.Reset();
                 watch.Start();
-                json = jsonParser.Parse(jsonstr);
+                try
+                {
+                    json = jsonParser.Parse(jsonstr);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
+                    return;
+                }
                 watch.Stop();
                 long t = watch.Elapsed.Ticks;
                 load_times[ii] = t;
@@ -68,14 +76,30 @@ namespace JSON_Tools.Tests
             RemesParser parser = new RemesParser();
             JNode result = new JNode(null, Dtype.NULL, 0);
             watch.Start();
-            Func<JNode, JNode> query_func = ((CurJson)parser.Compile(query)).function;
+            Func<JNode, JNode> query_func;
+            try
+            {
+                query_func = ((CurJson)parser.Compile(query)).function;
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
+                return;
+            }
             watch.Stop();
             long compile_time = watch.Elapsed.Ticks;
             for (int ii = 0; ii < num_trials; ii++)
             {
                 watch.Reset();
                 watch.Start();
-                result = query_func(json);
+                try
+                {
+                    result = query_func(json);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while executing compiled query:\n{ex}");
+                }
                 watch.Stop();
                 long t = watch.Elapsed.Ticks;
                 query_times[ii] = t;

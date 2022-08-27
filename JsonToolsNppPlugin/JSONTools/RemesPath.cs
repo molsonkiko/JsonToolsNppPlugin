@@ -573,7 +573,7 @@ namespace JSON_Tools.JSON_Tools
                 bool is_dict = (ix.is_dict || k1 is string) && !ix.is_recursive;
                 var arr = new List<JNode>();
                 var dic = new Dictionary<string, JNode>();
-                if (indexers.Count == 1)
+                if (idxrs.Count == 1)
                 {
                     if (ix.has_one_option)
                     {
@@ -600,8 +600,8 @@ namespace JSON_Tools.JSON_Tools
                     return new JArray(0, arr);
                 }
                 var remaining_idxrs = new List<IndexerFunc>();
-                for (int ii = 1; ii < indexers.Count; ii++)
-                    remaining_idxrs.Add(indexers[ii]);
+                for (int ii = 1; ii < idxrs.Count; ii++)
+                    remaining_idxrs.Add(idxrs[ii]);
                 if (ix.is_projection)
                 {
                     if (is_dict)
@@ -1241,7 +1241,7 @@ namespace JSON_Tools.JSON_Tools
                     char tval = (char)t;
                     if (tval == ':')
                     {
-                        slicer[slots_filled++] = (int)last_num;
+                        slicer[slots_filled++] = last_num;
                         last_num = null;
                         pos++;
                         continue;

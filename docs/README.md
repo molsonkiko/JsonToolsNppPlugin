@@ -38,23 +38,25 @@ Consider the following JSON, hereafter called "silly_example.json".
 ```
 
 ## The Basics ##
-Let's open up the JSON viewer.
+Let's open up this JSON file.
 
-![JSON viewer initial](/docs/json%20viewer%20initial.PNG?raw=true "JSON Viewer plug-in on opening")
+![JSON document before using JsonTools](/docs/json%20document%20initial.PNG?raw=true "JSON document before using JsonTools")
 
-We can open up the file (see `silly_example.json` in this directory) by clicking the `Open JSON file` button and choosing the file from the file explorer.
+You might want to reformat this document so it doesn't have so much whitespace. Use the "Compress current JSON file" plugin command (`Ctrl+Alt+Shift+C`) to reformat it like so:
 
-Alternatively, you could copy the whole file to your clipboard and paste it in the "Enter JSON here" textbox and click the `Create tree from text` button:
+![JSON reformatted with minimal whitespace](/docs/json%20document%20after%20compression.PNG?raw=true "JSON reformatted with minimal whitespace")
 
-![JSON viewer create tree from text](/docs/json%20viewer%20create%20tree%20from%20text.PNG?raw=true "JSON Viewer create tree from text")
+If you prefer it the way it was before, you can use the "Pretty-print current JSON file" (`Ctrl+Alt+Shift+P`) to restore it to that formatting.
 
-Once you do that, you should see a tree appear in the leftmost box:
+We can open up the JSON tree viewer in the main menu by navigating Plugins -> JsonTools -> "Open JSON tree viewer". The keyboard shortcut `Ctrl+Alt+Shift+J` will also open the tree.
 
-![JSON viewer tree first view](/docs/json%20viewer%20tree%20first%20view.PNG?raw=true "JSON Viewer tree first view")
+![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG?raw=true "JSON tree view immediately after creation")
 
-You can click on the nodes in that tree to see the children. 
+You can click on the nodes in that tree to see the children. When you do this, the caret will snap to the line of the node you've selected.
 
-![JSON viewer tree partially expanded](/docs/json%20viewer%20tree%20partially%20expanded.PNG?raw=true "JSON Viewer tree partially expanded")
+If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
+
+![JSON viewer tree partially expanded](/docs/tree%20partially%20expanded.PNG?raw=true "JSON Viewer tree partially expanded")
 
 
 You'll notice that icons appear next to the nodes in the tree. They are as follows:
@@ -65,6 +67,35 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 * <span style="color:red">-3.5</span>: __float__ (represented by 64-bit floating point number)
 * abc: __string__
 * <span style="color:grey">grey</span> square: __null__
+
+## Parser settings ##
+
+By default, this app can parse a superset of JSON that is very slightly more permissive than the [original JSON specification](https://json.org). This app parses `NaN` as the floating point `Not-A-Number` and `Infinity` as the floating point Infinity.
+
+You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow JavaScript comments in the file. Thus, such JSON will cause our parser to throw an error.
+
+![The default parser settings don't allow singlequoted strings or comments](/docs/json%20parser%20error%20due%20to%20singlequotes.PNG?raw=true "The default parser settings don't allow singlequoted strings or comments")
+
+We can fix that in the settings.
+
+![Change the parser settings to allow singlequotes and comments](/docs/json%20parser%20settings%20allow%20singlequotes%20and%20comments.PNG?raw=true "Change the parser settings to allow singlequotes and comments")
+
+As you can see, you can also make the parser settings *stricter* than the default so that they don't accept the nonstandard NaN and Infinity. Just set `allow_nan_inf` to False.
+
+## Viewing syntax errors in JSON ##
+
+The `linting` attribute in Settings enables the built-in linter for the JSON parser, which catches various syntax errors in JSON and logs them.
+When you parse a document that contains syntax errors like the one we saw above, you'll be asked if you want to see the syntax errors caught by the linter.
+
+![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
+
+If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught.
+
+![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
+
+**NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
+
+# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
 
 ## RemesPath ##
 
@@ -95,31 +126,6 @@ This app has a module that allows conversion of such JSON to a tabular format. R
 ![JSON to CSV convertor](/docs/json%20viewer%20csv%20generator.PNG?raw=true "JSON to CSV convertor")
 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies [here](/docs/json-to-csv.md).
-
-## Parser settings ##
-
-By default, this app can parse a superset of JSON that is very slightly more permissive than the [original JSON specification](https://json.org). This app parses `NaN` as the floating point `Not-A-Number` and `Infinity` as the floating point Infinity.
-
-You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow JavaScript comments in the file. Thus, such JSON will cause our parser to throw an error.
-
-![The default parser settings don't allow singlequoted strings or comments](/docs/json%20parser%20error%20due%20to%20singlequotes.PNG?raw=true "The default parser settings don't allow singlequoted strings or comments")
-
-We can fix that in the settings.
-
-![Change the parser settings to allow singlequotes and comments](/docs/json%20parser%20settings%20allow%20singlequotes%20and%20comments.PNG?raw=true "Change the parser settings to allow singlequotes and comments")
-
-As you can see, you can also make the parser settings *stricter* than the default so that they don't accept the nonstandard NaN and Infinity. Just set `allow_nan_inf` to False.
-
-## Viewing syntax errors in JSON ##
-
-The `linting` attribute in Settings enables the built-in linter for the JSON parser, which catches various syntax errors in JSON and logs them.
-These syntax errors can be viewed by clicking the `View Errors` button in the middle of the main form.
-
-![View syntax errors with the View Errors button and the errors/lint form](/docs/lint%20form%20example.PNG)
-
-You can export any errors you see to a text document with the button in the bottom of the syntax errors form.
-
-**NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
 
 # Get JSON from files and APIs #
 

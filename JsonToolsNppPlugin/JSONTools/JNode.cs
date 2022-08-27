@@ -249,7 +249,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public virtual string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, int depth = 0, int? cur_line_num = null)
         {
-            if (cur_line_num != null) { line_num = (int)cur_line_num; }
+            if (cur_line_num != null) line_num = (int)cur_line_num;
             return ToString();
         }
 
@@ -480,6 +480,7 @@ namespace JSON_Tools.JSON_Tools
                     sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, depth + 1, curline + 1);
                     sb.Append($"{dent}\"{k}\": {sline.str}");
                 }
+                curline = sline.line;
                 sb.Append((++ctr == children.Count) ? Environment.NewLine : "," + Environment.NewLine);
             }
             sb.Append($"{dent}}}");
@@ -645,6 +646,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     sb.Append($"{dent}{sline.str}");
                 }
+                curline = sline.line;
                 sb.Append((++ctr == children.Count) ? Environment.NewLine : "," + Environment.NewLine);
             }
             sb.Append($"{dent}]");
