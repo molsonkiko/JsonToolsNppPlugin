@@ -489,9 +489,15 @@ Returns the string representation of x.
 
 A RemesPath query can contain at most one `=` separating two valid expressions. This is the __assignment operator__.
 
-The LHS of the assignment expression is typically a query that selects items from a document (e.g., `@.foo[@ > 0]`) and the RHS is typically a scalar (if you want to give everything queried the same value) or a function like `@ + 1`.
+The LHS of the assignment expression is typically a query that selects items from a document (e.g., `@.foo[@ > 0]`).
 
-*NOTE: Until further notice, you __cannot__ mutate objects or arrays into any other type.* For example, `@.foo[]
+The RHS is typically a scalar (if you want to give everything queried the same value) or a function like `@ + 1`.
+
+If the RHS is a function and the LHS is an iterable, the RHS is applied separately to each element of the iterable.
+
+### Limitations ###
+1. Until further notice, you __cannot__ mutate an object or array, other than to change its scalar elements* For example, the query `@ = len(@)` on JSON `[[1, 2, 3]]` will fail, because this ends up trying to mutate the subarray `[1, 2, 3]`.
+2. You also cannot mutate a non-array or non-object into an array or object. For example, the query `@[0] = j``[1]`` `on the input `[0]` will fail because you're trying to convert a scalar (the integer `1`) to an array (`[1]`).
 
 An assignment expression mutates the input and then returns the input.
 
@@ -499,11 +505,12 @@ In these examples, we'll use the input
 ```json
 {
     "foo": [-1, 2, 3],
-    "bar": "abc"
+    "bar": "abc",
+    "baz": "de"
 }
 ```
 
 Some examples:
-* The query `@.foo[@ > 0] = @ + 1` will yield `{"foo": [0, 2, 3], "bar": "abc"}`
-* The query `@.bar = s_slice(@, :2)` will yield, `{"foo": [-1, 2, 3], "bar": "ab"}`
-* The query `@.foo = len(@)`
+* The query `@.foo[@ < 0] = @ + 1` will yield `{"foo": [0, 2, 3], "bar": "abc", "baz": "de"}`
+* The query `@.bar = s_slice(@, :2)` will yield `{"foo": [-1, 2, 3], "bar": "ab", "baz": "de"}`
+* The query `@.g``b`` = s_len(@)` will yield `{"foo": [-1, 2, 3], "bar": 3, "baz": 2}`
