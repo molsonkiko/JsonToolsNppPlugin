@@ -267,6 +267,14 @@ namespace JSON_Tools.JSON_Tools
             return schema;
         }
 
+        /// <summary>
+        /// in a list of multiple schemas, the schemas of arrays and objects
+        /// should come after simple type names,<br></br>
+        /// and simple type names should be in alphabetical order.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         private int SchemaComparer(JNode x, JNode y)
         {
             if (x.type == Dtype.OBJ)
@@ -275,7 +283,7 @@ namespace JSON_Tools.JSON_Tools
                 return 1;
             }
             if (y.type == Dtype.OBJ) { return -1; }
-            return x.type.ToString().CompareTo(y.type.ToString());
+            return x.CompareTo(y);
         }
 
         /// <summary>
@@ -304,6 +312,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JObject(0, kids);
             }
             var children = new List<JNode>();
+            // anyOf list of schemas
             if (schema is List<object>)
             {
                 foreach (object v in (List<object>)schema)

@@ -270,6 +270,33 @@ instead got
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }
 
+        public static void TestThrowsWhenAppropriate()
+        {
+            int ii = 0, tests_failed = 0;
+            JsonParser parser = new JsonParser();
+            string[] testcases = new string[]
+            {
+                "\"abc\\", // escape at end of unterminated string
+                "\"abc\" d", // something other than EOF after string document
+                "[1] [1]", // something other than EOF after string document
+            };
+
+            foreach (string test in testcases)
+            {
+                ii++;
+                try
+                {
+                    JNode json = parser.Parse(test);
+                    tests_failed++;
+                    Npp.AddLine($"Expected default settings JSON parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
+                }
+                catch { }
+            }
+
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
+
         public static void TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();

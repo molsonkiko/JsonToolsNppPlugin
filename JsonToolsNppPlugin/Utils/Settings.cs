@@ -75,7 +75,16 @@ namespace JSON_Tools.Utils
                         Text = "&Cancel",
                         Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                         Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 135, DEFAULT_HEIGHT - 36),
+                        Location = new Point(DEFAULT_WIDTH - 115, DEFAULT_HEIGHT - 36),
+                        UseVisualStyleBackColor = true
+                    },
+                    new Button
+                    {
+                        Name = "Reset",
+                        Text = "&Reset",
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                        Size = new Size(75, 23),
+                        Location = new Point(DEFAULT_WIDTH - 212, DEFAULT_HEIGHT - 36),
                         UseVisualStyleBackColor = true
                     },
                     new Button
@@ -84,7 +93,7 @@ namespace JSON_Tools.Utils
                         Text = "&Ok",
                         Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                         Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 135 - 150, DEFAULT_HEIGHT - 36),
+                        Location = new Point(DEFAULT_WIDTH - 310, DEFAULT_HEIGHT - 36),
                         UseVisualStyleBackColor = true
                     },
                     new PropertyGrid
@@ -103,22 +112,13 @@ namespace JSON_Tools.Utils
             dialog.Controls["Cancel"].Click += (a, b) => dialog.Close();
             dialog.Controls["Ok"].Click += (a, b) =>
             {
-                var changesEventArgs = new SettingsChangedEventArgs((Settings)this, copy);
+                // change the settings to whatever the user selected
+                var changesEventArgs = new SettingsChangedEventArgs(this, copy);
                 if (!changesEventArgs.Changed.Any())
                 {
                     dialog.Close();
                     return;
                 }
-                // from SettingsBase - see CSVLint
-                var acceptable = true; // OnValidateChanges(dialog, changesEventArgs);
-                if (!acceptable)
-                {
-                    dialog.Close();
-                    return;
-                }
-                // copy.SaveToIniFile();
-
-                // Copy all changed settings to this
                 foreach (var propertyInfo in GetType().GetProperties())
                 {
                     var oldValue = propertyInfo.GetValue(this, null);
@@ -126,7 +126,16 @@ namespace JSON_Tools.Utils
                     if (!oldValue.Equals(newValue))
                         propertyInfo.SetValue(this, newValue, null);
                 }
-                // OnSettingsChanged(dialog, changesEventArgs); // not sure what this does
+                dialog.Close();
+            };
+            dialog.Controls["Reset"].Click += (a, b) =>
+            {
+                // reset the settings to defaults
+                allow_nan_inf = true;
+                allow_javascript_comments = false;
+                allow_singlequoted_str = false;
+                allow_datetimes = false;
+                linting = false;
                 dialog.Close();
             };
 

@@ -129,7 +129,7 @@ namespace JSON_Tools.JSON_Tools
         private void ConsumeWhiteSpace(string inp)
         {
             char c;
-            while (ii < inp.Length - 1)
+            while (ii < inp.Length)
             {
                 c = inp[ii];
                 // tried using if/else if, but it's slower
@@ -318,7 +318,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else if (cur_c == '\\')
                 {
-                    if (ii == inp.Length - 2)
+                    if (ii >= inp.Length - 2)
                     {
                         if (lint == null) throw new JsonParserException("Unterminated string literal", cur_c, ii);
                         lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii, line_num, inp[ii]));
@@ -806,7 +806,7 @@ namespace JSON_Tools.JSON_Tools
                 throw new JsonParserException("Expected literal starting with 'f' to be false",
                                               next_c, ii+1);
             }
-            throw new JsonParserException("Badly located character", cur_c, inp.Length - 1);
+            throw new JsonParserException("Badly located character", cur_c, ii);
         }
 
         /// <summary>
@@ -832,7 +832,14 @@ namespace JSON_Tools.JSON_Tools
             }
             try
             {
-                return ParseSomething(inp);
+                JNode json = ParseSomething(inp);
+                ConsumeWhiteSpace(inp);
+                if (ii < inp.Length && inp[ii] == '/') MaybeConsumeComment(inp);
+                if (ii < inp.Length)
+                {
+                    throw new JsonParserException($"At end of valid JSON document, got {inp[ii]} instead of EOF", inp[ii], ii);
+                }
+                return json;
             }
             catch (Exception e)
             {
@@ -842,6 +849,23 @@ namespace JSON_Tools.JSON_Tools
                 }
                 throw;
             }
+        }
+
+        /// <summary>
+        /// create a new JsonParser with all the same settings as this one
+        /// </summary>
+        /// <returns></returns>
+        public JsonParser Copy()
+        {
+            bool linting = lint != null;
+            return new JsonParser(
+                allow_datetimes,
+                allow_singlequoted_str,
+                allow_javascript_comments,
+                linting,
+                allow_unquoted_str,
+                allow_nan_inf
+            );
         }
     }
     #endregion

@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
         public static DirectoryInfo smalldir = new DirectoryInfo(@"C:\Users\mjols\Documents\csharp\JSONToolsPlugin\testfiles\small");
         public static JsonParser jparser = new JsonParser();
         public static RemesParser rparser = new RemesParser();
-        private static JsonGrepper grepper = new JsonGrepper(new JsonParser());
+        private JsonGrepper grepper;
 
         public static void TestFnames()
         {
@@ -46,20 +46,21 @@ namespace JSON_Tools.Tests
             // test string slicer
             int tests_failed = 0;
             int ii = 0;
+            JsonGrepper grepper = new JsonGrepper(new JsonParser());
             foreach (object[] test in testcases)
             {
                 string search_pattern = (string)test[0];
                 bool recursive = (bool)test[1];
                 JNode desired_files = (JNode)test[2];
                 grepper.Reset();
-                grepper.ReadJsonFiles(smalldir.FullName, recursive, search_pattern);
+                grepper.Grep(smalldir.FullName, recursive, search_pattern);
                 JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
                 ((JArray)found_files).children.Sort();
                 ((JArray)desired_files).children.Sort();
                 if (found_files.ToString() != desired_files.ToString())
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (grepper.ReadJsonFiles({1}, {2}, {3})) failed:\n" +
+                    Npp.AddLine(String.Format("Test {0} (grepper.Grep({1}, {2}, {3})) failed:\n" +
                                                     "Expected to find files\n{4}\nGot files\n{5}",
                                                     ii + 1, subdir.FullName, recursive, search_pattern, desired_files.PrettyPrint(), found_files.PrettyPrint()));
                 }
@@ -81,14 +82,14 @@ namespace JSON_Tools.Tests
                 string search_pattern = kv.Key;
                 JNode desired_files = kv.Value;
                 grepper.Reset();
-                grepper.ReadJsonFiles(subdir.FullName, false, search_pattern);
+                grepper.Grep(subdir.FullName, false, search_pattern);
                 JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
                 ((JArray)found_files).children.Sort();
                 ((JArray)desired_files).children.Sort();
                 if (found_files.ToString() != desired_files.ToString())
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (grepper.ReadJsonFiles({1}, {2}, {3})) failed:\n" +
+                    Npp.AddLine(String.Format("Test {0} (grepper.Grep({1}, {2}, {3})) failed:\n" +
                                                     "Expected to find files\n{4}\nGot files\n{5}",
                                                     ii + 1, subdir.FullName, false, search_pattern, desired_files.PrettyPrint(), found_files.PrettyPrint()));
                 }

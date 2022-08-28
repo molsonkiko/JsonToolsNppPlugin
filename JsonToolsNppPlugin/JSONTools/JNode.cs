@@ -304,8 +304,15 @@ namespace JSON_Tools.JSON_Tools
                 // we could simply say value.CompareTo(other) after checking if value is null.
                 // It is more user-friendly to attempt to allow comparison of different numeric types, so we do this instead
                 case Dtype.STR: return ((string)value).CompareTo(other);
-                case Dtype.INT: return ((long)value).CompareTo(Convert.ToInt64(other));
-                case Dtype.FLOAT: return ((double)value).CompareTo(Convert.ToDouble(other));
+                case Dtype.INT: // Convert.ToInt64 has some weirdness where it rounds half-integers to the nearest even
+                                // so it is generally preferable to have ints and floats compared the same way
+                                // this way e.g. "3.5 < 4" will be treated the same as "4 > 3.5",
+                                // which is the same comparison but with different operand order.
+                                // The only downside of this approach is that integers between
+                                // 4.5036e15 (2 ^ 52) and 9.2234e18 (2 ^ 63)
+                                // can be precisely represented by longs but not by doubles,
+                                // so very large integers will have a loss of precision.
+                case Dtype.FLOAT: return Convert.ToDouble(value).CompareTo(Convert.ToDouble(other));
                 case Dtype.BOOL: return ((bool)value).CompareTo(Convert.ToBoolean(other));
                 case Dtype.NULL:
                 if (other != null) { throw new ArgumentException("Cannot compare null to non-null"); }

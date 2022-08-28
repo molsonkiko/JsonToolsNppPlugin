@@ -35,6 +35,12 @@ Testing JSON parser
             JsonParserTester.Test();
 
             Npp.AddLine(@"=========================
+Testing if JSON parser throws errors on bad inputs
+=========================
+");
+            JsonParserTester.TestThrowsWhenAppropriate();
+
+            Npp.AddLine(@"=========================
 Testing JSON parser advanced options (javascript comments, dates, datetimes, singlequoted strings)
 =========================
 ");

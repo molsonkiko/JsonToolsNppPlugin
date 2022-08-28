@@ -5,6 +5,12 @@ Testing JSON parser
 Failed 0 tests.
 Passed 45 tests.
 =========================
+Testing if JSON parser throws errors on bad inputs
+=========================
+
+Failed 0 tests.
+Passed 3 tests.
+=========================
 Testing JSON parser advanced options (javascript comments, dates, datetimes, singlequoted strings)
 =========================
 
@@ -105,14 +111,6 @@ Passed 126 tests.
 Testing JsonSchema generator
 =========================
 
-Expected the schema for [1, "1"] to be
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"type": ["integer", "string"]}, "type": "array"}
-Instead got
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"type": ["string", "integer"]}, "type": "array"}
-Expected the schema for [{"a": 1, "b": "w", "c": 1.0}, {"a": "2", "b": "v"}] to be
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": ["integer", "string"]}, "b": {"type": "string"}, "c": {"type": "number"}}, "required": ["a", "b"], "type": "object"}, "type": "array"}
-Instead got
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": ["string", "integer"]}, "b": {"type": "string"}, "c": {"type": "number"}}, "required": ["a", "b"], "type": "object"}, "type": "array"}
 Expected the schema for [[1, 2.0, {"a": 1}]] to be
 {"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"items": {"anyOf": [{"type": "integer"}, {"type": "number"}, {"properties": {"a": {"type": "integer"}}, "required": ["a"], "type": "object"}]}, "type": "array"}, "type": "array"}
 Instead got
@@ -121,131 +119,30 @@ Expected the schema for [{"a": 3},{"a": 1,"b": [{"a": {"b": 1,"c": 2}},{"a": {"b
 {"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": "integer"}, "b": {"items": {"properties": {"a": {"properties": {"b": {"type": "integer"}, "c": {"type": "integer"}, "d": {"type": "integer"}}, "required": ["b"], "type": "object"}}, "required": ["a"], "type": "object"}, "type": "array"}, "c": {"type": "integer"}}, "required": ["a"], "type": "object"}, "type": "array"}
 Instead got
 {"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": "integer"}, "b": {"items": {"properties": {"a": {"properties": {"b": {"type": "integer"}, "c": {"type": "integer"}, "d": {"type": "integer"}}, "required": ["b", "c", "d"], "type": "object"}}, "required": ["a"], "type": "object"}, "type": "array"}, "c": {"type": "integer"}}, "required": ["a"], "type": "object"}, "type": "array"}
-Failed 4 tests.
-Passed 1 tests.
+Failed 2 tests.
+Passed 3 tests.
 =========================
 Testing JSON tabularizer
 =========================
 
-Expected BuildTable([{"a": 1, "b": "foo", "c": [{"d": 1, "e": "a"}, {"d": 2, "e": "b"}]}, {"a": 2, "b": "bar", "c": [{"d": 3, "e": "c"}, {"d": 4, "e": "d"}]}])
-to return
-[{"a": 1, "b": "foo", "c.d": 1, "c.e": "a"}, {"a": 1, "b": "foo", "c.d": 2, "c.e": "b"}, {"a": 2, "b": "bar", "c.d": 3, "c.e": "c"}, {"a": 2, "b": "bar", "c.d": 4, "c.e": "d"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable([{"name": "foo", "players": [{"at-bats": [3, 4], "hits": [1, 2], "name": "alice"}, {"at-bats": [3], "hits": [2], "name": "bob"}]}, {"name": "bar", "players": [{"at-bats": [2, 3], "hits": [1], "name": "carol"}]}])
-to return
-[{"name": "foo", "players.at-bats": 3, "players.hits": 1, "players.name": "alice"}, {"name": "foo", "players.at-bats": 4, "players.hits": 2, "players.name": "alice"}, {"name": "foo", "players.at-bats": 3, "players.hits": 2, "players.name": "bob"}, {"name": "bar", "players.at-bats": 2, "players.hits": 1, "players.name": "carol"}, {"name": "bar", "players.at-bats": 3, "players.hits": "", "players.name": "carol"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable({"leagues": [{"league": "American", "teams": [{"name": "foo", "players": [{"at-bats": [3], "hits": [1], "name": "alice"}]}, {"name": "bar", "players": [{"at-bats": [2], "hits": [1], "name": "carol"}]}]}, {"league": "National", "teams": [{"name": "baz", "players": [{"at-bats": [3], "hits": [2], "name": "bob"}]}]}]})
-to return
-[{"leagues.league": "American", "leagues.teams.name": "foo", "leagues.teams.players.at-bats": 3, "leagues.teams.players.hits": 1, "leagues.teams.players.name": "alice"}, {"leagues.league": "American", "leagues.teams.name": "bar", "leagues.teams.players.at-bats": 2, "leagues.teams.players.hits": 1, "leagues.teams.players.name": "carol"}, {"leagues.league": "National", "leagues.teams.name": "baz", "leagues.teams.players.at-bats": 3, "leagues.teams.players.hits": 2, "leagues.teams.players.name": "bob"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable({"a": [{"name": "blah", "rows": [[1, 2, "a"], [1, 2, "a"]]}]})
-to return
-[{"a.name": "blah", "a.rows.col1": 1, "a.rows.col2": 2, "a.rows.col3": "a"}, {"a.name": "blah", "a.rows.col1": 1, "a.rows.col2": 2, "a.rows.col3": "a"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable({"stuff": [{"name": "blah", "substuff": [{"a": 1, "b": "foo", "c": [{"d": 1, "e": "a"}]}, {"a": 2, "b": "bar", "c": [{"d": 3, "e": "c"}]}]}, {"name": "wuz", "substuff": [{"a": 3, "b": "baz", "c": [{"d": 4, "e": "f"}]}]}]})
-to return
-[{"stuff_name": "blah", "stuff_substuff_a": 1, "stuff_substuff_b": "foo", "stuff_substuff_c_d": 1, "stuff_substuff_c_e": "a"}, {"stuff_name": "blah", "stuff_substuff_a": 2, "stuff_substuff_b": "bar", "stuff_substuff_c_d": 3, "stuff_substuff_c_e": "c"}, {"stuff_name": "wuz", "stuff_substuff_a": 3, "stuff_substuff_b": "baz", "stuff_substuff_c_d": 4, "stuff_substuff_c_e": "f"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable([{"a": 1, "b": "foo", "c": [{"d": 1, "e": "a"}]}, {"a": 2, "b": "bar", "c": [{"d": 3, "e": "c"}]}])
-to return
-[{"a": 1, "b": "foo", "c/d": 1, "c/e": "a"}, {"a": 2, "b": "bar", "c/d": 3, "c/e": "c"}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Expected BuildTable([{"a": 1, "b": [1], "c": {"d": "y"}}, {"a": true, "b": [7, 8]}, {"a": false, "b": [9]}])
-to return
-[{"a": 1, "b": 1, "c.d": "y"}, {"a": true, "b": 7}, {"a": true, "b": 8}, {"a": false, "b": 9}]
-Instead threw exception
-System.InvalidCastException: Specified cast is not valid.
-   at JSON_Tools.JSON_Tools.JNode.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JArray.ToString(Boolean sort_keys)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchemaHelper(Dictionary`2 schema, List`1 path, Dictionary`2 tab_paths)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.FindTabsInSchema(Dictionary`2 schema)
-   at JSON_Tools.JSON_Tools.JsonTabularizer.BuildTable(JNode obj, Dictionary`2 schema, String key_sep)
-   at JSON_Tools.Tests.JsonTabularizerTester.Test()
-Failed 7 tests.
-Passed 41 tests.
+Failed 0 tests.
+Passed 48 tests.
 =========================
 Testing JSON grepper's file reading ability
 =========================
 
-Test 4 (grepper.ReadJsonFiles(C:\Users\mjols\Documents\csharp\JSONToolsPlugin\testfiles\small\subsmall, True, *.txt)) failed:
-Expected to find files
-[
-"C:\\Users\\mjols\\Documents\\csharp\\JSONToolsPlugin\\testfiles\\small\\subsmall\\json_as_txt.txt"
-]
-Got files
-[
-"C:\\Users\\mjols\\Documents\\csharp\\JSONToolsPlugin\\testfiles\\small\\subsmall\\comment_json_as_txt.txt",
-"C:\\Users\\mjols\\Documents\\csharp\\JSONToolsPlugin\\testfiles\\small\\subsmall\\json_as_txt.txt",
-"C:\\Users\\mjols\\Documents\\csharp\\JSONToolsPlugin\\testfiles\\small\\subsmall\\singlequote_json_as_txt.txt"
-]
-Failed 1 tests.
-Passed 5 tests.
+Failed 0 tests.
+Passed 6 tests.
 =========================
 Performance tests for JsonParser and RemesPath
 =========================
 
+Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
+...
+To convert JSON string of size 975068 into JNode took 60.253 +/- 10.64 ms over 14 trials
+Load times (ms): 48, 75, 55, 46, 50, 48, 50, 68, 71, 78, 64, 55, 70, 58
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.005 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 1.492 +/- 3.267 ms over 14 trials
+Query times (ms): 0.644, 0.554, 0.49, 0.48, 0.614, 1.267, 0.524, 0.56, 0.488, 13.249, 0.571, 0.491, 0.478, 0.48
+Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
+...

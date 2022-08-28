@@ -323,7 +323,7 @@ namespace JSON_Tools.JSON_Tools
 				{
 					if (node is int && (int)node == 0)
 					{
-						patharr.children.Add(new JNode(0, Dtype.FLOAT, 0));
+						patharr.children.Add(new JNode(0L, Dtype.INT, 0));
 					}
 					else
 					{
