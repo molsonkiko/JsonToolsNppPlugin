@@ -30,13 +30,17 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
 
 ![JSON file with syntax errors before and after use of JSON tools](/jsontools%20before%20after.PNG)
 
-## Downloads ##
+## Downloads and Installation ##
 
 Go to the [Releases page](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) to see past releases.
 
 [Download latest 32-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x86.zip)
 
+You can unzip the 32-bit download to `.\Program Files (x86)\Notepad++\plugins\JsonTools\JsonTools.dll`.
+
 [Download latest 64-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x64.zip)
+
+You can unzip the 64-bit download to `C:\Program Files\Notepad++\plugins\JsonTools\JsonTools.dll`.
 
 ## Acknowledgments ##
 
