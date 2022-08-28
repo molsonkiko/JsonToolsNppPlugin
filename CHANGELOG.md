@@ -21,6 +21,7 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
+- Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree that were affected by the assignment.
 - Improve how well the caret tracks the node selected in the query tree.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
 - Add parsing of unquoted strings when linter is active.
@@ -41,6 +42,21 @@ This project has many features that were implemented in a [standalone app](https
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 
+
+## [2.0.0] - 2022-08-28
+
+### Added
+
+1. Assignment operator in RemesPath. Now you can __edit__ documents with RemesPath, not just query them!
+2. Menu option for converting a JSON document to YAML. Until I fix the bugs, it will throw up a message box warning the user that this option has some known bugs.
+
+### Bugfixes
+
+- So it turns out that `Convert.ToDouble(null)`, `Convert.ToInt64(null)`, and `Convert.ToBoolean(null)` all return `0`, which meant that before I added a bunch more runtime type checking, there were stupid bugs with vectorized arithmetic where you could get something like querying `@ - 1` with input `[[]]` returning `[-1.0]`. That has been fixed, and tests have been added to make sure it works.
+
+### Changed
+- `RemesParser.Search` and `RemesPathLexer.Compile` now have a required `out bool` parameter that indicates whether the query was an assignment expression. This is a __backwards-incompatible change__.
+	- I may try to come up with a better solution, but it seems important for the parser to give some indication of whether the input JSON was mutated.
 
 ## [1.2.0] - 2022-08-27
 

@@ -74,30 +74,30 @@ namespace JSON_Tools.JSON_Tools
         /// in JSON as the strings "NaN", "Infinity", and "-Infinity" respectively.
         /// These are not part of the official JSON spec, so they can be disallowed.
         ///</summary>
-        public bool allow_nan_inf = true;
+        public bool allow_nan_inf;
         /// <summary>
         /// If true, JavaScript single-line (preceded by "//") and multiline ("/* ... */") comments
         /// will be ignored rather than raising an exception.
         /// </summary>
-        public bool allow_javascript_comments = false;
+        public bool allow_javascript_comments;
         /// <summary>
         /// If true, Strings enquoted with ' rather than " will be tolerated rather than raising an exception.
         /// </summary>
-        public bool allow_singlequoted_str = false;
+        public bool allow_singlequoted_str;
         /// <summary>
         /// If true, Strings consisting only of ASCII letters and underscores without any surrounding quotes will be tolerated.
         /// </summary>
-        public bool allow_unquoted_str = false;
+        public bool allow_unquoted_str;
         /// <summary>
         /// If true, any strings in the standard formats of ISO 8601 dates (yyyy-MM-dd) and datetimes (yyyy-MM-dd hh:mm:ss.sss)
         ///  will be automatically parsed as the appropriate type.
         ///  Not currently supported. May never be.
         /// </summary>
-        public bool allow_datetimes = false;
+        public bool allow_datetimes;
         /// <summary>
         /// If "linting" is true, most forms of invalid syntax will not cause the parser to stop, but instead the syntax error will be recorded in a list.
         /// </summary>
-        public List<JsonLint> lint = null;
+        public List<JsonLint> lint;
         //public Dictionary<char, char> escape_map 
         // no customization for date culture will be available - dates will be recognized as yyyy-mm-dd
         // and datetimes will be recognized as YYYY-MM-DDThh:mm:ss.sssZ (the Z at the end indicates that it's UTC)
@@ -120,7 +120,7 @@ namespace JSON_Tools.JSON_Tools
             this.allow_unquoted_str = allow_unquoted_str; // not currently supported; may never be supported
             this.allow_datetimes = allow_datetimes;
             this.allow_nan_inf = allow_nan_inf;
-            if (linting) lint = new List<JsonLint>();
+            lint = linting ? new List<JsonLint>() : null;
         }
 
         #endregion

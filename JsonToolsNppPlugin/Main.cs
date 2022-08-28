@@ -66,6 +66,7 @@ namespace Kbg.NppPluginNET
                                                             settings.allow_nan_inf);
         public static RemesParser remesParser = new RemesParser();
         public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
+        public static YamlDumper yamlDumper = new YamlDumper();
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
@@ -125,7 +126,8 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(4, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
             PluginBase.SetCommand(5, "---", null);
             PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(7, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
+            PluginBase.SetCommand(7, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(8, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
         }
 
         static internal void SetToolBarIcon()
@@ -229,7 +231,8 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception e)
             {
-                MessageBox.Show($"Could not parse the document because of error\n{e}",
+                string expretty = RemesParser.PrettifyException(e);
+                MessageBox.Show($"Could not parse the document because of error\n{expretty}",
                                 "Error while trying to parse JSON",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
@@ -273,11 +276,36 @@ namespace Kbg.NppPluginNET
             Npp.SetLangJson();
         }
 
-        //form opening stuff
-        static void OpenRemesPathWindow()
+        static void DumpYaml()
         {
-            MessageBox.Show("This is supposed to open the RemesPath query window", "remespath querying not yet implemented");
+            string warning = "This feature has known bugs that may result in invalid YAML being emitted. Run the tests to see examples. Use it anyway?";
+            if (MessageBox.Show(warning,
+                            "JSON to YAML feature has some bugs",
+                            MessageBoxButtons.OKCancel,
+                            MessageBoxIcon.Warning)
+                == DialogResult.Cancel)
+                return;
+            JNode json = TryParseJson();
+            if (json == null) return;
+            Npp.notepad.FileNew();
+            string yaml = "";
+            try
+            {
+                yaml = yamlDumper.Dump(json);
+            }
+            catch (Exception ex)
+            {
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not convert the JSON to YAML because of error\n{expretty}",
+                                "Error while trying to convert JSON to YAML",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
+            }
+            Npp.editor.SetText(yaml);
         }
+
+        //form opening stuff
 
         static void OpenSettings()
         {

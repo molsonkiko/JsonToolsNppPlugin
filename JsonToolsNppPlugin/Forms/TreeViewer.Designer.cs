@@ -43,7 +43,7 @@
             // 
             this.Tree.Location = new System.Drawing.Point(4, 75);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(410, 550);
+            this.Tree.Size = new System.Drawing.Size(398, 550);
             this.Tree.TabIndex = 0;
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
             // 
@@ -96,7 +96,7 @@
             // 
             this.QueryToCsvButton.Location = new System.Drawing.Point(299, 4);
             this.QueryToCsvButton.Name = "QueryToCsvButton";
-            this.QueryToCsvButton.Size = new System.Drawing.Size(115, 26);
+            this.QueryToCsvButton.Size = new System.Drawing.Size(103, 26);
             this.QueryToCsvButton.TabIndex = 3;
             this.QueryToCsvButton.Text = "Query to CSV";
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
@@ -106,7 +106,7 @@
             // 
             this.SchemaButton.Location = new System.Drawing.Point(299, 36);
             this.SchemaButton.Name = "SchemaButton";
-            this.SchemaButton.Size = new System.Drawing.Size(115, 30);
+            this.SchemaButton.Size = new System.Drawing.Size(103, 30);
             this.SchemaButton.TabIndex = 4;
             this.SchemaButton.Text = "Make schema";
             this.SchemaButton.UseVisualStyleBackColor = true;
@@ -116,7 +116,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(418, 631);
+            this.ClientSize = new System.Drawing.Size(412, 631);
             this.Controls.Add(this.SchemaButton);
             this.Controls.Add(this.QueryToCsvButton);
             this.Controls.Add(this.SaveQueryButton);

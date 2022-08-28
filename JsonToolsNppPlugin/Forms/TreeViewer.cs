@@ -29,6 +29,8 @@ namespace JSON_Tools.Forms
 
         public JNode json;
 
+        public RemesPathLexer lexer;
+
         public RemesParser remesParser;
 
         public JsonSchemaMaker schemaMaker;
@@ -41,6 +43,7 @@ namespace JSON_Tools.Forms
             this.json = json;
             query_result = json;
             remesParser = new RemesParser();
+            lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
         }
 
@@ -90,21 +93,34 @@ namespace JSON_Tools.Forms
             tree.Nodes.Clear();
             TreeNode root = new TreeNode();
             SetImageOfTreeNode(root, json);
-            if ((json.type & Dtype.ITERABLE) != 0)
+            try
             {
-                // recursively build tree for iterable JSON
-                root.Text = "JSON";
-                // need to add the root first because FullPath is undefined until root is in a TreeView
-                // but also FullPath depends on the text so we need to track that too
-                tree.Nodes.Add(root);
-                JsonTreePopulateHelper(root, json, pathsToLines);
-                root.Expand(); // could be slow for larger JSON
+                if ((json.type & Dtype.ITERABLE) != 0)
+                {
+                    // recursively build tree for iterable JSON
+                    root.Text = "JSON";
+                    // need to add the root first because FullPath is undefined until root is in a TreeView
+                    // but also FullPath depends on the text so we need to track that too
+                    tree.Nodes.Add(root);
+                    JsonTreePopulateHelper(root, json, pathsToLines);
+                    root.Expand(); // could be slow for larger JSON
+                }
+                else
+                {
+                    // just show the value for the scalar
+                    root.Text = json.ToString();
+                    tree.Nodes.Add(root);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // just show the value for the scalar
-                root.Text = json.ToString();
-                tree.Nodes.Add(root);
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not populate JSON tree because of error:\n{expretty}",
+                                "Syntax error while populating tree",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                tree.Parent.UseWaitCursor = false;
+                return;
             }
             tree.Parent.UseWaitCursor = false; // gotta turn it off or else it persists until the form closes
             tree.EndUpdate();
@@ -194,14 +210,80 @@ namespace JSON_Tools.Forms
             if (json == null) return;
             string query = QueryBox.Text;
             JNode query_func = null;
+            List<object> toks = null;
+            bool is_assignment_expr = false;
             try
             {
-                query_func = remesParser.Compile(query);
+                toks = lexer.Tokenize(query, out is_assignment_expr);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not compile query {query} because of error:\n{ex}",
-                                "Error while compiling query",
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
+                                "Syntax error in RemesPath query",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
+            }
+            foreach (object tok in toks)
+            {
+                if (tok is char c && c == '=')
+                {
+                    is_assignment_expr = true;
+                    break;
+                }
+            }
+            if (is_assignment_expr)
+            {
+                JNode mutation_func = null;
+                try
+                {
+                    mutation_func = remesParser.CompileAssignmentExpr(toks);
+                }
+                catch (Exception ex)
+                {
+                    string expretty = RemesParser.PrettifyException(ex);
+                    MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
+                                "Syntax error in RemesPath query",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                    return;
+                }
+                if (mutation_func is CurJson cjmut)
+                {
+                    try
+                    {
+                        query_func = cjmut.function(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        string expretty = RemesParser.PrettifyException(ex);
+                        MessageBox.Show($"While executing query {query}, encountered error:\n{expretty}",
+                                        "Runtime error while executing query",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else
+                {
+                    query_func = mutation_func;
+                }
+                json = query_func;
+                string new_json_str = query_func.PrettyPrintAndChangeLineNumbers();
+                Npp.editor.SetText(new_json_str);
+                JsonTreePopulate(query_func);
+                return;
+            }
+            try
+            {
+                query_func = remesParser.Compile(toks);
+            }
+            catch (Exception ex)
+            {
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
+                                "Syntax error in RemesPath query",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                 return;
@@ -214,8 +296,9 @@ namespace JSON_Tools.Forms
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"While executing query {query}, encountered error:\n{ex}",
-                                    "Query execution failed",
+                    string expretty = RemesParser.PrettifyException(ex);
+                    MessageBox.Show($"While executing query {query}, encountered error:\n{expretty}",
+                                    "Runtime error while executing query",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Error);
                     return;
@@ -254,7 +337,8 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While creating JSON schema, encountered error:\n{ex}",
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
                                     "Exception while making JSON schema",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Error);

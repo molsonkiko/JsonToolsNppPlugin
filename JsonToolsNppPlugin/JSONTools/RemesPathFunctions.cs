@@ -69,7 +69,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(aval) + Convert.ToInt64(bval), Dtype.INT, 0);
             }
-            if (atype == Dtype.FLOAT || btype == Dtype.FLOAT)
+            if (((atype & Dtype.FLOAT_OR_INT) != 0) && ((atype & Dtype.FLOAT_OR_INT) != 0))
             {
                 return new JNode(Convert.ToDouble(aval) + Convert.ToDouble(bval), Dtype.FLOAT, 0);
             }
@@ -88,6 +88,8 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(aval) - Convert.ToInt64(bval), Dtype.INT, 0);
             }
+            if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't subtract objects of type {atype} and {btype}");
             return new JNode(Convert.ToDouble(aval) - Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
@@ -99,21 +101,29 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
             }
+            if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't multiply objects of type {atype} and {btype}");
             return new JNode(Convert.ToDouble(aval) * Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
         public static JNode Divide(JNode a, JNode b)
         {
+            if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't divide objects of types {a.type} and {b.type}");
             return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b.value), Dtype.FLOAT, 0);
         }
 
         public static JNode FloorDivide(JNode a, JNode b)
         {
+            if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't floor divide objects of types {a.type} and {b.type}");
             return new JNode(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value)), Dtype.INT, 0);
         }
 
         public static JNode Pow(JNode a, JNode b)
         {
+            if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't multiply objects of type {a.type} and {b.type}");
             return new JNode(Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
         }
 
@@ -125,6 +135,8 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public static JNode NegPow(JNode a, JNode b)
         {
+            if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't exponentiate objects of type {a.type} and {b.type}");
             return new JNode(-Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
         }
 
@@ -136,33 +148,41 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(aval) % Convert.ToInt64(bval), Dtype.INT, 0);
             }
+            if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
+                throw new RemesPathException($"Can't use modulo operator on objects of type {atype} and {btype}");
             return new JNode(Convert.ToDouble(aval) % Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
         public static JNode BitWiseOR(JNode a, JNode b)
         {
-            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            if (a.type == Dtype.INT && b.type == Dtype.INT)
             {
                 return new JNode(Convert.ToInt64(a.value) | Convert.ToInt64(b.value), Dtype.INT, 0);
             }
+            if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
+                throw new RemesPathException($"Can't bitwise OR objects of type {a.type} and {b.type}");
             return new JNode(Convert.ToBoolean(a.value) || Convert.ToBoolean(b.value), Dtype.BOOL, 0);
         }
 
         public static JNode BitWiseXOR(JNode a, JNode b)
         {
-            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            if (a.type == Dtype.INT && b.type == Dtype.INT)
             {
                 return new JNode(Convert.ToInt64(a.value) ^ Convert.ToInt64(b.value), Dtype.INT, 0);
             }
+            if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
+                throw new RemesPathException($"Can't bitwise XOR objects of type {a.type} and {b.type}");
             return new JNode((bool)a.value ^ (bool)b.value, Dtype.BOOL, 0);
         }
 
         public static JNode BitWiseAND(JNode a, JNode b)
         {
-            if (a.type == Dtype.INT || b.type == Dtype.INT)
+            if (a.type == Dtype.INT && b.type == Dtype.INT)
             {
                 return new JNode(Convert.ToInt64(a.value) & Convert.ToInt64(b.value), Dtype.INT, 0);
             }
+            if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
+                throw new RemesPathException($"Can't bitwise AND objects of type {a.type} and {b.type}");
             return new JNode((bool)a.value && (bool)b.value, Dtype.BOOL, 0);
         }
 
@@ -211,95 +231,6 @@ namespace JSON_Tools.JSON_Tools
         public static JNode IsNotEqual(JNode a, JNode b)
         {
             return new JNode(!a.Equals(b), Dtype.BOOL, 0);
-        }
-
-        /// <summary>
-        /// Not strictly a binop, because it has no return value.<br></br>
-        /// Implements the -= operator for two JNodes, both with type = Dtype.INT or Dtype.FLOAT,<br></br>
-        /// So MinusEquals(JNode(3), JNode(0.5))<br></br>
-        /// converts the first JNode's type from Dtype.INT to Dtype.FLOAT and sets its value to 2.5.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        public static void MinusEquals(JNode a, JNode b)
-        {
-            object aval = a.value; object bval = b.value;
-            Dtype atype = a.type; Dtype btype = b.type;
-            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) - Convert.ToDouble(bval);
-                a.type = Dtype.FLOAT;
-            }
-            else if (atype == Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) - Convert.ToDouble(bval);
-            }
-            else
-            {
-                a.value = Convert.ToInt64(aval) - Convert.ToInt64(bval);
-            }
-        }
-
-        /// <summary>
-        /// See documentation for Binop.MinusEquals, except this implements +=
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        public static void PlusEquals(JNode a, JNode b)
-        {
-            object aval = a.value; object bval = b.value;
-            Dtype atype = a.type; Dtype btype = b.type;
-            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) + Convert.ToDouble(bval);
-                a.type = Dtype.FLOAT;
-            }
-            else if (atype == Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) + Convert.ToDouble(bval);
-            }
-            else
-            {
-                a.value = Convert.ToInt64(aval) + Convert.ToInt64(bval);
-            }
-        }
-
-        /// <summary>
-        /// See documentation for MinusEquals, except this implements *=
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        public static void TimesEquals(JNode a, JNode b)
-        {
-            object aval = a.value; object bval = b.value;
-            Dtype atype = a.type; Dtype btype = b.type;
-            if (btype == Dtype.FLOAT && atype != Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) * Convert.ToDouble(bval);
-                a.type = Dtype.FLOAT;
-            }
-            else if (atype == Dtype.FLOAT)
-            {
-                a.value = Convert.ToDouble(aval) * Convert.ToDouble(bval);
-            }
-            else
-            {
-                a.value = Convert.ToInt64(aval) * Convert.ToInt64(bval);
-            }
-        }
-
-        /// <summary>
-        /// Implements in-place exponentiation of a JNode by another JNode.<br></br>
-        /// This always changes the type of JNode a to Dtype.FLOAT.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        public static void PowEquals(JNode a, JNode b)
-        {
-            object aval = a.value; object bval = b.value;
-            Dtype atype = a.type; Dtype btype = b.type;
-            a.value = Math.Pow(Convert.ToDouble(aval), Convert.ToDouble(bval));
-            a.type = Dtype.FLOAT;
         }
 
         public static Dictionary<string, Binop> BINOPS = new Dictionary<string, Binop>
@@ -480,6 +411,10 @@ namespace JSON_Tools.JSON_Tools
             double tot = 0;
             foreach (JNode child in itbl.children)
             {
+                if ((child.type & Dtype.NUM) == 0)
+                {
+                    throw new RemesPathException("Function Sum requires an array of all numbers");
+                }
                 tot += Convert.ToDouble(child.value);
             }
             return new JNode(tot, Dtype.FLOAT, 0);
@@ -496,6 +431,10 @@ namespace JSON_Tools.JSON_Tools
             double tot = 0;
             foreach (JNode child in itbl.children)
             {
+                if ((child.type & Dtype.NUM) == 0)
+                {
+                    throw new RemesPathException("Function Mean requires an array of all numbers");
+                }
                 tot += Convert.ToDouble(child.value);
             }
             return new JNode(tot / itbl.Length, Dtype.FLOAT, 0);
@@ -589,6 +528,10 @@ namespace JSON_Tools.JSON_Tools
             JNode biggest = new JNode(NanInf.neginf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
+                if ((child.type & Dtype.NUM) == 0)
+                {
+                    throw new RemesPathException("Function Max requires an array of all numbers");
+                }
                 if (Convert.ToDouble(child.value) > Convert.ToDouble(biggest.value)) { biggest = child; }
             }
             return biggest;
@@ -606,6 +549,10 @@ namespace JSON_Tools.JSON_Tools
             JNode smallest = new JNode(NanInf.inf, Dtype.FLOAT, 0);
             foreach (JNode child in itbl.children)
             {
+                if ((child.type & Dtype.NUM) == 0)
+                {
+                    throw new RemesPathException("Function Min requires an array of all numbers");
+                }
                 if (Convert.ToDouble(child.value) < Convert.ToDouble(smallest.value)) { smallest = child; }
             }
             return smallest;
@@ -867,6 +814,10 @@ namespace JSON_Tools.JSON_Tools
             var sorted = new List<double>();
             foreach (JNode node in ((JArray)args[0]).children)
             {
+                if ((node.type & Dtype.NUM) == 0)
+                {
+                    throw new RemesPathException("Function Quantile requires an array of all numbers");
+                }
                 sorted.Add(Convert.ToDouble(node.value));
             }
             double quantile = Convert.ToDouble(args[1].value);
@@ -885,7 +836,6 @@ namespace JSON_Tools.JSON_Tools
             double lower_val = sorted[lower_ind];
             if (ind != lower_ind)
             {
-                
                 double upper_val = sorted[lower_ind + 1];
                 double frac_upper = ind - lower_ind;
                 weighted_avg = upper_val * frac_upper + lower_val * (1 - frac_upper);
@@ -1032,7 +982,7 @@ namespace JSON_Tools.JSON_Tools
         //}
 
         /// <summary>
-        /// Takes 2-6 JArrays as arguments. They must be of equal length.
+        /// Takes 2-100 JArrays as arguments. They must be of equal length.
         /// Returns: one JArray in which the i^th element is an array containing the i^th elements of the input arrays.
         /// Example:
         /// Zip([1,2],["a", "b"], [true, false]) = [[1, "a", true], [2, "b", false]]
@@ -1498,7 +1448,7 @@ namespace JSON_Tools.JSON_Tools
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
-            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 6, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
+            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 100, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
             // vectorized functions
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),

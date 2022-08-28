@@ -5,10 +5,11 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 * indexing in objects with both dot syntax and square bracket syntax
 * boolean indexing
 * vectorized arithmetic
-* many vectorized functions
+* many built-in [functions](#functions), both [vectorized](#vectorized-functions) and not
 * [regular expression](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) functions
 * recursive search for keys
 * SQL-like group_by capabilities
+* [editing of JSON](#assignment-expressions)
 
 The formal description of the language in pseudo-Backus-Naur form is in ["RemesPath language spec.txt"](/docs/RemesPath%20language%20spec.txt). I'm not 100% sure this is a formally valid language spec, though.
 
@@ -146,7 +147,7 @@ return arr
 * You can also recursively search for the keys "b" and "a" with the query `@..[b, a]`. This will return `[2, 1, 4, 3]`.
 
 ## Functions ##
-RemesPath supports a variety of functions, some of which are vectorized and some of which are not.
+RemesPath supports a variety of functions, some of which are [vectorized](#vectorized-functions) and some of which are not.
 
 We'll present the non-vectorized functions separately from the vectorized ones to avoid confusion.
 
@@ -328,15 +329,15 @@ Returns an array of two-element subarrays `[k: anything, count: int]` where `cou
 The order of the sub-arrays is random.
 
 ----
-`zip(x1: array, x2: array [, x3: array, x4: array, x5: array, x6: array]) -> array`
+`zip(x1: array, x2-x100: array) -> array`
 
-Because of unfortunate limitations in the C# implementation of RemesPath, there can only be at most *6* arguments to this function.
+There can only be at most *100* arguments to this function.
 
 Returns a new array in which each `i^th` element is an array containing the `i^th` elements of each argument, in the order in which they were passed.
 
 All the argument arrays *must have the same length*.
 
-In other words, it's like the Python `zip` function.
+In other words, it's like the Python `zip` function, except it returns an array, not a lazy iterator.
 
 **Example:**
 * `zip(["a", "b", "c"], [1, 2, 3])` returns `[["a", 1], ["b", 2], ["c", 3]]`.
@@ -483,3 +484,26 @@ Returns the upper-case form of x.
 `str(x: anything) -> string`
 
 Returns the string representation of x.
+
+## Assignment expressions ##
+
+A RemesPath query can contain at most one `=` separating two valid expressions. This is the __assignment operator__.
+
+The LHS of the assignment expression is typically a query that selects items from a document (e.g., `@.foo[@ > 0]`) and the RHS is typically a scalar (if you want to give everything queried the same value) or a function like `@ + 1`.
+
+*NOTE: Until further notice, you __cannot__ mutate objects or arrays into any other type.* For example, `@.foo[]
+
+An assignment expression mutates the input and then returns the input.
+
+In these examples, we'll use the input
+```json
+{
+    "foo": [-1, 2, 3],
+    "bar": "abc"
+}
+```
+
+Some examples:
+* The query `@.foo[@ > 0] = @ + 1` will yield `{"foo": [0, 2, 3], "bar": "abc"}`
+* The query `@.bar = s_slice(@, :2)` will yield, `{"foo": [-1, 2, 3], "bar": "ab"}`
+* The query `@.foo = len(@)`

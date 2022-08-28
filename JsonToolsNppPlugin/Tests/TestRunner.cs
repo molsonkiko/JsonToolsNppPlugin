@@ -89,6 +89,18 @@ Testing RemesPath parser and compiler
             RemesParserTester.Test();
 
             Npp.AddLine(@"=========================
+Testing that RemesPath throws errors on bad inputs
+=========================
+");
+            RemesPathThrowsWhenAppropriateTester.Test();
+
+            Npp.AddLine(@"=========================
+Testing RemesPath assignment operations
+=========================
+");
+            RemesPathAssignmentTester.Test();
+
+            Npp.AddLine(@"=========================
 Testing JsonSchema generator
 =========================
 ");

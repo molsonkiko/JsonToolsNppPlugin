@@ -43,7 +43,7 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString() { return description; }
     }
-
+    #region OTHER_HELPER_CLASSES
     public class QueryCache
     {
         public int capacity;
@@ -206,14 +206,14 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString() { return description + "\nDetails:\n" + Message; }
     }
-
+    #endregion
     /// <summary>
     /// RemesPath is similar to JMESPath, but more fully featured.<br></br>
     /// The RemesParser parses queries.
     /// </summary>
     public class RemesParser
     {
-        public static RemesPathLexer lexer = new RemesPathLexer();
+        public RemesPathLexer lexer;
         /// <summary>
         /// A LRU cache mapping queries to compiled results that the parser can check against
         /// to save time on parsing.<br></br>
@@ -228,41 +228,85 @@ namespace JSON_Tools.JSON_Tools
         public RemesParser(int cache_capacity = 64)
         {
             cache = new QueryCache();
+            lexer = new RemesPathLexer();
         }
 
         /// <summary>
-        /// Parse a query and compile it into a RemesPath function that operates on JSON.
-        /// If the query is not a function of input, it will instead just output fixed JSON.
+        /// Parse a query and compile it into a RemesPath function that operates on JSON.<br></br>
+        /// If the query is not a function of input, it will instead just output fixed JSON.<br></br>
+        /// If is_assignment_expr is true, this means that the query is an assignment expression<br></br>
+        /// (i.e., a query that mutates the underlying JSON)
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public JNode Compile(string query)
+        public JNode Compile(List<object> toks)
         {
             //// turns out compiling queries is very fast (tens of microseconds for a simple query),
             //// so caching old queries doesn't save much time
             // JNode old_result = cache.Check(query);
             // if (old_result != null) { return old_result; }
-            List<object> toks = lexer.Tokenize(query);
             JNode result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
             //cache.Add(query, result);
             return result;
         }
 
         /// <summary>
-        /// Perform a RemesPath query on JSON and return the result.
+        /// Perform a RemesPath query on JSON and return the result.<br></br>
+        /// If is_assignment_expr is true, this means that the query is an assignment expression<br></br>
+        /// (i.e., a query that mutates the underlying JSON)
         /// </summary>
         /// <param name="query"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public JNode Search(string query, JNode obj)
+        public JNode Search(string query, JNode obj, out bool is_assignment_expr)
         {
-            JNode result = Compile(query);
-            if (result is CurJson)
+            List<object> toks = lexer.Tokenize(query, out is_assignment_expr);
+            foreach (object tok in toks)
+            {
+                if (tok is char c && c == '=')
+                {
+                    is_assignment_expr = true;
+                    break;
+                }
+            }
+            if (is_assignment_expr)
+            {
+                JNode mutation_func = CompileAssignmentExpr(toks);
+                // cache.Add(query, mutation_func);
+                if (mutation_func is CurJson cjmut)
+                {
+                    return cjmut.function(obj);
+                }
+                return mutation_func;
+            }
+            JNode result = Compile(toks);
+            if (result is CurJson cjres)
             {
                 return ((CurJson)result).function(obj);
             }
             return result;
         }
+
+        public JNode CompileAssignmentExpr(List<object> toks)
+        {
+            bool before_assignment_operator = true;
+            List<object> lhs_toks = new List<object>();
+            List<object> rhs_toks = new List<object>();
+            foreach (object tok in toks)
+            {
+                if (tok is char c && c == '=')
+                {
+                    before_assignment_operator = false;
+                    continue;
+                }
+                if (before_assignment_operator)
+                    lhs_toks.Add(tok);
+                else rhs_toks.Add(tok);
+            }
+            JNode lhs = Compile(lhs_toks);
+            JNode rhs = Compile(rhs_toks);
+            return ApplyAssignmentExpression(lhs, rhs);
+        } 
 
         public static string EXPR_FUNC_ENDERS = "]:},)";
         // these tokens have high enough precedence to stop an expr_function or scalar_function
@@ -1905,7 +1949,101 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException("Unterminated projection");
         }
         #endregion
+        #region ASSIGNMENT_EXPRESSIONS
 
+        private static void TransferJNodeProperties(JNode v, JNode vnew)
+        {
+            if (v is JArray)
+            {
+                throw new RemesPathException("Can't mutate an array.");
+            }
+            if (v is JObject)
+            {
+                throw new RemesPathException("Can't mutate an object.");
+            }
+            // v is a scalar
+            if (vnew is JArray || vnew is JObject)
+                throw new RemesPathException("Can't convert a scalar to an array or object.");
+            v.type = vnew.type;
+            v.value = vnew.value;
+        }
+
+        /// <summary>
+        /// An assignment expression is a valid RemesPath expression that contains the token '='.<br></br>
+        /// Assignment expressions are vectorized,<br></br>
+        /// so @ = @ * 2 will:<br></br>
+        /// * change [1, 2, 3] to [2, 4, 6]<br></br>
+        /// * change {"a": 1.5, "b": -4.6} to {"a": 3.0, "b": -9.2}<br></br>
+        /// * change 2 to 4
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="op"></param>
+        private JNode ApplyAssignmentExpression(JNode x, JNode op)
+        {
+            if (x is CurJson)
+            {
+                CurJson cjx = (CurJson)x;
+                Func<JNode, JNode> outfunc = (JNode inp) =>
+                {
+                    ApplyAssignmentExpression(cjx.function(inp), op);
+                    return inp;
+                };
+                return new CurJson(Dtype.UNKNOWN, outfunc);
+            }
+            if (op is CurJson cjop)
+            {
+                var func = cjop.function;
+                if (x is JObject)
+                {
+                    foreach (JNode v in ((JObject)x).children.Values)
+                    {
+                        TransferJNodeProperties(v, func(v));
+                    }
+                }
+                else if (x is JArray)
+                {
+                    foreach (JNode v in ((JArray)x).children)
+                    {
+                        TransferJNodeProperties(v, func(v));
+                    }
+                }
+                else // x is a scalar
+                {
+                    JNode xnew = func(x);
+                    if (xnew is JArray || xnew is JObject)
+                        throw new RemesPathException("Can't convert a scalar to an array or object");
+                    x.type = xnew.type;
+                    x.value = xnew.value;
+                }
+                return x;
+            }
+            // op is an unchanging value, so just perform the same change x or all children of x
+            if (x is JObject xobj)
+            {
+                foreach (JNode v in xobj.children.Values)
+                {
+                    TransferJNodeProperties(v, op);
+                }
+            }
+            else if (x is JArray xarr)
+            {
+                foreach (JNode v in xarr.children)
+                {
+                    TransferJNodeProperties(v, op);
+                }
+            }
+            else
+            {
+                // x is a scalar
+                if (op is JArray || op is JObject)
+                    throw new RemesPathException("Can't convert a scalar to an array or object");
+                x.type = op.type;
+                x.value = op.value;
+            }
+            return x;
+        }
+
+        #endregion
         #region EXCEPTION_PRETTIFIER
         // extracts the origin and target of the cast from an InvalidCastException
         private static Regex CAST_REGEX = new Regex("Unable to cast.+(Node|Object|Array|Char).+to type.+(Node|Object|Array|Char)", RegexOptions.Compiled);

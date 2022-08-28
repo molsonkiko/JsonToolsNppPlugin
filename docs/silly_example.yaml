@@ -1,0 +1,40 @@
+-
+    cities: BUS
+    contaminated: True
+    date: 
+    names: Bluds
+    nums: .nan
+    subzone: a
+    zone: 1
+-
+    cities: BUS
+    contaminated: False
+    date: 
+    names: Bluds
+    nums: .nan
+    subzone: c
+    zone: 1
+-
+    cities: FUDG
+    contaminated: True
+    date: "2020-12-13 12:00:00.00"
+    names: dfsd
+    nums: 0.5
+    subzone: c
+    zone: 2
+-
+    cities: FUDG
+    contaminated: False
+    date: "2020-12-13 12:00:00.00"
+    names: dfsd
+    nums: 0.5
+    subzone: e
+    zone: 2
+-
+    cities: YUNOB
+    contaminated: True
+    date: "2014-10-17 12:00:00.00"
+    names: Kjond
+    nums: 4.6
+    subzone: w
+    zone: 5

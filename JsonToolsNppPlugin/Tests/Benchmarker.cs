@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using JSON_Tools.JSON_Tools;
@@ -81,7 +82,8 @@ namespace JSON_Tools.Tests
                 watch.Start();
                 try
                 {
-                    query_func = ((CurJson)parser.Compile(query)).function;
+                    List<object> toks = parser.lexer.Tokenize(query, out bool _);
+                    query_func = ((CurJson)parser.Compile(toks)).function;
                 }
                 catch (Exception ex)
                 {

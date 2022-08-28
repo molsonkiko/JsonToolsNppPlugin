@@ -244,8 +244,9 @@ Syntax error at position 3: Number with two decimal points
             return Binop.BINOPS[bs];
         }
 
-        public List<object> Tokenize(string q)
+        public List<object> Tokenize(string q, out bool is_assignment_expr)
         {
+            is_assignment_expr = false;
             JsonParser jsonParser = new JsonParser();
             var tokens = new List<object>();
             ii = 0;
@@ -355,6 +356,26 @@ Syntax error at position 3: Number with two decimal points
                 }
                 else if (BINOP_START_CHARS.Contains(c))
                 {
+                    if (c == '=')
+                    {
+                        // could be the assignment operator
+                        c = q[ii];
+                        if (c != '=' && c != '~')
+                        {
+                            // it's not the first token of "==" or "=~", so it's an assignment expression
+                            if (is_assignment_expr)
+                            {
+                                throw new RemesLexerException(ii, q, "RemesPath queries can contain at most one assignment expression");
+                            }
+                            if (tokens.Count == 0)
+                            {
+                                throw new RemesLexerException(ii, q, "Assignment expression with no left-hand side");
+                            }
+                            is_assignment_expr = true;
+                            tokens.Add('=');
+                            continue;
+                        }
+                    }
                     ii--;
                     bop = ParseBinop(q);
                     tokens.Add(bop);
@@ -375,6 +396,10 @@ Syntax error at position 3: Number with two decimal points
             if (square_braces_opened > 0)
             {
                 throw new RemesLexerException(last_unclosed_squarebrace, q, "Unclosed '['");
+            }
+            if (tokens[tokens.Count - 1] is char last_c && last_c == '=')
+            {
+                throw new RemesLexerException(ii, q, "Assignment expression with no right-hand side");
             }
             return tokens;
         }

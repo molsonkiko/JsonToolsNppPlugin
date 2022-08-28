@@ -54,7 +54,9 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 
 You can click on the nodes in that tree to see the children. When you do this, the caret will snap to the line of the node you've selected.
 
-*NOTE: If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line. It's a bit unpredictable.*
+__NOTES__
+1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
+2. If you [edit your JSON](/docs/RemesPath.md#assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 

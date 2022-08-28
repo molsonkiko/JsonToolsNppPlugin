@@ -61,7 +61,8 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show("While trying to create CSV from JSON, raised this exception:\n" + ex.Message,
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show("While trying to create CSV from JSON, raised this exception:\n" + expretty,
                     "Exception while tabularizing JSON",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -86,7 +87,8 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(),
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show(expretty,
                     "Could not open documentation",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

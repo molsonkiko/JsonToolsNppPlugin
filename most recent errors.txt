@@ -79,7 +79,7 @@ Testing RemesPath lexer
 =========================
 
 Failed 0 tests.
-Passed 21 tests.
+Passed 25 tests.
 =========================
 Testing RemesPath parser and compiler
 =========================
@@ -107,6 +107,18 @@ Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown.
 Failed 5 tests.
 Passed 126 tests.
+=========================
+Testing that RemesPath throws errors on bad inputs
+=========================
+
+Failed 0 tests.
+Passed 102 tests.
+=========================
+Testing RemesPath assignment operations
+=========================
+
+Failed 0 tests.
+Passed 17 tests.
 =========================
 Testing JsonSchema generator
 =========================
@@ -139,10 +151,10 @@ Performance tests for JsonParser and RemesPath
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 58.723 +/- 9.391 ms over 14 trials
-Load times (ms): 46, 63, 60, 60, 72, 75, 74, 58, 50, 55, 50, 52, 47, 52
+To convert JSON string of size 975068 into JNode took 58.308 +/- 4.57 ms over 14 trials
+Load times (ms): 49, 62, 58, 58, 63, 58, 61, 56, 55, 67, 62, 55, 53, 54
 Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.004 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.684 +/- 0.219 ms over 14 trials
-Query times (ms): 0.719, 1.08, 1.135, 0.689, 0.502, 0.487, 0.491, 0.505, 0.58, 0.594, 0.604, 0.58, 0.576, 1.031
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.6 +/- 0.184 ms over 14 trials
+Query times (ms): 1.246, 0.538, 0.487, 0.475, 0.609, 0.605, 0.486, 0.515, 0.571, 0.58, 0.568, 0.573, 0.584, 0.568
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...
