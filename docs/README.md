@@ -54,6 +54,8 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 
 You can click on the nodes in that tree to see the children. When you do this, the caret will snap to the line of the node you've selected.
 
+*NOTE: If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line. It's a bit unpredictable.*
+
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 
 ![JSON viewer tree partially expanded](/docs/tree%20partially%20expanded.PNG?raw=true "JSON Viewer tree partially expanded")
@@ -95,20 +97,18 @@ If you click "Yes", a new file will open in a separate tab containing details on
 
 **NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
 
-# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
-
 ## RemesPath ##
 
 The primary utility of this tool comes from the ability to query the JSON using [RemesPath](RemesPath.md), which you can learn more about in the linked docs.
 
-You can submit RemesPath queries in the box in the top left, which by default has the `@` symbol in it.
+You can submit RemesPath queries in textbox above the tree, which by default has the `@` symbol in it.
 
 ![JSON viewer tree with RemesPath query](/docs/json%20viewer%20with%20remespath%20query.PNG?raw=true "JSON Viewer tree RemesPath query")
 
 Once you've submitted a query, you can use several other features of the JSON viewer.
-First, you can save the query result to a new JSON file.
+First, you can open a new buffer containing the query result.
 
-![JSON viewer save RemesPath query to file](/docs/json%20viewer%20query%20save.PNG?raw=true "JSON viewer save RemesPath query to file")
+![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG?raw=true "JSON viewer open query result in new buffer")
 
 ## JSON Schema ##
 
@@ -122,10 +122,14 @@ This JSON schema will not be perfect, until I fix a known bug that causes the "r
 
 Some JSON also has a somewhat __tabular__ format, such that it is amenable to conversion to a CSV file. The JSON in this example is a particularly simple case of this.
 
-This app has a module that allows conversion of such JSON to a tabular format. Remember that even if the JSON file as a whole can't be "tabularized" (or *can*, but you don't *want*  to), you can use a RemesPath query to select the part that you want to tabularize.
+This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON to a tabular format. Remember that even if the JSON file as a whole can't be "tabularized" (or *can*, but you don't *want*  to), you can use a RemesPath query to select the part that you want to tabularize.
+
 ![JSON to CSV convertor](/docs/json%20viewer%20csv%20generator.PNG?raw=true "JSON to CSV convertor")
 
-At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies [here](/docs/json-to-csv.md).
+At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
+
+# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
+======
 
 # Get JSON from files and APIs #
 

@@ -3,7 +3,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
-using NppPluginNET.PluginInfrastructure;
+using JSON_Tools.PluginInfrastructure;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {

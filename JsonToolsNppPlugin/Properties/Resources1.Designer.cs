@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NppPluginNET.Properties {
+namespace JSON_Tools.Properties {
     using System;
     
     

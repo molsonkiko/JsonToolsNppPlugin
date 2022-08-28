@@ -67,6 +67,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- infrastructure -->
+    <Compile Include="Forms\JsonToCsvForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\JsonToCsvForm.Designer.cs">
+      <DependentUpon>JsonToCsvForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\TreeViewer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -183,6 +189,9 @@
   </ItemGroup>
   <ItemGroup>
     <!-- resx files -->
+    <EmbeddedResource Include="Forms\JsonToCsvForm.resx">
+      <DependentUpon>JsonToCsvForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\TreeViewer.resx">
       <DependentUpon>TreeViewer.cs</DependentUpon>
     </EmbeddedResource>

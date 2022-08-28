@@ -123,10 +123,9 @@ namespace Kbg.NppPluginNET
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "Query JSON with RemesPath", OpenRemesPathWindow); remesPathWindowId = 5;
-            PluginBase.SetCommand(6, "---", null);
-            PluginBase.SetCommand(7, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(8, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
+            PluginBase.SetCommand(5, "---", null);
+            PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(7, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
         }
 
         static internal void SetToolBarIcon()
@@ -263,7 +262,7 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers());
-            Npp.notepad.SetCurrentLanguage(LangType.L_JSON);
+            Npp.SetLangJson();
         }
 
         static void CompressJson()
@@ -271,7 +270,7 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             Npp.editor.SetText(json.ToStringAndChangeLineNumbers());
-            Npp.notepad.SetCurrentLanguage(LangType.L_JSON);
+            Npp.SetLangJson();
         }
 
         //form opening stuff
@@ -298,57 +297,42 @@ namespace Kbg.NppPluginNET
             // Dockable Dialog Demo
             // 
             // This demonstration shows you how to do a dockable dialog.
-            // You can create your own non dockable dialog - in this case you don't nedd this demonstration.
+            // You can create your own non dockable dialog - in this case you don't need this demonstration.
             JNode json = TryParseJson();
             if (json == null) return;
-            TreeViewer treeViewer = null;
-            if (treeViewer == null)
+
+            TreeViewer treeViewer = new TreeViewer(json);
+            using (Bitmap newBmp = new Bitmap(16, 16))
             {
-                treeViewer = new TreeViewer();
-
-                using (Bitmap newBmp = new Bitmap(16, 16))
-                {
-                    Graphics g = Graphics.FromImage(newBmp);
-                    ColorMap[] colorMap = new ColorMap[1];
-                    colorMap[0] = new ColorMap();
-                    colorMap[0].OldColor = Color.Fuchsia;
-                    colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
-                    ImageAttributes attr = new ImageAttributes();
-                    attr.SetRemapTable(colorMap);
-                    g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
-                    tbIcon = Icon.FromHandle(newBmp.GetHicon());
-                }
-
-                NppTbData _nppTbData = new NppTbData();
-                _nppTbData.hClient = treeViewer.Handle;
-                _nppTbData.pszName = "Json Tree View";
-                // the dlgDlg should be the index of funcItem where the current function pointer is in
-                // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
-                _nppTbData.dlgID = jsonTreeId;
-                // define the default docking behaviour
-                _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
-                _nppTbData.hIconTab = (uint)tbIcon.Handle;
-                _nppTbData.pszModuleName = PluginName;
-                IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
-                Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
-
-                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
-                // Following message will toogle both menu item state and toolbar button
-                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
+                Graphics g = Graphics.FromImage(newBmp);
+                ColorMap[] colorMap = new ColorMap[1];
+                colorMap[0] = new ColorMap();
+                colorMap[0].OldColor = Color.Fuchsia;
+                colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
+                ImageAttributes attr = new ImageAttributes();
+                attr.SetRemapTable(colorMap);
+                g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                tbIcon = Icon.FromHandle(newBmp.GetHicon());
             }
-            else
-            {
-                if (!treeViewer.Visible)
-                {
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMSHOW, 0, treeViewer.Handle);
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
-                }
-                else
-                {
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMHIDE, 0, treeViewer.Handle);
-                    Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 0);
-                }
-            }
+
+            NppTbData _nppTbData = new NppTbData();
+            _nppTbData.hClient = treeViewer.Handle;
+            _nppTbData.pszName = "Json Tree View";
+            // the dlgDlg should be the index of funcItem where the current function pointer is in
+            // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
+            _nppTbData.dlgID = jsonTreeId;
+            // define the default docking behaviour
+            _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
+            _nppTbData.hIconTab = (uint)tbIcon.Handle;
+            _nppTbData.pszModuleName = PluginName;
+            IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+            Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
+
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
+            // Following message will toogle both menu item state and toolbar button
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
+
+            Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
             treeViewer.Focus();
         }

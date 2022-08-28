@@ -21,6 +21,8 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
+- Improve how well the caret tracks the node selected in the query tree.
+- Maybe make it so that creating the tree automatically pretty-prints the JSON?
 - Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
 - Add RemesPath functions:
@@ -39,6 +41,18 @@ This project has many features that were implemented in a [standalone app](https
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 
+
+## [1.2.0] - 2022-08-27
+
+### Added
+
+- RemesPath querying to the tree viewer
+- Conversion of RemesPath query results to CSV files
+- Creation of JSON schemas for query results
+
+### Changed
+
+- Because RemesPath querying has been added, the tree now tracks the query result rather than the underlying JSON. The caret tracking still mostly works, but only if the query is identity (`@`) or purely indexing-based (i.e., selecting indices from arrays, keys from objects, and applying boolean indices).
 
 ## [1.1.1] - 2022-08-27
 

@@ -33,6 +33,11 @@ namespace JSON_Tools.Utils
             editor.AppendTextAndMoveCursor(System.Environment.NewLine);
         }
 
+        public static void SetLangJson()
+        {
+            notepad.SetCurrentLanguage(LangType.L_JSON);
+        }
+
         /// <summary>
         /// input is one of 'p', 'd', 'f'<br></br>
         /// if 'p', get full path to current file (default)<br></br>

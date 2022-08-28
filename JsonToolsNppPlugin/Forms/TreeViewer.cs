@@ -22,12 +22,26 @@ namespace JSON_Tools.Forms
         /// Maps the path of a TreeNode to the line number of the corresponding JNode
         /// </summary>
         public Dictionary<string, int> pathsToLines;
+        /// <summary>
+        /// result of latest RemesPath query
+        /// </summary>
+        public JNode query_result;
 
-        public TreeViewer()
+        public JNode json;
+
+        public RemesParser remesParser;
+
+        public JsonSchemaMaker schemaMaker;
+
+        public TreeViewer(JNode json)
         {
             InitializeComponent();
             pathsToLines = new Dictionary<string, int>();
             fname = Npp.GetCurrentPath();
+            this.json = json;
+            query_result = json;
+            remesParser = new RemesParser();
+            schemaMaker = new JsonSchemaMaker();
         }
 
         public static void SetImageOfTreeNode(TreeNode root, JNode json)
@@ -173,6 +187,82 @@ namespace JSON_Tools.Forms
             if (!pathsToLines.ContainsKey(path)) return;
             Npp.editor.GotoLine(pathsToLines[path]);
             // might also want to make it so that the selected line is scrolled to the top
+        }
+
+        private void SubmitQueryButton_Click(object sender, EventArgs e)
+        {
+            if (json == null) return;
+            string query = QueryBox.Text;
+            JNode query_func = null;
+            try
+            {
+                query_func = remesParser.Compile(query);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not compile query {query} because of error:\n{ex}",
+                                "Error while compiling query",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
+            }
+            if (query_func is CurJson qf)
+            {
+                try
+                {
+                    query_result = qf.function(json);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"While executing query {query}, encountered error:\n{ex}",
+                                    "Query execution failed",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            else
+            {
+                // query_func is a constant, so just set the query to that
+                query_result = query_func;
+            }
+            JsonTreePopulate(query_result);
+        }
+
+        private void QueryToCsvButton_Click(object sender, EventArgs e)
+        {
+            if (query_result == null) return;
+            using (var jsonToCsv = new JsonToCsvForm(query_result))
+                jsonToCsv.ShowDialog();
+        }
+
+        private void SaveQueryResultButton_Click(object sender, EventArgs e)
+        {
+            if (query_result == null) return;
+            Npp.notepad.FileNew();
+            Npp.editor.AppendTextAndMoveCursor(query_result.PrettyPrint());
+            Npp.SetLangJson();
+        }
+
+        private void SchemaButton_Click(object sender, EventArgs e)
+        {
+            if (query_result == null) return;
+            JNode schema = null;
+            try
+            {
+                schema = schemaMaker.GetSchema(query_result);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While creating JSON schema, encountered error:\n{ex}",
+                                    "Exception while making JSON schema",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                return;
+            }
+            Npp.notepad.FileNew();
+            Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
+            Npp.SetLangJson();
         }
     }
 }
