@@ -28,6 +28,7 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Fixed
 
+- Sometimes characters greater than 0x7f (e.g., emojis, Chinese characters) can cause queries to cut off some characters from the end of the file. This can also affect the JSON-to-CSV conversion. [simple_json_with_unicode.json](/testfiles/small/subsmall/simple_json_with_unicode.json) in the test files is an example of this. 
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
 - Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
