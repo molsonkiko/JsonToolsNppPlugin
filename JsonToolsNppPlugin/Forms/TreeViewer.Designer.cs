@@ -36,7 +36,6 @@
             this.SubmitQueryButton = new System.Windows.Forms.Button();
             this.SaveQueryButton = new System.Windows.Forms.Button();
             this.QueryToCsvButton = new System.Windows.Forms.Button();
-            this.SchemaButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // Tree
@@ -102,22 +101,11 @@
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
             this.QueryToCsvButton.Click += new System.EventHandler(this.QueryToCsvButton_Click);
             // 
-            // SchemaButton
-            // 
-            this.SchemaButton.Location = new System.Drawing.Point(299, 36);
-            this.SchemaButton.Name = "SchemaButton";
-            this.SchemaButton.Size = new System.Drawing.Size(103, 30);
-            this.SchemaButton.TabIndex = 4;
-            this.SchemaButton.Text = "Make schema";
-            this.SchemaButton.UseVisualStyleBackColor = true;
-            this.SchemaButton.Click += new System.EventHandler(this.SchemaButton_Click);
-            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(412, 631);
-            this.Controls.Add(this.SchemaButton);
             this.Controls.Add(this.QueryToCsvButton);
             this.Controls.Add(this.SaveQueryButton);
             this.Controls.Add(this.SubmitQueryButton);
@@ -139,6 +127,5 @@
         private System.Windows.Forms.Button SubmitQueryButton;
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
-        private System.Windows.Forms.Button SchemaButton;
     }
 }

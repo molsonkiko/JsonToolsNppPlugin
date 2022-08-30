@@ -67,16 +67,16 @@ The binary operators in RemesPath are as follows:
 Symbol | Operator                                      | Precedence | Return type
 -------|-----------------------------------------------|------------|------------
  `&`   |  bitwise/logical `AND`                        |  0         | int/bool
- `\|`   |  bitwise/logical `OR`                         |  0         | int/bool
+ `\|`   |  bitwise/logical `OR`                        |  0         | int/bool
  `^`   |  bitwise/logical `XOR`                        |  0         | int/bool
- `=~`  |  value in array/object matches regex          |  1         | bool
+ `=~`  |  string matches regex                         |  1         | bool
  `==`, `!=`, `<`, `>`, `<=`, `>=` | the usual comparison operators | 1 | bool
  `+`   | Addition of numbers, concatenation of strings   |  2         | int/float/string
  `-`   | subtraction                                   |  2         | int/float
  `//`  | floor division                                |  3         | int
  `%`   | modulo                                        |  3         | int/float
  `*`   | multiplication                                |  3         | int/float
- `/`   | division                                      |  3         | int/float
+ `/`   | division                                      |  3         | float
  `**`  | exponentiation                                |  5         | float
 
 As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentation.
@@ -496,7 +496,8 @@ The RHS is typically a scalar (if you want to give everything queried the same v
 If the RHS is a function and the LHS is an iterable, the RHS is applied separately to each element of the iterable.
 
 ### Limitations ###
-1. Until further notice, you __cannot__ mutate an object or array, other than to change its scalar elements* For example, the query `@ = len(@)` on JSON `[[1, 2, 3]]` will fail, because this ends up trying to mutate the subarray `[1, 2, 3]`.
+1. Until further notice, you __cannot__ mutate an object or array, other than to change its scalar elements
+    * For example, the query `@ = len(@)` on JSON `[[1, 2, 3]]` will fail, because this ends up trying to mutate the subarray `[1, 2, 3]`.
 2. You also cannot mutate a non-array or non-object into an array or object. For example, the query `@[0] = j``[1]`` `on the input `[0]` will fail because you're trying to convert a scalar (the integer `1`) to an array (`[1]`).
 
 An assignment expression mutates the input and then returns the input.

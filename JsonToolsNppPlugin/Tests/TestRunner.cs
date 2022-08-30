@@ -29,6 +29,12 @@ namespace JSON_Tools.Tests
         {
             Npp.notepad.FileNew();
             Npp.AddLine(@"=========================
+Testing JNode Copy method
+=========================
+");
+            JsonParserTester.TestJNodeCopy();
+
+            Npp.AddLine(@"=========================
 Testing JSON parser
 =========================
 ");

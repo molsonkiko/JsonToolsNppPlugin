@@ -604,9 +604,9 @@ namespace JSON_Tools.JSON_Tools
                     // the IndexerFunc couldn't find
                     if (ix.is_dict)
                     {
-                        return new JObject(0, new Dictionary<string, JNode>());
+                        return new JObject();
                     }
-                    return new JArray(0, new List<JNode>());
+                    return new JArray();
                 }
                 Key_Node k1v1 = inds.Current;
                 object k1 = k1v1.obj;
@@ -1870,7 +1870,7 @@ namespace JSON_Tools.JSON_Tools
                     for (int arg2 = arg_num; arg2 < fun.max_args; arg2++)
                     {
                         // fill the remaining args with null nodes; alternatively we could have ArgFunctions use JNode?[] instead of JNode[]
-                        args[arg2] = new JNode(null, Dtype.NULL, 0);
+                        args[arg2] = new JNode();
                     }
                     return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }

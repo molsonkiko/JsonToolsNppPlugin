@@ -318,7 +318,7 @@ namespace JSON_Tools.JSON_Tools
 			}
 			if ((cls & JsonFormat.ANY_TABLE) != 0)
 			{
-				JArray patharr = new JArray(0, new List<JNode>());
+				JArray patharr = new JArray();
 				foreach (object node in path)
 				{
 					if (node is int && (int)node == 0)
@@ -715,7 +715,7 @@ namespace JSON_Tools.JSON_Tools
 		{
 			JsonParser jsonParser = new JsonParser();
 			List<JNode> result = new List<JNode>();
-			JArray path = new JArray(0, new List<JNode>());
+			JArray path = new JArray();
 			JsonFormat cls = JsonFormat.BAD;
 			if (strategy == JsonTabularizerStrategy.NO_RECURSION)
 			{
@@ -750,7 +750,7 @@ namespace JSON_Tools.JSON_Tools
 				Dictionary<string, JsonFormat> tab_paths = FindTabsInSchema(schema);
 				if (tab_paths.Count == 0)
 				{
-					return new JArray(0, new List<JNode>());
+					return new JArray();
 				}
 				if (tab_paths.Count > 1)
 				{

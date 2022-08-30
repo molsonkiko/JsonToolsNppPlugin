@@ -86,35 +86,55 @@ namespace JSON_Tools.JSON_Tools
             bool s2_empty = s2type is List<object> && ((List<object>)s2type).Count == 0;
             if (!s1_has_type)
             {
+                HashSet<Dtype> scaltypes = new HashSet<Dtype>();
                 if (!s2_has_type)
                 {
                     foreach (object v in (List<object>)s1["anyOf"])
                     {
-                        anyof.Add(v);
+                        if (v is Dtype d)
+                            scaltypes.Add(d);
+                        else anyof.Add(v);
                     }
                     foreach (object v in (List<object>)s2["anyOf"])
                     {
-                        anyof.Add(v);
+                        if (v is Dtype d)
+                            scaltypes.Add(d);
+                        else anyof.Add(v);
                     }
+                    foreach (Dtype d in scaltypes)
+                        anyof.Add(d);
                     return new Dictionary<string, object> { ["anyOf"] = anyof };
                 }
-                anyof.Add(new Dictionary<string, object> { ["type"] = s2type });
+                if (s2type is Dtype)
+                    scaltypes.Add((Dtype)s2type);
+                else anyof.Add(new Dictionary<string, object> { ["type"] = s2type });
                 foreach (object v in (List<object>)s1["anyOf"])
                 {
-                    anyof.Add(v);
+                    if (v is Dtype d)
+                        scaltypes.Add(d);
+                    else anyof.Add(v);
                 }
+                foreach (Dtype d in scaltypes)
+                    anyof.Add(d);
                 return new Dictionary<string, object> { ["anyOf"] = anyof };
             }
             if (!s2_has_type)
             {
-                anyof.Add(new Dictionary<string, object> { ["type"] = s1type });
+                HashSet<Dtype> scaltypes = new HashSet<Dtype>();
+                if (s1type is Dtype)
+                    scaltypes.Add((Dtype)s1type);
+                else anyof.Add(new Dictionary<string, object> { ["type"] = s1type });
                 foreach (object v in (List<object>)s2["anyOf"])
                 {
-                    anyof.Add(v);
+                    if (v is Dtype d)
+                        scaltypes.Add(d);
+                    else anyof.Add(v);
                 }
+                foreach (Dtype d in scaltypes)
+                    anyof.Add(d);
                 return new Dictionary<string, object> { ["anyOf"] = anyof };
             }
-            if (s1.Count == 1)
+            if (s1.Count == 1) // s1 is a scalar or array of scalars
             {
                 if (s1_empty)
                 {
@@ -159,6 +179,9 @@ namespace JSON_Tools.JSON_Tools
                     anyof.Add(s2);
                     return new Dictionary<string, object> { ["anyOf"] = anyof };
                 }
+                anyof.Add(new Dictionary<string, object> { { "type", s1type } });
+                anyof.Add(s2);
+                return new Dictionary<string, object> { { "anyOf", anyof } };
             }
             if (s2.Count == 1)
             {
@@ -231,7 +254,18 @@ namespace JSON_Tools.JSON_Tools
                 HashSet<object> scalar_types = new HashSet<object>();
                 foreach (JNode elt in ((JArray)obj).children)
                 {
-                    if ((elt.type & Dtype.SCALAR) != 0)
+                    if (elt.type == Dtype.FLOAT)
+                    {
+                        scalar_types.Remove(Dtype.INT);
+                        // "number" is a superset of "integer" in JSON type conventions
+                        // recall that JavaScript doesn't even have an integer type
+                        scalar_types.Add(Dtype.FLOAT);
+                    }
+                    else if (elt.type == Dtype.INT && !scalar_types.Contains("number"))
+                    {
+                        scalar_types.Add(Dtype.INT);
+                    }
+                    else if ((elt.type & Dtype.SCALAR) != 0)
                     {
                         scalar_types.Add(elt.type);
                     }

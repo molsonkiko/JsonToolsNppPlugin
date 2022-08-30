@@ -41,7 +41,7 @@ namespace JSON_Tools.Tests
             string jsonstr = File.ReadAllText(fname);
             int len = jsonstr.Length;
             long[] load_times = new long[num_trials];
-            JNode json = new JNode(null, Dtype.NULL, 0);
+            JNode json = new JNode();
             // benchmark time to load json
             for (int ii = 0; ii < num_trials; ii++)
             {
@@ -100,7 +100,7 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {load_times.Length} trials");
             // time query execution
             long[] query_times = new long[num_trials];
-            JNode result = new JNode(null, Dtype.NULL, 0);
+            JNode result = new JNode();
             for (int ii = 0; ii < num_trials; ii++)
             {
                 watch.Reset();

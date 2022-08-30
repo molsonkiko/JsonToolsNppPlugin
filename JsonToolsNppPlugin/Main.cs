@@ -224,7 +224,7 @@ namespace Kbg.NppPluginNET
             int len = Npp.editor.GetLength();
             string fname = Npp.GetCurrentPath();
             string text = Npp.editor.GetText(len);
-            JNode json = new JNode(null, Dtype.NULL, 0);
+            JNode json = new JNode();
             try
             {
                 json = jsonParser.Parse(text);

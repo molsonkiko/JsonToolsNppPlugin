@@ -10,18 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JSON-Tools) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of weeks.
 
-1. RemesPath query language for pandas-style querying of JSON. Similar in concept to [JMESPath](https://jmespath.org/), but with added functionality including regular expressions and recursive search. Query execution speed appears to be comparable to Python's pandas.
-    * See the [language specification.
-    * See RemesPath.cs, RemesPathFunctions.cs, RemesPathLexer.cs
-2. A tool for searching directories for many documents and using RemesPath to query them all in parallel. The query results can then be written to separate files.
+1. A tool for searching directories for many documents and using RemesPath to query them all in parallel. The query results can then be written to separate files.
     * This tool will also probably have a feature for sending API requests and getting the JSON directly for querying. No more writing scripts!
-3. Function (see JsonTabularize.BuildTable) for converting JSON into tabular (arrays of objects) form, and outputting JSON in this form as a delimiter-separated-variables (e.g., CSV, TSV) file 
-(see [JsonTabularize.TableToCsv](/JsonToolsNppPlugin/JSONTools/JsonTabularize.cs)).
-4. A YAML dumper that dumps valid equivalent YAML for *most* (but *not all*) JSON (see [YamlDumper.cs](/JsonToolsNppPlugin/JSONTools/YamlDumper.cs)). Most likely to have trouble with keys that contain colons or double quotes, and also values that contain newlines.
+	* Ideally the API request tool should let people enter the URL and the name of the file to be created for that JSON in a CSV file.
  
 ### To Be Changed
 
-- Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree that were affected by the assignment.
+- Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Improve how well the caret tracks the node selected in the query tree.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
 - Add parsing of unquoted strings when linter is active.
@@ -34,14 +29,29 @@ This project has many features that were implemented in a [standalone app](https
 ### To Be Fixed
 
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
-- Remove bug in determination of "required" keys for JsonSchema
+- Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
 	- fails when key contains quotes and colon
 	- fails when value contains quotes and newline
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
+- Sometimes recursive queries cause an infinite loop, or something else that leads to Notepad++ crashing. They are almost always fine. Not sure why yet.
 
+## [3.0.0] - 2022-08-30
+
+### Added
+
+1. New 0-arg constructor for JNode that makes a JNode with null value, Dtype.NULL, line_num 0.
+2. New 0-arg constructors for JArray and JObject that create instances with no children.
+
+### Bugfixes
+
+1. Fixed some bugs in JsonSchema, but it's still kind of a mess.
+
+### Changed
+
+1. The Make Schema button has been removed, and will not be reintroduced until JsonSchema.cs is debugged. There are enough *known* bugs with JsonSchema.cs on top of the *unknown* bugs that users should not be shown the feature at all, lest they believe it is robust enough to consistently give them a valid schema.
 
 ## [2.0.0] - 2022-08-28
 

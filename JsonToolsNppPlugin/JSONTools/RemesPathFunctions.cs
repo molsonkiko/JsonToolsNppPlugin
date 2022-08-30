@@ -457,7 +457,7 @@ namespace JSON_Tools.JSON_Tools
             JArray flat;
             if (iterations is null || iterations == 1)
             {
-                flat = new JArray(0, new List<JNode>());
+                flat = new JArray();
                 foreach (JNode child in itbl.children)
                 {
                     if (child is JArray)
@@ -475,10 +475,9 @@ namespace JSON_Tools.JSON_Tools
                 return flat;
             }
             flat = itbl;
-            JNode jnull = new JNode(null, Dtype.NULL, 0);
             for (int ii = 0; ii < iterations; ii++)
             {
-                flat = (JArray)Flatten(new JNode[] { flat, jnull });
+                flat = (JArray)Flatten(new JNode[] { flat, new JNode() });
             }
             return flat;
         }
@@ -561,7 +560,7 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode Sorted(JNode[] args)
         {
-            var sorted = new JArray(0, new List<JNode>());
+            var sorted = new JArray();
             sorted.children.AddRange(((JArray)args[0]).children);
             var reverse = args[1].value;
             sorted.children.Sort();
@@ -575,7 +574,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode SortBy(JNode[] args)
         {
             var arr = (JArray)args[0];
-            var sorted = new JArray(0, new List<JNode>());
+            var sorted = new JArray();
             var key = args[1].value;
             var reverse = args[2].value;
             if (key is string)
@@ -641,7 +640,7 @@ namespace JSON_Tools.JSON_Tools
         {
             var itbl = (JArray)args[0];
             var key = args[1].value;
-            if (itbl.Length == 0) return new JNode(null, Dtype.NULL, 0);
+            if (itbl.Length == 0) return new JNode();
             if (key is string)
             {
                 string keystr = (string)key;
@@ -691,7 +690,7 @@ namespace JSON_Tools.JSON_Tools
             var start = (long?)args[0].value;
             var end = (long?)args[1].value;
             var step = (long?)args[2].value;
-            var nums = new JArray(0, new List<JNode>());
+            var nums = new JArray();
             if (start == null)
             {
                 throw new RemesPathException("First argument for range function cannot be null.");
@@ -736,14 +735,14 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode Values(JNode[] args)
         {
-            var vals = new JArray(0, new List<JNode>());
+            var vals = new JArray();
             vals.children.AddRange(((JObject)args[0]).children.Values);
             return vals;
         }
 
         public static JNode Keys(JNode[] args)
         {
-            var ks = new JArray(0, new List<JNode>());
+            var ks = new JArray();
             foreach (string s in ((JObject)args[0]).children.Keys)
             {
                 ks.children.Add(new JNode(s, Dtype.STR, 0));
@@ -871,11 +870,11 @@ namespace JSON_Tools.JSON_Tools
                     uniqs[val] = 0;
                 uniqs[val]++;
             }
-            var uniq_arr = new JArray(0, new List<JNode>());
+            var uniq_arr = new JArray();
             foreach (object elt in uniqs.Keys)
             {
                 long ct = uniqs[elt];
-                JArray elt_ct = new JArray(0, new List<JNode>());
+                JArray elt_ct = new JArray();
                 elt_ct.children.Add(ObjectsToJNode(elt));
                 elt_ct.children.Add(new JNode(ct, Dtype.INT, 0));
                 uniq_arr.children.Add(elt_ct);
@@ -1343,7 +1342,7 @@ namespace JSON_Tools.JSON_Tools
         {
             if (obj == null)
             {
-                return new JNode(null, Dtype.NULL, 0);
+                return new JNode();
             }
             if (obj is long)
             {

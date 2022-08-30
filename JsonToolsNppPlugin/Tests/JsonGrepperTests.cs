@@ -15,7 +15,7 @@ namespace JSON_Tools.Tests
 
         public static void TestFnames()
         {
-            JObject all_jsons = new JObject(0, new Dictionary<string, JNode>());
+            JObject all_jsons = new JObject();
             foreach (FileInfo f in smalldir.GetFiles())
             {
                 string jsontxt = File.ReadAllText(f.FullName);

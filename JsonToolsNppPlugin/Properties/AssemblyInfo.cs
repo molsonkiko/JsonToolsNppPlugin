@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("JSON tools plugin for Notepad++")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("molsonkiko")]
+[assembly: AssemblyCompany("Mark Johnston Olson")]
 [assembly: AssemblyProduct("JSON tools plugin for Notepad++")]
-[assembly: AssemblyCopyright("molsonkiko 2022")]
+[assembly: AssemblyCopyright("Copyright © molsonkiko 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("3.0.0.0")]
+[assembly: AssemblyFileVersion("3.0.0.0")]

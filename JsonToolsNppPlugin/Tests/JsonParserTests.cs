@@ -23,6 +23,75 @@ namespace JSON_Tools.Tests
             return null;
         }
 
+        public static void TestJNodeCopy()
+        {
+            int ii = 0;
+            int tests_failed = 0;
+            JsonParser parser = new JsonParser(true);
+            string[] tests = new string[]
+            {
+                "2",
+                "true",
+                "\"abc\"",
+                "3.5",
+                "[1]",
+                "{\"a\": 1}",
+                "null",
+                "\"2000-01-01\"",
+                "\"1995-03-04 03:48:52\"",
+                "[null, [1, 2, {\"abc\": 3.5, \"d\": {\"e\": [true]}}]]",
+                "NaN",
+                "Infinity",
+            };
+
+            foreach (string test in tests)
+            {
+                ii++;
+                JNode node = parser.Parse(test);
+                JNode cp = node.Copy();
+                if (!node.Equals(cp))
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected Copy({node.ToString()}) to return\n{node.ToString()}\nInstead got {cp.ToString()}");
+                    continue;
+                }
+                // now test if mutating the node mutates the copy
+                if (node is JArray arr)
+                    arr.children.Clear();
+                else if (node is JObject obj)
+                    obj.children.Clear();
+                else if (node.value == null)
+                {
+                    node.value = long.MaxValue;
+                    node.type = Dtype.INT;
+                }
+                else
+                {
+                    node.value = null;
+                    node.type = Dtype.NULL;
+                }
+                try
+                {
+                    node.Equals(cp);
+                    if (!(node is JObject || node is JArray || node.type == Dtype.INT))
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"Expected mutating {node.ToString()}\nto not mutate Copy({node.ToString()})\nbut it did.");
+                        continue;
+                    }
+                    if (node.Equals(cp))
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"Expected mutating {node.ToString()}\nto not mutate Copy({node.ToString()})\nbut it did.");
+                        continue;
+                    }
+                }
+                catch { }
+            }
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
+
         public static void Test()
         {
             JsonParser parser = new JsonParser();
@@ -353,7 +422,7 @@ multiline comment
                 }
                 JNode desired_out = (JNode)test[1];
                 ii++;
-                JNode result = new JNode(null, Dtype.NULL, 0);
+                JNode result = new JNode();
                 string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out.ToString()}\n";
                 try
                 {
@@ -423,7 +492,7 @@ multiline comment
                     tests_failed += 1;
                     continue;
                 }
-                JNode result = new JNode(null, Dtype.NULL, 0);
+                JNode result = new JNode();
                 string expected_lint_str = "[" + string.Join(", ", expected_lint) + "]";
                 string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
                 try

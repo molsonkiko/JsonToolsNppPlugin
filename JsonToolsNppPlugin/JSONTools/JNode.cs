@@ -112,6 +112,16 @@ namespace JSON_Tools.JSON_Tools
             this.value = value;
         }
 
+        /// <summary>
+        /// instantiates a JNode with null value, type Dtype.NULL, and line number 0
+        /// </summary>
+        public JNode()
+        {
+            this.line_num = 0;
+            this.type = Dtype.NULL;
+            this.value = null;
+        }
+
         public static Dictionary<char, string> TO_STRING_ESCAPE_MAP = new Dictionary<char, string>
         {
             ['\\'] = "\\\\",
@@ -347,6 +357,21 @@ namespace JSON_Tools.JSON_Tools
         {
             return CompareTo(other) <= 0;
         }
+
+        /// <summary>
+        /// return a deep copy of this JNode (same in every respect except memory location)<br></br>
+        /// Also recursively copies all the children of a JArray or JObject.
+        /// </summary>
+        /// <returns></returns>
+        public virtual JNode Copy()
+        {
+            if (value is DateTime dt)
+            {
+                // DateTimes are mutable, unlike all other valid JNode values. We need to deal with them separately
+                return new JNode(new DateTime(dt.Ticks), type, line_num);
+            }
+            return new JNode(value, type, line_num);
+        }
     }
 
     /// <inheritdoc/>
@@ -362,6 +387,14 @@ namespace JSON_Tools.JSON_Tools
         public JObject(int line_num, Dictionary<string, JNode> children) : base(null, Dtype.OBJ, line_num)
         {
             this.children = children;
+        }
+
+        /// <summary>
+        /// instantiates a new empty JObject
+        /// </summary>
+        public JObject() : base(null, Dtype.OBJ, 0)
+        {
+            children = new Dictionary<string, JNode>();
         }
 
         /// <summary>
@@ -497,7 +530,7 @@ namespace JSON_Tools.JSON_Tools
         ///// <inheritdoc/>
         //public override JNode Search(string query)
         //{
-        //    return new JNode(null, Dtype.NULL, 0);
+        //    return new JNode();
         //}
 
         /// <summary>
@@ -529,6 +562,17 @@ namespace JSON_Tools.JSON_Tools
             }
             return true;
         }
+
+        /// <inheritdoc/>
+        public override JNode Copy()
+        {
+            JObject copy = new JObject();
+            foreach (string key in children.Keys)
+            {
+                copy[key] = children[key].Copy();
+            }
+            return copy;
+        }
     }
 
     public class JArray : JNode
@@ -540,6 +584,14 @@ namespace JSON_Tools.JSON_Tools
         public JArray(int line_num, List<JNode> children) : base(null, Dtype.ARR, line_num)
         {
             this.children = children;
+        }
+
+        /// <summary>
+        /// instantiates a new empty JArray
+        /// </summary>
+        public JArray() : base(null, Dtype.ARR, 0)
+        {
+            children = new List<JNode>();
         }
 
         /// <summary>
@@ -663,7 +715,7 @@ namespace JSON_Tools.JSON_Tools
         ///// <inheritdoc/>
         //public override JNode Search(string query)
         //{
-        //    return new JNode(null, Dtype.NULL, 0);
+        //    return new JNode();
         //}
 
         /// <summary>
@@ -695,6 +747,17 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             return true;
+        }
+
+        /// <inheritdoc/>
+        public override JNode Copy()
+        {
+            JArray copy = new JArray();
+            foreach (JNode child in children)
+            {
+                copy.children.Add(child.Copy());
+            }
+            return copy;
         }
     }
 

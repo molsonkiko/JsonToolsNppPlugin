@@ -1,4 +1,10 @@
 =========================
+Testing JNode Copy method
+=========================
+
+Failed 0 tests.
+Passed 12 tests.
+=========================
 Testing JSON parser
 =========================
 
@@ -123,16 +129,16 @@ Passed 17 tests.
 Testing JsonSchema generator
 =========================
 
-Expected the schema for [[1, 2.0, {"a": 1}]] to be
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"items": {"anyOf": [{"type": "integer"}, {"type": "number"}, {"properties": {"a": {"type": "integer"}}, "required": ["a"], "type": "object"}]}, "type": "array"}, "type": "array"}
-Instead got
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"items": {"anyOf": [{"properties": {"a": {"type": "integer"}}, "required": ["a"], "type": "object"}, {"type": "number"}, {"type": "integer"}]}, "type": "array"}, "type": "array"}
 Expected the schema for [{"a": 3},{"a": 1,"b": [{"a": {"b": 1,"c": 2}},{"a": {"b": 1}}]},{"a": 1,"b": [{"a": {"b": 1,"c": 2,"d": 3}}]},{"a": 2,"c": 3}] to be
 {"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": "integer"}, "b": {"items": {"properties": {"a": {"properties": {"b": {"type": "integer"}, "c": {"type": "integer"}, "d": {"type": "integer"}}, "required": ["b"], "type": "object"}}, "required": ["a"], "type": "object"}, "type": "array"}, "c": {"type": "integer"}}, "required": ["a"], "type": "object"}, "type": "array"}
 Instead got
 {"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"properties": {"a": {"type": "integer"}, "b": {"items": {"properties": {"a": {"properties": {"b": {"type": "integer"}, "c": {"type": "integer"}, "d": {"type": "integer"}}, "required": ["b", "c", "d"], "type": "object"}}, "required": ["a"], "type": "object"}, "type": "array"}, "c": {"type": "integer"}}, "required": ["a"], "type": "object"}, "type": "array"}
+Expected the schema for [[null, 1], [null, ["a"]]] to be
+{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"items": {"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "integer"}, {"type": "null"}]}, "type": "array"}, "type": "array"}
+Instead got
+{"$schema": "https://json-schema.org/draft/2020-12/schema", "items": {"items": {"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}, {"type": ["integer", "null"]}]}, "type": "array"}, "type": "array"}
 Failed 2 tests.
-Passed 3 tests.
+Passed 4 tests.
 =========================
 Testing JSON tabularizer
 =========================
@@ -151,10 +157,10 @@ Performance tests for JsonParser and RemesPath
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 58.308 +/- 4.57 ms over 14 trials
-Load times (ms): 49, 62, 58, 58, 63, 58, 61, 56, 55, 67, 62, 55, 53, 54
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.004 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.6 +/- 0.184 ms over 14 trials
-Query times (ms): 1.246, 0.538, 0.487, 0.475, 0.609, 0.605, 0.486, 0.515, 0.571, 0.58, 0.568, 0.573, 0.584, 0.568
+To convert JSON string of size 975068 into JNode took 51.199 +/- 7.442 ms over 14 trials
+Load times (ms): 43, 53, 45, 44, 55, 47, 59, 45, 44, 48, 50, 70, 48, 58
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.004 +/- 0.005 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.976 +/- 1.054 ms over 14 trials
+Query times (ms): 0.634, 1.541, 0.545, 0.488, 4.454, 0.649, 0.547, 0.51, 1.898, 0.515, 0.473, 0.472, 0.468, 0.469
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...

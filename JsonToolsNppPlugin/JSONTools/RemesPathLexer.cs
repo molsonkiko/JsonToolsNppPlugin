@@ -200,7 +200,7 @@ Syntax error at position 3: Number with two decimal points
                 object con = CONSTANTS[uqs];
                 if (con == null)
                 {
-                    return new JNode(null, Dtype.NULL, 0);
+                    return new JNode();
                 }
                 else if (con is double)
                 {

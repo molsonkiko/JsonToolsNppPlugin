@@ -26,7 +26,7 @@ namespace JSON_Tools.JSON_Tools
 
 		public JsonGrepper(JsonParser json_parser = null)
 		{
-			fname_jsons = new JObject(0, new Dictionary<string, JNode>());
+			fname_jsons = new JObject();
 			if (json_parser == null)
             {
 				this.json_parser = new JsonParser(true, true, true, true, true, true);

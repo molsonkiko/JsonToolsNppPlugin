@@ -39,14 +39,13 @@ namespace JSON_Tools.Tests
                             "{" +
                             "\"anyOf\": " +
                                 "[" +
-                                    "{\"type\": \"integer\"}," +
-                                    "{\"type\": \"number\"}," +
                                     "{" +
                                         "\"type\": \"object\", " +
                                         "\"properties\": " +
                                             "{\"a\": {\"type\": \"integer\"}}, " +
                                         "\"required\": [\"a\"]" +
-                                     "}" +
+                                     "}," +
+                                    "{\"type\": \"number\"}" +
                                 "]" +
                             "}" +
                         "}" +
@@ -136,6 +135,21 @@ namespace JSON_Tools.Tests
                     "}" +
                 "}"
                 }, // nested JSON object schema
+                new string[]{
+                    "[[null, 1], [null, [\"a\"]]]", // make sure we don't get duplicate scalar types in anyOf
+                    "{\"type\": \"array\", \"items\": {" +
+                        "\"items\":" +
+                            "{\"anyOf\": [" +
+                                "{" +
+                                    "\"type\" : \"array\"," +
+                                    "\"items\": {\"type\": \"string\"}" +
+                                "}," +
+                                "{\"type\": \"integer\"}," +
+                                "{\"type\": \"null\"}" +
+                                "]" +
+                             "}," +
+                        "\"type\": \"array\"}}"
+                },
             };
             int ii = 0;
             int tests_failed = 0;
@@ -152,7 +166,7 @@ namespace JSON_Tools.Tests
                     desired_schema[k] = base_schema_j[k];
                 }
                 string desired_sch_str = desired_schema.ToString();
-                JNode schema = new JNode(null, Dtype.NULL, 0);
+                JNode schema = new JNode();
                 try
                 {
                     schema = sch_maker.GetSchema(jinp);
@@ -174,7 +188,7 @@ namespace JSON_Tools.Tests
                 catch (Exception e)
                 {
                     tests_failed++;
-                    Npp.AddLine($"Expected the schema for {jinp} to be\n{desired_sch_str}\nInstead raised exception {e}");
+                    Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead raised exception {e}");
                 }
             }
             Npp.AddLine($"Failed {tests_failed} tests.");

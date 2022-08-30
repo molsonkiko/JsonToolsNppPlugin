@@ -101,7 +101,7 @@ If you click "Yes", a new file will open in a separate tab containing details on
 
 ## RemesPath ##
 
-The primary utility of this tool comes from the ability to query the JSON using [RemesPath](RemesPath.md), which you can learn more about in the linked docs.
+The primary utility of this tool comes from the ability to query and edit the JSON using [RemesPath](RemesPath.md), which you can learn more about in the linked docs.
 
 You can submit RemesPath queries in textbox above the tree, which by default has the `@` symbol in it.
 
@@ -111,14 +111,6 @@ Once you've submitted a query, you can use several other features of the JSON vi
 First, you can open a new buffer containing the query result.
 
 ![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG?raw=true "JSON viewer open query result in new buffer")
-
-## JSON Schema ##
-
-You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
-
-This JSON schema will not be perfect, until I fix a known bug that causes the "required" attribute of object schemas to include the *union* of all keys in all objects belonging to that schema rather than the *intersection* as it should.
-
-![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG?raw=true "JSON schema generator")
 
 ## JSON to CSV ##
 
@@ -132,6 +124,16 @@ At present the __Strategy__ option for the CSV Generation form has four options.
 
 # OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
 ======
+
+## JSON Schema ##
+
+You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
+
+This JSON schema will not be perfect, until I fix a known bug that causes the "required" attribute of object schemas to include the *union* of all keys in all objects belonging to that schema rather than the *intersection* as it should.
+
+There are other bugs too, but I haven't yet diagnosed what causes them to appear.
+
+![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG?raw=true "JSON schema generator")
 
 # Get JSON from files and APIs #
 

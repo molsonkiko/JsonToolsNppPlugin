@@ -419,7 +419,7 @@ namespace JSON_Tools.Tests
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
-				JNode result = new JNode(null, Dtype.NULL, 0);
+				JNode result = new JNode();
 				string base_message = $"Expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
 				try
 				{
@@ -631,7 +631,7 @@ namespace JSON_Tools.Tests
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
-				JNode result = new JNode(null, Dtype.NULL, 0);
+				JNode result = new JNode();
 				string base_message = $"With recursive search turned off, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
 				try
 				{
@@ -691,7 +691,7 @@ namespace JSON_Tools.Tests
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
-				JNode result = new JNode(null, Dtype.NULL, 0);
+				JNode result = new JNode();
 				string base_message = $"With full recursive strategy, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
 				try
 				{
@@ -766,7 +766,7 @@ namespace JSON_Tools.Tests
 				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
-				JNode result = new JNode(null, Dtype.NULL, 0);
+				JNode result = new JNode();
 				string base_message = $"With stringified iterables, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
 				try
 				{

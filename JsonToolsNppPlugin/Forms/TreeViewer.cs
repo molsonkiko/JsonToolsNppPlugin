@@ -327,26 +327,26 @@ namespace JSON_Tools.Forms
             Npp.SetLangJson();
         }
 
-        private void SchemaButton_Click(object sender, EventArgs e)
-        {
-            if (query_result == null) return;
-            JNode schema = null;
-            try
-            {
-                schema = schemaMaker.GetSchema(query_result);
-            }
-            catch (Exception ex)
-            {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
-                                    "Exception while making JSON schema",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
-                return;
-            }
-            Npp.notepad.FileNew();
-            Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
-            Npp.SetLangJson();
-        }
+        //private void SchemaButton_Click(object sender, EventArgs e)
+        //{
+        //    if (query_result == null) return;
+        //    JNode schema = null;
+        //    try
+        //    {
+        //        schema = schemaMaker.GetSchema(query_result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string expretty = RemesParser.PrettifyException(ex);
+        //        MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
+        //                            "Exception while making JSON schema",
+        //                            MessageBoxButtons.OK,
+        //                            MessageBoxIcon.Error);
+        //        return;
+        //    }
+        //    Npp.notepad.FileNew();
+        //    Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
+        //    Npp.SetLangJson();
+        //}
     }
 }
