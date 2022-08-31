@@ -3,12 +3,13 @@ RemesPath documentation
 
 RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/) with such useful features as
 * indexing in objects with both dot syntax and square bracket syntax
-* boolean indexing
-* vectorized arithmetic
+* [boolean indexing](#boolean-indexing)
+* [vectorized arithmetic](#vectorized-operations)
 * many built-in [functions](#functions), both [vectorized](#vectorized-functions) and not
 * [regular expression](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) functions
-* recursive search for keys
-* SQL-like group_by capabilities
+* [recursive search](#recursive-search) for keys
+* SQL-like group_by capabilities (see non-vectorized functions)
+* reshaping and summarization of JSON using [projections](#projections)
 * [editing of JSON](#assignment-expressions)
 
 The formal description of the language in pseudo-Backus-Naur form is in ["RemesPath language spec.txt"](/docs/RemesPath%20language%20spec.txt). I'm not 100% sure this is a formally valid language spec, though.
@@ -485,7 +486,79 @@ Returns the upper-case form of x.
 
 Returns the string representation of x.
 
-## Assignment expressions ##
+## Projections ##
+
+A __projection__ (a concept from JMESpath) is an iterable (either an object or an array) that is somehow based on the current JSON. Projections can be used to reshape JSON, capture summaries, and much more.
+
+In RemesPath, a projection can be created by following a valid RemesPath query with a comma-separated list of elements or a comma-separated list of key-value pairs.
+
+For example, suppose you have an array of arrays of numbers.
+```json
+[
+    [1, 2, 3, 4],
+    [5, 6],
+    [7, 8, 9]
+]
+```
+You might be interested in getting a list of the length of the array, the length of the first element of the array, and the length of the last element.
+
+```
+@{
+    len(@), 
+    len(@[0]), 
+    len(@[-1])
+}
+``` 
+returns 
+```json
+[3, 4, 3]
+```
+
+Or maybe you want to know the sum and average of each subarray.
+
+`@[:]{sum(@), avg(@)}` returns
+
+```json
+[[10.0, 2.5],
+ [11.0, 5.5],
+ [24.0, 8.0]]
+```
+
+Or maybe you prefer to get that information as an object, so that the reader can more easily figure out what each row is.
+
+`@[:]{row_sum: sum(@), row_avg: avg(@)}` returns
+
+```json
+[
+    {"row_avg": 2.5, "row_sum": 10.0},
+    {"row_avg": 5.5, "row_sum": 11.0}, 
+    {"row_avg": 8.0, "row_sum": 24.0}
+]
+```
+
+These projections can themselves be queried, allowing you to do perform some SQL-like analyses of your data.
+
+Suppose you want to know the average and length of the two rows that have the highest average.
+
+```
+sort_by(
+    @[:]
+        {`len`: len(@), `avg`: avg(@)},
+    `avg`,
+    true
+)[:2]
+```
+returns
+```json
+[
+    {"avg": 8.0, "len": 3},
+    {"avg": 5.5, "len": 2}
+]
+```
+
+Note that in this example, we're using quotes around the key names `avg` and `len` to indicate that they're being used as strings and not function names. Otherwise the parser will get confused.
+
+## Editing with assignment expressions ##
 
 A RemesPath query can contain at most one `=` separating two valid expressions. This is the __assignment operator__.
 
