@@ -571,7 +571,7 @@ If the RHS is a function and the LHS is an iterable, the RHS is applied separate
 ### Limitations ###
 1. Until further notice, you __cannot__ mutate an object or array, other than to change its scalar elements
     * For example, the query `@ = len(@)` on JSON `[[1, 2, 3]]` will fail, because this ends up trying to mutate the subarray `[1, 2, 3]`.
-2. You also cannot mutate a non-array or non-object into an array or object. For example, the query `@[0] = j``[1]`` `on the input `[0]` will fail because you're trying to convert a scalar (the integer `1`) to an array (`[1]`).
+2. You also cannot mutate a non-array or non-object into an array or object. For example, the query ``@[0] = j`[1]` ``on the input `[0]` will fail because you're trying to convert a scalar (the integer `1`) to an array (`[1]`).
 
 An assignment expression mutates the input and then returns the input.
 
