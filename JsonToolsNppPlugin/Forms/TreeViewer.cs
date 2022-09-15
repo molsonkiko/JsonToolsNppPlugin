@@ -21,7 +21,7 @@ namespace JSON_Tools.Forms
         /// <summary>
         /// Maps the path of a TreeNode to the line number of the corresponding JNode
         /// </summary>
-        public Dictionary<string, int> pathsToLines;
+        public Dictionary<string, JNode> pathsToJNodes;
         /// <summary>
         /// result of latest RemesPath query
         /// </summary>
@@ -35,16 +35,21 @@ namespace JSON_Tools.Forms
 
         public JsonSchemaMaker schemaMaker;
 
+        public TreeViewCancelEventHandler expandler;
+
         public TreeViewer(JNode json)
         {
             InitializeComponent();
-            pathsToLines = new Dictionary<string, int>();
+            pathsToJNodes = new Dictionary<string, JNode>();
             fname = Npp.GetCurrentPath();
             this.json = json;
             query_result = json;
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
+            this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
+                PopulateIfUnpopulatedHandler
+            );
         }
 
         public static void SetImageOfTreeNode(TreeNode root, JNode json)
@@ -89,21 +94,34 @@ namespace JSON_Tools.Forms
                 */
             }
             tree.BeginUpdate();
-            tree.Parent.UseWaitCursor = true; // get the spinny cursor that means the computer is processing
             tree.Nodes.Clear();
             TreeNode root = new TreeNode();
             SetImageOfTreeNode(root, json);
             try
             {
-                if ((json.type & Dtype.ITERABLE) != 0)
+                if (json is JArray || json is JObject)
                 {
                     // recursively build tree for iterable JSON
                     root.Text = "JSON";
                     // need to add the root first because FullPath is undefined until root is in a TreeView
                     // but also FullPath depends on the text so we need to track that too
                     tree.Nodes.Add(root);
-                    JsonTreePopulateHelper(root, json, pathsToLines);
-                    root.Expand(); // could be slow for larger JSON
+                    if (json is JArray arr)
+                    {
+                        if (arr.Length > 0)
+                        {
+                            root.Nodes.Add(new TreeNode("")); // sentinel node
+                        }
+                    }
+                    else if (json is JObject obj)
+                    {
+                        if (obj.Length > 0)
+                        {
+                            root.Nodes.Add(new TreeNode("")); // sentinel node
+                        }
+                    }
+                    
+                    //root.Expand(); // could be slow for larger JSON
                 }
                 else
                 {
@@ -122,36 +140,53 @@ namespace JSON_Tools.Forms
                 tree.Parent.UseWaitCursor = false;
                 return;
             }
-            tree.Parent.UseWaitCursor = false; // gotta turn it off or else it persists until the form closes
+            pathsToJNodes[root.FullPath] = json;
             tree.EndUpdate();
         }
 
-        // recursively build the JSON tree out of TreeNodes
-        public static void JsonTreePopulateHelper(TreeNode root, JNode json, Dictionary<string, int> pathsToLines)
+        /// <summary>
+        /// build the top layer of the tree out of JNodes.<br></br>
+        /// JArrays and JObjects will initially have a single sentinel TreeNode as children.<br></br>
+        /// Because this sentinel node will not be in the pathsToJNodes map, this will be<br></br>
+        /// able to distinguish which nodes already have their children populated.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="json"></param>
+        /// <param name="pathsToJNodes"></param>
+        public static void JsonTreePopulateHelper(TreeNode root, 
+                                                  JNode json, 
+                                                  Dictionary<string, JNode> pathsToJNodes)
         {
-            pathsToLines[root.FullPath] = json.line_num;
+            root.TreeView.BeginUpdate();
+            root.Nodes.Clear(); // remove the sentinel node
             if (json is JArray)
             {
                 List<JNode> jar = ((JArray)json).children;
                 for (int ii = 0; ii < jar.Count; ii++)
                 {
                     JNode child = jar[ii];
-                    if (child.type == Dtype.ARR || child.type == Dtype.OBJ)
+                    if (child is JArray)
                     {
-                        // it's an array or object, so add a subtree
                         var child_node = new TreeNode(ii.ToString());
                         root.Nodes.Add(child_node);
-                        SetImageOfTreeNode(child_node, child);
-                        JsonTreePopulateHelper(child_node, child, pathsToLines);
+                        child_node.ImageIndex = 0;
+                        child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+                    }
+                    else if (child is JObject)
+                    {
+                        var child_node = new TreeNode(ii.ToString());
+                        root.Nodes.Add(child_node);
+                        child_node.ImageIndex = 5;
+                        child_node.Nodes.Add(new TreeNode("")); // add the sentinel
                     }
                     else
                     {
                         // it's a scalar, so just display the index and the value of the json
                         root.Nodes.Add(ii.ToString(), $"{ii} : {child.ToString()}");
                         SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
-                        string path = root.Nodes[root.Nodes.Count - 1].FullPath;
-                        pathsToLines[path] = child.line_num;
                     }
+                    string path = root.Nodes[root.Nodes.Count - 1].FullPath;
+                    pathsToJNodes[path] = child;
                 }
                 if (root.Nodes.Count == 0)
                 {
@@ -164,31 +199,35 @@ namespace JSON_Tools.Forms
             Dictionary<string, JNode> dic = ((JObject)json).children;
             foreach (string key in dic.Keys)
             {
-                //// We need to make sure keys that are stringified integers are visually distinct from actual integers.
-                //// otherwise the user might think that e.g. {"0": 1, "1": 2} is the same thing as [1, 2].
-                //string keystr = double.TryParse(key, out _) ? '"' + key + '"' : key;
                 JNode child = dic[key];
-                if (child.type == Dtype.ARR || child.type == Dtype.OBJ)
+                if (child is JArray)
                 {
-                    // it's an array or object, so add a subtree
                     var child_node = new TreeNode(key);
                     root.Nodes.Add(child_node);
-                    SetImageOfTreeNode(child_node, child);
-                    JsonTreePopulateHelper(child_node, child, pathsToLines);
+                    SetImageOfTreeNode(root, child);
+                    child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+                }
+                else if (child is JObject)
+                {
+                    var child_node = new TreeNode(key);
+                    root.Nodes.Add(child_node);
+                    SetImageOfTreeNode(root, child);
+                    child_node.Nodes.Add(new TreeNode("")); // add the sentinel
                 }
                 else
                 {
                     // it's a scalar, so just display the key and the value of the json
                     root.Nodes.Add(key, $"{key} : {child.ToString()}");
                     SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
-                    string path = root.Nodes[root.Nodes.Count - 1].FullPath;
-                    pathsToLines[path] = child.line_num;
                 }
+                string path = root.Nodes[root.Nodes.Count - 1].FullPath;
+                pathsToJNodes[path] = child;
             }
             if (root.Nodes.Count == 0)
             {
                 root.Text += " : {}";
             }
+            root.TreeView.EndUpdate();
         }
 
         /// <summary>
@@ -198,11 +237,39 @@ namespace JSON_Tools.Forms
         /// <param name="e"></param>
         private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
+            //StringBuilder sb = new StringBuilder();
+            //foreach (string k in pathsToJNodes.Keys)
+            //{
+            //    JNode v = pathsToJNodes[k];
+            //    sb.Append($"{k}: {v.ToString().Slice(0, 10, 1)}...");
+            //    sb.Append("\r\n");
+            //}
+            //MessageBox.Show(sb.ToString());
             if (Npp.GetCurrentPath() != fname) return;
             string path = e.Node.FullPath;
-            if (!pathsToLines.ContainsKey(path)) return;
-            Npp.editor.GotoLine(pathsToLines[path]);
+            if (!pathsToJNodes.ContainsKey(path)) return;
+            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
             // might also want to make it so that the selected line is scrolled to the top
+        }
+
+        /// <summary>
+        /// if a TreeNode is checked, replace the sentinel child with its true children.<br></br>
+        /// Otherwise, do nothing.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PopulateIfUnpopulatedHandler(object sender, TreeViewCancelEventArgs e)
+        {
+            TreeNode root = e.Node;
+            e.Cancel = false;
+            if (root.Nodes.Count == 1 
+                && !pathsToJNodes.ContainsKey(root.Nodes[0].FullPath))
+                // if root has the sentinel node indicating an unexpanded node,
+                // populate its children
+            {
+                JNode node = pathsToJNodes[root.FullPath];
+                JsonTreePopulateHelper(root, node, pathsToJNodes);
+            }
         }
 
         private void SubmitQueryButton_Click(object sender, EventArgs e)
@@ -327,6 +394,7 @@ namespace JSON_Tools.Forms
             Npp.SetLangJson();
         }
 
+        // not creating schemas at present because schemas produced may be invalid
         //private void SchemaButton_Click(object sender, EventArgs e)
         //{
         //    if (query_result == null) return;

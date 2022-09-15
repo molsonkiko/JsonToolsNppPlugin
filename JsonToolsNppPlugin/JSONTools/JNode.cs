@@ -141,7 +141,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="x">the int to represent</param>
         /// <param name="out_len">the number of zeros to left-pad the hex number with</param>
         /// <returns></returns> 
-        private static string ToHex(int x, int out_len)
+        public static string ToHex(int x, int out_len)
         {
             var sb = new char[out_len];
             int rem;
@@ -169,10 +169,14 @@ namespace JSON_Tools.JSON_Tools
                     sb.Append('"');
                     foreach (char c in (string)value)
                     {
-                        // TODO: add conversion of unicode to \u, \x, \U
-                        if (c > 0xff)
+                        if (c > 0x7f)
                         {
                             sb.Append($"\\u{ToHex(c, 4)}");
+                            // unfortunately things like y with umlaut (char 0xff)
+                            // confuse a lot of text editors because they can be
+                            // composed in different ways using Unicode.
+                            // The safest thing to do is to use \u notation for everything
+                            // that's not in standard 7-bit ASCII
                         }
                         else if (TO_STRING_ESCAPE_MAP.TryGetValue(c, out string escape))
                         {

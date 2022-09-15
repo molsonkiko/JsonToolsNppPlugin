@@ -69,7 +69,17 @@ namespace JSON_Tools.Forms
                 return;
             }
             Npp.notepad.FileNew();
-            Npp.editor.AppendTextAndMoveCursor(csv);
+            int out_len = 0;
+            foreach (char c in csv)
+            {
+                if (c > 0x1000)
+                    out_len += 3;
+                else if (c > 0x7f)
+                    out_len += 2;
+                else
+                    out_len++;
+            }
+            Npp.editor.AppendText(out_len, csv);
             Close();
         }
 

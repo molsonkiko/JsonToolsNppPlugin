@@ -781,23 +781,53 @@ namespace JSON_Tools.JSON_Tools
 		private string ApplyQuotesIfNeeded(string s, char delim, char quote_char)
 		{
 			string squote_char = new string(quote_char, 1);
+			StringBuilder sb = new StringBuilder();
 			if (s.Contains(delim))
 			{
 				// if the string contains the delimiter, we need to wrap it in quotes
 				// we also need to escape all literal quote characters in the string
 				// regardless of what happens, we need to replace internal newlines with "\\n"
 				// so we don't get fake rows
-				return squote_char + s.Replace(squote_char, "\\" + squote_char).Replace("\n", "\\n") + squote_char;
+				sb.Append(quote_char);
+				foreach (char c in s)
+                {
+					// I don't think I *need* to deal with chars > 65535
+					// because we're going from JSON, which won't have such
+					// characters in the first place.
+					// but maybe I should include mitigation?
+					//if (c > 0x7f) 
+					//{
+					//	sb.Append("\\u");
+					//	sb.Append(JNode.ToHex(c, 4));
+					//	// experience has shown that even though UTF-8 can technically
+					//	// handle characters between 0x80 and 0xff, in practice
+					//	// it tends to cause problems with Notepad++.
+					//}
+					if (c == quote_char || c == '\n')
+					{
+						sb.Append('\\');
+						sb.Append(c);
+					}
+					else
+						sb.Append(c);
+                }
+				sb.Append(quote_char);
+				return sb.ToString();
 			}
 			// just replace newlines
-			string outval = s.Replace("\n", "\\n");
-			// check for quotes at beginning and end of string
-			// we would prefer to avoid 
-			//if (outval[0] == quote_char || outval[outval.Length - 1] == quote_char)
-			//{
-			//	return outval.Replace(squote_char, "\\" + squote_char);
-			//}
-			return outval;
+			foreach (char c in s)
+            {
+				//if (c > 0x7f)
+				//{
+				//	sb.Append("\\u");
+				//	sb.Append(JNode.ToHex(c, 4));
+				//}
+				if (c == '\n')
+					sb.Append("\\n");
+				else
+					sb.Append(c);
+            }
+			return sb.ToString();
 		}
 
 		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false)

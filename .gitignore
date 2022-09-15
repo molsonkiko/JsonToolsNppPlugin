@@ -13,6 +13,9 @@ TestResults
 *.user
 *.sln.docstates
 
+# Obsidian vault
+.obsidian
+
 # Build results
 [Dd]ebug/
 [Rr]elease/
