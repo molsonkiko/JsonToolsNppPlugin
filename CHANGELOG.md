@@ -39,6 +39,13 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries cause an infinite loop, or something else that leads to Notepad++ crashing. They are almost always fine. Not sure why yet.
 
+## dev changes - 2022-09-15
+
+### Fixed
+
+1. Mostly dealt with cut-off of CSV files during JSON->CSV conversion for JSON that contains encoded non-ASCII characters, especially emojis. There's still some weirdness here (a big file containing 400+ tweets from the Twitter API with a bunch of emojis and Hindi characters and whatnot was cut off using the Stringify Iterables option of the JSON->CSV form), but on smaller files I don't see any such problems.
+2. For both the ToString method of string JNodes and the JsonParser, implemented the algorithm used by Python's JSON encoder and decoder for handling surrogate pairs of Unicode characters that represent characters greater than 0xffff.
+
 ## [3.0.0] - 2022-08-30
 
 ### Added

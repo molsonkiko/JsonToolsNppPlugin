@@ -171,12 +171,23 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (c > 0x7f)
                         {
-                            sb.Append($"\\u{ToHex(c, 4)}");
                             // unfortunately things like y with umlaut (char 0xff)
                             // confuse a lot of text editors because they can be
                             // composed in different ways using Unicode.
                             // The safest thing to do is to use \u notation for everything
                             // that's not in standard 7-bit ASCII
+                            if (c < 0x10000)
+                                sb.Append($"\\u{ToHex(c, 4)}");
+                            else
+                            {
+                                    // make a surrogate pair for chars bigger
+                                    // than 0xffff
+                                    // see https://github.com/python/cpython/blob/main/Lib/json/decoder.py
+                                    int n = c - 0x10000;
+                                int s1 = 0xd800 | ((n >> 10) & 0x3ff);
+                                int s2 = 0xdc00 | (n & 0x3ff);
+                                return $"\\u{ToHex(s1, 4)}\\u{ToHex(s2, 4)}";
+                            }
                         }
                         else if (TO_STRING_ESCAPE_MAP.TryGetValue(c, out string escape))
                         {

@@ -72,7 +72,7 @@ namespace JSON_Tools.Forms
             int out_len = 0;
             foreach (char c in csv)
             {
-                if (c > 0x1000)
+                if (c > 0x1000 && !(c >= 0xd800 && c <= 0xdfff))
                     out_len += 3;
                 else if (c > 0x7f)
                     out_len += 2;
