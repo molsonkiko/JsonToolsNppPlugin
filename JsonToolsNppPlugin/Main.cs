@@ -18,33 +18,6 @@ using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using static Kbg.NppPluginNET.PluginInfrastructure.Win32;
 
-//namespace Kbg.NppPluginNET
-//{
-    /// <summary>
-    /// Integration layer as the demo app uses the pluginfiles as soft-links files.
-    /// This is different to normal plugins that would use the project template and get the files directly.
-    /// </summary>
-    //class Main
-    //{
-    //    static internal void CommandMenuInit()
-    //    {
-    //        Kbg.Demo.Namespace.Main.CommandMenuInit();
-    //    }
-
-    //    static internal void PluginCleanUp()
-    //    {
-    //        Kbg.Demo.Namespace.Main.PluginCleanUp();
-    //    }
-
-    //    static internal void SetToolBarIcon()
-    //    {
-    //        Kbg.Demo.Namespace.Main.SetToolBarIcon();
-    //    }
-
-    //    internal static string PluginName { get { return Kbg.Demo.Namespace.Main.PluginName; }}
-    //}
-//}
-
 namespace Kbg.NppPluginNET
 {
     class Main
@@ -264,7 +237,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers());
+            Npp.editor.SetText(json.PrettyPrint());
             Npp.SetLangJson();
         }
 
@@ -272,7 +245,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.ToStringAndChangeLineNumbers());
+            Npp.editor.SetText(json.ToString());
             Npp.SetLangJson();
         }
 

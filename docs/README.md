@@ -40,27 +40,29 @@ Consider the following JSON, hereafter called "silly_example.json".
 ## The Basics ##
 Let's open up this JSON file.
 
-![JSON document before using JsonTools](/docs/json%20document%20initial.PNG?raw=true "JSON document before using JsonTools")
+![JSON document before using JsonTools](/docs/json%20document%20initial.PNG)
 
 You might want to reformat this document so it doesn't have so much whitespace. Use the "Compress current JSON file" plugin command (`Ctrl+Alt+Shift+C`) to reformat it like so:
 
-![JSON reformatted with minimal whitespace](/docs/json%20document%20after%20compression.PNG?raw=true "JSON reformatted with minimal whitespace")
+![JSON reformatted with minimal whitespace](/docs/json%20document%20after%20compression.PNG)
 
 If you prefer it the way it was before, you can use the "Pretty-print current JSON file" (`Ctrl+Alt+Shift+P`) to restore it to that formatting.
 
 We can open up the JSON tree viewer in the main menu by navigating Plugins -> JsonTools -> "Open JSON tree viewer". The keyboard shortcut `Ctrl+Alt+Shift+J` will also open the tree.
 
-![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG?raw=true "JSON tree view immediately after creation")
+![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG)
 
 You can click on the nodes in that tree to see the children. When you do this, the caret will snap to the line of the node you've selected.
 
 __NOTES__
 1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
 2. If you [edit your JSON](/docs/RemesPath.md#assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
+3. For very large JSON (4+ MB) files, display of the full tree is disallowed by default, so you can only see the direct children of the root. You can change the maximum file size for full tree display in the settings.
+4. You can disable the tree completely in the settings as well.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 
-![JSON viewer tree partially expanded](/docs/tree%20partially%20expanded.PNG?raw=true "JSON Viewer tree partially expanded")
+![JSON viewer tree partially expanded](/docs/tree%20partially%20expanded.PNG)
 
 
 You'll notice that icons appear next to the nodes in the tree. They are as follows:
@@ -78,11 +80,11 @@ By default, this app can parse a superset of JSON that is very slightly more per
 
 You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow JavaScript comments in the file. Thus, such JSON will cause our parser to throw an error.
 
-![The default parser settings don't allow singlequoted strings or comments](/docs/json%20parser%20error%20due%20to%20singlequotes.PNG?raw=true "The default parser settings don't allow singlequoted strings or comments")
+![The default parser settings don't allow singlequoted strings or comments](/docs/json%20parser%20error%20due%20to%20singlequotes.PNG)
 
 We can fix that in the settings.
 
-![Change the parser settings to allow singlequotes and comments](/docs/json%20parser%20settings%20allow%20singlequotes%20and%20comments.PNG?raw=true "Change the parser settings to allow singlequotes and comments")
+![Change the parser settings to allow singlequotes and comments](/docs/json%20parser%20settings%20allow%20singlequotes%20and%20comments.PNG)
 
 As you can see, you can also make the parser settings *stricter* than the default so that they don't accept the nonstandard NaN and Infinity. Just set `allow_nan_inf` to False.
 
@@ -105,12 +107,12 @@ The primary utility of this tool comes from the ability to query and edit the JS
 
 You can submit RemesPath queries in textbox above the tree, which by default has the `@` symbol in it.
 
-![JSON viewer tree with RemesPath query](/docs/json%20viewer%20with%20remespath%20query.PNG?raw=true "JSON Viewer tree RemesPath query")
+![JSON viewer tree with RemesPath query](/docs/json%20viewer%20with%20remespath%20query.PNG)
 
 Once you've submitted a query, you can use several other features of the JSON viewer.
 First, you can open a new buffer containing the query result.
 
-![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG?raw=true "JSON viewer open query result in new buffer")
+![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG)
 
 ## JSON to CSV ##
 
@@ -118,7 +120,7 @@ Some JSON also has a somewhat __tabular__ format, such that it is amenable to co
 
 This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON to a tabular format. Remember that even if the JSON file as a whole can't be "tabularized" (or *can*, but you don't *want*  to), you can use a RemesPath query to select the part that you want to tabularize.
 
-![JSON to CSV convertor](/docs/json%20viewer%20csv%20generator.PNG?raw=true "JSON to CSV convertor")
+![JSON to CSV convertor](/docs/json%20viewer%20csv%20generator.PNG)
 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
 
@@ -133,7 +135,7 @@ This JSON schema will not be perfect, until I fix a known bug that causes the "r
 
 There are other bugs too, but I haven't yet diagnosed what causes them to appear.
 
-![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG?raw=true "JSON schema generator")
+![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)
 
 # Get JSON from files and APIs #
 

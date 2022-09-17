@@ -38,6 +38,13 @@ namespace JSON_Tools.Utils
             Category("JSON Parser")] //, DefaultValue(false)]
         public bool linting { get; set; } = false;
 
+        [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
+            "Larger files get only the direct children of the root added to the tree."),
+            Category("Tree View")]
+        public double max_size_full_tree_MB { get; set; } = 4d;
+
+        [Description("Whether or not to use the tree view at all."), Category("Tree View")]
+        public bool use_tree { get; set; } = true;
 
         /// <summary>
         /// Opens a window that edits all settings
@@ -136,6 +143,8 @@ namespace JSON_Tools.Utils
                 allow_singlequoted_str = false;
                 allow_datetimes = false;
                 linting = false;
+                max_size_full_tree_MB = 4d;
+                use_tree = true;
                 dialog.Close();
             };
 

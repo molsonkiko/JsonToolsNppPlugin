@@ -138,8 +138,8 @@ namespace JSON_Tools.JSON_Tools
 		}
 
 		public JsonTabularizer(JsonTabularizerStrategy strategy = JsonTabularizerStrategy.DEFAULT) // ,
-																								   // JsonFormat output_format = JsonFormat.REC)
-																								   // don't worry about output_format, because other output formats aren't supported
+							// JsonFormat output_format = JsonFormat.REC)
+							// don't worry about output_format, because other output formats aren't supported
 		{
 			this.strategy = strategy;
 			//if ((output_format & JsonFormat.ANY_TABLE) != 0) _output_format = output_format;
@@ -781,23 +781,35 @@ namespace JSON_Tools.JSON_Tools
 		private string ApplyQuotesIfNeeded(string s, char delim, char quote_char)
 		{
 			string squote_char = new string(quote_char, 1);
+			StringBuilder sb = new StringBuilder();
 			if (s.Contains(delim))
 			{
 				// if the string contains the delimiter, we need to wrap it in quotes
 				// we also need to escape all literal quote characters in the string
 				// regardless of what happens, we need to replace internal newlines with "\\n"
 				// so we don't get fake rows
-				return squote_char + s.Replace(squote_char, "\\" + squote_char).Replace("\n", "\\n") + squote_char;
+				sb.Append(quote_char);
+				foreach (char c in s)
+                {
+					if (c == quote_char)
+						sb.Append("\\\"");
+					else if (c == '\n')
+						sb.Append("\\n");
+					else
+						sb.Append(c);
+                }
+				sb.Append(quote_char);
+				return sb.ToString();
 			}
 			// just replace newlines
-			string outval = s.Replace("\n", "\\n");
-			// check for quotes at beginning and end of string
-			// we would prefer to avoid 
-			//if (outval[0] == quote_char || outval[outval.Length - 1] == quote_char)
-			//{
-			//	return outval.Replace(squote_char, "\\" + squote_char);
-			//}
-			return outval;
+			foreach (char c in s)
+            {
+				if (c == '\n')
+					sb.Append("\\n");
+				else
+					sb.Append(c);
+            }
+			return sb.ToString();
 		}
 
 		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false)

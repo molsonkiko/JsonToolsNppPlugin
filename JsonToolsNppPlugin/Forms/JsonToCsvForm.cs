@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -69,7 +70,8 @@ namespace JSON_Tools.Forms
                 return;
             }
             Npp.notepad.FileNew();
-            Npp.editor.AppendTextAndMoveCursor(csv);
+            int out_len = Encoding.UTF8.GetByteCount(csv);
+            Npp.editor.AppendText(out_len, csv);
             Close();
         }
 

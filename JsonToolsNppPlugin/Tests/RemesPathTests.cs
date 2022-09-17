@@ -289,6 +289,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
                 new Query_DesiredResult("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
                     "[0, 0, 0, 0, 0, 0, 1, 0, 0]"),
+                new Query_DesiredResult("range(len(@), 0, -1)", 
+                    "[8, 7, 6, 5, 4, 3, 2, 1]"),
                 new Query_DesiredResult("range(-10)", "[]"),
                 new Query_DesiredResult("range(-3, -5, -1)", "[-3, -4]"),
                 new Query_DesiredResult("range(2, 19, -5)", "[]"),

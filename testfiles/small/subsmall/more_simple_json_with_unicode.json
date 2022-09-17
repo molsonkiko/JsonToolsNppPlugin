@@ -1,0 +1,8 @@
+[
+["\u042f", 1, "a"], // backward R cyrillic char
+["\u25d0", 2, "b"], // circle where half is black and half is white
+["\u1ed3", 3, "c"], // o with hat and accent
+["\uff6a", 4, "d"], // HALFWIDTH KATAKANA LETTER SMALL E
+["\u8349", 5, "e"], // Taiwanese char for "grass"
+["\ud83d\ude00", 6, "f"] // smily face (\U0001F600)
+]

@@ -221,6 +221,17 @@ namespace JSON_Tools.JSON_Tools
             try
             {
                 charval = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+                if (0xd800 <= charval && charval <= 0xdbff
+                    && inp[end - 1] == '\\' && inp[end] == 'u')
+                {
+                    // see https://github.com/python/cpython/blob/main/Lib/json/encoder.py
+                    // Characters bigger than 0xffff are encoded as surrogate pairs
+                    // of 2-byte characters, and this is a way to tell that you're going
+                    // to see a surrogate pair
+                    ii = end + 1;
+                    int charval2 = ParseHexadecimal(inp, 4);
+                    return 0x10000 + (((charval - 0xd800) << 10) | (charval2 - 0xdc00));
+                }
                 ii = end - 1;
                 return charval;
                 // the -1 is because ParseString increments by 1 after every escaped sequence anyway
