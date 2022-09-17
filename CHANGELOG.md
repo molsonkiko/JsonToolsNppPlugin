@@ -16,6 +16,7 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
+- I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would vastly reduce the initial load time for the tree view and also the effective query execution time.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Improve how well the caret tracks the node selected in the query tree.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
@@ -25,10 +26,10 @@ This project has many features that were implemented in a [standalone app](https
 	- for converting JSON to tabular form
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
+- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
  
 ### To Be Fixed
 
-- Sometimes characters greater than 0x7f (e.g., emojis, Chinese characters) can cause queries to cut off some characters from the end of the file. This can also affect the JSON-to-CSV conversion. [simple_json_with_unicode.json](/testfiles/small/subsmall/simple_json_with_unicode.json) in the test files is an example of this. 
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
 - Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
@@ -37,14 +38,24 @@ This project has many features that were implemented in a [standalone app](https
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
-- Sometimes recursive queries cause an infinite loop, or something else that leads to Notepad++ crashing. They are almost always fine. Not sure why yet.
+- Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
-## dev changes - 2022-09-15
+## [3.1.0] - 2022-09-17
 
-### Fixed
+### Added
 
-1. Mostly dealt with cut-off of CSV files during JSON->CSV conversion for JSON that contains encoded non-ASCII characters, especially emojis. There's still some weirdness here (a big file containing 400+ tweets from the Twitter API with a bunch of emojis and Hindi characters and whatnot was cut off using the Stringify Iterables option of the JSON->CSV form), but on smaller files I don't see any such problems.
+1. New setting (`use_tree`) for disabling the tree altogether. Since populating the tree is generally slower than parsing JSON or executing queries, this can provide a significant responsiveness boost.
+2. New setting (`max_size_full_tree_MB`) for the maximum size, in megabytes, of a JSON file (default 4) such that the entire JSON tree will be recursively added to the tree view. Populating the full tree could lead to massive latency and memory consumption. Any file above this size will only have the __direct children__ of the root added to the tree, to provide some minimal quality of life without greatly compromising performance.
+	- This setting also applies to queries, although I will attempt to add some code to determine if the query resultset is small enough that populating the query's full tree would not be too expensive.
+
+### Bugfixes
+
+1. Fully eliminated early cutoff of CSV files produced by the JSON->CSV form containing non-ascii characters by using `Encoding.UTF8.GetByteCount` instead of my own bespoke byte-counting algorithm.
 2. For both the ToString method of string JNodes and the JsonParser, implemented the algorithm used by Python's JSON encoder and decoder for handling surrogate pairs of Unicode characters that represent characters greater than 0xffff.
+
+### Changed
+
+1. As noted above, the default behavior is now to only display the top-level nodes of the JSON for 4+ MB files in the tree view. This can be changed in settings.
 
 ## [3.0.0] - 2022-08-30
 

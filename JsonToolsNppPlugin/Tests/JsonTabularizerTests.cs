@@ -495,7 +495,7 @@ namespace JSON_Tools.Tests
 				'\t', '"', null, false
 				},
 				new object[]{"[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]",
-				"a\n1\n2\n3\n",
+				"a\n1\n2\n3\n", // one column
 				',', '"', null, false},
 				new object[]{"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]",
 				"a|b|c\n1|2|3\n2|3|4\n3|4|5\n",
@@ -533,7 +533,26 @@ namespace JSON_Tools.Tests
 				"]", // missing keys
 				"a,b,c.d\n1,1,y\ntrue,7,\ntrue,8,\nfalse,9,\n",
 				',', '"', null, false
-				}
+				},
+				new object[]
+                {
+				"[{\"a\": \"\\u042f\", \"b\": 1, \"c\": \"a\"}," + // backward R cyrillic char
+                 "{\"a\": \"\\u25d0\", \"b\": 2, \"c\": \"b\"}," + // circle where half black and half white
+                 "{\"a\": \"\\u1ed3\", \"b\": 3, \"c\": \"c\"}," + // o with hat and accent
+                 "{\"a\": \"\\uff6a\", \"b\": 4, \"c\": \"d\"}, " + // HALFWIDTH KATAKANA LETTER SMALL E
+                 "{\"a\": \"\\u8349\", \"b\": 5, \"c\": \"e\"}," + // Taiwanese char for "grass"
+				 "{\"a\": \"Love \\u8349. It \\ud83d\\ude00\", \"b\": 5, \"c\": \"e\"}," + // ascii to non-ascii back to ascii and then to emoji
+                 "{\"a\": \"\\ud83d\\ude00\", \"b\": 6, \"c\": \"f\"}]", // smily face (\U0001F600)
+				"a,b,c\n" +
+                "\u042f,1,a\n" +
+                "\u25d0,2,b\n" +
+                "\u1ed3,3,c\n" +
+				"\uff6a,4,d\n" +
+                "\u8349,5,e\n" +
+				"Love \u8349. It \ud83d\ude00,5,e\n" +
+                "\ud83d\ude00,6,f\n",
+				',', '"', null, false
+				},
 			};
 			foreach (object[] test in csv_testcases)
 			{
@@ -547,24 +566,27 @@ namespace JSON_Tools.Tests
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
 				string head_str = header == null ? "null" : '[' + string.Join(", ", header) + ']';
-				string base_message = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str})\nto return\n{desired_out}\n";
+				string message_without_desired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str})\nto return\n";
+				string base_message = $"{message_without_desired}{desired_out}\n";
+				int msg_len = Encoding.UTF8.GetByteCount(desired_out) + 1 + message_without_desired.Length;
 				try
 				{
 					result = tabularizer.TableToCsv((JArray)table, delim, quote_char, header, bools_as_ints);
-					//Npp.AddText(table);
-					//Npp.AddText(result);
+					int result_len = Encoding.UTF8.GetByteCount(result);
 					try
 					{
 						if (!desired_out.Equals(result))
 						{
 							tests_failed++;
-							Npp.AddLine($"{base_message}Instead returned\n{result}");
+							Npp.editor.AppendText(msg_len + 17 + result_len + 1, $"{base_message}Instead returned\n{result}\n");
 						}
 					}
 					catch (Exception ex)
 					{
 						tests_failed++;
-						Npp.AddLine($"{base_message}Instead returned\n{result}\nand threw exception\n{ex}");
+						int ex_len = ex.ToString().Length;
+						Npp.editor.AppendText(msg_len + 17 + result_len + 21 + ex_len + 1, 
+							$"{base_message}Instead returned\n{result}\nand threw exception\n{ex}\n");
 					}
 				}
 				catch (Exception ex)

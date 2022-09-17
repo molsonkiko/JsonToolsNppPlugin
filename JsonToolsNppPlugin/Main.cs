@@ -237,7 +237,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers());
+            Npp.editor.SetText(json.PrettyPrint());
             Npp.SetLangJson();
         }
 
@@ -245,7 +245,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.ToStringAndChangeLineNumbers());
+            Npp.editor.SetText(json.ToString());
             Npp.SetLangJson();
         }
 

@@ -94,25 +94,25 @@ The queried JSON in the RemesParser tests is:{"_": {"0": 0}, "7": [{"foo": 2}, 1
 Expected remesparser.Search(log(@.foo[0] + 1), foo) to return [0.0, 0.693147180559945, 1.09861228866811], but instead got [0.0, 0.693147180559945, 1.09861228866811].
 Expected remesparser.Search(log2(@.foo[1]), foo) to return [1.58496250072116, 2.0, 2.32192809488736], but instead got [1.58496250072116, 2.0, 2.32192809488736].
 Expected remesparser.Search(range(0, -len(@) + len(@)), foo) to return [], but instead threw an exception:
-For arg 1 of function range, expected argument of type in INT, instead threw exception For arg 1 of function range, expected argument of type in INT, instead got type FLOAT
+For arg 1 of function range, expected argument of type in 130, instead threw exception For arg 1 of function range, expected argument of type in 130, instead got type FLOAT
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown..
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown.
 Expected remesparser.Search(range(0, -len(@) - len(@)), foo) to return [], but instead threw an exception:
-For arg 1 of function range, expected argument of type in INT, instead threw exception For arg 1 of function range, expected argument of type in INT, instead got type FLOAT
+For arg 1 of function range, expected argument of type in 130, instead threw exception For arg 1 of function range, expected argument of type in 130, instead got type FLOAT
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown..
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown.
 Expected remesparser.Search(range(0, -len(@) * len(@)), foo) to return [], but instead threw an exception:
-For arg 1 of function range, expected argument of type in INT, instead threw exception For arg 1 of function range, expected argument of type in INT, instead got type FLOAT
+For arg 1 of function range, expected argument of type in 130, instead threw exception For arg 1 of function range, expected argument of type in 130, instead got type FLOAT
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown..
 Details:
 Exception of type 'JSON_Tools.JSON_Tools.RemesPathException' was thrown.
 Failed 5 tests.
-Passed 126 tests.
+Passed 127 tests.
 =========================
 Testing that RemesPath throws errors on bad inputs
 =========================
@@ -144,7 +144,7 @@ Testing JSON tabularizer
 =========================
 
 Failed 0 tests.
-Passed 48 tests.
+Passed 49 tests.
 =========================
 Testing JSON grepper's file reading ability
 =========================
@@ -157,10 +157,10 @@ Performance tests for JsonParser and RemesPath
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 97.618 +/- 11.038 ms over 14 trials
-Load times (ms): 82, 95, 106, 89, 108, 96, 109, 86, 115, 101, 95, 104, 74, 102
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.007 +/- 0.007 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 1.634 +/- 2.227 ms over 14 trials
-Query times (ms): 1.163, 0.88, 0.828, 1.129, 0.838, 1.653, 1.432, 1.635, 0.921, 0.719, 0.627, 0.586, 9.575, 0.889
+To convert JSON string of size 975068 into JNode took 51.764 +/- 6.705 ms over 14 trials
+Load times (ms): 43, 45, 48, 52, 47, 60, 42, 44, 56, 49, 56, 55, 65, 56
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.004 +/- 0.005 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.653 +/- 0.207 ms over 14 trials
+Query times (ms): 0.619, 0.53, 0.58, 1.084, 0.493, 0.529, 1.004, 0.57, 0.799, 0.5, 0.967, 0.489, 0.478, 0.504
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...

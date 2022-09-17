@@ -138,8 +138,8 @@ namespace JSON_Tools.JSON_Tools
 		}
 
 		public JsonTabularizer(JsonTabularizerStrategy strategy = JsonTabularizerStrategy.DEFAULT) // ,
-																								   // JsonFormat output_format = JsonFormat.REC)
-																								   // don't worry about output_format, because other output formats aren't supported
+							// JsonFormat output_format = JsonFormat.REC)
+							// don't worry about output_format, because other output formats aren't supported
 		{
 			this.strategy = strategy;
 			//if ((output_format & JsonFormat.ANY_TABLE) != 0) _output_format = output_format;
@@ -791,23 +791,10 @@ namespace JSON_Tools.JSON_Tools
 				sb.Append(quote_char);
 				foreach (char c in s)
                 {
-					// I don't think I *need* to deal with chars > 65535
-					// because we're going from JSON, which won't have such
-					// characters in the first place.
-					// but maybe I should include mitigation?
-					//if (c > 0x7f) 
-					//{
-					//	sb.Append("\\u");
-					//	sb.Append(JNode.ToHex(c, 4));
-					//	// experience has shown that even though UTF-8 can technically
-					//	// handle characters between 0x80 and 0xff, in practice
-					//	// it tends to cause problems with Notepad++.
-					//}
-					if (c == quote_char || c == '\n')
-					{
-						sb.Append('\\');
-						sb.Append(c);
-					}
+					if (c == quote_char)
+						sb.Append("\\\"");
+					else if (c == '\n')
+						sb.Append("\\n");
 					else
 						sb.Append(c);
                 }
@@ -817,11 +804,6 @@ namespace JSON_Tools.JSON_Tools
 			// just replace newlines
 			foreach (char c in s)
             {
-				//if (c > 0x7f)
-				//{
-				//	sb.Append("\\u");
-				//	sb.Append(JNode.ToHex(c, 4));
-				//}
 				if (c == '\n')
 					sb.Append("\\n");
 				else

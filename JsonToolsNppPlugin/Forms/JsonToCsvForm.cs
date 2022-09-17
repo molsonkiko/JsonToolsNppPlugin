@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -69,16 +70,7 @@ namespace JSON_Tools.Forms
                 return;
             }
             Npp.notepad.FileNew();
-            int out_len = 0;
-            foreach (char c in csv)
-            {
-                if (c > 0x1000 && !(c >= 0xd800 && c <= 0xdfff))
-                    out_len += 3;
-                else if (c > 0x7f)
-                    out_len += 2;
-                else
-                    out_len++;
-            }
+            int out_len = Encoding.UTF8.GetByteCount(csv);
             Npp.editor.AppendText(out_len, csv);
             Close();
         }
