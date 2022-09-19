@@ -36,6 +36,10 @@ namespace JSON_Tools.Forms
 
         public JsonSchemaMaker schemaMaker;
 
+        public bool use_tree;
+
+        public double max_size_full_tree_MB;
+
         public TreeViewer(JNode json)
         {
             InitializeComponent();
@@ -46,6 +50,17 @@ namespace JSON_Tools.Forms
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
+            use_tree = Main.settings.use_tree;
+            max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;
+            int file_len = Npp.editor.GetLength();
+            if (file_len / 1e6 > max_size_full_tree_MB || use_tree == false)
+            {
+                // show that the full tree isn't being showed if the conditions
+                // are not met for showing it
+                FullTreeCheckBox.Checked = false;
+            }
+            else
+                FullTreeCheckBox.Checked = true;
             //this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
             //    PopulateIfUnpopulatedHandler
             //);
@@ -120,10 +135,10 @@ namespace JSON_Tools.Forms
                     //    }
                     //}
                     int json_len = Npp.editor.GetLength();
-                    if (!Main.settings.use_tree)
+                    if (!use_tree)
                     { // allow for tree to be turned off altogether. Best performance for loss of quality of life
                     }
-                    else if (json_len > Main.settings.max_size_full_tree_MB * 1e6)
+                    else if (json_len > max_size_full_tree_MB * 1e6)
                         JsonTreePopulateHelper_DirectChildren(root, json, pathsToJNodes);
                     else
                         JsonTreePopulateHelper(root, json, pathsToJNodes);
@@ -392,6 +407,38 @@ namespace JSON_Tools.Forms
             Npp.notepad.FileNew();
             Npp.editor.AppendTextAndMoveCursor(query_result.PrettyPrint());
             Npp.SetLangJson();
+        }
+
+        private void FullTreeCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (FullTreeCheckBox.Checked)
+            {
+                int file_len = Npp.editor.GetLength();
+                double estimated_time = file_len / 5e5; // 2s per MB
+                string est_time_str = estimated_time.ToString("N2"); // round to 2 decimal places
+                if ((estimated_time > 5 
+                        && MessageBox.Show($"Loading the full tree for this document will make Notepad++ unresponsive " +
+                                    $"for an estimated {est_time_str} seconds. Are you sure you want to do this?",
+                                    "Loading the full tree could be slow",
+                                    MessageBoxButtons.OKCancel,
+                                    MessageBoxIcon.Warning)
+                            == DialogResult.OK)
+                    || estimated_time <= 5)
+                {
+                    max_size_full_tree_MB = 10_000;
+                    // make it large enough to ensure that the document's tree will fit
+                    use_tree = true;
+                    JsonTreePopulate(json); // replace with full tree
+                }
+                else
+                    FullTreeCheckBox.Checked = false; // cancel the checking action
+            }
+            else
+            {
+                // replace the full tree with a partial tree
+                max_size_full_tree_MB = 0;
+                JsonTreePopulate(json);
+            }
         }
 
         // not creating schemas at present because schemas produced may be invalid

@@ -96,11 +96,12 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(2, "Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "Open JSON tree viewer", OpenJsonTree, new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
+            PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
             PluginBase.SetCommand(5, "---", null);
             PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(7, "JSON to YAML", DumpYaml);
-            PluginBase.SetCommand(8, "Run tests", TestRunner.RunAll, new ShortcutKey(true, true, true, Keys.R));
+            PluginBase.SetCommand(7, "Parse JSON Lines document", () => OpenJsonTree(true));
+            PluginBase.SetCommand(8, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(9, "Run tests", TestRunner.RunAll);
         }
 
         static internal void SetToolBarIcon()
@@ -192,7 +193,17 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        static JNode TryParseJson()
+        /// <summary>
+        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines).<br></br>
+        /// If parsing fails, throw up a message box telling the user what happened.<br></br>
+        /// If linting is active and the linter catches anything, throw up a message box
+        /// asking the user if they want to view the caught errors in a new buffer.<br></br>
+        /// Finally, associate the parsed JSON with the current filename in fname_jsons
+        /// and return the JSON.
+        /// </summary>
+        /// <param name="is_json_lines"></param>
+        /// <returns></returns>
+        static JNode TryParseJson(bool is_json_lines = false)
         {
             int len = Npp.editor.GetLength();
             string fname = Npp.GetCurrentPath();
@@ -200,7 +211,10 @@ namespace Kbg.NppPluginNET
             JNode json = new JNode();
             try
             {
-                json = jsonParser.Parse(text);
+                if (is_json_lines)
+                    json = jsonParser.ParseJsonLines(text);
+                else
+                    json = jsonParser.Parse(text);
             }
             catch (Exception e)
             {
@@ -293,13 +307,15 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        static void OpenJsonTree()
+        /// <summary>
+        /// Try to parse a JSON document and then open up the tree view.<br></br>
+        /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.
+        /// </summary>
+        static void OpenJsonTree(bool is_json_lines = false)
         {
-            // Dockable Dialog Demo
-            // 
-            // This demonstration shows you how to do a dockable dialog.
-            // You can create your own non dockable dialog - in this case you don't need this demonstration.
-            JNode json = TryParseJson();
+            if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
+                is_json_lines = true;
+            JNode json = TryParseJson(is_json_lines);
             if (json == null) return;
 
             TreeViewer treeViewer = new TreeViewer(json);

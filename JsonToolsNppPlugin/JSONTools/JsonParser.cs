@@ -863,6 +863,67 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// Parse a JSON Lines document (a text file containing one or more \n-delimited lines
+        /// where each line contains its own valid JSON document)
+        /// as an array where the i^th element is the document on the i^th line.<br></br>
+        /// See https://jsonlines.org/
+        /// </summary>
+        /// <param name="inp"></param>
+        /// <returns></returns>
+        public JNode ParseJsonLines(string inp)
+        {
+            if (lint != null)
+                lint.Clear();
+            if (inp.Length == 0)
+            {
+                throw new JsonParserException("no input");
+            }
+            ii = 0;
+            line_num = 0;
+            JNode json = new JNode();
+            List<JNode> arr = new List<JNode>();
+            while (ii < inp.Length)
+            {
+                try
+                {
+                    json = ParseSomething(inp);
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                    {
+                        throw new JsonParserException("Unexpected end of JSON", inp[inp.Length - 1], inp.Length - 1);
+                    }
+                    throw;
+                }
+                arr.Add(json);
+                // make sure this document was all in one line
+                if (line_num != arr.Count - 1)
+                {
+                    if (ii > inp.Length - 1)
+                        ii = inp.Length - 1;
+                    throw new JsonParserException(
+                        "JSON Lines document does not contain exactly one JSON document per line",
+                        inp[ii], ii
+                    );
+                }
+                ConsumeWhiteSpace(inp); // go to next line
+            }
+            // one last check to make sure the document has one JSON doc per line
+            // it's fine for the document to have one empty line at the end
+            if (line_num != arr.Count - 1 && line_num != arr.Count)
+            {
+                if (ii > inp.Length - 1)
+                    ii = inp.Length - 1;
+                throw new JsonParserException(
+                    "JSON Lines document does not contain exactly one JSON document per line",
+                    inp[ii], ii
+                );
+            }
+            return new JArray(0, arr);
+        }
+
+        /// <summary>
         /// create a new JsonParser with all the same settings as this one
         /// </summary>
         /// <returns></returns>

@@ -63,6 +63,27 @@ namespace JSON_Tools.Utils
             return path.ToString();
         }
 
+        /// <summary>
+        /// Get the file type for a file path (no period)<br></br>
+        /// Default path is the currently open file.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string FileExtension(string path = null)
+        {
+            if (path == null)
+                path = GetCurrentPath('f');
+            StringBuilder sb = new StringBuilder();
+            for (int ii = path.Length - 1; ii >= 0; ii--)
+            {
+                char c = path[ii];
+                if (c == '.') break;
+                sb.Append(c);
+            }
+            // the chars were added in the wrong direction, so reverse them
+            return sb.ToString().Slice("::-1");
+        }
+
         //public static DateTime LastSavedTime(string fname)
         //{
         //    DateTime now = DateTime.Now;

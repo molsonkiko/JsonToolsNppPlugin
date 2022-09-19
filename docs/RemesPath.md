@@ -10,7 +10,7 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 * [recursive search](#recursive-search) for keys
 * SQL-like group_by capabilities (see non-vectorized functions)
 * reshaping and summarization of JSON using [projections](#projections)
-* [editing of JSON](#assignment-expressions)
+* [editing of JSON](#editing-with-assignment-expressions)
 
 The formal description of the language in pseudo-Backus-Naur form is in ["RemesPath language spec.txt"](/docs/RemesPath%20language%20spec.txt). I'm not 100% sure this is a formally valid language spec, though.
 

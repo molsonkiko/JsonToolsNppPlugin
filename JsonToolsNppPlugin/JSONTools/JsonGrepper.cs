@@ -4,10 +4,40 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
-using JSON_Tools.Utils;
+using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using JSON_Tools.Utils;
+using Kbg.NppPluginNET;
+/*
+using System;
+using System.Net;
+using System.IO;
+
+public class Test
+{
+    public static void Main (string[] args)
+    {
+        if (args == null || args.Length == 0)
+        {
+            throw new ApplicationException ("Specify the URI of the resource to retrieve.");
+        }
+        WebClient client = new WebClient ();
+
+        // Add a user agent header in case the
+        // requested URI contains a query.
+
+        client.Headers.Add ("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+
+        Stream data = client.OpenRead (args[0]);
+        StreamReader reader = new StreamReader (data);
+        string s = reader.ReadToEnd ();
+        Console.WriteLine (s);
+        data.Close ();
+        reader.Close ();
+    }
+} 
+*/
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -22,10 +52,14 @@ namespace JSON_Tools.JSON_Tools
 		/// </summary>
 		public JObject fname_jsons;
 		public JsonParser json_parser;
-		public Dictionary<string, JsonLint[]> fname_lints;
+        private static readonly WebClient webClient = new WebClient();
+        public int max_threads;
+        public bool api_requests_async;
 
 		public JsonGrepper(JsonParser json_parser = null)
 		{
+            max_threads = 4; // Main.settings.thread_count_parsing;
+            api_requests_async = true; // Main.settings.api_requests_async;
 			fname_jsons = new JObject();
 			if (json_parser == null)
             {
@@ -35,7 +69,13 @@ namespace JSON_Tools.JSON_Tools
             {
 				this.json_parser = json_parser;
             }
-			fname_lints = new Dictionary<string, JsonLint[]>();
+            webClient.Headers.Clear();
+            // add a header saying that this client accepts only JSON
+            webClient.Headers.Add("Accept", "application/json");
+            // add a user-agent header saying who you are
+            webClient.Headers.Add("User-Agent", "JsonTools Notepad++ plugin");
+            // see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#request_context
+            // for more info on HTTP request headers
 		}
 
 		/// <summary>
@@ -97,7 +137,7 @@ namespace JSON_Tools.JSON_Tools
 		/// <param name="fname_strs"></param>
 		/// <param name="max_threads"></param>
 		/// <returns></returns>
-		private void ParseJsonStringsThreaded(Dictionary<string, string> fname_strs, int max_threads)
+		private void ParseJsonStringsThreaded(Dictionary<string, string> fname_strs)
         {
 			List<Thread> threads = new List<Thread>();
 			string[] fnames = fname_strs.Keys.ToArray();
@@ -110,7 +150,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 int end = start + fnames_per_thread;
                 if (end > fnames.Length // give the final thread fewer files than the rest
-                    || (end < fnames.Length && ii == max_threads - 1)) // give the final thread all the remaining files
+                    || ii == max_threads - 1) // give the final thread all the remaining files
                 {
                     end = fnames.Length;
                 }
@@ -146,96 +186,73 @@ namespace JSON_Tools.JSON_Tools
         {
             Dictionary<string, string> fname_strs = new Dictionary<string, string>();
             ReadJsonFiles(root_dir, recursive, search_pattern, fname_strs);
-            ParseJsonStringsThreaded(fname_strs, max_threads);
+            ParseJsonStringsThreaded(fname_strs);
         }
-
-        /// <summary>
-        /// Send an asynchronous request for JSON to an API.
-        /// If the request succeeds, return the JSON string.
-        /// If the request raises an exception, return the error message.
-        /// See https://docs.microsoft.com/en-us/dotnet/csharp/tutorials/console-webapiclient
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        //private async Task<string> GetJsonStringFromOneUrl(string url)
-        //{
-        //    return "";
-            //	// below is an example of how to set headers
-            //	// see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#request_context
-            //	client.DefaultRequestHeaders.Accept.Clear();
-            //	// the below Accept header is necessary to specify what kind of media response you will accept 
-            //          client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            //	// the User-Agent header tells the API who you are
-            //	client.DefaultRequestHeaders.Add("User-Agent", "JSON viewer API request tool");
-            //	try
-            //          {
-            //		Task<string> stringTask = client.GetStringAsync(url);
-            //		string json_str = await stringTask;
-            //		return json_str;
-            //	}
-            //	catch (Exception ex)
-            //          {
-            //		return ex.ToString();
-            //          }
-        //}
 
         ///// <summary>
         ///// Asynchronously send API requests to several URLs.
         ///// For each URL where the request succeeds, try to parse the JSON returned.
         ///// If the JSON returned is valid, add the JSON to fname_jsons.
-        ///// Return a list of all URLs for which the request succeeded,
-        ///// a dict mapping urls to exception strings,
-        ///// and a dict mapping urls to JsonLint arrays (lists of syntax errors in JSON)
+        ///// Populate a HashSet of all URLs for which the request succeeded
+        ///// and a dict mapping urls to exception strings
         ///// </summary>
         ///// <param name="urls"></param>
         ///// <returns></returns>
-        //private async void GetJsonStringsFromUrls(string[] urls, 
-        //                                        HashSet<string> urls_requested,
-        //                                        Dictionary<string, string> exceptions)
+        //private object[] GetJsonFromApis(string[] urls)
         //{
-        //    var json_tasks = new Dictionary<string, Task<string>>();
-        //    string[] json_strs = new string[urls.Length];
-        //    foreach (string url in urls)
+        //    var urls_requested = new HashSet<string>();
+        //    var exceptions = new string[urls.Length];
+        //    var json_strs = new string[urls.Length];
+        //    // somehow create a handler that associates the result with the url
+        //    // that it was downloaded from
+        //    var process_response = new DownloadStringCompletedEventHandler(
+        //        (object sender, DownloadStringCompletedEventArgs e) =>
+        //        {
+        //            if (e.Error != null)
+        //            {
+        //                exceptions[0] = e.Error.ToString();
+        //                return;
+        //            }
+        //            json_strs[0] = e.Result;
+        //        }
+        //    );
+        //    webClient.DownloadStringCompleted += process_response;
+        //    for (int ii = 0; ii < urls.Length; ii++)
         //    {
+        //        string url = urls[ii];
         //        // if (!fname_jsons.children.ContainsKey(url))
-        //        //// it is probably better to allow duplication of labor, so that the user can get new JSON
-        //        //// if something changed
-        //        json_tasks[url] = GetJsonStringFromApiAsync(url);
+        //        // it is probably better to allow duplication of labor, 
+        //        // so that the user can get new JSON if something changed
+        //        webClient.DownloadStringAsync(new Uri(url));
+        //        webClient.DownloadStringCompleted -= process_response;
+        //        if (ii < urls.Length - 1)
+        //        {
+        //            // The i^th url will have an event handler that puts the
+        //            // json response in the i^th entry of json_strs,
+        //            // or if there's an error, puts the error msg in the i^th
+        //            // entry of exceptions.
+        //            process_response = new DownloadStringCompletedEventHandler(
+        //                (object sender, DownloadStringCompletedEventArgs e) =>
+        //                {
+        //                    if (e.Error != null)
+        //                    {
+        //                        exceptions[ii + 1] = e.Error.ToString();
+        //                        return;
+        //                    }
+        //                    json_strs[ii + 1] = e.Result;
+        //                }
+        //            );
+        //            webClient.DownloadStringCompleted += process_response;
+        //        }
         //    }
-            //	// keep track of which urls were actually requested, excluding the ones where the request failed
-            //	var urls_requested = new HashSet<string>();
-            //	var exceptions = new Dictionary<string, string>();
-            //	for (int ii = 0; ii < urls.Length; ii++)
-            //          {
-            //		string url = urls[ii];
-            //		string json = jsons[ii];
-            //		try
-            //              {
-            //			fname_jsons[url] = json_parser.Parse(json);
-            //			if (json_parser.lint != null && json_parser.lint.Count > 0)
-            //                  {
-            //				fname_lints[url] = json_parser.lint.LazySlice(":").ToArray();
-            //			}
-            //			urls_requested.Add(url);
-            //		}
-            //              catch (Exception ex)
-            //              {
-            //			// GetJsonStringFromApiAsync returns the exception message if the request failed.
-            //			exceptions[url] = json;
-            //              }
-            //	}
-            //	return (urls_requested, exceptions);
+        //    // keep track of which urls were actually requested,
+        //    // excluding the ones where the request failed
+        //    for (int ii = 0; ii < urls.Length; ii++)
+        //    {
+        //        if (json_strs[ii] == null)
+        //            urls_requested.Add(urls[ii]);
+        //    }
         //}
-
-        ///<summary>
-        /// sends a GET request to each url in urls, assuming that the
-        /// response will be a JSON string.<br></br>
-        /// If the API responds with valid JSON, map the url to the JNode produced.
-        ///</summary>
-        public void GetJsonFromApis(string[] urls)
-        {
-
-        }
 
         /// <summary>
         /// clear the map from filenames to JSON objects, and get rid of any lint
@@ -243,7 +260,7 @@ namespace JSON_Tools.JSON_Tools
         public void Reset()
         {
 			fname_jsons.children.Clear();
-			fname_lints.Clear();
+			//fname_lints.Clear();
         }
 	}
 }

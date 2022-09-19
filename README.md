@@ -24,6 +24,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
 4. Get a report of all the syntax errors in the document (`linting` must be active).
 5. Open a drop-down tree view of the document. Clicking on a node in the tree navigates to the corresponding line in the document.
 6. Query and edit JSON with the [RemesPath](/docs/RemesPath.md) query language.
+7. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
 
 [Read the docs.](/docs/README.md)
 

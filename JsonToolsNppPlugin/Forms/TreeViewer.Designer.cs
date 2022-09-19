@@ -36,13 +36,14 @@
             this.SubmitQueryButton = new System.Windows.Forms.Button();
             this.SaveQueryButton = new System.Windows.Forms.Button();
             this.QueryToCsvButton = new System.Windows.Forms.Button();
+            this.FullTreeCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // Tree
             // 
-            this.Tree.Location = new System.Drawing.Point(4, 75);
+            this.Tree.Location = new System.Drawing.Point(4, 91);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(398, 550);
+            this.Tree.Size = new System.Drawing.Size(398, 534);
             this.Tree.TabIndex = 0;
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
             // 
@@ -66,7 +67,7 @@
             this.QueryBox.Location = new System.Drawing.Point(4, 4);
             this.QueryBox.Multiline = true;
             this.QueryBox.Name = "QueryBox";
-            this.QueryBox.Size = new System.Drawing.Size(164, 62);
+            this.QueryBox.Size = new System.Drawing.Size(164, 74);
             this.QueryBox.TabIndex = 0;
             this.QueryBox.Text = "@";
             // 
@@ -85,7 +86,7 @@
             // 
             this.SaveQueryButton.Location = new System.Drawing.Point(174, 36);
             this.SaveQueryButton.Name = "SaveQueryButton";
-            this.SaveQueryButton.Size = new System.Drawing.Size(119, 30);
+            this.SaveQueryButton.Size = new System.Drawing.Size(119, 27);
             this.SaveQueryButton.TabIndex = 2;
             this.SaveQueryButton.Text = "Save query result";
             this.SaveQueryButton.UseVisualStyleBackColor = true;
@@ -101,11 +102,23 @@
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
             this.QueryToCsvButton.Click += new System.EventHandler(this.QueryToCsvButton_Click);
             // 
+            // FullTreeCheckBox
+            // 
+            this.FullTreeCheckBox.AutoSize = true;
+            this.FullTreeCheckBox.Location = new System.Drawing.Point(174, 69);
+            this.FullTreeCheckBox.Name = "FullTreeCheckBox";
+            this.FullTreeCheckBox.Size = new System.Drawing.Size(130, 20);
+            this.FullTreeCheckBox.TabIndex = 4;
+            this.FullTreeCheckBox.Text = "View all subtrees";
+            this.FullTreeCheckBox.UseVisualStyleBackColor = true;
+            this.FullTreeCheckBox.CheckedChanged += new System.EventHandler(this.FullTreeCheckBox_CheckedChanged);
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(412, 631);
+            this.Controls.Add(this.FullTreeCheckBox);
             this.Controls.Add(this.QueryToCsvButton);
             this.Controls.Add(this.SaveQueryButton);
             this.Controls.Add(this.SubmitQueryButton);
@@ -127,5 +140,6 @@
         private System.Windows.Forms.Button SubmitQueryButton;
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
+        private System.Windows.Forms.CheckBox FullTreeCheckBox;
     }
 }

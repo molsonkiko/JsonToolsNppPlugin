@@ -59,6 +59,12 @@ Testing JSON parser's linter functionality
             JsonParserTester.TestLinter();
 
             Npp.AddLine(@"=========================
+Testing JSON Lines parser
+=========================
+");
+            JsonParserTester.TestJsonLines();
+
+            Npp.AddLine(@"=========================
 Testing YAML dumper
 =========================
 ");

@@ -17,7 +17,7 @@ namespace JSON_Tools.Utils
 
         // private static readonly string IniFilePath;
 
-        // JSON Parser settings
+        #region JSON_PARSER_SETTINGS
         [Description("Parse NaN and Infinity in JSON. If false, those raise an error."),
             Category("JSON Parser")] //, DefaultValue(true)]
         public bool allow_nan_inf { get; set; } = true;
@@ -37,7 +37,8 @@ namespace JSON_Tools.Utils
         [Description("Track the locations where any JSON syntax errors were found"),
             Category("JSON Parser")] //, DefaultValue(false)]
         public bool linting { get; set; } = false;
-
+        #endregion
+        #region TREE_VIEW_SETTINGS
         [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
             "Larger files get only the direct children of the root added to the tree."),
             Category("Tree View")]
@@ -45,6 +46,16 @@ namespace JSON_Tools.Utils
 
         [Description("Whether or not to use the tree view at all."), Category("Tree View")]
         public bool use_tree { get; set; } = true;
+        #endregion
+
+        //#region GREP_API_SETTINGS
+        //[Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
+        //    Category("Grep and API requests")]
+        //public int thread_count_parsing { get; set; } = 4;
+
+        //[Description("Should the API requester be asynchronous?"), Category("Grep and API requests")]
+        //public bool api_requests_async { get; set; } = true;
+        //#endregion
 
         /// <summary>
         /// Opens a window that edits all settings
@@ -145,6 +156,8 @@ namespace JSON_Tools.Utils
                 linting = false;
                 max_size_full_tree_MB = 4d;
                 use_tree = true;
+                //thread_count_parsing = 4;
+                //api_requests_async = true;
                 dialog.Close();
             };
 

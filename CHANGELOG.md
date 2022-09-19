@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JSON-Tools) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of weeks.
+This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JSON-Tools) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of months.
 
 1. A tool for searching directories for many documents and using RemesPath to query them all in parallel. The query results can then be written to separate files.
     * This tool will also probably have a feature for sending API requests and getting the JSON directly for querying. No more writing scripts!
@@ -16,7 +16,9 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
-- I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would vastly reduce the initial load time for the tree view and also the effective query execution time.
+- I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would be a marked improvement over the partial tree loading or no-tree option implemented in [version 3.1.0](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v3.1.0).
+- *If lazy loading can't be implemented:*
+	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Improve how well the caret tracks the node selected in the query tree.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
@@ -26,10 +28,10 @@ This project has many features that were implemented in a [standalone app](https
 	- for converting JSON to tabular form
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
-- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
  
 ### To Be Fixed
 
+- The `ClassifySchema` function (used by the `Default` strategy for JSON tabularization) has problems when parsing some queries, even though those queries are clearly tabularizable. Something about keys missing from a dictionary. Most likely related to bad schemas. 
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
 - Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
@@ -39,6 +41,17 @@ This project has many features that were implemented in a [standalone app](https
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
+
+## [3.2.0] - 2022-09-19
+
+### Added
+
+1. [Checkbox in tree view for toggling full-tree view of the JSON](/docs/README.md#changing-how-much-json-tree-is-displayed).
+2. [JSON Lines documents can now be parsed](/docs/README.md#json-lines-documents).
+
+### Changed
+
+1. Got rid of keyboard shortcut for `Run Tests`, since that's really only for people who are debugging the plugin.
 
 ## [3.1.0] - 2022-09-17
 

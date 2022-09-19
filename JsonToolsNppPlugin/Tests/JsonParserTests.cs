@@ -10,10 +10,14 @@ namespace JSON_Tools.Tests
 {
     public class JsonParserTester
     {
-        public static JNode TryParse(string input, JsonParser parser)
+        public static string NL = System.Environment.NewLine;
+
+        public static JNode TryParse(string input, JsonParser parser, bool is_json_lines = false)
         {
             try
             {
+                if (is_json_lines)
+                    return parser.ParseJsonLines(input);
                 return parser.Parse(input);
             }
             catch (Exception e)
@@ -106,7 +110,6 @@ namespace JSON_Tools.Tests
             // 8. hex and escape sequences in keys
             // 9. all special scalars (nan, null, inf, -inf, true, false)
             // 10. all forms of whitespace
-            string NL = Environment.NewLine;
             #region ParserTests
             string example = "{\"a\":[-1, true, {\"b\" :  0.5, \"c\": \"\\uae77\"},null],\n"
                     + "\"a\\u10ff\":[true, false, NaN, Infinity,-Infinity, {},\t\"\\u043ea\", []], "
@@ -532,6 +535,83 @@ multiline comment
                     tests_failed++;
                     Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
                 }
+            }
+
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
+
+        public static void TestJsonLines()
+        {
+            JsonParser parser = new JsonParser();
+            var testcases = new string[][]
+            {
+                new string[]
+                {
+                    "[\"a\", \"b\"]\r\n" +
+                    "{\"a\": false, \"b\": 2}\r\n" +
+                    "null\r\n" +
+                    "1.5", // normal style
+                    "[[\"a\", \"b\"], {\"a\": false, \"b\": 2}, null, 1.5]"
+                },
+                new string[]
+                {
+                    "[1, 2]\n[3, 4]\n", // newline at end
+                    "[[1, 2], [3, 4]]"
+                },
+                new string[]
+                {
+                    "{\"a\": [1, 2], \"b\": -7.8}", // single document
+                    "[{\"a\": [1, 2], \"b\": -7.8}]"
+                },
+            };
+            int tests_failed = 0;
+            int ii = 0;
+            foreach (string[] test in testcases)
+            {
+                string input = test[0];
+                JNode desired_output = TryParse(test[1], parser);
+                JNode json = TryParse(input, parser, true);
+                if (json == null)
+                {
+                    ii++;
+                    tests_failed++;
+                    continue;
+                }
+                if (!json.Equals(desired_output))
+                {
+                    tests_failed++;
+                    Npp.AddLine(String.Format(@"Test {0} failed:
+Expected
+{1}
+Got
+{2} ",
+                                     ii + 1, test[1], json.ToString()));
+                }
+            }
+
+            string[] should_throw_testcases = new string[]
+            {
+                "[1,\n2]\n[3, 4]", // one doc covers multiple lines
+                "[1, 2]\n\n3", // two lines between docs
+                "[1, 2] [3, 4]", // two docs on same line
+                "", // empty input
+                "[1, 2]\n[3, 4", // final doc is invalid
+                "[1, 2\n[3, 4]", // first doc is invalid
+                "[1, 2]\nd", // bad char at EOF
+                "[1, 2]\n\n", // multiple newlines after last doc
+            };
+
+            foreach (string test in should_throw_testcases)
+            {
+                ii++;
+                try
+                {
+                    JNode json = parser.ParseJsonLines(test);
+                    tests_failed++;
+                    Npp.AddLine($"Expected JSON Lines parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
+                }
+                catch { }
             }
 
             Npp.AddLine($"Failed {tests_failed} tests.");

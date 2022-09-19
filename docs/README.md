@@ -56,9 +56,7 @@ You can click on the nodes in that tree to see the children. When you do this, t
 
 __NOTES__
 1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
-2. If you [edit your JSON](/docs/RemesPath.md#assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
-3. For very large JSON (4+ MB) files, display of the full tree is disallowed by default, so you can only see the direct children of the root. You can change the maximum file size for full tree display in the settings.
-4. You can disable the tree completely in the settings as well.
+2. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 
@@ -124,8 +122,59 @@ This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON 
 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
 
+## Changing how much JSON tree is displayed ##
+
+Loading the full tree for very large, complex JSON can cause tremendous memory consumption and make Notepad++ unresponsive for a long time. Because of this, only the __direct children of the root__ are displayed by default for JSON files larger than 4 megabytes. This is reflected in the `View all subtrees` checkbox. You can change this in the settings.
+
+![Only direct children of the root are displayed for a big file](/docs/partial%20tree%20load%20example.PNG)
+
+For best performance, you can disable the tree view completely. If the JSON is a single scalar (bool, int, float, string, null, or date), it will display. For arrays and objects, you will only see the type icon.
+
+The `View all subtrees` checkbox on the JSON viewer form allows you to quickly toggle between viewing the full tree and only the direct children. Some notes on the checkbox:
+- If the full tree will not be shown when the tree is loaded, this box is unchecked; otherwise it is checked.
+- Checking the box when previously unchecked will load the full tree, but the user must click OK at a message box if the document is 2.5 MB or larger or else the box will remain unchecked. This box warns that loading the full tree for a big document could make Notepad++ responsive for a long time.
+![Message box warning of unresponsiveness when loading a big document](/docs/full%20tree%20load%20warning%20msg.PNG)
+- This message box for canceling loading of the full tree will now also show up when you try to open the full tree for a document 2.5 MB or larger.
+- Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
+- This box does not change the global settings. It only changes the settings for that tree view.
+
+## JSON Lines documents ##
+
+[JSON Lines](https://jsonlines.org/) documents can contain multiple valid JSON documents, provided that each is on its own line and there is exactly one line per document (with an optional empty line after the last).
+
+JSON Lines docs typically have a `.jsonl` file extension, and if a file has that extension, this plugin will try to parse it as a JSON Lines doc.
+
+This is a *valid* JSON Lines document:
+```json
+["a", "b"]
+{"a": 1, "b": 2, "c": [3]}
+"d"
+1.5
+```
+This is *invalid*, because there is an empty line in the middle:
+```json
+["a", "b"]
+
+1
+```
+This is also *invalid*, because two documents are on the same line:
+```json
+[1, 2] [3, 4]
+```
+And this is *invalid* too, because one document spans multiple lines:
+```json
+[1,
+2]
+[3, 4]
+```
+
+__NOTES:__
+- This plugin parses a JSON Lines doc as an array where the `i^th` element is the JSON document on the `i^th` line.
+- If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
+- At present, there is no way to tell the plugin to output JSON Lines instead of a normal array.
+- If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
+
 # OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
-======
 
 ## JSON Schema ##
 
