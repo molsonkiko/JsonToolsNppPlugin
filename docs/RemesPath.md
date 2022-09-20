@@ -95,7 +95,7 @@ A JSON literal can be created inside a RemesPath expression by prefixing a \`\` 
 
 You can select all the keys of an object that match a regular expression by using a regular expression with the dot or square bracket syntax.
 
-**Examples:**
+__Examples:__
 * Consider the object `{"foo": 1, "bar": 2, "baz": 3}`.
 * ``@.g`^b` ``returns `{"bar": 2, "baz": 3}`.
 * ``@[g`r$`, foo]`` returns `{"bar": 2, "foo": 1}`.
@@ -109,12 +109,12 @@ A boolean index can be one of the following:
     * Consider the array `[1, 2, 3]`
     * e.g., `@[in(2, @)]` will return `[1, 2, 3]` because `in(2, @)` is `true`.
     * `@[in(4, @)]` will return `[]` because `in(4, @)` is `false`.
-* *If the iterable is an **array**, an array of booleans of the same length as the iterable*. An array with all the values for which the boolean index was `true` will be returned.
+* *If the iterable is an __array__, an array of booleans of the same length as the iterable*. An array with all the values for which the boolean index was `true` will be returned.
     * Consider the array `[1, 2, 3]`
     * `@[@ > @[0]]` will return `[2, 3]`.
     * `@[@ ** 2 < 1]` will return `[]`.
     * `@[@[:2] > 0]` will throw a VectorizedArithmeticException, because the boolean index has length 2 and the array has length 3. 
-* *If the iterable is an **object**, an object of booleans with exactly the same keys as the iterable.* An object will be returned with all the pairs k: v for which the boolean index's value corresponding to k was `true`.
+* *If the iterable is an __object__, an object of booleans with exactly the same keys as the iterable.* An object will be returned with all the pairs k: v for which the boolean index's value corresponding to k was `true`.
     * Consider the object `{"a": 1, "b": 2, "c": 3}`
     * `@[@ > @.a]` returns `{"b": 2, "c": 3}`.
     * `@[@[a,b] > 1]` will throw a VectorizedArithmeticException, because the boolean index is `{"a": false, "b": true}`, which does not have exactly the same keys as the object.
@@ -156,16 +156,62 @@ Each subset will be organized in alphabetical order.
 
 ### Non-vectorized functions ###
 
+`add_items(obj: object, k1: string, v1: anything, [k2: string, v2: anything, k3: string, v3: anything, k4: string, v4: anything]) -> object`
+
+Takes 3-9 arguments. As shown, every even-numbered argument must be a string (new keys).
+
+Returns a *new object* with the key-value pair(s) k1-v1 (and possibly k2-v2, k3-v3, and k4-v4 added).
+
+*Does not mutate the original object.*
+
+__EXAMPLES__
+- add_items({}, "a", 1, "b", 2, "c", 3, "d", 4) -> {"a": 1, "b": 2, "c": 3, "d": 4}
+
+-----
+`append(x: array, x2-x8: anything) -> array`
+
+Takes an array and 1-7 other things (any *not-null* JSON) and returns a *new array* with
+the other things added to the end of the first array.
+
+Does not mutate the original array.
+
+The other things are added in the order that they were passed as arguments.
+
+Note that since `null` arguments are ignored, you will have to use `concat` with an array of `null` to add `null`'s to the end of an array. 
+
+__EXAMPLES__
+- `append([], 1, false, "a", [4]) -> [1, false, "a", [4]]`
+
+-----
 `avg(x: array) -> float`
 
 Finds the arithmetic mean of an array of numbers. `mean` is an alias for this function.
+
+-----
+`concat(x: array | object, x2-x8: array | object) -> array | object`
+
+Takes 2-8 arguments, either all arrays or all objects.
+
+If all args are arrays, returns an array that contains all elements of
+every array passed in, in the order they were passed.
+
+If all args are objects, returns an object that contains all key-value pairs in
+all the objects passed in.
+
+If multiple objects have the same keys, objects later in the arguments take precedence.
+
+__EXAMPLES__
+- `concat([1, 2], [3, 4], [5])` -> `[1, 2, 3, 4, 5]`
+- `concat({"a": 1, "b": 2}, {"c": 3}, {"a": 4})` -> `{"b": 2, "c": 3, "a": 4}`
+- `concat([1, 2], {"a": 2})` raises an exception because you can't concatenate arrays with objects.
+- `concat(1, [1, 2])` raises an exception because you can't concatenate anything with non-iterables.
 
 -----
 `dict(x: array) -> object`
 
 If x is an array of 2-element subarrays where the first element in each subarray is a string, return an object where each subarray is converted to a key-value pair.
 
-**Example:**
+__Example:__
 * `dict([["a", 1], ["b", 2]])` returns `{"a": 1, "b": 2}`.
 
 ----
@@ -173,7 +219,7 @@ If x is an array of 2-element subarrays where the first element in each subarray
    
 Recursively searches in `x` down to a depth of `depth`, pulling each element of every sub-array at that depth into the final array.
 
-It's easier to understand with some **examples:**
+It's easier to understand with some __examples:__
 * `flatten([[1, 2], [3, 4]])` returns `[1, 2, 3, 4]`.
 * `flatten([1, 2, 3])` returns `[1, 2, 3]`.
 * `flatten([1, [2, [3]]])` returns `[1, 2, [3]]`.
@@ -330,9 +376,9 @@ Returns an array of two-element subarrays `[k: anything, count: int]` where `cou
 The order of the sub-arrays is random.
 
 ----
-`zip(x1: array, x2-x100: array) -> array`
+`zip(x1: array, x2-x8: array) -> array`
 
-There can only be at most *100* arguments to this function.
+There can only be at most *8* arguments to this function.
 
 Returns a new array in which each `i^th` element is an array containing the `i^th` elements of each argument, in the order in which they were passed.
 
@@ -340,7 +386,7 @@ All the argument arrays *must have the same length*.
 
 In other words, it's like the Python `zip` function, except it returns an array, not a lazy iterator.
 
-**Example:**
+__Example:__
 * `zip(["a", "b", "c"], [1, 2, 3])` returns `[["a", 1], ["b", 2], ["c", 3]]`.
 
 ### Vectorized functions ###

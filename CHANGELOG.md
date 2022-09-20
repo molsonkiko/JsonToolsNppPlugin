@@ -42,6 +42,15 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
+## [3.3.0] - 2022-MM-DD
+
+### Added
+
+1. New [RemesPath functions](/docs/RemesPath.md#non-vectorized-functions):
+	- `concat` function in Remespath for concatenating arrays or merging objects.
+	- `append` function for adding scalars to arrays
+	- `add_items` function for adding key-value pairs to objects
+
 ## [3.2.0] - 2022-09-19
 
 ### Added

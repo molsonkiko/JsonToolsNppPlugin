@@ -310,6 +310,11 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("abs(-len(@) + len(@))", "0"), // see if other functions (not just range) of binops of uminus'd CurJson cause problems
                 new Query_DesiredResult("range(0, abs(-len(@) + len(@)))", "[]"),
                 new Query_DesiredResult("range(0, -abs(-len(@) + len(@)))", "[]"),
+                new Query_DesiredResult("add_items(j`{}`, a, 1, b, 2, c, 3, d, 4)", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4}"),
+                new Query_DesiredResult("add_items(j`{}`, a, null, b, 2, c, null)", "{\"a\": null, \"b\": 2, \"c\": null}"), // null values in add_items
+                new Query_DesiredResult("append(j`[]`, 1, false, a, j`[4]`)", "[1, false, \"a\", [4]]"),
+                new Query_DesiredResult("concat(j`[1, 2]`, j`[3, 4]`, j`[5]`)", "[1, 2, 3, 4, 5]"),
+                new Query_DesiredResult("concat(j`{\"a\": 1, \"b\": 2}`, j`{\"c\": 3}`, j`{\"a\": 4}`)", "{\"b\": 2, \"c\": 3, \"a\": 4}"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -370,12 +375,14 @@ namespace JSON_Tools.Tests
             int tests_failed = 0;
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
-            // test issue where sometimes a binop does not raise an error when it operates on two invalid types
-            string[] invalid_others = new string[] { "{}", "[]", "\"\"" };
             List<string[]> testcases = new List<string[]>(new string[][]
             {
-
-            });
+                new string[] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
+                new string[] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
+                new string[] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
+});
+            // test issue where sometimes a binop does not raise an error when it operates on two invalid types
+            string[] invalid_others = new string[] { "{}", "[]", "\"\"" };
             foreach (string other in invalid_others)
             {
                 foreach (string bop in Binop.BINOPS.Keys)

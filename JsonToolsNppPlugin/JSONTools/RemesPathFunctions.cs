@@ -344,6 +344,29 @@ namespace JSON_Tools.JSON_Tools
             return $"ArgFunction({name}, {type})";
         }
 
+        #region HELPER_FUNCTIONS
+
+        /// <summary>
+        /// Unspecified optional arguments to functions are filled with null.<br></br>
+        /// We may therefore want to stop processing arguments if the remaining args are null.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ii"></param>
+        /// <returns></returns>
+        private static bool RemainingArgsNull(JNode[] args, int ii)
+        {
+            while (ii < args.Length)
+            {
+                JNode node = args[ii++];
+                if (node.type != Dtype.NULL)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        #endregion
+
         #region NON_VECTORIZED_ARG_FUNCTIONS
 
         /// <summary>
@@ -981,7 +1004,7 @@ namespace JSON_Tools.JSON_Tools
         //}
 
         /// <summary>
-        /// Takes 2-100 JArrays as arguments. They must be of equal length.
+        /// Takes 2-8 JArrays as arguments. They must be of equal length.
         /// Returns: one JArray in which the i^th element is an array containing the i^th elements of the input arrays.
         /// Example:
         /// Zip([1,2],["a", "b"], [true, false]) = [[1, "a", true], [2, "b", false]]
@@ -1040,6 +1063,117 @@ namespace JSON_Tools.JSON_Tools
                 rst[(string)key.value] = val;
             }
             return new JObject(0, rst);
+        }
+
+        /// <summary>
+        /// Takes 2-8 arguments, either all arrays or all objects.<br></br>
+        /// If all args are arrays, returns an array that contains all elements of
+        /// every array passed in, in the order they were passed.<br></br>
+        /// If all args are objects, returns an object that contains all key-value pairs in
+        /// all the objects passed in.<br></br>
+        /// If multiple objects have the same keys, objects later in the arguments take precedence.<br></br>
+        /// EXAMPLES<br></br>
+        /// concat([1, 2], [3, 4], [5]) -> [1, 2, 3, 4, 5]<br></br>
+        /// concat({"a": 1, "b": 2}, {"c": 3}, {"a": 4}) -> {"b": 2, "c": 3, "a": 4}<br></br>
+        /// concat([1, 2], {"a": 2}) raises an exception because you can't concatenate arrays with objects.<br></br>
+        /// concat(1, [1, 2]) raises an exception because you can't concatenate anything with non-iterables.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathException"></exception>
+        public static JNode Concat(JNode[] args)
+        {
+            JNode first_itbl = args[0];
+            if (first_itbl is JArray first_arr)
+            {
+                List<JNode> new_arr = new List<JNode>(first_arr.children);
+                for (int ii = 1; ii < args.Length; ii++)
+                {
+                    if (!(args[ii] is JArray arr))
+                    {
+                        if (RemainingArgsNull(args, ii))
+                            break;
+                        throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
+                    }
+                    new_arr.AddRange(arr.children);
+                }
+                return new JArray(0, new_arr);
+            }
+            else if (first_itbl is JObject first_obj)
+            {
+                Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(first_obj.children);
+                for (int ii = 1; ii < args.Length; ii++)
+                {
+                    if (!(args[ii] is JObject obj))
+                    {
+                        if (RemainingArgsNull(args, ii))
+                            break;
+                        throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
+                    }
+                    foreach (string key in obj.children.Keys)
+                    {
+                        // this can overwrite the same key in any earlier arg.
+                        // TODO: maybe consider raising if multiple iterables have same key?
+                        new_obj[key] = obj[key];
+                    }
+                }
+                return new JObject(0, new_obj);
+            }
+            throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
+        }
+
+        /// <summary>
+        /// Takes an array and 1-7 other things (any not-null JSON) and returns a <em>new array</em> with
+        /// the other things added to the end of the first array.<br></br>
+        /// Does not mutate the original array.<br></br>
+        /// They are added in the order that they were passed as arguments.<br></br>
+        /// EXAMPLES<br></br>
+        /// - append([], 1, false, "a", [4]) -> [1, false, "a", [4]]
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathException"></exception>
+        public static JNode Append(JNode[] args)
+        {
+            JArray arr = (JArray)args[0];
+            List<JNode> new_arr = new List<JNode>(arr.children);
+            for (int ii = 1; ii < args.Length; ii++)
+            {
+                JNode arg = args[ii];
+                if (arg.type == Dtype.NULL)
+                    continue; // ignore null, because unspecified optional args are filled with nulls
+                new_arr.Add(arg);
+            }
+            return new JArray(0, new_arr);
+        }
+
+        /// <summary>
+        /// The 3-9 arguments must have the types (obj: object, k1: string, v1: any, [k2: string, v2: any, k3: string, v3: any, k4: string, v4: any])<br></br>
+        /// Returns a <em>new object</em> with the key-value pair(s) k1-v1 (and possibly k2-v2 and k3-v3 added).<br></br>
+        /// <em>Does not mutate the original object.</em><br></br>
+        /// EXAMPLES<br></br>
+        /// - add_items({}, "a", 1, "b", 2, "c", 3, "d", 4) -> {"a": 1, "b": 2, "c": 3, "d": 4}
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode AddItems(JNode[] args)
+        {
+            JObject obj = (JObject)args[0];
+            Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(obj.children);
+            int ii = 1;
+            while (ii < args.Length)
+            {
+                JNode k = args[ii++];
+                if (k.type != Dtype.STR)
+                {
+                    if (RemainingArgsNull(args, ii))
+                        break;
+                    throw new RemesPathException("Even-numbered args to 'add_items' function (new keys) must be strings");
+                }
+                JNode v = args[ii++];
+                new_obj[(string)k.value] = v;
+            }
+            return new JObject(0, new_obj);
         }
 
         #endregion
@@ -1424,11 +1558,14 @@ namespace JSON_Tools.JSON_Tools
         new Dictionary<string, ArgFunction>
         {
             // non-vectorized functions
+            ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, 9, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING }),
+            ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, 8, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING }),
             ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, 8, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE }),
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
             ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.INT }),
             ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
-            ["in"] = new ArgFunction(In, "in", Dtype.BOOL, 2, 2, false, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE, Dtype.ITERABLE }),
+            ["in"] = new ArgFunction(In, "in", Dtype.BOOL, 2, 2, false, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE }),
             ["index"] = new ArgFunction(Index, "index", Dtype.INT, 2, 3, false, new Dtype[] {Dtype.ITERABLE, Dtype.SCALAR, Dtype.BOOL}),
             ["items"] = new ArgFunction(Items, "items", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN }),
             ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
@@ -1447,18 +1584,18 @@ namespace JSON_Tools.JSON_Tools
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
-            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 100, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
+            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 8, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
             // vectorized functions
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
-            ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.SCALAR | Dtype.ITERABLE}),
-            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE, Dtype.ITERABLE | Dtype.SCALAR, Dtype.ITERABLE | Dtype.SCALAR}),
-            ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
-            ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
-            ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
-            ["is_str"] = new ArgFunction(IsStr, "is_str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
-            ["isna"] = new ArgFunction(IsNa, "isna", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
-            ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE}),
+            ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE | Dtype.SCALAR, Dtype.ITERABLE | Dtype.SCALAR}),
+            ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["is_str"] = new ArgFunction(IsStr, "is_str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["isna"] = new ArgFunction(IsNa, "isna", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["log"] = new ArgFunction(Log, "log", Dtype.FLOAT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.FLOAT_OR_INT}),
             ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["__UMINUS__"] = new ArgFunction(Uminus, "-", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
@@ -1474,7 +1611,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR}),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.SCALAR | Dtype.ITERABLE})
+            ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING})
         };
     }
 

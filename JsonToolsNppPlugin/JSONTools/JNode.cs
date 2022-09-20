@@ -66,7 +66,8 @@ namespace JSON_Tools.JSON_Tools
         DATE_OR_DATETIME = DATE | DATETIME,
         INT_OR_SLICE = INT | SLICE,
         ARR_OR_OBJ = ARR | OBJ,
-        SCALAR = FLOAT | INT | BOOL | STR | NULL | REGEX | DATETIME | DATE, // | TIME 
+        SCALAR = FLOAT | INT | BOOL | STR | NULL | REGEX | DATETIME | DATE, // | TIME
+        ANYTHING = SCALAR | ITERABLE,
     }
 
     /// <summary>
