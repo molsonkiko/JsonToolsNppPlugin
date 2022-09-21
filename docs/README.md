@@ -170,8 +170,8 @@ And this is *invalid* too, because one document spans multiple lines:
 
 __NOTES:__
 - This plugin parses a JSON Lines doc as an array where the `i^th` element is the JSON document on the `i^th` line.
+- The `Array to JSON Lines` command on the plugin menu allows you to convert a normal JSON array into a JSON Lines document. 
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
-- At present, there is no way to tell the plugin to output JSON Lines instead of a normal array.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
 
 # OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #

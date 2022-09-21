@@ -97,11 +97,13 @@ namespace Kbg.NppPluginNET
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "---", null);
-            PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(5, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(6, "---", null);
             PluginBase.SetCommand(7, "Parse JSON Lines document", () => OpenJsonTree(true));
-            PluginBase.SetCommand(8, "JSON to YAML", DumpYaml);
-            PluginBase.SetCommand(9, "Run tests", TestRunner.RunAll);
+            PluginBase.SetCommand(8, "Array to JSON Lines", DumpJsonLines);
+            PluginBase.SetCommand(9, "---", null);
+            PluginBase.SetCommand(10, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(11, "Run tests", TestRunner.RunAll);
         }
 
         static internal void SetToolBarIcon()
@@ -290,6 +292,26 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.editor.SetText(yaml);
+        }
+
+        /// <summary>
+        /// If the current file is a JSON array, open a new buffer with a JSON Lines
+        /// document containing all entries in the array.
+        /// </summary>
+        static void DumpJsonLines()
+        {
+            JNode json = TryParseJson();
+            if (json == null) return;
+            if (!(json is JArray arr))
+            {
+                MessageBox.Show("Only JSON arrays can be converted to JSON Lines format.",
+                                "Only arrays can be converted to JSON Lines",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            Npp.notepad.FileNew();
+            string result = arr.ToJsonLines();
+            Npp.editor.AppendText(result.Length, result);
         }
 
         //form opening stuff

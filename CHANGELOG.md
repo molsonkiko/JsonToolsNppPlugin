@@ -16,6 +16,13 @@ This project has many features that were implemented in a [standalone app](https
  
 ### To Be Changed
 
+- Consider dropping the `line_num` attrribute of JNodes and replacing it with `position` attribute that tracks position in the JSON string.
+	* Pros:
+		- allows navigation within a single line; more useful in one-line files
+		- faster parsing because the parser doesn't need to track line number
+		- cool features like grabbing the path to the location of the caret
+	* Cons:
+		- backwards-incompatible change
 - I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would be a marked improvement over the partial tree loading or no-tree option implemented in [version 3.1.0](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v3.1.0).
 - *If lazy loading can't be implemented:*
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
@@ -42,7 +49,7 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
-## [3.3.0] - 2022-MM-DD
+## [3.3.0] (unreleased) - 2022-MM-DD
 
 ### Added
 
@@ -50,6 +57,7 @@ This project has many features that were implemented in a [standalone app](https
 	- `concat` function in Remespath for concatenating arrays or merging objects.
 	- `append` function for adding scalars to arrays
 	- `add_items` function for adding key-value pairs to objects
+2. Menu command for generating a [JSON Lines](/docs/README.md#json-lines-documents) document from a JSON array.
 
 ## [3.2.0] - 2022-09-19
 

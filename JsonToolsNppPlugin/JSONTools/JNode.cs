@@ -775,6 +775,23 @@ namespace JSON_Tools.JSON_Tools
             }
             return copy;
         }
+
+        /// <summary>
+        /// Return a '\n'-delimited JSON Lines document
+        /// where the i^th line has the i^th element in this JArray.
+        /// </summary>
+        /// <returns></returns>
+        public string ToJsonLines()
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int ii = 0; ii < children.Count; ii++)
+            {
+                sb.Append(children[ii].ToString());
+                if (ii < children.Count - 1)
+                    sb.Append('\n');
+            }
+            return sb.ToString();
+        }
     }
 
     /// <summary>
