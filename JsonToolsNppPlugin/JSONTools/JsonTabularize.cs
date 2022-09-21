@@ -760,7 +760,6 @@ namespace JSON_Tools.JSON_Tools
 				{
 					JsonFormat clsname = tab_paths[pathstr];
 					jsonParser.ii = 0;
-					jsonParser.line_num = 0;
 					path = jsonParser.ParseArray(pathstr);
 					cls = clsname;
 				}

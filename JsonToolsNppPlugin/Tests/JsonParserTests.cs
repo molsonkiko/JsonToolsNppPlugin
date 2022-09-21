@@ -214,19 +214,19 @@ Got
                 ii++;
             }
             #endregion
-            #region PrettyPrintTests
+            #region ChangePositionsTests
             string objstr = "{\"a\": [1, 2, 3], \"b\": {}, \"c\": [], \"d\": 3}";
             JNode onode = TryParse(objstr, parser);
             if (onode != null)
             {
                 JObject obj = (JObject)onode;
                 string pp = obj.PrettyPrint();
-                string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers();
+                string pp_ch_line = obj.PrettyPrintAndChangePositions();
                 if (pp != pp_ch_line)
                 {
                     tests_failed++;
                     Npp.AddLine(String.Format(@"Test {0} failed:
-Expected PrettyPrintAndChangeLineNumbers({1}) to return
+Expected PrettyPrintAndChangePositions({1}) to return
 {2}
 instead got
 {3}",
@@ -234,28 +234,29 @@ instead got
                 }
                 ii++;
 
-                var keylines = new object[][]
+                var keypositions = new object[][]
                 {
-                new object[]{"a", 2 },
-                new object[]{ "b", 8 },
-                new object[]{ "c", 11 },
-                new object[]{"d", 13 }
+                // key, position after pretty-print, position after compress
+                new object[]{ "a", 14, 7 }, 
+                new object[]{ "b", 58, 23 },
+                new object[]{ "c", 79, 32 },
+                new object[]{ "d", 95, 41 }
                 };
-                foreach (object[] kl in keylines)
+                foreach (object[] kp in keypositions)
                 {
-                    string key = (string)kl[0];
-                    int expected_line = (int)kl[1];
-                    int true_line = obj[key].line_num;
-                    if (true_line != expected_line)
+                    string key = (string)kp[0];
+                    int expected_pos = (int)kp[1];
+                    int true_pos = obj[key].position;
+                    if (true_pos != expected_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                        Npp.AddLine($"After PrettyPrintAndChangePositions({objstr}), expected the position of child {key} to be {expected_pos}, got {true_pos}.");
                     }
                     ii++;
                 }
 
                 string tostr = obj.ToString();
-                string tostr_ch_line = obj.ToStringAndChangeLineNumbers();
+                string tostr_ch_line = obj.ToStringAndChangePositions();
                 ii++;
                 if (tostr != tostr_ch_line)
                 {
@@ -267,33 +268,34 @@ instead got
 {3}",
                                                     ii + 1, objstr, tostr, tostr_ch_line));
                 }
-                foreach (object[] kl in keylines)
+                foreach (object[] kp in keypositions)
                 {
-                    string key = (string)kl[0];
+                    string key = (string)kp[0];
                     ii++;
-                    int true_line = obj[key].line_num;
-                    if (true_line != 0)
+                    int true_pos = obj[key].position;
+                    int desired_pos = (int)kp[2];
+                    if (true_pos != desired_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangeLineNumbers({objstr}), expected the line of child {key} to be 0, got {true_line}.");
+                        Npp.AddLine($"After ToStringAndChangeLineNumbers({objstr}), expected the position of child {key} to be {desired_pos}, got {true_pos}.");
                     }
                 }
 
-                // test if the parser correctly counts line numbers in nested JSON
+                // test if the parser correctly gets positions in nested JSON
                 JNode pp_node = TryParse(pp_ch_line, parser);
                 if (pp_node != null)
                 {
                     JObject pp_obj = (JObject)pp_node;
-                    foreach (object[] kl in keylines)
+                    foreach (object[] kl in keypositions)
                     {
                         string key = (string)kl[0];
-                        int expected_line = (int)kl[1];
-                        int true_line = pp_obj[key].line_num;
+                        int expected_pos = (int)kl[1];
+                        int true_pos = pp_obj[key].position;
                         ii++;
-                        if (true_line != expected_line)
+                        if (true_pos != expected_pos)
                         {
                             tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                            Npp.AddLine($"After PrettyPrintAndChangePositions({pp}), expected the position of child {key} to be {expected_pos}, got {true_pos}.");
                         }
                     }
                 }
@@ -572,16 +574,16 @@ multiline comment
                 string input = test[0];
                 JNode desired_output = TryParse(test[1], parser);
                 JNode json = TryParse(input, parser, true);
+                ii++;
                 if (json == null)
                 {
-                    ii++;
                     tests_failed++;
                     continue;
                 }
                 if (!json.Equals(desired_output))
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
+                    Npp.AddLine(string.Format(@"Test {0} failed:
 Expected
 {1}
 Got

@@ -239,7 +239,7 @@ namespace Kbg.NppPluginNET
                     sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
                     foreach (JsonLint lint in jsonParser.lint)
                     {
-                        sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.cur_char}): {lint.message}");
+                        sb.AppendLine($"Syntax error at position {lint.pos} (char {lint.cur_char}): {lint.message}");
                     }
                     Npp.AddLine(sb.ToString());
                     Npp.notepad.OpenFile(fname);

@@ -1966,6 +1966,10 @@ namespace JSON_Tools.JSON_Tools
                 throw new RemesPathException("Can't convert a scalar to an array or object.");
             v.type = vnew.type;
             v.value = vnew.value;
+            // no point updating positions.
+            // assignment expressions can potentially change the positions of almost all JNodes in the JSON
+            // and the only way to know where everything will end up is to PrettyPrintAndChangePositions
+            // or ToStringAndChangePositions after the assignment expression has completed.
         }
 
         /// <summary>

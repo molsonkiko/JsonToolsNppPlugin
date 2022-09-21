@@ -20,7 +20,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         string fname;
         /// <summary>
-        /// Maps the path of a TreeNode to the line number of the corresponding JNode
+        /// Maps the path of a TreeNode to the corresponding JNode
         /// </summary>
         public Dictionary<string, JNode> pathsToJNodes;
         /// <summary>
@@ -264,7 +264,7 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// snap the caret to the line of the JNode corresponding to the TreeNode clicked.
+        /// snap the caret to the position of the JNode corresponding to the TreeNode clicked.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -272,7 +272,7 @@ namespace JSON_Tools.Forms
         {
             if (Npp.GetCurrentPath() != fname) return;
             string path = e.Node.FullPath;
-            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
+            Npp.editor.GotoPos(pathsToJNodes[path].position);
             // might also want to make it so that the selected line is scrolled to the top
         }
 
@@ -342,7 +342,7 @@ namespace JSON_Tools.Forms
                     query_func = mutation_func;
                 }
                 json = query_func;
-                string new_json_str = query_func.PrettyPrintAndChangeLineNumbers();
+                string new_json_str = query_func.PrettyPrintAndChangePositions();
                 Npp.editor.SetText(new_json_str);
                 JsonTreePopulate(query_func);
                 return;

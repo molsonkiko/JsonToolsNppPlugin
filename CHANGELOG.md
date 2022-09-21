@@ -49,6 +49,16 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
+## [4.0.0] (dev branch changes) - YYYY-MM-DD
+
+### BIG CHANGE!
+
+Eliminated `line_num` attribute of JNodes and replaced it with a `position` attribute.
+__Practical consequences:__
+1. Clicking on a tree node in the treeview snaps the caret to the *position* of a JSON node rather than just the line number. This means you can use the tree view to navigate within a one-line document.
+2. Other features may become possible in the future, including:
+	- getting the path to the location of the caret in the current document (currently possible only if the document is pretty-printed and each line has only one node)
+
 ## [3.3.0] (unreleased) - 2022-MM-DD
 
 ### Added

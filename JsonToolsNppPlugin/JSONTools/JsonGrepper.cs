@@ -159,8 +159,8 @@ namespace JSON_Tools.JSON_Tools
 				var assigned_fnames = new string[count];
 				for (int jj = 0; jj < count; jj++)
                     assigned_fnames[jj] = fnames[start + jj];
-                // JsonParsers store position in the parsed string (ii) and line_num as instance variables.
-                // that means that if multiple threads share a JsonParser, you have race conditions associated with ii and line_num.
+                // JsonParsers store position in the parsed string (ii) as instance variables.
+                // that means that if multiple threads share a JsonParser, you have a race condition associated with ii.
                 // For this reason, we need to give each thread a separate JsonParser.
                 Thread thread = new Thread(() => ParseJsonStrings_Task(assigned_fnames, fname_strs, fname_jsons.children, json_parser.Copy()));
 				threads.Add(thread);
