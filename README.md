@@ -22,9 +22,10 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
     * non-string key in object
     * `]` closing an object or `}` closing an array
 4. Get a report of all the syntax errors in the document (`linting` must be active).
-5. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. Clicking on a node in the tree navigates to the corresponding line in the document. The tree also lets you [get the path to the current line](/docs/README.md#path-to-current-line)
-6. Query and edit JSON with the [RemesPath](/docs/RemesPath.md) query language.
-7. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
+5. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. Clicking on a node in the tree navigates to the corresponding line in the document.
+6. [Get the path to the current line](/docs/README.md#path-to-current-line)
+7. Query and edit JSON with the [RemesPath](/docs/RemesPath.md) query language.
+8. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
 
 [Read the docs.](/docs/README.md)
 
