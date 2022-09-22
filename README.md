@@ -7,8 +7,8 @@ Miscellaneous tools for working with JSON in Notepad++.
 Any issues, feel free to email me at mjolsonsfca@gmail.com.
 
 ## Features ##
-1. [Pretty-print JSON](/docs/README.md#prettyprintstyle) so that it's spread out over multiple lines.
-2. [Compress JSON](/docs/README.md#minimalwhitespacecompression) so that it has little or no unnecessary whitespace.
+1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.
+2. [Compress JSON](/docs/README.md#minimal_whitespace_compression) so that it has little or no unnecessary whitespace.
 3. Change the settings to [enable the parsing of documents that have various syntax errors](/docs/README.md#parser-settings) (using the `linting` setting in settings):
     * string literals containing newlines
     * string literals enclosed by ' instead of "
