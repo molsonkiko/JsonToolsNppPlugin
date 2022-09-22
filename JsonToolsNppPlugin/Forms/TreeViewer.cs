@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -39,6 +40,14 @@ namespace JSON_Tools.Forms
         public bool use_tree;
 
         public double max_size_full_tree_MB;
+        // event handlers for the node mouseclick drop down menu
+        private static MouseEventHandler valToClipboardHandler = null;
+        private static MouseEventHandler pathToClipboardHandler_Remespath = null;
+        private static MouseEventHandler pathToClipboardHandler_Python = null;
+        private static MouseEventHandler pathToClipboardHandler_Javascript = null;
+        private static MouseEventHandler keyToClipboardHandler_Remespath = null;
+        private static MouseEventHandler keyToClipboardHandler_Python = null;
+        private static MouseEventHandler keyToClipboardHandler_Javascript = null;
 
         public TreeViewer(JNode json)
         {
@@ -187,13 +196,13 @@ namespace JSON_Tools.Forms
                     JNode child = jar[ii];
                     if (child is JArray || child is JObject)
                     {
-                        child_node = new TreeNode(ii.ToString());
-                        root.Nodes.Add(child_node);
+                        root.Nodes.Add(ii.ToString());
+                        child_node = root.Nodes[root.Nodes.Count - 1];
                         JsonTreePopulateHelper(child_node, child, pathsToJNodes);
                     }
                     else
                     {
-                        root.Nodes.Add(ii.ToString(), $"{ii} : {child.ToString()}");
+                        root.Nodes.Add($"{ii} : {child.ToString()}");
                         child_node = root.LastNode;
                     }
                     SetImageOfTreeNode(child_node, child);
@@ -210,8 +219,8 @@ namespace JSON_Tools.Forms
                 JNode child = jobj[key];
                 if (child is JArray || child is JObject)
                 {
-                    child_node = new TreeNode(key);
-                    root.Nodes.Add(child_node);
+                    root.Nodes.Add(key, key);
+                    child_node = root.Nodes[root.Nodes.Count - 1];
                     JsonTreePopulateHelper(child_node, child, pathsToJNodes);
                 }
                 else
@@ -262,19 +271,6 @@ namespace JSON_Tools.Forms
                 root.Nodes.Add(child_node);
                 pathsToJNodes[child_node.FullPath] = child;
             }
-        }
-
-        /// <summary>
-        /// snap the caret to the line of the JNode corresponding to the TreeNode clicked.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
-        {
-            if (Npp.GetCurrentPath() != fname) return;
-            string path = e.Node.FullPath;
-            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
-            // might also want to make it so that the selected line is scrolled to the top
         }
 
         private void SubmitQueryButton_Click(object sender, EventArgs e)
@@ -440,6 +436,196 @@ namespace JSON_Tools.Forms
                 max_size_full_tree_MB = 0;
                 JsonTreePopulate(json);
             }
+        }
+
+        /// <summary>
+        /// snap the caret to the line of the JNode corresponding to the TreeNode clicked.<br></br>
+        /// On right click, throw up a context menu that lets you do the following:<br></br>
+        /// - Copy the current node's value to the clipboard<br></br>
+        /// - Copy the node's path (Python style) to the clipboard<br></br>
+        /// - Copy the node's key/index (Python style) to the clipboard<br></br>
+        /// - Copy the node's path (JavaScript style) to the clipboard<br></br>
+        /// - Copy the node's path (RemesPath style) to the clipboard
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (Npp.GetCurrentPath() != fname) return;
+            TreeNode node = e.Node;
+            string path = node.FullPath;
+            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
+            // might also want to make it so that the selected line is scrolled to the top
+            if (e.Button == MouseButtons.Right)
+            {
+                // open a context menu that lets the user copy things to clipboard
+                // lets user copy string value of current node to clipboard
+                var valToClipboard = NodeRightClickMenu.Items[0];
+                if (valToClipboardHandler != null)
+                {
+                    try
+                    {
+                        valToClipboard.MouseUp -= valToClipboardHandler;
+                    }
+                    catch { }
+                }
+                valToClipboardHandler = new MouseEventHandler(
+                    (object sender2, MouseEventArgs e2) =>
+                    {
+                        JNode jnode = pathsToJNodes[node.FullPath];
+                        if (jnode is JObject || jnode is JArray)
+                            return;
+                        Npp.TryCopyToClipboard(jnode.ToString());
+                    }
+                );
+                valToClipboard.MouseUp += valToClipboardHandler;
+                // things that get the key of the current node to clipboard
+                var keyToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[1];
+                var keyToClipboard_javascript = keyToClipboard.DropDownItems[0];
+                if (keyToClipboardHandler_Javascript != null)
+                {
+                    try
+                    {
+                        keyToClipboard_javascript.MouseUp -= keyToClipboardHandler_Javascript;
+                    }
+                    catch { }
+                }
+                keyToClipboardHandler_Javascript = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(KeyOfTreeNode(node, KeyStyle.JavaScript));
+                    }
+                );
+                keyToClipboard_javascript.MouseUp += keyToClipboardHandler_Javascript;
+                var keyToClipboard_Python = keyToClipboard.DropDownItems[1];
+                if (keyToClipboardHandler_Python != null)
+                {
+                    try
+                    {
+                        keyToClipboard_Python.MouseUp -= keyToClipboardHandler_Python;
+                    }
+                    catch { }
+                }
+                keyToClipboardHandler_Python = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(KeyOfTreeNode(node, KeyStyle.Python));
+                    }
+                );
+                keyToClipboard_Python.MouseUp += keyToClipboardHandler_Python;
+                var keyToClipboard_RemesPath = keyToClipboard.DropDownItems[2];
+                if (keyToClipboardHandler_Remespath != null)
+                {
+                    try
+                    {
+                        keyToClipboard_RemesPath.MouseUp -= keyToClipboardHandler_Remespath;
+                    }
+                    catch { }
+                }
+                keyToClipboardHandler_Remespath = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(KeyOfTreeNode(node, KeyStyle.RemesPath));
+                    }
+                );
+                keyToClipboard_RemesPath.MouseUp += keyToClipboardHandler_Remespath;
+                // drop down menu for getting path to clipboard
+                var pathToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[2];
+                var pathToClipboard_javascript = pathToClipboard.DropDownItems[0];
+                if (pathToClipboardHandler_Javascript != null)
+                {
+                    try
+                    {
+                        pathToClipboard_javascript.MouseUp -= pathToClipboardHandler_Javascript;
+                    }
+                    catch { }
+                }
+                pathToClipboardHandler_Javascript = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(PathToTreeNode(node, KeyStyle.JavaScript));
+                    }
+                );
+                pathToClipboard_javascript.MouseUp += pathToClipboardHandler_Javascript;
+                var pathToClipboard_Python = pathToClipboard.DropDownItems[1];
+                if (pathToClipboardHandler_Python != null)
+                {
+                    try
+                    {
+                        pathToClipboard_Python.MouseUp -= pathToClipboardHandler_Python;
+                    }
+                    catch { }
+                }
+                pathToClipboardHandler_Python = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(PathToTreeNode(node, KeyStyle.Python));
+                    }
+                );
+                pathToClipboard_Python.MouseUp += pathToClipboardHandler_Python;
+                var pathToClipboard_RemesPath = pathToClipboard.DropDownItems[2];
+                if (pathToClipboardHandler_Remespath != null)
+                {
+                    try
+                    {
+                        pathToClipboard_RemesPath.MouseUp -= pathToClipboardHandler_Remespath;
+                    }
+                    catch { }
+                }
+                pathToClipboardHandler_Remespath = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        Npp.TryCopyToClipboard(PathToTreeNode(node, KeyStyle.RemesPath));
+                    }
+                );
+                pathToClipboard_RemesPath.MouseUp += pathToClipboardHandler_Remespath;
+                switch (Main.settings.key_style)
+                {
+                    case (KeyStyle.RemesPath): pathToClipboard.MouseUp += pathToClipboardHandler_Remespath; break;
+                    case (KeyStyle.Python): pathToClipboard.MouseUp += pathToClipboardHandler_Python; break;
+                    case (KeyStyle.JavaScript): pathToClipboard.MouseUp += pathToClipboardHandler_Javascript; break;
+                }
+                NodeRightClickMenu.Show(MousePosition);
+            }
+        }
+
+        /// <summary>
+        /// Get the path to the current TreeNode.<br></br>
+        /// Style: one of Python, JavaScript), or RemesPath<br></br>
+        /// EXAMPLES (using the JSON {"a b": [1, {"c": 2}], "d": [4]}<br></br>
+        /// Path to key "c":<br></br>
+        /// - JavaScript style: ['a b'][1].c<br></br>
+        /// - Python style: ['a b'][1]['c']<br></br>
+        /// - RemesPath style: [`a b`][1].c
+        /// </summary>
+        /// <param name="style"></param>
+        /// <returns></returns>
+        public string PathToTreeNode(TreeNode node, KeyStyle style = KeyStyle.Python, List<string> keys = null)
+        {
+            if (keys == null)
+                keys = new List<string>();
+            if (node.Parent == null)
+            {
+                if (keys.Count == 0)
+                    return "";
+                keys.Reverse(); // cuz they were added from the node to the root
+                return string.Join("", keys);
+            }
+            keys.Add(KeyOfTreeNode(node, style));
+            return PathToTreeNode(node.Parent, style, keys);
+        }
+
+        /// <summary>
+        /// See FormatKey, but uses the key of a TreeNode
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="style"></param>
+        /// <returns></returns>
+        public string KeyOfTreeNode(TreeNode node, KeyStyle style)
+        {
+            if (node.Name == "")
+                return $"[{node.Index}]";
+            return JNode.FormatKey(node.Name, style);
         }
 
         // not creating schemas at present because schemas produced may be invalid

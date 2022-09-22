@@ -37,6 +37,17 @@
             this.SaveQueryButton = new System.Windows.Forms.Button();
             this.QueryToCsvButton = new System.Windows.Forms.Button();
             this.FullTreeCheckBox = new System.Windows.Forms.CheckBox();
+            this.NodeRightClickMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.CopyValueMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.CopyKeyItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.JavaScriptStyleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.PythonStyleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RemesPathStyleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.CopyPathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.JavaScriptStyleKeyItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // Tree
@@ -113,6 +124,78 @@
             this.FullTreeCheckBox.UseVisualStyleBackColor = true;
             this.FullTreeCheckBox.CheckedChanged += new System.EventHandler(this.FullTreeCheckBox_CheckedChanged);
             // 
+            // NodeRightClickMenu
+            // 
+            this.NodeRightClickMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.NodeRightClickMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.CopyValueMenuItem,
+            this.CopyKeyItem,
+            this.CopyPathItem});
+            this.NodeRightClickMenu.Name = "NodeRightClickMenu";
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(231, 76);
+            // 
+            // CopyValueMenuItem
+            // 
+            this.CopyValueMenuItem.Name = "CopyValueMenuItem";
+            this.CopyValueMenuItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyValueMenuItem.Text = "Value to clipboard";
+            // 
+            // CopyKeyItem
+            // 
+            this.CopyKeyItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.JavaScriptStyleItem,
+            this.PythonStyleItem,
+            this.RemesPathStyleItem});
+            this.CopyKeyItem.Name = "CopyKeyItem";
+            this.CopyKeyItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyKeyItem.Text = "Key/index to clipboard";
+            // 
+            // JavaScriptStyleItem
+            // 
+            this.JavaScriptStyleItem.Name = "JavaScriptStyleItem";
+            this.JavaScriptStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.JavaScriptStyleItem.Text = "JavaScript style";
+            // 
+            // PythonStyleItem
+            // 
+            this.PythonStyleItem.Name = "PythonStyleItem";
+            this.PythonStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.PythonStyleItem.Text = "Python style";
+            // 
+            // RemesPathStyleItem
+            // 
+            this.RemesPathStyleItem.Name = "RemesPathStyleItem";
+            this.RemesPathStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.RemesPathStyleItem.Text = "RemesPath style";
+            // 
+            // CopyPathItem
+            // 
+            this.CopyPathItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.JavaScriptStyleKeyItem,
+            this.PythonStylePathItem,
+            this.RemesPathStylePathItem});
+            this.CopyPathItem.Name = "CopyPathItem";
+            this.CopyPathItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyPathItem.Text = "Path to clipboard";
+            // 
+            // JavaScriptStyleKeyItem
+            // 
+            this.JavaScriptStyleKeyItem.Name = "JavaScriptStyleKeyItem";
+            this.JavaScriptStyleKeyItem.Size = new System.Drawing.Size(198, 26);
+            this.JavaScriptStyleKeyItem.Text = "JavaScript style";
+            // 
+            // PythonStylePathItem
+            // 
+            this.PythonStylePathItem.Name = "PythonStylePathItem";
+            this.PythonStylePathItem.Size = new System.Drawing.Size(198, 26);
+            this.PythonStylePathItem.Text = "Python style";
+            // 
+            // RemesPathStylePathItem
+            // 
+            this.RemesPathStylePathItem.Name = "RemesPathStylePathItem";
+            this.RemesPathStylePathItem.Size = new System.Drawing.Size(198, 26);
+            this.RemesPathStylePathItem.Text = "RemesPath style";
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -127,6 +210,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
+            this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -141,5 +225,15 @@
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
         private System.Windows.Forms.CheckBox FullTreeCheckBox;
+        private System.Windows.Forms.ContextMenuStrip NodeRightClickMenu;
+        private System.Windows.Forms.ToolStripMenuItem CopyValueMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem CopyKeyItem;
+        private System.Windows.Forms.ToolStripMenuItem JavaScriptStyleItem;
+        private System.Windows.Forms.ToolStripMenuItem PythonStyleItem;
+        private System.Windows.Forms.ToolStripMenuItem RemesPathStyleItem;
+        private System.Windows.Forms.ToolStripMenuItem CopyPathItem;
+        private System.Windows.Forms.ToolStripMenuItem JavaScriptStyleKeyItem;
+        private System.Windows.Forms.ToolStripMenuItem PythonStylePathItem;
+        private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
     }
 }

@@ -163,10 +163,10 @@ Performance tests for JsonParser and RemesPath
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 51.74 +/- 7.763 ms over 14 trials
-Load times (ms): 55, 52, 68, 45, 48, 55, 47, 45, 43, 58, 43, 46, 65, 47
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.005 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.555 +/- 0.147 ms over 14 trials
-Query times (ms): 0.901, 0.573, 0.483, 0.475, 0.474, 0.525, 0.569, 0.91, 0.478, 0.474, 0.495, 0.473, 0.472, 0.474
+To convert JSON string of size 975068 into JNode took 53.83 +/- 7.911 ms over 14 trials
+Load times (ms): 65, 55, 68, 52, 51, 66, 52, 46, 44, 56, 43, 45, 56, 47
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.004 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.627 +/- 0.265 ms over 14 trials
+Query times (ms): 0.62, 0.542, 0.476, 1.034, 0.485, 0.472, 0.615, 0.562, 0.5, 0.47, 1.439, 0.556, 0.534, 0.479
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...

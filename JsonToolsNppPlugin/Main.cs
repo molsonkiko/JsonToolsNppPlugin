@@ -94,6 +94,7 @@ namespace Kbg.NppPluginNET
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
             PluginBase.SetCommand(1, "Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(2, "Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
+            PluginBase.SetCommand(3, "Path to current line", PathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
@@ -255,7 +256,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.PrettyPrint(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
+            Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
             Npp.SetLangJson();
         }
 
@@ -264,9 +265,9 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             if (settings.minimal_whitespace_compression)
-                Npp.editor.SetText(json.ToString(settings.sort_keys, ":", ","));
+                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys, null, ":", ","));
             else
-                Npp.editor.SetText(json.ToString(settings.sort_keys));
+                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys));
             Npp.SetLangJson();
         }
 
@@ -336,6 +337,24 @@ namespace Kbg.NppPluginNET
             {
                 jsonParser.lint = new List<JsonLint>();
             }
+        }
+
+        private static void PathToCurrentLine()
+        {
+            string fname = Npp.GetCurrentPath();
+            if (!fname_jsons.TryGetValue(fname, out var json))
+                return;
+            int line = Npp.editor.GetCurrentLineNumber();
+            string result = json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
+            if (result.Length == 0)
+            {
+                MessageBox.Show($"Did not find a node on line {line} of this file",
+                    "Could not find a node on this line",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+            Npp.TryCopyToClipboard(result);
         }
 
         /// <summary>

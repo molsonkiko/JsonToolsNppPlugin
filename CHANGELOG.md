@@ -49,6 +49,14 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
+## [3.4.0] (unreleased) - 2022-MM-DD
+
+### Added
+
+1. [Menu command](/docs/README.md#path-to-current-line) for getting path to first node in current line.
+2. Right-clicking on tree nodes lets you get the current node's value, key/index in parent iterable, or path.
+3. `key_style` option in settings for customizing how the path is formatted (e.g., dot syntax for JavaScript vs. obligatory square brackets and quotes for Python)
+
 ## [3.3.0] - 2022-09-21
 
 ### Added

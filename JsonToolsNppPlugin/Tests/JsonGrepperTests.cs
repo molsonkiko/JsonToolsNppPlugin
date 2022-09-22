@@ -73,8 +73,8 @@ namespace JSON_Tools.Tests
 
             var special_testcases = new Dictionary<string, JNode>
             {
-                ["*comment*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\comment_json_as_txt.txt\"]"),
-                ["*singlequote*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\singlequote_json_as_txt.txt\"]"),
+                ["*comment*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\comment_json_as_txt.txt\", \"{json_subdir_name}\\\\comments_and_singlequotes_json.txt\"]"),
+                ["*singlequote*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\singlequote_json_as_txt.txt\", \"{json_subdir_name}\\\\comments_and_singlequotes_json.txt\"]"),
             };
             foreach (KeyValuePair<string, JNode> kv in special_testcases)
             {

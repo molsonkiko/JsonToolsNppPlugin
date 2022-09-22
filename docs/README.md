@@ -101,6 +101,20 @@ If you click "Yes", a new file will open in a separate tab containing details on
 
 **NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
 
+## Path to current line ##
+
+The `Path to current line` menu option lets you fill the clipboard with the path to the first node on the current line. This is most helpful when your JSON is already [pretty-printed](/docs/README.md#pretty_print_style) so no two nodes share a line.
+
+![Getting the path to current line](/docs/path%20to%20current%20line.PNG)
+
+### Key style ###
+
+By default, the path clipped is in RemesPath style (dot syntax and backtick-quoted strings). You can get JavaScript style (dot syntax and c-style quoted strings in square brackets) or Python style (c-style quoted strings in square brackets) in the settings.
+For example, the different path styles might look like this:
+- Remespath (default): ``[`a b`][0].c``
+- Python: `['a b'][0]['c']`
+- JavaScript: `['a b'][0].c` 
+
 ## RemesPath ##
 
 The primary utility of this tool comes from the ability to query and edit the JSON using [RemesPath](RemesPath.md), which you can learn more about in the linked docs.
@@ -139,6 +153,13 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 - This message box for canceling loading of the full tree will now also show up when you try to open the full tree for a document 2.5 MB or larger.
 - Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
 - This box does not change the global settings. It only changes the settings for that tree view.
+
+### Right-click on tree nodes for info ###
+
+You can right click on a tree node to copy any of the following to the clipboard:
+* Value
+* Key/index (customizable via [key style](#key-style))
+* Path (see [key style](#key-style)) 
 
 ## JSON formatting ##
 

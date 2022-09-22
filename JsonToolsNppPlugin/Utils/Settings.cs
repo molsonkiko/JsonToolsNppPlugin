@@ -86,6 +86,11 @@ namespace JSON_Tools.Utils
             Category("JSON formatting")]
         public PrettyPrintStyle pretty_print_style { get; set; } = PrettyPrintStyle.Google;
         #endregion
+        #region MISCELLANEOUS
+        [Description("The style of key to use when getting the path or key/index of a node or line"),
+            Category("Miscellaneous")]
+        public KeyStyle key_style { get; set; } = KeyStyle.RemesPath; 
+        #endregion
         //#region GREP_API_SETTINGS
         //[Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
         //    Category("Grep and API requests")]
@@ -198,6 +203,7 @@ namespace JSON_Tools.Utils
                 minimal_whitespace_compression = false;
                 sort_keys = true;
                 pretty_print_style = PrettyPrintStyle.Google;
+                key_style = KeyStyle.RemesPath;
                 //thread_count_parsing = 4;
                 //api_requests_async = true;
                 dialog.Close();

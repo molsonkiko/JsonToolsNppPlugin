@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 using Kbg.NppPluginNET.PluginInfrastructure;
 
 /// <summary>
@@ -82,6 +83,21 @@ namespace JSON_Tools.Utils
             }
             // the chars were added in the wrong direction, so reverse them
             return sb.ToString().Slice("::-1");
+        }
+
+        public static void TryCopyToClipboard(string text)
+        {
+            // trying to copy an empty string to the clipboard raises an error
+            if (text == null || text.Length == 0)
+            {
+                MessageBox.Show("Couldn't find anything to copy to the clipboard",
+                    "Nothing to copy to clipboard",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+            Clipboard.SetText(text);
         }
 
         //public static DateTime LastSavedTime(string fname)

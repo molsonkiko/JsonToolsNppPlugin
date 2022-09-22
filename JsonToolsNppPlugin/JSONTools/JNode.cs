@@ -127,6 +127,30 @@ namespace JSON_Tools.JSON_Tools
     }
 
     /// <summary>
+    /// Whether a given string can be accessed using dot syntax
+    /// or square brackets and quotes, and what kind of quotes to use
+    /// </summary>
+    public enum KeyStyle
+    {
+        /// <summary>
+        /// dot syntax for strings starting with _ or letters and containing only _, letters, and digits<br></br>
+        /// else singlequotes if it doesn't contain '<br></br>
+        /// else double quotes
+        /// </summary>
+        JavaScript,
+        /// <summary>
+        /// Singlequotes if it doesn't contain '<br></br>
+        /// else double quotes
+        /// </summary>
+        Python,
+        /// <summary>
+        /// dot syntax for strings starting with _ or letters and containing only _, letters, and digits<br></br>
+        /// else backticks
+        /// </summary>
+        RemesPath,
+    }
+
+    /// <summary>
     /// JSON documents are parsed as JNodes, JObjects, and JArrays. JObjects and JArrays are subclasses of JNode.
     ///    A JSON node, for use in creating a drop-down tree
     ///    Here's an example of how a small JSON document (with newlines as shown)
@@ -448,6 +472,110 @@ namespace JSON_Tools.JSON_Tools
             }
             return new JNode(value, type, line_num);
         }
+
+        #region PATH_FINDING_STUFF
+        private static readonly Regex INT_REGEX = new Regex("^\\d+$", RegexOptions.Compiled);
+        private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
+        // "dot compatible" means a string that starts with a letter or underscore
+        // and contains only letters, underscores, and digits
+
+        /// <summary>
+        /// Get the path to the first node on a line.<br></br>
+        /// See PathToTreeNode for information on how paths are formatted
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="line"></param>
+        /// <param name="style"></param>
+        /// <param name="keys_so_far"></param>
+        /// <returns></returns>
+        public string PathToFirstNodeOnLine(int line, List<string> keys_so_far, KeyStyle style = KeyStyle.Python)
+        {
+            string result;
+            if (this is JArray arr)
+            {
+                for (int ii = 0; ii < arr.Length; ii++)
+                {
+                    JNode child = arr[ii];
+                    var new_keys_so_far = new List<string>(keys_so_far);
+                    new_keys_so_far.Add($"[{ii}]");
+                    result = child.PathToFirstNodeOnLine(line, new_keys_so_far, style);
+                    if (result.Length > 0)
+                        return result;
+                }
+            }
+            else if (this is JObject obj)
+            {
+                foreach (string key in obj.children.Keys)
+                {
+                    JNode child = obj[key];
+                    var new_keys_so_far = new List<string>(keys_so_far);
+                    new_keys_so_far.Add(FormatKey(key, style));
+                    result = child.PathToFirstNodeOnLine(line, new_keys_so_far, style);
+                    if (result.Length > 0)
+                        return result;
+                }
+            }
+            if (line_num == line)
+            {
+                return string.Join("", keys_so_far);
+            }
+            return "";
+        }
+
+        /// <summary>
+        /// Get the key in square brackets or prefaced by a quote as determined by the style.<br></br>
+        /// Style: one of 'p' (Python), 'j' (JavaScript), or 'r' (RemesPath)<br></br>
+        /// EXAMPLES (using the JSON {"a b": [1, {"c": 2}], "d": [4]}<br></br>
+        /// Using key "a b":<br></br>
+        /// - JavaScript style: ['a b']<br></br>
+        /// - Python style: ['a b']<br></br>
+        /// - RemesPath style: [`a b`]<br></br>
+        /// Using key "c":<br></br>
+        /// - JavaScript style: .c<br></br>
+        /// - RemesPath style: .c<br></br>
+        /// - Python style: ['c']
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="style"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static string FormatKey(string key, KeyStyle style = KeyStyle.Python)
+        {
+            switch (style)
+            {
+                case KeyStyle.RemesPath:
+                    {
+                        if (DOT_COMPATIBLE_REGEX.IsMatch(key))
+                            return $".{key}";
+                        string key_dubquotes_unescaped = key.Replace("\\", "\\\\").Replace("`", "\\`");
+                        return $"[`{key_dubquotes_unescaped}`]";
+                    }
+                case KeyStyle.JavaScript:
+                    {
+                        if (DOT_COMPATIBLE_REGEX.IsMatch(key))
+                            return $".{key}";
+                        if (key.Contains('\''))
+                        {
+                            string key_escaped = key.Replace("\"", "\\\"");
+                            return $"[\"{key_escaped}\"]";
+                        }
+                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
+                        return $"['{key_dubquotes_unescaped}']";
+                    }
+                case KeyStyle.Python:
+                    {
+                        if (key.Contains('\''))
+                        {
+                            string key_escaped = key.Replace("\"", "\\\"");
+                            return $"[\"{key_escaped}\"]";
+                        }
+                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
+                        return $"['{key_dubquotes_unescaped}']";
+                    }
+                default: throw new ArgumentException("style argument for PathToTreeNode must be a KeyStyle member");
+            }
+        }
+        #endregion
     }
 
     /// <inheritdoc/>
@@ -869,7 +997,7 @@ namespace JSON_Tools.JSON_Tools
             }
             else
             {
-                sb.Append($"{dent}[" + NL);
+                sb.Append('[' + NL);
                 string extra_dent = new string(' ', indent);
                 int ctr = 0;
                 foreach (JNode v in children)
@@ -877,14 +1005,7 @@ namespace JSON_Tools.JSON_Tools
                     Str_Line sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, ++curline);
                     curline = sline.line;
                     // this child's string could be multiple lines, so we need to know what the final line of its string was.
-                    if (v is JObject || v is JArray)
-                    {
-                        sb.Append(sline.str);
-                    }
-                    else
-                    {
-                        sb.Append($"{dent}{extra_dent}{sline.str}");
-                    }
+                    sb.Append($"{dent}{extra_dent}{sline.str}");
                     curline = sline.line;
                     sb.Append((++ctr == children.Count) ? NL : "," + NL);
                 }
