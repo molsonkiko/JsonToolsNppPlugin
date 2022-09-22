@@ -49,7 +49,7 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 
-## [3.3.0] (unreleased) - 2022-MM-DD
+## [3.3.0] - 2022-09-21
 
 ### Added
 
@@ -58,6 +58,15 @@ This project has many features that were implemented in a [standalone app](https
 	- `append` function for adding scalars to arrays
 	- `add_items` function for adding key-value pairs to objects
 2. Menu command for generating a [JSON Lines](/docs/README.md#json-lines-documents) document from a JSON array.
+3. [JSON formatting options](/docs/README.md#json-formatting):
+	- `sort_keys`, whether to sort the keys of objects
+	- `minimal_whitespace_compression`, whether to remove ALL whitespace when compressing JSON or leave one space after each array/object item and after the colon in an object key-value pair, as is the standard style in Python.
+	- `indent_pretty_print`, how many spaces of indentation to use per level of JSON.
+	- `pretty_print_style`, the style of pretty-printing to use.
+
+### Changed
+
+1. You can no longer have more than one tree viewer open. The `Open JSON tree viewer` command closes the current tree viewer if one is already open.
 
 ## [3.2.0] - 2022-09-19
 

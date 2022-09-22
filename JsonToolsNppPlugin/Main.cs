@@ -40,6 +40,7 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
         public static YamlDumper yamlDumper = new YamlDumper();
+        public static TreeViewer treeViewer = null;
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
@@ -52,7 +53,6 @@ namespace Kbg.NppPluginNET
 
         // fields related to forms
         static internal int jsonTreeId = -1;
-        static internal int remesPathWindowId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -170,6 +170,8 @@ namespace Kbg.NppPluginNET
         static internal void PluginCleanUp()
         {
             Win32.WritePrivateProfileString(sectionName, keyName, shouldLoadJson ? "1" : "0", iniFilePath);
+            if (treeViewer != null)
+                treeViewer.Close();
         }
         #endregion
 
@@ -253,7 +255,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.PrettyPrint());
+            Npp.editor.SetText(json.PrettyPrint(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
             Npp.SetLangJson();
         }
 
@@ -261,7 +263,10 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            Npp.editor.SetText(json.ToString());
+            if (settings.minimal_whitespace_compression)
+                Npp.editor.SetText(json.ToString(settings.sort_keys, ":", ","));
+            else
+                Npp.editor.SetText(json.ToString(settings.sort_keys));
             Npp.SetLangJson();
         }
 
@@ -310,7 +315,11 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.notepad.FileNew();
-            string result = arr.ToJsonLines();
+            string result;
+            if (settings.minimal_whitespace_compression)
+                result = arr.ToJsonLines(settings.sort_keys, ":", ",");
+            else
+                result = arr.ToJsonLines(settings.sort_keys);
             Npp.editor.AppendText(result.Length, result);
         }
 
@@ -331,16 +340,27 @@ namespace Kbg.NppPluginNET
 
         /// <summary>
         /// Try to parse a JSON document and then open up the tree view.<br></br>
-        /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.
+        /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.<br></br>
+        /// If the tree view is already open, close it instead.
         /// </summary>
         static void OpenJsonTree(bool is_json_lines = false)
         {
+            if (treeViewer != null)
+            {
+                // if the tree view is open, hide the tree view and then dispose of it
+                Win32.SendMessage(PluginBase.nppData._nppHandle,
+                    (uint)(NppMsg.NPPM_DMMHIDE),
+                    0, treeViewer.Handle);
+                treeViewer.Close();
+                treeViewer = null;
+                return;
+            }
             if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
                 is_json_lines = true;
             JNode json = TryParseJson(is_json_lines);
-            if (json == null) return;
-
-            TreeViewer treeViewer = new TreeViewer(json);
+            if (json == null)
+                return; // don't open the tree view for non-json files
+            treeViewer = new TreeViewer(json);
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
                 Graphics g = Graphics.FromImage(newBmp);
@@ -370,7 +390,7 @@ namespace Kbg.NppPluginNET
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             // Following message will toogle both menu item state and toolbar button
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
-
+            // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
             treeViewer.Focus();

@@ -48,6 +48,8 @@ You might want to reformat this document so it doesn't have so much whitespace. 
 
 If you prefer it the way it was before, you can use the "Pretty-print current JSON file" (`Ctrl+Alt+Shift+P`) to restore it to that formatting.
 
+You can change the way this plugin compresses and pretty-prints JSON in the settings. See the [JSON formatting](#json-formatting) section below.
+
 We can open up the JSON tree viewer in the main menu by navigating Plugins -> JsonTools -> "Open JSON tree viewer". The keyboard shortcut `Ctrl+Alt+Shift+J` will also open the tree.
 
 ![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG)
@@ -137,6 +139,82 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 - This message box for canceling loading of the full tree will now also show up when you try to open the full tree for a document 2.5 MB or larger.
 - Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
 - This box does not change the global settings. It only changes the settings for that tree view.
+
+## JSON formatting ##
+
+This plugin can print JSON in a variety of different ways, depending on what settings you use.
+
+The formatting settings are as follows:
+### indent_pretty_print ###
+Changes how much indentation pretty-printed JSON has per level. With the default of __4__, JSON looks like this:
+```json
+{
+    "a": [
+        1
+    ]
+}
+```
+With indentation __2__, you get this instead:
+```json
+{
+  "a": [
+    1
+  ]
+}
+```
+### minimal_whitespace_compression ###
+The Python convention for formatting JSON results in compressed JSON with a little bit of whitespace, like so:
+```json
+{"a": [1, 2]}
+```
+Notice that there's some unnecessary whitespace after items and between keys and values.
+
+With minimal_whitespace_compression, __all__ unnecessary whitespace is removed:
+```json
+{"a":[1,2]}
+```
+### pretty_print_style ###
+There are many different [styles](http://astyle.sourceforge.net/astyle.html#_style) for pretty-printing JSON that vary in how they indent and where they put braces.
+
+At present, two different styles are supported:
+
+[Google style](http://astyle.sourceforge.net/astyle.html#_style=google)
+```json
+{
+    "a": [
+        1,
+        [
+            2
+        ]
+    ]
+}
+```
+[Whitesmith style](http://astyle.sourceforge.net/astyle.html#_style=whitesmith)
+```json
+{
+"a":
+    [
+    1,
+        [
+        2
+        ]
+    ]
+}
+```
+### sort_keys ###
+Whether to sort the keys of objects alphabetically.
+
+If this is false, the input order of object keys is preserved when formatting.
+
+```json
+{"C": 3, "BA": 2, "a": 1, "A": 2, "ba": 4, "c": 4}
+```
+
+If this is true, keys are sorted alphabetically like so:
+```json
+{"A": 2, "a": 1, "ba": 4, "BA": 2, "c": 4, "C": 3}
+```
+As you can see, the sort is unstable when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
 ## JSON Lines documents ##
 

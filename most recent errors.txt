@@ -9,7 +9,7 @@ Testing JSON parser
 =========================
 
 Failed 0 tests.
-Passed 45 tests.
+Passed 51 tests.
 =========================
 Testing if JSON parser throws errors on bad inputs
 =========================
@@ -163,10 +163,10 @@ Performance tests for JsonParser and RemesPath
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 54.872 +/- 6.31 ms over 14 trials
-Load times (ms): 59, 55, 58, 48, 48, 69, 51, 47, 48, 62, 56, 47, 56, 56
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.005 +/- 0.006 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.916 +/- 0.311 ms over 14 trials
-Query times (ms): 0.929, 0.829, 0.767, 0.751, 1.948, 0.813, 0.764, 0.747, 0.966, 0.806, 0.774, 1.21, 0.763, 0.759
+To convert JSON string of size 975068 into JNode took 51.74 +/- 7.763 ms over 14 trials
+Load times (ms): 55, 52, 68, 45, 48, 55, 47, 45, 43, 58, 43, 46, 65, 47
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.005 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.555 +/- 0.147 ms over 14 trials
+Query times (ms): 0.901, 0.573, 0.483, 0.475, 0.474, 0.525, 0.569, 0.91, 0.478, 0.474, 0.495, 0.473, 0.472, 0.474
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...

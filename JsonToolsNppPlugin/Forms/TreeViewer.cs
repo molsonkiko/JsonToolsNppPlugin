@@ -204,6 +204,7 @@ namespace JSON_Tools.Forms
             Dictionary<string, JNode> jobj = ((JObject)json).children;
             if (jobj.Count == 0)
                 root.Text += " : {}";
+            // TODO: Consider making it so that keys are sorted if the keys of the JSON are sorted
             foreach (string key in jobj.Keys)
             {
                 JNode child = jobj[key];
@@ -342,7 +343,7 @@ namespace JSON_Tools.Forms
                     query_func = mutation_func;
                 }
                 json = query_func;
-                string new_json_str = query_func.PrettyPrintAndChangeLineNumbers();
+                string new_json_str = query_func.PrettyPrintAndChangeLineNumbers(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
                 JsonTreePopulate(query_func);
                 return;
@@ -405,7 +406,7 @@ namespace JSON_Tools.Forms
         {
             if (query_result == null) return;
             Npp.notepad.FileNew();
-            Npp.editor.AppendTextAndMoveCursor(query_result.PrettyPrint());
+            Npp.editor.AppendTextAndMoveCursor(query_result.PrettyPrint(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style));
             Npp.SetLangJson();
         }
 

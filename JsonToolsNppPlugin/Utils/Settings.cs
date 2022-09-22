@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using JSON_Tools.JSON_Tools;
 
 namespace JSON_Tools.Utils
 {
@@ -38,6 +39,7 @@ namespace JSON_Tools.Utils
             Category("JSON Parser")] //, DefaultValue(false)]
         public bool linting { get; set; } = false;
         #endregion
+        
         #region TREE_VIEW_SETTINGS
         [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
             "Larger files get only the direct children of the root added to the tree."),
@@ -48,6 +50,42 @@ namespace JSON_Tools.Utils
         public bool use_tree { get; set; } = true;
         #endregion
 
+        #region JSON_FORMATTING_SETTINGS
+        [Description("The indentation between levels of JSON when pretty-printing"),
+            Category("JSON formatting")]
+        public int indent_pretty_print { get; set; } = 4;
+
+        [Description("If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays"),
+            Category("JSON formatting")]
+        public bool minimal_whitespace_compression { get; set; } = false;
+
+        [Description("Sort the keys of objects alphabetically when pretty-printing or compressing"),
+            Category("JSON formatting")]
+        public bool sort_keys { get; set; } = true;
+
+        [Description("How JSON is pretty printed.\r\n" +
+            "Google style (default):\r\n" +
+            "{\r\n" +
+            "    \"a\": [\r\n" +
+            "        1,\r\n" +
+            "        [\r\n" +
+            "            2\r\n" +
+            "        ]\r\n" +
+            "    ]\r\n" +
+            "}\r\n\r\n" +
+            "Whitesmith style:\r\n" +
+            "{\r\n" +
+            "\"a\":\r\n" +
+            "    [\r\n" +
+            "    1,\r\n" +
+            "        [\r\n" +
+            "        2\r\n" +
+            "        ]\r\n" +
+            "    ]\r\n" +
+            "}"),
+            Category("JSON formatting")]
+        public PrettyPrintStyle pretty_print_style { get; set; } = PrettyPrintStyle.Google;
+        #endregion
         //#region GREP_API_SETTINGS
         //[Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
         //    Category("Grep and API requests")]
@@ -156,6 +194,10 @@ namespace JSON_Tools.Utils
                 linting = false;
                 max_size_full_tree_MB = 4d;
                 use_tree = true;
+                indent_pretty_print = 4;
+                minimal_whitespace_compression = false;
+                sort_keys = true;
+                pretty_print_style = PrettyPrintStyle.Google;
                 //thread_count_parsing = 4;
                 //api_requests_async = true;
                 dialog.Close();

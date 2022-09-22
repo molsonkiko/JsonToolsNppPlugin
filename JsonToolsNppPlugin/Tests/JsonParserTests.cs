@@ -189,7 +189,7 @@ namespace JSON_Tools.Tests
                     continue;
                 }
                 string norm_str_out = json.ToString();
-                string pprint_out = json.PrettyPrint(4);
+                string pprint_out = json.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
                 if (norm_str_out != norm_input)
                 {
                     tests_failed++;
@@ -214,14 +214,68 @@ Got
                 ii++;
             }
             #endregion
+            #region OtherPrintStyleTests
+            var minimal_whitespace_testcases = new string[][]
+            {
+                new string[]
+                {
+                    "[1, {\"a\": 2, \"b\": 3}, [4, 5]]",
+                    "[1,{\"a\":2,\"b\":3},[4,5]]"
+                },
+            };
+            foreach (string[] test in minimal_whitespace_testcases)
+            {
+                string inp = test[0];
+                string compact_desired = test[1];
+                JNode json = TryParse(inp, parser);
+                string compact_true = json.ToString(true, ":", ",");
+                if (compact_true != compact_desired)
+                {
+                    tests_failed++;
+                    Npp.AddLine(String.Format(@"Test {0} (minimal whitespace printing) failed:
+Expected
+{1}
+Got
+{2} ",
+                                     ii + 1, compact_desired, compact_true));
+                }
+                ii++;
+            }
+            var dont_sort_keys_testcases = new string[][]
+            {
+                new string[]
+                {
+                    "{\"a\": 2,  \"c\": 4,   \"b\": [{\"e\":   1,\"d\":2}]}",
+                    "{\"a\": 2, \"c\": 4, \"b\": [{\"e\": 1, \"d\": 2}]}"
+                },
+            };
+            foreach (string[] test in dont_sort_keys_testcases)
+            {
+                string inp = test[0];
+                string unsorted_desired = test[1];
+                JNode json = TryParse(inp, parser);
+                string unsorted_true = json.ToString(false);
+                if (unsorted_true != unsorted_desired)
+                {
+                    tests_failed++;
+                    Npp.AddLine(String.Format(@"Test {0} (minimal whitespace printing) failed:
+Expected
+{1}
+Got
+{2} ",
+                                     ii + 1, unsorted_desired, unsorted_true));
+                }
+                ii++;
+            }
+            #endregion
             #region PrettyPrintTests
             string objstr = "{\"a\": [1, 2, 3], \"b\": {}, \"c\": [], \"d\": 3}";
             JNode onode = TryParse(objstr, parser);
             if (onode != null)
             {
                 JObject obj = (JObject)onode;
-                string pp = obj.PrettyPrint();
-                string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers();
+                string pp = obj.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
+                string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Whitesmith);
                 if (pp != pp_ch_line)
                 {
                     tests_failed++;
@@ -236,10 +290,11 @@ instead got
 
                 var keylines = new object[][]
                 {
-                new object[]{"a", 2 },
-                new object[]{ "b", 8 },
-                new object[]{ "c", 11 },
-                new object[]{"d", 13 }
+                new object[]{"a", 2, 1 },
+                // key, correct line in Whitesmith style, correct line in Google style
+                new object[]{ "b", 8, 6 },
+                new object[]{ "c", 11, 8 },
+                new object[]{"d", 13, 10 }
                 };
                 foreach (object[] kl in keylines)
                 {
@@ -296,6 +351,26 @@ instead got
                             Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
                         }
                     }
+                    pp_obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Google);
+                    // test that Google style gives right line numbers
+                    foreach (object[] kl in keylines)
+                    {
+                        string key = (string)kl[0];
+                        int expected_line = (int)kl[2];
+                        int true_line = pp_obj[key].line_num;
+                        ii++;
+                        if (true_line != expected_line)
+                        {
+                            tests_failed++;
+                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}) with Google style, expected the line of child {key} to be {expected_line}, got {true_line}.");
+                        }
+                    }
+                }
+                else
+                {
+                    ii += keylines.Length;
+                    tests_failed += keylines.Length;
+                    return;
                 }
             }
             else

@@ -7,9 +7,9 @@ Miscellaneous tools for working with JSON in Notepad++.
 Any issues, feel free to email me at mjolsonsfca@gmail.com.
 
 ## Features ##
-1. Pretty-print JSON so that it's spread out over multiple lines.
-2. Compress JSON so that it has very little unnecessary whitespace.
-3. Change the settings to enable the parsing of documents that have various syntax errors (using the `linting` setting in settings):
+1. [Pretty-print JSON](/docs/README.md#prettyprintstyle) so that it's spread out over multiple lines.
+2. [Compress JSON](/docs/README.md#minimalwhitespacecompression) so that it has little or no unnecessary whitespace.
+3. Change the settings to [enable the parsing of documents that have various syntax errors](/docs/README.md#parser-settings) (using the `linting` setting in settings):
     * string literals containing newlines
     * string literals enclosed by ' instead of "
     * unterminated string literals (lint shows location of starting quote)
@@ -22,7 +22,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
     * non-string key in object
     * `]` closing an object or `}` closing an array
 4. Get a report of all the syntax errors in the document (`linting` must be active).
-5. Open a drop-down tree view of the document. Clicking on a node in the tree navigates to the corresponding line in the document.
+5. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. Clicking on a node in the tree navigates to the corresponding line in the document.
 6. Query and edit JSON with the [RemesPath](/docs/RemesPath.md) query language.
 7. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
 
