@@ -85,9 +85,13 @@ namespace JSON_Tools.Utils
             return sb.ToString().Slice("::-1");
         }
 
+        /// <summary>
+        /// Trying to copy an empty string or null to the clipboard raises an error.<br></br>
+        /// This shows a message box if the user tries to do that.
+        /// </summary>
+        /// <param name="text"></param>
         public static void TryCopyToClipboard(string text)
         {
-            // trying to copy an empty string to the clipboard raises an error
             if (text == null || text.Length == 0)
             {
                 MessageBox.Show("Couldn't find anything to copy to the clipboard",

@@ -48,14 +48,21 @@ This project has many features that were implemented in a [standalone app](https
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
+- The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 
-## [3.4.0] (unreleased) - 2022-MM-DD
+## [3.4.0] - 2022-09-22
 
 ### Added
 
 1. [Menu command](/docs/README.md#path-to-current-line) for getting path to first node in current line.
 2. Right-clicking on tree nodes lets you get the current node's value, key/index in parent iterable, or path.
-3. `key_style` option in settings for customizing how the path is formatted (e.g., dot syntax for JavaScript vs. obligatory square brackets and quotes for Python)
+3. [key_style](/docs/README.md#key-style) option in settings for customizing how the path is formatted (e.g., dot syntax for JavaScript vs. obligatory square brackets and quotes for Python)
+4. Automatic resizing of the query box and the tree view when the docking box is resized.
+5. A text box containing the path to the currently selected tree node (in the default key style) and a [button for copying it to the clipboard](/docs/README.md#get-info-about-tree-nodes).
+
+### Changed
+
+1. Settings now persist between sessions. They are saved to an ini file in the Notepad++ config directory.
 
 ## [3.3.0] - 2022-09-21
 

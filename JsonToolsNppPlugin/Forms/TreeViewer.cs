@@ -455,6 +455,7 @@ namespace JSON_Tools.Forms
             TreeNode node = e.Node;
             string path = node.FullPath;
             Npp.editor.GotoLine(pathsToJNodes[path].line_num);
+            CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
             // might also want to make it so that the selected line is scrolled to the top
             if (e.Button == MouseButtons.Right)
             {
@@ -626,6 +627,16 @@ namespace JSON_Tools.Forms
             if (node.Name == "")
                 return $"[{node.Index}]";
             return JNode.FormatKey(node.Name, style);
+        }
+
+        private void CurrentPathButton_Click(object sender, EventArgs e)
+        {
+            Npp.TryCopyToClipboard(CurrentPathBox.Text);
+            CurrentPathButton.Text = "Copied!";
+            CurrentPathButton.Update();
+            System.Threading.Thread.Sleep(200);
+            CurrentPathButton.Text = "Current path";
+            CurrentPathButton.Update();
         }
 
         // not creating schemas at present because schemas produced may be invalid

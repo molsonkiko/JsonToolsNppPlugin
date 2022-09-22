@@ -92,6 +92,7 @@
     <Compile Include="PluginInfrastructure\Preference_h.cs" />
     <Compile Include="PluginInfrastructure\ScintillaGateway.cs" />
     <Compile Include="PluginInfrastructure\Scintilla_iface.cs" />
+    <Compile Include="PluginInfrastructure\SettingsBase.cs" />
     <Compile Include="PluginInfrastructure\UnmanagedExports.cs" />
     <Compile Include="PluginInfrastructure\Win32.cs" />
     <Compile Include="PluginInfrastructure\resource_h.cs" />

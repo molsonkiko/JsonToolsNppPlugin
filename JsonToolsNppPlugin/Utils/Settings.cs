@@ -5,63 +5,60 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
+using CsvQuery.PluginInfrastructure; // for SettingsBase
 
 namespace JSON_Tools.Utils
 {
     /// <summary>
     /// Manages application settings
     /// </summary>
-    public class Settings
+    public class Settings : SettingsBase
     {
-        private const int DEFAULT_WIDTH = 350;
-        private const int DEFAULT_HEIGHT = 450;
-
-        // private static readonly string IniFilePath;
-
         #region JSON_PARSER_SETTINGS
         [Description("Parse NaN and Infinity in JSON. If false, those raise an error."),
-            Category("JSON Parser")] //, DefaultValue(true)]
-        public bool allow_nan_inf { get; set; } = true;
+            Category("JSON Parser"), DefaultValue(true)]
+        public bool allow_nan_inf { get; set; }
 
         [Description("Ignore JavaScript comments in JSON. If false, comments cause the parser to error out."),
-            Category("JSON Parser")] //, DefaultValue(false)]
-        public bool allow_javascript_comments { get; set; } = false;
+            Category("JSON Parser"), DefaultValue(false)]
+        public bool allow_javascript_comments { get; set; }
 
         [Description("Allow use of ' as well as \" for quoting strings."),
-            Category("JSON Parser")] //, DefaultValue(false)]
-        public bool allow_singlequoted_str { get; set; } = false;
+            Category("JSON Parser"), DefaultValue(false)]
+        public bool allow_singlequoted_str { get; set; }
 
         [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),
-            Category("JSON Parser")] //, DefaultValue(false)]
-        public bool allow_datetimes { get; set; } = false;
+            Category("JSON Parser"), DefaultValue(false)]
+        public bool allow_datetimes { get; set; }
 
         [Description("Track the locations where any JSON syntax errors were found"),
-            Category("JSON Parser")] //, DefaultValue(false)]
-        public bool linting { get; set; } = false;
+            Category("JSON Parser"), DefaultValue(false)]
+        public bool linting { get; set; }
         #endregion
-        
+
         #region TREE_VIEW_SETTINGS
         [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
             "Larger files get only the direct children of the root added to the tree."),
-            Category("Tree View")]
-        public double max_size_full_tree_MB { get; set; } = 4d;
+            Category("Tree View"), DefaultValue(4d)]
+        public double max_size_full_tree_MB { get; set; }
 
-        [Description("Whether or not to use the tree view at all."), Category("Tree View")]
-        public bool use_tree { get; set; } = true;
+        [Description("Whether or not to use the tree view at all."),
+            Category("Tree View"), DefaultValue(true)]
+        public bool use_tree { get; set; }
         #endregion
 
         #region JSON_FORMATTING_SETTINGS
         [Description("The indentation between levels of JSON when pretty-printing"),
-            Category("JSON formatting")]
-        public int indent_pretty_print { get; set; } = 4;
+            Category("JSON formatting"), DefaultValue(4)]
+        public int indent_pretty_print { get; set; }
 
         [Description("If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays"),
-            Category("JSON formatting")]
-        public bool minimal_whitespace_compression { get; set; } = false;
+            Category("JSON formatting"), DefaultValue(false)]
+        public bool minimal_whitespace_compression { get; set; }
 
         [Description("Sort the keys of objects alphabetically when pretty-printing or compressing"),
-            Category("JSON formatting")]
-        public bool sort_keys { get; set; } = true;
+            Category("JSON formatting"), DefaultValue(true)]
+        public bool sort_keys { get; set; }
 
         [Description("How JSON is pretty printed.\r\n" +
             "Google style (default):\r\n" +
@@ -83,159 +80,22 @@ namespace JSON_Tools.Utils
             "        ]\r\n" +
             "    ]\r\n" +
             "}"),
-            Category("JSON formatting")]
-        public PrettyPrintStyle pretty_print_style { get; set; } = PrettyPrintStyle.Google;
+            Category("JSON formatting"), DefaultValue(PrettyPrintStyle.Google)]
+        public PrettyPrintStyle pretty_print_style { get; set; }
         #endregion
         #region MISCELLANEOUS
         [Description("The style of key to use when getting the path or key/index of a node or line"),
-            Category("Miscellaneous")]
-        public KeyStyle key_style { get; set; } = KeyStyle.RemesPath; 
+            Category("Miscellaneous"), DefaultValue(KeyStyle.RemesPath)]
+        public KeyStyle key_style { get; set; }
         #endregion
         //#region GREP_API_SETTINGS
         //[Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
-        //    Category("Grep and API requests")]
-        //public int thread_count_parsing { get; set; } = 4;
+        //    Category("Grep and API requests"), DefaultValue(4)]
+        //public int thread_count_parsing;
 
-        //[Description("Should the API requester be asynchronous?"), Category("Grep and API requests")]
-        //public bool api_requests_async { get; set; } = true;
+        //[Description("Should the API requester be asynchronous?"),
+        //    Category("Grep and API requests"), DefaultValue(true)]
+        //public bool api_requests_async;
         //#endregion
-
-        /// <summary>
-        /// Opens a window that edits all settings
-        /// </summary>
-        public void ShowDialog(bool debug=false)
-        {
-            // We bind a copy of this object and only apply it after they click "Ok"
-            var copy = (Settings)MemberwiseClone();
-            
-            //// check the current settings
-            //var settings_sb = new StringBuilder();
-            //foreach (System.Reflection.PropertyInfo p in GetType().GetProperties())
-            //{
-            //    settings_sb.Append(p.ToString());
-            //    settings_sb.Append($": {p.GetValue(this)}");
-            //    settings_sb.Append(", ");
-            //}
-            //MessageBox.Show(settings_sb.ToString());
-
-            var dialog = new Form
-            {
-                Text = "Settings - JSON Viewer plug-in",
-                ClientSize = new Size(DEFAULT_WIDTH, DEFAULT_HEIGHT),
-                MinimumSize = new Size(250, 250),
-                ShowIcon = false,
-                AutoScaleMode = AutoScaleMode.Font,
-                AutoScaleDimensions = new SizeF(6F, 13F),
-                ShowInTaskbar = false,
-                StartPosition = FormStartPosition.CenterParent,
-                Controls =
-                {
-                    new Button
-                    {
-                        Name = "Cancel",
-                        Text = "&Cancel",
-                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                        Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 115, DEFAULT_HEIGHT - 36),
-                        UseVisualStyleBackColor = true
-                    },
-                    new Button
-                    {
-                        Name = "Reset",
-                        Text = "&Reset",
-                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                        Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 212, DEFAULT_HEIGHT - 36),
-                        UseVisualStyleBackColor = true
-                    },
-                    new Button
-                    {
-                        Name = "Ok",
-                        Text = "&Ok",
-                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                        Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 310, DEFAULT_HEIGHT - 36),
-                        UseVisualStyleBackColor = true
-                    },
-                    new PropertyGrid
-                    {
-                        Name = "Grid",
-                        Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                        Location = new Point(13, 13),
-                        Size = new Size(DEFAULT_WIDTH - 13 - 13, DEFAULT_HEIGHT - 55),
-                        AutoScaleMode = AutoScaleMode.Font,
-                        AutoScaleDimensions = new SizeF(6F,13F),
-                        SelectedObject = copy
-                    },
-                }
-            };
-
-            dialog.Controls["Cancel"].Click += (a, b) => dialog.Close();
-            dialog.Controls["Ok"].Click += (a, b) =>
-            {
-                // change the settings to whatever the user selected
-                var changesEventArgs = new SettingsChangedEventArgs(this, copy);
-                if (!changesEventArgs.Changed.Any())
-                {
-                    dialog.Close();
-                    return;
-                }
-                foreach (var propertyInfo in GetType().GetProperties())
-                {
-                    var oldValue = propertyInfo.GetValue(this, null);
-                    var newValue = propertyInfo.GetValue(copy, null);
-                    if (!oldValue.Equals(newValue))
-                        propertyInfo.SetValue(this, newValue, null);
-                }
-                dialog.Close();
-            };
-            dialog.Controls["Reset"].Click += (a, b) =>
-            {
-                // reset the settings to defaults
-                allow_nan_inf = true;
-                allow_javascript_comments = false;
-                allow_singlequoted_str = false;
-                allow_datetimes = false;
-                linting = false;
-                max_size_full_tree_MB = 4d;
-                use_tree = true;
-                indent_pretty_print = 4;
-                minimal_whitespace_compression = false;
-                sort_keys = true;
-                pretty_print_style = PrettyPrintStyle.Google;
-                key_style = KeyStyle.RemesPath;
-                //thread_count_parsing = 4;
-                //api_requests_async = true;
-                dialog.Close();
-            };
-
-            dialog.ShowDialog();
-        }
-    }
-
-
-
-    public class SettingsChangedEventArgs : CancelEventArgs
-    {
-        public SettingsChangedEventArgs(Settings oldSettings, Settings newSettings)
-        {
-            OldSettings = oldSettings;
-            NewSettings = newSettings;
-            Changed = new HashSet<string>();
-            foreach (var propertyInfo in typeof(Settings).GetProperties())
-            {
-                var oldValue = propertyInfo.GetValue(oldSettings, null);
-                var newValue = propertyInfo.GetValue(newSettings, null);
-                if (!oldValue.Equals(newValue))
-                {
-                    Trace.TraceInformation($"Setting {propertyInfo.Name} has changed");
-                    Changed.Add(propertyInfo.Name);
-                }
-            }
-        }
-
-        public HashSet<string> Changed { get; }
-        public Settings OldSettings { get; }
-        public Settings NewSettings { get; }
     }
 }

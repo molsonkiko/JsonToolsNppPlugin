@@ -285,6 +285,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         [DllImport("kernel32")]
         public static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
 
+        [DllImport("kernel32.dll")]
+        public static extern int GetPrivateProfileSection(string lpAppName, byte[] lpszReturnBuffer, int nSize, string lpFileName);
+
         public const int MF_BYCOMMAND = 0;
         public const int MF_CHECKED = 8;
         public const int MF_UNCHECKED = 0;

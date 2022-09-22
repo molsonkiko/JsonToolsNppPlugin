@@ -154,12 +154,16 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 - Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
 - This box does not change the global settings. It only changes the settings for that tree view.
 
-### Right-click on tree nodes for info ###
+## Get info about tree nodes ##
 
 You can right click on a tree node to copy any of the following to the clipboard:
 * Value
 * Key/index (customizable via [key style](#key-style))
-* Path (see [key style](#key-style)) 
+* Path (see [key style](#key-style))
+
+You can also click on the `Current path` button beneath the tree to copy the path of the currently selected tree node to the clipboard. The path will have the style of whatever default style you chose in the settings.
+
+![Current path button for path to current tree node](/docs/path%20to%20current%20tree%20node%20button.PNG)
 
 ## JSON formatting ##
 

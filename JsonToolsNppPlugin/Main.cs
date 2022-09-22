@@ -24,11 +24,6 @@ namespace Kbg.NppPluginNET
     {
         #region " Fields "
         internal const string PluginName = "JsonTools";
-        static string iniFilePath = null;
-        static string sectionName = "Format JSON";
-        static string keyName = "LoadJson";
-        static bool shouldLoadJson = false;
-        //static string sessionFilePath = @"C:\text.session";
         // json tools related things
         public static Settings settings = new Settings();
         public static JsonParser jsonParser = new JsonParser(settings.allow_datetimes,
@@ -60,28 +55,6 @@ namespace Kbg.NppPluginNET
         static internal void CommandMenuInit()
         {
             // Initialization of your plugin commands
-            // You should fill your plugins commands here
- 
-            //
-            // Firstly we get the parameters from your plugin config file (if any)
-            //
-
-            // get path of plugin configuration
-            StringBuilder sbIniFilePath = new StringBuilder(Win32.MAX_PATH);
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MAX_PATH, sbIniFilePath);
-            iniFilePath = sbIniFilePath.ToString();
-
-            // if config path doesn't exist, we create it
-            if (!Directory.Exists(iniFilePath))
-            {
-                Directory.CreateDirectory(iniFilePath);
-            }
-
-            // make your plugin config file full file path name
-            iniFilePath = Path.Combine(iniFilePath, PluginName + ".ini");
-
-            // get the parameter value from plugin config
-            //shouldLoadJson = Win32.GetPrivateProfileInt(sectionName, keyName, 0, iniFilePath) != 0;
 
             // with function :
             // SetCommand(int index,                            // zero based number to indicate the order of command
@@ -146,13 +119,28 @@ namespace Kbg.NppPluginNET
             //{
             //    Main.LoadJson();
             //}
-
-            //// when closing a file
+            // when closing a file
             if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
             {
                 fname_jsons.Remove(Npp.GetCurrentPath());
+                return;
             }
-
+            // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
+            //if (code == (uint)SciMsg.SCI_UNDO
+            //    || code == (uint)SciMsg.SCI_REDO)
+            //{
+            //    string fname = Npp.GetCurrentPath();
+            //    if (!fname_jsons.ContainsKey(fname))
+            //        return; // ignore files with no JSON yet
+            //    // reparse the file
+            //    string ext = Npp.FileExtension(fname);
+            //    JNode json = TryParseJson(ext == "jsonl");
+            //    treeViewer.json = json;
+            //    // if the tree view is open, refresh it
+            //    if (treeViewer != null)
+            //        treeViewer.JsonTreePopulate(json);
+            //    return;
+            //}
             //if (code > int.MaxValue) // windows messages
             //{
             //    int wm = -(int)code;
@@ -170,7 +158,6 @@ namespace Kbg.NppPluginNET
 
         static internal void PluginCleanUp()
         {
-            Win32.WritePrivateProfileString(sectionName, keyName, shouldLoadJson ? "1" : "0", iniFilePath);
             if (treeViewer != null)
                 treeViewer.Close();
         }
@@ -333,10 +320,7 @@ namespace Kbg.NppPluginNET
             jsonParser.allow_datetimes = settings.allow_datetimes;
             jsonParser.allow_javascript_comments = settings.allow_javascript_comments;
             jsonParser.allow_singlequoted_str = settings.allow_singlequoted_str;
-            if (settings.linting)
-            {
-                jsonParser.lint = new List<JsonLint>();
-            }
+            jsonParser.lint = settings.linting ? new List<JsonLint>() : null;
         }
 
         private static void PathToCurrentLine()

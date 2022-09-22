@@ -47,14 +47,19 @@
             this.JavaScriptStyleKeyItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.CurrentPathBox = new System.Windows.Forms.TextBox();
+            this.CurrentPathButton = new System.Windows.Forms.Button();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // Tree
             // 
+            this.Tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.Tree.Location = new System.Drawing.Point(4, 91);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(398, 534);
+            this.Tree.Size = new System.Drawing.Size(398, 339);
             this.Tree.TabIndex = 0;
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
             // 
@@ -73,6 +78,8 @@
             // 
             // QueryBox
             // 
+            this.QueryBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.QueryBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.RecentlyUsedList;
             this.QueryBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.QueryBox.Location = new System.Drawing.Point(4, 4);
@@ -84,6 +91,7 @@
             // 
             // SubmitQueryButton
             // 
+            this.SubmitQueryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SubmitQueryButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.SubmitQueryButton.Location = new System.Drawing.Point(174, 4);
             this.SubmitQueryButton.Name = "SubmitQueryButton";
@@ -95,6 +103,7 @@
             // 
             // SaveQueryButton
             // 
+            this.SaveQueryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SaveQueryButton.Location = new System.Drawing.Point(174, 36);
             this.SaveQueryButton.Name = "SaveQueryButton";
             this.SaveQueryButton.Size = new System.Drawing.Size(119, 27);
@@ -105,6 +114,7 @@
             // 
             // QueryToCsvButton
             // 
+            this.QueryToCsvButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.QueryToCsvButton.Location = new System.Drawing.Point(299, 4);
             this.QueryToCsvButton.Name = "QueryToCsvButton";
             this.QueryToCsvButton.Size = new System.Drawing.Size(103, 26);
@@ -115,6 +125,7 @@
             // 
             // FullTreeCheckBox
             // 
+            this.FullTreeCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.FullTreeCheckBox.AutoSize = true;
             this.FullTreeCheckBox.Location = new System.Drawing.Point(174, 69);
             this.FullTreeCheckBox.Name = "FullTreeCheckBox";
@@ -196,11 +207,34 @@
             this.RemesPathStylePathItem.Size = new System.Drawing.Size(198, 26);
             this.RemesPathStylePathItem.Text = "RemesPath style";
             // 
+            // CurrentPathBox
+            // 
+            this.CurrentPathBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.CurrentPathBox.Location = new System.Drawing.Point(103, 436);
+            this.CurrentPathBox.Name = "CurrentPathBox";
+            this.CurrentPathBox.ReadOnly = true;
+            this.CurrentPathBox.Size = new System.Drawing.Size(299, 22);
+            this.CurrentPathBox.TabIndex = 5;
+            // 
+            // CurrentPathButton
+            // 
+            this.CurrentPathButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.CurrentPathButton.Location = new System.Drawing.Point(4, 435);
+            this.CurrentPathButton.Name = "CurrentPathButton";
+            this.CurrentPathButton.Size = new System.Drawing.Size(93, 23);
+            this.CurrentPathButton.TabIndex = 6;
+            this.CurrentPathButton.Text = "Current path";
+            this.CurrentPathButton.UseVisualStyleBackColor = true;
+            this.CurrentPathButton.Click += new System.EventHandler(this.CurrentPathButton_Click);
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(412, 631);
+            this.ClientSize = new System.Drawing.Size(412, 461);
+            this.Controls.Add(this.CurrentPathButton);
+            this.Controls.Add(this.CurrentPathBox);
             this.Controls.Add(this.FullTreeCheckBox);
             this.Controls.Add(this.QueryToCsvButton);
             this.Controls.Add(this.SaveQueryButton);
@@ -235,5 +269,7 @@
         private System.Windows.Forms.ToolStripMenuItem JavaScriptStyleKeyItem;
         private System.Windows.Forms.ToolStripMenuItem PythonStylePathItem;
         private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
+        private System.Windows.Forms.TextBox CurrentPathBox;
+        private System.Windows.Forms.Button CurrentPathButton;
     }
 }
