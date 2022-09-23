@@ -439,7 +439,22 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// snap the caret to the line of the JNode corresponding to the TreeNode clicked.<br></br>
+        /// Snap the caret to the line of the JNode corresponding to the TreeNode selected.<br></br>
+        /// Also populate the current path box with the path to the selected node.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (Npp.GetCurrentPath() != fname) return;
+            TreeNode node = e.Node;
+            string path = node.FullPath;
+            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
+            // might also want to make it so that the selected line is scrolled to the top
+            CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
+        }
+
+        /// <summary>
         /// On right click, throw up a context menu that lets you do the following:<br></br>
         /// - Copy the current node's value to the clipboard<br></br>
         /// - Copy the node's path (Python style) to the clipboard<br></br>
@@ -451,12 +466,7 @@ namespace JSON_Tools.Forms
         /// <param name="e"></param>
         private void Tree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (Npp.GetCurrentPath() != fname) return;
             TreeNode node = e.Node;
-            string path = node.FullPath;
-            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
-            CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
-            // might also want to make it so that the selected line is scrolled to the top
             if (e.Button == MouseButtons.Right)
             {
                 // open a context menu that lets the user copy things to clipboard

@@ -54,7 +54,7 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 
 ![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG)
 
-You can click on the nodes in that tree to see the children. When you do this, the caret will snap to the line of the node you've selected.
+You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected.
 
 __NOTES__
 1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.

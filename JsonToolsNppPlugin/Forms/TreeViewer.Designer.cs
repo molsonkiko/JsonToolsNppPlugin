@@ -61,6 +61,7 @@
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(398, 339);
             this.Tree.TabIndex = 0;
+            this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
             // 
             // TypeIconList
