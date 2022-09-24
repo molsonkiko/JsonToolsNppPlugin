@@ -49,6 +49,8 @@
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.CurrentPathButton = new System.Windows.Forms.Button();
+            this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RefreshButton = new System.Windows.Forms.Button();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -60,7 +62,8 @@
             this.Tree.Location = new System.Drawing.Point(4, 91);
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(398, 339);
-            this.Tree.TabIndex = 0;
+            this.Tree.TabIndex = 5;
+            this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
             // 
@@ -81,7 +84,6 @@
             // 
             this.QueryBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.QueryBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.RecentlyUsedList;
             this.QueryBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.QueryBox.Location = new System.Drawing.Point(4, 4);
             this.QueryBox.Multiline = true;
@@ -108,7 +110,7 @@
             this.SaveQueryButton.Location = new System.Drawing.Point(174, 36);
             this.SaveQueryButton.Name = "SaveQueryButton";
             this.SaveQueryButton.Size = new System.Drawing.Size(119, 27);
-            this.SaveQueryButton.TabIndex = 2;
+            this.SaveQueryButton.TabIndex = 3;
             this.SaveQueryButton.Text = "Save query result";
             this.SaveQueryButton.UseVisualStyleBackColor = true;
             this.SaveQueryButton.Click += new System.EventHandler(this.SaveQueryResultButton_Click);
@@ -119,7 +121,7 @@
             this.QueryToCsvButton.Location = new System.Drawing.Point(299, 4);
             this.QueryToCsvButton.Name = "QueryToCsvButton";
             this.QueryToCsvButton.Size = new System.Drawing.Size(103, 26);
-            this.QueryToCsvButton.TabIndex = 3;
+            this.QueryToCsvButton.TabIndex = 2;
             this.QueryToCsvButton.Text = "Query to CSV";
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
             this.QueryToCsvButton.Click += new System.EventHandler(this.QueryToCsvButton_Click);
@@ -142,14 +144,15 @@
             this.NodeRightClickMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.CopyValueMenuItem,
             this.CopyKeyItem,
-            this.CopyPathItem});
+            this.CopyPathItem,
+            this.ToggleSubtreesItem});
             this.NodeRightClickMenu.Name = "NodeRightClickMenu";
-            this.NodeRightClickMenu.Size = new System.Drawing.Size(231, 76);
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 100);
             // 
             // CopyValueMenuItem
             // 
             this.CopyValueMenuItem.Name = "CopyValueMenuItem";
-            this.CopyValueMenuItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyValueMenuItem.Size = new System.Drawing.Size(267, 24);
             this.CopyValueMenuItem.Text = "Value to clipboard";
             // 
             // CopyKeyItem
@@ -159,7 +162,7 @@
             this.PythonStyleItem,
             this.RemesPathStyleItem});
             this.CopyKeyItem.Name = "CopyKeyItem";
-            this.CopyKeyItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyKeyItem.Size = new System.Drawing.Size(267, 24);
             this.CopyKeyItem.Text = "Key/index to clipboard";
             // 
             // JavaScriptStyleItem
@@ -187,7 +190,7 @@
             this.PythonStylePathItem,
             this.RemesPathStylePathItem});
             this.CopyPathItem.Name = "CopyPathItem";
-            this.CopyPathItem.Size = new System.Drawing.Size(230, 24);
+            this.CopyPathItem.Size = new System.Drawing.Size(267, 24);
             this.CopyPathItem.Text = "Path to clipboard";
             // 
             // JavaScriptStyleKeyItem
@@ -216,7 +219,8 @@
             this.CurrentPathBox.Name = "CurrentPathBox";
             this.CurrentPathBox.ReadOnly = true;
             this.CurrentPathBox.Size = new System.Drawing.Size(299, 22);
-            this.CurrentPathBox.TabIndex = 5;
+            this.CurrentPathBox.TabIndex = 7;
+            this.CurrentPathBox.TabStop = false;
             // 
             // CurrentPathButton
             // 
@@ -229,11 +233,29 @@
             this.CurrentPathButton.UseVisualStyleBackColor = true;
             this.CurrentPathButton.Click += new System.EventHandler(this.CurrentPathButton_Click);
             // 
+            // ToggleSubtreesItem
+            // 
+            this.ToggleSubtreesItem.Name = "ToggleSubtreesItem";
+            this.ToggleSubtreesItem.Size = new System.Drawing.Size(267, 24);
+            this.ToggleSubtreesItem.Text = "Expand/collapse all subtrees";
+            // 
+            // RefreshButton
+            // 
+            this.RefreshButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.RefreshButton.Location = new System.Drawing.Point(299, 36);
+            this.RefreshButton.Name = "RefreshButton";
+            this.RefreshButton.Size = new System.Drawing.Size(103, 27);
+            this.RefreshButton.TabIndex = 8;
+            this.RefreshButton.Text = "Refresh";
+            this.RefreshButton.UseVisualStyleBackColor = true;
+            this.RefreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(412, 461);
+            this.Controls.Add(this.RefreshButton);
             this.Controls.Add(this.CurrentPathButton);
             this.Controls.Add(this.CurrentPathBox);
             this.Controls.Add(this.FullTreeCheckBox);
@@ -245,6 +267,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
+            this.VisibleChanged += new System.EventHandler(this.TreeViewer_OnVisibleChanged);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -272,5 +295,7 @@
         private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
         private System.Windows.Forms.TextBox CurrentPathBox;
         private System.Windows.Forms.Button CurrentPathButton;
+        private System.Windows.Forms.ToolStripMenuItem ToggleSubtreesItem;
+        private System.Windows.Forms.Button RefreshButton;
     }
 }

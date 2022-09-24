@@ -35,7 +35,10 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
         public static YamlDumper yamlDumper = new YamlDumper();
+        //public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         public static TreeViewer treeViewer = null;
+        //public static string active_fname;
+        //public static bool IsWin32 = Npp.notepad.GetPluginConfig().Contains("x86");
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
@@ -112,24 +115,63 @@ namespace Kbg.NppPluginNET
             //
             // if (code == (uint)SciMsg.SCNxxx)
             // { ... }
-
-            // changing tabs
-            //if ((code == (uint)NppMsg.NPPN_BUFFERACTIVATED) ||
-            //    (code == (uint)NppMsg.NPPN_LANGCHANGED))
+            // all the triggers below depend on IntPtrs representing buffer id's
+            // being convertible into 32-bit integers. This only works for 32-bit Notepad++.
+            // For 64-bit Notepad++, the IntPtrs are longs. 
+            //if (!IsWin32)
+            //    return;
+            //// changing tabs
+            //if (code == (uint)NppMsg.NPPN_BUFFERACTIVATED)
             //{
-            //    Main.LoadJson();
+            //    // check to see if there was a treeview for the file
+            //    // we just navigated away from
+            //    if (active_fname != null)
+            //    {
+            //        if (treeViewers.TryGetValue(active_fname, out TreeViewer old_tv))
+            //        {
+            //            if (old_tv.IsDisposed)
+            //            // it was closed by user earlier
+            //                treeViewers.Remove(active_fname);
+            //            else
+            //            // minimize the treeviewer that was visible
+            //                HideTreeView(old_tv);
+            //        }
+            //    }
+            //    // now open the treeview for the file just opened, assuming it exists
+            //    active_fname = Npp.notepad.GetCurrentFilePath();
+            //    if (treeViewers.TryGetValue(active_fname, out TreeViewer tv))
+            //    {
+            //        if (tv.IsDisposed)
+            //        // it was removed earlier, so clean it up
+            //            treeViewers.Remove(active_fname);
+            //        else
+            //        // maximize the treeviewer belonging to this file
+            //            ShowTreeView(tv);
+            //    }
+            //    return;
             //}
-            // when closing a file
-            if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
-            {
-                fname_jsons.Remove(Npp.GetCurrentPath());
-                return;
-            }
+            //// when closing a file
+            //if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
+            //{
+            //    int buffer_closed_id = notification.Header.IdFrom.ToInt32();
+            //    string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
+            //    // clean up data associated with the buffer that was just closed
+            //    if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
+            //        return;
+            //    if (!closed_tv.IsDisposed)
+            //    {
+            //        HideTreeView(closed_tv);
+            //        closed_tv.Close();
+            //    }
+            //    treeViewers.Remove(buffer_closed);
+            //    fname_jsons.Remove(buffer_closed);
+            //    return;
+            //}
             // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
             //if (code == (uint)SciMsg.SCI_UNDO
             //    || code == (uint)SciMsg.SCI_REDO)
             //{
-            //    string fname = Npp.GetCurrentPath();
+            //    string fname = Npp.notepad.GetCurrentFilePath();
             //    if (!fname_jsons.ContainsKey(fname))
             //        return; // ignore files with no JSON yet
             //    // reparse the file
@@ -158,8 +200,7 @@ namespace Kbg.NppPluginNET
 
         static internal void PluginCleanUp()
         {
-            if (treeViewer != null)
-                treeViewer.Close();
+            //treeViewers.Clear();
         }
         #endregion
 
@@ -195,10 +236,10 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="is_json_lines"></param>
         /// <returns></returns>
-        static JNode TryParseJson(bool is_json_lines = false)
+        public static JNode TryParseJson(bool is_json_lines = false)
         {
             int len = Npp.editor.GetLength();
-            string fname = Npp.GetCurrentPath();
+            string fname = Npp.notepad.GetCurrentFilePath();
             string text = Npp.editor.GetText(len);
             JNode json = new JNode();
             try
@@ -325,7 +366,7 @@ namespace Kbg.NppPluginNET
 
         private static void PathToCurrentLine()
         {
-            string fname = Npp.GetCurrentPath();
+            string fname = Npp.notepad.GetCurrentFilePath();
             if (!fname_jsons.TryGetValue(fname, out var json))
                 return;
             int line = Npp.editor.GetCurrentLineNumber();
@@ -341,6 +382,20 @@ namespace Kbg.NppPluginNET
             Npp.TryCopyToClipboard(result);
         }
 
+        public static void HideTreeView(TreeViewer tree)
+        {
+            Win32.SendMessage(PluginBase.nppData._nppHandle,
+                    (uint)(NppMsg.NPPM_DMMHIDE),
+                    0, tree.Handle);
+        }
+
+        public static void ShowTreeView(TreeViewer tree)
+        {
+            Win32.SendMessage(PluginBase.nppData._nppHandle,
+                    (uint)(NppMsg.NPPM_DMMSHOW),
+                    0, tree.Handle);
+        }
+
         /// <summary>
         /// Try to parse a JSON document and then open up the tree view.<br></br>
         /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.<br></br>
@@ -348,14 +403,20 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void OpenJsonTree(bool is_json_lines = false)
         {
-            if (treeViewer != null)
+            string cur_fname = Npp.notepad.GetCurrentFilePath();
+            //TreeViewer tv = null;
+            //if (IsWin32)
+            //    treeViewers.TryGetValue(cur_fname, out tv);
+            //else
+            //    tv = treeViewer; // 64-bit windows doesn't use the treeViewers dict
+            if (treeViewer != null && !treeViewer.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
-                Win32.SendMessage(PluginBase.nppData._nppHandle,
-                    (uint)(NppMsg.NPPM_DMMHIDE),
-                    0, treeViewer.Handle);
+                HideTreeView(treeViewer);
                 treeViewer.Close();
-                treeViewer = null;
+                //if (IsWin32)
+                //    treeViewers.Remove(cur_fname);
+                //else treeViewer = null;
                 return;
             }
             if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
@@ -396,6 +457,8 @@ namespace Kbg.NppPluginNET
             // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
+            //if (IsWin32)
+            //    treeViewers[cur_fname] = tv;
             treeViewer.Focus();
         }
         #endregion

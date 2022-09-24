@@ -48,12 +48,13 @@ namespace JSON_Tools.Forms
         private static MouseEventHandler keyToClipboardHandler_Remespath = null;
         private static MouseEventHandler keyToClipboardHandler_Python = null;
         private static MouseEventHandler keyToClipboardHandler_Javascript = null;
+        private static MouseEventHandler ToggleSubtreesHandler = null;
 
         public TreeViewer(JNode json)
         {
             InitializeComponent();
             pathsToJNodes = new Dictionary<string, JNode>();
-            fname = Npp.GetCurrentPath();
+            fname = Npp.notepad.GetCurrentFilePath();
             this.json = json;
             query_result = json;
             remesParser = new RemesParser();
@@ -73,6 +74,8 @@ namespace JSON_Tools.Forms
             //this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
             //    PopulateIfUnpopulatedHandler
             //);
+            //QueryBox.Select(); 
+            // activate the query box so user can start typing immediately
         }
 
         public static void SetImageOfTreeNode(TreeNode root, JNode json)
@@ -444,14 +447,31 @@ namespace JSON_Tools.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
+        private void Tree_NodeSelection(object sender, EventArgs e)
         {
-            if (Npp.GetCurrentPath() != fname) return;
-            TreeNode node = e.Node;
+            if (Npp.notepad.GetCurrentFilePath() != fname) return;
+            TreeNode node;
+            // if there's an AfterSelect event, due to clicking or arrow key navigation
+            if (e is TreeViewEventArgs tvea)
+                node = tvea.Node;
+            // invoked by BeforeExpand event, which doesn't trigger an AfterSelect
+            else if (e is TreeViewCancelEventArgs tnmcea)
+                node = tnmcea.Node;
+            else return;
             string path = node.FullPath;
             Npp.editor.GotoLine(pathsToJNodes[path].line_num);
             // might also want to make it so that the selected line is scrolled to the top
             CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
+        }
+
+        private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            Tree_NodeSelection(sender, e);
+        }
+
+        private void Tree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            Tree_NodeSelection(sender, e);
         }
 
         /// <summary>
@@ -596,6 +616,19 @@ namespace JSON_Tools.Forms
                     case (KeyStyle.Python): pathToClipboard.MouseUp += pathToClipboardHandler_Python; break;
                     case (KeyStyle.JavaScript): pathToClipboard.MouseUp += pathToClipboardHandler_Javascript; break;
                 }
+                NodeRightClickMenu.Items[3].MouseUp -= ToggleSubtreesHandler;
+                ToggleSubtreesHandler = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        if (node.Nodes.Count > 0)
+                        {
+                            if (node.IsExpanded)
+                                node.Collapse();
+                            else node.ExpandAll();
+                        }
+                    }
+                );
+                NodeRightClickMenu.Items[3].MouseUp += ToggleSubtreesHandler;
                 NodeRightClickMenu.Show(MousePosition);
             }
         }
@@ -648,6 +681,49 @@ namespace JSON_Tools.Forms
             CurrentPathButton.Text = "Current path";
             CurrentPathButton.Update();
         }
+
+        /// <summary>
+        /// When the tree viewer is minimized, close it altogether.<br></br>
+        /// Don't do this when the user switches away from this TreeViewer's buffer
+        /// though.
+        /// </summary>
+        private void TreeViewer_OnVisibleChanged(object sender, EventArgs e)
+        {
+            if (!Visible && Npp.notepad.GetCurrentFilePath() == fname)
+            {
+                Close();
+            }
+        }
+
+        /// <summary>
+        /// reset the JSON and query of this form to the JSON in whatever
+        /// file is currently active
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RefreshButton_Click(object sender, EventArgs e)
+        {
+            string cur_fname = Npp.notepad.GetCurrentFilePath();
+            JNode new_json;
+            if (!Main.fname_jsons.TryGetValue(cur_fname, out new_json))
+            {
+                Main.TryParseJson();
+                if (!Main.fname_jsons.TryGetValue(cur_fname, out new_json))
+                    return; // do nothing if error in parsing current file
+            }
+            fname = cur_fname;
+            json = new_json;
+            query_result = json;
+            JsonTreePopulate(json);
+        }
+
+        //private void EscapeKeyPress(object sender, KeyEventArgs e)
+        //{
+        //    if (e.KeyCode == Keys.Escape)
+        //    {
+
+        //    }
+        //}
 
         // not creating schemas at present because schemas produced may be invalid
         //private void SchemaButton_Click(object sender, EventArgs e)

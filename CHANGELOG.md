@@ -13,6 +13,12 @@ This project has many features that were implemented in a [standalone app](https
 1. A tool for searching directories for many documents and using RemesPath to query them all in parallel. The query results can then be written to separate files.
     * This tool will also probably have a feature for sending API requests and getting the JSON directly for querying. No more writing scripts!
 	* Ideally the API request tool should let people enter the URL and the name of the file to be created for that JSON in a CSV file.
+2. Add parsing of unquoted strings when linter is active.
+	(would this cause too much of a performance hit?)
+3. Add RemesPath functions:
+	- for converting JSON to tabular form
+	- for dates and datetimes (e.g., a `datediff` function that creates
+	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
  
 ### To Be Changed
 
@@ -23,18 +29,14 @@ This project has many features that were implemented in a [standalone app](https
 		- cool features like grabbing the path to the location of the caret
 	* Cons:
 		- backwards-incompatible change
+- Add a dictionary mapping filenames to TreeViewers. This way each JSON buffer for which a tree viewer was opened can have its own, and the user has a better experience.
+	- *Big issue here: files other than the active buffer being closed.* There's no good way using the plugin pack to track any buffers other than the current buffer, because [INotepadPPGateway.GetFilePath](/JsonToolsNppPlugin/PluginInfrastructure/NotepadPPGateway.cs#L111) *can't be used in Win64, because IntPtrs are longs and that function only accepts ints.*
+	- This means that if you use the dictionary idea, and you just close the TreeViewer for the active file whenever a file is closed, if you close a file other than the active file, *the file that was closed will keep its TreeViewer and the file that is currently open will have its TreeViewer removed.*
 - I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would be a marked improvement over the partial tree loading or no-tree option implemented in [version 3.1.0](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v3.1.0).
 - *If lazy loading can't be implemented:*
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
-- Improve how well the caret tracks the node selected in the query tree.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
-- Add parsing of unquoted strings when linter is active.
-	(would this cause too much of a performance hit?)
-- Add RemesPath functions:
-	- for converting JSON to tabular form
-	- for dates and datetimes (e.g., a `datediff` function that creates
-	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
  
 ### To Be Fixed
 
@@ -49,6 +51,19 @@ This project has many features that were implemented in a [standalone app](https
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
+- Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
+
+## [3.5.0] (unreleased) - 2022-MM-DD
+
+### Added
+
+1. `Refresh` button for resetting the form with the JSON in the currently active buffer.
+2. Clicking on a tree node to expand it also changes the displayed node path and snaps the caret.
+3. Drop-down menu option for expanding/collapsing all subtrees when right-clicking on a tree node.
+
+### Changed
+
+1. Minimizing the tree view closes it completely.
 
 ## [3.4.1] - 2022-09-22
 
