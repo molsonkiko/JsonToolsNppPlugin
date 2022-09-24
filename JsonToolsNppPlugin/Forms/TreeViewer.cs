@@ -74,8 +74,53 @@ namespace JSON_Tools.Forms
             //this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
             //    PopulateIfUnpopulatedHandler
             //);
-            //QueryBox.Select(); 
             // activate the query box so user can start typing immediately
+        }
+
+        // largely copied from NppManagedPluginDemo.cs in the original plugin pack
+        private void TreeViewer_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                // Ctrl+Enter in query box -> submit query
+                if (e.Control && QueryBox.Focused)
+                    SubmitQueryButton.PerformClick();
+                else if (sender is Button btn)
+                {
+                    // Enter has the same effect as clicking a selected button
+                    btn.PerformClick();
+                }
+                else if (sender is TreeView)
+                {
+                    // Enter in the TreeView toggles the selected node
+                    TreeNode selected = Tree.SelectedNode;
+                    if (selected == null || selected.Nodes.Count == 0)
+                        return;
+                    if (selected.IsExpanded)
+                        selected.Collapse(true); // don't collapse the children as well
+                    else selected.Expand();
+                }
+            }
+            // Escape -> go to editor
+            else if (e.KeyData == Keys.Escape)
+            {
+                Npp.editor.GrabFocus();
+            }
+            // Tab -> go through controls, Shift+Tab -> go through controls backward
+            else if (e.KeyCode == Keys.Tab)
+            {
+                Control next = GetNextControl((Control)sender, !e.Shift);
+                while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
+                next.Focus();
+                e.Handled = true;
+            }
+        }
+
+        private void QueryBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\t')
+                e.Handled = true;
         }
 
         public static void SetImageOfTreeNode(TreeNode root, JNode json)

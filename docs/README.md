@@ -59,6 +59,11 @@ You can click on the nodes in that tree to see the children. When you select a n
 __NOTES__
 1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
 2. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
+3. Keyboard shortcuts:
+    - `Ctrl+Enter` in the query box submits the query.
+    - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
+    - Up and down arrow keys can also navigate the tree.
+    - `Escape` takes focus from the tree view back to the editor.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 

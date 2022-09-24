@@ -47,9 +47,9 @@
             this.JavaScriptStyleKeyItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.CurrentPathButton = new System.Windows.Forms.Button();
-            this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RefreshButton = new System.Windows.Forms.Button();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
@@ -62,10 +62,11 @@
             this.Tree.Location = new System.Drawing.Point(4, 91);
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(398, 339);
-            this.Tree.TabIndex = 5;
+            this.Tree.TabIndex = 6;
             this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
+            this.Tree.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // TypeIconList
             // 
@@ -91,6 +92,8 @@
             this.QueryBox.Size = new System.Drawing.Size(164, 74);
             this.QueryBox.TabIndex = 0;
             this.QueryBox.Text = "@";
+            this.QueryBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryBox_KeyPress);
+            this.QueryBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // SubmitQueryButton
             // 
@@ -103,6 +106,7 @@
             this.SubmitQueryButton.Text = "Submit query";
             this.SubmitQueryButton.UseVisualStyleBackColor = true;
             this.SubmitQueryButton.Click += new System.EventHandler(this.SubmitQueryButton_Click);
+            this.SubmitQueryButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // SaveQueryButton
             // 
@@ -114,6 +118,7 @@
             this.SaveQueryButton.Text = "Save query result";
             this.SaveQueryButton.UseVisualStyleBackColor = true;
             this.SaveQueryButton.Click += new System.EventHandler(this.SaveQueryResultButton_Click);
+            this.SaveQueryButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // QueryToCsvButton
             // 
@@ -125,6 +130,7 @@
             this.QueryToCsvButton.Text = "Query to CSV";
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
             this.QueryToCsvButton.Click += new System.EventHandler(this.QueryToCsvButton_Click);
+            this.QueryToCsvButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // FullTreeCheckBox
             // 
@@ -133,10 +139,11 @@
             this.FullTreeCheckBox.Location = new System.Drawing.Point(174, 69);
             this.FullTreeCheckBox.Name = "FullTreeCheckBox";
             this.FullTreeCheckBox.Size = new System.Drawing.Size(130, 20);
-            this.FullTreeCheckBox.TabIndex = 4;
+            this.FullTreeCheckBox.TabIndex = 5;
             this.FullTreeCheckBox.Text = "View all subtrees";
             this.FullTreeCheckBox.UseVisualStyleBackColor = true;
             this.FullTreeCheckBox.CheckedChanged += new System.EventHandler(this.FullTreeCheckBox_CheckedChanged);
+            this.FullTreeCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // NodeRightClickMenu
             // 
@@ -211,6 +218,12 @@
             this.RemesPathStylePathItem.Size = new System.Drawing.Size(198, 26);
             this.RemesPathStylePathItem.Text = "RemesPath style";
             // 
+            // ToggleSubtreesItem
+            // 
+            this.ToggleSubtreesItem.Name = "ToggleSubtreesItem";
+            this.ToggleSubtreesItem.Size = new System.Drawing.Size(267, 24);
+            this.ToggleSubtreesItem.Text = "Expand/collapse all subtrees";
+            // 
             // CurrentPathBox
             // 
             this.CurrentPathBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
@@ -219,7 +232,7 @@
             this.CurrentPathBox.Name = "CurrentPathBox";
             this.CurrentPathBox.ReadOnly = true;
             this.CurrentPathBox.Size = new System.Drawing.Size(299, 22);
-            this.CurrentPathBox.TabIndex = 7;
+            this.CurrentPathBox.TabIndex = 8;
             this.CurrentPathBox.TabStop = false;
             // 
             // CurrentPathButton
@@ -228,16 +241,11 @@
             this.CurrentPathButton.Location = new System.Drawing.Point(4, 435);
             this.CurrentPathButton.Name = "CurrentPathButton";
             this.CurrentPathButton.Size = new System.Drawing.Size(93, 23);
-            this.CurrentPathButton.TabIndex = 6;
+            this.CurrentPathButton.TabIndex = 7;
             this.CurrentPathButton.Text = "Current path";
             this.CurrentPathButton.UseVisualStyleBackColor = true;
             this.CurrentPathButton.Click += new System.EventHandler(this.CurrentPathButton_Click);
-            // 
-            // ToggleSubtreesItem
-            // 
-            this.ToggleSubtreesItem.Name = "ToggleSubtreesItem";
-            this.ToggleSubtreesItem.Size = new System.Drawing.Size(267, 24);
-            this.ToggleSubtreesItem.Text = "Expand/collapse all subtrees";
+            this.CurrentPathButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // RefreshButton
             // 
@@ -245,10 +253,11 @@
             this.RefreshButton.Location = new System.Drawing.Point(299, 36);
             this.RefreshButton.Name = "RefreshButton";
             this.RefreshButton.Size = new System.Drawing.Size(103, 27);
-            this.RefreshButton.TabIndex = 8;
+            this.RefreshButton.TabIndex = 4;
             this.RefreshButton.Text = "Refresh";
             this.RefreshButton.UseVisualStyleBackColor = true;
             this.RefreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
+            this.RefreshButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // TreeViewer
             // 
@@ -268,6 +277,7 @@
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
             this.VisibleChanged += new System.EventHandler(this.TreeViewer_OnVisibleChanged);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -278,7 +288,6 @@
 
         private System.Windows.Forms.TreeView Tree;
         private System.Windows.Forms.ImageList TypeIconList;
-        private System.Windows.Forms.TextBox QueryBox;
         private System.Windows.Forms.Button SubmitQueryButton;
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
@@ -297,5 +306,6 @@
         private System.Windows.Forms.Button CurrentPathButton;
         private System.Windows.Forms.ToolStripMenuItem ToggleSubtreesItem;
         private System.Windows.Forms.Button RefreshButton;
+        internal System.Windows.Forms.TextBox QueryBox;
     }
 }

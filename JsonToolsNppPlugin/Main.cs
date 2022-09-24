@@ -403,7 +403,6 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void OpenJsonTree(bool is_json_lines = false)
         {
-            string cur_fname = Npp.notepad.GetCurrentFilePath();
             //TreeViewer tv = null;
             //if (IsWin32)
             //    treeViewers.TryGetValue(cur_fname, out tv);
@@ -414,6 +413,7 @@ namespace Kbg.NppPluginNET
                 // if the tree view is open, hide the tree view and then dispose of it
                 HideTreeView(treeViewer);
                 treeViewer.Close();
+                treeViewer = null;
                 //if (IsWin32)
                 //    treeViewers.Remove(cur_fname);
                 //else treeViewer = null;
@@ -459,7 +459,10 @@ namespace Kbg.NppPluginNET
             treeViewer.JsonTreePopulate(json);
             //if (IsWin32)
             //    treeViewers[cur_fname] = tv;
-            treeViewer.Focus();
+            treeViewer.QueryBox.Focus();
+            // select QueryBox on startup
+            // note that this is only possible because we changed the access modifier
+            // of that control from private (the default) to internal.
         }
         #endregion
     }

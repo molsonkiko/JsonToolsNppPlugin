@@ -53,13 +53,20 @@ This project has many features that were implemented in a [standalone app](https
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 
-## [3.5.0] (unreleased) - 2022-MM-DD
+## [3.5.0] - 2022-09-24
 
 ### Added
 
-1. `Refresh` button for resetting the form with the JSON in the currently active buffer.
-2. Clicking on a tree node to expand it also changes the displayed node path and snaps the caret.
-3. Drop-down menu option for expanding/collapsing all subtrees when right-clicking on a tree node.
+1. `Refresh` button for resetting the form with the JSON in the currently active buffer (resolves Issue #13).
+2. __Tree view enhancements__ (resolves Issue #10):
+	- Clicking on a tree node to expand it also changes the displayed node path and snaps the caret.
+	- `Tab` can be used to switch between controls on the tree form.
+	- Drop-down menu option for expanding/collapsing all subtrees when right-clicking on a tree node.
+	- Query box is auto-selected when tree is opened.
+	- `Ctrl+Enter` while query box is selected submits the query.
+	- `Enter` while any button selected is equivalent to clicking it.
+	- `Enter` while tree is selected toggles the selected node between expanded/collapsed.
+	- `Escape` key takes focus from the tree back to the text editor (resolves Issue #11).
 
 ### Changed
 

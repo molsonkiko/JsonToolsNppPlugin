@@ -23,6 +23,21 @@ namespace JSON_Tools.Forms
             StrategyBox.SelectedIndex = 0;
         }
 
+        private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                e.Handled = true;
+                Close();
+            }
+            else if (e.KeyCode == Keys.Enter)
+            {
+                if (sender is Button btn)
+                    btn.PerformClick();
+                e.Handled = true;
+            }
+        }
+
         private void GenerateCSVButton_Click(object sender, EventArgs e)
         {
             string keysep = new string(KeySepBox.Text[0], 1);

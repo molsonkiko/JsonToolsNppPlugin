@@ -50,6 +50,7 @@
             this.KeySepBox.Size = new System.Drawing.Size(52, 24);
             this.KeySepBox.TabIndex = 0;
             this.KeySepBox.Text = ".";
+            this.KeySepBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // JsonToCsvFormTitle
             // 
@@ -73,6 +74,7 @@
             this.DelimBox.Name = "DelimBox";
             this.DelimBox.Size = new System.Drawing.Size(75, 26);
             this.DelimBox.TabIndex = 1;
+            this.DelimBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // BoolsToIntsCheckBox
             // 
@@ -84,6 +86,7 @@
             this.BoolsToIntsCheckBox.TabIndex = 2;
             this.BoolsToIntsCheckBox.Text = "Convert true/false to 1/0?";
             this.BoolsToIntsCheckBox.UseVisualStyleBackColor = true;
+            this.BoolsToIntsCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // StrategyBox
             // 
@@ -98,6 +101,7 @@
             this.StrategyBox.Name = "StrategyBox";
             this.StrategyBox.Size = new System.Drawing.Size(195, 26);
             this.StrategyBox.TabIndex = 3;
+            this.StrategyBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // StrategyBoxLabel
             // 
@@ -139,6 +143,7 @@
             this.GenerateCSVButton.Text = "Generate CSV";
             this.GenerateCSVButton.UseVisualStyleBackColor = true;
             this.GenerateCSVButton.Click += new System.EventHandler(this.GenerateCSVButton_Click);
+            this.GenerateCSVButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // DocsButton
             // 
@@ -150,6 +155,7 @@
             this.DocsButton.Text = "Docs";
             this.DocsButton.UseVisualStyleBackColor = true;
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
+            this.DocsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // JsonToCsvForm
             // 
@@ -169,6 +175,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "JsonToCsvForm";
             this.Text = "JSON to CSV";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             this.ResumeLayout(false);
             this.PerformLayout();
 
