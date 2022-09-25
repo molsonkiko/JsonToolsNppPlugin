@@ -1,0 +1,298 @@
+﻿namespace JSON_Tools.Forms
+{
+    partial class GrepperForm
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GrepperForm));
+            this.GrepperFormTitle = new System.Windows.Forms.Label();
+            this.UrlsBox = new System.Windows.Forms.TextBox();
+            this.GetJsonFromApisTitle = new System.Windows.Forms.Label();
+            this.UrlsBoxLabel = new System.Windows.Forms.Label();
+            this.SendRequestsButton = new System.Windows.Forms.Button();
+            this.GetJsonFromFilesTitle = new System.Windows.Forms.Label();
+            this.RecursiveSearchCheckBox = new System.Windows.Forms.CheckBox();
+            this.SearchPatternsBox = new System.Windows.Forms.TextBox();
+            this.SearchPatternsBoxLabel = new System.Windows.Forms.Label();
+            this.ChooseDirectoriesButton = new System.Windows.Forms.Button();
+            this.ChooseFilesTitle = new System.Windows.Forms.Label();
+            this.FilesFoundBox = new System.Windows.Forms.ListBox();
+            this.RemoveSelectedFilesButton = new System.Windows.Forms.Button();
+            this.ViewResultsButton = new System.Windows.Forms.Button();
+            this.LeftCenterDivider = new System.Windows.Forms.Label();
+            this.CenterRightDivider = new System.Windows.Forms.Label();
+            this.TopBottomDivider = new System.Windows.Forms.Label();
+            this.ViewErrorsButton = new System.Windows.Forms.Button();
+            this.DocsButton = new System.Windows.Forms.Button();
+            this.FolderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.SuspendLayout();
+            // 
+            // GrepperFormTitle
+            // 
+            this.GrepperFormTitle.Font = new System.Drawing.Font("Segoe UI", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GrepperFormTitle.Location = new System.Drawing.Point(339, 9);
+            this.GrepperFormTitle.Name = "GrepperFormTitle";
+            this.GrepperFormTitle.Size = new System.Drawing.Size(288, 31);
+            this.GrepperFormTitle.TabIndex = 0;
+            this.GrepperFormTitle.Text = "JSON from files and APIs";
+            // 
+            // UrlsBox
+            // 
+            this.UrlsBox.Location = new System.Drawing.Point(26, 133);
+            this.UrlsBox.Multiline = true;
+            this.UrlsBox.Name = "UrlsBox";
+            this.UrlsBox.Size = new System.Drawing.Size(304, 268);
+            this.UrlsBox.TabIndex = 3;
+            this.UrlsBox.WordWrap = false;
+            // 
+            // GetJsonFromApisTitle
+            // 
+            this.GetJsonFromApisTitle.AutoSize = true;
+            this.GetJsonFromApisTitle.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GetJsonFromApisTitle.Location = new System.Drawing.Point(91, 51);
+            this.GetJsonFromApisTitle.Name = "GetJsonFromApisTitle";
+            this.GetJsonFromApisTitle.Size = new System.Drawing.Size(182, 25);
+            this.GetJsonFromApisTitle.TabIndex = 1;
+            this.GetJsonFromApisTitle.Text = "Get JSON from APIs";
+            // 
+            // UrlsBoxLabel
+            // 
+            this.UrlsBoxLabel.Location = new System.Drawing.Point(73, 85);
+            this.UrlsBoxLabel.Name = "UrlsBoxLabel";
+            this.UrlsBoxLabel.Size = new System.Drawing.Size(218, 35);
+            this.UrlsBoxLabel.TabIndex = 2;
+            this.UrlsBoxLabel.Text = "Enter URLs of APIs you want to request JSON from (one per line)";
+            // 
+            // SendRequestsButton
+            // 
+            this.SendRequestsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SendRequestsButton.Location = new System.Drawing.Point(114, 416);
+            this.SendRequestsButton.Name = "SendRequestsButton";
+            this.SendRequestsButton.Size = new System.Drawing.Size(137, 33);
+            this.SendRequestsButton.TabIndex = 4;
+            this.SendRequestsButton.Text = "Send requests";
+            this.SendRequestsButton.UseVisualStyleBackColor = true;
+            this.SendRequestsButton.Click += new System.EventHandler(this.SendRequestsButton_Click);
+            // 
+            // GetJsonFromFilesTitle
+            // 
+            this.GetJsonFromFilesTitle.AutoSize = true;
+            this.GetJsonFromFilesTitle.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.GetJsonFromFilesTitle.Location = new System.Drawing.Point(377, 59);
+            this.GetJsonFromFilesTitle.Name = "GetJsonFromFilesTitle";
+            this.GetJsonFromFilesTitle.Size = new System.Drawing.Size(224, 25);
+            this.GetJsonFromFilesTitle.TabIndex = 5;
+            this.GetJsonFromFilesTitle.Text = "Get JSON from local files";
+            // 
+            // RecursiveSearchCheckBox
+            // 
+            this.RecursiveSearchCheckBox.AutoSize = true;
+            this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(363, 110);
+            this.RecursiveSearchCheckBox.Name = "RecursiveSearchCheckBox";
+            this.RecursiveSearchCheckBox.Size = new System.Drawing.Size(180, 20);
+            this.RecursiveSearchCheckBox.TabIndex = 6;
+            this.RecursiveSearchCheckBox.Text = "Search in subdirectories?";
+            this.RecursiveSearchCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // SearchPatternsBox
+            // 
+            this.SearchPatternsBox.Location = new System.Drawing.Point(363, 156);
+            this.SearchPatternsBox.Multiline = true;
+            this.SearchPatternsBox.Name = "SearchPatternsBox";
+            this.SearchPatternsBox.Size = new System.Drawing.Size(87, 56);
+            this.SearchPatternsBox.TabIndex = 7;
+            this.SearchPatternsBox.Text = "*.json";
+            // 
+            // SearchPatternsBoxLabel
+            // 
+            this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(466, 156);
+            this.SearchPatternsBoxLabel.Name = "SearchPatternsBoxLabel";
+            this.SearchPatternsBoxLabel.Size = new System.Drawing.Size(148, 56);
+            this.SearchPatternsBoxLabel.TabIndex = 8;
+            this.SearchPatternsBoxLabel.Text = "Enter search pattern(s)\r\n(one per line)";
+            // 
+            // ChooseDirectoriesButton
+            // 
+            this.ChooseDirectoriesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ChooseDirectoriesButton.Location = new System.Drawing.Point(408, 240);
+            this.ChooseDirectoriesButton.Name = "ChooseDirectoriesButton";
+            this.ChooseDirectoriesButton.Size = new System.Drawing.Size(151, 32);
+            this.ChooseDirectoriesButton.TabIndex = 9;
+            this.ChooseDirectoriesButton.Text = "Choose directory...";
+            this.ChooseDirectoriesButton.UseVisualStyleBackColor = true;
+            this.ChooseDirectoriesButton.Click += new System.EventHandler(this.ChooseDirectoriesButton_Click);
+            // 
+            // ChooseFilesTitle
+            // 
+            this.ChooseFilesTitle.AutoSize = true;
+            this.ChooseFilesTitle.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ChooseFilesTitle.Location = new System.Drawing.Point(704, 51);
+            this.ChooseFilesTitle.Name = "ChooseFilesTitle";
+            this.ChooseFilesTitle.Size = new System.Drawing.Size(198, 25);
+            this.ChooseFilesTitle.TabIndex = 10;
+            this.ChooseFilesTitle.Text = "Choose files and URLs";
+            // 
+            // FilesFoundBox
+            // 
+            this.FilesFoundBox.FormattingEnabled = true;
+            this.FilesFoundBox.HorizontalScrollbar = true;
+            this.FilesFoundBox.ItemHeight = 16;
+            this.FilesFoundBox.Location = new System.Drawing.Point(648, 93);
+            this.FilesFoundBox.Name = "FilesFoundBox";
+            this.FilesFoundBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
+            this.FilesFoundBox.Size = new System.Drawing.Size(313, 308);
+            this.FilesFoundBox.TabIndex = 11;
+            // 
+            // RemoveSelectedFilesButton
+            // 
+            this.RemoveSelectedFilesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.RemoveSelectedFilesButton.Location = new System.Drawing.Point(709, 416);
+            this.RemoveSelectedFilesButton.Name = "RemoveSelectedFilesButton";
+            this.RemoveSelectedFilesButton.Size = new System.Drawing.Size(176, 33);
+            this.RemoveSelectedFilesButton.TabIndex = 12;
+            this.RemoveSelectedFilesButton.Text = "Remove selected files";
+            this.RemoveSelectedFilesButton.UseVisualStyleBackColor = true;
+            this.RemoveSelectedFilesButton.Click += new System.EventHandler(this.RemoveSelectedFilesButton_Click);
+            // 
+            // ViewResultsButton
+            // 
+            this.ViewResultsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ViewResultsButton.Location = new System.Drawing.Point(363, 416);
+            this.ViewResultsButton.Name = "ViewResultsButton";
+            this.ViewResultsButton.Size = new System.Drawing.Size(238, 33);
+            this.ViewResultsButton.TabIndex = 15;
+            this.ViewResultsButton.Text = "View results in buffer";
+            this.ViewResultsButton.UseVisualStyleBackColor = true;
+            this.ViewResultsButton.Click += new System.EventHandler(this.ViewResultsButton_Click);
+            // 
+            // LeftCenterDivider
+            // 
+            this.LeftCenterDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.LeftCenterDivider.Location = new System.Drawing.Point(345, 51);
+            this.LeftCenterDivider.Name = "LeftCenterDivider";
+            this.LeftCenterDivider.Size = new System.Drawing.Size(3, 350);
+            this.LeftCenterDivider.TabIndex = 16;
+            // 
+            // CenterRightDivider
+            // 
+            this.CenterRightDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.CenterRightDivider.Location = new System.Drawing.Point(624, 51);
+            this.CenterRightDivider.Name = "CenterRightDivider";
+            this.CenterRightDivider.Size = new System.Drawing.Size(3, 350);
+            this.CenterRightDivider.TabIndex = 18;
+            // 
+            // TopBottomDivider
+            // 
+            this.TopBottomDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.TopBottomDivider.Location = new System.Drawing.Point(345, 289);
+            this.TopBottomDivider.Name = "TopBottomDivider";
+            this.TopBottomDivider.Size = new System.Drawing.Size(280, 3);
+            this.TopBottomDivider.TabIndex = 17;
+            // 
+            // ViewErrorsButton
+            // 
+            this.ViewErrorsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ViewErrorsButton.Location = new System.Drawing.Point(363, 368);
+            this.ViewErrorsButton.Name = "ViewErrorsButton";
+            this.ViewErrorsButton.Size = new System.Drawing.Size(238, 33);
+            this.ViewErrorsButton.TabIndex = 14;
+            this.ViewErrorsButton.Text = "View errors";
+            this.ViewErrorsButton.UseVisualStyleBackColor = true;
+            this.ViewErrorsButton.Click += new System.EventHandler(this.ViewErrorsButton_Click);
+            // 
+            // DocsButton
+            // 
+            this.DocsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DocsButton.Location = new System.Drawing.Point(363, 314);
+            this.DocsButton.Name = "DocsButton";
+            this.DocsButton.Size = new System.Drawing.Size(238, 33);
+            this.DocsButton.TabIndex = 13;
+            this.DocsButton.Text = "Documentation";
+            this.DocsButton.UseVisualStyleBackColor = true;
+            this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
+            // 
+            // FolderBrowserDialog1
+            // 
+            this.FolderBrowserDialog1.Description = "Choose folder to find JSON files in";
+            this.FolderBrowserDialog1.ShowNewFolderButton = false;
+            // 
+            // GrepperForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(987, 461);
+            this.Controls.Add(this.DocsButton);
+            this.Controls.Add(this.ViewErrorsButton);
+            this.Controls.Add(this.TopBottomDivider);
+            this.Controls.Add(this.CenterRightDivider);
+            this.Controls.Add(this.LeftCenterDivider);
+            this.Controls.Add(this.ViewResultsButton);
+            this.Controls.Add(this.RemoveSelectedFilesButton);
+            this.Controls.Add(this.FilesFoundBox);
+            this.Controls.Add(this.ChooseFilesTitle);
+            this.Controls.Add(this.ChooseDirectoriesButton);
+            this.Controls.Add(this.SearchPatternsBoxLabel);
+            this.Controls.Add(this.SearchPatternsBox);
+            this.Controls.Add(this.RecursiveSearchCheckBox);
+            this.Controls.Add(this.GetJsonFromFilesTitle);
+            this.Controls.Add(this.SendRequestsButton);
+            this.Controls.Add(this.UrlsBoxLabel);
+            this.Controls.Add(this.GetJsonFromApisTitle);
+            this.Controls.Add(this.UrlsBox);
+            this.Controls.Add(this.GrepperFormTitle);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Name = "GrepperForm";
+            this.Text = "JSON from files and APIs";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Label GrepperFormTitle;
+        private System.Windows.Forms.TextBox UrlsBox;
+        private System.Windows.Forms.Label GetJsonFromApisTitle;
+        private System.Windows.Forms.Label UrlsBoxLabel;
+        private System.Windows.Forms.Button SendRequestsButton;
+        private System.Windows.Forms.Label GetJsonFromFilesTitle;
+        private System.Windows.Forms.CheckBox RecursiveSearchCheckBox;
+        private System.Windows.Forms.TextBox SearchPatternsBox;
+        private System.Windows.Forms.Label SearchPatternsBoxLabel;
+        private System.Windows.Forms.Button ChooseDirectoriesButton;
+        private System.Windows.Forms.Label ChooseFilesTitle;
+        private System.Windows.Forms.ListBox FilesFoundBox;
+        private System.Windows.Forms.Button RemoveSelectedFilesButton;
+        private System.Windows.Forms.Button ViewResultsButton;
+        private System.Windows.Forms.Label LeftCenterDivider;
+        private System.Windows.Forms.Label CenterRightDivider;
+        private System.Windows.Forms.Label TopBottomDivider;
+        private System.Windows.Forms.Button ViewErrorsButton;
+        private System.Windows.Forms.Button DocsButton;
+        private System.Windows.Forms.FolderBrowserDialog FolderBrowserDialog1;
+    }
+}

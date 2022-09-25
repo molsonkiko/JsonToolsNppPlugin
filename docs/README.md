@@ -59,7 +59,8 @@ You can click on the nodes in that tree to see the children. When you select a n
 __NOTES__
 1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
 2. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
-3. Keyboard shortcuts:
+    - As of version 3.5.0, you can use the `Refresh` button to refresh the tree with the most recently parsed JSON, rather than closing and re-opening the tree.
+3. Keyboard shortcuts (*added in v3.5.0*):
     - `Ctrl+Enter` in the query box submits the query.
     - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
     - Up and down arrow keys can also navigate the tree.
@@ -108,6 +109,8 @@ If you click "Yes", a new file will open in a separate tab containing details on
 
 ## Path to current line ##
 
+*Added in version v3.4.0*
+
 The `Path to current line` menu option lets you fill the clipboard with the path to the first node on the current line. This is most helpful when your JSON is already [pretty-printed](/docs/README.md#pretty_print_style) so no two nodes share a line.
 
 ![Getting the path to current line](/docs/path%20to%20current%20line.PNG)
@@ -122,6 +125,8 @@ For example, the different path styles might look like this:
 
 ## RemesPath ##
 
+*Added in version 1.2.0*
+
 The primary utility of this tool comes from the ability to query and edit the JSON using [RemesPath](RemesPath.md), which you can learn more about in the linked docs.
 
 You can submit RemesPath queries in textbox above the tree, which by default has the `@` symbol in it.
@@ -135,6 +140,8 @@ First, you can open a new buffer containing the query result.
 
 ## JSON to CSV ##
 
+*Added in version 1.2.0*
+
 Some JSON also has a somewhat __tabular__ format, such that it is amenable to conversion to a CSV file. The JSON in this example is a particularly simple case of this.
 
 This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON to a tabular format. Remember that even if the JSON file as a whole can't be "tabularized" (or *can*, but you don't *want*  to), you can use a RemesPath query to select the part that you want to tabularize.
@@ -144,6 +151,8 @@ This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
 
 ## Changing how much JSON tree is displayed ##
+
+*Added in version 3.1.0*
 
 Loading the full tree for very large, complex JSON can cause tremendous memory consumption and make Notepad++ unresponsive for a long time. Because of this, only the __direct children of the root__ are displayed by default for JSON files larger than 4 megabytes. This is reflected in the `View all subtrees` checkbox. You can change this in the settings.
 
@@ -161,6 +170,8 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 
 ## Get info about tree nodes ##
 
+*Added in version 3.4.0*
+
 You can right click on a tree node to copy any of the following to the clipboard:
 * Value
 * Key/index (customizable via [key style](#key-style))
@@ -171,6 +182,8 @@ You can also click on the `Current path` button beneath the tree to copy the pat
 ![Current path button for path to current tree node](/docs/path%20to%20current%20tree%20node%20button.PNG)
 
 ## JSON formatting ##
+
+*Added in version 3.3.0*
 
 This plugin can print JSON in a variety of different ways, depending on what settings you use.
 
@@ -248,6 +261,8 @@ As you can see, the sort is unstable when comparing two keys that differ only in
 
 ## JSON Lines documents ##
 
+*Added in version v3.2.0*
+
 [JSON Lines](https://jsonlines.org/) documents can contain multiple valid JSON documents, provided that each is on its own line and there is exactly one line per document (with an optional empty line after the last).
 
 JSON Lines docs typically have a `.jsonl` file extension, and if a file has that extension, this plugin will try to parse it as a JSON Lines doc.
@@ -278,7 +293,7 @@ And this is *invalid* too, because one document spans multiple lines:
 
 __NOTES:__
 - This plugin parses a JSON Lines doc as an array where the `i^th` element is the JSON document on the `i^th` line.
-- The `Array to JSON Lines` command on the plugin menu allows you to convert a normal JSON array into a JSON Lines document. 
+- The `Array to JSON Lines` command (*added in v3.3.0*) on the plugin menu allows you to convert a normal JSON array into a JSON Lines document. 
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
 

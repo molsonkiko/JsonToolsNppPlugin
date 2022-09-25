@@ -276,7 +276,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
-            this.VisibleChanged += new System.EventHandler(this.TreeViewer_OnVisibleChanged);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);

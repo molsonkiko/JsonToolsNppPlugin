@@ -83,19 +83,21 @@ namespace JSON_Tools.Utils
             Category("JSON formatting"), DefaultValue(PrettyPrintStyle.Google)]
         public PrettyPrintStyle pretty_print_style { get; set; }
         #endregion
+
         #region MISCELLANEOUS
         [Description("The style of key to use when getting the path or key/index of a node or line"),
             Category("Miscellaneous"), DefaultValue(KeyStyle.RemesPath)]
         public KeyStyle key_style { get; set; }
         #endregion
-        //#region GREP_API_SETTINGS
-        //[Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
-        //    Category("Grep and API requests"), DefaultValue(4)]
-        //public int thread_count_parsing;
 
-        //[Description("Should the API requester be asynchronous?"),
-        //    Category("Grep and API requests"), DefaultValue(true)]
-        //public bool api_requests_async;
-        //#endregion
+        #region GREP_API_SETTINGS
+        [Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
+            Category("Grep and API requests"), DefaultValue(4)]
+        public int thread_count_parsing { get; set; }
+
+        [Description("Should the API requester be asynchronous?"),
+            Category("Grep and API requests"), DefaultValue(true)]
+        public bool api_requests_async { get; set; }
+        #endregion
     }
 }

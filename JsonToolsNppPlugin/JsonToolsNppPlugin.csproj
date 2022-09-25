@@ -67,6 +67,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- infrastructure -->
+    <Compile Include="Forms\GrepperForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\GrepperForm.Designer.cs">
+      <DependentUpon>GrepperForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\JsonToCsvForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -190,6 +196,9 @@
   </ItemGroup>
   <ItemGroup>
     <!-- resx files -->
+    <EmbeddedResource Include="Forms\GrepperForm.resx">
+      <DependentUpon>GrepperForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\JsonToCsvForm.resx">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
     </EmbeddedResource>

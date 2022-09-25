@@ -606,6 +606,8 @@ Note that in this example, we're using quotes around the key names `avg` and `le
 
 ## Editing with assignment expressions ##
 
+*Added in version v2.0.0*
+
 A RemesPath query can contain at most one `=` separating two valid expressions. This is the __assignment operator__.
 
 The LHS of the assignment expression is typically a query that selects items from a document (e.g., `@.foo[@ > 0]`).

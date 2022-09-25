@@ -8,7 +8,6 @@ using System.Net;
 using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET;
 /*
 using System;
 using System.Net;
@@ -51,16 +50,20 @@ namespace JSON_Tools.JSON_Tools
 		/// maps filenames and urls to parsed JSON
 		/// </summary>
 		public JObject fname_jsons;
+        public JObject exceptions;
+        public Dictionary<string, string> fname_strings;
 		public JsonParser json_parser;
         private static readonly WebClient webClient = new WebClient();
         public int max_threads;
         public bool api_requests_async;
 
-		public JsonGrepper(JsonParser json_parser = null)
+		public JsonGrepper(JsonParser json_parser = null, int max_threads = 4, bool api_requests_async = true)
 		{
-            max_threads = 4; // Main.settings.thread_count_parsing;
-            api_requests_async = true; // Main.settings.api_requests_async;
+            this.max_threads = max_threads;
+            this.api_requests_async = api_requests_async;
+            fname_strings = new Dictionary<string, string>();
 			fname_jsons = new JObject();
+            exceptions = new JObject();
 			if (json_parser == null)
             {
 				this.json_parser = new JsonParser(true, true, true, true, true, true);
@@ -76,6 +79,9 @@ namespace JSON_Tools.JSON_Tools
             webClient.Headers.Add("User-Agent", "JsonTools Notepad++ plugin");
             // see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#request_context
             // for more info on HTTP request headers
+            webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(
+                DownloadOneJsonString
+            );
 		}
 
 		/// <summary>
@@ -86,23 +92,25 @@ namespace JSON_Tools.JSON_Tools
 		/// <param name="root_dir"></param>
 		/// <param name="recursive"></param>
 		/// <param name="search_pattern"></param>
-		private void ReadJsonFiles(string root_dir, bool recursive, string search_pattern, Dictionary<string, string> fname_strs)
+		private void ReadJsonFiles(string root_dir, bool recursive, string search_pattern)
 		{
-			if (fname_strs == null)
-				fname_strs = new Dictionary<string, string>();
-            DirectoryInfo dir_info = new DirectoryInfo(root_dir);
-			// this could throw a DirectoryNotFoundException; maybe I should do some error handling?
+            DirectoryInfo dir_info;
+            try
+            {
+                dir_info = new DirectoryInfo(root_dir);
+            }
+            catch { return; }
 			foreach (FileInfo file_info in dir_info.EnumerateFiles(search_pattern))
 			{
 				string fname = file_info.FullName;
-                fname_strs[fname] = file_info.OpenText().ReadToEnd();
+                fname_strings[fname] = file_info.OpenText().ReadToEnd();
 			}
 			if (recursive)
             {
 				// recursively search subdirectories for files that match the search pattern
 				foreach (DirectoryInfo subdir_info in dir_info.EnumerateDirectories())
                 {
-					ReadJsonFiles(subdir_info.FullName, recursive, search_pattern, fname_strs);
+					ReadJsonFiles(subdir_info.FullName, recursive, search_pattern);
                 }
             }
 		}
@@ -111,19 +119,20 @@ namespace JSON_Tools.JSON_Tools
 		/// the task of a single thread in ParseJsonStringsThreaded:<br></br>
 		/// Loop through a subset of filenames/urls and tries to parse the JSON associated with each filename.
 		/// </summary>
-		/// <param name="fname_strs"></param>
+		/// <param name="fname_strings"></param>
 		/// <param name="results"></param>
 		private static void ParseJsonStrings_Task(string[] assigned_fnames, 
-                                                  Dictionary<string, string> fname_strs, 
+                                                  Dictionary<string, string> fname_strings, 
                                                   Dictionary<string, JNode> fname_jsons,
                                                   JsonParser json_parser)
         {
 			foreach (string fname in assigned_fnames)
             {
-				string json_str = fname_strs[fname];
+				string json_str = fname_strings[fname];
                 try
                 {
-					fname_jsons[fname] = json_parser.Parse(json_str);
+                    string fname_redone = new JNode(fname, Dtype.STR, 0).ToString().Slice("1:-1");
+					fname_jsons[fname_redone] = json_parser.Parse(json_str);
                 }
                 catch { } // just ignore badly formatted files
             }
@@ -134,13 +143,10 @@ namespace JSON_Tools.JSON_Tools
 		/// and attempts to parse each string and add the fname-JNode pair to fname_jsons.<br></br>
 		/// Divides up the filenames between at most max_threads threads.
 		/// </summary>
-		/// <param name="fname_strs"></param>
-		/// <param name="max_threads"></param>
-		/// <returns></returns>
-		private void ParseJsonStringsThreaded(Dictionary<string, string> fname_strs)
+		private void ParseJsonStringsThreaded()
         {
 			List<Thread> threads = new List<Thread>();
-			string[] fnames = fname_strs.Keys.ToArray();
+			string[] fnames = fname_strings.Keys.ToArray();
 			Array.Sort(fnames);
 			int start = 0;
 			int fnames_per_thread = fnames.Length / max_threads;
@@ -162,13 +168,14 @@ namespace JSON_Tools.JSON_Tools
                 // JsonParsers store position in the parsed string (ii) and line_num as instance variables.
                 // that means that if multiple threads share a JsonParser, you have race conditions associated with ii and line_num.
                 // For this reason, we need to give each thread a separate JsonParser.
-                Thread thread = new Thread(() => ParseJsonStrings_Task(assigned_fnames, fname_strs, fname_jsons.children, json_parser.Copy()));
+                Thread thread = new Thread(() => ParseJsonStrings_Task(assigned_fnames, fname_strings, fname_jsons.children, json_parser.Copy()));
 				threads.Add(thread);
 				thread.Start();
 				start = end;
             }
 			foreach (Thread thread in threads)
 				thread.Join();
+            fname_strings.Clear(); // don't need the strings anymore, only the JSON
         }
 
         /// <summary>
@@ -182,84 +189,86 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="recursive"></param>
         /// <param name="search_pattern"></param>
         /// <param name="max_threads"></param>
-        public void Grep(string root_dir, bool recursive = false, string search_pattern = "*.json", int max_threads = 4)
+        public void Grep(string root_dir, bool recursive = false, string search_pattern = "*.json")
         {
-            Dictionary<string, string> fname_strs = new Dictionary<string, string>();
-            ReadJsonFiles(root_dir, recursive, search_pattern, fname_strs);
-            ParseJsonStringsThreaded(fname_strs);
+            ReadJsonFiles(root_dir, recursive, search_pattern);
+            ParseJsonStringsThreaded();
         }
 
-        ///// <summary>
-        ///// Asynchronously send API requests to several URLs.
-        ///// For each URL where the request succeeds, try to parse the JSON returned.
-        ///// If the JSON returned is valid, add the JSON to fname_jsons.
-        ///// Populate a HashSet of all URLs for which the request succeeded
-        ///// and a dict mapping urls to exception strings
-        ///// </summary>
-        ///// <param name="urls"></param>
-        ///// <returns></returns>
-        //private object[] GetJsonFromApis(string[] urls)
-        //{
-        //    var urls_requested = new HashSet<string>();
-        //    var exceptions = new string[urls.Length];
-        //    var json_strs = new string[urls.Length];
-        //    // somehow create a handler that associates the result with the url
-        //    // that it was downloaded from
-        //    var process_response = new DownloadStringCompletedEventHandler(
-        //        (object sender, DownloadStringCompletedEventArgs e) =>
-        //        {
-        //            if (e.Error != null)
-        //            {
-        //                exceptions[0] = e.Error.ToString();
-        //                return;
-        //            }
-        //            json_strs[0] = e.Result;
-        //        }
-        //    );
-        //    webClient.DownloadStringCompleted += process_response;
-        //    for (int ii = 0; ii < urls.Length; ii++)
-        //    {
-        //        string url = urls[ii];
-        //        // if (!fname_jsons.children.ContainsKey(url))
-        //        // it is probably better to allow duplication of labor, 
-        //        // so that the user can get new JSON if something changed
-        //        webClient.DownloadStringAsync(new Uri(url));
-        //        webClient.DownloadStringCompleted -= process_response;
-        //        if (ii < urls.Length - 1)
-        //        {
-        //            // The i^th url will have an event handler that puts the
-        //            // json response in the i^th entry of json_strs,
-        //            // or if there's an error, puts the error msg in the i^th
-        //            // entry of exceptions.
-        //            process_response = new DownloadStringCompletedEventHandler(
-        //                (object sender, DownloadStringCompletedEventArgs e) =>
-        //                {
-        //                    if (e.Error != null)
-        //                    {
-        //                        exceptions[ii + 1] = e.Error.ToString();
-        //                        return;
-        //                    }
-        //                    json_strs[ii + 1] = e.Result;
-        //                }
-        //            );
-        //            webClient.DownloadStringCompleted += process_response;
-        //        }
-        //    }
-        //    // keep track of which urls were actually requested,
-        //    // excluding the ones where the request failed
-        //    for (int ii = 0; ii < urls.Length; ii++)
-        //    {
-        //        if (json_strs[ii] == null)
-        //            urls_requested.Add(urls[ii]);
-        //    }
-        //}
+        /// <summary>
+        /// Downloads JSON from APIs. If api_requests_async, does this asynchronously.<br></br>
+        /// Otherwise, does it synchronously.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void GetJsonFromApis(string[] urls)
+        {
+            if (api_requests_async)
+            {
+                GetJsonFromApisAsync(urls);
+                return;
+            }
+            foreach (string url in urls)
+            {
+                try
+                {
+                    fname_strings[url] = webClient.DownloadString(new Uri(url));
+                }
+                catch (Exception ex)
+                {
+                    exceptions[url] = new JNode(ex.ToString(), Dtype.STR, 0);
+                }
+            }
+            ParseJsonStringsThreaded();
+        }
 
         /// <summary>
-        /// clear the map from filenames to JSON objects, and get rid of any lint
+        /// Asynchronously send API requests to several URLs.
+        /// For each URL where the request succeeds, try to parse the JSON returned.
+        /// If the JSON returned is valid, add the JSON to fname_jsons.
+        /// Populate a HashSet of all URLs for which the request succeeded
+        /// and a dict mapping urls to exception strings
+        /// </summary>
+        /// <param name="urls"></param>
+        /// <returns></returns>
+        private void GetJsonFromApisAsync(string[] urls)
+        {
+            Task[] tasks = new Task[urls.Length];
+            for (int ii = 0; ii < urls.Length; ii++)
+            {
+                string url = urls[ii];
+                // if (!fname_jsons.children.ContainsKey(url))
+                // could stop if already downloaded, but it is probably better to allow duplication of labor, 
+                // so that the user can get new JSON if something changed
+                tasks[ii] = new Task(() => webClient.DownloadStringAsync(new Uri(url), url));
+                tasks[ii].Start();
+                // the second arg to DownloadStringAsync is a unique identifier
+                // of the asynchronous task
+            }
+            // wait for all those downloads to complete
+            Task.WaitAll(tasks);
+            // now parse all the JSON strings that were downloaded
+            ParseJsonStringsThreaded();
+        }
+
+        private void DownloadOneJsonString(object sender, DownloadStringCompletedEventArgs e)
+        {
+            string src_url = (string)e.UserState;
+            if (e.Error != null)
+            {
+                exceptions[src_url] = new JNode(e.Error.ToString(), Dtype.STR, 0);
+                return;
+            }
+            fname_strings[src_url] = e.Result;
+        }
+
+        /// <summary>
+        /// clear all exceptions, JSON strings, and JSON
         /// </summary>
         public void Reset()
         {
+            fname_strings.Clear();
 			fname_jsons.children.Clear();
+            exceptions.children.Clear();
 			//fname_lints.Clear();
         }
 	}

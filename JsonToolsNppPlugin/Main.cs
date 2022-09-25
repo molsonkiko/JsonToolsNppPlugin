@@ -37,6 +37,7 @@ namespace Kbg.NppPluginNET
         public static YamlDumper yamlDumper = new YamlDumper();
         //public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         public static TreeViewer treeViewer = null;
+        public static GrepperForm grepperForm = null;
         //public static string active_fname;
         //public static bool IsWin32 = Npp.notepad.GetPluginConfig().Contains("x86");
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
@@ -51,6 +52,7 @@ namespace Kbg.NppPluginNET
 
         // fields related to forms
         static internal int jsonTreeId = -1;
+        static internal int grepperFormId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -74,13 +76,14 @@ namespace Kbg.NppPluginNET
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(6, "---", null);
-            PluginBase.SetCommand(7, "Parse JSON Lines document", () => OpenJsonTree(true));
-            PluginBase.SetCommand(8, "Array to JSON Lines", DumpJsonLines);
-            PluginBase.SetCommand(9, "---", null);
-            PluginBase.SetCommand(10, "JSON to YAML", DumpYaml);
-            PluginBase.SetCommand(11, "Run tests", TestRunner.RunAll);
+            PluginBase.SetCommand(5, "Get JSON from files and APIs", OpenGrepperForm); grepperFormId = 5;
+            PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(7, "---", null);
+            PluginBase.SetCommand(8, "Parse JSON Lines document", () => OpenJsonTree(true));
+            PluginBase.SetCommand(9, "Array to JSON Lines", DumpJsonLines);
+            PluginBase.SetCommand(10, "---", null);
+            PluginBase.SetCommand(11, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(12, "Run tests", TestRunner.RunAll);
         }
 
         static internal void SetToolBarIcon()
@@ -121,36 +124,56 @@ namespace Kbg.NppPluginNET
             //if (!IsWin32)
             //    return;
             //// changing tabs
-            //if (code == (uint)NppMsg.NPPN_BUFFERACTIVATED)
-            //{
-            //    // check to see if there was a treeview for the file
-            //    // we just navigated away from
-            //    if (active_fname != null)
-            //    {
-            //        if (treeViewers.TryGetValue(active_fname, out TreeViewer old_tv))
-            //        {
-            //            if (old_tv.IsDisposed)
-            //            // it was closed by user earlier
-            //                treeViewers.Remove(active_fname);
-            //            else
-            //            // minimize the treeviewer that was visible
-            //                HideTreeView(old_tv);
-            //        }
-            //    }
-            //    // now open the treeview for the file just opened, assuming it exists
-            //    active_fname = Npp.notepad.GetCurrentFilePath();
-            //    if (treeViewers.TryGetValue(active_fname, out TreeViewer tv))
-            //    {
-            //        if (tv.IsDisposed)
-            //        // it was removed earlier, so clean it up
-            //            treeViewers.Remove(active_fname);
-            //        else
-            //        // maximize the treeviewer belonging to this file
-            //            ShowTreeView(tv);
-            //    }
-            //    return;
-            //}
-            //// when closing a file
+            if (code == (uint)NppMsg.NPPN_BUFFERACTIVATED)
+            {
+                // check to see if there was a treeview for the file
+                // we just navigated away from
+                //if (active_fname != null)
+                //{
+                //    if (treeViewers.TryGetValue(active_fname, out TreeViewer old_tv))
+                //    {
+                //        if (old_tv.IsDisposed)
+                //            // it was closed by user earlier
+                //            treeViewers.Remove(active_fname);
+                //        else
+                //            // minimize the treeviewer that was visible
+                //            HideTreeView(old_tv);
+                //    }
+                //}
+                //// now open the treeview for the file just opened, assuming it exists
+                //active_fname = Npp.notepad.GetCurrentFilePath();
+                //if (treeViewers.TryGetValue(active_fname, out TreeViewer tv))
+                //{
+                //    if (tv.IsDisposed)
+                //        // it was removed earlier, so clean it up
+                //        treeViewers.Remove(active_fname);
+                //    else
+                //        // maximize the treeviewer belonging to this file
+                //        ShowTreeView(tv);
+                //}
+                // if grepper form and tree viewer are both open,
+                // ensure that only one is visible at a time
+                if (grepperForm != null
+                    && grepperForm.tv != null
+                    && !grepperForm.tv.IsDisposed)
+                {
+                    if (grepperForm.tv.Visible)
+                    {
+                        HideTreeView(grepperForm.tv);
+                        if (treeViewer != null && !treeViewer.IsDisposed)
+                            ShowTreeView(treeViewer);
+                    }
+                    else if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                    {
+                        ShowTreeView(grepperForm.tv);
+                        if (treeViewer != null && !treeViewer.IsDisposed)
+                            HideTreeView(treeViewer);
+                    }
+                }
+
+                return;
+            }
+            // when closing a file
             //if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
             //{
             //    int buffer_closed_id = notification.Header.IdFrom.ToInt32();
@@ -205,7 +228,7 @@ namespace Kbg.NppPluginNET
         #endregion
 
         #region " Menu functions "
-        static void docs()
+        public static void docs()
         {
             string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin";
             try
@@ -411,13 +434,14 @@ namespace Kbg.NppPluginNET
             if (treeViewer != null && !treeViewer.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
+                bool was_visible = treeViewer.Visible;
                 HideTreeView(treeViewer);
                 treeViewer.Close();
-                treeViewer = null;
+                if (was_visible)
+                    return;
                 //if (IsWin32)
                 //    treeViewers.Remove(cur_fname);
                 //else treeViewer = null;
-                return;
             }
             if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
                 is_json_lines = true;
@@ -425,6 +449,22 @@ namespace Kbg.NppPluginNET
             if (json == null)
                 return; // don't open the tree view for non-json files
             treeViewer = new TreeViewer(json);
+            DisplayJsonTree(treeViewer, json);
+        }
+
+        static void OpenGrepperForm()
+        {
+            if (grepperForm != null)
+                grepperForm.Focus();
+            else
+            {
+                grepperForm = new GrepperForm();
+                grepperForm.Show();
+            }
+        }
+
+        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json)
+        {
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
                 Graphics g = Graphics.FromImage(newBmp);
@@ -457,6 +497,7 @@ namespace Kbg.NppPluginNET
             // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
+            ShowTreeView(treeViewer);
             //if (IsWin32)
             //    treeViewers[cur_fname] = tv;
             treeViewer.QueryBox.Focus();

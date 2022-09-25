@@ -728,19 +728,6 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// When the tree viewer is minimized, close it altogether.<br></br>
-        /// Don't do this when the user switches away from this TreeViewer's buffer
-        /// though.
-        /// </summary>
-        private void TreeViewer_OnVisibleChanged(object sender, EventArgs e)
-        {
-            if (!Visible && Npp.notepad.GetCurrentFilePath() == fname)
-            {
-                Close();
-            }
-        }
-
-        /// <summary>
         /// reset the JSON and query of this form to the JSON in whatever
         /// file is currently active
         /// </summary>
@@ -749,26 +736,13 @@ namespace JSON_Tools.Forms
         private void RefreshButton_Click(object sender, EventArgs e)
         {
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            JNode new_json;
-            if (!Main.fname_jsons.TryGetValue(cur_fname, out new_json))
-            {
-                Main.TryParseJson();
-                if (!Main.fname_jsons.TryGetValue(cur_fname, out new_json))
-                    return; // do nothing if error in parsing current file
-            }
+            JNode new_json = Main.TryParseJson();
             fname = cur_fname;
             json = new_json;
             query_result = json;
+            Main.fname_jsons[fname] = json;
             JsonTreePopulate(json);
         }
-
-        //private void EscapeKeyPress(object sender, KeyEventArgs e)
-        //{
-        //    if (e.KeyCode == Keys.Escape)
-        //    {
-
-        //    }
-        //}
 
         // not creating schemas at present because schemas produced may be invalid
         //private void SchemaButton_Click(object sender, EventArgs e)
