@@ -23,9 +23,9 @@ namespace JSON_Tools.Forms
         public GrepperForm()
         {
             InitializeComponent();
-            grepper = new JsonGrepper(new JsonParser(),
+            grepper = new JsonGrepper(Main.jsonParser.Copy(),
                 Main.settings.thread_count_parsing,
-                Main.settings.api_requests_async
+                Main.settings.max_api_request_threads
             );
             tv = null;
             files_found = new HashSet<string>();
@@ -91,12 +91,24 @@ namespace JSON_Tools.Forms
 
         private void ViewErrorsButton_Click(object sender, EventArgs e)
         {
+            if (grepper.exceptions.Length == 0)
+            {
+                MessageBox.Show("No exceptions! \U0001f600");
+                return;
+            }
             Npp.notepad.FileNew();
-            Npp.AddLine(grepper.exceptions.ToString());
+            string exc_str = grepper.exceptions.PrettyPrintAndChangeLineNumbers(
+                Main.settings.indent_pretty_print,
+                Main.settings.sort_keys,
+                Main.settings.pretty_print_style
+            );
+            Npp.AddLine(exc_str);
+            Npp.SetLangJson();
         }
 
         private void RemoveSelectedFilesButton_Click(object sender, EventArgs e)
         {
+            Main.grepperTreeViewJustOpened = true;
             var selected_files = new List<string>();
             foreach (object file in FilesFoundBox.SelectedItems)
             {
@@ -122,19 +134,22 @@ namespace JSON_Tools.Forms
                 tv.JsonTreePopulate(grepper.fname_jsons);
                 Npp.notepad.FileNew();
                 fname = Npp.notepad.GetCurrentFilePath();
+                tv.fname = fname;
                 string result = grepper.fname_jsons.PrettyPrintAndChangeLineNumbers(
                     Main.settings.indent_pretty_print,
                     Main.settings.sort_keys,
                     Main.settings.pretty_print_style
                 );
                 Npp.AddLine(result);
+                Npp.SetLangJson();
                 if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
-                    Main.HideTreeView(Main.treeViewer);
+                    Npp.notepad.HideDockingForm(Main.treeViewer);
             }
         }
 
         private void ViewResultsButton_Click(object sender, EventArgs e)
         {
+            Main.grepperTreeViewJustOpened = true;
             Npp.notepad.FileNew();
             fname = Npp.notepad.GetCurrentFilePath();
             string result = grepper.fname_jsons.PrettyPrintAndChangeLineNumbers(
@@ -145,13 +160,66 @@ namespace JSON_Tools.Forms
             Npp.AddLine(result);
             if (tv != null && !tv.IsDisposed)
             {
-                Main.HideTreeView(tv);
+                Npp.notepad.HideDockingForm(tv);
                 tv.Close();
             }
             tv = new TreeViewer(grepper.fname_jsons);
-            Main.DisplayJsonTree(tv, tv.json);
+            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree");
             if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
-                Main.HideTreeView(Main.treeViewer);
+                Npp.notepad.HideDockingForm(Main.treeViewer);
+        }
+
+        /// <summary>
+        /// when the form closes, clear all the JSON
+        /// and hide and then destroy the associated tree view
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GrepperForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            grepper.Reset();
+            if (tv != null)
+            {
+                Npp.notepad.HideDockingForm(tv);
+                tv.Close();
+            }
+            if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
+            {
+                Npp.notepad.ShowDockingForm(Main.treeViewer);
+            }
+        }
+
+        private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            // enter presses button
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                if (sender is Button btn)
+                {
+                    // Enter has the same effect as clicking a selected button
+                    btn.PerformClick();
+                }
+            }
+            // Escape -> go to editor
+            else if (e.KeyData == Keys.Escape)
+            {
+                Npp.editor.GrabFocus();
+            }
+            // Tab -> go through controls, Shift+Tab -> go through controls backward
+            else if (e.KeyCode == Keys.Tab)
+            {
+                Control next = GetNextControl((Control)sender, !e.Shift);
+                while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
+                next.Focus();
+                e.Handled = true;
+            }
+        }
+
+        private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\t')
+                e.Handled = true;
         }
 
         private void AddFilesToFilesFound()

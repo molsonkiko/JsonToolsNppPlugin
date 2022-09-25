@@ -19,8 +19,8 @@ namespace CsvQuery.PluginInfrastructure
 {
     public class SettingsBase
     {
-        private const int DEFAULT_WIDTH = 350;
-        private const int DEFAULT_HEIGHT = 450;
+        private const int DEFAULT_WIDTH = 400;
+        private const int DEFAULT_HEIGHT = 500;
 
         private static readonly string IniFilePath;
 

@@ -297,19 +297,9 @@ __NOTES:__
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
 
-# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
-
-## JSON Schema ##
-
-You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
-
-This JSON schema will not be perfect, until I fix a known bug that causes the "required" attribute of object schemas to include the *union* of all keys in all objects belonging to that schema rather than the *intersection* as it should.
-
-There are other bugs too, but I haven't yet diagnosed what causes them to appear.
-
-![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)
-
 # Get JSON from files and APIs #
+
+*Added in version 3.6.0*
 
 Sometimes it is useful to work with many JSON files at a time. For this purpose, we created a tool for *grepping* (searching for certain kinds of files in a directory, possibly recursively) for JSON files in a local directory, and also for sending [REST API](https://www.redhat.com/en/topics/api/what-is-a-rest-api) requests to multiple URLs.
 
@@ -331,41 +321,23 @@ Here's an example of what you get with successful request(s):
 
 ![JSON grepper/API requester successful API requests](/docs/json_from_files_and_apis%20api%20good%20url%20result.PNG)
 
-The results automatically populate the tree on the left, and a list of files and urls shows where the tool has gotten JSON from.
-
-Of course, sometimes you'll send a bad request.
-
-![JSON grepper/API requester bad API request](/docs/json_from_files_and_apis%20api%20bad%20url%20error.PNG)
-
-*As long as you keep clicking **OK**,* an error message like the one shown above will show up for every URL where the request failed for whatever reason, until there are no more bad URLs. If you click **Cancel**, no more messages will show up.
+Of course, sometimes an API request will fail. You can click the `View errors` button to see any errors that happened.
 
 ## Getting JSON from local directories ##
 
-If you want to open up all the JSON files in a directory, look to the bottom center left. There you can customize what type of [filename search pattern](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension), choose whether to recursively search in subdirectories (false by default), and finally search for files using the settings you chose.
+If you want to open up all the JSON files in a directory, look to the bottom center left. There you can customize what type(s) of [filename search pattern](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension), choose whether to recursively search in subdirectories (false by default), and finally search for files using the settings you chose.
+
+For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the `View errors button`.
 
 ![JSON grepper/API requester search JSON in local directories](/docs/json_from_files_and_apis%20get%20json%20in%20directory.PNG)
 
-## Querying searched JSON with RemesPath ##
+### Viewing results in a buffer ###
 
-Just as in the single-file client, we can execute RemesPath queries. When you enter a query and click the `Execute query` button, the query will run on *all* of the JSON documents that the tool has found.
+If you want to see the JSON found by this tool, just click the `View results in buffer` button. This will open a new buffer in Notepad++ with an object mapping filenames and URLs to the JSON associated with them.
 
-![JSON grepper/API requester remespath query all JSONs](/docs/json_from_files_and_apis%20enter%20remespath%20query.PNG)
+This form has its own tree viewer associated with this buffer. You can use this plugin's normal tree viewer for other buffers. If you close the buffer, the tree viewer is destroyed.
 
-You can then save your query results to files. For each query result you have, a prompt will pop up, and you can choose if and how you want to save the file.
-
-![JSON grepper/API requester remespath query save to files](/docs/json_from_files_and_apis%20save%20query%20to%20file.PNG)
-
-Note that the title of the file-saving box tells you which file you're saving the query result for, so that you can decide how to name the new file.
-
-## Clearing previously searched JSON ##
-
-Maybe you've decided that you no longer want to look at the JSON you've already searched, and you want to try a different search. You can do this by clicking the `Clear all files` button in the bottom left.
-
-![JSON grepper/API requester clear all files](/docs/json_from_files_and_apis%20clear%20all%20files.PNG)
-
-This will clear out all memory of files you found, the associated JSON, and any queries you made.
-
-## Clearing only selected files ##
+## Clearing selected files ##
 
 If you like most of the JSON documents you've found but you don't want to keep *all* of the files, you can select some of them, and then click the `Remove selected files` button in the bottom right center.
 
@@ -374,3 +346,21 @@ If you like most of the JSON documents you've found but you don't want to keep *
 After you click the button, those JSON documents will be removed.
 
 ![JSON grepper/API requester remove selected files button AFTER removal](/docs/json_from_files_and_apis%20remove%20selected%20files%20AFTER.PNG)
+
+## Viewing errors ##
+
+Click the `View errors` button to see if any errors happened. If any did, a new buffer will happen with an object mapping from filenames and urls to the associated exception.
+
+ADD IMAGE
+
+# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
+
+## JSON Schema ##
+
+You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
+
+This JSON schema will not be perfect, until I fix a known bug that causes the "required" attribute of object schemas to include the *union* of all keys in all objects belonging to that schema rather than the *intersection* as it should.
+
+There are other bugs too, but I haven't yet diagnosed what causes them to appear.
+
+![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)

@@ -38,6 +38,7 @@ namespace Kbg.NppPluginNET
         //public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         public static TreeViewer treeViewer = null;
         public static GrepperForm grepperForm = null;
+        public static bool grepperTreeViewJustOpened = false;
         //public static string active_fname;
         //public static bool IsWin32 = Npp.notepad.GetPluginConfig().Contains("x86");
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
@@ -76,7 +77,7 @@ namespace Kbg.NppPluginNET
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "Get JSON from files and APIs", OpenGrepperForm); grepperFormId = 5;
+            PluginBase.SetCommand(5, "Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 5;
             PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(7, "---", null);
             PluginBase.SetCommand(8, "Parse JSON Lines document", () => OpenJsonTree(true));
@@ -137,7 +138,7 @@ namespace Kbg.NppPluginNET
                 //            treeViewers.Remove(active_fname);
                 //        else
                 //            // minimize the treeviewer that was visible
-                //            HideTreeView(old_tv);
+                //            Npp.notepad.HideDockingForm(old_tv);
                 //    }
                 //}
                 //// now open the treeview for the file just opened, assuming it exists
@@ -149,47 +150,61 @@ namespace Kbg.NppPluginNET
                 //        treeViewers.Remove(active_fname);
                 //    else
                 //        // maximize the treeviewer belonging to this file
-                //        ShowTreeView(tv);
+                //        Npp.notepad.ShowDockingForm(tv);
                 //}
                 // if grepper form and tree viewer are both open,
                 // ensure that only one is visible at a time
+                // don't do anything when the tree view first opens though
                 if (grepperForm != null
                     && grepperForm.tv != null
-                    && !grepperForm.tv.IsDisposed)
+                    && !grepperForm.tv.IsDisposed
+                    && !grepperTreeViewJustOpened)
                 {
-                    if (grepperForm.tv.Visible)
+                    if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
                     {
-                        HideTreeView(grepperForm.tv);
+                        Npp.notepad.ShowDockingForm(grepperForm.tv);
                         if (treeViewer != null && !treeViewer.IsDisposed)
-                            ShowTreeView(treeViewer);
+                            Npp.notepad.HideDockingForm(treeViewer);
                     }
-                    else if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                    else
                     {
-                        ShowTreeView(grepperForm.tv);
+                        Npp.notepad.HideDockingForm(grepperForm.tv);
                         if (treeViewer != null && !treeViewer.IsDisposed)
-                            HideTreeView(treeViewer);
+                            Npp.notepad.ShowDockingForm(treeViewer);
                     }
                 }
-
+                grepperTreeViewJustOpened = false;
                 return;
             }
             // when closing a file
-            //if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
-            //{
-            //    int buffer_closed_id = notification.Header.IdFrom.ToInt32();
-            //    string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
-            //    // clean up data associated with the buffer that was just closed
-            //    if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
-            //        return;
-            //    if (!closed_tv.IsDisposed)
-            //    {
-            //        HideTreeView(closed_tv);
-            //        closed_tv.Close();
-            //    }
-            //    treeViewers.Remove(buffer_closed);
-            //    fname_jsons.Remove(buffer_closed);
-            //    return;
-            //}
+            if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
+            {
+                // if you close the file belonging the GrepperForm, delete its tree viewer
+                if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed &&
+                    Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                {
+                    Npp.notepad.HideDockingForm(grepperForm.tv);
+                    grepperForm.tv.Close();
+                    grepperForm.tv = null;
+                    // also unhide the normal tree viewer if it exists
+                    if (treeViewer != null && !treeViewer.IsDisposed)
+                        Npp.notepad.ShowDockingForm(treeViewer);
+                    return;
+                }
+                //int buffer_closed_id = notification.Header.IdFrom.ToInt32();
+                //string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
+                //// clean up data associated with the buffer that was just closed
+                //if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
+                //    return;
+                //if (!closed_tv.IsDisposed)
+                //{
+                //    Npp.notepad.HideDockingForm(closed_tv);
+                //    closed_tv.Close();
+                //}
+                //treeViewers.Remove(buffer_closed);
+                //fname_jsons.Remove(buffer_closed);
+                //return;
+            }
             // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
             //if (code == (uint)SciMsg.SCI_UNDO
             //    || code == (uint)SciMsg.SCI_REDO)
@@ -349,6 +364,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.editor.SetText(yaml);
+            Npp.notepad.SetCurrentLanguage(LangType.L_YAML);
         }
 
         /// <summary>
@@ -390,8 +406,12 @@ namespace Kbg.NppPluginNET
         private static void PathToCurrentLine()
         {
             string fname = Npp.notepad.GetCurrentFilePath();
-            if (!fname_jsons.TryGetValue(fname, out var json))
-                return;
+            JNode json = null;
+            if (!fname_jsons.TryGetValue(fname, out json))
+            {
+                if (grepperForm != null && grepperForm.fname == fname)
+                    json = grepperForm.grepper.fname_jsons;
+            }
             int line = Npp.editor.GetCurrentLineNumber();
             string result = json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
             if (result.Length == 0)
@@ -403,20 +423,6 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.TryCopyToClipboard(result);
-        }
-
-        public static void HideTreeView(TreeViewer tree)
-        {
-            Win32.SendMessage(PluginBase.nppData._nppHandle,
-                    (uint)(NppMsg.NPPM_DMMHIDE),
-                    0, tree.Handle);
-        }
-
-        public static void ShowTreeView(TreeViewer tree)
-        {
-            Win32.SendMessage(PluginBase.nppData._nppHandle,
-                    (uint)(NppMsg.NPPM_DMMSHOW),
-                    0, tree.Handle);
         }
 
         /// <summary>
@@ -434,8 +440,21 @@ namespace Kbg.NppPluginNET
             if (treeViewer != null && !treeViewer.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
+                // if the grepper form is open, this should just toggle it.
+                // it's counterintuitive to the user that the plugin command would toggle
+                // a tree view other than the one they're currently looking at
                 bool was_visible = treeViewer.Visible;
-                HideTreeView(treeViewer);
+                if (!was_visible
+                    && grepperForm != null
+                    && grepperForm.tv != null && !grepperForm.tv.IsDisposed
+                    && Npp.GetCurrentPath() == grepperForm.fname)
+                {
+                    if (grepperForm.tv.Visible)
+                        Npp.notepad.HideDockingForm(grepperForm.tv);
+                    else Npp.notepad.ShowDockingForm(grepperForm.tv);
+                    return;
+                }
+                Npp.notepad.HideDockingForm(treeViewer);
                 treeViewer.Close();
                 if (was_visible)
                     return;
@@ -454,7 +473,7 @@ namespace Kbg.NppPluginNET
 
         static void OpenGrepperForm()
         {
-            if (grepperForm != null)
+            if (grepperForm != null && !grepperForm.IsDisposed)
                 grepperForm.Focus();
             else
             {
@@ -463,7 +482,7 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json)
+        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title = "Json Tree View")
         {
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
@@ -480,7 +499,7 @@ namespace Kbg.NppPluginNET
 
             NppTbData _nppTbData = new NppTbData();
             _nppTbData.hClient = treeViewer.Handle;
-            _nppTbData.pszName = "Json Tree View";
+            _nppTbData.pszName = title;
             // the dlgDlg should be the index of funcItem where the current function pointer is in
             // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
             _nppTbData.dlgID = jsonTreeId;
@@ -497,7 +516,7 @@ namespace Kbg.NppPluginNET
             // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
-            ShowTreeView(treeViewer);
+            Npp.notepad.ShowDockingForm(treeViewer);
             //if (IsWin32)
             //    treeViewers[cur_fname] = tv;
             treeViewer.QueryBox.Focus();

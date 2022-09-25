@@ -807,6 +807,18 @@ namespace JSON_Tools.JSON_Tools
             }
             return copy;
         }
+
+        /// <summary>
+        /// you need to make sure that a string has all characters properly escaped and whatnot
+        /// before you can use it as a key in JSON
+        /// </summary>
+        /// <param name="k"></param>
+        /// <returns></returns>
+        public static string FormatAsKey(string k)
+        {
+            string result = new JNode(k, Dtype.STR, 0).ToString();
+            return result.Substring(1, result.Length - 2);
+        }
     }
 
     public class JArray : JNode

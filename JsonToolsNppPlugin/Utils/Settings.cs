@@ -96,8 +96,8 @@ namespace JSON_Tools.Utils
         public int thread_count_parsing { get; set; }
 
         [Description("Should the API requester be asynchronous?"),
-            Category("Grep and API requests"), DefaultValue(true)]
-        public bool api_requests_async { get; set; }
+            Category("Grep and API requests"), DefaultValue(8)]
+        public int max_api_request_threads { get; set; }
         #endregion
     }
 }

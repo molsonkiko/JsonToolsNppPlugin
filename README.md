@@ -26,6 +26,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com.
 6. [Get the path to the current line](/docs/README.md#path-to-current-line)
 7. Query and edit JSON with the [RemesPath](/docs/RemesPath.md) query language.
 8. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
+9. [A form for gettting JSON from APIs or many different local files](/docs/README.md#get-json-from-files-and-apis). 
 
 [Read the docs.](/docs/README.md)
 

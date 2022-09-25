@@ -19,6 +19,10 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		unsafe string GetFilePath(int bufferId);
 		void SetCurrentLanguage(LangType language);
 		bool OpenFile(string path);
+		bool SaveCurrentFile();
+		void ShowDockingForm(System.Windows.Forms.Form form);
+		void HideDockingForm(System.Windows.Forms.Form form);
+		
 	}
 
 	/// <summary>
@@ -118,6 +122,32 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		public void SetCurrentLanguage(LangType language)
 		{
 			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_SETCURRENTLANGTYPE, Unused, (int) language);
+		}
+
+		/// <summary>
+		/// open a standard save file dialog to save the current file<br></br>
+		/// Returns true if the file was saved
+		/// </summary>
+		public bool SaveCurrentFile()
+		{
+			IntPtr result = Win32.SendMessage(PluginBase.nppData._nppHandle,
+					(uint)(NppMsg.NPPM_SAVECURRENTFILEAS),
+					0, 0);
+			return result.ToInt32() == 1;
+		}
+
+		public void HideDockingForm(System.Windows.Forms.Form form)
+		{
+			Win32.SendMessage(PluginBase.nppData._nppHandle,
+					(uint)(NppMsg.NPPM_DMMHIDE),
+					0, form.Handle);
+		}
+
+		public void ShowDockingForm(System.Windows.Forms.Form form)
+		{
+			Win32.SendMessage(PluginBase.nppData._nppHandle,
+					(uint)(NppMsg.NPPM_DMMSHOW),
+					0, form.Handle);
 		}
 	}
 

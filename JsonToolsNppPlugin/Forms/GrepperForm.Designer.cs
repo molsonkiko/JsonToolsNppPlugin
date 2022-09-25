@@ -68,6 +68,8 @@
             this.UrlsBox.Size = new System.Drawing.Size(304, 268);
             this.UrlsBox.TabIndex = 3;
             this.UrlsBox.WordWrap = false;
+            this.UrlsBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.UrlsBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // GetJsonFromApisTitle
             // 
@@ -97,6 +99,7 @@
             this.SendRequestsButton.Text = "Send requests";
             this.SendRequestsButton.UseVisualStyleBackColor = true;
             this.SendRequestsButton.Click += new System.EventHandler(this.SendRequestsButton_Click);
+            this.SendRequestsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // GetJsonFromFilesTitle
             // 
@@ -117,6 +120,7 @@
             this.RecursiveSearchCheckBox.TabIndex = 6;
             this.RecursiveSearchCheckBox.Text = "Search in subdirectories?";
             this.RecursiveSearchCheckBox.UseVisualStyleBackColor = true;
+            this.RecursiveSearchCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // SearchPatternsBox
             // 
@@ -126,6 +130,8 @@
             this.SearchPatternsBox.Size = new System.Drawing.Size(87, 56);
             this.SearchPatternsBox.TabIndex = 7;
             this.SearchPatternsBox.Text = "*.json";
+            this.SearchPatternsBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.SearchPatternsBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // SearchPatternsBoxLabel
             // 
@@ -145,6 +151,7 @@
             this.ChooseDirectoriesButton.Text = "Choose directory...";
             this.ChooseDirectoriesButton.UseVisualStyleBackColor = true;
             this.ChooseDirectoriesButton.Click += new System.EventHandler(this.ChooseDirectoriesButton_Click);
+            this.ChooseDirectoriesButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // ChooseFilesTitle
             // 
@@ -166,6 +173,7 @@
             this.FilesFoundBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.FilesFoundBox.Size = new System.Drawing.Size(313, 308);
             this.FilesFoundBox.TabIndex = 11;
+            this.FilesFoundBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // RemoveSelectedFilesButton
             // 
@@ -177,6 +185,7 @@
             this.RemoveSelectedFilesButton.Text = "Remove selected files";
             this.RemoveSelectedFilesButton.UseVisualStyleBackColor = true;
             this.RemoveSelectedFilesButton.Click += new System.EventHandler(this.RemoveSelectedFilesButton_Click);
+            this.RemoveSelectedFilesButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // ViewResultsButton
             // 
@@ -188,6 +197,7 @@
             this.ViewResultsButton.Text = "View results in buffer";
             this.ViewResultsButton.UseVisualStyleBackColor = true;
             this.ViewResultsButton.Click += new System.EventHandler(this.ViewResultsButton_Click);
+            this.ViewResultsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // LeftCenterDivider
             // 
@@ -223,6 +233,7 @@
             this.ViewErrorsButton.Text = "View errors";
             this.ViewErrorsButton.UseVisualStyleBackColor = true;
             this.ViewErrorsButton.Click += new System.EventHandler(this.ViewErrorsButton_Click);
+            this.ViewErrorsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // DocsButton
             // 
@@ -234,6 +245,7 @@
             this.DocsButton.Text = "Documentation";
             this.DocsButton.UseVisualStyleBackColor = true;
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
+            this.DocsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // FolderBrowserDialog1
             // 
@@ -267,6 +279,8 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "GrepperForm";
             this.Text = "JSON from files and APIs";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GrepperForm_FormClosing);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             this.ResumeLayout(false);
             this.PerformLayout();
 

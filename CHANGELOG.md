@@ -10,15 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 This project has many features that were implemented in a [standalone app](https://github.com/molsonkiko/JSON-Tools) requiring .NET 6.0. Those features will be rolled out in the plugin over the next couple of months.
 
-1. A tool for searching directories for many documents and using RemesPath to query them all in parallel. The query results can then be written to separate files.
-    * This tool will also probably have a feature for sending API requests and getting the JSON directly for querying. No more writing scripts!
-	* Ideally the API request tool should let people enter the URL and the name of the file to be created for that JSON in a CSV file.
-2. Add parsing of unquoted strings when linter is active.
+1. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
-3. Add RemesPath functions:
+2. Add RemesPath functions:
 	- for converting JSON to tabular form
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
+3. TreeViewer's `fname` attribute should change if the file it is associated with is renamed. Probably need to add a listener for the `NppMsg.NPPN_FILEBEFORERENAME` message.
  
 ### To Be Changed
 
@@ -53,12 +51,16 @@ This project has many features that were implemented in a [standalone app](https
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 
-## [3.6.0] (UNRELEASED) - 2022-MM-DD
+## [3.6.0] - 2022-09-25
+
+### Added
+
+1. Add [form for getting JSON from files and APIs](/docs/README.md#get-json-from-files-and-apis).
 
 ### Fixed
 
 1. Bug with the `Refresh` button where editing a file with RemesPath would not allow Refresh to properly reflect the text in the file.
-2. Add form for getting JSON from files and APIs
+2. Bug where clicking on a node would not always snap the caret to the node's line if that node was the only one in the tree. 
 
 ## [3.5.0] - 2022-09-24
 

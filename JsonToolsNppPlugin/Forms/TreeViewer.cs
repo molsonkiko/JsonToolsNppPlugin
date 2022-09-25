@@ -19,7 +19,7 @@ namespace JSON_Tools.Forms
         /// <summary>
         /// the name of the file holding the JSON that this is associated with
         /// </summary>
-        string fname;
+        public string fname;
         /// <summary>
         /// Maps the path of a TreeNode to the line number of the corresponding JNode
         /// </summary>
@@ -488,7 +488,8 @@ namespace JSON_Tools.Forms
 
         /// <summary>
         /// Snap the caret to the line of the JNode corresponding to the TreeNode selected.<br></br>
-        /// Also populate the current path box with the path to the selected node.
+        /// Also populate the current path box with the path to the selected node.<br></br>
+        /// This happens when a node is clicked, expanded, or selected by arrow keys
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -496,13 +497,12 @@ namespace JSON_Tools.Forms
         {
             if (Npp.notepad.GetCurrentFilePath() != fname) return;
             TreeNode node;
-            // if there's an AfterSelect event, due to clicking or arrow key navigation
-            if (e is TreeViewEventArgs tvea)
-                node = tvea.Node;
-            // invoked by BeforeExpand event, which doesn't trigger an AfterSelect
-            else if (e is TreeViewCancelEventArgs tnmcea)
-                node = tnmcea.Node;
-            else return;
+            try
+            {
+                node = (TreeNode)e.GetType().GetProperty("Node").GetValue(e, null);
+            }
+            catch { return; }
+            if (node == null) return;
             string path = node.FullPath;
             Npp.editor.GotoLine(pathsToJNodes[path].line_num);
             // might also want to make it so that the selected line is scrolled to the top
@@ -676,6 +676,10 @@ namespace JSON_Tools.Forms
                 NodeRightClickMenu.Items[3].MouseUp += ToggleSubtreesHandler;
                 NodeRightClickMenu.Show(MousePosition);
             }
+            if (node.IsSelected)
+                // normally clicking a node selects it, so we don't need to explicitly invoke this method
+                // but if the node was already selected, we need to call it
+                Tree_NodeSelection(sender, e);
         }
 
         /// <summary>
