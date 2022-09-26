@@ -1,22 +1,18 @@
 ﻿// NPP plugin platform for .Net v0.91.57 by Kasper B. Graversen etc.
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Diagnostics;
 using System.Drawing;
-using System.Threading;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using Kbg.Demo.Namespace.Properties;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
-using static Kbg.NppPluginNET.PluginInfrastructure.Win32;
 
 namespace Kbg.NppPluginNET
 {

@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+﻿using System.ComponentModel;
 using JSON_Tools.JSON_Tools;
 using CsvQuery.PluginInfrastructure; // for SettingsBase
 

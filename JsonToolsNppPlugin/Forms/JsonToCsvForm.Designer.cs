@@ -39,6 +39,7 @@
             this.DelimBoxLabel = new System.Windows.Forms.Label();
             this.GenerateCSVButton = new System.Windows.Forms.Button();
             this.DocsButton = new System.Windows.Forms.Button();
+            this.AcceptCancelButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // KeySepBox
@@ -157,11 +158,26 @@
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
             this.DocsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
+            // AcceptCancelButton
+            // 
+            this.AcceptCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.AcceptCancelButton.Location = new System.Drawing.Point(231, 150);
+            this.AcceptCancelButton.Name = "AcceptCancelButton";
+            this.AcceptCancelButton.Size = new System.Drawing.Size(112, 23);
+            this.AcceptCancelButton.TabIndex = 10;
+            this.AcceptCancelButton.TabStop = false;
+            this.AcceptCancelButton.Text = "AcceptCancelButton";
+            this.AcceptCancelButton.UseVisualStyleBackColor = true;
+            this.AcceptCancelButton.Visible = false;
+            // 
             // JsonToCsvForm
             // 
+            this.AcceptButton = this.AcceptCancelButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.AcceptCancelButton;
             this.ClientSize = new System.Drawing.Size(355, 278);
+            this.Controls.Add(this.AcceptCancelButton);
             this.Controls.Add(this.DocsButton);
             this.Controls.Add(this.GenerateCSVButton);
             this.Controls.Add(this.DelimBoxLabel);
@@ -193,5 +209,6 @@
         private System.Windows.Forms.Label DelimBoxLabel;
         private System.Windows.Forms.Button GenerateCSVButton;
         private System.Windows.Forms.Button DocsButton;
+        private System.Windows.Forms.Button AcceptCancelButton;
     }
 }

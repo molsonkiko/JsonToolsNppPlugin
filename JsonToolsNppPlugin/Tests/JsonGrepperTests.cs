@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Tests
 {

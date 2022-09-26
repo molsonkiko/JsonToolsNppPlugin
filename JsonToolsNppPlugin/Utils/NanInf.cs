@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace JSON_Tools.Utils
+﻿namespace JSON_Tools.Utils
 {
     public class NanInf
     {

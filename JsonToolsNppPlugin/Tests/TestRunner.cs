@@ -4,13 +4,7 @@ There is also a CLI utility that accepts a letter ('j' or 'y') and a filename as
 resultant pretty-printed JSON (if first arg j) or YAML (if first arg y) document (UTF-8 encoded). 
 Redirecting this output to a text file allows the creation of a new YAML file.
 */
-using System;
-using System.IO;
-using System.Linq;
-using System.Text;
 using JSON_Tools.Utils;
-using JSON_Tools.JSON_Tools;
-using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Tests
 {

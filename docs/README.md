@@ -303,9 +303,7 @@ __NOTES:__
 
 Sometimes it is useful to work with many JSON files at a time. For this purpose, we created a tool for *grepping* (searching for certain kinds of files in a directory, possibly recursively) for JSON files in a local directory, and also for sending [REST API](https://www.redhat.com/en/topics/api/what-is-a-rest-api) requests to multiple URLs.
 
-We can open this tool with a button in the bottom center.
-
-![Open the JSON grepper/API requester with this button](/docs/json%20viewer%20json_from_files_and_apis%20button.PNG)
+We can open this tool with the `Plugins->JsonTools->Get JSON from files and APIs` menu command or `Ctrl+Alt+Shift+G`.
 
 The tool looks like this:
 
@@ -313,7 +311,7 @@ The tool looks like this:
 
 ## Sending REST API requests ##
 
-Perhaps the most useful attribute of this tool is its ability to connect to APIs and extract useful data without the user needing to write a script.
+Perhaps the most useful attribute of this tool is its ability to connect to APIs and extract useful data without the user needing to write a script. Just enter one URL per line in the box on the left.
 
 **WARNING!!!** Before sending API requests, make sure you understand the correct way to format the URL, what type of JSON you expect to be getting, etc. *This tool has not been tested on private APIs*, so you should expect it to fail unless you can incorporate your API key and other authentication information into the URL.
 
@@ -321,7 +319,9 @@ Here's an example of what you get with successful request(s):
 
 ![JSON grepper/API requester successful API requests](/docs/json_from_files_and_apis%20api%20good%20url%20result.PNG)
 
-Of course, sometimes an API request will fail. You can click the `View errors` button to see any errors that happened.
+The URLs of successful requests show up in the box on the right. I used the `View results in buffer` button at the bottom of the form to open the buffer and tree view shown here.
+
+Of course, sometimes an API request will fail. You can click the [View errors button](#viewing-errors) to see any errors that happened.
 
 ## Getting JSON from local directories ##
 
@@ -343,7 +343,7 @@ If you like most of the JSON documents you've found but you don't want to keep *
 
 ![JSON grepper/API requester remove selected files button BEFORE removal](/docs/json_from_files_and_apis%20remove%20selected%20files%20BEFORE.PNG)
 
-After you click the button, those JSON documents will be removed.
+After you click the button, those JSON documents will be removed, and the buffer and tree view will update to reflect this.
 
 ![JSON grepper/API requester remove selected files button AFTER removal](/docs/json_from_files_and_apis%20remove%20selected%20files%20AFTER.PNG)
 
@@ -351,7 +351,7 @@ After you click the button, those JSON documents will be removed.
 
 Click the `View errors` button to see if any errors happened. If any did, a new buffer will happen with an object mapping from filenames and urls to the associated exception.
 
-ADD IMAGE
+![JSON grepper/API requester error report](/docs/json_from_files_and_apis%20error%20report.PNG)
 
 # OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
 

@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET.PluginInfrastructure;
 using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Forms
@@ -77,12 +70,34 @@ namespace JSON_Tools.Forms
             // activate the query box so user can start typing immediately
         }
 
+        /// <summary>
+        /// this is a method that will hopefully stop the dinging from the TreeView.<br></br>
+        /// See https://stackoverflow.com/questions/10328103/c-sharp-winforms-how-to-stop-ding-sound-in-treeview<br></br>
+        /// e.SuppressKeyPress works for most controls but the TreeView is special
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Enter || keyData == Keys.Escape || keyData == Keys.Tab)
+                return true;
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        //private void TreeViewer_KeyUp(object sender, KeyEventArgs e)
+        //{
+              // try some weirdness to avoid bell sound from TreeViewer<br></br>
+              // see https://stackoverflow.com/questions/10328103/c-sharp-winforms-how-to-stop-ding-sound-in-treeview
+        //    BeginInvoke(new Action(() => TreeViewer_KeyUp_Handler(sender, e)));
+        //}
+
         // largely copied from NppManagedPluginDemo.cs in the original plugin pack
         private void TreeViewer_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.Handled = true;
+                e.SuppressKeyPress = true;
                 // Ctrl+Enter in query box -> submit query
                 if (e.Control && QueryBox.Focused)
                     SubmitQueryButton.PerformClick();
@@ -106,6 +121,7 @@ namespace JSON_Tools.Forms
             else if (e.KeyData == Keys.Escape)
             {
                 Npp.editor.GrabFocus();
+                e.SuppressKeyPress = true;
             }
             // Tab -> go through controls, Shift+Tab -> go through controls backward
             else if (e.KeyCode == Keys.Tab)
@@ -113,7 +129,7 @@ namespace JSON_Tools.Forms
                 Control next = GetNextControl((Control)sender, !e.Shift);
                 while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
                 next.Focus();
-                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
         }
 

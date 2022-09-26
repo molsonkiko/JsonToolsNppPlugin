@@ -50,6 +50,13 @@ This project has many features that were implemented in a [standalone app](https
 - Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
+- Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [3.6.1] (unreleased) - 2022-MM-DD
+
+### Fixed
+
+1. Annoying dinging sounds when pressing `Enter`, `Tab`, or `Escape` with the forms. Dinging sounds seem impossible to remove from the `TreeView` control (see #11), but I will keep trying.
 
 ## [3.6.0] - 2022-09-25
 

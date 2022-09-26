@@ -51,6 +51,8 @@
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.CurrentPathButton = new System.Windows.Forms.Button();
             this.RefreshButton = new System.Windows.Forms.Button();
+            this.TheAcceptButton = new System.Windows.Forms.Button();
+            this.TheCancelButton = new System.Windows.Forms.Button();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -259,11 +261,37 @@
             this.RefreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
             this.RefreshButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
+            // TheAcceptButton
+            // 
+            this.TheAcceptButton.Location = new System.Drawing.Point(325, 435);
+            this.TheAcceptButton.Name = "TheAcceptButton";
+            this.TheAcceptButton.Size = new System.Drawing.Size(75, 23);
+            this.TheAcceptButton.TabIndex = 9;
+            this.TheAcceptButton.TabStop = false;
+            this.TheAcceptButton.Text = "Accept";
+            this.TheAcceptButton.UseVisualStyleBackColor = true;
+            this.TheAcceptButton.Visible = false;
+            // 
+            // TheCancelButton
+            // 
+            this.TheCancelButton.Location = new System.Drawing.Point(244, 435);
+            this.TheCancelButton.Name = "TheCancelButton";
+            this.TheCancelButton.Size = new System.Drawing.Size(75, 23);
+            this.TheCancelButton.TabIndex = 10;
+            this.TheCancelButton.TabStop = false;
+            this.TheCancelButton.Text = "Cancel";
+            this.TheCancelButton.UseVisualStyleBackColor = true;
+            this.TheCancelButton.Visible = false;
+            // 
             // TreeViewer
             // 
+            this.AcceptButton = this.TheAcceptButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.TheCancelButton;
             this.ClientSize = new System.Drawing.Size(412, 461);
+            this.Controls.Add(this.TheCancelButton);
+            this.Controls.Add(this.TheAcceptButton);
             this.Controls.Add(this.RefreshButton);
             this.Controls.Add(this.CurrentPathButton);
             this.Controls.Add(this.CurrentPathBox);
@@ -276,7 +304,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
-            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -306,5 +333,7 @@
         private System.Windows.Forms.ToolStripMenuItem ToggleSubtreesItem;
         private System.Windows.Forms.Button RefreshButton;
         internal System.Windows.Forms.TextBox QueryBox;
+        private System.Windows.Forms.Button TheAcceptButton;
+        private System.Windows.Forms.Button TheCancelButton;
     }
 }
