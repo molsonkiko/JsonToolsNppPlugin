@@ -19,7 +19,7 @@ namespace JSON_Tools.Forms
         {
             InitializeComponent();
             grepper = new JsonGrepper(Main.jsonParser.Copy(),
-                Main.settings.thread_count_parsing,
+                Main.settings.max_threads_parsing,
                 Main.settings.max_api_request_threads
             );
             tv = null;

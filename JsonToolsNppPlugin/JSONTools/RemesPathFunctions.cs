@@ -77,7 +77,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToString(aval) + Convert.ToString(bval), Dtype.STR, 0);
             }
-            throw new RemesPathException($"Can't add objects of types {atype} and {btype}");
+            throw new RemesPathException($"Can't add objects of types {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
 
         public static JNode Sub(JNode a, JNode b)
@@ -89,7 +89,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(aval) - Convert.ToInt64(bval), Dtype.INT, 0);
             }
             if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't subtract objects of type {atype} and {btype}");
+                throw new RemesPathException($"Can't subtract objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
             return new JNode(Convert.ToDouble(aval) - Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
@@ -102,28 +102,28 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
             }
             if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't multiply objects of type {atype} and {btype}");
+                throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
             return new JNode(Convert.ToDouble(aval) * Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
         public static JNode Divide(JNode a, JNode b)
         {
             if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't divide objects of types {a.type} and {b.type}");
+                throw new RemesPathException($"Can't divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b.value), Dtype.FLOAT, 0);
         }
 
         public static JNode FloorDivide(JNode a, JNode b)
         {
             if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't floor divide objects of types {a.type} and {b.type}");
+                throw new RemesPathException($"Can't floor divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value)), Dtype.INT, 0);
         }
 
         public static JNode Pow(JNode a, JNode b)
         {
             if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't multiply objects of type {a.type} and {b.type}");
+                throw new RemesPathException($"Can't exponentiate objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode(Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
         }
 
@@ -136,7 +136,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode NegPow(JNode a, JNode b)
         {
             if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't exponentiate objects of type {a.type} and {b.type}");
+                throw new RemesPathException($"Can't exponentiate objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode(-Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
         }
 
@@ -149,7 +149,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(aval) % Convert.ToInt64(bval), Dtype.INT, 0);
             }
             if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
-                throw new RemesPathException($"Can't use modulo operator on objects of type {atype} and {btype}");
+                throw new RemesPathException($"Can't use modulo operator on objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
             return new JNode(Convert.ToDouble(aval) % Convert.ToDouble(bval), Dtype.FLOAT, 0);
         }
 
@@ -160,7 +160,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(a.value) | Convert.ToInt64(b.value), Dtype.INT, 0);
             }
             if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
-                throw new RemesPathException($"Can't bitwise OR objects of type {a.type} and {b.type}");
+                throw new RemesPathException($"Can't bitwise OR objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode(Convert.ToBoolean(a.value) || Convert.ToBoolean(b.value), Dtype.BOOL, 0);
         }
 
@@ -171,7 +171,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(a.value) ^ Convert.ToInt64(b.value), Dtype.INT, 0);
             }
             if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
-                throw new RemesPathException($"Can't bitwise XOR objects of type {a.type} and {b.type}");
+                throw new RemesPathException($"Can't bitwise XOR objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode((bool)a.value ^ (bool)b.value, Dtype.BOOL, 0);
         }
 
@@ -182,7 +182,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToInt64(a.value) & Convert.ToInt64(b.value), Dtype.INT, 0);
             }
             if ((a.type != Dtype.BOOL) || (b.type != Dtype.BOOL))
-                throw new RemesPathException($"Can't bitwise AND objects of type {a.type} and {b.type}");
+                throw new RemesPathException($"Can't bitwise AND objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
             return new JNode((bool)a.value && (bool)b.value, Dtype.BOOL, 0);
         }
 

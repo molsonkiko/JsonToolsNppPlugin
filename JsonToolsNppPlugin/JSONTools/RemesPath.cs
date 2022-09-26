@@ -32,17 +32,7 @@ namespace JSON_Tools.JSON_Tools
         public Obj_Pos(object obj, int pos) { this.obj = obj; this.pos = pos; }
     }
     #endregion DATA_HOLDER_STRUCTS
-    /// <summary>
-    /// an exception thrown when trying to use a boolean index of unequal length<br></br>
-    /// or when trying to apply a binary operator to two objects with different sets of keys<br></br>
-    /// or arrays with different lengths.
-    /// </summary>
-    public class VectorizedArithmeticException : RemesPathException
-    {
-        public VectorizedArithmeticException(string description) : base(description) { }
-
-        public override string ToString() { return description; }
-    }
+    
     #region OTHER_HELPER_CLASSES
     public class QueryCache
     {
@@ -205,6 +195,36 @@ namespace JSON_Tools.JSON_Tools
         public RemesPathException(string description) { this.description = description; }
 
         public override string ToString() { return description + "\nDetails:\n" + Message; }
+    }
+
+    /// <summary>
+    /// an exception thrown when trying to use a boolean index of unequal length<br></br>
+    /// or when trying to apply a binary operator to two objects with different sets of keys<br></br>
+    /// or arrays with different lengths.
+    /// </summary>
+    public class VectorizedArithmeticException : RemesPathException
+    {
+        public VectorizedArithmeticException(string description) : base(description) { }
+
+        public override string ToString() { return description; }
+    }
+
+    public class RemesPathArgumentException : RemesPathException
+    {
+        public int arg_num { get; set; }
+        public ArgFunction func { get; set; }
+
+        public RemesPathArgumentException(string description, int arg_num, ArgFunction func) : base(description)
+        {
+            this.arg_num = arg_num;
+            this.func = func;
+        }
+
+        public override string ToString()
+        {
+            string fmt_dtype = JNode.FormatDtype(func.input_types()[arg_num]);
+            return $"For argument {arg_num} of function {func.name}, expected {fmt_dtype}, instead {description}";
+        }
     }
     #endregion
     /// <summary>
@@ -855,7 +875,8 @@ namespace JSON_Tools.JSON_Tools
                         return Dtype.STR;
                     }
                 }
-                throw new RemesPathException($"Invalid argument types {ltype} and {rtype} for binop {name}");
+                throw new RemesPathException($"Invalid argument types {JNode.FormatDtype(ltype)}" +
+                                            $" and {JNode.FormatDtype(rtype)} for binop {name}");
             }
             if (Binop.BITWISE_BINOPS.Contains(name)) // ^, & , |
             {
@@ -863,7 +884,8 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (rtype == Dtype.FLOAT)
                     {
-                        throw new RemesPathException($"Incompatible types {ltype} and {rtype} for bitwise binop {name}");
+                        throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
+                                                    $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
                     }
                     return Dtype.INT;
                 }
@@ -871,7 +893,8 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (ltype == Dtype.FLOAT)
                     {
-                        throw new RemesPathException($"Incompatible types {ltype} and {rtype} for bitwise binop {name}");
+                        throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
+                                                     $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
                     }
                     return Dtype.INT;
                 }
@@ -1830,14 +1853,13 @@ namespace JSON_Tools.JSON_Tools
                     if (cur_arg == null || (cur_arg.type & type_options) == 0)
                     {
                         Dtype arg_type = (cur_arg) == null ? Dtype.NULL : cur_arg.type;
-                        throw new RemesPathException($"For arg {arg_num} of function {fun.name}, expected argument of type "
-                                                     + $"in {type_options}, instead got type {arg_type}");
+                        throw new RemesPathArgumentException($"got type {JNode.FormatDtype(arg_type)}", arg_num, fun);
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new RemesPathException($"For arg {arg_num} of function {fun.name}, expected argument of type "
-                                                 + $"in {type_options}, instead threw exception {ex}.");
+                    if (ex is RemesPathArgumentException) throw;
+                    throw new RemesPathArgumentException($"threw exception {ex}.", arg_num, fun);
                 }
                 t = toks[pos];
                 bool comma = false;
@@ -1854,11 +1876,15 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (arg_num + 1 < fun.min_args && !comma)
                 {
+                    if (fun.min_args == fun.max_args)
+                        throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
                     throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} " +
                                                  $"({fun.min_args} - {fun.max_args} args)");
                 }
                 if (arg_num + 1 == fun.max_args && !close_paren)
                 {
+                    if (fun.min_args == fun.max_args)
+                        throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
                     throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} " +
                                                  $"({fun.min_args} - {fun.max_args} args)");
                 }
@@ -1875,6 +1901,8 @@ namespace JSON_Tools.JSON_Tools
                     return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }
             }
+            if (fun.min_args == fun.max_args)
+                throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
             throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} "
                                          + $"({fun.min_args} - {fun.max_args} args)");
         }
@@ -1914,7 +1942,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         else
                         {
-                            throw new RemesPathException($"Object projection keys must be string, not {key.type}");
+                            throw new RemesPathException($"Object projection keys must be string, not {JNode.FormatDtype(key.type)}");
                         }
                     }
                     else
@@ -2055,17 +2083,21 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public static string PrettifyException(Exception ex)
         {
-            if (ex is RemesLexerException)
+            if (ex is RemesLexerException rle)
             {
-                return ((RemesLexerException)ex).ToString();
+                return rle.ToString();
             }
-            if (ex is RemesPathException)
+            if (ex is JsonParserException jpe)
             {
-                return ((RemesPathException)ex).ToString();
+                return jpe.ToString();
             }
-            if (ex is JsonParserException)
+            if (ex is RemesPathArgumentException rpae)
             {
-                return ((JsonParserException)ex).ToString();
+                return rpae.ToString();
+            }
+            if (ex is RemesPathException rpe)
+            {
+                return rpe.ToString();
             }
             string exstr = ex.ToString();
             Match is_cast = CAST_REGEX.Match(exstr);

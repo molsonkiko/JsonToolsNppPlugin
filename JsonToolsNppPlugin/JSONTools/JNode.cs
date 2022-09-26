@@ -473,7 +473,7 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(value, type, line_num);
         }
 
-        #region PATH_FINDING_STUFF
+        #region HELPER_FUNCS
         private static readonly Regex INT_REGEX = new Regex("^\\d+$", RegexOptions.Compiled);
         private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
         // "dot compatible" means a string that starts with a letter or underscore
@@ -574,6 +574,45 @@ namespace JSON_Tools.JSON_Tools
                     }
                 default: throw new ArgumentException("style argument for PathToTreeNode must be a KeyStyle member");
             }
+        }
+
+        public static Dictionary<Dtype, string> DtypeStrings = new Dictionary<Dtype, string>
+        {
+            [Dtype.SCALAR] = "scalar",
+            [Dtype.ITERABLE] = "iterable",
+            [Dtype.NUM] = "numeric",
+            [Dtype.ARR] = "array",
+            [Dtype.BOOL] = "boolean",
+            [Dtype.FLOAT] = "float",
+            [Dtype.INT] = "integer",
+            [Dtype.NULL] = "null",
+            [Dtype.OBJ] = "object",
+            [Dtype.STR] = "string",
+            [Dtype.UNKNOWN] = "unknown",
+            [Dtype.SLICE] = "slice",
+            [Dtype.DATE] = "date",
+            [Dtype.REGEX] = "regex",
+            [Dtype.DATETIME] = "datetime",
+        };
+
+        public static string FormatDtype(Dtype type)
+        {
+            List<string> typestrs = new List<string>();
+            if (DtypeStrings.TryGetValue(type, out string val))
+            {
+                return val;
+            }
+            ushort typeint = (ushort)type;
+            foreach (Dtype typ in DtypeStrings.Keys)
+            {
+                ushort shortyp = (ushort)typ;
+                if ((typeint & shortyp) == shortyp)
+                {
+                    typestrs.Add(DtypeStrings[typ]);
+                    typeint -= shortyp;
+                }
+            }
+            return string.Join("|", typestrs);
         }
         #endregion
     }

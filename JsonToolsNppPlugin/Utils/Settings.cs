@@ -88,7 +88,7 @@ namespace JSON_Tools.Utils
         #region GREP_API_SETTINGS
         [Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
             Category("Grep and API requests"), DefaultValue(4)]
-        public int thread_count_parsing { get; set; }
+        public int max_threads_parsing { get; set; }
 
         [Description("Should the API requester be asynchronous?"),
             Category("Grep and API requests"), DefaultValue(8)]

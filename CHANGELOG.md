@@ -57,6 +57,8 @@ This project has many features that were implemented in a [standalone app](https
 ### Fixed
 
 1. Annoying dinging sounds when pressing `Enter`, `Tab`, or `Escape` with the forms. Dinging sounds seem impossible to remove from the `TreeView` control (see #11), but I will keep trying.
+2. Make sure that changes to settings are propagated to the `JSON from files and APIs` form if it exists.
+3. More useful error messages from RemesPath.
 
 ## [3.6.0] - 2022-09-25
 

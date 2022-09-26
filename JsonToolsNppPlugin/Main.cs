@@ -235,6 +235,8 @@ namespace Kbg.NppPluginNET
         static internal void PluginCleanUp()
         {
             //treeViewers.Clear();
+            if (grepperForm != null && !grepperForm.IsDisposed)
+                grepperForm.Close();
         }
         #endregion
 
@@ -397,6 +399,18 @@ namespace Kbg.NppPluginNET
             jsonParser.allow_javascript_comments = settings.allow_javascript_comments;
             jsonParser.allow_singlequoted_str = settings.allow_singlequoted_str;
             jsonParser.lint = settings.linting ? new List<JsonLint>() : null;
+            // make sure grepperForm gets these new settings as well
+            if (grepperForm != null && !grepperForm.IsDisposed)
+            {
+                grepperForm.grepper.json_parser = jsonParser.Copy();
+                grepperForm.grepper.max_api_request_threads = settings.max_api_request_threads;
+                grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
+                if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
+                {
+                    grepperForm.tv.use_tree = settings.use_tree;
+                    grepperForm.tv.max_size_full_tree_MB = settings.max_size_full_tree_MB;
+                }
+            }
         }
 
         private static void PathToCurrentLine()

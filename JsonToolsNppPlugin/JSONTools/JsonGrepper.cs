@@ -50,12 +50,12 @@ namespace JSON_Tools.JSON_Tools
         public Dictionary<string, string> fname_strings;
 		public JsonParser json_parser;
         private static readonly WebClient webClient = new WebClient();
-        public int max_threads;
+        public int max_threads_parsing;
         public int max_api_request_threads;
 
 		public JsonGrepper(JsonParser json_parser = null, int max_threads = 4, int max_api_request_threads = 8)
 		{
-            this.max_threads = max_threads;
+            this.max_threads_parsing = max_threads;
             this.max_api_request_threads = max_api_request_threads;
             fname_strings = new Dictionary<string, string>();
 			fname_jsons = new JObject();
@@ -154,7 +154,7 @@ namespace JSON_Tools.JSON_Tools
 			List<Thread> threads = new List<Thread>();
 			string[] fnames = fname_strings.Keys.ToArray();
 			Array.Sort(fnames);
-            foreach (object[] assigned_fnames in DivideObjectsBetweenThreads(fnames, max_threads))
+            foreach (object[] assigned_fnames in DivideObjectsBetweenThreads(fnames, max_threads_parsing))
             {
                 // JsonParsers store position in the parsed string (ii) and line_num as instance variables.
                 // that means that if multiple threads share a JsonParser, you have race conditions associated with ii and line_num.
