@@ -65,21 +65,21 @@ namespace Kbg.NppPluginNET
             //            ShortcutKey *shortcut,                // optional. Define a shortcut to trigger this command
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
-            PluginBase.SetCommand(0, "Documentation", docs);
+            PluginBase.SetCommand(0, "&Documentation", docs);
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
-            PluginBase.SetCommand(1, "Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
-            PluginBase.SetCommand(2, "Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "Path to current line", PathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
+            PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
+            PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
+            PluginBase.SetCommand(3, "Pat&h to current line", PathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "Open JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 5;
-            PluginBase.SetCommand(6, "Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(4, "Open JSON &tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
+            PluginBase.SetCommand(5, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 5;
+            PluginBase.SetCommand(6, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(7, "---", null);
-            PluginBase.SetCommand(8, "Parse JSON Lines document", () => OpenJsonTree(true));
-            PluginBase.SetCommand(9, "Array to JSON Lines", DumpJsonLines);
+            PluginBase.SetCommand(8, "Parse JSON &Lines document", () => OpenJsonTree(true));
+            PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(11, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(12, "Run tests", TestRunner.RunAll);
         }
 
