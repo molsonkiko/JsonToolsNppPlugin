@@ -62,7 +62,8 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Tree.Location = new System.Drawing.Point(4, 91);
-            this.Tree.BackColor = System.Drawing.SystemColors.WindowFrame;
+            this.Tree.BackColor = System.Drawing.Color.FromArgb(0x29, 0x31, 0x34);
+            this.Tree.ForeColor = System.Drawing.Color.FromArgb(0xe0, 0xe2, 0xe4);
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(398, 339);
             this.Tree.TabIndex = 6;
