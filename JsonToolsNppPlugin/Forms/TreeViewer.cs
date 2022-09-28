@@ -97,7 +97,9 @@ namespace JSON_Tools.Forms
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true;
+                // supposedly this is like e.Handled but also suppresses ding,
+                // but the TreeView dings anyway
+                e.SuppressKeyPress = true; 
                 // Ctrl+Enter in query box -> submit query
                 if (e.Control && QueryBox.Focused)
                     SubmitQueryButton.PerformClick();
@@ -330,7 +332,7 @@ namespace JSON_Tools.Forms
                 JNode child = jobj[key];
                 TreeNode child_node = (child is JObject || child is JArray)
                     ? new TreeNode(key)
-                    : child_node = new TreeNode($"{key} : {child.ToString()}");
+                    : new TreeNode($"{key} : {child.ToString()}");
                 SetImageOfTreeNode(child_node, child);
                 root.Nodes.Add(child_node);
                 pathsToJNodes[child_node.FullPath] = child;

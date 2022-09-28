@@ -275,6 +275,7 @@
             // 
             // TheCancelButton
             // 
+            this.TheCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.TheCancelButton.Location = new System.Drawing.Point(244, 435);
             this.TheCancelButton.Name = "TheCancelButton";
             this.TheCancelButton.Size = new System.Drawing.Size(75, 23);
