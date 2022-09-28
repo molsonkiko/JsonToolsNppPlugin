@@ -348,22 +348,25 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Unspecified optional arguments to functions are filled with null.<br></br>
-        /// We may therefore want to stop processing arguments if the remaining args are null.
+        /// We may therefore want to know what the index of the last non-null argument is.
         /// </summary>
         /// <param name="args"></param>
         /// <param name="ii"></param>
         /// <returns></returns>
-        private static bool RemainingArgsNull(JNode[] args, int ii)
+        private static int LastNonNullArg(JNode[] args)
         {
+            int ii = 0;
+            int last_non_null = 0;
             while (ii < args.Length)
             {
-                JNode node = args[ii++];
+                JNode node = args[ii];
                 if (node.type != Dtype.NULL)
                 {
-                    return false;
+                    last_non_null = ii;
                 }
+                ii++;
             }
-            return true;
+            return last_non_null;
         }
         #endregion
 
@@ -1084,17 +1087,14 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Concat(JNode[] args)
         {
             JNode first_itbl = args[0];
+            int last_non_null = LastNonNullArg(args);
             if (first_itbl is JArray first_arr)
             {
                 List<JNode> new_arr = new List<JNode>(first_arr.children);
-                for (int ii = 1; ii < args.Length; ii++)
+                for (int ii = 1; ii <= last_non_null; ii++)
                 {
                     if (!(args[ii] is JArray arr))
-                    {
-                        if (RemainingArgsNull(args, ii))
-                            break;
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
-                    }
                     new_arr.AddRange(arr.children);
                 }
                 return new JArray(0, new_arr);
@@ -1102,14 +1102,10 @@ namespace JSON_Tools.JSON_Tools
             else if (first_itbl is JObject first_obj)
             {
                 Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(first_obj.children);
-                for (int ii = 1; ii < args.Length; ii++)
+                for (int ii = 1; ii <= last_non_null; ii++)
                 {
                     if (!(args[ii] is JObject obj))
-                    {
-                        if (RemainingArgsNull(args, ii))
-                            break;
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
-                    }
                     foreach (string key in obj.children.Keys)
                     {
                         // this can overwrite the same key in any earlier arg.
@@ -1161,19 +1157,89 @@ namespace JSON_Tools.JSON_Tools
             JObject obj = (JObject)args[0];
             Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(obj.children);
             int ii = 1;
-            while (ii < args.Length)
+            while (ii <= LastNonNullArg(args))
             {
                 JNode k = args[ii++];
                 if (k.type != Dtype.STR)
-                {
-                    if (RemainingArgsNull(args, ii))
-                        break;
                     throw new RemesPathException("Even-numbered args to 'add_items' function (new keys) must be strings");
-                }
                 JNode v = args[ii++];
                 new_obj[(string)k.value] = v;
             }
             return new JObject(0, new_obj);
+        }
+
+        public static JNode ToRecords(JNode[] args)
+        {
+            JNode arg = args[0];
+            Dictionary<string, object> schema = new JsonSchemaMaker().BuildSchema(arg);
+            char strat = args[1].value == null ? 'd' : ((string)args[1].value)[0];
+            switch (strat)
+            {
+                case 'd': return new JsonTabularizer(JsonTabularizerStrategy.DEFAULT).BuildTable(arg, schema);
+                case 'r': return new JsonTabularizer(JsonTabularizerStrategy.FULL_RECURSIVE).BuildTable(arg, schema);
+                case 'n': return new JsonTabularizer(JsonTabularizerStrategy.NO_RECURSION).BuildTable(arg, schema);
+                case 's': return new JsonTabularizer(JsonTabularizerStrategy.STRINGIFY_ITERABLES).BuildTable(arg, schema);
+                default: throw new RemesPathException($"ToRecords second arg must be either blank or one of\n'd': default\n'r': full recursive\n'n': no recursion\n's': stringify iterables\nSee the JSON to CSV form documentation.");
+            }
+        }
+
+        public static JNode Pivot(JNode[] args)
+        {
+            JArray arr = (JArray)args[0];
+            var piv = new Dictionary<string, JNode>();
+            int last_non_null = LastNonNullArg(args);
+            if (arr[0] is JArray)
+            {
+                int by = Convert.ToInt32(args[1].value);
+                int val_col = Convert.ToInt32(args[2].value);
+                foreach (JNode item in arr.children)
+                {
+                    JArray subarr = (JArray)item;
+                    JNode bynode = subarr[by];
+                    string key = bynode.type == Dtype.STR
+                        ? JObject.FormatAsKey((string)bynode.value)
+                        : bynode.ToString();
+                    if (!piv.ContainsKey(key))
+                        piv[key] = new JArray();
+                    ((JArray)piv[key]).children.Add(subarr[val_col]);
+                }
+                int uniq_ct = piv.Count;
+                for (int ii = 3; ii <= last_non_null; ii++)
+                {
+                    int idx_col = Convert.ToInt32(args[ii].value);
+                    var new_subarr = new List<JNode>();
+                    for (int jj = 0; jj < arr.children.Count; jj += uniq_ct)
+                        new_subarr.Add(((JArray)arr[jj])[idx_col]);
+                    piv[idx_col.ToString()] = new JArray(0, new_subarr);
+                }
+            }
+            else if (arr[0] is JObject)
+            {
+                string by = (string)args[1].value;
+                string val_col = (string)args[2].value;
+                foreach (JNode item in arr.children)
+                {
+                    JObject subobj = (JObject)item;
+                    JNode bynode = subobj[by];
+                    string key = bynode.type == Dtype.STR
+                        ? JObject.FormatAsKey((string)bynode.value)
+                        : bynode.ToString();
+                    if (!piv.ContainsKey(key))
+                        piv[key] = new JArray();
+                    ((JArray)piv[key]).children.Add(subobj[val_col]);
+                }
+                int uniq_ct = piv.Count;
+                for (int ii = 3; ii <= last_non_null; ii++)
+                {
+                    string idx_col = (string)args[ii].value;
+                    var new_subarr = new List<JNode>();
+                    for (int jj = 0; jj < arr.children.Count; jj += uniq_ct)
+                        new_subarr.Add(((JObject)arr[jj])[idx_col]);
+                    piv[idx_col] = new JArray(0, new_subarr);
+                }
+            }
+            else throw new RemesPathException("First argument to Pivot must be an array of arrays or an array of objects");
+            return new JObject(0, piv);
         }
 
         #endregion
@@ -1574,6 +1640,7 @@ namespace JSON_Tools.JSON_Tools
             ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, 9, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN }),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.FLOAT}),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN}),
@@ -1581,6 +1648,7 @@ namespace JSON_Tools.JSON_Tools
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.BOOL }),
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["to_records"] = new ArgFunction(ToRecords, "to_records", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ITERABLE, Dtype.STR | Dtype.UNKNOWN }),
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),

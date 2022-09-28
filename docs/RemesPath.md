@@ -297,6 +297,52 @@ Returns a floating-point number equal to the minimum value in an array.
 
 See `max_by`.
 
+---
+`pivot(x: array[object | array], by: str | int, val_col: str | int, other_col4-other_col9: str | int) -> object[str, array]`
+
+There can be at most *9* arguments to this function.
+
+The first argument should be an array whose sub-iterables have a repeating cycle of values for one column (`by`), and the only other column that varies within a given cycle is the values column (`val_col`).
+
+The result is an object where each distinct value of the `by` column is mapped to an array of the corresponding values in the `val_col` column. Additionally, you may include up to 6 other columns.
+
+__Examples:__
+- With
+```json
+[
+    ["foo", 2, 3, true],
+    ["bar", 3, 3, true],
+    ["foo", 4, 4, false],
+    ["bar", 5, 4, false]
+]
+```
+as input, `pivot(@, 0, 1, 2, 3)` (use `0` as pivot, `1` as values, `2` and `3` as other columns) returns
+```json
+{
+    "foo": [2, 4],
+    "bar": [3, 5],
+    "2": [3, 4],
+    "3": [true, false]
+}
+```
+- With
+```json
+[
+    {"a": "foo", "b": 2, "c": 3},
+    {"a": "bar", "b": 3, "c": 3},
+    {"a": "foo", "b": 4, "c": 4},
+    {"a": "bar", "b": 5, "c": 4}
+]
+```
+as input, `pivot(@, a, b, c)` returns
+```json
+{
+    "foo": [2, 4],
+    "bar": [3, 5],
+    "c": [3, 4]
+}
+```
+
 ----
 `quantile(x: array, q: float) -> float`
 
@@ -360,6 +406,17 @@ Returns a new array where the elements are sorted ascending. If `descending` is 
 Returns the sum of the elements in x. 
 
 x must contain only numbers. Booleans are fine.
+
+---
+`to_records(x: iterable, [strategy: str]) -> array[object]`
+
+Converts some iterable to an array of objects, using one of the [strategies](/docs/json-to-csv.md#strategies) used to make a CSV in the JSON-to-CSV form. The resulting JSON is just the JSON equivalent of the CSV that would be generated with `x` as input and the same strategy (each object has the same column types and same column names as the corresponding row of the CSV).
+
+The strategy argument must be one of the following strings:
+- 'd': [default](/docs/json-to-csv.md#default)
+- 'r': [full recursive](/docs/json-to-csv.md#full-recursive)
+- 'n': [no recursion](/docs/json-to-csv.md#no-recursion)
+- 's': [stringify iterables](/docs/json-to-csv.md#stringify-iterables)
 
 ----
 `unique(x: array, sorted: bool = false)`

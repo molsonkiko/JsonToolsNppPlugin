@@ -125,12 +125,17 @@ Testing JSON grepper's file reading ability
             JsonGrepperTester.TestFnames();
 
             Npp.AddLine(@"=========================
-Performance tests for JsonParser and RemesPath
+Performance tests for JsonParser and RemesPath (arithmetic)
 =========================
 ");
             // use an absolute path to the location of this file in your repo
             string big_random_fname = @"C:\Users\mjols\Documents\csharp\JsonToolsPlugin\testfiles\big_random.json";
-            Benchmarker.Benchmark("@[@[:].z =~ `(?i)[a-z]{5}`]", big_random_fname, 14);
+            Benchmarker.Benchmark("@[@[:].a * @[:].q < @[:].e]", big_random_fname, 14); // arithmetic
+            Npp.AddLine(@"=========================
+Performance tests for JsonParser and RemesPath (string operations)
+=========================
+");
+            Benchmarker.Benchmark("@[@[:].z =~ `(?i)[a-z]{5}`]", big_random_fname, 14); // string operations
             //because Visual Studio runs a whole bunch of other things in the background
             //     when I build my project, the benchmarking suite
             //     makes my code seem way slower than it actually is when it's running unhindered.

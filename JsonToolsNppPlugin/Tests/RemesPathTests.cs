@@ -314,6 +314,14 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("append(j`[]`, 1, false, a, j`[4]`)", "[1, false, \"a\", [4]]"),
                 new Query_DesiredResult("concat(j`[1, 2]`, j`[3, 4]`, j`[5]`)", "[1, 2, 3, 4, 5]"),
                 new Query_DesiredResult("concat(j`{\"a\": 1, \"b\": 2}`, j`{\"c\": 3}`, j`{\"a\": 4}`)", "{\"b\": 2, \"c\": 3, \"a\": 4}"),
+                new Query_DesiredResult("pivot(j`[[\"foo\", 2, 3, true], [\"bar\", 3, 3, true], [\"foo\", 4, 4, false], [\"bar\", 5, 4, false]]`, 0, 1, 2, 3)", "{\"foo\": [2, 4], \"bar\": [3, 5], \"2\": [3, 4], \"3\": [true, false]}"),
+                new Query_DesiredResult("pivot(j`[{\"a\": true, \"b\": 2, \"c\": 3}, {\"a\": false, \"b\": 3, \"c\": 3}, {\"a\": true, \"b\": 4, \"c\": 4}, {\"a\": false, \"b\": 5, \"c\": 4}]`, a, b, c)", "{\"true\": [2, 4], \"false\": [3, 5], \"c\": [3, 4]}"),
+                new Query_DesiredResult("pivot(j`[{\"a\": \"foo\", \"b\": 2, \"c\": 3}, {\"a\": \"bar\", \"b\": 3, \"c\": 3}, {\"a\": \"foo\", \"b\": 4, \"c\": 4}, {\"a\": \"bar\", \"b\": 5, \"c\": 4}]`, a, b, c)", "{\"foo\": [2, 4], \"bar\": [3, 5], \"c\": [3, 4]}"),
+                new Query_DesiredResult("to_records(j`{\"a\": [1, 2], \"b\": [2, 3]}`)", "[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 3}]"),
+                new Query_DesiredResult("to_records(j`{\"a\": [1, 2], \"b\": [2, 3]}`, d)", "[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 3}]"),
+                new Query_DesiredResult("to_records(j`{\"a\": [1, 2], \"b\": [2, 3]}`, n)", "[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 3}]"),
+                new Query_DesiredResult("to_records(j`[[1, 2, [3]], [2, 3, [4]]]`, r)", "[{\"col1\": 1, \"col2\": 2, \"col3.col1\": 3}, {\"col1\": 2, \"col2\": 3, \"col3.col1\": 4}]"),
+                new Query_DesiredResult("to_records(j`[[1, 2, [3]], [2, 3, [4]]]`, s)", "[{\"col1\": 1, \"col2\": 2, \"col3\": \"[3]\"}, {\"col1\": 2, \"col2\": 3, \"col3\": \"[4]\"}]"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -379,6 +387,7 @@ namespace JSON_Tools.Tests
                 new string[] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
                 new string[] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
                 new string[] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
+                new string[] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
 });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"\"" };
