@@ -380,13 +380,14 @@ namespace JSON_Tools.JSON_Tools
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (k == strv)
                                         {
-                                            if (!paths_visited.Contains(newpath)) yield return new Key_Node(0, val);
+                                            if (!paths_visited.Contains(newpath))
+                                                yield return new Key_Node(0, val);
                                             paths_visited.Add(newpath);
                                         }
                                         else
                                         {
                                             foreach (Key_Node ono in multi_idx_func(val, newpath, paths_visited))
-                                                yield return ono;
+                                                yield return new Key_Node(0, ono.node);
                                         }
                                     }
                                 }
@@ -400,7 +401,8 @@ namespace JSON_Tools.JSON_Tools
                                         string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
                                         if (regv.IsMatch(k))
                                         {
-                                            if (!paths_visited.Contains(newpath)) yield return new Key_Node(0, val);
+                                            if (!paths_visited.Contains(newpath))
+                                                yield return new Key_Node(0, val);
                                             paths_visited.Add(newpath);
                                         }
                                         else
@@ -449,7 +451,7 @@ namespace JSON_Tools.JSON_Tools
                 // it's a list of ints or slices
                 if (is_recursive)
                 {
-                    // decide whether to implement recursive search for slices and indices
+                    // TODO: decide whether to implement recursive search for slices and indices
                     throw new NotImplementedException("Recursive search for array indices and slices is not implemented");
                 }
                 IEnumerable<Key_Node> multi_idx_func(JNode x)
@@ -594,6 +596,49 @@ namespace JSON_Tools.JSON_Tools
             for (int ii = 0; ii < xarr.Length; ii++)
             {
                 yield return new Key_Node(ii, xarr[ii]);
+            }
+        }
+
+        /// <summary>
+        /// Yield all *scalars* that are descendents of node, no matter their depth<br></br>
+        /// Does not yield keys or indices, only the nodes themselves.
+        /// EXAMPLE<br></br>
+        /// RecursivelyFlattenIterable({"a": [true, 2, [3]], "b": {"c": ["d", "e"], "f": null}}) yields<br></br>
+        /// true, 2, 3, "d", "e", null
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private static IEnumerable<Key_Node> RecursivelyFlattenIterable(JNode node)
+        {
+            if (node is JObject obj)
+            {
+                foreach (JNode val in obj.children.Values)
+                {
+                    if ((val.type & Dtype.ITERABLE) == 0)
+                    {
+                        yield return new Key_Node(0, val);
+                    }
+                    else
+                    {
+                        foreach (Key_Node sub_kn in RecursivelyFlattenIterable(val))
+                            yield return sub_kn;
+                    }
+                }
+            }
+            else if (node is JArray arr)
+            {
+                foreach (JNode val in arr.children)
+                {
+                    if ((val.type & Dtype.ITERABLE) == 0)
+                    {
+                        yield return new Key_Node(0, val);
+                    }
+                    else
+                    {
+                        foreach (Key_Node sub_kn in RecursivelyFlattenIterable(val))
+                            yield return sub_kn;
+                    }
+                }
             }
         }
 
@@ -1605,6 +1650,7 @@ namespace JSON_Tools.JSON_Tools
                     pos = opo.pos;
                     nt = PeekNextToken(toks, pos - 1);
                     bool is_varname_list = cur_idxr is VarnameList;
+                    bool is_dict = is_varname_list & !is_recursive;
                     bool has_one_option = false;
                     bool is_projection = false;
                     if (is_varname_list || cur_idxr is SlicerList)
@@ -1632,13 +1678,13 @@ namespace JSON_Tools.JSON_Tools
                             }
                         }
                         Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
-                        idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_varname_list, is_recursive));
+                        idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
                     }
                     else if (cur_idxr is BooleanIndex)
                     {
                         object boodex_fun = ((BooleanIndex)cur_idxr).value;
                         Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyBooleanIndex((JNode)boodex_fun);
-                        idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_varname_list, is_recursive));
+                        idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
                     }
                     else if (cur_idxr is Projection)
                     {
@@ -1648,7 +1694,10 @@ namespace JSON_Tools.JSON_Tools
                     else
                     {
                         // it's a star indexer
-                        idxrs.Add(new IndexerFunc(ApplyStarIndexer, has_one_option, is_projection, is_varname_list, false));
+                        if (is_recursive)
+                            idxrs.Add(new IndexerFunc(RecursivelyFlattenIterable, false, false, false, true));
+                        else
+                            idxrs.Add(new IndexerFunc(ApplyStarIndexer, has_one_option, is_projection, is_dict, false));
                     }
                 }
                 if (idxrs.Count > 0)

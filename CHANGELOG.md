@@ -1,5 +1,5 @@
 # Change Log
-All notable changes to this project will be documented in this file.
+All [notable changes](#370---2022-10-08) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
 4. TreeViewer's `fname` attribute should change if the file it is associated with is renamed. Probably need to add a listener for the `NppMsg.NPPN_FILEBEFORERENAME` message.
+5. GrepperForm should track the history of folders selected by the user.
  
 ### To Be Changed
 
@@ -35,11 +36,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
+- Consider making it so that trying to get a missing key raises an error instead of returning `{}`. E.g., `@.foo` would raise an exception if the current JSON doesn't have `foo` as a key.
  
 ### To Be Fixed
 
-- If multiple views are open in the same window pane, the `Save query result` button appends the query result to the current file rather than to the newly opened file. 
-- The `ClassifySchema` function (used by the `Default` strategy for JSON tabularization) has problems when parsing some queries, even though those queries are clearly tabularizable. Something about keys missing from a dictionary. Most likely related to bad schemas. 
+- If multiple views are open in the same window pane, the `Save query result` button appends the query result to the current file rather than to the newly opened file.
 - JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
 - Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
@@ -48,10 +49,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
-- Sometimes recursive queries may cause an infinite loop, or something else that leads to Notepad++ crashing. Recursive queries are almost always fine, and I only saw this bug once. Not sure why yet.
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [3.7.0] - 2022-10-08
+
+### Added
+
+1. [GUI form](/docs/README.md#find-and-replace-form) for finding and replacing in JSON.
+
+### Changed
+
+1. `..*` ([recursive search](/docs/RemesPath.md#recursively-find-all-descendents) with the star indexer) now returns an array containing all the scalar descendents of a JSON node, no matter their depth.
+2. Replaced the `Current Path` button with a button for opening the [find/replace form](/docs/README.md#find-and-replace-form).
+3. Recursive search always returns an array even if no keys match. In that case, an empty array is returned rather than an empty object.
+
+### Fixed
+
+1. When a key contains singlequotes and double quotes (e.g. `"a'\""`), the Python and JavaScript keystyles now correctly formats that key.
+2. Eliminated possibility of null dereferencing when using the `Path to current line` command on an unparsed file.
 
 ## [3.6.1] - 2022-09-28
 

@@ -526,10 +526,10 @@ namespace JSON_Tools.JSON_Tools
         /// Get the key in square brackets or prefaced by a quote as determined by the style.<br></br>
         /// Style: one of 'p' (Python), 'j' (JavaScript), or 'r' (RemesPath)<br></br>
         /// EXAMPLES (using the JSON {"a b": [1, {"c": 2}], "d": [4]}<br></br>
-        /// Using key "a b":<br></br>
-        /// - JavaScript style: ['a b']<br></br>
-        /// - Python style: ['a b']<br></br>
-        /// - RemesPath style: [`a b`]<br></br>
+        /// Using key "a b'":<br></br>
+        /// - JavaScript style: ["a b'"]<br></br>
+        /// - Python style: ["a b'"]<br></br>
+        /// - RemesPath style: [`a b'`]<br></br>
         /// Using key "c":<br></br>
         /// - JavaScript style: .c<br></br>
         /// - RemesPath style: .c<br></br>
@@ -556,8 +556,7 @@ namespace JSON_Tools.JSON_Tools
                             return $".{key}";
                         if (key.Contains('\''))
                         {
-                            string key_escaped = key.Replace("\"", "\\\"");
-                            return $"[\"{key_escaped}\"]";
+                            return $"[\"{key}\"]";
                         }
                         string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
                         return $"['{key_dubquotes_unescaped}']";
@@ -566,8 +565,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (key.Contains('\''))
                         {
-                            string key_escaped = key.Replace("\"", "\\\"");
-                            return $"[\"{key_escaped}\"]";
+                            return $"[\"{key}\"]";
                         }
                         string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
                         return $"['{key_dubquotes_unescaped}']";

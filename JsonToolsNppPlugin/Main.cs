@@ -416,11 +416,17 @@ namespace Kbg.NppPluginNET
         private static void PathToCurrentLine()
         {
             string fname = Npp.notepad.GetCurrentFilePath();
-            JNode json = null;
+            JNode json;
             if (!fname_jsons.TryGetValue(fname, out json))
             {
                 if (grepperForm != null && grepperForm.fname == fname)
                     json = grepperForm.grepper.fname_jsons;
+            }
+            if (json == null)
+            {
+                json = TryParseJson(Npp.FileExtension() == "jsonl");
+                if (json == null)
+                    return;
             }
             int line = Npp.editor.GetCurrentLineNumber();
             string result = json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
