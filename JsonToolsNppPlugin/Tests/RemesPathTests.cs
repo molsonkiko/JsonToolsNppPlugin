@@ -339,9 +339,11 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@..`7`[0].foo", "[2]"),
                 new Query_DesiredResult("@._..`0`", "[0]"),
                 new Query_DesiredResult("@.bar..[a, b]", "[false, [\"a`g\", \"bah\"]]"),
-                new Query_DesiredResult("@.bar..c", "{}"),
+                new Query_DesiredResult("@.bar..c", "[]"),
                 new Query_DesiredResult("@.bar..[a, c]", "[false]"),
                 new Query_DesiredResult("@.`7`..foo", "[2]"),
+                new Query_DesiredResult("j`{\"a\": [true, 2, [3]], \"b\": {\"c\": [\"d\", \"e\"], \"f\": null}}`..*", "[true, 2, 3, \"d\", \"e\", null]"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": {\"c\": 2}}`..g`zzz`", "[]"), // return empty array if no keys match
             };
             int ii = 0;
             int tests_failed = 0;

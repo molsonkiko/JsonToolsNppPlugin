@@ -49,10 +49,8 @@
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
-            this.CurrentPathButton = new System.Windows.Forms.Button();
             this.RefreshButton = new System.Windows.Forms.Button();
-            this.TheAcceptButton = new System.Windows.Forms.Button();
-            this.TheCancelButton = new System.Windows.Forms.Button();
+            this.FindReplaceButton = new System.Windows.Forms.Button();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -61,11 +59,11 @@
             this.Tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Tree.Location = new System.Drawing.Point(4, 91);
+            this.Tree.Location = new System.Drawing.Point(4, 95);
             this.Tree.BackColor = System.Drawing.Color.FromArgb(0x29, 0x31, 0x34);
             this.Tree.ForeColor = System.Drawing.Color.FromArgb(0xe0, 0xe2, 0xe4);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(398, 339);
+            this.Tree.Size = new System.Drawing.Size(398, 335);
             this.Tree.TabIndex = 6;
             this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
@@ -239,18 +237,6 @@
             this.CurrentPathBox.TabIndex = 8;
             this.CurrentPathBox.TabStop = false;
             // 
-            // CurrentPathButton
-            // 
-            this.CurrentPathButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.CurrentPathButton.Location = new System.Drawing.Point(4, 435);
-            this.CurrentPathButton.Name = "CurrentPathButton";
-            this.CurrentPathButton.Size = new System.Drawing.Size(93, 23);
-            this.CurrentPathButton.TabIndex = 7;
-            this.CurrentPathButton.Text = "Current path";
-            this.CurrentPathButton.UseVisualStyleBackColor = true;
-            this.CurrentPathButton.Click += new System.EventHandler(this.CurrentPathButton_Click);
-            this.CurrentPathButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
-            // 
             // RefreshButton
             // 
             this.RefreshButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -263,40 +249,25 @@
             this.RefreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
             this.RefreshButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
-            // TheAcceptButton
+            // FindReplaceButton
             // 
-            this.TheAcceptButton.Location = new System.Drawing.Point(325, 435);
-            this.TheAcceptButton.Name = "TheAcceptButton";
-            this.TheAcceptButton.Size = new System.Drawing.Size(75, 23);
-            this.TheAcceptButton.TabIndex = 9;
-            this.TheAcceptButton.TabStop = false;
-            this.TheAcceptButton.Text = "Accept";
-            this.TheAcceptButton.UseVisualStyleBackColor = true;
-            this.TheAcceptButton.Visible = false;
-            // 
-            // TheCancelButton
-            // 
-            this.TheCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.TheCancelButton.Location = new System.Drawing.Point(244, 435);
-            this.TheCancelButton.Name = "TheCancelButton";
-            this.TheCancelButton.Size = new System.Drawing.Size(75, 23);
-            this.TheCancelButton.TabIndex = 10;
-            this.TheCancelButton.TabStop = false;
-            this.TheCancelButton.Text = "Cancel";
-            this.TheCancelButton.UseVisualStyleBackColor = true;
-            this.TheCancelButton.Visible = false;
+            this.FindReplaceButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.FindReplaceButton.Location = new System.Drawing.Point(4, 435);
+            this.FindReplaceButton.Name = "FindReplaceButton";
+            this.FindReplaceButton.Size = new System.Drawing.Size(92, 23);
+            this.FindReplaceButton.TabIndex = 7;
+            this.FindReplaceButton.Text = "Find/replace";
+            this.FindReplaceButton.UseVisualStyleBackColor = true;
+            this.FindReplaceButton.Click += new System.EventHandler(this.FindReplaceButton_Click);
+            this.FindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // TreeViewer
             // 
-            this.AcceptButton = this.TheAcceptButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.TheCancelButton;
             this.ClientSize = new System.Drawing.Size(412, 461);
-            this.Controls.Add(this.TheCancelButton);
-            this.Controls.Add(this.TheAcceptButton);
+            this.Controls.Add(this.FindReplaceButton);
             this.Controls.Add(this.RefreshButton);
-            this.Controls.Add(this.CurrentPathButton);
             this.Controls.Add(this.CurrentPathBox);
             this.Controls.Add(this.FullTreeCheckBox);
             this.Controls.Add(this.QueryToCsvButton);
@@ -314,10 +285,7 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TreeView Tree;
         private System.Windows.Forms.ImageList TypeIconList;
-        private System.Windows.Forms.Button SubmitQueryButton;
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
         private System.Windows.Forms.CheckBox FullTreeCheckBox;
@@ -332,11 +300,11 @@
         private System.Windows.Forms.ToolStripMenuItem PythonStylePathItem;
         private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
         private System.Windows.Forms.TextBox CurrentPathBox;
-        private System.Windows.Forms.Button CurrentPathButton;
         private System.Windows.Forms.ToolStripMenuItem ToggleSubtreesItem;
         private System.Windows.Forms.Button RefreshButton;
         internal System.Windows.Forms.TextBox QueryBox;
-        private System.Windows.Forms.Button TheAcceptButton;
-        private System.Windows.Forms.Button TheCancelButton;
+        private System.Windows.Forms.Button FindReplaceButton;
+        internal System.Windows.Forms.TreeView Tree;
+        internal System.Windows.Forms.Button SubmitQueryButton;
     }
 }

@@ -147,6 +147,25 @@ return arr
 * You can recursively search for the key "a" in this JSON with *double-dot* syntax `@..a`. This will return `[1, 3]`.
 * You can also recursively search for the keys "b" and "a" with the query `@..[b, a]`. This will return `[2, 1, 4, 3]`.
 
+### Recursively find all descendents ###
+
+*Added in v3.7.0*
+
+`@..*` will return a single array containing all the *scalar* descendents of the current JSON, no matter their depth.
+
+It will not return indices or parents, only the child nodes
+
+For example, the `@..*` query on JSON
+```json
+{"a": [true, 2, [3]], "b": {"c": ["d", "e"], "f": null}}
+```
+
+will return
+
+```json
+[true, 2, 3, "d", "e", null]
+```
+
 ## Functions ##
 RemesPath supports a variety of functions, some of which are [vectorized](#vectorized-functions) and some of which are not.
 

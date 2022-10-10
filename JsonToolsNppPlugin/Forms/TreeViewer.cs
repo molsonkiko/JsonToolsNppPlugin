@@ -30,6 +30,8 @@ namespace JSON_Tools.Forms
 
         public JsonSchemaMaker schemaMaker;
 
+        public FindReplaceForm findReplaceForm;
+
         public bool use_tree;
 
         public double max_size_full_tree_MB;
@@ -53,6 +55,7 @@ namespace JSON_Tools.Forms
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
+            findReplaceForm = null;
             use_tree = Main.settings.use_tree;
             max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;
             int file_len = Npp.editor.GetLength();
@@ -472,6 +475,12 @@ namespace JSON_Tools.Forms
             Npp.SetLangJson();
         }
 
+        private void FindReplaceButton_Click(object sender, EventArgs e)
+        {
+            findReplaceForm = new FindReplaceForm(this);
+            findReplaceForm.Show();
+        }
+
         private void FullTreeCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             if (FullTreeCheckBox.Checked)
@@ -737,16 +746,6 @@ namespace JSON_Tools.Forms
             if (node.Name == "")
                 return $"[{node.Index}]";
             return JNode.FormatKey(node.Name, style);
-        }
-
-        private void CurrentPathButton_Click(object sender, EventArgs e)
-        {
-            Npp.TryCopyToClipboard(CurrentPathBox.Text);
-            CurrentPathButton.Text = "Copied!";
-            CurrentPathButton.Update();
-            System.Threading.Thread.Sleep(200);
-            CurrentPathButton.Text = "Current path";
-            CurrentPathButton.Update();
         }
 
         /// <summary>

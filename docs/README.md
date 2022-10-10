@@ -138,6 +138,30 @@ First, you can open a new buffer containing the query result.
 
 ![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG)
 
+## Find and Replace Form ##
+
+*Added in version 3.7.0*
+
+If you want to perform some simple search or find-and-replace operations on JSON without worrying about RemesPath syntax, you can use the find/replace form.
+
+![Find/replace form simple find](/docs/find%20replace%20form%20simple%20find.PNG)
+
+![Find/replace form simple replace](/docs/find%20replace%20form%20simple%20replace.PNG)
+
+This form provides lets you perform text searches on keys and values in JSON, and also lets you do mathematical find/replace operations on numeric values.
+
+The default behavior of the form is to do a regular expression search on both keys and values, or a text find/replace on values only. You can change that under `Show advanced options`.
+
+![Find/replace form math find](/docs/find%20replace%20form%20math%20find.PNG)
+
+![Find/replace form math replace](/docs/find%20replace%20form%20math%20replace.PNG)
+
+If you don't do a regular expression search, your search term must match keys/values *exactly*. Substring matching of non-regular-expressions is *not* currently supported.
+
+![Find/replace form non-regex search must match exactly](/docs/find%20replace%20form%20nonregex%20exact.PNG)
+
+The form has limited functionality. For example, you can't perform a search on keys and a replacement on values. However, the form generates RemesPath queries in the RemesPath query box in the tree viewer, so you can use those queries as a starting point.
+
 ## JSON to CSV ##
 
 *Added in version 1.2.0*
@@ -177,7 +201,7 @@ You can right click on a tree node to copy any of the following to the clipboard
 * Key/index (customizable via [key style](#key-style))
 * Path (see [key style](#key-style))
 
-You can also click on the `Current path` button beneath the tree to copy the path of the currently selected tree node to the clipboard. The path will have the style of whatever default style you chose in the settings.
+In versions 3.4.0 through 3.6.1.1, you can also click on the `Current path` button beneath the tree to copy the path of the currently selected tree node to the clipboard. The path will have the style of whatever default style you chose in the settings (shown in the adjacent text box). In versions 3.7.0 and above, this button does not exist, so just select and copy the text in the box.
 
 ![Current path button for path to current tree node](/docs/path%20to%20current%20tree%20node%20button.PNG)
 
