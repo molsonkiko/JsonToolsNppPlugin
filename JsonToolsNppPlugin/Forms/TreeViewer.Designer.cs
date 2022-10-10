@@ -13,6 +13,8 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
+            if (findReplaceForm != null && !findReplaceForm.IsDisposed)
+                findReplaceForm.Close();
             if (disposing && (components != null))
             {
                 components.Dispose();
@@ -276,6 +278,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
+            this.VisibleChanged += new System.EventHandler(this.TreeViewer_VisibleChanged);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

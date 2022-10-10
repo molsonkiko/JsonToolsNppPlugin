@@ -115,11 +115,6 @@ namespace Kbg.NppPluginNET
             //
             // if (code == (uint)SciMsg.SCNxxx)
             // { ... }
-            // all the triggers below depend on IntPtrs representing buffer id's
-            // being convertible into 32-bit integers. This only works for 32-bit Notepad++.
-            // For 64-bit Notepad++, the IntPtrs are longs. 
-            //if (!IsWin32)
-            //    return;
             //// changing tabs
             if (code == (uint)NppMsg.NPPN_BUFFERACTIVATED)
             {
@@ -158,9 +153,9 @@ namespace Kbg.NppPluginNET
                 {
                     if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
                     {
-                        Npp.notepad.ShowDockingForm(grepperForm.tv);
                         if (treeViewer != null && !treeViewer.IsDisposed)
                             Npp.notepad.HideDockingForm(treeViewer);
+                        Npp.notepad.ShowDockingForm(grepperForm.tv);
                     }
                     else
                     {
@@ -175,9 +170,11 @@ namespace Kbg.NppPluginNET
             // when closing a file
             if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
             {
+                IntPtr buffer_closed_id = notification.Header.IdFrom;
+                string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
                 // if you close the file belonging the GrepperForm, delete its tree viewer
                 if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed &&
-                    Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                    buffer_closed == grepperForm.fname)
                 {
                     Npp.notepad.HideDockingForm(grepperForm.tv);
                     grepperForm.tv.Close();
@@ -187,9 +184,8 @@ namespace Kbg.NppPluginNET
                         Npp.notepad.ShowDockingForm(treeViewer);
                     return;
                 }
-                //int buffer_closed_id = notification.Header.IdFrom.ToInt32();
-                //string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
-                //// clean up data associated with the buffer that was just closed
+                // clean up data associated with the buffer that was just closed
+                fname_jsons.Remove(buffer_closed);
                 //if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
                 //    return;
                 //if (!closed_tv.IsDisposed)
@@ -198,8 +194,7 @@ namespace Kbg.NppPluginNET
                 //    closed_tv.Close();
                 //}
                 //treeViewers.Remove(buffer_closed);
-                //fname_jsons.Remove(buffer_closed);
-                //return;
+                return;
             }
             // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
             //if (code == (uint)SciMsg.SCI_UNDO
@@ -220,14 +215,6 @@ namespace Kbg.NppPluginNET
             //if (code > int.MaxValue) // windows messages
             //{
             //    int wm = -(int)code;
-            //    // leaving previous tab
-            //    if (wm == 0x22A && sShouldResetCaretBack) // =554 WM_MDI_SETACTIVE
-            //    {
-            //        // set caret line to default on file change
-            //        sShouldResetCaretBack = false;
-            //        var editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
-            //        editor.SetCaretLineBackAlpha(sAlpha);// Alpha.NOALPHA); // default
-            //        editor.SetCaretLineBack(sCaretLineColor);
             //    }
             //}
         }

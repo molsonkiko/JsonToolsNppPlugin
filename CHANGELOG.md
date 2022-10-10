@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#370---2022-10-08) to this project will be documented in this file.
+All [notable changes](#371-unreleased---2022-mm-dd) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -49,9 +49,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
 - Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
-- The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
+- The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [3.7.1.1] - 2022-10-10
+
+### Changed
+
+1. Parsed JSON is now removed from memory when the associated file is closed.
+
+### Fixed
+
+1. The find/replace form is automatically closed when its associated tree viewer is closed.
+	- Unfortunately, the implementation of this feature is such that temporarily hiding the tree view (which can happen when using the `JSON from files and APIs` form) will permanently close its find/replace form. Other solutions were considered and rejected as being even worse.
+2. Closing a file other than the temporary buffer associated with the `JSON from files and APIs` tree view no longer closes that tree view. Closing the buffer associated with that tree view still deletes the tree.
 
 ## [3.7.0] - 2022-10-08
 
