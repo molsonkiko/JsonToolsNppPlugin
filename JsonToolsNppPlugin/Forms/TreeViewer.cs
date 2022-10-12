@@ -765,6 +765,12 @@ namespace JSON_Tools.Forms
             JsonTreePopulate(json);
         }
 
+        private void TreeViewer_VisibleChanged(object sender, EventArgs e)
+        {
+            if (findReplaceForm != null && !findReplaceForm.IsDisposed)
+                findReplaceForm.Close();
+        }
+
         // not creating schemas at present because schemas produced may be invalid
         //private void SchemaButton_Click(object sender, EventArgs e)
         //{
