@@ -552,6 +552,13 @@ multiline comment
                                                          "Tried to terminate an array with '}'",
                                                          "Comma after last key-value pair of object",
                                                          "Tried to terminate object with ']'"} },
+                new object[]{ "[1, 2", "[1, 2]", new string[]{ "Unterminated array" } },
+                new object[]{ "{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" } },
+                new object[]{ "{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
+                                                                                                "Unterminated array", 
+                                                                                                "Unterminated object" } },
+                new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
+                new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
             };
 
             int tests_failed = 0;

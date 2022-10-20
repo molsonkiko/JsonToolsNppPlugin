@@ -29,8 +29,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 		- backwards-incompatible change
 - Replace the folder browser dialog for the grepper form with a text box where the `Tab` key reveals a dropdown with all subfolders of the current folder starting with whatever substring is after the last `\\`. This could be easier to use and more friendly than the current `FolderBrowserDialog`.
 - Add a dictionary mapping filenames to TreeViewers. This way each JSON buffer for which a tree viewer was opened can have its own, and the user has a better experience.
-	- *Big issue here: files other than the active buffer being closed.* There's no good way using the plugin pack to track any buffers other than the current buffer, because [INotepadPPGateway.GetFilePath](/JsonToolsNppPlugin/PluginInfrastructure/NotepadPPGateway.cs#L111) *can't be used in Win64, because IntPtrs are longs and that function only accepts ints.*
-	- This means that if you use the dictionary idea, and you just close the TreeViewer for the active file whenever a file is closed, if you close a file other than the active file, *the file that was closed will keep its TreeViewer and the file that is currently open will have its TreeViewer removed.*
 - I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would be a marked improvement over the partial tree loading or no-tree option implemented in [version 3.1.0](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v3.1.0).
 - *If lazy loading can't be implemented:*
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
@@ -52,6 +50,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [3.7.2.1] - 2022-10-20
+
+### Added
+
+1. With the linter turned on, can now parse unterminated arrays and objects like `{"a": [1, {"b": 2`
+	- This currently only works for non-empty arrays and objects (e.g., `[` and `{` will still raise errors).
+
+### Changed
+
+1. Removed `Search Up?` button from find/replace form because it does nothing.
+
+### Fixed
+
+1. The [API request tool](/docs/README.md#sending-rest-api-requests) can now send more than one request per thread.
+2. Improved tab-stop behavior on the find/replace form.
 
 ## [3.7.1.1] - 2022-10-10
 

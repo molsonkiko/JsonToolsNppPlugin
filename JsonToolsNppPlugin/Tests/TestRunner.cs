@@ -125,6 +125,12 @@ Testing JSON grepper's file reading ability
             JsonGrepperTester.TestFnames();
 
             Npp.AddLine(@"=========================
+Testing JSON grepper's API request tool
+=========================
+");
+            JsonGrepperTester.TestApiRequester();
+
+            Npp.AddLine(@"=========================
 Performance tests for JsonParser and RemesPath (arithmetic)
 =========================
 ");

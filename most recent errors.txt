@@ -26,8 +26,18 @@ Passed 14 tests.
 Testing JSON parser's linter functionality
 =========================
 
-Failed 0 tests.
-Passed 10 tests.
+Expected JsonParser(true, true, true, true).Parse({)
+to return
+{} and have lint [Unexpected end of JSON]
+Instead threw exception
+Unexpected end of JSON at position 0 (char '{')
+Expected JsonParser(true, true, true, true).Parse([)
+to return
+[] and have lint [Unexpected end of JSON]
+Instead threw exception
+Unexpected end of JSON at position 0 (char '[')
+Failed 2 tests.
+Passed 13 tests.
 =========================
 Testing JSON Lines parser
 =========================
@@ -146,16 +156,25 @@ Testing JSON grepper's file reading ability
 Failed 0 tests.
 Passed 6 tests.
 =========================
+Testing JSON grepper's API request tool
+=========================
+
+Testing with 3 urls and 4 threads
+Testing with 3 urls and 1 threads
+Testing with 3 urls and 2 threads
+Failed 0 tests.
+Passed 6 tests.
+=========================
 Performance tests for JsonParser and RemesPath (arithmetic)
 =========================
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 53.134 +/- 12.932 ms over 14 trials
-Load times (ms): 60, 73, 41, 43, 68, 41, 46, 46, 39, 45, 76, 39, 68, 51
-Compiling query "@[@[:].a * @[:].q < @[:].e]" into took 0.005 +/- 0.005 ms over 14 trials
-To run pre-compiled query "@[@[:].a * @[:].q < @[:].e]" on JNode from JSON of size 975068 into took 0.519 +/- 0.329 ms over 14 trials
-Query times (ms): 0.466, 1.236, 0.34, 0.332, 0.336, 0.333, 1.37, 0.361, 0.334, 0.334, 0.333, 0.574, 0.495, 0.425
+To convert JSON string of size 975068 into JNode took 50.155 +/- 9.712 ms over 14 trials
+Load times (ms): 42, 47, 45, 40, 54, 46, 58, 60, 77, 46, 39, 51, 47, 44
+Compiling query "@[@[:].a * @[:].q < @[:].e]" into took 0.007 +/- 0.011 ms over 14 trials
+To run pre-compiled query "@[@[:].a * @[:].q < @[:].e]" on JNode from JSON of size 975068 into took 0.344 +/- 0.148 ms over 14 trials
+Query times (ms): 0.418, 0.324, 0.435, 0.447, 0.331, 0.755, 0.231, 0.227, 0.226, 0.241, 0.494, 0.225, 0.236, 0.225
 Preview of result: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
 =========================
@@ -164,10 +183,10 @@ Performance tests for JsonParser and RemesPath (string operations)
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 975068 into JNode took 46.598 +/- 6.92 ms over 14 trials
-Load times (ms): 57, 47, 42, 42, 64, 39, 44, 44, 47, 39, 46, 53, 38, 43
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.003 +/- 0.005 ms over 14 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.697 +/- 0.197 ms over 14 trials
-Query times (ms): 0.702, 0.62, 0.747, 0.553, 0.483, 0.484, 0.497, 0.584, 0.95, 0.492, 1.149, 0.89, 0.824, 0.78
+To convert JSON string of size 975068 into JNode took 51.64 +/- 9.921 ms over 14 trials
+Load times (ms): 63, 70, 39, 41, 61, 39, 42, 44, 57, 49, 56, 59, 39, 55
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.006 +/- 0.016 ms over 14 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 0.628 +/- 0.323 ms over 14 trials
+Query times (ms): 0.594, 1.378, 0.502, 0.487, 0.476, 0.483, 0.473, 0.474, 0.475, 0.475, 0.474, 0.474, 0.578, 1.45
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...

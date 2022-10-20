@@ -90,7 +90,7 @@ namespace JSON_Tools.Utils
             Category("Grep and API requests"), DefaultValue(4)]
         public int max_threads_parsing { get; set; }
 
-        [Description("Should the API requester be asynchronous?"),
+        [Description("How many threads to use for requesting JSON from remote APIs?"),
             Category("Grep and API requests"), DefaultValue(8)]
         public int max_api_request_threads { get; set; }
         #endregion

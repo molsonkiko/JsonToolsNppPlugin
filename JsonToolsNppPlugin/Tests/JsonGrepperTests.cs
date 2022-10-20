@@ -97,5 +97,65 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }
+
+        public static int[] TestApiRequesterHelper(string[] urls, int ii, int tests_failed, JsonGrepper grepper)
+        {
+            int n = urls.Length;
+            ii += 1;
+            Npp.AddLine($"Testing with {n} urls and {grepper.max_api_request_threads} threads");
+            try
+            {
+                grepper.GetJsonFromApis(urls);
+                int json_downloaded = grepper.fname_jsons.Length;
+                int errors = grepper.exceptions.Length;
+                int err_plus_json = json_downloaded + errors;
+                ii += 1;
+                if (err_plus_json != n)
+                {
+                    tests_failed += 1;
+                    Npp.AddLine($"After making {n} requests, expected a total of {n} JSON downloads or errors," +
+                        $" instead got {err_plus_json}.");
+                }
+                if (errors > 0)
+                {
+                    tests_failed += errors;
+                    Npp.AddLine($"Expected no errors, instead got the following:\n{grepper.exceptions.PrettyPrint()}");
+                }
+            }
+            catch (Exception ex)
+            {
+                tests_failed += 1;
+                Npp.AddLine($"Expected API requester to not raise any exceptions, instead got exception\n{ex}");
+            }
+            return new int[] { ii, tests_failed };
+        }
+
+        public static void TestApiRequester()
+        {
+            JsonGrepper grepper = new JsonGrepper(new JsonParser());
+            int ii = 0;
+            int tests_failed = 0;
+
+            string[] urls = new string[] {
+                "https://api.weather.gov",
+                "https://api.weather.gov/points/37.68333333333334,-121.92500000000001", // Alameda
+                "https://api.weather.gov/points/37.75833333333334,-122.43333333333334", // San Francisco
+            };
+            int n = urls.Length;
+            grepper.max_api_request_threads = n + 1; // test with more threads than urls
+            int[] test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
+            ii = test_result[0];
+            tests_failed = test_result[1];
+            grepper.max_api_request_threads = 1; // test single-threaded
+            test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
+            ii = test_result[0];
+            tests_failed = test_result[1];
+            grepper.max_api_request_threads = 2; // test multi-threaded with more urls than threads
+            test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
+            ii = test_result[0];
+            tests_failed = test_result[1];
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
     }
 }

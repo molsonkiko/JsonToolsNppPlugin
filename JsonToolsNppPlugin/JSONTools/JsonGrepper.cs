@@ -4,35 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Net;
-/*
-using System;
-using System.Net;
-using System.IO;
-
-public class Test
-{
-    public static void Main (string[] args)
-    {
-        if (args == null || args.Length == 0)
-        {
-            throw new ApplicationException ("Specify the URI of the resource to retrieve.");
-        }
-        WebClient client = new WebClient ();
-
-        // Add a user agent header in case the
-        // requested URI contains a query.
-
-        client.Headers.Add ("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
-        Stream data = client.OpenRead (args[0]);
-        StreamReader reader = new StreamReader (data);
-        string s = reader.ReadToEnd ();
-        Console.WriteLine (s);
-        data.Close ();
-        reader.Close ();
-    }
-} 
-*/
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -68,12 +39,11 @@ namespace JSON_Tools.JSON_Tools
             {
 				this.json_parser = json_parser;
             }
-            InitializeWebClient(webClient);
-            // https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
+            // security protocol addresses issue: https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
 		}
 
-        private void InitializeWebClient(WebClient wc)
+        private static void InitializeWebClient(WebClient wc)
         {
             wc.Headers.Clear();
             // add a header saying that this client accepts only JSON
@@ -200,6 +170,7 @@ namespace JSON_Tools.JSON_Tools
             }
             foreach (string url in urls)
             {
+                InitializeWebClient(webClient);
                 try
                 {
                     fname_strings[url] = webClient.DownloadString(new Uri(url));
@@ -230,7 +201,6 @@ namespace JSON_Tools.JSON_Tools
                 // could stop if already downloaded, but it is probably better to allow duplication of labor, 
                 // so that the user can get new JSON if something changed
                 WebClient newWebClient = new WebClient();
-                InitializeWebClient(newWebClient);
                 Thread thread = new Thread(
                     () => GetJsonFromApis_Task(
                         urls_this_thread,
@@ -259,6 +229,7 @@ namespace JSON_Tools.JSON_Tools
             foreach (object urlobj in urls_this_thread)
             {
                 string url = (string)urlobj;
+                InitializeWebClient(webClient);
                 try
                 {
                     fname_strings[url] = webClient.DownloadString(url);
