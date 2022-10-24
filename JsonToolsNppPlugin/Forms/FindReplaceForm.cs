@@ -128,10 +128,10 @@ namespace JSON_Tools.Forms
                 // can only filter on values when in math mode, so don't consider KeysValsBothBox
                 if (RecursiveSearchBox.Checked)
                 {
-                    findQuery = $"({root}..*)[@ {FindTextBox.Text}]";
+                    findQuery = $"(({root}..*)[is_num(@)])[@ {FindTextBox.Text}]";
                     return;
                 }
-                findQuery = $"({root}.*)[@ {FindTextBox.Text}]";
+                findQuery = $"(({root}.*)[is_num(@)])[@ {FindTextBox.Text}]";
                 return;
             }
             string keys_find_text;
@@ -155,12 +155,12 @@ namespace JSON_Tools.Forms
                         findQuery = $"{root}..{keys_find_text}";
                         break;
                     case 1: // values
-                        findQuery = $"({root}..*){values_find_text}";
+                        findQuery = $"(({root})..*){values_find_text}";
                         break;
                     default: // both keys and values
                         findQuery = "concat(\r\n" +
-                                    $"    {root}..{keys_find_text},\r\n" +
-                                    $"    ({root}..*){values_find_text}\r\n" +
+                                    $"    ({root})..{keys_find_text},\r\n" +
+                                    $"    (({root})..*){values_find_text}\r\n" +
                                     $")";
                         break;
                 }
@@ -172,12 +172,12 @@ namespace JSON_Tools.Forms
                     findQuery = $"{root}.{keys_find_text}";
                     break;
                 case 1: // values
-                    findQuery = $"{root}{values_find_text}";
+                    findQuery = $"({root}){values_find_text}";
                     break;
                 default: // both keys and values
                     findQuery = "concat(\r\n" +
                                 $"    {root}.{keys_find_text},\r\n" +
-                                $"    {root}{values_find_text}\r\n" +
+                                $"    ({root}){values_find_text}\r\n" +
                                 $")";
                     break;
             }

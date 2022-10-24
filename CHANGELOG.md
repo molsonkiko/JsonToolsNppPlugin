@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#371-unreleased---2022-mm-dd) to this project will be documented in this file.
+All [notable changes](#3721---2022-10-20) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -50,6 +50,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [3.7.3.1] (unreleased) - 2022-MM-DD
+
+### Fixed
+
+1. Changed queries produced by [find/replace form](/docs/README.md#find-and-replace-form) to make it more robust and easy to use.
+2. Eliminated potential errors when using the [remove files](/docs/README.md#clearing-selected-files) button on the JSON from files and APIs form.
 
 ## [3.7.2.1] - 2022-10-20
 
