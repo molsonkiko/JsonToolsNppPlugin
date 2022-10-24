@@ -106,37 +106,23 @@ namespace JSON_Tools.Forms
             Main.grepperTreeViewJustOpened = true;
             var selected_files = new List<string>();
             foreach (object file in FilesFoundBox.SelectedItems)
+            // have to create a separate list to avoid an error from mutating something
+            // while enumerating it
             {
                 selected_files.Add((string)file);
             }
-            // have to create a separate list to avoid an error from mutating something
-            // while enumerating it
-            JObject query_results = null;
-            bool tv_null = tv == null;
-            if (!tv_null)
-                query_results = (JObject)tv.query_result;
             foreach (string file in selected_files)
             {
                 FilesFoundBox.Items.Remove(file);
                 files_found.Remove(file);
                 grepper.fname_jsons.children.Remove(file);
-                if (!tv_null)
-                    query_results.children.Remove(file);
             }
-            if (!tv_null)
+            if (tv != null)
             {
+                // refresh the tree view with the current query executed
+                // on the pruned JSON
                 tv.json = grepper.fname_jsons;
-                tv.JsonTreePopulate(grepper.fname_jsons);
-                Npp.notepad.FileNew();
-                fname = Npp.notepad.GetCurrentFilePath();
-                tv.fname = fname;
-                string result = grepper.fname_jsons.PrettyPrintAndChangeLineNumbers(
-                    Main.settings.indent_pretty_print,
-                    Main.settings.sort_keys,
-                    Main.settings.pretty_print_style
-                );
-                Npp.AddLine(result);
-                Npp.SetLangJson();
+                tv.SubmitQueryButton.PerformClick();
                 if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
                     Npp.notepad.HideDockingForm(Main.treeViewer);
             }

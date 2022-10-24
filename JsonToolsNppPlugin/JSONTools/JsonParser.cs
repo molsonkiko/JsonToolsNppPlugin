@@ -557,7 +557,10 @@ namespace JSON_Tools.JSON_Tools
                     children.Add(new_obj);
                 }
             }
-            throw new JsonParserException("Unterminated array", cur_c, ii);
+            if (lint == null)
+                throw new JsonParserException("Unterminated array", cur_c, ii);
+            lint.Add(new JsonLint("Unterminated array", ii, line_num, cur_c));
+            return new JArray(start_line_num, children);
         }
 
         /// <summary>
@@ -679,7 +682,10 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                 }
             }
-            throw new JsonParserException("Unterminated object", cur_c, ii);
+            if (lint == null)
+                throw new JsonParserException("Unterminated object", cur_c, ii);
+            lint.Add(new JsonLint($"Unterminated object", ii, line_num, cur_c));
+            return new JObject(start_line_num, children);
         }
 
         /// <summary>

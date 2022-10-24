@@ -34,7 +34,6 @@
             this.RecursiveSearchBox = new System.Windows.Forms.CheckBox();
             this.FindReplaceFormTitle = new System.Windows.Forms.Label();
             this.FindButton = new System.Windows.Forms.Button();
-            this.SearchUpBox = new System.Windows.Forms.CheckBox();
             this.ReplaceButton = new System.Windows.Forms.Button();
             this.FindTextBox = new System.Windows.Forms.TextBox();
             this.FindTextBoxLabel = new System.Windows.Forms.Label();
@@ -102,19 +101,6 @@
             this.FindButton.UseVisualStyleBackColor = true;
             this.FindButton.Click += new System.EventHandler(this.FindButton_Click);
             this.FindButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
-            // 
-            // SearchUpBox
-            // 
-            this.SearchUpBox.AutoSize = true;
-            this.SearchUpBox.Location = new System.Drawing.Point(201, 99);
-            this.SearchUpBox.Name = "SearchUpBox";
-            this.SearchUpBox.Size = new System.Drawing.Size(97, 20);
-            this.SearchUpBox.TabIndex = 7;
-            this.SearchUpBox.TabStop = false;
-            this.SearchUpBox.Text = "Search up?";
-            this.SearchUpBox.UseVisualStyleBackColor = true;
-            this.SearchUpBox.Visible = false;
-            this.SearchUpBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
             // 
             // ReplaceButton
             // 
@@ -211,6 +197,8 @@
             this.RootTextBox.Name = "RootTextBox";
             this.RootTextBox.Size = new System.Drawing.Size(196, 22);
             this.RootTextBox.TabIndex = 2;
+            this.RootTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.RootTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
             // 
             // RootTextBoxLabel
             // 
@@ -225,7 +213,6 @@
             // 
             this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBoxLabel);
             this.AdvancedGroupBox.Controls.Add(this.RegexBox);
-            this.AdvancedGroupBox.Controls.Add(this.SearchUpBox);
             this.AdvancedGroupBox.Controls.Add(this.RecursiveSearchBox);
             this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBox);
             this.AdvancedGroupBox.Controls.Add(this.MathBox);
@@ -254,6 +241,7 @@
             this.SwapFindReplaceButton.Text = "Swap";
             this.SwapFindReplaceButton.UseVisualStyleBackColor = true;
             this.SwapFindReplaceButton.Click += new System.EventHandler(this.SwapFindReplaceButton_Click);
+            this.SwapFindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
             // 
             // FindReplaceForm
             // 
@@ -289,7 +277,6 @@
         private System.Windows.Forms.CheckBox RecursiveSearchBox;
         private System.Windows.Forms.Label FindReplaceFormTitle;
         private System.Windows.Forms.Button FindButton;
-        private System.Windows.Forms.CheckBox SearchUpBox;
         private System.Windows.Forms.Button ReplaceButton;
         private System.Windows.Forms.TextBox FindTextBox;
         private System.Windows.Forms.Label FindTextBoxLabel;
