@@ -125,7 +125,7 @@ namespace JSON_Tools.Tests
             var query_times_str = new string[query_times.Length];
             for (int ii = 0; ii < query_times.Length; ii++)
             {
-                query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString();
+                query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString(JNode.DOT_DECIMAL_SEP);
             }
             Npp.AddLine($"Query times (ms): {String.Join(", ", query_times_str)}");
             string result_preview = result.ToString().Slice(":300") + "\n...";

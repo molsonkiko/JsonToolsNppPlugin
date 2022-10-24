@@ -51,12 +51,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 
-## [3.7.3.1] (unreleased) - 2022-MM-DD
+## [3.7.3.3] - 2022-10-24
 
 ### Fixed
 
 1. Changed queries produced by [find/replace form](/docs/README.md#find-and-replace-form) to make it more robust and easy to use.
 2. Eliminated potential errors when using the [remove files](/docs/README.md#clearing-selected-files) button on the JSON from files and APIs form.
+3. Resolve [Issue #17](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/17) with parsing of floating-point numbers in cultures where the decimal separator is `,` and not the `.` used in the USA.
 
 ## [3.7.2.1] - 2022-10-20
 

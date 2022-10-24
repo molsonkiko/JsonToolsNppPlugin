@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic; // for dictionary, list
+using System.Globalization;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -219,6 +220,13 @@ namespace JSON_Tools.JSON_Tools
             ['\f'] = "\\f",
         };
 
+        // in some places like Germany they use ',' as the normal decimal separator.
+        // need to override this to ensure that we parse JSON correctly
+        public static readonly NumberFormatInfo DOT_DECIMAL_SEP = new NumberFormatInfo
+        {
+            NumberDecimalSeparator = "."
+        };
+
         private const string HEX_CHARS = "0123456789abcdef";
         /// <summary>
         /// Return the hexadecimal string representation of an integer
@@ -299,10 +307,10 @@ namespace JSON_Tools.JSON_Tools
                     if (v == Math.Round(v))
                     {
                         // add ending ".0" to distinguish doubles equal to integers from actual integers
-                        return v.ToString() + ".0";
+                        return v.ToString(DOT_DECIMAL_SEP) + ".0";
                     }
 
-                    return v.ToString();
+                    return v.ToString(DOT_DECIMAL_SEP);
                 }
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";

@@ -98,7 +98,14 @@ namespace JSON_Tools.JSON_Tools
 
         private string YamlKeyRepr(string k)
         {
-            if (double.TryParse(k, out double d))
+            bool is_float_str = false;
+            try
+            {
+                double.Parse(k, JNode.DOT_DECIMAL_SEP);
+                is_float_str = true;
+            }
+            catch { }
+            if (is_float_str)
             {
                 // k is a string representing a number; we need to enquote it so that
                 // a YAML parser will recognize that it is not actually a number.
@@ -115,46 +122,43 @@ namespace JSON_Tools.JSON_Tools
 
         private string YamlValRepr(JNode v)
         {
-            if (v.type == Dtype.NULL)
+            if (v.value == null)
             {
                 return "null";
             }
-            object val = v.value;
-            string strv = val.ToString();
-            if (v.type == Dtype.INT || v.type == Dtype.BOOL)
+            string strv = v.value.ToString();
+            if (v.type == Dtype.STR)
             {
-                return strv;
+                try
+                {
+                    _ = double.Parse(strv, JNode.DOT_DECIMAL_SEP);
+                    return $"'{strv}'";
+                    // enquote stringified numbers to avoid confusion with actual numbers
+                }
+                catch { }
+                if (StartsOrEndsWith(strv, " "))
+                {
+                    return $"\"{strv}\"";
+                }
+                Regex backslash = new Regex("([\\\\:\"'\r\t\n\f\b])");
+                if (backslash.IsMatch(strv))
+                {
+                    return EscapeBackslash(strv);
+                }
             }
-            if (double.TryParse(strv, out double d))
+            else if (v.type == Dtype.FLOAT)
             {
                 // k is a number
+                double d = (double)v.value;
                 if (d == NanInf.inf) return ".inf";
                 if (d == NanInf.neginf) return "-.inf";
                 if (double.IsNaN(d))
                 {
                     return ".nan";
                 }
-                if (v.type == Dtype.STR)
-                {
-                    // enquote numstrings to prevent confusion
-                    return "'" + strv + "'";
-                }
-                if (v.type == Dtype.FLOAT && double.Parse(strv) % 1 == 0)
-                {
-                    // ensure that floats equal to ints are rendered as floats
-                    return strv + ".0";
-                }
-                return strv;
-            }
-            if (StartsOrEndsWith(strv, " "))
-            {
-                return '"' + strv + '"';
-            }
-            Regex backslash = new Regex("([\\\\:\"'\r\t\n\f\b])");
-            if (backslash.IsMatch(strv))
-            {
-                //Console.WriteLine("has backslash");
-                return EscapeBackslash(strv);
+                if (d % 1 == 0)
+                    return $"{d}.0"; // add .0 at end of floats that are equal to ints
+                return d.ToString(JNode.DOT_DECIMAL_SEP);
             }
             return strv;
         }

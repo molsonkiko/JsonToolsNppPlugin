@@ -3,6 +3,7 @@ A parser and linter for JSON.
 */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
@@ -455,7 +456,7 @@ namespace JSON_Tools.JSON_Tools
                 else if (c == '/')
                 {
                     // fractions are part of the JSON language specification
-                    double numer = double.Parse(sb.ToString());
+                    double numer = double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP);
                     JNode denom_node;
                     ii++;
                     denom_node = ParseNumber(q);
@@ -471,7 +472,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(long.Parse(sb.ToString()), Dtype.INT, line_num);
             }
-            return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, line_num);
+            return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, line_num);
         }
 
         /// <summary>

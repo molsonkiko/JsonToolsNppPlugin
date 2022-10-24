@@ -1476,7 +1476,7 @@ namespace JSON_Tools.JSON_Tools
             JNode val = args[0];
             if (val.type == Dtype.STR)
             {
-                return new JNode(double.Parse((string)val.value), Dtype.FLOAT, 0);
+                return new JNode(double.Parse((string)val.value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
             }
             return new JNode(Convert.ToDouble(val.value), Dtype.FLOAT, 0);
         }
