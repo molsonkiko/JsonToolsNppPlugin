@@ -51,13 +51,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 
-## [3.7.3.3] - 2022-10-24
+## [4.0.0] - 2022-10-24
 
 ### Fixed
 
 1. Changed queries produced by [find/replace form](/docs/README.md#find-and-replace-form) to make it more robust and easy to use.
 2. Eliminated potential errors when using the [remove files](/docs/README.md#clearing-selected-files) button on the JSON from files and APIs form.
 3. Resolve [Issue #17](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/17) with parsing of floating-point numbers in cultures where the decimal separator is `,` and not the `.` used in the USA.
+
+### Changed
+
+__[.NET Framework 4.8](https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies#net-framework-48) must now be installed on the computer to run the plugin.__ As a practical matter, this means that any Windows OS older than [Windows 10 May 2019 Update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) may be unable to use this plugin going forward.
 
 ## [3.7.2.1] - 2022-10-20
 
