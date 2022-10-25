@@ -135,7 +135,7 @@ Syntax error at position 3: Number with two decimal points
             {
                 return new JNode(long.Parse(sb.ToString()), Dtype.INT, 0);
             }
-            return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, 0);
+            return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
         }
 
         public JNode ParseQuotedString(string q)
