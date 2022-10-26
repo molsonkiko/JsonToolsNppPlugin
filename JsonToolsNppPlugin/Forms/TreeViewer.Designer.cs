@@ -1,4 +1,6 @@
-﻿namespace JSON_Tools.Forms
+﻿using Kbg.NppPluginNET.PluginInfrastructure;
+
+namespace JSON_Tools.Forms
 {
     partial class TreeViewer
     {
@@ -62,8 +64,8 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Tree.Location = new System.Drawing.Point(4, 95);
-            this.Tree.BackColor = System.Drawing.Color.FromArgb(0x29, 0x31, 0x34);
-            this.Tree.ForeColor = System.Drawing.Color.FromArgb(0xe0, 0xe2, 0xe4);
+            this.Tree.BackColor = PluginBase.GetDefaultBackgroundColor();
+            this.Tree.ForeColor = PluginBase.GetDefaultForegroundColor();
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(398, 335);
             this.Tree.TabIndex = 6;

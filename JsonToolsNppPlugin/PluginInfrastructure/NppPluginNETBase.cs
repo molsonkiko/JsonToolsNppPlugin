@@ -1,5 +1,6 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
 using System;
+using System.Drawing;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {
@@ -58,6 +59,18 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         public static Func<IScintillaGateway> GetGatewayFactory()
         {
             return gatewayFactory;
+        }
+
+        public static Color GetDefaultForegroundColor()
+        {
+            var rawColor = (int)Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
+            return Color.FromArgb(rawColor & 0xff, (rawColor >> 8) & 0xff, (rawColor >> 16) & 0xff);
+        }
+
+        public static Color GetDefaultBackgroundColor()
+        {
+            var rawColor = (int)Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
+            return Color.FromArgb(rawColor & 0xff, (rawColor >> 8) & 0xff, (rawColor >> 16) & 0xff);
         }
     }
 }
