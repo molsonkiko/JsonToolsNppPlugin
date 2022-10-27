@@ -669,45 +669,100 @@ namespace JSON_Tools.JSON_Tools
 		/// <param name="key_sep"></param>
 		/// <returns></returns>
 		/// <exception cref="ArgumentException"></exception>
-		private void BuildTableHelper_STRINGIFY_ITERABLES(JNode obj, List<JNode> result)
+		private void BuildTableHelper_STRINGIFY_ITERABLES(JNode obj, List<JNode> result, string key_sep = ".")
 		{
-			foreach (JNode child in ((JArray)obj).children)
+			if (obj is JArray)
+            {
+				foreach (JNode child in ((JArray)obj).children)
+				{
+					Dictionary<string, JNode> row = new Dictionary<string, JNode>();
+					if (child is JArray)
+					{
+						JArray achild = (JArray)child;
+						for (int ii = 0; ii < achild.Length; ii++)
+						{
+							string key = $"col{ii + 1}";
+							JNode subchild = achild[ii];
+							if (subchild is JArray || subchild is JObject)
+							{
+								row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); // .Replace("\"", "\\\""), Dtype.STR, 0);
+							}
+							else
+							{
+								row[key] = subchild;
+							}
+						}
+					}
+					else if (child is JObject)
+					{
+						JObject ochild = (JObject)child;
+						foreach (string key in ochild.children.Keys)
+						{
+							JNode subchild = ochild[key];
+							if (subchild is JArray || subchild is JObject)
+							{
+								row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); //.Replace("\"", "\\\""), Dtype.STR, 0);
+							}
+							else
+							{
+								row[key] = subchild;
+							}
+						}
+					}
+					result.Add(new JObject(0, row));
+				}
+				return;
+			}
+			JObject oobj = (JObject)obj;
+			// obj is a dict mapping some number of keys to scalars and the rest to arrays
+			// some keys may be mapped to hanging all-scalar dicts and not scalars
+			Dictionary<string, JArray> arr_dict = new Dictionary<string, JArray>();
+			Dictionary<string, JNode> not_arr_dict = new Dictionary<string, JNode>();
+			int len_arr = 0;
+			foreach (string k in oobj.children.Keys)
 			{
-				Dictionary<string, JNode> row = new Dictionary<string, JNode>();
-				if (child is JArray)
+				JNode v = oobj[k];
+				if (v is JArray varr)
 				{
-					JArray achild = (JArray)child;
-					for (int ii = 0; ii < achild.Length; ii++)
-					{
-						string key = $"col{ii + 1}";
-						JNode subchild = achild[ii];
-						if (subchild is JArray || subchild is JObject)
-						{
-							row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); // .Replace("\"", "\\\""), Dtype.STR, 0);
-						}
-						else
-						{
-							row[key] = subchild;
-						}
-					}
+					arr_dict[k] = varr;
+					if (varr.Length > len_arr) { len_arr = varr.Length; }
 				}
-				else if (child is JObject)
+				else
 				{
-					JObject ochild = (JObject)child;
-					foreach (string key in ochild.children.Keys)
-					{
-						JNode subchild = ochild[key];
-						if (subchild is JArray || subchild is JObject)
-						{
-							row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); //.Replace("\"", "\\\""), Dtype.STR, 0);
-						}
-						else
-						{
-							row[key] = subchild;
-						}
-					}
+					not_arr_dict[k] = v;
 				}
-				result.Add(new JObject(0, row));
+			}
+			not_arr_dict = ResolveHang(not_arr_dict, key_sep);
+			// for each array child, iterate through the arrays in parallel,
+			// and make the i^th object in each record contain the following:
+			// * all the scalar values of the non-array children in the object
+			// * if the child is an array:
+			//     - if the array is shorter than i, an empty string
+			//     - if the i^th element is an iterable, the stringified form of that iterable
+			//     - if the i^th element is a scalar, that scalar
+			for (int ii = 0; ii < len_arr; ii++)
+			{
+				Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
+				foreach (string k in arr_dict.Keys)
+				{
+					JArray v = arr_dict[k];
+					// if one array is longer than others, the missing values from the short rows are filled by
+					// empty strings
+					if (ii > v.Length)
+						newrec[k] = new JNode("", Dtype.STR, 0);
+                    else
+                    {
+						JNode subchild = v[ii];
+						if (subchild is JArray subarr)
+							newrec[k] = new JNode(subarr.ToString(), Dtype.STR, 0);
+						else if (subchild is JObject subobj)
+							newrec[k] = new JNode(subobj.ToString(), Dtype.STR, 0);
+						else
+							newrec[k] = subchild;
+                    }
+				}
+				foreach (string k in not_arr_dict.Keys) { JNode v = not_arr_dict[k]; newrec[k] = v; }
+				result.Add(new JObject(0, newrec));
 			}
 		}
 
@@ -737,10 +792,6 @@ namespace JSON_Tools.JSON_Tools
 			}
 			else if (strategy == JsonTabularizerStrategy.STRINGIFY_ITERABLES)
 			{
-				if (!(obj is JArray))
-				{
-					throw new ArgumentException($"Stringify iterables strategy does not work on non-array JSON.");
-				}
 				BuildTableHelper_STRINGIFY_ITERABLES(obj, result);
 			}
 			else

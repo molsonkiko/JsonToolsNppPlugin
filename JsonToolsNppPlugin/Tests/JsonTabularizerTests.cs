@@ -769,13 +769,21 @@ namespace JSON_Tools.Tests
 						"{\"retweet_count\": 5, \"retweeted\": false, " +
 						"\"source\": \"<a href=\\\"http://twitter.com/download/android\\\" rel=\\\"nofollow\\\">Twitter for Android</a>\"}" +
 					"}" +
-				"]", // TODO: find best way to handle stringify_iterables with literal quote chars in string in stringified object
+				"]", // literal quote chars in string in stringified object
 				"[" +
 					"{\"foo\": \"bar\", \"baz\": " +
 						"\"{\\\"retweet_count\\\": 5, \\\"retweeted\\\": false, " +
 						"\\\"source\\\": \\\"<a href=\\\\\\\"http://twitter.com/download/android\\\\\\\" rel=\\\\\\\"nofollow\\\\\\\">Twitter for Android</a>\\\"}\"" +
 					"}" +
 				"]"
+				},
+				new string[]{ // object with child arrays, one of which contains sub-iterables
+					"{\"a\": 1.5, \"b\": [[1], [\"x\"], {\"y\": \"z\"}], \"c\": [\"a\", \"b\", \"c\"]}",
+					"[" +
+						"{\"a\": 1.5, \"b\": \"[1]\", \"c\": \"a\"}," +
+                        "{\"a\": 1.5, \"b\": \"[\\\"x\\\"]\", \"c\": \"b\"}," +
+                        "{\"a\": 1.5, \"b\": \"{\\\"y\\\": \\\"z\\\"}\", \"c\": \"c\"}" +
+                    "]"
 				},
 		};
 

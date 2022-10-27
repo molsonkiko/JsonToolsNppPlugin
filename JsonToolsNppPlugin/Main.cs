@@ -168,7 +168,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             // when closing a file
-            if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
+            else if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
             {
                 IntPtr buffer_closed_id = notification.Header.IdFrom;
                 string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
@@ -195,6 +195,15 @@ namespace Kbg.NppPluginNET
                 //}
                 //treeViewers.Remove(buffer_closed);
                 return;
+            }
+            else if (code == (uint)NppMsg.NPPN_WORDSTYLESUPDATED)
+            {
+                // the editor color scheme changed, so update the tree view colors
+                if (treeViewer != null)
+                    treeViewer.ApplyStyle(settings.use_npp_styling);
+                if (grepperForm != null && grepperForm.tv != null)
+                    grepperForm.tv.ApplyStyle(settings.use_npp_styling);
+                
             }
             // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
             //if (code == (uint)SciMsg.SCI_UNDO
@@ -396,8 +405,13 @@ namespace Kbg.NppPluginNET
                 {
                     grepperForm.tv.use_tree = settings.use_tree;
                     grepperForm.tv.max_size_full_tree_MB = settings.max_size_full_tree_MB;
+                    grepperForm.tv.ApplyStyle(settings.use_npp_styling);
                 }
             }
+            // when the user changes their mind about whether to use editor styling
+            // for the tree viewer, reflect their decision immediately
+            if (treeViewer != null && !treeViewer.IsDisposed)
+                treeViewer.ApplyStyle(settings.use_npp_styling);
         }
 
         private static void PathToCurrentLine()

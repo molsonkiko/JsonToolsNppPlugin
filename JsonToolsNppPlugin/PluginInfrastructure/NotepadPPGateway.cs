@@ -22,7 +22,8 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		bool SaveCurrentFile();
 		void ShowDockingForm(System.Windows.Forms.Form form);
 		void HideDockingForm(System.Windows.Forms.Form form);
-		
+		Color GetDefaultForegroundColor();
+		Color GetDefaultBackgroundColor();
 	}
 
 	/// <summary>
@@ -148,6 +149,18 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 			Win32.SendMessage(PluginBase.nppData._nppHandle,
 					(uint)(NppMsg.NPPM_DMMSHOW),
 					0, form.Handle);
+		}
+
+		public Color GetDefaultForegroundColor()
+		{
+			var rawColor = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
+			return Color.FromArgb(rawColor & 0xff, (rawColor >> 8) & 0xff, (rawColor >> 16) & 0xff);
+		}
+
+		public Color GetDefaultBackgroundColor()
+		{
+			var rawColor = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
+			return Color.FromArgb(rawColor & 0xff, (rawColor >> 8) & 0xff, (rawColor >> 16) & 0xff);
 		}
 	}
 

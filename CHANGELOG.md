@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#3721---2022-10-20) to this project will be documented in this file.
+All [notable changes](#400---2022-10-24) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
 3. Add RemesPath functions:
-	- for converting JSON to tabular form
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
 4. TreeViewer's `fname` attribute should change if the file it is associated with is renamed. Probably need to add a listener for the `NppMsg.NPPN_FILEBEFORERENAME` message.
@@ -50,6 +49,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [4.1.0] - 2022-10-26
+
+### Added
+
+1. The tree viewer's color scheme will now match the editor window. You can turn this off in the settings.
+
+### Fixed
+
+1. The `Stringify iterables` strategy of the [JSON to CSV form](/docs/json-to-csv.md) and the `to_records` RemesPath function now correctly works with objects as well as arrays. 
 
 ## [4.0.0] - 2022-10-24
 

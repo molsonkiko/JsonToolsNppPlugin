@@ -94,5 +94,11 @@ namespace JSON_Tools.Utils
             Category("Grep and API requests"), DefaultValue(8)]
         public int max_api_request_threads { get; set; }
         #endregion
+
+        #region STYLING
+        [Description("Use the same colors as the editor window for the tree viewer?"),
+            Category("Styling"), DefaultValue(true)]
+        public bool use_npp_styling { get; set; }
+        #endregion
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -70,7 +71,7 @@ namespace JSON_Tools.Forms
             //this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
             //    PopulateIfUnpopulatedHandler
             //);
-            // activate the query box so user can start typing immediately
+            ApplyStyle(Main.settings.use_npp_styling);
         }
 
         /// <summary>
@@ -765,10 +766,59 @@ namespace JSON_Tools.Forms
             JsonTreePopulate(json);
         }
 
+        // close the find/replace form when this becomes invisible
         private void TreeViewer_VisibleChanged(object sender, EventArgs e)
         {
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
                 findReplaceForm.Close();
+        }
+
+        /// <summary>
+        /// Changes the background and text color of the tree viewer
+        /// and associated controls to match the editor window.<br></br>
+        /// Fires when the tree viewer is first opened
+        /// and also whenever the style is changed.<br></br>
+        /// Heavily based on CsvQuery (https://github.com/jokedst/CsvQuery)
+        /// </summary>
+        public void ApplyStyle(bool use_npp_style)
+        {
+            Color back_color = Npp.notepad.GetDefaultBackgroundColor();
+            if (!use_npp_style || (
+                back_color.R > 240 &&
+                back_color.G > 240 &&
+                back_color.B > 240))
+            {
+                // if the background is basically white,
+                // use the system defaults because they
+                // look best on a white background
+                BackColor = SystemColors.Control;
+                ForeColor = SystemColors.ControlText;
+                foreach (Control ctrl in Controls)
+                {
+                    ctrl.BackColor = SystemColors.Control;
+                    ctrl.ForeColor = SystemColors.ControlText;
+                }
+                Tree.BackColor = SystemColors.Window;
+                Tree.ForeColor = SystemColors.WindowText;
+                FullTreeCheckBox.ForeColor = SystemColors.ControlText;
+                QueryBox.ForeColor = SystemColors.ControlText;
+                QueryBox.BackColor = SystemColors.Window;
+                return;
+            }
+            Color fore_color = Npp.notepad.GetDefaultForegroundColor();
+            Color in_between = Color.FromArgb(
+                (fore_color.R + back_color.R * 3) / 4,
+                (fore_color.G + back_color.G * 3) / 4,
+                (fore_color.B + back_color.B * 3) / 4
+            );
+            BackColor = back_color;
+            foreach (Control ctrl in Controls)
+            {
+                ctrl.BackColor = in_between;
+                ctrl.ForeColor = fore_color;
+            }
+            QueryBox.BackColor = in_between;
+            QueryBox.ForeColor = fore_color;
         }
 
         // not creating schemas at present because schemas produced may be invalid
