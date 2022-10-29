@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#400---2022-10-24) to this project will be documented in this file.
+All [notable changes](#420---2022-10-29) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. About form, containing information about the plugin.
+1. About form, containing information about the plugin. Resolves [Issue 21](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/21)
 
 ### Fixed
 
