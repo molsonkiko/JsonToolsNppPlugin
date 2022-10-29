@@ -67,6 +67,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- infrastructure -->
+    <Compile Include="Forms\AboutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AboutForm.Designer.cs">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FindReplaceForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -202,6 +208,9 @@
   </ItemGroup>
   <ItemGroup>
     <!-- resx files -->
+    <EmbeddedResource Include="Forms\AboutForm.resx">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\FindReplaceForm.resx">
       <DependentUpon>FindReplaceForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -244,8 +253,12 @@
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
+  <Target Name="CopyTestFiles" BeforeTargets="Build">
+    <ItemGroup>
+        <TESTFILES Include="testfiles\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(TESTFILES)" DestinationFolder="$(ProgramW6432)\Notepad++\plugins\JsonTools\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TESTFILES)" DestinationFolder="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
   -->
 </Project>

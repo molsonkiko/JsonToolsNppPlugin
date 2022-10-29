@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using Kbg.NppPluginNET.PluginInfrastructure;
@@ -100,6 +101,14 @@ namespace JSON_Tools.Utils
                 return;
             }
             Clipboard.SetText(text);
+        }
+
+        public static string AssemblyVersionString()
+        {
+            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            while (version.EndsWith(".0"))
+                version = version.TrimEnd(new char[] { '.', '0' });
+            return version;
         }
 
         //public static DateTime LastSavedTime(string fname)

@@ -36,7 +36,6 @@ namespace Kbg.NppPluginNET
         public static GrepperForm grepperForm = null;
         public static bool grepperTreeViewJustOpened = false;
         //public static string active_fname;
-        //public static bool IsWin32 = Npp.notepad.GetPluginConfig().Contains("x86");
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
@@ -50,6 +49,7 @@ namespace Kbg.NppPluginNET
         // fields related to forms
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
+        static internal int AboutFormId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -81,6 +81,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(10, "---", null);
             PluginBase.SetCommand(11, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(12, "&Run tests", TestRunner.RunAll);
+            PluginBase.SetCommand(13, "A&bout", ShowAboutForm); AboutFormId = 13;
         }
 
         static internal void SetToolBarIcon()
@@ -540,6 +541,13 @@ namespace Kbg.NppPluginNET
             // select QueryBox on startup
             // note that this is only possible because we changed the access modifier
             // of that control from private (the default) to internal.
+        }
+
+        static void ShowAboutForm()
+        {
+            AboutForm aboutForm = new AboutForm();
+            aboutForm.ShowDialog();
+            aboutForm.Focus();
         }
         #endregion
     }

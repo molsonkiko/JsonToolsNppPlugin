@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -9,12 +8,12 @@ namespace JSON_Tools.Tests
 {
     public class JsonGrepperTester
     {
-        public static DirectoryInfo smalldir = new DirectoryInfo(@"C:\Users\mjols\Documents\csharp\JSONToolsPlugin\testfiles\small");
         public static JsonParser jparser = new JsonParser();
         public static RemesParser rparser = new RemesParser();
 
         public static void TestFnames()
         {
+            DirectoryInfo smalldir = new DirectoryInfo(@"plugins\JsonTools\testfiles\small");
             JObject all_jsons = new JObject();
             foreach (FileInfo f in smalldir.GetFiles())
             {

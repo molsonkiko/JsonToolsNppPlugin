@@ -50,6 +50,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 
+## [4.2.0] - 2022-10-29
+
+### Added
+
+1. About form, containing information about the plugin.
+
+### Fixed
+
+1. Test files (the testfiles directory) are now included along with the DLL. This should address [Issue 17](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/17) in which the plugin crashed while running the JSON grepper tests.
+
 ## [4.1.0] - 2022-10-26
 
 ### Added

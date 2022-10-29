@@ -27,8 +27,11 @@ namespace JSON_Tools.Tests
         /// and my Python remespath implementation is 10-30x SLOWER than this remespath implementation.
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="num_trials"></param>
-        public static void Benchmark(string query, string fname, int num_trials = 8)
+        /// <param name="num_parse_trials"></param>
+        public static void Benchmark(string[][] queries_and_descriptions, 
+                                     string fname,
+                                     int num_parse_trials = 14,
+                                     int num_query_trials = 42)
         {
             // setup
             JsonParser jsonParser = new JsonParser();
@@ -40,10 +43,10 @@ namespace JSON_Tools.Tests
             }
             string jsonstr = File.ReadAllText(fname);
             int len = jsonstr.Length;
-            long[] load_times = new long[num_trials];
+            long[] load_times = new long[num_parse_trials];
             JNode json = new JNode();
             // benchmark time to load json
-            for (int ii = 0; ii < num_trials; ii++)
+            for (int ii = 0; ii < num_parse_trials; ii++)
             {
                 watch.Reset();
                 watch.Start();
@@ -74,62 +77,71 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"Load times (ms): {String.Join(", ", load_times_str)}");
             // time query compiling
             RemesParser parser = new RemesParser();
-            Func<JNode, JNode> query_func = null;
-            long[] compile_times = new long[num_trials];
-            for (int ii = 0; ii < num_trials; ii++)
+            foreach (string[] query_and_desc in queries_and_descriptions)
             {
-                watch.Reset();
-                watch.Start();
-                try
+                string query = query_and_desc[0];
+                string description = query_and_desc[1];
+                Npp.AddLine($@"=========================
+Performance tests for RemesPath ({description})
+=========================
+");
+                Func<JNode, JNode> query_func = null;
+                long[] compile_times = new long[num_query_trials];
+                for (int ii = 0; ii < num_query_trials; ii++)
                 {
-                    List<object> toks = parser.lexer.Tokenize(query, out bool _);
-                    query_func = ((CurJson)parser.Compile(toks)).function;
+                    watch.Reset();
+                    watch.Start();
+                    try
+                    {
+                        List<object> toks = parser.lexer.Tokenize(query, out bool _);
+                        query_func = ((CurJson)parser.Compile(toks)).function;
+                    }
+                    catch (Exception ex)
+                    {
+                        Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
+                        return;
+                    }
+                    watch.Stop();
+                    long t = watch.Elapsed.Ticks;
+                    compile_times[ii] = t;
                 }
-                catch (Exception ex)
+                mu_sd = GetMeanAndSd(compile_times);
+                double mu = mu_sd[0];
+                double sd = mu_sd[1];
+                Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
+                // time query execution
+                long[] query_times = new long[num_query_trials];
+                JNode result = new JNode();
+                for (int ii = 0; ii < num_query_trials; ii++)
                 {
-                    Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
-                    return;
+                    watch.Reset();
+                    watch.Start();
+                    try
+                    {
+                        result = query_func(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while executing compiled query:\n{ex}");
+                    }
+                    watch.Stop();
+                    long t = watch.Elapsed.Ticks;
+                    query_times[ii] = t;
                 }
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                compile_times[ii] = t;
+                // display querying results
+                mu_sd = GetMeanAndSd(query_times);
+                mu = mu_sd[0];
+                sd = mu_sd[1];
+                Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
+                var query_times_str = new string[query_times.Length];
+                for (int ii = 0; ii < query_times.Length; ii++)
+                {
+                    query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString(JNode.DOT_DECIMAL_SEP);
+                }
+                Npp.AddLine($"Query times (ms): {String.Join(", ", query_times_str)}");
+                string result_preview = result.ToString().Slice(":300") + "\n...";
+                Npp.AddLine($"Preview of result: {result_preview}");
             }
-            mu_sd = GetMeanAndSd(compile_times);
-            double mu = mu_sd[0];
-            double sd = mu_sd[1];
-            Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {load_times.Length} trials");
-            // time query execution
-            long[] query_times = new long[num_trials];
-            JNode result = new JNode();
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                try
-                {
-                    result = query_func(json);
-                }
-                catch (Exception ex)
-                {
-                    Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while executing compiled query:\n{ex}");
-                }
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                query_times[ii] = t;
-            }
-            // display querying results
-            mu_sd = GetMeanAndSd(query_times);
-            mu = mu_sd[0];
-            sd = mu_sd[1];
-            Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {load_times.Length} trials");
-            var query_times_str = new string[query_times.Length];
-            for (int ii = 0; ii < query_times.Length; ii++)
-            {
-                query_times_str[ii] = Math.Round(query_times[ii] / 1e4, 3).ToString(JNode.DOT_DECIMAL_SEP);
-            }
-            Npp.AddLine($"Query times (ms): {String.Join(", ", query_times_str)}");
-            string result_preview = result.ToString().Slice(":300") + "\n...";
-            Npp.AddLine($"Preview of result: {result_preview}");
         }
 
         public static double[] GetMeanAndSd(long[] times)
