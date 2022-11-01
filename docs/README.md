@@ -321,6 +321,14 @@ __NOTES:__
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
 
+## Running tests ##
+
+The plugin contains a variety of built-in unit tests and performance benchmarks that can be run on demand from the `Run Tests` plugin menu command.
+
+This repository also contains ["most recent errors.txt"](/most%20recent%20errors.txt), which shows the expected output (modulo some variation in the benchmarking times) of these tests. By comparing the output of running the tests on your computer to the expected output, you can determine whether the plugin's code is working as expected.
+
+Prior to version [4.2.0](/CHANGELOG.md#420---2022-10-29), running these tests should cause the plugin to crash after printing the line `Testing JSON grepper's file reading ability` because some tests referenced an absolute file path.
+
 # Get JSON from files and APIs #
 
 *Added in version 3.6.0*

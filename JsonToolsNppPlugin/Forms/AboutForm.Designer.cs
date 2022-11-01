@@ -55,8 +55,8 @@
             this.GitHubLink.Size = new System.Drawing.Size(321, 35);
             this.GitHubLink.TabIndex = 1;
             this.GitHubLink.TabStop = true;
-            this.GitHubLink.Text = "[{\"need\": \"help?\", \"ask me at\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugi" +
-    "n\"]";
+            this.GitHubLink.Text = "[{\"need\": \"help?\"}, \"ask me at\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlug" +
+    "in\"]";
             this.GitHubLink.UseCompatibleTextRendering = true;
             this.GitHubLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.GitHubLink_LinkClicked);
             // 
