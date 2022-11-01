@@ -16,15 +16,9 @@ namespace JSON_Tools.Tests
         /// <summary>
         /// Repeatedly parse the JSON of a large file (big_random.json, about 1MB, containing nested arrays, dicts,
         /// with ints, floats and strings as scalars)<br></br>
-        /// Also repeatedly run a Remespath query on the JSON.<br></br>
-        /// MOST RECENT RESULTS:<br></br>
-        /// To convert JSON string of size 975068 into JNode took 185.589 +/- 53.713 ms over 14 trials
-        /// Load times(ms): 214,175,222,181,267,248,229,171,175,248,139,121,114,87
-        /// Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" took 0.056 ms(one-time cost b/c caching)
-        /// To run query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 975068 into took 1.854 +/- 3.915 ms over 14 trials
-        /// Query times(ms) : 1.718,1.709,1.024,0.92,0.836,0.756,15.882,0.666,0.438,0.385,0.386,0.364,0.41,0.454<br></br>
-        /// For reference, the Python standard library JSON parser is about 10x FASTER than JsonParser.Parse,<br></br>
-        /// and my Python remespath implementation is 10-30x SLOWER than this remespath implementation.
+        /// Also repeatedly run Remespath queries on the JSON.<br></br>
+        /// queries_and_descriptions is an array of 2-string arrays (query, description)<br></br>
+        /// For the most recent benchmarking results, see "most recent errors.txt" in the main repository.
         /// </summary>
         /// <param name="query"></param>
         /// <param name="num_parse_trials"></param>

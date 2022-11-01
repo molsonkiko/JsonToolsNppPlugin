@@ -13,7 +13,16 @@ namespace JSON_Tools.Tests
 
         public static void TestFnames()
         {
-            DirectoryInfo smalldir = new DirectoryInfo(@"plugins\JsonTools\testfiles\small");
+            DirectoryInfo smalldir;
+            try
+            {
+                smalldir = new DirectoryInfo(@"plugins\JsonTools\testfiles\small");
+            }
+            catch
+            {
+                Npp.AddLine("Could not find the testfiles directory in this plugin's folder\nThis directory contains the files required for this test.");
+                return;
+            }
             JObject all_jsons = new JObject();
             foreach (FileInfo f in smalldir.GetFiles())
             {
