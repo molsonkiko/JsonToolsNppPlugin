@@ -45,10 +45,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when value contains quotes and newline
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
-- Fix bug with the range() function where if the first or second argument is a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(-len(@))` and `range(0, -len(@))`) will throw errors.
+- Fix bug with the range() function where if the second argument is a binop of a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(0, -len(@) * len(@))`) will throw errors, but `range(-len(@) * len(@))` and `range(2, -len(@))` and `range(0, 5, -len(@) * len(@))` will not.
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+
+## [4.3.0] - 2022-11-07
+
+### Added
+
+1. Button for case-insensitive matching in find/replace form.
+
+### Changed
+
+1. Changed the [API request tool](/docs/README.md#sending-rest-api-requests) to send asynchronous (not multithreaded) requests. This should result in better performance. The `max_api_request_threads` option in [Settings](/docs/README.md#parser-settings) has been removed because it is no longer needed.
+2. A recursion limit of 512 has been added for JSON parsing to ensure that the plugin fails gracefully rather than causing Notepad++ to crash because of stack overflow. This is not configurable.
+	- This limit also applies to the number of unclosed parentheses in RemesPath, because a query like 2000 * `(` + `1` + 2000 * `)` could also cause stack overflow.
+
+### Fixed
+
+1. If a number is represented as an integer with absolute value `>= 2**63`, it will now be parsed as a double rather than throwing an overflow exception. Any number represented as a 64-bit integer will still be represented internally as an integer.
+	- At present, RemesPath queries that might produce integers greater than `2**63` (e.g., `int(2**63)`) do not have such checks in place, so they will cause overflow errors rather than auto-convert to floating point.
+2. Clicking the `Find/replace` button on the tree view when a find/replace form already exists now focuses the existing one rather than creating a new one.
 
 ## [4.2.0] - 2022-10-29
 

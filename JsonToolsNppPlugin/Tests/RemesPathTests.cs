@@ -156,6 +156,16 @@ namespace JSON_Tools.Tests
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to assignment expression with no LHS");
             }
             catch { }
+            // test if recursion limit of 512 is enforced
+            ii++;
+            try
+            {
+                query = $"{new string('(', 1000)}1{new string(')', 1000)}";
+                lexer.Tokenize(query, out bool _);
+                tests_failed++;
+                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to exceeding recursion limit with too many unclosed parentheses");
+            }
+            catch { }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }

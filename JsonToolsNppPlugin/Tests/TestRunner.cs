@@ -1,13 +1,14 @@
 ﻿/*
 A test runner for all of this package.
 */
+using System.Threading.Tasks;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.Tests
 {
     public class TestRunner
     {
-        public static void RunAll()
+        public static async Task RunAll()
         {
             Npp.notepad.FileNew();
             Npp.AddLine(@"=========================
@@ -116,7 +117,7 @@ Testing JSON grepper's file reading ability
 Testing JSON grepper's API request tool
 =========================
 ");
-            JsonGrepperTester.TestApiRequester();
+            await JsonGrepperTester.TestApiRequester();
 
             Npp.AddLine(@"=========================
 Performance tests for JsonParser

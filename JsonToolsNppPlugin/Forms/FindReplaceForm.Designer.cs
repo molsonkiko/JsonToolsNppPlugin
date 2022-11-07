@@ -47,6 +47,7 @@
             this.AdvancedGroupBox = new System.Windows.Forms.GroupBox();
             this.AdvancedGroupBoxLabel = new System.Windows.Forms.Label();
             this.SwapFindReplaceButton = new System.Windows.Forms.Button();
+            this.IgnoreCaseCheckBox = new System.Windows.Forms.CheckBox();
             this.AdvancedGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -211,6 +212,7 @@
             // 
             // AdvancedGroupBox
             // 
+            this.AdvancedGroupBox.Controls.Add(this.IgnoreCaseCheckBox);
             this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBoxLabel);
             this.AdvancedGroupBox.Controls.Add(this.RegexBox);
             this.AdvancedGroupBox.Controls.Add(this.RecursiveSearchBox);
@@ -242,6 +244,17 @@
             this.SwapFindReplaceButton.UseVisualStyleBackColor = true;
             this.SwapFindReplaceButton.Click += new System.EventHandler(this.SwapFindReplaceButton_Click);
             this.SwapFindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
+            // 
+            // IgnoreCaseCheckBox
+            // 
+            this.IgnoreCaseCheckBox.AutoSize = true;
+            this.IgnoreCaseCheckBox.Location = new System.Drawing.Point(201, 99);
+            this.IgnoreCaseCheckBox.Name = "IgnoreCaseCheckBox";
+            this.IgnoreCaseCheckBox.Size = new System.Drawing.Size(107, 20);
+            this.IgnoreCaseCheckBox.TabIndex = 15;
+            this.IgnoreCaseCheckBox.TabStop = false;
+            this.IgnoreCaseCheckBox.Text = "Ignore case?";
+            this.IgnoreCaseCheckBox.UseVisualStyleBackColor = true;
             // 
             // FindReplaceForm
             // 
@@ -290,5 +303,6 @@
         private System.Windows.Forms.GroupBox AdvancedGroupBox;
         private System.Windows.Forms.Label AdvancedGroupBoxLabel;
         private System.Windows.Forms.Button SwapFindReplaceButton;
+        private System.Windows.Forms.CheckBox IgnoreCaseCheckBox;
     }
 }

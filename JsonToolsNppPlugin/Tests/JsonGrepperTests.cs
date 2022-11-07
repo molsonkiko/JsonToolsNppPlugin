@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -107,14 +108,16 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }
 
-        public static int[] TestApiRequesterHelper(string[] urls, int ii, int tests_failed, JsonGrepper grepper)
+        public static async Task<int[]> TestApiRequesterHelper(string[] urls, int ii, int tests_failed, JsonGrepper grepper)
         {
             int n = urls.Length;
             ii += 1;
-            Npp.AddLine($"Testing with {n} urls and {grepper.max_api_request_threads} threads");
+            Npp.AddLine($"Testing with {n} urls");
             try
             {
-                grepper.GetJsonFromApis(urls);
+                grepper.fname_jsons.children.Clear();
+                grepper.exceptions.children.Clear();
+                await grepper.GetJsonFromApis(urls);
                 int json_downloaded = grepper.fname_jsons.Length;
                 int errors = grepper.exceptions.Length;
                 int err_plus_json = json_downloaded + errors;
@@ -139,7 +142,7 @@ namespace JSON_Tools.Tests
             return new int[] { ii, tests_failed };
         }
 
-        public static void TestApiRequester()
+        public static async Task TestApiRequester()
         {
             JsonGrepper grepper = new JsonGrepper(new JsonParser());
             int ii = 0;
@@ -150,17 +153,13 @@ namespace JSON_Tools.Tests
                 "https://api.weather.gov/points/37.68333333333334,-121.92500000000001", // Alameda
                 "https://api.weather.gov/points/37.75833333333334,-122.43333333333334", // San Francisco
             };
-            int n = urls.Length;
-            grepper.max_api_request_threads = n + 1; // test with more threads than urls
-            int[] test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
+            // test when requesting from multiple urls
+            int[] test_result = await TestApiRequesterHelper(urls, ii, tests_failed, grepper);
             ii = test_result[0];
             tests_failed = test_result[1];
-            grepper.max_api_request_threads = 1; // test single-threaded
-            test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
-            ii = test_result[0];
-            tests_failed = test_result[1];
-            grepper.max_api_request_threads = 2; // test multi-threaded with more urls than threads
-            test_result = TestApiRequesterHelper(urls, ii, tests_failed, grepper);
+            // test when requesting from only one url
+            string[] first_url = new string[] { "https://api.weather.gov" };
+            test_result = await TestApiRequesterHelper(first_url, ii, tests_failed, grepper);
             ii = test_result[0];
             tests_failed = test_result[1];
             Npp.AddLine($"Failed {tests_failed} tests.");

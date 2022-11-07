@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -19,19 +20,18 @@ namespace JSON_Tools.Forms
         {
             InitializeComponent();
             grepper = new JsonGrepper(Main.jsonParser.Copy(),
-                Main.settings.max_threads_parsing,
-                Main.settings.max_api_request_threads
+                Main.settings.max_threads_parsing
             );
             tv = null;
             files_found = new HashSet<string>();
             fname = null;
         }
 
-        private void SendRequestsButton_Click(object sender, EventArgs e)
+        private async void SendRequestsButton_Click(object sender, EventArgs e)
         {
             try
             {
-                grepper.GetJsonFromApis(UrlsBox.Lines);
+                await grepper.GetJsonFromApis(UrlsBox.Lines);
             }
             catch (Exception ex)
             {

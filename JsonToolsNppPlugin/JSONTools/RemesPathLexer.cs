@@ -52,6 +52,7 @@ Syntax error at position 3: Number with two decimal points
 
     public class RemesPathLexer
     {
+        public const int MAX_RECURSION_DEPTH = JsonParser.MAX_RECURSION_DEPTH;
         /// <summary>
         /// position in query string
         /// </summary>
@@ -133,7 +134,15 @@ Syntax error at position 3: Number with two decimal points
             }
             if (parsed == 1)
             {
-                return new JNode(long.Parse(sb.ToString()), Dtype.INT, 0);
+                try
+                {
+                    return new JNode(long.Parse(sb.ToString()), Dtype.INT, 0);
+                }
+                catch (OverflowException)
+                {
+                    // doubles can represent much larger numbers than 64-bit ints, albeit with loss of precision
+                    return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, 0);
+                }
             }
             return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
         }
@@ -282,7 +291,10 @@ Syntax error at position 3: Number with two decimal points
                     switch (c)
                     {
                         case '(':
-                            if (parens_opened == 0) { last_unclosed_paren = ii; }
+                            if (parens_opened == 0)
+                                last_unclosed_paren = ii;
+                            else if (parens_opened == MAX_RECURSION_DEPTH)
+                                throw new RemesLexerException(ii, q, $"Maximum recursion depth ({MAX_RECURSION_DEPTH}) exceeded");
                             parens_opened++; 
                             break;
                         case ')':

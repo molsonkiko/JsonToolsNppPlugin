@@ -138,13 +138,26 @@ namespace JSON_Tools.Forms
             string values_find_text;
             if (RegexBox.Checked)
             {
-                keys_find_text = "g`" + FindTextBox.Text.Replace("`", "\\`") + '`';
+                if (IgnoreCaseCheckBox.Checked)
+                    keys_find_text = "g`(?i)" + FindTextBox.Text.Replace("`", "\\`") + '`';
+                else
+                    keys_find_text = "g`" + FindTextBox.Text.Replace("`", "\\`") + '`';
                 values_find_text = $"[str(@) =~ {keys_find_text}]";
             }
             else
             {
-                keys_find_text = '`' + FindTextBox.Text.Replace("`", "\\`") + '`';
-                values_find_text = $"[str(@) == {keys_find_text}]";
+                if (IgnoreCaseCheckBox.Checked)
+                {
+                    // case-insensitive non-regex matching is equivalent to regex matching
+                    // with the (?i) flag and anchors at both the end and beginning
+                    keys_find_text = "g`(?i)^" + FindTextBox.Text.Replace("`", "\\`") + "$`";
+                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                }
+                else
+                {
+                    keys_find_text = '`' + FindTextBox.Text.Replace("`", "\\`") + '`';
+                    values_find_text = $"[str(@) == {keys_find_text}]";
+                }
             }
             replaceQuery = $"s_sub(@, {keys_find_text}, `" + ReplaceTextBox.Text.Replace("`", "\\`") + "`)";
             if (RecursiveSearchBox.Checked)

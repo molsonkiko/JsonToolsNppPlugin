@@ -69,6 +69,8 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public class JsonParser
     {
+        // need to track recursion depth because stack overflow causes a panic that makes Notepad++ crash
+        public const int MAX_RECURSION_DEPTH = 512;
         #region JSON_PARSER_ATTRS
         ///<summary>
         /// If true, float NaN (not a number) and float infinity and -infinity are allowed
@@ -470,7 +472,15 @@ namespace JSON_Tools.JSON_Tools
             }
             if (parsed == 1)
             {
-                return new JNode(long.Parse(sb.ToString()), Dtype.INT, line_num);
+                try
+                {
+                    return new JNode(long.Parse(sb.ToString()), Dtype.INT, line_num);
+                }
+                catch (OverflowException)
+                {
+                    // doubles can represent much larger numbers than 64-bit ints, albeit with loss of precision
+                    return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, line_num);
+                }
             }
             return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, line_num);
         }
@@ -490,12 +500,16 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="line_num">The starting line number</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
         /// <exception cref="JsonParserException"></exception>
-        public JArray ParseArray(string inp)
+        public JArray ParseArray(string inp, int recursion_depth)
         {
             var children = new List<JNode>();
             bool already_seen_comma = false;
             int start_line_num = line_num;
             char cur_c = inp[++ii];
+            // need to do this to avoid stack overflow when presented with unreasonably deep nesting
+            // stack overflow causes an unrecoverable panic, and we would rather fail gracefully
+            if (recursion_depth == MAX_RECURSION_DEPTH)
+                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", cur_c, ii);
             while (ii < inp.Length)
             {
                 ConsumeWhiteSpace(inp);
@@ -553,7 +567,7 @@ namespace JSON_Tools.JSON_Tools
                     // a new array member of some sort
                     already_seen_comma = false;
                     JNode new_obj;
-                    new_obj = ParseSomething(inp);
+                    new_obj = ParseSomething(inp, recursion_depth);
                     // Npp.AddText("\nobj = "+new_obj.ToString());
                     children.Add(new_obj);
                 }
@@ -581,12 +595,14 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="line_num">The starting line number</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
         /// <exception cref="JsonParserException"></exception>
-        public JObject ParseObject(string inp)
+        public JObject ParseObject(string inp, int recursion_depth)
         {
             int start_line_num = line_num;
             var children = new Dictionary<string, JNode>();
             bool already_seen_comma = false;
             char cur_c = inp[++ii];
+            if (recursion_depth == MAX_RECURSION_DEPTH)
+                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", cur_c, ii);
             string child_key;
             while (ii < inp.Length)
             {
@@ -670,7 +686,7 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                     ConsumeWhiteSpace(inp);
                     if (inp[ii] == '/') MaybeConsumeComment(inp);
-                    JNode new_obj = ParseSomething(inp);
+                    JNode new_obj = ParseSomething(inp, recursion_depth);
                     // Npp.AddText($"\nkey = {child_key}, obj = {new_obj.ToString()}");
                     children.Add(child_key, new_obj);
                     already_seen_comma = false;
@@ -701,7 +717,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="line_num">The starting line number</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
         /// <exception cref="JsonParserException"></exception>
-        public JNode ParseSomething(string inp)
+        public JNode ParseSomething(string inp, int recursion_depth)
         {
             char cur_c = inp[ii]; // could throw IndexOutOfRangeException, but we'll handle that elsewhere
             char next_c;
@@ -719,11 +735,11 @@ namespace JSON_Tools.JSON_Tools
             }
             if (cur_c == '[')
             {
-                return ParseArray(inp);
+                return ParseArray(inp, recursion_depth + 1);
             }
             if (cur_c == '{')
             {
-                return ParseObject(inp);
+                return ParseObject(inp, recursion_depth + 1);
             }
             // either a special scalar or a negative number
             next_c = inp[ii + 1];
@@ -850,7 +866,7 @@ namespace JSON_Tools.JSON_Tools
             }
             try
             {
-                JNode json = ParseSomething(inp);
+                JNode json = ParseSomething(inp, 0);
                 ConsumeWhiteSpace(inp);
                 if (ii < inp.Length && inp[ii] == '/') MaybeConsumeComment(inp);
                 if (ii < inp.Length)
@@ -893,7 +909,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 try
                 {
-                    json = ParseSomething(inp);
+                    json = ParseSomething(inp, 0);
                 }
                 catch (Exception e)
                 {

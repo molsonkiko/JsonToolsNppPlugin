@@ -478,8 +478,12 @@ namespace JSON_Tools.Forms
 
         private void FindReplaceButton_Click(object sender, EventArgs e)
         {
-            findReplaceForm = new FindReplaceForm(this);
-            findReplaceForm.Show();
+            if (findReplaceForm == null || findReplaceForm.IsDisposed)
+            {
+                findReplaceForm = new FindReplaceForm(this);
+                findReplaceForm.Show();
+            }
+            else findReplaceForm.Focus();
         }
 
         private void FullTreeCheckBox_CheckedChanged(object sender, EventArgs e)

@@ -172,6 +172,8 @@ namespace JSON_Tools.Tests
                              NL + "    }" +
                              NL + "]",
                              "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" },
+                new string[] { "111111111111111111111111111111", $"1.11111111111111E+29", $"1.11111111111111E+29",
+                    "auto-conversion of int64 overflow to double" },
             };
             int tests_failed = 0;
             int ii = 0;
@@ -424,6 +426,7 @@ instead got
                 "\"abc\\", // escape at end of unterminated string
                 "\"abc\" d", // something other than EOF after string document
                 "[1] [1]", // something other than EOF after string document
+                $"{new string('[', 1000)}1{new string(']', 1000)}", // too much recursion
             };
 
             foreach (string test in testcases)

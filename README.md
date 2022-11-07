@@ -4,7 +4,7 @@
 
 Miscellaneous tools for working with JSON in Notepad++.
 
-Any issues, feel free to email me at mjolsonsfca@gmail.com.
+Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) on GitHub. Please be sure to include diagnostic information about your system and plugin version.
 
 ## Features ##
 1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.

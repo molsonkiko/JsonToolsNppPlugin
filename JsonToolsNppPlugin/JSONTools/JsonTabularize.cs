@@ -812,7 +812,7 @@ namespace JSON_Tools.JSON_Tools
 					JsonFormat clsname = tab_paths[pathstr];
 					jsonParser.ii = 0;
 					jsonParser.line_num = 0;
-					path = jsonParser.ParseArray(pathstr);
+					path = jsonParser.ParseArray(pathstr, 0);
 					cls = clsname;
 				}
 				BuildTableHelper_DEFAULT(obj, cls, 0, path, result, new Dictionary<string, JNode>(), new List<string>(), key_sep);

@@ -80,7 +80,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(10, "---", null);
             PluginBase.SetCommand(11, "JSON to &YAML", DumpYaml);
-            PluginBase.SetCommand(12, "&Run tests", TestRunner.RunAll);
+            PluginBase.SetCommand(12, "&Run tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(13, "A&bout", ShowAboutForm); AboutFormId = 13;
         }
 
@@ -400,7 +400,6 @@ namespace Kbg.NppPluginNET
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
                 grepperForm.grepper.json_parser = jsonParser.Copy();
-                grepperForm.grepper.max_api_request_threads = settings.max_api_request_threads;
                 grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
                 if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
                 {
@@ -465,7 +464,7 @@ namespace Kbg.NppPluginNET
                 if (!was_visible
                     && grepperForm != null
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
-                    && Npp.GetCurrentPath() == grepperForm.fname)
+                    && Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
                 {
                     if (grepperForm.tv.Visible)
                         Npp.notepad.HideDockingForm(grepperForm.tv);

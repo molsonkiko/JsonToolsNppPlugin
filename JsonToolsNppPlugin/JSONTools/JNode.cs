@@ -304,12 +304,11 @@ namespace JSON_Tools.JSON_Tools
                         return (v < 0) ? "-Infinity" : "Infinity";
                     }
                     if (double.IsNaN(v)) { return "NaN"; }
-                    if (v == Math.Round(v))
+                    if (v == Math.Round(v) && !(v > Int64.MaxValue || v < Int64.MinValue))
                     {
                         // add ending ".0" to distinguish doubles equal to integers from actual integers
                         return v.ToString(DOT_DECIMAL_SEP) + ".0";
                     }
-
                     return v.ToString(DOT_DECIMAL_SEP);
                 }
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
