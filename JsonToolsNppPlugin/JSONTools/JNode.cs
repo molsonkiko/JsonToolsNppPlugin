@@ -237,10 +237,9 @@ namespace JSON_Tools.JSON_Tools
         public static string ToHex(int x, int out_len)
         {
             var sb = new char[out_len];
-            int rem;
             for (int pow = out_len - 1; pow > -1; pow--)
             {
-                x = Math.DivRem(x, 16, out rem);
+                x = Math.DivRem(x, 16, out int rem);
                 sb[pow] = HEX_CHARS[rem];
             }
             return new string(sb);
@@ -481,7 +480,6 @@ namespace JSON_Tools.JSON_Tools
         }
 
         #region HELPER_FUNCS
-        private static readonly Regex INT_REGEX = new Regex("^\\d+$", RegexOptions.Compiled);
         private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
         // "dot compatible" means a string that starts with a letter or underscore
         // and contains only letters, underscores, and digits
@@ -528,6 +526,7 @@ namespace JSON_Tools.JSON_Tools
             }
             return "";
         }
+
 
         /// <summary>
         /// Get the key in square brackets or prefaced by a quote as determined by the style.<br></br>

@@ -232,9 +232,6 @@
   </ItemGroup>
   <ItemGroup>
     <!-- icons and such -->
-    <Content Include="Properties\star.png" />
-    <None Include="Properties\star_white.ico" />
-    <None Include="Properties\star_black.ico" />
     <Content Include="Properties\star_bmp.bmp" />
     <None Include="Resources\array type icon.PNG" />
     <None Include="Resources\bool type icon.PNG" />

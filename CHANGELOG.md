@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#420---2022-10-29) to this project will be documented in this file.
+All [notable changes](#440---2022-11-23) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
-- Consider dropping the `line_num` attrribute of JNodes and replacing it with `position` attribute that tracks position in the JSON string.
+- Consider dropping the `line_num` attribute of JNodes and replacing it with `position` attribute that tracks position in the JSON string.
 	* Pros:
 		- allows navigation within a single line; more useful in one-line files
 		- faster parsing because the parser doesn't need to track line number
@@ -27,14 +27,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	* Cons:
 		- backwards-incompatible change
 - Replace the folder browser dialog for the grepper form with a text box where the `Tab` key reveals a dropdown with all subfolders of the current folder starting with whatever substring is after the last `\\`. This could be easier to use and more friendly than the current `FolderBrowserDialog`.
-- Add a dictionary mapping filenames to TreeViewers. This way each JSON buffer for which a tree viewer was opened can have its own, and the user has a better experience.
 - I am trying to implement lazy loading of subtrees, so that subtrees of the tree view aren't populated until the user clicks on the `+` button. If properly implemented, this would be a marked improvement over the partial tree loading or no-tree option implemented in [version 3.1.0](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v3.1.0).
 - *If lazy loading can't be implemented:*
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
 - Consider making it so that trying to get a missing key raises an error instead of returning `{}`. E.g., `@.foo` would raise an exception if the current JSON doesn't have `foo` as a key.
- 
+- Consider using bisection search to find a node on the current line. Would be faster, but wouldn't necessarily get the *first* node on the line.
+
 ### To Be Fixed
 
 - If multiple views are open in the same window pane, the `Save query result` button appends the query result to the current file rather than to the newly opened file.
@@ -49,6 +49,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
+- When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
+
+## [4.4.0] - 2022-11-23
+
+### Added
+
+1. `any` and `all` [RemesPath functions](/docs/RemesPath.md#non-vectorized-functions) for quickly determining if any or all of the values in a boolean array are true.
+2. [UI tests](/ui_tests.py), implemented in Python with [pyautogui](https://pyautogui.readthedocs.io/en/latest/roadmap.html?highlight=window#roadmap). These should be used *carefully* because they use GUI automation.
+3. Double-clicking on the body of a tree viewer form (not on any of the buttons, just the empty space) now opens the file associated with that tree viewer.
+
+### Fixed
+
+1. The arbitrary limit on the number of arguments for [RemesPath functions](/docs/RemesPath.md#non-vectorized-functions) like `zip` and `append` has been lifted. Fellow developers: to create a new function with any number of optional args, simply specify input_types up to min_args as normal, then the last input_type is the type for all optional args.
+3. The default JSON->CSV algorithm now handles empty arrays by adding a row where all the parent keys of empty arrays are associated with an empty string. Basically, empty arrays are now treated as nulls, rather than being completely ignored.
+
+### Changed
+
+1. There can now be multiple tree viewer forms. Each is associated with a single file. You can still see a JSON tree for a different file than the one that you have open.
 
 ## [4.3.0] - 2022-11-07
 
@@ -136,7 +154,7 @@ __[.NET Framework 4.8](https://learn.microsoft.com/en-us/dotnet/framework/migrat
 
 ### Changed
 
-1. `..*` ([recursive search](/docs/RemesPath.md#recursively-find-all-descendents) with the star indexer) now returns an array containing all the scalar descendents of a JSON node, no matter their depth.
+1. `..*` ([recursive search](/docs/RemesPath.md#recursively-find-all-descendents) with the star indexer) now returns an array containing all the scalar descendants of a JSON node, no matter their depth.
 2. Replaced the `Current Path` button with a button for opening the [find/replace form](/docs/README.md#find-and-replace-form).
 3. Recursive search always returns an array even if no keys match. In that case, an empty array is returned rather than an empty object.
 

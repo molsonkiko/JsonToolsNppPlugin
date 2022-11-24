@@ -12,6 +12,7 @@ TestResults
 *.suo
 *.user
 *.sln.docstates
+JsonToolsNppPlugin/yamldotnet_example.cs
 
 # Obsidian vault
 .obsidian

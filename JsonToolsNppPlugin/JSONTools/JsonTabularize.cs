@@ -469,6 +469,15 @@ namespace JSON_Tools.JSON_Tools
 					}
 				}
 				not_arr_dict = ResolveHang(not_arr_dict, key_sep);
+				if (len_arr == 0)
+                {
+					// A 0-length array should be dealt with by adding a single row with an empty value
+					// for the array's parent key
+					foreach (string k in arr_dict.Keys)
+						not_arr_dict[k] = new JNode("", Dtype.STR, 0);
+					result.Add(new JObject(0, not_arr_dict));
+					return;
+                }
 				for (int ii = 0; ii < len_arr; ii++)
 				{
 					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();

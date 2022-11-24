@@ -1074,19 +1074,21 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode x = func.args[0];
             bool other_callables = false;
-            JNode[] other_args = new JNode[func.args.Length - 1];
-            for (int ii = 0; ii < func.args.Length - 1; ii++)
+            List<JNode> other_args = new List<JNode>(func.args.Count - 1);
+            for (int ii = 0; ii < func.args.Count - 1; ii++)
             {
                 JNode arg = func.args[ii + 1];
                 if (arg is CurJson) { other_callables = true; }
-                other_args[ii] = arg;
+                other_args.Add(arg);
             }
             // vectorized functions take on the type of the iterable they're vectorized across, but they have a set type
             // when operating on scalars (e.g. s_len returns an array when acting on an array and a dict
             // when operating on a dict, but s_len always returns an int when acting on a single string)
             // non-vectorized functions always return the same type
             Dtype out_type = func.function.is_vectorized && ((x.type & Dtype.ITERABLE) != 0) ? x.type : func.function.type;
-            JNode[] all_args = new JNode[func.args.Length];
+            List<JNode> all_args = new List<JNode>(func.args.Count);
+            foreach (var a in func.args)
+                all_args.Add(null);
             if (func.function.is_vectorized)
             {
                 if (x is CurJson)
@@ -1098,7 +1100,7 @@ namespace JSON_Tools.JSON_Tools
                         JNode arg_outfunc(JNode inp)
                         {
                             var itbl = xcur.function(inp);
-                            for (int ii = 0; ii < other_args.Length; ii++)
+                            for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1136,7 +1138,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         // there are no other functions of the current JSON; the first argument is the only one
                         // this means that all the other args are fixed and can be used as is
-                        for (int ii = 0; ii < other_args.Length; ii++)
+                        for (int ii = 0; ii < other_args.Count; ii++)
                         {
                             JNode other_arg = other_args[ii];
                             all_args[ii + 1] = other_arg;
@@ -1183,7 +1185,7 @@ namespace JSON_Tools.JSON_Tools
                         JNode arg_outfunc(JNode inp)
                         {
                             var dic = new Dictionary<string, JNode>();
-                            for (int ii = 0; ii < other_args.Length; ii++)
+                            for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1204,7 +1206,7 @@ namespace JSON_Tools.JSON_Tools
                         JNode arg_outfunc(JNode inp)
                         {
                             var arr = new List<JNode>();
-                            for (int ii = 0; ii < other_args.Length; ii++)
+                            for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1223,7 +1225,7 @@ namespace JSON_Tools.JSON_Tools
                         // x is not iterable, and at least one other arg is a function of the current JSON
                         JNode arg_outfunc(JNode inp)
                         {
-                            for (int ii = 0; ii < other_args.Length; ii++)
+                            for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1237,7 +1239,7 @@ namespace JSON_Tools.JSON_Tools
                 else
                 {
                     // none of the arguments are functions of the current JSON
-                    for (int ii = 0; ii < other_args.Length; ii++)
+                    for (int ii = 0; ii < other_args.Count; ii++)
                     {
                         JNode other_arg = other_args[ii];
                         all_args[ii + 1] = other_arg;
@@ -1279,7 +1281,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         JNode arg_outfunc(JNode inp)
                         {
-                            for (int ii = 0; ii < other_args.Length; ii++)
+                            for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
                                 all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1291,7 +1293,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else
                     {
-                        for (int ii = 0; ii < other_args.Length; ii++)
+                        for (int ii = 0; ii < other_args.Count; ii++)
                         {
                             JNode other_arg = other_args[ii];
                             all_args[ii + 1] = other_arg;
@@ -1310,7 +1312,7 @@ namespace JSON_Tools.JSON_Tools
                     // one other is
                     JNode arg_outfunc(JNode inp)
                     {
-                        for (int ii = 0; ii < other_args.Length; ii++)
+                        for (int ii = 0; ii < other_args.Count; ii++)
                         {
                             JNode other_arg = other_args[ii];
                             all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
@@ -1322,7 +1324,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 // it is a non-vectorized function where none of the args are functions of the current
                 // json (e.g., s_mul(`a`, 14))
-                for (int ii = 0; ii < other_args.Length; ii++)
+                for (int ii = 0; ii < other_args.Count; ii++)
                 {
                     JNode other_arg = other_args[ii];
                     all_args[ii + 1] = other_arg;
@@ -1831,7 +1833,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             // applying unary minus to this expr/scalar has higher precedence than everything except
                             // exponentiation.
-                            JNode[] args = new JNode[] { (JNode)left_operand };
+                            List<JNode> args = new List<JNode> { (JNode)left_operand };
                             var uminus_func = new ArgFunctionWithArgs(ArgFunction.FUNCTIONS["__UMINUS__"], args);
                             left_operand = ApplyArgFunction(uminus_func);
                             uminus = false;
@@ -1862,12 +1864,14 @@ namespace JSON_Tools.JSON_Tools
             pos++;
             int arg_num = 0;
             Dtype[] intypes = fun.input_types();
-            JNode[] args = new JNode[fun.max_args];
+            List<JNode> args = new List<JNode>(fun.min_args);
             JNode cur_arg = null;
             while (pos < toks.Count)
             {
                 t = toks[pos];
-                Dtype type_options = intypes[arg_num];
+                // the last Dtype in an ArgFunction's input_types is either the type options for the last arg
+                // or the type options for every optional arg (if the function can have infinitely many args)
+                Dtype type_options = arg_num >= intypes.Length ? intypes[intypes.Length - 1] : intypes[arg_num];
                 try
                 {
                     try
@@ -1937,15 +1941,19 @@ namespace JSON_Tools.JSON_Tools
                     throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} " +
                                                  $"({fun.min_args} - {fun.max_args} args)");
                 }
-                args[arg_num++] = cur_arg;
+                args.Add(cur_arg);
+                arg_num++;
                 pos++;
                 if (close_paren)
                 {
                     var withargs = new ArgFunctionWithArgs(fun, args);
-                    for (int arg2 = arg_num; arg2 < fun.max_args; arg2++)
+                    if (fun.max_args < Int32.MaxValue)
                     {
-                        // fill the remaining args with null nodes; alternatively we could have ArgFunctions use JNode?[] instead of JNode[]
-                        args[arg2] = new JNode();
+                        // for functions that have a fixed number of optional args, pad the unfilled args with null nodes
+                        for (int arg2 = arg_num; arg2 < fun.max_args; arg2++)
+                        {
+                            args.Add(new JNode());
+                        }
                     }
                     return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }
@@ -2028,6 +2036,13 @@ namespace JSON_Tools.JSON_Tools
         #endregion
         #region ASSIGNMENT_EXPRESSIONS
 
+        /// <summary>
+        /// Changes the type and value of v to the type and value of vnew.<br></br>
+        /// Cannot mutate an object or array.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="vnew"></param>
+        /// <exception cref="RemesPathException"></exception>
         private static void TransferJNodeProperties(JNode v, JNode vnew)
         {
             if (v is JArray)

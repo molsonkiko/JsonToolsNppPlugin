@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Forms
 {
@@ -35,6 +36,8 @@ namespace JSON_Tools.Forms
 
         public bool use_tree;
 
+        public NppTbData tbData;
+
         public double max_size_full_tree_MB;
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
@@ -57,6 +60,7 @@ namespace JSON_Tools.Forms
             lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
             findReplaceForm = null;
+            tbData = new NppTbData();
             use_tree = Main.settings.use_tree;
             max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;
             int file_len = Npp.editor.GetLength();
@@ -323,7 +327,7 @@ namespace JSON_Tools.Forms
                     JNode child = jar[ii];
                     TreeNode child_node = (child is JObject || child is JArray)
                         ? new TreeNode(ii.ToString())
-                        : child_node = new TreeNode($"{ii} : {child.ToString()}");
+                        : new TreeNode($"{ii} : {child.ToString()}");
                     SetImageOfTreeNode(child_node, child);
                     root.Nodes.Add(child_node);
                     pathsToJNodes[child_node.FullPath] = child;
@@ -763,6 +767,11 @@ namespace JSON_Tools.Forms
         {
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             JNode new_json = Main.TryParseJson();
+            if (new_json == null)
+                return;
+            //if (cur_fname != fname)
+            //    tbData.pszName = $"Json Tree View for {RelativeFilename()}"; // doesn't work
+                // change the docking form's title to reflect the new filename
             fname = cur_fname;
             json = new_json;
             query_result = json;
@@ -786,6 +795,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         public void ApplyStyle(bool use_npp_style)
         {
+            if (IsDisposed) return;
             Color back_color = Npp.notepad.GetDefaultBackgroundColor();
             if (!use_npp_style || (
                 back_color.R > 240 &&
@@ -823,6 +833,25 @@ namespace JSON_Tools.Forms
             }
             QueryBox.BackColor = in_between;
             QueryBox.ForeColor = fore_color;
+        }
+
+        /// <summary>
+        /// On double-click, activate the buffer with the tree viewer's fname
+        /// </summary>
+        private void TreeViewer_DoubleClick(object sender, EventArgs e)
+        {
+            Npp.notepad.OpenFile(fname);
+        }
+
+        /// <summary>
+        /// Just the filename, no directory information.<br></br>
+        /// If no fname supplied, gets the relative filename for this TreeViewer's fname.
+        /// </summary>
+        public string RelativeFilename(string fname = null)
+        {
+            if (fname == null) fname = this.fname;
+            string[] fname_split = fname.Split('\\');
+            return fname_split[fname_split.Length - 1];
         }
 
         // not creating schemas at present because schemas produced may be invalid

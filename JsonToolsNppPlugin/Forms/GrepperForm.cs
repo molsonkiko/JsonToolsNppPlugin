@@ -15,6 +15,7 @@ namespace JSON_Tools.Forms
         public JsonGrepper grepper;
         HashSet<string> files_found;
         public string fname;
+        public List<string> directories_visited;
 
         public GrepperForm()
         {
@@ -25,6 +26,7 @@ namespace JSON_Tools.Forms
             tv = null;
             files_found = new HashSet<string>();
             fname = null;
+            directories_visited = new List<string>();
         }
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)
@@ -55,10 +57,13 @@ namespace JSON_Tools.Forms
             bool recursive = RecursiveSearchCheckBox.Checked;
             string root_dir;
             FolderBrowserDialog1.RootFolder = Environment.SpecialFolder.MyComputer;
-            FolderBrowserDialog1.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            FolderBrowserDialog1.SelectedPath = directories_visited.Count == 0
+                ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                : directories_visited[directories_visited.Count - 1]; // last visited directory
             if (FolderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 root_dir = FolderBrowserDialog1.SelectedPath;
+                directories_visited.Add(root_dir);
                 if (Directory.Exists(root_dir))
                 {
                     foreach (string search_pattern in search_patterns)
@@ -123,8 +128,8 @@ namespace JSON_Tools.Forms
                 // on the pruned JSON
                 tv.json = grepper.fname_jsons;
                 tv.SubmitQueryButton.PerformClick();
-                if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
-                    Npp.notepad.HideDockingForm(Main.treeViewer);
+                if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
+                    Npp.notepad.HideDockingForm(Main.openTreeViewer);
             }
         }
 
@@ -146,8 +151,8 @@ namespace JSON_Tools.Forms
             }
             tv = new TreeViewer(grepper.fname_jsons);
             Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree");
-            if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
-                Npp.notepad.HideDockingForm(Main.treeViewer);
+            if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
+                Npp.notepad.HideDockingForm(Main.openTreeViewer);
         }
 
         /// <summary>
@@ -164,9 +169,9 @@ namespace JSON_Tools.Forms
                 Npp.notepad.HideDockingForm(tv);
                 tv.Close();
             }
-            if (Main.treeViewer != null && !Main.treeViewer.IsDisposed)
+            if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
             {
-                Npp.notepad.ShowDockingForm(Main.treeViewer);
+                Npp.notepad.ShowDockingForm(Main.openTreeViewer);
             }
         }
 

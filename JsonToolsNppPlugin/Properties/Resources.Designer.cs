@@ -68,45 +68,12 @@ namespace Kbg.Demo.Namespace.Properties {
             }
         }
 
-        internal static System.Drawing.Bitmap star
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("star", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-
         internal static System.Drawing.Bitmap star_bmp
         {
             get
             {
                 object obj = ResourceManager.GetObject("star_bmp", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        internal static System.Drawing.Icon star_black_ico
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("star_black_ico", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        internal static System.Drawing.Icon star_white_ico
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("star_white_ico", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
             }
         }
     }

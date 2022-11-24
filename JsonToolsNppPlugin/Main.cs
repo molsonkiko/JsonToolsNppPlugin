@@ -31,25 +31,24 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
         public static YamlDumper yamlDumper = new YamlDumper();
-        //public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
-        public static TreeViewer treeViewer = null;
+        public static string active_fname = null;
+        public static TreeViewer openTreeViewer = null;
+        public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         public static GrepperForm grepperForm = null;
+        //public static Form nodeSelectedForm = null;
         public static bool grepperTreeViewJustOpened = false;
-        //public static string active_fname;
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
 
         // toolbar icons
-        static Bitmap tbBmp = Resources.star;
         static Bitmap tbBmp_tbTab = Resources.star_bmp;
-        static Icon tbIco = Resources.star_black_ico;
-        static Icon tbIcoDM = Resources.star_white_ico;
         static Icon tbIcon = null;
 
         // fields related to forms
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
         static internal int AboutFormId = -1;
+        //static internal int nodeSelectedLabelId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -69,7 +68,7 @@ namespace Kbg.NppPluginNET
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
             PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "Path to current &line", PathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
+            PluginBase.SetCommand(3, "Path to current &line", CopyPathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
@@ -82,27 +81,10 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(11, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(12, "&Run tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(13, "A&bout", ShowAboutForm); AboutFormId = 13;
-        }
 
-        static internal void SetToolBarIcon()
-        {
-            // create struct
-            toolbarIcons tbIcons = new toolbarIcons();
-			
-            // add bmp icon
-            tbIcons.hToolbarBmp = tbBmp.GetHbitmap();
-            tbIcons.hToolbarIcon = tbIco.Handle;            // icon with black lines
-            tbIcons.hToolbarIconDarkMode = tbIcoDM.Handle;  // icon with light grey lines
-
-            // convert to c++ pointer
-            IntPtr pTbIcons = Marshal.AllocHGlobal(Marshal.SizeOf(tbIcons));
-            Marshal.StructureToPtr(tbIcons, pTbIcons, false);
-
-            // call Notepad++ api
-            //Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_ADDTOOLBARICON_FORDARKMODE, PluginBase._funcItems.Items[idFrmGotToLine]._cmdID, pTbIcons);
-
-            // release pointer
-            Marshal.FreeHGlobal(pTbIcons);
+            //// set mouse dwell time in preparation for mouse dwell related-methods
+            //Npp.editor.SetMouseDwellTime(400);
+            //nodeSelectedLabelId = 14;
         }
 
         public static void OnNotification(ScNotification notification)
@@ -117,116 +99,148 @@ namespace Kbg.NppPluginNET
             // if (code == (uint)SciMsg.SCNxxx)
             // { ... }
             //// changing tabs
-            if (code == (uint)NppMsg.NPPN_BUFFERACTIVATED)
+            switch (code)
             {
-                // check to see if there was a treeview for the file
-                // we just navigated away from
-                //if (active_fname != null)
-                //{
-                //    if (treeViewers.TryGetValue(active_fname, out TreeViewer old_tv))
-                //    {
-                //        if (old_tv.IsDisposed)
-                //            // it was closed by user earlier
-                //            treeViewers.Remove(active_fname);
-                //        else
-                //            // minimize the treeviewer that was visible
-                //            Npp.notepad.HideDockingForm(old_tv);
-                //    }
-                //}
-                //// now open the treeview for the file just opened, assuming it exists
-                //active_fname = Npp.notepad.GetCurrentFilePath();
-                //if (treeViewers.TryGetValue(active_fname, out TreeViewer tv))
-                //{
-                //    if (tv.IsDisposed)
-                //        // it was removed earlier, so clean it up
-                //        treeViewers.Remove(active_fname);
-                //    else
-                //        // maximize the treeviewer belonging to this file
-                //        Npp.notepad.ShowDockingForm(tv);
-                //}
-                // if grepper form and tree viewer are both open,
-                // ensure that only one is visible at a time
-                // don't do anything when the tree view first opens though
-                if (grepperForm != null
-                    && grepperForm.tv != null
-                    && !grepperForm.tv.IsDisposed
-                    && !grepperTreeViewJustOpened)
-                {
-                    if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                    string new_fname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
+                    if (active_fname != null)
                     {
-                        if (treeViewer != null && !treeViewer.IsDisposed)
-                            Npp.notepad.HideDockingForm(treeViewer);
-                        Npp.notepad.ShowDockingForm(grepperForm.tv);
+                        // check to see if there was a treeview for the file
+                        // we just navigated away from
+                        if (openTreeViewer != null && openTreeViewer.IsDisposed)
+                        {
+                            treeViewers.Remove(openTreeViewer.fname);
+                            openTreeViewer = null;
+                        }
+                        // now see if there's a treeview for the file just opened
+                        if (treeViewers.TryGetValue(new_fname, out TreeViewer new_tv))
+                        {
+                            if (new_tv.IsDisposed)
+                                treeViewers.Remove(new_fname);
+                            else
+                            {
+                                // minimize the treeviewer that was visible and make the new one visible
+                                if (openTreeViewer != null)
+                                    Npp.notepad.HideDockingForm(openTreeViewer);
+                                Npp.notepad.ShowDockingForm(new_tv);
+                                openTreeViewer = new_tv;
+                            }
+                        }
+                        // else { }
+                        // don't hide the active TreeViewer just because the user opened a new tab,
+                        // they might want to still have it open
                     }
-                    else
+                    // if grepper form and tree viewer are both open,
+                    // ensure that only one is visible at a time
+                    // don't do anything when the tree view first opens though
+                    if (grepperForm != null
+                        && grepperForm.tv != null
+                        && !grepperForm.tv.IsDisposed
+                        && !grepperTreeViewJustOpened)
+                    {
+                        if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                        {
+                            if (openTreeViewer != null && !openTreeViewer.IsDisposed)
+                                Npp.notepad.HideDockingForm(openTreeViewer);
+                            Npp.notepad.ShowDockingForm(grepperForm.tv);
+                        }
+                        else
+                        {
+                            Npp.notepad.HideDockingForm(grepperForm.tv);
+                            if (openTreeViewer != null && !openTreeViewer.IsDisposed)
+                                Npp.notepad.ShowDockingForm(openTreeViewer);
+                        }
+                    }
+                    grepperTreeViewJustOpened = false;
+                    active_fname = new_fname;
+                    return;
+                // when closing a file
+                case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
+                    IntPtr buffer_closed_id = notification.Header.IdFrom;
+                    string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
+                    // if you close the file belonging the GrepperForm, delete its tree viewer
+                    if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed &&
+                        buffer_closed == grepperForm.fname)
                     {
                         Npp.notepad.HideDockingForm(grepperForm.tv);
-                        if (treeViewer != null && !treeViewer.IsDisposed)
-                            Npp.notepad.ShowDockingForm(treeViewer);
+                        grepperForm.tv.Close();
+                        grepperForm.tv = null;
+                        // also unhide the normal tree viewer if it exists
+                        if (treeViewers.TryGetValue(buffer_closed, out TreeViewer treeViewer1) && !treeViewer1.IsDisposed)
+                            Npp.notepad.ShowDockingForm(treeViewer1);
+                        return;
                     }
-                }
-                grepperTreeViewJustOpened = false;
-                return;
-            }
-            // when closing a file
-            else if (code == (uint)NppMsg.NPPN_FILEBEFORECLOSE)
-            {
-                IntPtr buffer_closed_id = notification.Header.IdFrom;
-                string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
-                // if you close the file belonging the GrepperForm, delete its tree viewer
-                if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed &&
-                    buffer_closed == grepperForm.fname)
-                {
-                    Npp.notepad.HideDockingForm(grepperForm.tv);
-                    grepperForm.tv.Close();
-                    grepperForm.tv = null;
-                    // also unhide the normal tree viewer if it exists
-                    if (treeViewer != null && !treeViewer.IsDisposed)
-                        Npp.notepad.ShowDockingForm(treeViewer);
+                    // clean up data associated with the buffer that was just closed
+                    fname_jsons.Remove(buffer_closed);
+                    if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
+                        return;
+                    if (!closed_tv.IsDisposed)
+                    {
+                        Npp.notepad.HideDockingForm(closed_tv);
+                        closed_tv.Close();
+                    }
+                    treeViewers.Remove(buffer_closed);
                     return;
-                }
-                // clean up data associated with the buffer that was just closed
-                fname_jsons.Remove(buffer_closed);
-                //if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
-                //    return;
-                //if (!closed_tv.IsDisposed)
-                //{
-                //    Npp.notepad.HideDockingForm(closed_tv);
-                //    closed_tv.Close();
-                //}
-                //treeViewers.Remove(buffer_closed);
-                return;
-            }
-            else if (code == (uint)NppMsg.NPPN_WORDSTYLESUPDATED)
-            {
                 // the editor color scheme changed, so update the tree view colors
-                if (treeViewer != null)
-                    treeViewer.ApplyStyle(settings.use_npp_styling);
-                if (grepperForm != null && grepperForm.tv != null)
-                    grepperForm.tv.ApplyStyle(settings.use_npp_styling);
-                
+                case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
+                    foreach (TreeViewer treeViewer2 in treeViewers.Values)
+                    {
+                        if (treeViewer2 != null)
+                            treeViewer2.ApplyStyle(settings.use_npp_styling);
+                        if (grepperForm != null && grepperForm.tv != null)
+                            grepperForm.tv.ApplyStyle(settings.use_npp_styling);
+                    }
+                    return;
+                // the user left their mouse in one place for a while (default 0.4s)
+                //case (uint)SciMsg.SCN_DWELLSTART:
+                //    // create a little menu that shows the path to the current node.
+                //    if (Npp.editor.GetLength() > 1e5)
+                //    int dwell_line = Npp.editor.LineFromPosition(notification.Position.Value);
+                //    string node_path = PathToLine(dwell_line);
+                //    if (node_path.Length == 0)
+                //        return;
+                //    if (nodeSelectedForm != null)
+                //    {
+                //        nodeSelectedForm.Dispose();
+                //        nodeSelectedForm = null;
+                //    }
+                //    nodeSelectedForm = new Form();
+                //    nodeSelectedForm.Text = node_path;
+                //    nodeSelectedForm.MouseUp += new MouseEventHandler(
+                //        (o, a) => Clipboard.SetText(node_path)
+                //    );
+                //    nodeSelectedForm.Show();
+                //    return;
+                //// the user did something that ended the passive mouse dwell period
+                //case (uint)SciMsg.SCN_DWELLEND:
+                //    if (notification.Position.Value == -1)
+                //        // ignore DWELLEND events that fire for no particular reason
+                //        // this happens all the time and I don't know why
+                //        return;
+                //    if (nodeSelectedForm != null)
+                //        nodeSelectedForm.Close();
+                //    nodeSelectedForm = null;
+                //    return;
+                // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
+                //case (uint)SciMsg.SCI_UNDO:
+                //case (uint)SciMsg.SCI_REDO:
+                //    string fname = Npp.notepad.GetCurrentFilePath();
+                //    if (!fname_jsons.ContainsKey(fname))
+                //        return; // ignore files with no JSON yet
+                //    // reparse the file
+                //    string ext = Npp.FileExtension(fname);
+                //    JNode json = TryParseJson(ext == "jsonl");
+                //    treeViewer.json = json;
+                //    // if the tree view is open, refresh it
+                //    if (treeViewer != null)
+                //        treeViewer.JsonTreePopulate(json);
+                //    return;
+                //if (code > int.MaxValue) // windows messages
+                //{
+                //    int wm = -(int)code;
+                //    }
+                //}
             }
-            // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
-            //if (code == (uint)SciMsg.SCI_UNDO
-            //    || code == (uint)SciMsg.SCI_REDO)
-            //{
-            //    string fname = Npp.notepad.GetCurrentFilePath();
-            //    if (!fname_jsons.ContainsKey(fname))
-            //        return; // ignore files with no JSON yet
-            //    // reparse the file
-            //    string ext = Npp.FileExtension(fname);
-            //    JNode json = TryParseJson(ext == "jsonl");
-            //    treeViewer.json = json;
-            //    // if the tree view is open, refresh it
-            //    if (treeViewer != null)
-            //        treeViewer.JsonTreePopulate(json);
-            //    return;
-            //}
-            //if (code > int.MaxValue) // windows messages
-            //{
-            //    int wm = -(int)code;
-            //    }
-            //}
         }
 
         static internal void PluginCleanUp()
@@ -234,6 +248,11 @@ namespace Kbg.NppPluginNET
             //treeViewers.Clear();
             if (grepperForm != null && !grepperForm.IsDisposed)
                 grepperForm.Close();
+            foreach (string key in treeViewers.Keys)
+            {
+                treeViewers[key].Dispose();
+                treeViewers[key] = null;
+            }
         }
         #endregion
 
@@ -410,11 +429,26 @@ namespace Kbg.NppPluginNET
             }
             // when the user changes their mind about whether to use editor styling
             // for the tree viewer, reflect their decision immediately
-            if (treeViewer != null && !treeViewer.IsDisposed)
+            foreach (TreeViewer treeViewer in treeViewers.Values)
                 treeViewer.ApplyStyle(settings.use_npp_styling);
         }
 
-        private static void PathToCurrentLine()
+        private static void CopyPathToCurrentLine()
+        {
+            int line = Npp.editor.GetCurrentLineNumber();
+            string result = PathToLine(line);
+            if (result.Length == 0)
+            {
+                MessageBox.Show($"Did not find a node on line {line} of this file",
+                    "Could not find a node on this line",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+            Npp.TryCopyToClipboard(result);
+        }
+
+        private static string PathToLine(int line)
         {
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
@@ -427,19 +461,9 @@ namespace Kbg.NppPluginNET
             {
                 json = TryParseJson(Npp.FileExtension() == "jsonl");
                 if (json == null)
-                    return;
+                    return "";
             }
-            int line = Npp.editor.GetCurrentLineNumber();
-            string result = json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
-            if (result.Length == 0)
-            {
-                MessageBox.Show($"Did not find a node on line {line} of this file",
-                    "Could not find a node on this line",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
-            Npp.TryCopyToClipboard(result);
+            return json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
         }
 
         /// <summary>
@@ -449,11 +473,14 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void OpenJsonTree(bool is_json_lines = false)
         {
-            //TreeViewer tv = null;
-            //if (IsWin32)
-            //    treeViewers.TryGetValue(cur_fname, out tv);
-            //else
-            //    tv = treeViewer; // 64-bit windows doesn't use the treeViewers dict
+            if (openTreeViewer != null)
+            {
+                if (openTreeViewer.IsDisposed)
+                    openTreeViewer = null;
+                else
+                    Npp.notepad.HideDockingForm(openTreeViewer);
+            }
+            treeViewers.TryGetValue(active_fname, out TreeViewer treeViewer);
             if (treeViewer != null && !treeViewer.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
@@ -475,17 +502,21 @@ namespace Kbg.NppPluginNET
                 treeViewer.Close();
                 if (was_visible)
                     return;
-                //if (IsWin32)
-                //    treeViewers.Remove(cur_fname);
-                //else treeViewer = null;
+                if (openTreeViewer != null && treeViewer == openTreeViewer)
+                {
+                    openTreeViewer = null;
+                    treeViewers.Remove(active_fname);
+                    return;
+                }
             }
             if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
                 is_json_lines = true;
             JNode json = TryParseJson(is_json_lines);
             if (json == null)
                 return; // don't open the tree view for non-json files
-            treeViewer = new TreeViewer(json);
-            DisplayJsonTree(treeViewer, json);
+            openTreeViewer = new TreeViewer(json);
+            treeViewers[active_fname] = openTreeViewer;
+            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}");
         }
 
         static void OpenGrepperForm()
@@ -499,7 +530,7 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title = "Json Tree View")
+        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title)
         {
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
@@ -532,10 +563,9 @@ namespace Kbg.NppPluginNET
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
             Npp.SetLangJson();
+            treeViewer.tbData = _nppTbData;
             treeViewer.JsonTreePopulate(json);
             Npp.notepad.ShowDockingForm(treeViewer);
-            //if (IsWin32)
-            //    treeViewers[cur_fname] = tv;
             treeViewer.QueryBox.Focus();
             // select QueryBox on startup
             // note that this is only possible because we changed the access modifier

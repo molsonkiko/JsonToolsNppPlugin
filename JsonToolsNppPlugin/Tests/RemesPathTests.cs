@@ -321,7 +321,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("range(0, -abs(-len(@) + len(@)))", "[]"),
                 new Query_DesiredResult("add_items(j`{}`, a, 1, b, 2, c, 3, d, 4)", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4}"),
                 new Query_DesiredResult("add_items(j`{}`, a, null, b, 2, c, null)", "{\"a\": null, \"b\": 2, \"c\": null}"), // null values in add_items
-                new Query_DesiredResult("append(j`[]`, 1, false, a, j`[4]`)", "[1, false, \"a\", [4]]"),
+                new Query_DesiredResult("append(j`[]`, 1, false, a, null, j`[4]`, null, 2.5)", "[1, false, \"a\", null, [4], null, 2.5]"),
                 new Query_DesiredResult("concat(j`[1, 2]`, j`[3, 4]`, j`[5]`)", "[1, 2, 3, 4, 5]"),
                 new Query_DesiredResult("concat(j`{\"a\": 1, \"b\": 2}`, j`{\"c\": 3}`, j`{\"a\": 4}`)", "{\"b\": 2, \"c\": 3, \"a\": 4}"),
                 new Query_DesiredResult("pivot(j`[[\"foo\", 2, 3, true], [\"bar\", 3, 3, true], [\"foo\", 4, 4, false], [\"bar\", 5, 4, false]]`, 0, 1, 2, 3)", "{\"foo\": [2, 4], \"bar\": [3, 5], \"2\": [3, 4], \"3\": [true, false]}"),
@@ -332,6 +332,11 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("to_records(j`{\"a\": [1, 2], \"b\": [2, 3]}`, n)", "[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 3}]"),
                 new Query_DesiredResult("to_records(j`[[1, 2, [3]], [2, 3, [4]]]`, r)", "[{\"col1\": 1, \"col2\": 2, \"col3.col1\": 3}, {\"col1\": 2, \"col2\": 3, \"col3.col1\": 4}]"),
                 new Query_DesiredResult("to_records(j`[[1, 2, [3]], [2, 3, [4]]]`, s)", "[{\"col1\": 1, \"col2\": 2, \"col3\": \"[3]\"}, {\"col1\": 2, \"col2\": 3, \"col3\": \"[4]\"}]"),
+                new Query_DesiredResult("all(j`[true, true, false]`)", "false"),
+                new Query_DesiredResult("all(j`[true, true]`)", "true"),
+                new Query_DesiredResult("any(j`[true, true, false]`)", "true"),
+                new Query_DesiredResult("any(j`[true, true]`)", "true"),
+                new Query_DesiredResult("all(j`[false, false]`)", "false"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -576,33 +581,26 @@ namespace JSON_Tools.Tests
             JNode jfalse = jsonParser.Parse("false");
             var testcases = new object[][]
             {
-                new object[]{ new JNode[]{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
-                new object[]{ new JNode[]{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
-                new object[]{ new JNode[]{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
-                new object[]{ new JNode[]{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
-                //(new JNode[]{jsonParser.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 3, \"b\": 1}]"), new JNode("b", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["min_by"], jsonParser.Parse("{\"a\": 3, \"b\": 1}")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]")}, ArgFunction.FUNCTIONS["s_len"], jsonParser.Parse("[2, 3, 0]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JNode("a", Dtype.STR, 0), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JRegex(new Regex(@"a+")), new JNode("z", Dtype.STR, 0)}, ArgFunction.FUNCTIONS["s_sub"], jsonParser.Parse("[\"zb\", \"bcz\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("[\"ab\", \"bca\", \"\"]"), new JSlicer(new int?[] {1, null, -1})}, ArgFunction.FUNCTIONS["s_slice"], jsonParser.Parse("[\"ba\", \"cb\", \"\"]")),
-                //(new JNode[]{jsonParser.Parse("{\"a\": \"2\", \"b\": \"1.5\"}")}, ArgFunction.FUNCTIONS["float"], jsonParser.Parse("{\"a\": 2.0, \"b\": 1.5}")),
-                //(new JNode[]{jsonParser.Parse("{\"a\": \"a\", \"b\": \"b\"}"), new JNode(3, Dtype.INT, 0)}, ArgFunction.FUNCTIONS["s_mul"], jsonParser.Parse("{\"a\": \"aaa\", \"b\": \"bbb\"}"))
+                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
+                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
+                new object[]{ new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
+                new object[]{ new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
             };
             int tests_failed = 0;
             int ii = 0;
             foreach (object[] test in testcases)
             {
-                JNode[] args = (JNode[])test[0];
+                List<JNode> args = (List<JNode>)test[0];
                 ArgFunction f = (ArgFunction)test[1];
                 JNode desired = (JNode)test[2];
                 JNode output = f.Call(args);
                 var sb = new StringBuilder();
                 sb.Append('{');
                 int argnum = 0;
-                while (argnum < args.Length)
+                while (argnum < args.Count)
                 {
                     sb.Append(args[argnum++].ToString());
-                    if (argnum < (args.Length - 1)) { sb.Append(", "); }
+                    if (argnum < (args.Count - 1)) { sb.Append(", "); }
                 }
                 sb.Append('}');
                 string argstrings = sb.ToString();

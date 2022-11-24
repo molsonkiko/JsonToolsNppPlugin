@@ -117,27 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="star" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
-        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACXBIWXMAAAsQAAALEAGtI711AAACHUlE
-        QVQ4T2P4//8/Cr6Z7q13uyh8/Z2y2Me3q5L+3yyL/X8tO+DxpQSX9RdCzfTQ1aNw7hRHrL9bHvf/oof6
-        /1O6bP9PajCA8Skd1v9nHeT+n491/H82zGI9sh4w8f3+TY571cmPr0XbwDXhwqddVf6fDDZ7fKwuhwNu
-        AMhmbJqvxzmAMbr4CaBrjnlogF3CcK86yRTkbHRFIPzx5P7/707s/79HFVPuiJv6/0POKqYMt/KCdoH8
-        jK7ggrMC0AIIWGergCF/zJj//0Eb6V0Md2tSnsACDOTch20F/58vnPD/x5P7UO3//396fP//w8kNYDmY
-        l05oMf3fayf7hAEUVTBT71bEQ7XgBufL4uFe2mUlCYx3YDzDDADhi0AFuMCeovj/U+UY/m9TgajdYSr6
-        n+F6QdgTUDwjG3J/fj9UCwJcmNOPovmEJuP/bYb8TxguxTrsAiUSZANAoY8O7u1Y/3+NEkLNIW22/zu1
-        OXYxXEr2MAGlMGQDYAF4qq8ebDMIvL56/v9SRYSa7Tqc/zdrsJmAExIoeYJTGFTy9br5/1dYyYOdvF4Z
-        6GxbebAL5itA5PcCbd+mwQpJSCDi/IQGDlDyBKUwmCErgc49rI6wEcQGuQCkeYsG6+NpCsyIpAzDoOQJ
-        SmGgRAKKZ5hmUICB/AxyNsxmGEYxAIQP28roHrSVXb/PRvoxKJ5BUbXDgO/xDh3O9Ts0WHRR1f9nAAA9
-        w3MvSkvduQAAAABJRU5ErkJggg==
-</value>
-  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="star_black_ico" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>star_black.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="star_bmp" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         Qk1yAgAAAAAAAHIBAAAoAAAAEAAAABAAAAABAAgAAAAAAAAAAAARCwAAEQsAAE8AAABPAAAAAAAA////

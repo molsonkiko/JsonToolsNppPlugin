@@ -80,9 +80,9 @@ Symbol | Operator                                      | Precedence | Return typ
  `/`   | division                                      |  3         | float
  `**`  | exponentiation                                |  5         | float
 
-As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentation.
+As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentiation.
 
-All binary operators are [left-associative](https://en.wikipedia.org/wiki/Operator_associativity) (evaluated left-to-right when precedence is tied), except exponentation (`**`), which is right-associative.
+All binary operators are [left-associative](https://en.wikipedia.org/wiki/Operator_associativity) (evaluated left-to-right when precedence is tied), except exponentiation (`**`), which is right-associative.
 
 
 ## Regular expressions and JSON literals ##
@@ -147,11 +147,11 @@ return arr
 * You can recursively search for the key "a" in this JSON with *double-dot* syntax `@..a`. This will return `[1, 3]`.
 * You can also recursively search for the keys "b" and "a" with the query `@..[b, a]`. This will return `[2, 1, 4, 3]`.
 
-### Recursively find all descendents ###
+### Recursively find all descendants ###
 
 *Added in v3.7.0*
 
-`@..*` will return a single array containing all the *scalar* descendents of the current JSON, no matter their depth.
+`@..*` will return a single array containing all the *scalar* descendants of the current JSON, no matter their depth.
 
 It will not return indices or parents, only the child nodes
 
@@ -175,11 +175,11 @@ Each subset will be organized in alphabetical order.
 
 ### Non-vectorized functions ###
 
-`add_items(obj: object, k1: string, v1: anything, [k2: string, v2: anything, k3: string, v3: anything, k4: string, v4: anything]) -> object`
+`add_items(obj: object, k1: string, v1: anything, ...: string, anything (alternating)) -> object`
 
-Takes 3-9 arguments. As shown, every even-numbered argument must be a string (new keys).
+Takes 3+ arguments. As shown, every even-numbered argument must be a string (new keys).
 
-Returns a *new object* with the key-value pair(s) k1-v1 (and possibly k2-v2, k3-v3, and k4-v4 added).
+Returns a *new object* with the key-value pair(s) k_i, v_i added.
 
 *Does not mutate the original object.*
 
@@ -187,16 +187,24 @@ __EXAMPLES__
 - add_items({}, "a", 1, "b", 2, "c", 3, "d", 4) -> {"a": 1, "b": 2, "c": 3, "d": 4}
 
 -----
-`append(x: array, x2-x8: anything) -> array`
+`all(x: array[bool]) -> bool`
 
-Takes an array and 1-7 other things (any *not-null* JSON) and returns a *new array* with
+Returns true if *all* of the values in `x` (which *must* contain all booleans) are `true`, else `false`.
+
+-----
+`any(x: array[bool]) -> bool`
+
+Returns true if *any* of the values in `x` (which *must* contain all booleans) are `true`, else `false`.
+
+-----
+`append(x: array, ...: anything) -> array`
+
+Takes an array and any number of things (any JSON) and returns a *new array* with
 the other things added to the end of the first array.
 
 Does not mutate the original array.
 
 The other things are added in the order that they were passed as arguments.
-
-Note that since `null` arguments are ignored, you will have to use `concat` with an array of `null` to add `null`'s to the end of an array. 
 
 __EXAMPLES__
 - `append([], 1, false, "a", [4]) -> [1, false, "a", [4]]`
@@ -207,9 +215,9 @@ __EXAMPLES__
 Finds the arithmetic mean of an array of numbers. `mean` is an alias for this function.
 
 -----
-`concat(x: array | object, x2-x8: array | object) -> array | object`
+`concat(x: array | object, ...: array | object) -> array | object`
 
-Takes 2-8 arguments, either all arrays or all objects.
+Takes 2+ arguments, either all arrays or all objects.
 
 If all args are arrays, returns an array that contains all elements of
 every array passed in, in the order they were passed.
@@ -317,13 +325,13 @@ Returns a floating-point number equal to the minimum value in an array.
 See `max_by`.
 
 ---
-`pivot(x: array[object | array], by: str | int, val_col: str | int, other_col4-other_col9: str | int) -> object[str, array]`
+`pivot(x: array[object | array], by: str | int, val_col: str | int, ...: str | int) -> object[str, array]`
 
-There can be at most *9* arguments to this function.
+There must be at least 3 arguments to this function.
 
 The first argument should be an array whose sub-iterables have a repeating cycle of values for one column (`by`), and the only other column that varies within a given cycle is the values column (`val_col`).
 
-The result is an object where each distinct value of the `by` column is mapped to an array of the corresponding values in the `val_col` column. Additionally, you may include up to 6 other columns.
+The result is an object where each distinct value of the `by` column is mapped to an array of the corresponding values in the `val_col` column. Additionally, you may include any number of other columns.
 
 __Examples:__
 - With
@@ -452,9 +460,9 @@ Returns an array of two-element subarrays `[k: anything, count: int]` where `cou
 The order of the sub-arrays is random.
 
 ----
-`zip(x1: array, x2-x8: array) -> array`
+`zip(x1: array, ...: array) -> array`
 
-There can only be at most *8* arguments to this function.
+There must be at least two arguments to this function, all arrays.
 
 Returns a new array in which each `i^th` element is an array containing the `i^th` elements of each argument, in the order in which they were passed.
 
@@ -513,7 +521,7 @@ Returns true if x is a string.
 
 Returns true if x is the floating-point Not-A-Number (represented in some JSON by `NaN`).
 
-Recall that `NaN` is *NOT* in the original JOSN specification.
+Recall that `NaN` is *NOT* in the original JSON specification.
 
 ----
 `log(x: number, n: number = e) -> number`
@@ -596,7 +604,7 @@ Strips the whitespace off both ends of x.
 
 Replaces all instances of string/regex `to_replace` in `x` with `replacement`.
 
-See the [C# regular expressions reference on substitions](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
+See the [C# regular expressions reference on substitutions](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
 
 ----
 `s_upper(x: string) -> string`

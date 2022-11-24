@@ -299,19 +299,25 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public class ArgFunction
     {
-        private Func<JNode[], JNode> Function { get; }
+        private Func<List<JNode>, JNode> Function { get; }
         private Dtype[] Input_types;
         public string name;
         public Dtype type;
-        public byte max_args;
-        public byte min_args;
+        public int max_args;
+        public int min_args;
         public bool is_vectorized;
 
-        public ArgFunction(Func<JNode[], JNode> function,
+        /// <summary>
+        /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
+        /// Input_types[ii] is the type that the i^th argument to a function must have,
+        /// unless the function has arbitrarily many arguments (indicated by max_args = Int32.MaxValue),
+        /// in which case the last value of Input_types is the type that all optional arguments must have.
+        /// </summary>
+        public ArgFunction(Func<List<JNode>, JNode> function,
             string name,
             Dtype type,
-            byte min_args,
-            byte max_args,
+            int min_args,
+            int max_args,
             bool is_vectorized,
             Dtype[] input_types)
         {
@@ -334,7 +340,7 @@ namespace JSON_Tools.JSON_Tools
             return intypes;
         }
 
-        public JNode Call(JNode[] args)
+        public JNode Call(List<JNode> args)
         {
             return Function(args);
         }
@@ -343,32 +349,6 @@ namespace JSON_Tools.JSON_Tools
         {
             return $"ArgFunction({name}, {type})";
         }
-
-        #region HELPER_FUNCTIONS
-
-        /// <summary>
-        /// Unspecified optional arguments to functions are filled with null.<br></br>
-        /// We may therefore want to know what the index of the last non-null argument is.
-        /// </summary>
-        /// <param name="args"></param>
-        /// <param name="ii"></param>
-        /// <returns></returns>
-        private static int LastNonNullArg(JNode[] args)
-        {
-            int ii = 0;
-            int last_non_null = 0;
-            while (ii < args.Length)
-            {
-                JNode node = args[ii];
-                if (node.type != Dtype.NULL)
-                {
-                    last_non_null = ii;
-                }
-                ii++;
-            }
-            return last_non_null;
-        }
-        #endregion
 
         #region NON_VECTORIZED_ARG_FUNCTIONS
 
@@ -388,7 +368,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode In(JNode[] args)
+        public static JNode In(List<JNode> args)
         {
             JNode elt = args[0];
             JNode itbl = args[1];
@@ -416,7 +396,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Len(JNode[] args)
+        public static JNode Len(List<JNode> args)
         {
             var itbl = args[0];
             if (itbl is JArray)
@@ -431,7 +411,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Sum(JNode[] args)
+        public static JNode Sum(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             double tot = 0;
@@ -451,7 +431,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Mean(JNode[] args)
+        public static JNode Mean(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             double tot = 0;
@@ -476,7 +456,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args">an array containng a single List<object></param>
         /// <returns>List<object> containing the flattened result</returns>
-        public static JNode Flatten(JNode[] args)
+        public static JNode Flatten(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var iterations = (long?)args[1].value;
@@ -503,7 +483,7 @@ namespace JSON_Tools.JSON_Tools
             flat = itbl;
             for (int ii = 0; ii < iterations; ii++)
             {
-                flat = (JArray)Flatten(new JNode[] { flat, new JNode() });
+                flat = (JArray)Flatten(new List<JNode> { flat, new JNode() });
             }
             return flat;
         }
@@ -520,7 +500,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public static JNode Index(JNode[] args)
+        public static JNode Index(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var elt = args[1];
@@ -547,7 +527,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Max(JNode[] args)
+        public static JNode Max(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             JNode biggest = new JNode(NanInf.neginf, Dtype.FLOAT, 0);
@@ -568,7 +548,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Min(JNode[] args)
+        public static JNode Min(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             JNode smallest = new JNode(NanInf.inf, Dtype.FLOAT, 0);
@@ -584,7 +564,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
 
-        public static JNode Sorted(JNode[] args)
+        public static JNode Sorted(List<JNode> args)
         {
             var sorted = new JArray();
             sorted.children.AddRange(((JArray)args[0]).children);
@@ -597,7 +577,7 @@ namespace JSON_Tools.JSON_Tools
             return sorted;
         }
 
-        public static JNode SortBy(JNode[] args)
+        public static JNode SortBy(List<JNode> args)
         {
             var arr = (JArray)args[0];
             var sorted = new JArray();
@@ -626,7 +606,7 @@ namespace JSON_Tools.JSON_Tools
             return sorted;
         }
 
-        public static JNode MaxBy(JNode[] args)
+        public static JNode MaxBy(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var key = args[1].value;
@@ -652,7 +632,6 @@ namespace JSON_Tools.JSON_Tools
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
                     JArray x = (JArray)itbl[ii];
-                    JNode xval = x[kint];
                     if (x[kint].CompareTo(max[kint]) > 0)
                     {
                         max = x;
@@ -662,7 +641,7 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        public static JNode MinBy(JNode[] args)
+        public static JNode MinBy(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var key = args[1].value;
@@ -688,7 +667,6 @@ namespace JSON_Tools.JSON_Tools
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
                     JArray x = (JArray)itbl[ii];
-                    JNode xval = x[kint];
                     if (x[kint].CompareTo(min[kint]) < 0)
                     {
                         min = x;
@@ -711,7 +689,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Range(JNode[] args)
+        public static JNode Range(List<JNode> args)
         {
             var start = (long?)args[0].value;
             var end = (long?)args[1].value;
@@ -759,14 +737,14 @@ namespace JSON_Tools.JSON_Tools
             return nums;
         }
 
-        public static JNode Values(JNode[] args)
+        public static JNode Values(List<JNode> args)
         {
             var vals = new JArray();
             vals.children.AddRange(((JObject)args[0]).children.Values);
             return vals;
         }
 
-        public static JNode Keys(JNode[] args)
+        public static JNode Keys(List<JNode> args)
         {
             var ks = new JArray();
             foreach (string s in ((JObject)args[0]).children.Keys)
@@ -786,7 +764,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Items(JNode[] args)
+        public static JNode Items(List<JNode> args)
         {
             var its = new List<JNode>();
             JObject obj = (JObject)args[0];
@@ -802,7 +780,7 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, its);
         }
 
-        public static JNode Unique(JNode[] args)
+        public static JNode Unique(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var is_sorted = args[1].value;
@@ -834,7 +812,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Quantile(JNode[] args)
+        public static JNode Quantile(List<JNode> args)
         {
             var sorted = new List<double>();
             foreach (JNode node in ((JArray)args[0]).children)
@@ -881,7 +859,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode ValueCounts(JNode[] args)
+        public static JNode ValueCounts(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             var uniqs = new Dictionary<object, long>();
@@ -908,7 +886,7 @@ namespace JSON_Tools.JSON_Tools
             return uniq_arr;
         }
 
-        public static JNode StringJoin(JNode[] args)
+        public static JNode StringJoin(List<JNode> args)
         {
             string sep = (string)args[0].value;
             var itbl = (JArray)args[1];
@@ -934,7 +912,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static JNode GroupBy(JNode[] args)
+        public static JNode GroupBy(List<JNode> args)
         {
             var itbl = (JArray)args[0];
             object key = args[1].value;
@@ -994,7 +972,7 @@ namespace JSON_Tools.JSON_Tools
         ///// </summary>
         ///// <param name="args"></param>
         ///// <returns></returns>
-        //public static JNode AggBy(JNode[] args)
+        //public static JNode AggBy(List<JNode> args)
         //{
         //    JObject gb = (JObject)GroupBy(args.Slice(":2").ToArray());
         //    CurJson fun = (CurJson)args[2];
@@ -1012,7 +990,7 @@ namespace JSON_Tools.JSON_Tools
         /// Example:
         /// Zip([1,2],["a", "b"], [true, false]) = [[1, "a", true], [2, "b", false]]
         /// </summary>
-        public static JNode Zip(JNode[] args)
+        public static JNode Zip(List<JNode> args)
         {
             int first_len = ((JArray)args[0]).Length;
             List<JArray> arrs = new List<JArray>();
@@ -1053,7 +1031,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode Dict(JNode[] args)
+        public static JNode Dict(List<JNode> args)
         {
             JArray pairs = (JArray)args[0];
             Dictionary<string, JNode> rst = new Dictionary<string, JNode>();
@@ -1084,14 +1062,13 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="RemesPathException"></exception>
-        public static JNode Concat(JNode[] args)
+        public static JNode Concat(List<JNode> args)
         {
             JNode first_itbl = args[0];
-            int last_non_null = LastNonNullArg(args);
             if (first_itbl is JArray first_arr)
             {
                 List<JNode> new_arr = new List<JNode>(first_arr.children);
-                for (int ii = 1; ii <= last_non_null; ii++)
+                for (int ii = 1; ii < args.Count; ii++)
                 {
                     if (!(args[ii] is JArray arr))
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
@@ -1102,7 +1079,7 @@ namespace JSON_Tools.JSON_Tools
             else if (first_itbl is JObject first_obj)
             {
                 Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(first_obj.children);
-                for (int ii = 1; ii <= last_non_null; ii++)
+                for (int ii = 1; ii < args.Count; ii++)
                 {
                     if (!(args[ii] is JObject obj))
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
@@ -1119,7 +1096,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Takes an array and 1-7 other things (any not-null JSON) and returns a <em>new array</em> with
+        /// Takes an array and any number of other things (any JSON) and returns a <em>new array</em> with
         /// the other things added to the end of the first array.<br></br>
         /// Does not mutate the original array.<br></br>
         /// They are added in the order that they were passed as arguments.<br></br>
@@ -1129,35 +1106,33 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="RemesPathException"></exception>
-        public static JNode Append(JNode[] args)
+        public static JNode Append(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
             List<JNode> new_arr = new List<JNode>(arr.children);
-            for (int ii = 1; ii < args.Length; ii++)
+            for (int ii = 1; ii < args.Count; ii++)
             {
                 JNode arg = args[ii];
-                if (arg.type == Dtype.NULL)
-                    continue; // ignore null, because unspecified optional args are filled with nulls
                 new_arr.Add(arg);
             }
             return new JArray(0, new_arr);
         }
 
         /// <summary>
-        /// The 3-9 arguments must have the types (obj: object, k1: string, v1: any, [k2: string, v2: any, k3: string, v3: any, k4: string, v4: any])<br></br>
-        /// Returns a <em>new object</em> with the key-value pair(s) k1-v1 (and possibly k2-v2 and k3-v3 added).<br></br>
+        /// The 3+ arguments must have the types (obj: object, ...: string, anything alternating)<br></br>
+        /// Returns a <em>new object</em> with the key-value pair(s) k_i-v_i added.<br></br>
         /// <em>Does not mutate the original object.</em><br></br>
         /// EXAMPLES<br></br>
         /// - add_items({}, "a", 1, "b", 2, "c", 3, "d", 4) -> {"a": 1, "b": 2, "c": 3, "d": 4}
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode AddItems(JNode[] args)
+        public static JNode AddItems(List<JNode> args)
         {
             JObject obj = (JObject)args[0];
             Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(obj.children);
             int ii = 1;
-            while (ii <= LastNonNullArg(args))
+            while (ii < args.Count - 1)
             {
                 JNode k = args[ii++];
                 if (k.type != Dtype.STR)
@@ -1168,7 +1143,7 @@ namespace JSON_Tools.JSON_Tools
             return new JObject(0, new_obj);
         }
 
-        public static JNode ToRecords(JNode[] args)
+        public static JNode ToRecords(List<JNode> args)
         {
             JNode arg = args[0];
             Dictionary<string, object> schema = new JsonSchemaMaker().BuildSchema(arg);
@@ -1183,11 +1158,10 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        public static JNode Pivot(JNode[] args)
+        public static JNode Pivot(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
             var piv = new Dictionary<string, JNode>();
-            int last_non_null = LastNonNullArg(args);
             if (arr[0] is JArray)
             {
                 int by = Convert.ToInt32(args[1].value);
@@ -1204,7 +1178,7 @@ namespace JSON_Tools.JSON_Tools
                     ((JArray)piv[key]).children.Add(subarr[val_col]);
                 }
                 int uniq_ct = piv.Count;
-                for (int ii = 3; ii <= last_non_null; ii++)
+                for (int ii = 3; ii < args.Count; ii++)
                 {
                     int idx_col = Convert.ToInt32(args[ii].value);
                     var new_subarr = new List<JNode>();
@@ -1229,7 +1203,7 @@ namespace JSON_Tools.JSON_Tools
                     ((JArray)piv[key]).children.Add(subobj[val_col]);
                 }
                 int uniq_ct = piv.Count;
-                for (int ii = 3; ii <= last_non_null; ii++)
+                for (int ii = 3; ii < args.Count; ii++)
                 {
                     string idx_col = (string)args[ii].value;
                     var new_subarr = new List<JNode>();
@@ -1242,13 +1216,46 @@ namespace JSON_Tools.JSON_Tools
             return new JObject(0, piv);
         }
 
+        /// <summary>
+        /// Accepts one argument, an array of all booleans.<br></br>
+        /// Returns true if ALL of the booleans in the array are true.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode All(List<JNode> args)
+        {
+            JArray arr = (JArray)args[0];
+            foreach (JNode item in arr.children)
+            {
+                if (!(bool)item.value)
+                    return new JNode(false, Dtype.BOOL, 0);
+            }
+            return new JNode(true, Dtype.BOOL, 0);
+        }
+
+        /// <summary>
+        /// Accepts one argument, an array of all booleans.<br></br>
+        /// Returns true if ANY of the values in the array are true.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Any(List<JNode> args)
+        {
+            JArray arr = (JArray)args[0];
+            foreach (JNode item in arr.children)
+            {
+                if ((bool)item.value)
+                    return new JNode(true, Dtype.BOOL, 0);
+            }
+            return new JNode(false, Dtype.BOOL, 0);
+        }
         #endregion
         #region VECTORIZED_ARG_FUNCTIONS
         /// <summary>
         /// Length of a string
         /// </summary>
         /// <param name="node">string</param>
-        public static JNode StrLen(JNode[] args)
+        public static JNode StrLen(List<JNode> args)
         {
             JNode node = args[0];
             if (node.type != Dtype.STR)
@@ -1266,7 +1273,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="n">number of times to repeat s</param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static JNode StrMul(JNode[] args)
+        public static JNode StrMul(List<JNode> args)
         {
             JNode node = args[0];
             JNode n = args[1];
@@ -1287,7 +1294,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="node">a string in which to find pattern/substring sub</param>
         /// <param name="sub">a substring or Regex pattern</param>
-        public static JNode StrCount(JNode[] args)
+        public static JNode StrCount(List<JNode> args)
         {
             JNode node = args[0];
             JNode sub = args[1];
@@ -1312,7 +1319,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="node">string</param>
         /// <param name="sub">substring or Regex pattern to be found within node</param>
         /// <returns></returns>
-        public static JNode StrFind(JNode[] args)
+        public static JNode StrFind(List<JNode> args)
         {
             JNode node = args[0];
             JNode pat = args[1];
@@ -1326,7 +1333,7 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, result_list);
         }
 
-        public static JNode StrSplit(JNode[] args)
+        public static JNode StrSplit(List<JNode> args)
         {
             JNode node = args[0];
             JNode sep = args[1];
@@ -1340,22 +1347,22 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, out_nodes);
         }
 
-        public static JNode StrLower(JNode[] args)
+        public static JNode StrLower(List<JNode> args)
         {
             return new JNode(((string)args[0].value).ToLower(), Dtype.STR, 0);
         }
 
-        public static JNode StrUpper(JNode[] args)
+        public static JNode StrUpper(List<JNode> args)
         {
             return new JNode(((string)args[0].value).ToUpper(), Dtype.STR, 0);
         }
 
-        public static JNode StrStrip(JNode[] args)
+        public static JNode StrStrip(List<JNode> args)
         {
             return new JNode(((string)args[0].value).Trim(), Dtype.STR, 0);
         }
 
-        public static JNode StrSlice(JNode[] args)
+        public static JNode StrSlice(List<JNode> args)
         {
             string s = (string)args[0].value;
             JNode slicer_or_int = args[1];
@@ -1374,7 +1381,7 @@ namespace JSON_Tools.JSON_Tools
         /// of JNode node
         /// </summary>
          /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
-        public static JNode StrSub(JNode[] args)
+        public static JNode StrSub(List<JNode> args)
         {
             JNode node = args[0];
             JNode to_replace = args[1];
@@ -1390,7 +1397,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// returns true is x is string
         /// </summary>
-        public static JNode IsStr(JNode[] args)
+        public static JNode IsStr(List<JNode> args)
         {
             return new JNode(args[0].type == Dtype.STR, Dtype.BOOL, 0);
         }
@@ -1398,7 +1405,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// returns true is x is long, double, or bool
         /// </summary>
-        public static JNode IsNum(JNode[] args)
+        public static JNode IsNum(List<JNode> args)
         {
             return new JNode((args[0].type & (Dtype.INT | Dtype.FLOAT | Dtype.BOOL)) != 0, Dtype.BOOL, 0);
         }
@@ -1406,12 +1413,12 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// returns true if x is JObject or JArray
         /// </summary>
-        public static JNode IsExpr(JNode[] args)
+        public static JNode IsExpr(List<JNode> args)
         {
             return new JNode((args[0].type & Dtype.ARR_OR_OBJ) != 0, Dtype.BOOL, 0);
         }
 
-        public static JNode IsNull(JNode[] args)
+        public static JNode IsNull(List<JNode> args)
         {
             return new JNode(args[0].type == Dtype.NULL, Dtype.BOOL, 0);
         }
@@ -1421,12 +1428,12 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static JNode IfElse(JNode[] args)
+        public static JNode IfElse(List<JNode> args)
         {
             return (bool)args[0].value ? args[1] : args[2];
         }
 
-        public static JNode Log(JNode[] args)
+        public static JNode Log(List<JNode> args)
         {
             double num = Convert.ToDouble(args[0].value);
             object Base = args[1].value;
@@ -1437,12 +1444,12 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(Math.Log(num, Convert.ToDouble(Base)), Dtype.FLOAT, 0);
         }
 
-        public static JNode Log2(JNode[] args)
+        public static JNode Log2(List<JNode> args)
         {
             return new JNode(Math.Log(Convert.ToDouble(args[0].value), 2), Dtype.FLOAT, 0);
         }
 
-        public static JNode Abs(JNode[] args)
+        public static JNode Abs(List<JNode> args)
         {
             JNode val = args[0];
             if (val.type == Dtype.INT)
@@ -1456,12 +1463,12 @@ namespace JSON_Tools.JSON_Tools
             throw new ArgumentException("Abs can only be called on ints and floats");
         }
 
-        public static JNode IsNa(JNode[] args)
+        public static JNode IsNa(List<JNode> args)
         {
             return new JNode(double.IsNaN(Convert.ToDouble(args[0].value)), Dtype.BOOL, 0);
         }
 
-        public static JNode ToStr(JNode[] args)
+        public static JNode ToStr(List<JNode> args)
         {
             JNode val = args[0];
             if (val.type == Dtype.STR)
@@ -1471,7 +1478,7 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(val.ToString(), Dtype.STR, 0);
         }
 
-        public static JNode ToFloat(JNode[] args)
+        public static JNode ToFloat(List<JNode> args)
         {
             JNode val = args[0];
             if (val.type == Dtype.STR)
@@ -1481,7 +1488,7 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(Convert.ToDouble(val.value), Dtype.FLOAT, 0);
         }
 
-        public static JNode ToInt(JNode[] args)
+        public static JNode ToInt(List<JNode> args)
         {
             JNode val = args[0];
             if (val.type == Dtype.STR)
@@ -1498,7 +1505,7 @@ namespace JSON_Tools.JSON_Tools
         ///     - else return val rounded to nearest double with sigfigs decimal places<br></br>
         /// If val's value is any other type, throw an ArgumentException
         /// </summary>
-        public static JNode Round(JNode[] args)
+        public static JNode Round(List<JNode> args)
         {
             JNode val = args[0];
             JNode sigfigs = args[1];
@@ -1517,12 +1524,12 @@ namespace JSON_Tools.JSON_Tools
             throw new ArgumentException("Cannot round non-float, non-integer numbers");            
         }
 
-        public static JNode Not(JNode[] args)
+        public static JNode Not(List<JNode> args)
         {
             return new JNode(!Convert.ToBoolean(args[0].value), Dtype.BOOL, 0);
         }
 
-        public static JNode Uminus(JNode[] args)
+        public static JNode Uminus(List<JNode> args)
         {
             JNode val = args[0];
             if (val.type == Dtype.INT)
@@ -1618,16 +1625,18 @@ namespace JSON_Tools.JSON_Tools
         }
 
         // VectorizeArgFunction used to be here, but it's not necessary now that I reimplemented all the
-        // vectorized ArgFunctions to take JNode[] as arguments
+        // vectorized ArgFunctions to take List<JNode> as arguments
 
         public static Dictionary<string, ArgFunction> FUNCTIONS =
         new Dictionary<string, ArgFunction>
         {
             // non-vectorized functions
-            ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, 9, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING, Dtype.STR, Dtype.ANYTHING }),
-            ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, 8, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING }),
+            ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, Int32.MaxValue, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN, Dtype.STR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
+            ["all"] = new ArgFunction(All, "all", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["any"] = new ArgFunction(Any, "any", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, Int32.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
             ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
-            ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, 8, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE, Dtype.ITERABLE }),
+            ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, Int32.MaxValue, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, /* any # of args */ Dtype.ITERABLE }),
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
             ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.INT }),
             ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
@@ -1640,7 +1649,7 @@ namespace JSON_Tools.JSON_Tools
             ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
-            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, 9, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN }),
+            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, Int32.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, /* any # of args */ Dtype.STR | Dtype.INT | Dtype.UNKNOWN }),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.FLOAT}),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN}),
@@ -1652,7 +1661,7 @@ namespace JSON_Tools.JSON_Tools
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
-            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, 8, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN }),
+            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, Int32.MaxValue, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, /* any # of args */ Dtype.ARR | Dtype.UNKNOWN }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
             // vectorized functions
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
@@ -1673,7 +1682,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT}),
+            ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT | Dtype.UNKNOWN }),
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
             ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
@@ -1687,9 +1696,9 @@ namespace JSON_Tools.JSON_Tools
     public class ArgFunctionWithArgs
     {
         public ArgFunction function;
-        public JNode[] args;
+        public List<JNode> args;
 
-        public ArgFunctionWithArgs(ArgFunction function, JNode[] args)
+        public ArgFunctionWithArgs(ArgFunction function, List<JNode> args)
         {
             this.function = function;
             this.args = args;

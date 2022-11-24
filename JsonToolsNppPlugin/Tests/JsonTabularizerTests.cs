@@ -402,7 +402,19 @@ namespace JSON_Tools.Tests
 					"{\"a\": false, \"b\": 9}" +
 				"]",
 				"."
-				}
+				},
+				new string[]
+				{
+				"[" +
+					"{\"a\": [1], \"b\": 1.5, \"c\": [\"x\"]}, " +
+                    "{\"a\": [], \"b\": 3}" +
+                "]", // empty arrays in default algorithm
+				"[" +
+					"{\"a\": 1, \"b\": 1.5, \"c\": \"x\"}," +
+                    "{\"a\": \"\", \"b\": 3}" +
+                "]",
+				"."
+				},
 			};
 			JsonParser jsonParser = new JsonParser();
 			JsonTabularizer tabularizer = new JsonTabularizer();

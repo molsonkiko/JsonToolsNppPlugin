@@ -8,11 +8,12 @@
         private System.ComponentModel.IContainer components = null;
 
         /// <summary>
-        /// Clean up any resources being used.
+        /// Clean up any resources being used, and remove reference to associated JSON
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
+            json = null;
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
                 findReplaceForm.Close();
             if (disposing && (components != null))
@@ -279,6 +280,7 @@
             this.Name = "TreeViewer";
             this.Text = "TreeViewer";
             this.VisibleChanged += new System.EventHandler(this.TreeViewer_VisibleChanged);
+            this.DoubleClick += new System.EventHandler(this.TreeViewer_DoubleClick);
             this.NodeRightClickMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
