@@ -36,8 +36,6 @@ namespace JSON_Tools.Forms
 
         public bool use_tree;
 
-        public NppTbData tbData;
-
         public double max_size_full_tree_MB;
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
@@ -60,7 +58,6 @@ namespace JSON_Tools.Forms
             lexer = new RemesPathLexer();
             schemaMaker = new JsonSchemaMaker();
             findReplaceForm = null;
-            tbData = new NppTbData();
             use_tree = Main.settings.use_tree;
             max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;
             int file_len = Npp.editor.GetLength();
@@ -75,7 +72,7 @@ namespace JSON_Tools.Forms
             //this.Tree.BeforeExpand += new TreeViewCancelEventHandler(
             //    PopulateIfUnpopulatedHandler
             //);
-            ApplyStyle(Main.settings.use_npp_styling);
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         /// <summary>
@@ -375,6 +372,8 @@ namespace JSON_Tools.Forms
                     break;
                 }
             }
+            // if the query is an assignment expression, we need to overwrite the file with the
+            // modified JSON after the query has been executed
             if (is_assignment_expr)
             {
                 JNode mutation_func = null;
@@ -418,6 +417,8 @@ namespace JSON_Tools.Forms
                 JsonTreePopulate(query_func);
                 return;
             }
+            // not an assignment expression, so executing the query changes the contents of the tree
+            // but leaves the text of the document unchanged
             try
             {
                 query_func = remesParser.Compile(toks);
@@ -784,55 +785,6 @@ namespace JSON_Tools.Forms
         {
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
                 findReplaceForm.Close();
-        }
-
-        /// <summary>
-        /// Changes the background and text color of the tree viewer
-        /// and associated controls to match the editor window.<br></br>
-        /// Fires when the tree viewer is first opened
-        /// and also whenever the style is changed.<br></br>
-        /// Heavily based on CsvQuery (https://github.com/jokedst/CsvQuery)
-        /// </summary>
-        public void ApplyStyle(bool use_npp_style)
-        {
-            if (IsDisposed) return;
-            Color back_color = Npp.notepad.GetDefaultBackgroundColor();
-            if (!use_npp_style || (
-                back_color.R > 240 &&
-                back_color.G > 240 &&
-                back_color.B > 240))
-            {
-                // if the background is basically white,
-                // use the system defaults because they
-                // look best on a white background
-                BackColor = SystemColors.Control;
-                ForeColor = SystemColors.ControlText;
-                foreach (Control ctrl in Controls)
-                {
-                    ctrl.BackColor = SystemColors.Control;
-                    ctrl.ForeColor = SystemColors.ControlText;
-                }
-                Tree.BackColor = SystemColors.Window;
-                Tree.ForeColor = SystemColors.WindowText;
-                FullTreeCheckBox.ForeColor = SystemColors.ControlText;
-                QueryBox.ForeColor = SystemColors.ControlText;
-                QueryBox.BackColor = SystemColors.Window;
-                return;
-            }
-            Color fore_color = Npp.notepad.GetDefaultForegroundColor();
-            Color in_between = Color.FromArgb(
-                (fore_color.R + back_color.R * 3) / 4,
-                (fore_color.G + back_color.G * 3) / 4,
-                (fore_color.B + back_color.B * 3) / 4
-            );
-            BackColor = back_color;
-            foreach (Control ctrl in Controls)
-            {
-                ctrl.BackColor = in_between;
-                ctrl.ForeColor = fore_color;
-            }
-            QueryBox.BackColor = in_between;
-            QueryBox.ForeColor = fore_color;
         }
 
         /// <summary>

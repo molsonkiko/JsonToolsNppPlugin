@@ -49,6 +49,7 @@
             this.ViewErrorsButton = new System.Windows.Forms.Button();
             this.DocsButton = new System.Windows.Forms.Button();
             this.FolderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.DirectoriesVisitedBox = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // GrepperFormTitle
@@ -114,7 +115,7 @@
             // RecursiveSearchCheckBox
             // 
             this.RecursiveSearchCheckBox.AutoSize = true;
-            this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(363, 110);
+            this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(363, 98);
             this.RecursiveSearchCheckBox.Name = "RecursiveSearchCheckBox";
             this.RecursiveSearchCheckBox.Size = new System.Drawing.Size(180, 20);
             this.RecursiveSearchCheckBox.TabIndex = 6;
@@ -124,7 +125,7 @@
             // 
             // SearchPatternsBox
             // 
-            this.SearchPatternsBox.Location = new System.Drawing.Point(363, 156);
+            this.SearchPatternsBox.Location = new System.Drawing.Point(363, 140);
             this.SearchPatternsBox.Multiline = true;
             this.SearchPatternsBox.Name = "SearchPatternsBox";
             this.SearchPatternsBox.Size = new System.Drawing.Size(87, 56);
@@ -135,7 +136,7 @@
             // 
             // SearchPatternsBoxLabel
             // 
-            this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(466, 156);
+            this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(466, 140);
             this.SearchPatternsBoxLabel.Name = "SearchPatternsBoxLabel";
             this.SearchPatternsBoxLabel.Size = new System.Drawing.Size(148, 56);
             this.SearchPatternsBoxLabel.TabIndex = 8;
@@ -144,7 +145,7 @@
             // ChooseDirectoriesButton
             // 
             this.ChooseDirectoriesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ChooseDirectoriesButton.Location = new System.Drawing.Point(408, 240);
+            this.ChooseDirectoriesButton.Location = new System.Drawing.Point(406, 209);
             this.ChooseDirectoriesButton.Name = "ChooseDirectoriesButton";
             this.ChooseDirectoriesButton.Size = new System.Drawing.Size(151, 32);
             this.ChooseDirectoriesButton.TabIndex = 9;
@@ -160,7 +161,7 @@
             this.ChooseFilesTitle.Location = new System.Drawing.Point(704, 51);
             this.ChooseFilesTitle.Name = "ChooseFilesTitle";
             this.ChooseFilesTitle.Size = new System.Drawing.Size(198, 25);
-            this.ChooseFilesTitle.TabIndex = 10;
+            this.ChooseFilesTitle.TabIndex = 11;
             this.ChooseFilesTitle.Text = "Choose files and URLs";
             // 
             // FilesFoundBox
@@ -172,7 +173,7 @@
             this.FilesFoundBox.Name = "FilesFoundBox";
             this.FilesFoundBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.FilesFoundBox.Size = new System.Drawing.Size(313, 308);
-            this.FilesFoundBox.TabIndex = 11;
+            this.FilesFoundBox.TabIndex = 12;
             this.FilesFoundBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // RemoveSelectedFilesButton
@@ -181,7 +182,7 @@
             this.RemoveSelectedFilesButton.Location = new System.Drawing.Point(709, 416);
             this.RemoveSelectedFilesButton.Name = "RemoveSelectedFilesButton";
             this.RemoveSelectedFilesButton.Size = new System.Drawing.Size(176, 33);
-            this.RemoveSelectedFilesButton.TabIndex = 12;
+            this.RemoveSelectedFilesButton.TabIndex = 13;
             this.RemoveSelectedFilesButton.Text = "Remove selected files";
             this.RemoveSelectedFilesButton.UseVisualStyleBackColor = true;
             this.RemoveSelectedFilesButton.Click += new System.EventHandler(this.RemoveSelectedFilesButton_Click);
@@ -193,7 +194,7 @@
             this.ViewResultsButton.Location = new System.Drawing.Point(363, 416);
             this.ViewResultsButton.Name = "ViewResultsButton";
             this.ViewResultsButton.Size = new System.Drawing.Size(238, 33);
-            this.ViewResultsButton.TabIndex = 15;
+            this.ViewResultsButton.TabIndex = 16;
             this.ViewResultsButton.Text = "View results in buffer";
             this.ViewResultsButton.UseVisualStyleBackColor = true;
             this.ViewResultsButton.Click += new System.EventHandler(this.ViewResultsButton_Click);
@@ -229,7 +230,7 @@
             this.ViewErrorsButton.Location = new System.Drawing.Point(363, 368);
             this.ViewErrorsButton.Name = "ViewErrorsButton";
             this.ViewErrorsButton.Size = new System.Drawing.Size(238, 33);
-            this.ViewErrorsButton.TabIndex = 14;
+            this.ViewErrorsButton.TabIndex = 15;
             this.ViewErrorsButton.Text = "View errors";
             this.ViewErrorsButton.UseVisualStyleBackColor = true;
             this.ViewErrorsButton.Click += new System.EventHandler(this.ViewErrorsButton_Click);
@@ -241,7 +242,7 @@
             this.DocsButton.Location = new System.Drawing.Point(363, 314);
             this.DocsButton.Name = "DocsButton";
             this.DocsButton.Size = new System.Drawing.Size(238, 33);
-            this.DocsButton.TabIndex = 13;
+            this.DocsButton.TabIndex = 14;
             this.DocsButton.Text = "Documentation";
             this.DocsButton.UseVisualStyleBackColor = true;
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
@@ -252,11 +253,22 @@
             this.FolderBrowserDialog1.Description = "Choose folder to find JSON files in";
             this.FolderBrowserDialog1.ShowNewFolderButton = false;
             // 
+            // DirectoriesVisitedBox
+            // 
+            this.DirectoriesVisitedBox.FormattingEnabled = true;
+            this.DirectoriesVisitedBox.Items.AddRange(new object[] {
+            "Previously visited directories..."});
+            this.DirectoriesVisitedBox.Location = new System.Drawing.Point(363, 253);
+            this.DirectoriesVisitedBox.Name = "DirectoriesVisitedBox";
+            this.DirectoriesVisitedBox.Size = new System.Drawing.Size(251, 24);
+            this.DirectoriesVisitedBox.TabIndex = 10;
+            // 
             // GrepperForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(987, 461);
+            this.Controls.Add(this.DirectoriesVisitedBox);
             this.Controls.Add(this.DocsButton);
             this.Controls.Add(this.ViewErrorsButton);
             this.Controls.Add(this.TopBottomDivider);
@@ -308,5 +320,6 @@
         private System.Windows.Forms.Button ViewErrorsButton;
         private System.Windows.Forms.Button DocsButton;
         private System.Windows.Forms.FolderBrowserDialog FolderBrowserDialog1;
+        private System.Windows.Forms.ComboBox DirectoriesVisitedBox;
     }
 }

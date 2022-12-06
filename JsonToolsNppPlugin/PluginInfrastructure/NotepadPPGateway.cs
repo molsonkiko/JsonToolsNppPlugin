@@ -24,6 +24,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		void HideDockingForm(System.Windows.Forms.Form form);
 		Color GetDefaultForegroundColor();
 		Color GetDefaultBackgroundColor();
+		string GetConfigDirectory();
 	}
 
 	/// <summary>
@@ -161,6 +162,17 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		{
 			var rawColor = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
 			return Color.FromArgb(rawColor & 0xff, (rawColor >> 8) & 0xff, (rawColor >> 16) & 0xff);
+		}
+
+		/// <summary>
+		/// Figure out default N++ config file path<br></br>
+		/// Path is usually -> .\Users\<username>\AppData\Roaming\Notepad++\plugins\config\
+		/// </summary>
+		public string GetConfigDirectory()
+        {
+			var sbIniFilePath = new StringBuilder(Win32.MAX_PATH);
+			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MAX_PATH, sbIniFilePath);
+			return sbIniFilePath.ToString();
 		}
 	}
 

@@ -183,12 +183,16 @@ namespace Kbg.NppPluginNET
                     return;
                 // the editor color scheme changed, so update the tree view colors
                 case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
+                    if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed)
+                    {
+                        FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
+                    }
                     foreach (TreeViewer treeViewer2 in treeViewers.Values)
                     {
                         if (treeViewer2 != null)
-                            treeViewer2.ApplyStyle(settings.use_npp_styling);
-                        if (grepperForm != null && grepperForm.tv != null)
-                            grepperForm.tv.ApplyStyle(settings.use_npp_styling);
+                        {
+                            FormStyle.ApplyStyle(treeViewer2, settings.use_npp_styling);
+                        }
                     }
                     return;
                 // the user left their mouse in one place for a while (default 0.4s)
@@ -422,15 +426,15 @@ namespace Kbg.NppPluginNET
                 grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
                 if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
                 {
+                    FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
                     grepperForm.tv.use_tree = settings.use_tree;
                     grepperForm.tv.max_size_full_tree_MB = settings.max_size_full_tree_MB;
-                    grepperForm.tv.ApplyStyle(settings.use_npp_styling);
                 }
             }
             // when the user changes their mind about whether to use editor styling
             // for the tree viewer, reflect their decision immediately
             foreach (TreeViewer treeViewer in treeViewers.Values)
-                treeViewer.ApplyStyle(settings.use_npp_styling);
+                FormStyle.ApplyStyle(treeViewer, settings.use_npp_styling);
         }
 
         private static void CopyPathToCurrentLine()
@@ -563,7 +567,6 @@ namespace Kbg.NppPluginNET
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
             Npp.SetLangJson();
-            treeViewer.tbData = _nppTbData;
             treeViewer.JsonTreePopulate(json);
             Npp.notepad.ShowDockingForm(treeViewer);
             treeViewer.QueryBox.Focus();

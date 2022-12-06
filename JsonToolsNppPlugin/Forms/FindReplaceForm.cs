@@ -29,6 +29,7 @@ namespace JSON_Tools.Forms
         {
             InitializeComponent();
             this.treeViewer = treeViewer;
+            // if the user is querying a subset of the JSON, the find/replace is done on that subset
             if (treeViewer.Tree.SelectedNode == null || treeViewer.Tree.SelectedNode.FullPath == "JSON")
                 RootTextBox.Text = "";
             else RootTextBox.Text = treeViewer.PathToTreeNode(treeViewer.Tree.SelectedNode, KeyStyle.RemesPath);
@@ -37,6 +38,7 @@ namespace JSON_Tools.Forms
             Height = COLLAPSED_HEIGHT;
             findQuery = "";
             replaceQuery = "";
+            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         public static readonly Regex BinopRegex = new Regex(@"[\+\-\|&^%\*/]|\*\*|//|[<>]=?|[=!]=");
@@ -85,6 +87,7 @@ namespace JSON_Tools.Forms
             if (Height == COLLAPSED_HEIGHT)
             {
                 Height = EXTENDED_HEIGHT;
+                AdvancedGroupBoxLabel.Text = "Hide advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_EXTENDED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
                 {
@@ -95,6 +98,7 @@ namespace JSON_Tools.Forms
             else if (Height == EXTENDED_HEIGHT)
             {
                 Height = COLLAPSED_HEIGHT;
+                AdvancedGroupBoxLabel.Text = "Show advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
                 {

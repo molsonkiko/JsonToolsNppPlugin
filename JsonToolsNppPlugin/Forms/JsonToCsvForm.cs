@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
+using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Forms
 {
@@ -21,6 +23,7 @@ namespace JSON_Tools.Forms
             schemaMaker = new JsonSchemaMaker();
             DelimBox.SelectedIndex = 0;
             StrategyBox.SelectedIndex = 0;
+            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)

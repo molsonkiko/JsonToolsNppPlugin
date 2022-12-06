@@ -50,6 +50,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
+- Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.5.0] - 2022-12-06
+
+### Added
+
+1. Memory of past JSON from files+apis form directories chosen.
+
+### Fixed
+
+2. When files are removed from the grepper form, the text in the associated buffer is refreshed with the pruned JSON.
 
 ## [4.4.0] - 2022-11-23
 

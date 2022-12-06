@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
-using System.Threading.Tasks;
+using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -15,7 +16,7 @@ namespace JSON_Tools.Forms
         public JsonGrepper grepper;
         HashSet<string> files_found;
         public string fname;
-        public List<string> directories_visited;
+        private readonly FileInfo directories_visited_file;
 
         public GrepperForm()
         {
@@ -26,7 +27,27 @@ namespace JSON_Tools.Forms
             tv = null;
             files_found = new HashSet<string>();
             fname = null;
-            directories_visited = new List<string>();
+            DirectoriesVisitedBox.SelectedIndex = 0;
+            directories_visited_file = new FileInfo(Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName, $"{Main.PluginName} directories visited.txt"));
+            int max_dirname_chars = DirectoriesVisitedBox.Items[0].ToString().Length;
+            if (directories_visited_file.Exists)
+            {
+                string[] dirs_visited = new string[] { "" };
+                using (var fp = new StreamReader(directories_visited_file.OpenRead(), Encoding.UTF8, true))
+                {
+                    dirs_visited = fp.ReadToEnd().Split('\n');
+                }
+                foreach (string dir_visited in dirs_visited)
+                {
+                    if (dir_visited.Length > 0)
+                        DirectoriesVisitedBox.Items.Add(dir_visited);
+                    // increase the dropdown width as needed to accomodate the longest dirname
+                    if (dir_visited.Length > max_dirname_chars)
+                        max_dirname_chars = dir_visited.Length;
+                }
+            }
+            DirectoriesVisitedBox.DropDownWidth = max_dirname_chars * 7;
+            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)
@@ -51,19 +72,35 @@ namespace JSON_Tools.Forms
             Main.docs();
         }
 
+        private string LastVisitedDirectory()
+        {
+            return DirectoriesVisitedBox.Items[DirectoriesVisitedBox.Items.Count - 1].ToString();
+        }
+
         private void ChooseDirectoriesButton_Click(object sender, EventArgs e)
         {
             string[] search_patterns = SearchPatternsBox.Lines;
             bool recursive = RecursiveSearchCheckBox.Checked;
-            string root_dir;
             FolderBrowserDialog1.RootFolder = Environment.SpecialFolder.MyComputer;
-            FolderBrowserDialog1.SelectedPath = directories_visited.Count == 0
+            // the user can select from previously opened directories, or they can use a folder browser dialog
+            FolderBrowserDialog1.SelectedPath = DirectoriesVisitedBox.Items.Count == 0
                 ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-                : directories_visited[directories_visited.Count - 1]; // last visited directory
-            if (FolderBrowserDialog1.ShowDialog() == DialogResult.OK)
+                : LastVisitedDirectory();
+            if (DirectoriesVisitedBox.SelectedIndex != 0 || FolderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
-                root_dir = FolderBrowserDialog1.SelectedPath;
-                directories_visited.Add(root_dir);
+                string root_dir;
+                // if the user used the dialog, add the folder found to the list of recently visited dirs
+                if (DirectoriesVisitedBox.SelectedIndex == 0)
+                {
+                    root_dir = FolderBrowserDialog1.SelectedPath;
+                    DirectoriesVisitedBox.Items.Add(root_dir);
+                    if (DirectoriesVisitedBox.Items.Count > 11)
+                        DirectoriesVisitedBox.Items.RemoveAt(1); // only track 10 most recently visited dirs
+                    // increase the dropdown width as needed to accomodate the longest dirname
+                    if (root_dir.Length * 7 > DirectoriesVisitedBox.DropDownWidth)
+                        DirectoriesVisitedBox.DropDownWidth = root_dir.Length * 7;
+                }
+                else root_dir = DirectoriesVisitedBox.Items[DirectoriesVisitedBox.SelectedIndex].ToString();
                 if (Directory.Exists(root_dir))
                 {
                     foreach (string search_pattern in search_patterns)
@@ -86,6 +123,7 @@ namespace JSON_Tools.Forms
                     }
                 }
             }
+            DirectoriesVisitedBox.SelectedIndex = 0;
             AddFilesToFilesFound();
         }
 
@@ -93,7 +131,7 @@ namespace JSON_Tools.Forms
         {
             if (grepper.exceptions.Length == 0)
             {
-                MessageBox.Show("No exceptions! \U0001f600");
+                MessageBox.Show("No exceptions! \U0001f600"); // smily face
                 return;
             }
             Npp.notepad.FileNew();
@@ -126,8 +164,13 @@ namespace JSON_Tools.Forms
             {
                 // refresh the tree view with the current query executed
                 // on the pruned JSON
+                // also overwrite the grepper tree's buffer with the pruned JSON
                 tv.json = grepper.fname_jsons;
+                string file_open = Npp.notepad.GetCurrentFilePath();
+                Npp.notepad.OpenFile(tv.fname);
+                Npp.editor.SetText(tv.json.PrettyPrintAndChangeLineNumbers());
                 tv.SubmitQueryButton.PerformClick();
+                Npp.notepad.OpenFile(file_open);
                 if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                     Npp.notepad.HideDockingForm(Main.openTreeViewer);
             }
@@ -157,7 +200,8 @@ namespace JSON_Tools.Forms
 
         /// <summary>
         /// when the form closes, clear all the JSON
-        /// and hide and then destroy the associated tree view
+        /// and hide and then destroy the associated tree view.<br></br>
+        /// Also write all directories visited to the config file
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -172,6 +216,18 @@ namespace JSON_Tools.Forms
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
             {
                 Npp.notepad.ShowDockingForm(Main.openTreeViewer);
+            }
+            // write directories visited to config file
+            if (DirectoriesVisitedBox.Items.Count > 1)
+            {
+                using (var fp = new StreamWriter(directories_visited_file.OpenWrite(), Encoding.UTF8))
+                {
+                    for (int ii = 1; ii < DirectoriesVisitedBox.Items.Count; ii++)
+                    {
+                        fp.Write($"{DirectoriesVisitedBox.Items[ii]}\n");
+                    }
+                    fp.Flush();
+                }
             }
         }
 

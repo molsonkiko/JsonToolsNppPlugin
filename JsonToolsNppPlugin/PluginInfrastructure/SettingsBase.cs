@@ -48,12 +48,7 @@ namespace CsvQuery.PluginInfrastructure
 
         static SettingsBase()
         {
-            // Figure out default N++ config file path
-            // Path is usually -> .\Users\<username>\AppData\Roaming\Notepad++\plugins\config\
-            var sbIniFilePath = new StringBuilder(Win32.MAX_PATH);
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MAX_PATH, sbIniFilePath);
-            var configDirectory = sbIniFilePath.ToString();
-            IniFilePath = Path.Combine(configDirectory, Main.PluginName + ".ini");
+            IniFilePath = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName, Main.PluginName + ".ini");
         }
 
         /// <summary>
