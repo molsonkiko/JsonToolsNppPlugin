@@ -278,8 +278,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
                 new Query_DesiredResult("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
                 new Query_DesiredResult("s_strip(` a dog!\t`)", "\"a dog!\""),
-                new Query_DesiredResult("log(@.foo[0] + 1)", $"[0.0, {Math.Log(2)}, {Math.Log(3)}]"),
-                new Query_DesiredResult("log2(@.foo[1])", $"[{Math.Log(3, 2)}, 2.0, {Math.Log(5, 2)}]"),
+                new Query_DesiredResult("log(2.718281828459045 ** @.foo[0])", $"[0.0, 1.0, 2.0]"),
+                new Query_DesiredResult("log(j`[10, 100]`, 10)", $"[1.0, 2.0]"),
+                new Query_DesiredResult("log2(j`[1, 4, 8]`)", $"[0, 2, 3]"),
                 new Query_DesiredResult("abs(j`[-1, 0, 1]`)", "[1, 0, 1]"),
                 new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
                 new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
@@ -359,6 +360,12 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@.`7`..foo", "[2]"),
                 new Query_DesiredResult("j`{\"a\": [true, 2, [3]], \"b\": {\"c\": [\"d\", \"e\"], \"f\": null}}`..*", "[true, 2, 3, \"d\", \"e\", null]"),
                 new Query_DesiredResult("j`{\"a\": 1, \"b\": {\"c\": 2}}`..g`zzz`", "[]"), // return empty array if no keys match
+                new Query_DesiredResult("(range(len(@.foo)))[0]", "0"), // indexing on a paren-wrapped non-vectorized arg function result
+                new Query_DesiredResult("(2 // @.foo[0])[1]", "2"), // indexing on a paren-wrapped binop result
+                new Query_DesiredResult("(3 * range(len(@.foo)))[2]", "6"), // indexing on a paren-wrapped result of a binop (scalar, non-vectorized arg function)
+                new Query_DesiredResult("(2 | s_len(str(@.foo[0])))[2]", "3"), // indexing on a paren-wrapped result of a binop (scalar, vectorized arg function)
+                new Query_DesiredResult("(range(len(@.foo)) ** 3)[2]", "8.0"), // indexing on a paren-wrapped result of a binop (non-vectorized arg function, scalar)
+                new Query_DesiredResult("(s_len(str(@.foo[0])) ^ 3)[2]", "2"), // indexing on a paren-wrapped result of a binop (vectorized arg function, scalar)
             };
             int ii = 0;
             int tests_failed = 0;

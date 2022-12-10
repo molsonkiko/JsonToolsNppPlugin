@@ -177,7 +177,9 @@
     <Compile Include="JSONTools\JNode.cs" />
     <Compile Include="JSONTools\JsonGrepper.cs" />
     <Compile Include="JSONTools\JsonParser.cs" />
+    <Compile Include="JSONTools\RandomJsonFromSchema.cs" />
     <Compile Include="JSONTools\JsonSchema.cs" />
+    <Compile Include="JSONTools\JsonSchemaValidator.cs" />
     <Compile Include="JSONTools\JsonTabularize.cs" />
     <Compile Include="JSONTools\RemesPath.cs" />
     <Compile Include="JSONTools\RemesPathFunctions.cs" />
@@ -186,6 +188,7 @@
     <Compile Include="Tests\JsonGrepperTests.cs" />
     <Compile Include="Tests\JsonParserTests.cs" />
     <Compile Include="Tests\JsonSchemaTests.cs" />
+    <Compile Include="Tests\JsonSchemaValidatorTests.cs" />
     <Compile Include="Tests\JsonTabularizerTests.cs" />
     <Compile Include="Tests\RemesPathTests.cs" />
     <Compile Include="Tests\SliceTests.cs" />

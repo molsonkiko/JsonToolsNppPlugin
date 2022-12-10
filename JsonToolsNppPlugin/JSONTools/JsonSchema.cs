@@ -50,7 +50,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
-        public string TypeName(Dtype x)
+        public static string TypeName(Dtype x)
         {
             switch (x)
             {

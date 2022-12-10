@@ -102,6 +102,12 @@ Testing JsonSchema generator
             JsonSchemaMakerTester.Test();
 
             Npp.AddLine(@"=========================
+Testing JsonSchema validator
+=========================
+");
+            JsonSchemaValidatorTester.Test();
+
+            Npp.AddLine(@"=========================
 Testing JSON tabularizer
 =========================
 ");

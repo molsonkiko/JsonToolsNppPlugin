@@ -387,9 +387,46 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 ![JSON grepper/API requester error report](/docs/json_from_files_and_apis%20error%20report.PNG)
 
+## Validating JSON against JSON schema ##
+
+The plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
+
+This tool can only validate the following keywords:
+
+### Keywords for all JSON
+* type
+* [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
+* [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
+
+### Keywords for objects
+* [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
+* [required](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-required)
+
+### Keywords for arrays
+* [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)
+* [minItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minitems)
+* [maxItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxitems)
+
+![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
+
+![Example of failed JSON schema validation](/docs/json%20schema%20validation%20failed.PNG)
+
+## Generating random JSON from a schema ##
+
+The plugin can also generate random JSON from a schema. The default minimum and maximum array lengths (for schemas where the `minItems` and `maxItems` keywords are omitted) are `0` and `10` respectively.
+
+![randomly generated JSON from a schema](/docs/random%20json%20from%20schema.PNG)
+
+In addition to the keywords supported for JSON schema [validation](#validating-json-against-json-schema), the following keywords are supported for random generation of *arrays*:
+* [contains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
+* [minContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
+* [maxContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
+
+
+
 # OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
 
-## JSON Schema ##
+## Generating JSON schema from JSON ##
 
 You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
 

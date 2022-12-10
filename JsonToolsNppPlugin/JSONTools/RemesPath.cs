@@ -889,17 +889,17 @@ namespace JSON_Tools.JSON_Tools
         private Dtype BinopOutType(Binop b, Dtype ltype, Dtype rtype)
         {
             if (ltype == Dtype.UNKNOWN || rtype == Dtype.UNKNOWN) { return Dtype.UNKNOWN; }
-            if (ltype == Dtype.OBJ)
+            if (ltype == Dtype.OBJ || rtype == Dtype.OBJ)
             {
-                if (rtype == Dtype.ARR)
+                if (ltype == Dtype.ARR || rtype == Dtype.ARR)
                 {
                     throw new RemesPathException("Cannot have a function of an array and an object");
                 }
                 return Dtype.OBJ;
             }
-            if (ltype == Dtype.ARR)
+            if (ltype == Dtype.ARR || rtype == Dtype.ARR)
             {
-                if (rtype == Dtype.OBJ)
+                if (ltype == Dtype.OBJ || rtype == Dtype.OBJ)
                 {
                     throw new RemesPathException("Cannot have a function of an array and an object");
                 }
@@ -911,9 +911,9 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (name == "+")
                 {
-                    if (ltype == Dtype.STR)
+                    if (ltype == Dtype.STR || rtype == Dtype.STR)
                     {
-                        if (rtype != Dtype.STR && (rtype & Dtype.ITERABLE) == 0)
+                        if (rtype != Dtype.STR || ltype != Dtype.STR)
                         {
                             throw new RemesPathException("Cannot add non-string to string");
                         }
@@ -925,25 +925,15 @@ namespace JSON_Tools.JSON_Tools
             }
             if (Binop.BITWISE_BINOPS.Contains(name)) // ^, & , |
             {
-                if (ltype == Dtype.INT)
+                // return ints if acting on two ints, bools when acting on two bools
+                if (ltype == Dtype.INT && rtype == Dtype.INT)
                 {
-                    if (rtype == Dtype.FLOAT)
-                    {
-                        throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
-                                                    $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
-                    }
                     return Dtype.INT;
                 }
-                if (rtype == Dtype.INT)
-                {
-                    if (ltype == Dtype.FLOAT)
-                    {
-                        throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
-                                                     $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
-                    }
-                    return Dtype.INT;
-                }
-                return Dtype.BOOL;
+                if (ltype == Dtype.BOOL && rtype == Dtype.BOOL)
+                    return Dtype.BOOL;
+                throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
+                                            $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
             }
             // it's a polymorphic binop - one of -, +, *, %
             if (rtype == Dtype.BOOL && ltype == Dtype.BOOL)
@@ -953,9 +943,9 @@ namespace JSON_Tools.JSON_Tools
             if (name == "//") { return Dtype.INT; }
             if (Binop.FLOAT_RETURNING_BINOPS.Contains(name)) { return Dtype.FLOAT; } 
             // division and exponentiation always give doubles
-            if (rtype == Dtype.INT && ltype == Dtype.INT)
+            if (((rtype & Dtype.INT) != 0) && ((ltype & Dtype.INT) != 0))
             {
-                return Dtype.INT;
+                return rtype & ltype;
             }
             return Dtype.FLOAT;
         }

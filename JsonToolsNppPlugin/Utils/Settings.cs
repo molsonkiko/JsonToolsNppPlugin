@@ -96,5 +96,15 @@ namespace JSON_Tools.Utils
             Category("Styling"), DefaultValue(true)]
         public bool use_npp_styling { get; set; }
         #endregion
+
+        #region RANDOM_JSON_SETTINGS
+        [Description("Minimum length of random arrays, unless otherwise specified by the \"minItems\" keyword"),
+            Category("Random JSON"), DefaultValue(0)]
+        public int minArrayLength { get; set; }
+        
+        [Description("Maximum length of random arrays, unless otherwise specified by the \"maxItems\" keyword"),
+            Category("Random JSON"), DefaultValue(10)]
+        public int maxArrayLength { get; set; }
+        #endregion
     }
 }

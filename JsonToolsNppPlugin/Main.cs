@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -78,9 +79,12 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(8, "Parse JSON Li&nes document", () => OpenJsonTree(true));
             PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "JSON to &YAML", DumpYaml);
-            PluginBase.SetCommand(12, "&Run tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(13, "A&bout", ShowAboutForm); AboutFormId = 13;
+            PluginBase.SetCommand(11, "&Validate JSON against JSON schema", ValidateJson);
+            PluginBase.SetCommand(12, "Generate &random JSON from schema", GenerateRandomJson);
+            PluginBase.SetCommand(13, "---", null);
+            PluginBase.SetCommand(14, "JSON to &YAML", DumpYaml);
+            PluginBase.SetCommand(15, "Run &tests", async () => await TestRunner.RunAll());
+            PluginBase.SetCommand(16, "A&bout", ShowAboutForm); AboutFormId = 16;
 
             //// set mouse dwell time in preparation for mouse dwell related-methods
             //Npp.editor.SetMouseDwellTime(400);
@@ -468,6 +472,76 @@ namespace Kbg.NppPluginNET
                     return "";
             }
             return json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
+        }
+
+        static void ValidateJson()
+        {
+            JNode json = TryParseJson();
+            if (json == null) return;
+            string cur_fname = Npp.notepad.GetCurrentFilePath();
+            FileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*";
+            openFileDialog.FilterIndex = 0;
+            openFileDialog.Title = "Select JSON schema file to validate against";
+            if (openFileDialog.ShowDialog() != DialogResult.OK || !openFileDialog.CheckFileExists)
+                return;
+            string schema_text = File.ReadAllText(openFileDialog.FileName);
+            JNode schema;
+            try
+            {
+                schema = jsonParser.Parse(schema_text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While trying to parse the schema at path {openFileDialog.FileName}, the following error occurred:\r\n{ex}", "error while trying to parse schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (MessageBox.Show("Schema parsing successful. Open the schema in a new buffer?", "Open schema in a new buffer?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                Npp.notepad.FileNew();
+                int byte_count = Encoding.UTF8.GetByteCount(schema_text);
+                Npp.editor.AppendText(byte_count, schema_text);
+            }
+            bool validates;
+            JsonSchemaValidator.ValidationProblem? problem;
+            try
+            {
+                validates = JsonSchemaValidator.Validates(json, schema, out problem);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"While validating JSON against the schema at path {openFileDialog.FileName}, the following error occurred:\r\n{e}",
+                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (!validates)
+            {
+                Npp.editor.GotoLine((int)problem?.line_num);
+                MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {openFileDialog.FileName}. Problem description:\n{problem}",
+                    "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
+            MessageBox.Show($"The JSON in file {cur_fname} validates against the schema at path {openFileDialog.FileName}.",
+                "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        static void GenerateRandomJson()
+        {
+            JNode json = TryParseJson();
+            if (json == null) return;
+            try
+            {
+                JNode randomJson = RandomJsonFromSchema.RandomJson(json, settings.minArrayLength, settings.maxArrayLength);
+                Npp.notepad.FileNew();
+                string randomJsonStr = randomJson.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
+                int byteCount = Encoding.UTF8.GetByteCount(randomJsonStr);
+                Npp.editor.AppendText(byteCount, randomJsonStr);
+                Npp.SetLangJson();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While trying to generate random JSON from this schema, got an error. Make sure that this is a JSON schema.\nError message:\n{ex}");
+            }
         }
 
         /// <summary>

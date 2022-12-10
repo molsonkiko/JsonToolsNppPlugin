@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#440---2022-11-23) to this project will be documented in this file.
+All [notable changes](#460---2022-12-09) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -45,12 +45,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when value contains quotes and newline
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
-- Fix bug with the range() function where if the second argument is a binop of a uminus'd function of the CurJson there's an error because the uminus somehow maybe turned the int into a float(???). Error is raised on line 1706 of RemesPath.cs. E.g., `range(0, -len(@) * len(@))`) will throw errors, but `range(-len(@) * len(@))` and `range(2, -len(@))` and `range(0, 5, -len(@) * len(@))` will not.
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.6.0] - 2022-12-09
+
+### Added
+
+1. JSON schema validation.
+2. Generation of random JSON from a schema.
+
+### Fixed
+
+1. Bugs with handling of binops in RemesPath. Also cleaned up the tests of `log` and `log2`. The longest-standing known bugs in RemesPath are finally squashed!
 
 ## [4.5.0] - 2022-12-06
 
