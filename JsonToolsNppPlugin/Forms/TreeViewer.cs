@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -37,6 +37,9 @@ namespace JSON_Tools.Forms
         public bool use_tree;
 
         public double max_size_full_tree_MB;
+
+        public NppTbData tbData;
+
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
@@ -806,135 +809,157 @@ namespace JSON_Tools.Forms
             return fname_split[fname_split.Length - 1];
         }
 
-        // not creating schemas at present because schemas produced may be invalid
-        //private void SchemaButton_Click(object sender, EventArgs e)
-        //{
-        //    if (query_result == null) return;
-        //    JNode schema = null;
-        //    try
-        //    {
-        //        schema = schemaMaker.GetSchema(query_result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        string expretty = RemesParser.PrettifyException(ex);
-        //        MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
-        //                            "Exception while making JSON schema",
-        //                            MessageBoxButtons.OK,
-        //                            MessageBoxIcon.Error);
-        //        return;
-        //    }
-        //    Npp.notepad.FileNew();
-        //    Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
-        //    Npp.SetLangJson();
-        //}
+        /// <summary>
+        /// Change the fname attribute of this.<br></br>
+        /// We would like to be able to change the title of the UI element as well,
+        /// but it seems pretty hard to do from C#.
+        /// </summary>
+        /// <param name="new_fname"></param>
+        public void Rename(string new_fname)
+        {
+            fname = new_fname;
+            // none of this 
+            //// change the title of the UI element
+            //tbData.pszName = new_fname;
+            //// tell Notepad++ to update the info
+            //Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMUPDATEDISPINFO, 0, tbData.hClient);
+            /******* DO NOT UNCOMMENT THIS BLOCK!!! IT WILL MAKE NOTEPAD++ CRASH!
+            IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+            Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
 
-        ///// <summary>
-        ///// build the top layer of the tree out of JNodes.<br></br>
-        ///// JArrays and JObjects will initially have a single sentinel TreeNode as children.<br></br>
-        ///// Because this sentinel node will not be in the pathsToJNodes map, this will be<br></br>
-        ///// able to distinguish which nodes already have their children populated.<br></br>
-        ///// THIS DOES NOT WORK BECAUSE OF STRANGE ISSUES WITH EVENT HANDLERS.
-        ///// </summary>
-        ///// <param name="root"></param>
-        ///// <param name="json"></param>
-        ///// <param name="pathsToJNodes"></param>
-        //public static void JsonTreePopulateHelper_Lazy(TreeNode root, 
-        //                                               JNode json, 
-        //                                               Dictionary<string, JNode> pathsToJNodes)
-        //{
-        //    throw new NotImplementedException();
-        //    root.TreeView.BeginUpdate();
-        //    root.Nodes.Clear(); // remove the sentinel node
-        //    if (json is JArray)
-        //    {
-        //        List<JNode> jar = ((JArray)json).children;
-        //        for (int ii = 0; ii < jar.Count; ii++)
-        //        {
-        //            JNode child = jar[ii];
-        //            if (child is JArray)
-        //            {
-        //                var child_node = new TreeNode(ii.ToString());
-        //                root.Nodes.Add(child_node);
-        //                child_node.ImageIndex = 0;
-        //                child_node.Nodes.Add(new TreeNode("")); // add the sentinel
-        //            }
-        //            else if (child is JObject)
-        //            {
-        //                var child_node = new TreeNode(ii.ToString());
-        //                root.Nodes.Add(child_node);
-        //                child_node.ImageIndex = 5;
-        //                child_node.Nodes.Add(new TreeNode("")); // add the sentinel
-        //            }
-        //            else
-        //            {
-        //                // it's a scalar, so just display the index and the value of the json
-        //                root.Nodes.Add(ii.ToString(), $"{ii} : {child.ToString()}");
-        //                SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
-        //            }
-        //            string path = root.Nodes[root.Nodes.Count - 1].FullPath;
-        //            pathsToJNodes[path] = child;
-        //        }
-        //        if (root.Nodes.Count == 0)
-        //        {
-        //            root.Text += " : []";
-        //        }
-        //        return;
-        //    }
-        //    // create a subtree for a json object
-        //    // scalars are dealt with already, so no need for a separate branch
-        //    Dictionary<string, JNode> dic = ((JObject)json).children;
-        //    foreach (string key in dic.Keys)
-        //    {
-        //        JNode child = dic[key];
-        //        if (child is JArray)
-        //        {
-        //            var child_node = new TreeNode(key);
-        //            root.Nodes.Add(child_node);
-        //            SetImageOfTreeNode(root, child);
-        //            child_node.Nodes.Add(new TreeNode("")); // add the sentinel
-        //        }
-        //        else if (child is JObject)
-        //        {
-        //            var child_node = new TreeNode(key);
-        //            root.Nodes.Add(child_node);
-        //            SetImageOfTreeNode(root, child);
-        //            child_node.Nodes.Add(new TreeNode("")); // add the sentinel
-        //        }
-        //        else
-        //        {
-        //            // it's a scalar, so just display the key and the value of the json
-        //            root.Nodes.Add(key, $"{key} : {child.ToString()}");
-        //            SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
-        //        }
-        //        string path = root.Nodes[root.Nodes.Count - 1].FullPath;
-        //        pathsToJNodes[path] = child;
-        //    }
-        //    if (root.Nodes.Count == 0)
-        //    {
-        //        root.Text += " : {}";
-        //    }
-        //    root.TreeView.EndUpdate();
-        //}
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
+            ********/
+}
 
-        ///// <summary>
-        ///// If a TreeNode has a sentinel node child, replace the sentinel child with its true children.<br></br>
-        ///// Otherwise, do nothing.
-        ///// </summary>
-        ///// <param name="sender"></param>
-        ///// <param name="e"></param>
-        //private void PopulateIfUnpopulatedHandler(object sender, TreeViewCancelEventArgs e)
-        //{
-        //    TreeNode root = e.Node;
-        //    e.Cancel = false;
-        //    if (root.Nodes.Count == 1 
-        //        && !pathsToJNodes.ContainsKey(root.Nodes[0].FullPath))
-        //        // if root has the sentinel node indicating an unexpanded node,
-        //        // populate its children
-        //    {
-        //        JNode node = pathsToJNodes[root.FullPath];
-        //        JsonTreePopulateHelper(root, node, pathsToJNodes);
-        //    }
-        //}
-    }
+// not creating schemas at present because schemas produced may be invalid
+//private void SchemaButton_Click(object sender, EventArgs e)
+//{
+//    if (query_result == null) return;
+//    JNode schema = null;
+//    try
+//    {
+//        schema = schemaMaker.GetSchema(query_result);
+//    }
+//    catch (Exception ex)
+//    {
+//        string expretty = RemesParser.PrettifyException(ex);
+//        MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
+//                            "Exception while making JSON schema",
+//                            MessageBoxButtons.OK,
+//                            MessageBoxIcon.Error);
+//        return;
+//    }
+//    Npp.notepad.FileNew();
+//    Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
+//    Npp.SetLangJson();
+//}
+
+///// <summary>
+///// build the top layer of the tree out of JNodes.<br></br>
+///// JArrays and JObjects will initially have a single sentinel TreeNode as children.<br></br>
+///// Because this sentinel node will not be in the pathsToJNodes map, this will be<br></br>
+///// able to distinguish which nodes already have their children populated.<br></br>
+///// THIS DOES NOT WORK BECAUSE OF STRANGE ISSUES WITH EVENT HANDLERS.
+///// </summary>
+///// <param name="root"></param>
+///// <param name="json"></param>
+///// <param name="pathsToJNodes"></param>
+//public static void JsonTreePopulateHelper_Lazy(TreeNode root, 
+//                                               JNode json, 
+//                                               Dictionary<string, JNode> pathsToJNodes)
+//{
+//    throw new NotImplementedException();
+//    root.TreeView.BeginUpdate();
+//    root.Nodes.Clear(); // remove the sentinel node
+//    if (json is JArray)
+//    {
+//        List<JNode> jar = ((JArray)json).children;
+//        for (int ii = 0; ii < jar.Count; ii++)
+//        {
+//            JNode child = jar[ii];
+//            if (child is JArray)
+//            {
+//                var child_node = new TreeNode(ii.ToString());
+//                root.Nodes.Add(child_node);
+//                child_node.ImageIndex = 0;
+//                child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+//            }
+//            else if (child is JObject)
+//            {
+//                var child_node = new TreeNode(ii.ToString());
+//                root.Nodes.Add(child_node);
+//                child_node.ImageIndex = 5;
+//                child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+//            }
+//            else
+//            {
+//                // it's a scalar, so just display the index and the value of the json
+//                root.Nodes.Add(ii.ToString(), $"{ii} : {child.ToString()}");
+//                SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
+//            }
+//            string path = root.Nodes[root.Nodes.Count - 1].FullPath;
+//            pathsToJNodes[path] = child;
+//        }
+//        if (root.Nodes.Count == 0)
+//        {
+//            root.Text += " : []";
+//        }
+//        return;
+//    }
+//    // create a subtree for a json object
+//    // scalars are dealt with already, so no need for a separate branch
+//    Dictionary<string, JNode> dic = ((JObject)json).children;
+//    foreach (string key in dic.Keys)
+//    {
+//        JNode child = dic[key];
+//        if (child is JArray)
+//        {
+//            var child_node = new TreeNode(key);
+//            root.Nodes.Add(child_node);
+//            SetImageOfTreeNode(root, child);
+//            child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+//        }
+//        else if (child is JObject)
+//        {
+//            var child_node = new TreeNode(key);
+//            root.Nodes.Add(child_node);
+//            SetImageOfTreeNode(root, child);
+//            child_node.Nodes.Add(new TreeNode("")); // add the sentinel
+//        }
+//        else
+//        {
+//            // it's a scalar, so just display the key and the value of the json
+//            root.Nodes.Add(key, $"{key} : {child.ToString()}");
+//            SetImageOfTreeNode(root.Nodes[root.Nodes.Count - 1], child);
+//        }
+//        string path = root.Nodes[root.Nodes.Count - 1].FullPath;
+//        pathsToJNodes[path] = child;
+//    }
+//    if (root.Nodes.Count == 0)
+//    {
+//        root.Text += " : {}";
+//    }
+//    root.TreeView.EndUpdate();
+//}
+
+///// <summary>
+///// If a TreeNode has a sentinel node child, replace the sentinel child with its true children.<br></br>
+///// Otherwise, do nothing.
+///// </summary>
+///// <param name="sender"></param>
+///// <param name="e"></param>
+//private void PopulateIfUnpopulatedHandler(object sender, TreeViewCancelEventArgs e)
+//{
+//    TreeNode root = e.Node;
+//    e.Cancel = false;
+//    if (root.Nodes.Count == 1 
+//        && !pathsToJNodes.ContainsKey(root.Nodes[0].FullPath))
+//        // if root has the sentinel node indicating an unexpanded node,
+//        // populate its children
+//    {
+//        JNode node = pathsToJNodes[root.FullPath];
+//        JsonTreePopulateHelper(root, node, pathsToJNodes);
+//    }
+//}
+}
 }

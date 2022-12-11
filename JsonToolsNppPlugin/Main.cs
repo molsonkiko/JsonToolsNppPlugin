@@ -35,6 +35,8 @@ namespace Kbg.NppPluginNET
         public static string active_fname = null;
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
+        private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
+        private static bool should_rename_grepperForm = false;
         public static GrepperForm grepperForm = null;
         //public static Form nodeSelectedForm = null;
         public static bool grepperTreeViewJustOpened = false;
@@ -142,7 +144,7 @@ namespace Kbg.NppPluginNET
                         && !grepperForm.tv.IsDisposed
                         && !grepperTreeViewJustOpened)
                     {
-                        if (Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                        if (Npp.notepad.GetCurrentFilePath() == grepperForm.tv.fname)
                         {
                             if (openTreeViewer != null && !openTreeViewer.IsDisposed)
                                 Npp.notepad.HideDockingForm(openTreeViewer);
@@ -163,8 +165,9 @@ namespace Kbg.NppPluginNET
                     IntPtr buffer_closed_id = notification.Header.IdFrom;
                     string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
                     // if you close the file belonging the GrepperForm, delete its tree viewer
-                    if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed &&
-                        buffer_closed == grepperForm.fname)
+                    if (grepperForm != null && grepperForm.tv != null
+                        && !grepperForm.tv.IsDisposed
+                        && buffer_closed == grepperForm.tv.fname)
                     {
                         Npp.notepad.HideDockingForm(grepperForm.tv);
                         grepperForm.tv.Close();
@@ -199,50 +202,54 @@ namespace Kbg.NppPluginNET
                         }
                     }
                     return;
-                // the user left their mouse in one place for a while (default 0.4s)
-                //case (uint)SciMsg.SCN_DWELLSTART:
-                //    // create a little menu that shows the path to the current node.
-                //    if (Npp.editor.GetLength() > 1e5)
-                //    int dwell_line = Npp.editor.LineFromPosition(notification.Position.Value);
-                //    string node_path = PathToLine(dwell_line);
-                //    if (node_path.Length == 0)
-                //        return;
-                //    if (nodeSelectedForm != null)
-                //    {
-                //        nodeSelectedForm.Dispose();
-                //        nodeSelectedForm = null;
-                //    }
-                //    nodeSelectedForm = new Form();
-                //    nodeSelectedForm.Text = node_path;
-                //    nodeSelectedForm.MouseUp += new MouseEventHandler(
-                //        (o, a) => Clipboard.SetText(node_path)
-                //    );
-                //    nodeSelectedForm.Show();
-                //    return;
-                //// the user did something that ended the passive mouse dwell period
-                //case (uint)SciMsg.SCN_DWELLEND:
-                //    if (notification.Position.Value == -1)
-                //        // ignore DWELLEND events that fire for no particular reason
-                //        // this happens all the time and I don't know why
-                //        return;
-                //    if (nodeSelectedForm != null)
-                //        nodeSelectedForm.Close();
-                //    nodeSelectedForm = null;
-                //    return;
-                // after an undo (Ctrl + Z) or redo (Ctrl + Y) action
-                //case (uint)SciMsg.SCI_UNDO:
-                //case (uint)SciMsg.SCI_REDO:
-                //    string fname = Npp.notepad.GetCurrentFilePath();
-                //    if (!fname_jsons.ContainsKey(fname))
-                //        return; // ignore files with no JSON yet
-                //    // reparse the file
-                //    string ext = Npp.FileExtension(fname);
-                //    JNode json = TryParseJson(ext == "jsonl");
-                //    treeViewer.json = json;
-                //    // if the tree view is open, refresh it
-                //    if (treeViewer != null)
-                //        treeViewer.JsonTreePopulate(json);
-                //    return;
+                // Before a file is renamed, add a note of the
+                // buffer id of the associated treeviewer and what its old name was.
+                // That way, the treeviewer can be renamed later.
+                // If you do nothing, the renamed treeviewers will be unreachable and
+                // the plugin will crash when Notepad++ closes.
+                case (uint)NppMsg.NPPN_FILEBEFORESAVE:
+                case (uint)NppMsg.NPPN_FILEBEFORERENAME:
+                    IntPtr buffer_renamed_id = notification.Header.IdFrom;
+                    string buffer_old_name = Npp.notepad.GetFilePath(buffer_renamed_id);
+                    if (treeViewers.TryGetValue(buffer_old_name, out TreeViewer tv))
+                    {
+                        treeviewer_buffers_renamed[buffer_renamed_id] = buffer_old_name;
+                    }
+                    else if (grepperForm != null && grepperForm.tv != null 
+                            && !grepperForm.tv.IsDisposed
+                            && grepperForm.tv.fname == buffer_old_name)
+                    {
+                        should_rename_grepperForm = true;
+                    }
+                    return;
+                // After the file is renamed, change the fname attribute of any
+                // treeViewers that were renamed.
+                // Also remap the new fname to that treeviewer and remove the old
+                // fname from treeViewers.
+                case (uint)NppMsg.NPPN_FILESAVED:
+                case (uint)NppMsg.NPPN_FILERENAMED:
+                    buffer_renamed_id = notification.Header.IdFrom;
+                    string buffer_new_name = Npp.notepad.GetFilePath(buffer_renamed_id);
+                    if (treeviewer_buffers_renamed.TryGetValue(buffer_renamed_id, out buffer_old_name))
+                    {
+                        treeviewer_buffers_renamed.Remove(buffer_renamed_id);
+                        TreeViewer renamed = treeViewers[buffer_old_name];
+                        renamed.Rename(buffer_new_name);
+                        treeViewers.Remove(buffer_old_name);
+                        treeViewers[buffer_new_name] = renamed;
+                    }
+                    else if (should_rename_grepperForm)
+                    {
+                        grepperForm.tv.fname = buffer_new_name;
+                        should_rename_grepperForm = false;
+                    }
+                    return;
+                // if a treeviewer was slated for renaming, just cancel that
+                case (uint)NppMsg.NPPN_FILERENAMECANCEL:
+                    buffer_renamed_id = notification.Header.IdFrom;
+                    treeviewer_buffers_renamed.Remove(buffer_renamed_id);
+                    should_rename_grepperForm = false;
+                    return;
                 //if (code > int.MaxValue) // windows messages
                 //{
                 //    int wm = -(int)code;
@@ -462,8 +469,12 @@ namespace Kbg.NppPluginNET
             JNode json;
             if (!fname_jsons.TryGetValue(fname, out json))
             {
-                if (grepperForm != null && grepperForm.fname == fname)
+                if (grepperForm != null 
+                    && grepperForm.tv != null && !grepperForm.tv.IsDisposed
+                    && grepperForm.tv.fname == fname)
+                {
                     json = grepperForm.grepper.fname_jsons;
+                }
             }
             if (json == null)
             {
@@ -569,7 +580,7 @@ namespace Kbg.NppPluginNET
                 if (!was_visible
                     && grepperForm != null
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
-                    && Npp.notepad.GetCurrentFilePath() == grepperForm.fname)
+                    && Npp.notepad.GetCurrentFilePath() == grepperForm.tv.fname)
                 {
                     if (grepperForm.tv.Visible)
                         Npp.notepad.HideDockingForm(grepperForm.tv);
@@ -624,6 +635,7 @@ namespace Kbg.NppPluginNET
             }
 
             NppTbData _nppTbData = new NppTbData();
+            treeViewer.tbData = _nppTbData;
             _nppTbData.hClient = treeViewer.Handle;
             _nppTbData.pszName = title;
             // the dlgDlg should be the index of funcItem where the current function pointer is in

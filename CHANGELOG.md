@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#460---2022-12-09) to this project will be documented in this file.
+All [notable changes](#461---2022-12-11) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -14,8 +14,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Add RemesPath functions:
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
-4. TreeViewer's `fname` attribute should change if the file it is associated with is renamed. Probably need to add a listener for the `NppMsg.NPPN_FILEBEFORERENAME` message.
-5. GrepperForm should track the history of folders selected by the user.
  
 ### To Be Changed
 
@@ -32,8 +30,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- Allow full tree display of small query results even if full tree display is disallowed for the entire JSON.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - Maybe make it so that creating the tree automatically pretty-prints the JSON?
-- Consider making it so that trying to get a missing key raises an error instead of returning `{}`. E.g., `@.foo` would raise an exception if the current JSON doesn't have `foo` as a key.
-- Consider using bisection search to find a node on the current line. Would be faster, but wouldn't necessarily get the *first* node on the line.
 
 ### To Be Fixed
 
@@ -49,14 +45,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
+	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.6.1] - 2022-12-11
+
+### Fixed
+
+1. Fixed bugs where renaming a tree view (including the GrepperForm tree view) would cause problems, including a plugin crash upon closing Notepad++.
+	- Such crash bugs still seem to appear under conditions that I cannot reliably replicate, but they are rare and innocuous.  
 
 ## [4.6.0] - 2022-12-09
 
 ### Added
 
-1. JSON schema validation.
-2. Generation of random JSON from a schema.
+1. [JSON schema validation](/docs/README.md#validating-json-against-json-schema).
+2. [Generation of random JSON from a schema](/docs/README.md#generating-random-json-from-a-schema).
 
 ### Fixed
 

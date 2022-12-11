@@ -15,7 +15,6 @@ namespace JSON_Tools.Forms
         public TreeViewer tv;
         public JsonGrepper grepper;
         HashSet<string> files_found;
-        public string fname;
         private readonly FileInfo directories_visited_file;
 
         public GrepperForm()
@@ -26,7 +25,6 @@ namespace JSON_Tools.Forms
             );
             tv = null;
             files_found = new HashSet<string>();
-            fname = null;
             DirectoriesVisitedBox.SelectedIndex = 0;
             directories_visited_file = new FileInfo(Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName, $"{Main.PluginName} directories visited.txt"));
             int max_dirname_chars = DirectoriesVisitedBox.Items[0].ToString().Length;
@@ -180,7 +178,6 @@ namespace JSON_Tools.Forms
         {
             Main.grepperTreeViewJustOpened = true;
             Npp.notepad.FileNew();
-            fname = Npp.notepad.GetCurrentFilePath();
             string result = grepper.fname_jsons.PrettyPrintAndChangeLineNumbers(
                 Main.settings.indent_pretty_print,
                 Main.settings.sort_keys,
