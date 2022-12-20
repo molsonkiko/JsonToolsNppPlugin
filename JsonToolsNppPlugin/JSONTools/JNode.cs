@@ -263,7 +263,7 @@ namespace JSON_Tools.JSON_Tools
                     sb.Append('"');
                     foreach (char c in (string)value)
                     {
-                        if (c > 0x7f)
+                        /* if (c > 0x7f)
                         {
                             // unfortunately things like y with umlaut (char 0xff)
                             // confuse a lot of text editors because they can be
@@ -283,7 +283,8 @@ namespace JSON_Tools.JSON_Tools
                                 return $"\\u{ToHex(s1, 4)}\\u{ToHex(s2, 4)}";
                             }
                         }
-                        else if (TO_STRING_ESCAPE_MAP.TryGetValue(c, out string escape))
+                        else */
+                        if (TO_STRING_ESCAPE_MAP.TryGetValue(c, out string escape))
                         {
                             sb.Append(escape);
                         }

@@ -343,11 +343,17 @@ namespace JSON_Tools.Tests
                     false // object expected in array, but got number
                 ),
             };
-            string random_tweet_text = null, tweet_schema_text = null;
+            string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
             string testfiles_path = @"plugins\JsonTools\testfiles\";
             try
             {
                 random_tweet_text = File.ReadAllText(testfiles_path + "random_tweet.json");
+                // make a copy of the tweet that violates the schema
+                JNode bad_random_tweet = jsonParser.Parse(random_tweet_text);
+                var rparser = new RemesParser();
+                // set a value deep in the tweet to an invalid type
+                rparser.Search("@[1].entities.media[1].sizes.small.w = `THIS SHOULD BE AN INTEGER`", bad_random_tweet, out bool _);
+                bad_random_tweet_text = bad_random_tweet.ToString(); bad_random_tweet.ToString();
             }
             catch
             {
@@ -364,6 +370,8 @@ namespace JSON_Tools.Tests
             if (tweet_schema_text != null && random_tweet_text != null)
             {
                 testcases.Add(new SchemaValidatesJson(random_tweet_text, tweet_schema_text, true));
+                if (bad_random_tweet_text != null)
+                    testcases.Add(new SchemaValidatesJson(bad_random_tweet_text, tweet_schema_text, false));
             }
             foreach (SchemaValidatesJson test in testcases)
             {

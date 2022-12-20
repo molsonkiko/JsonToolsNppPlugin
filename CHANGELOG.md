@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#461---2022-12-11) to this project will be documented in this file.
+All [notable changes](#470---2022-12-20) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -47,6 +47,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.7.0] - 2022-12-20
+
+### Added
+
+1. Support for extended ASCII characters (i.e., anything from `0x7f` (⌂) to `0xff` (ÿ)) in random JSON.
+
+### Changed
+
+1. Non-ASCII characters (e.g., 😀, Я) are now displayed normally rather than being converted to ASCII using the `\u` notation (e.g., `\ud83d\ude00`, `\u042f`). Resolve [Issue #25](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/25).
+
+### Fixed
+
+1. Fix bug where [find/replace form](/docs/README.md#find-and-replace-form) advanced controls would not be toggled if the user manually resized the form.
 
 ## [4.6.1] - 2022-12-11
 

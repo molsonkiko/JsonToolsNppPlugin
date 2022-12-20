@@ -112,21 +112,12 @@ namespace JSON_Tools.Tests
             string example = "{\"a\":[-1, true, {\"b\" :  0.5, \"c\": \"\\uae77\"},null],\n"
                     + "\"a\\u10ff\":[true, false, NaN, Infinity,-Infinity, {},\t\"\\u043ea\", []], "
                     + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]} ";
-            string norm_example = "{\"a\": [-1, true, {\"b\": 0.5, \"c\": \"\\uae77\"}, null], "
-                    + "\"a\\u10ff\": [true, false, NaN, Infinity, -Infinity, {}, \"\\u043ea\", []], "
-                    + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]}";
+            string norm_example = "{"
+                + "\"a\u10ff\": [true, false, NaN, Infinity, -Infinity, {}, \"\u043ea\", []], "
+                + "\"a\": [-1, true, {\"b\": 0.5, \"c\": \"\uae77\"}, null], "
+                + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]}";
             string pprint_example = "{" +
-                                    NL + "\"a\":" +
-                                    NL + "    [" +
-                                    NL + "    -1," +
-                                    NL + "    true," +
-                                    NL + "        {" +
-                                    NL + "        \"b\": 0.5," +
-                                    NL + "        \"c\": \"\\uae77\"" +
-                                    NL + "        }," +
-                                    NL + "    null" +
-                                    NL + "    ]," +
-                                    NL + "\"a\\u10ff\":" +
+                                    NL + "\"a\u10ff\":" +
                                     NL + "    [" +
                                     NL + "    true," +
                                     NL + "    false," +
@@ -135,9 +126,19 @@ namespace JSON_Tools.Tests
                                     NL + "    -Infinity," +
                                     NL + "        {" +
                                     NL + "        }," +
-                                    NL + "    \"\\u043ea\"," +
+                                    NL + "    \"\u043ea\"," +
                                     NL + "        [" +
                                     NL + "        ]" +
+                                    NL + "    ]," +
+                                    NL + "\"a\":" +
+                                    NL + "    [" +
+                                    NL + "    -1," +
+                                    NL + "    true," +
+                                    NL + "        {" +
+                                    NL + "        \"b\": 0.5," +
+                                    NL + "        \"c\": \"\uae77\"" +
+                                    NL + "        }," +
+                                    NL + "    null" +
                                     NL + "    ]," +
                                     NL + "\"back'slas\\\"h\":" +
                                     NL + "    [" +
@@ -204,12 +205,13 @@ Got
                 if (pprint_out != pprint_desired)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} (pretty-print {1}) failed:
+                    msg = String.Format(@"Test {0} (pretty-print {1}) failed:
 Expected
 {2}
 Got
-{3} ",
-                                     ii + 1, msg, pprint_desired, pprint_out));
+{3}
+", ii + 1, msg, pprint_desired, pprint_out);
+                    Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
                 ii++;
             }

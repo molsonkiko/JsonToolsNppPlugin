@@ -542,7 +542,7 @@ namespace Kbg.NppPluginNET
             if (json == null) return;
             try
             {
-                JNode randomJson = RandomJsonFromSchema.RandomJson(json, settings.minArrayLength, settings.maxArrayLength);
+                JNode randomJson = RandomJsonFromSchema.RandomJson(json, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings);
                 Npp.notepad.FileNew();
                 string randomJsonStr = randomJson.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
                 int byteCount = Encoding.UTF8.GetByteCount(randomJsonStr);

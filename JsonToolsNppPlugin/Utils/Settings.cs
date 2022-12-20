@@ -105,6 +105,10 @@ namespace JSON_Tools.Utils
         [Description("Maximum length of random arrays, unless otherwise specified by the \"maxItems\" keyword"),
             Category("Random JSON"), DefaultValue(10)]
         public int maxArrayLength { get; set; }
+
+        [Description("Use extended ASCII characters (e.g., \x0b, \xf1) in strings?"),
+            Category("Random JSON"), DefaultValue(false)]
+        public bool extended_ascii_strings { get; set; }
         #endregion
     }
 }

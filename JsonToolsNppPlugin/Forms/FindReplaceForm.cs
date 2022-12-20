@@ -84,9 +84,10 @@ namespace JSON_Tools.Forms
         private void AdvancedGroupBoxLabel_Click(object sender, EventArgs e)
         {
             // show the advanced controls and expand the box
-            if (Height == COLLAPSED_HEIGHT)
+            if (!RegexBox.Visible)
             {
-                Height = EXTENDED_HEIGHT;
+                if (Height < EXTENDED_HEIGHT)
+                    Height = EXTENDED_HEIGHT;
                 AdvancedGroupBoxLabel.Text = "Hide advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_EXTENDED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
@@ -95,9 +96,10 @@ namespace JSON_Tools.Forms
                 }
             }
             // hide the advanced controls and collapse the box
-            else if (Height == EXTENDED_HEIGHT)
+            else
             {
-                Height = COLLAPSED_HEIGHT;
+                if (Height == EXTENDED_HEIGHT)
+                    Height = COLLAPSED_HEIGHT;
                 AdvancedGroupBoxLabel.Text = "Show advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)

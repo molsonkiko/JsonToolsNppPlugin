@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace JSON_Tools.JSON_Tools
@@ -204,7 +203,7 @@ namespace JSON_Tools.JSON_Tools
             }
             if ((Dtype)s1type == Dtype.ARR && (Dtype)s2type == Dtype.ARR)
             {
-                var combined_items = MergeSchemas((Dictionary<string, object>)s1["items"], 
+                var combined_items = MergeSchemas((Dictionary<string, object>)s1["items"],
                                                   (Dictionary<string, object>)s2["items"]);
                 return new Dictionary<string, object> { { "type", Dtype.ARR }, { "items", combined_items } };
             }
@@ -247,7 +246,7 @@ namespace JSON_Tools.JSON_Tools
         public Dictionary<string, object> BuildSchema(JNode obj)
         {
             Dtype tipe = obj.type;
-            var schema = new Dictionary<string, object>{ { "type", tipe } };
+            var schema = new Dictionary<string, object> { { "type", tipe } };
             if (tipe == Dtype.ARR)
             {
                 var items = new Dictionary<string, object> { { "type", new List<object>() } };
