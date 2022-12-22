@@ -415,6 +415,12 @@ namespace JSON_Tools.Tests
                 "]",
 				"."
 				},
+				new string[]
+				{
+					"[[1, 3, 4], []]", // empty arrays in arrays
+                    "[{\"col1\": 1, \"col2\": 3, \"col3\": 4}, {}]",
+					"."
+				}
 			};
 			JsonParser jsonParser = new JsonParser();
 			JsonTabularizer tabularizer = new JsonTabularizer();
@@ -833,7 +839,7 @@ namespace JSON_Tools.Tests
 					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
 				}
 			}
-
+			
 			Npp.AddLine($"Failed {tests_failed} tests.");
 			Npp.AddLine($"Passed {ii - tests_failed} tests.");
 		}

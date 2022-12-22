@@ -26,6 +26,9 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public enum Dtype : ushort
     {
+        /// <summary>useful only in JSON schema</summary>
+        TYPELESS = 0,
+        /// <summary>represented as booleans</summary>
         BOOL = 1,
         /// <summary>represented as longs</summary>
         INT = 2,
@@ -180,6 +183,7 @@ namespace JSON_Tools.JSON_Tools
     ///    node8: JNode(value = null, type = Dtype.NULL, line_num = 6)
     /// </example>
     /// </summary>
+    [System.Diagnostics.DebuggerDisplay("JNode({ToString()})")]
     public class JNode : IComparable
     {
         public static string NL = Environment.NewLine;
@@ -626,6 +630,7 @@ namespace JSON_Tools.JSON_Tools
     /// <summary>
     /// A class representing JSON objects.
     /// </summary>
+    [System.Diagnostics.DebuggerDisplay("JObject({ToString()})")]
     public class JObject : JNode
     {
         public Dictionary<string, JNode> children;
@@ -865,6 +870,7 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
+    [System.Diagnostics.DebuggerDisplay("JArray({ToString()})")]
     public class JArray : JNode
     {
         public List<JNode> children;

@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#470---2022-12-20) to this project will be documented in this file.
+All [notable changes](#480---2022-12-22) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -8,10 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Bring back Json Schema generation (once bugs are fixed)! 
-2. Add parsing of unquoted strings when linter is active.
+1. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
-3. Add RemesPath functions:
+2. Add RemesPath functions:
 	- for dates and datetimes (e.g., a `datediff` function that creates
 	somthing like a Python TimeDelta that you can add to DateTimes and Dates)
  
@@ -34,8 +33,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### To Be Fixed
 
 - If multiple views are open in the same window pane, the `Save query result` button appends the query result to the current file rather than to the newly opened file.
-- JsonSchema has some bugs in the ordering of types. Non-impactful, I think. For example, a type list might come out as `["string", "integer"]` rather than `["integer", "string"]`.
-- Remove bug in determination of `required` keys for JsonSchema. As far as I know, this only occurs in very specific cases for the bottom object in an `array->object->array->object->object` hierarchy.
 - Fix bugs in YamlDumper.cs:
 	- fails when key contains quotes and colon
 	- fails when value contains quotes and newline
@@ -47,6 +44,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.8.0] - 2022-12-22
+
+### Added
+
+1. [JSON Schema generation](/docs/README.md#generating-json-schema-from-json) is back!
 
 ## [4.7.0] - 2022-12-20
 
@@ -67,7 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Fixed bugs where renaming a tree view (including the GrepperForm tree view) would cause problems, including a plugin crash upon closing Notepad++.
-	- Such crash bugs still seem to appear under conditions that I cannot reliably replicate, but they are rare and innocuous.  
+	- Such crash bugs still seem to appear under conditions that I cannot reliably replicate, but they are rare and innocuous.
 
 ## [4.6.0] - 2022-12-09
 

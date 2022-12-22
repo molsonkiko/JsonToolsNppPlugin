@@ -423,15 +423,22 @@ In addition to the keywords supported for JSON schema [validation](#validating-j
 * [maxContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
 
 
-
-# OTHER FEATURES NOT YET ADDED (COME BACK SOON!) #
-
 ## Generating JSON schema from JSON ##
 
-You can also generate a [JSON schema](https://json-schema.org/) for your query result. Remember that if you want a schema for the whole file, you can just use the default `@` query to select the whole document.
+You can also generate a [JSON schema](https://json-schema.org/) from a JSON document.
 
-This JSON schema will not be perfect, until I fix a known bug that causes the "required" attribute of object schemas to include the *union* of all keys in all objects belonging to that schema rather than the *intersection* as it should.
+This JSON schema generator only produces schemas with the following keywords:
 
-There are other bugs too, but I haven't yet diagnosed what causes them to appear.
+### Keywords for all JSON
+* type
+* [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
+* [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
+
+### Keywords for objects
+* [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
+* [required](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-required)
+
+### Keywords for arrays
+* [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)
 
 ![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)

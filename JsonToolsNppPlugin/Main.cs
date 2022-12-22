@@ -67,7 +67,7 @@ namespace Kbg.NppPluginNET
             //            ShortcutKey *shortcut,                // optional. Define a shortcut to trigger this command
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
-            PluginBase.SetCommand(0, "Documentation", docs);
+            PluginBase.SetCommand(0, "&Documentation", docs);
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
             PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
@@ -82,11 +82,12 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(10, "---", null);
             PluginBase.SetCommand(11, "&Validate JSON against JSON schema", ValidateJson);
-            PluginBase.SetCommand(12, "Generate &random JSON from schema", GenerateRandomJson);
-            PluginBase.SetCommand(13, "---", null);
-            PluginBase.SetCommand(14, "JSON to &YAML", DumpYaml);
-            PluginBase.SetCommand(15, "Run &tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(16, "A&bout", ShowAboutForm); AboutFormId = 16;
+            PluginBase.SetCommand(12, "Generate sc&hema from JSON", GenerateJsonSchema);
+            PluginBase.SetCommand(13, "Generate &random JSON from schema", GenerateRandomJson);
+            PluginBase.SetCommand(14, "---", null);
+            PluginBase.SetCommand(15, "JSON to &YAML", DumpYaml);
+            PluginBase.SetCommand(16, "Run &tests", async () => await TestRunner.RunAll());
+            PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 16;
 
             //// set mouse dwell time in preparation for mouse dwell related-methods
             //Npp.editor.SetMouseDwellTime(400);
@@ -534,6 +535,31 @@ namespace Kbg.NppPluginNET
             }
             MessageBox.Show($"The JSON in file {cur_fname} validates against the schema at path {openFileDialog.FileName}.",
                 "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        static void GenerateJsonSchema()
+        {
+            JNode json = TryParseJson();
+            if (json == null) return;
+            JNode schema = new JNode();
+            try
+            {
+                schema = schemaMaker.GetSchema(json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not generate a JSON schema. Got the following error:\n{ex}",
+                    "JSON schema generation error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+                return;
+            }
+            Npp.notepad.FileNew();
+            string schema_str = schema.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
+            Npp.editor.AppendText(Encoding.UTF8.GetByteCount(schema_str), schema_str);
+            Npp.SetLangJson();
         }
 
         static void GenerateRandomJson()

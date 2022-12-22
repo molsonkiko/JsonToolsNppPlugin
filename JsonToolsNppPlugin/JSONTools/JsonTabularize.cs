@@ -166,29 +166,15 @@ namespace JSON_Tools.JSON_Tools
 			{
 				// it's tabular if it contains only arrays of scalars
 				// or only objects where all values are scalar
-				var items = (Dictionary<string, object>)schema["items"];
+				if (!schema.TryGetValue("items", out object items_obj))
+					return JsonFormat.ROW; // an empty array is a row
+				var items = (Dictionary<string, object>)items_obj;
 				bool item_has_type = items.TryGetValue("type", out object item_types);
 				if (!item_has_type)
 				{
 					// this is because it's an "anyOf" type, where it can have some non-scalars and some scalars as values.
 					// we can't tabularize it so we call it "bad"
 					return JsonFormat.BAD;
-				}
-				if (item_types is List<object>)
-				{
-					// it's an array with a mixture of element types
-					foreach (object t in (List<object>)item_types)
-					{
-						if (((Dtype)t & Dtype.SCALAR) == 0)
-						{
-							// disallow arrays of arrays of non-scalars
-							return JsonFormat.BAD;
-						}
-					}
-					// a list of scalars is not a tabular schema, but a "row".
-					// rows have desirable properties, though,
-					// because we can flatten them into keys of the parent object
-					return JsonFormat.ROW;
 				}
 				Dtype item_dtype = (Dtype)item_types;
 				if ((item_dtype & Dtype.SCALAR) != 0)
@@ -199,27 +185,21 @@ namespace JSON_Tools.JSON_Tools
 				if (item_dtype == Dtype.ARR)
 				{
 					// it's an array of arrays
-					Dictionary<string, object> subitems = (Dictionary<string, object>)items["items"];
+					if (!items.TryGetValue("items", out object subitems_obj))
+					{
+						// an array containing only empty arrays would be a table
+						// with no columns, so this is BAD
+						return JsonFormat.BAD;
+					}
+					Dictionary<string, object> subitems = (Dictionary<string, object>)subitems_obj;
 					bool subarr_has_type = subitems.TryGetValue("type", out object subarr_types);
 					if (!subarr_has_type)
 					{
-						// this is an array containing mixed arrays - bad!
+						// this is an array containing a mix of scalars and
+						// non-scalars; BAD!
 						return JsonFormat.BAD;
 					}
-					if (subarr_types is List<object>)
-					{
-						foreach (object v in (List<object>)subarr_types)
-						{
-							if (((Dtype)v & Dtype.SCALAR) == 0)
-							{
-								// this is an array of mixed scalar/non-scalar arrays, no good!
-								return JsonFormat.BAD;
-							}
-						}
-						// an array of arrays of mixed-type, e.g., [[1, "2"], [3, "4"]]
-						return JsonFormat.SQR;
-					}
-					if (subarr_types is Dtype && ((Dtype)subarr_types & Dtype.SCALAR) != 0)
+					if (((Dtype)subarr_types & Dtype.ITERABLE) == 0)
 					{
 						// an array of arrays of homogeneous scalars (e.g., [[1, 2], [3, 4]])
 						return JsonFormat.SQR;
@@ -236,7 +216,7 @@ namespace JSON_Tools.JSON_Tools
 					{
 						return JsonFormat.BAD; // it's a dict with a mixture of non-scalar types - bad! 
 					}
-					if (!(subtipe is List<object> || (subtipe is Dtype && ((Dtype)subtipe & Dtype.SCALAR) != 0)))
+					if (((Dtype)subtipe & Dtype.ITERABLE) != 0)
 					{
 						// it's a dict containing non-scalar values
 						return JsonFormat.BAD;
@@ -255,12 +235,13 @@ namespace JSON_Tools.JSON_Tools
 			foreach (object prop in props.Values)
 			{
 				var dprop = (Dictionary<string, object>)prop;
-				bool has_subtipe = dprop.TryGetValue("type", out object subtipe);
+				bool has_subtipe = dprop.TryGetValue("type", out object subtipe_obj);
+				var subtipe = (Dtype)subtipe_obj;
 				if (!has_subtipe)
 				{
 					return JsonFormat.BAD; // it's a dict with a mixture of non-scalar types - bad! 
 				}
-				if (subtipe is Dtype && (Dtype)subtipe == Dtype.OBJ)
+				if (subtipe == Dtype.OBJ)
 				{
 					Dictionary<string, object> subprops = (Dictionary<string, object>)dprop["properties"];
 					foreach (object subprop in subprops.Values)
@@ -272,28 +253,33 @@ namespace JSON_Tools.JSON_Tools
 							// this key of the dictionary has a mixture of nonscalar types
 							return JsonFormat.BAD;
 						}
-						if (!(subproptipe is List<object> || (subtipe is Dtype && ((Dtype)subproptipe & Dtype.SCALAR) != 0)))
+						if (((Dtype)subproptipe & Dtype.ARR_OR_OBJ) != 0)
 						{
-							// this key of the dictionary has one nonscalar type
+							// this key of the dictionary has nonscalar type(s)
 							return JsonFormat.BAD;
 						}
 						continue;
 					}
 				}
-				if (subtipe is Dtype && (Dtype)subtipe != Dtype.ARR)
+				if (subtipe != Dtype.ARR)
 				{
 					// it's OK for a table to have some scalar values and some list values.
-					// the scalars values are just copy-pasted into each row for that table
+					// the scalar values are just copy-pasted into each row for that table
 					continue;
 				}
-				if (subtipe is List<object>)
+				if (!dprop.TryGetValue("items", out object subitems))
 				{
-					// it's also OK for a table to have a mixture of scalar values for one key
+					// The array has no "items" keyword, which can happen
+					// when there are empty arrays.
+					// This is fine.
 					continue;
 				}
-				bool subarr_has_type = ((Dictionary<string, object>)dprop["items"]).TryGetValue("type", out object subarr_tipe);
-				if (!subarr_has_type || (subarr_tipe is Dtype && ((Dtype)subarr_tipe & Dtype.SCALAR) == 0))
+				bool subarr_has_type = ((Dictionary<string, object>)subitems).TryGetValue("type", out object subarr_tipe);
+				if (!subarr_has_type)
+					return JsonFormat.BAD;
+				if (((Dtype)subarr_tipe & Dtype.ARR_OR_OBJ) != 0)
 				{
+					// it's an array containing some non-scalars
 					return JsonFormat.BAD;
 				}
 				// it must be a subarray filled with scalars, so now the presumptive type is "tab"
@@ -334,11 +320,13 @@ namespace JSON_Tools.JSON_Tools
 				return;
 			}
 			// by process of elimination, it's bad, but maybe it contains tables
-			object tipe = schema["type"];
-			if (tipe is Dtype && (Dtype)tipe == Dtype.ARR)
+			Dtype tipe = (Dtype)schema["type"];
+			if (tipe == Dtype.ARR)
 			{
 				// it's an array; we'll search recursively at each index for tables
-				var items = (Dictionary<string, object>)schema["items"];
+				if (!schema.TryGetValue("items", out object items_obj))
+					return; // no "items" keyword only happens for empty arrays
+				var items = (Dictionary<string, object>)items_obj;
 				List<object> newpath = new List<object>(path);
 				// use 0 as a placeholder for all indices in arrays
 				// the important thing is that it's not a string
