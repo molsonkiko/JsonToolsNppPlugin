@@ -415,6 +415,8 @@ This tool can only validate the following keywords:
 
 The plugin can also generate random JSON from a schema. The default minimum and maximum array lengths (for schemas where the `minItems` and `maxItems` keywords are omitted) are `0` and `10` respectively.
 
+*Added in version 4.8.1:* You can also use a non-schema file to generate random JSON. A schema will be generated on the fly, and that schema will be used to make the random JSON.
+
 ![randomly generated JSON from a schema](/docs/random%20json%20from%20schema.PNG)
 
 In addition to the keywords supported for JSON schema [validation](#validating-json-against-json-schema), the following keywords are supported for random generation of *arrays*:

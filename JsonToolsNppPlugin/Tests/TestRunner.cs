@@ -126,6 +126,12 @@ Testing JSON grepper's API request tool
             await JsonGrepperTester.TestApiRequester();
 
             Npp.AddLine(@"=========================
+Testing generation of random JSON from schema
+=========================
+");
+            RandomJsonTests.TestRandomJson();
+
+            Npp.AddLine(@"=========================
 Performance tests for JsonParser
 =========================
 ");

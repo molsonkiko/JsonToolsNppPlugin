@@ -45,6 +45,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
 
+## [4.8.1] - 2022-12-26
+
+### Added
+
+1. [Random JSON generation](/docs/README.md#generating-random-json-from-a-schema) from a non-schema file.
+2. Tests for random JSON generation.
+
+### Fixed
+
+1. Bug with random JSON generation where *all keys* (including *non-required keys*) in an object schema would always be included in random JSON. Now each object will have a random set of keys that is a superset of the required keys and a subset of all validated keys.
+
 ## [4.8.0] - 2022-12-22
 
 ### Added

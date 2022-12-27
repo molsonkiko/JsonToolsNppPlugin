@@ -151,6 +151,7 @@ namespace JSON_Tools.JSON_Tools
                 next_c = inp[ii + 1];
                 if (next_c == '/')
                 {
+                    // one or more single-line comments
                     ii++;
                     while (ii < inp.Length)
                     {
@@ -165,6 +166,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else if (next_c == '*')
                 {
+                    // a multi-line comment (/* ... */)
                     ii++;
                     bool comment_ended = false;
                     while (ii < inp.Length - 1)
@@ -394,7 +396,6 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(sb.ToString(), Dtype.STR, line_num);
         }
 
-        //public static readonly Regex num_regex = new Regex(@"(-?(?:0|[1-9]\d*))(\.\d+)?([eE][-+]?\d+)?");
         /// <summary>
         /// Parse a number in a JSON string.
         /// </summary>
@@ -403,7 +404,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="line_num">The starting line number</param>
         /// <returns>a JNode with type = Dtype.INT or Dtype.FLOAT, and the position of the end of the number.
         /// </returns>
-        public JNode ParseNumber(string q)
+        public JNode ParseNumber(string inp)
         {
             StringBuilder sb = new StringBuilder();
             // parsed tracks which portions of a number have been parsed.
@@ -411,15 +412,15 @@ namespace JSON_Tools.JSON_Tools
             // If the int and decimal point parts have been parsed, it will be 3.
             // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
             int parsed = 1;
-            char c = q[ii];
+            char c = inp[ii];
             if (c == '-' || c == '+')
             {
                 sb.Append(c);
                 ii++;
             }
-            while (ii < q.Length)
+            while (ii < inp.Length)
             {
-                c = q[ii];
+                c = inp[ii];
                 if (c >= '0' && c <= '9')
                 {
                     sb.Append(c);
@@ -429,7 +430,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (parsed != 1)
                     {
-                        if (lint == null) throw new RemesLexerException(ii, q, "Number with two decimal points");
+                        if (lint == null) throw new RemesLexerException(ii, inp, "Number with two decimal points");
                         lint.Add(new JsonLint("Number with two decimal points", ii, line_num, c));
                         break;
                     }
@@ -445,9 +446,9 @@ namespace JSON_Tools.JSON_Tools
                     }
                     parsed += 4;
                     sb.Append('e');
-                    if (ii < q.Length - 1)
+                    if (ii < inp.Length - 1)
                     {
-                        c = q[++ii];
+                        c = inp[++ii];
                         if (c == '+' || c == '-')
                         {
                             sb.Append(c);
@@ -461,7 +462,7 @@ namespace JSON_Tools.JSON_Tools
                     double numer = double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP);
                     JNode denom_node;
                     ii++;
-                    denom_node = ParseNumber(q);
+                    denom_node = ParseNumber(inp);
                     double denom = Convert.ToDouble(denom_node.value);
                     return new JNode(numer / denom, Dtype.FLOAT, line_num);
                 }
@@ -651,10 +652,7 @@ namespace JSON_Tools.JSON_Tools
                     return obj;
                 }
                 else if (cur_c == '"' 
-                    || ((allow_singlequoted_str || lint != null) && cur_c == '\'')
-                    //|| (allow_unquoted_str && (('a' <= cur_c && cur_c <= 'z') || ('A' <= cur_c && cur_c <= 'Z') || cur_c == '_'))
-                    //// unquoted strings may someday be allowed so long as they start with letters or underscore and contain only letters, underscore, and digits
-                    )
+                    || ((allow_singlequoted_str || lint != null) && cur_c == '\''))
                 {
                     if (children.Count > 0 && !already_seen_comma)
                     {

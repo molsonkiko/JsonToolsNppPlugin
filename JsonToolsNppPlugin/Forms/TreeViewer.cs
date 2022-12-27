@@ -15,10 +15,12 @@ namespace JSON_Tools.Forms
         /// the name of the file holding the JSON that this is associated with
         /// </summary>
         public string fname;
+        
         /// <summary>
         /// Maps the path of a TreeNode to the line number of the corresponding JNode
         /// </summary>
         public Dictionary<string, JNode> pathsToJNodes;
+
         /// <summary>
         /// result of latest RemesPath query
         /// </summary>
@@ -818,7 +820,7 @@ namespace JSON_Tools.Forms
         public void Rename(string new_fname)
         {
             fname = new_fname;
-            // none of this 
+            // none of this works, don't bother
             //// change the title of the UI element
             //tbData.pszName = new_fname;
             //// tell Notepad++ to update the info

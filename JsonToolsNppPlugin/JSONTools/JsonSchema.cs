@@ -8,7 +8,7 @@ namespace JSON_Tools.JSON_Tools
 {
     /// <summary>
     /// This class generates a minimalist <a href="https://json-schema.org/">JSON schema</a> for a JSON object.<br></br>
-    /// It does <i>not</i> validate existing schemas (yet), only generate new schemas.<br></br>
+    /// It does <i>not</i> validate existing schemas, only generate new schemas.<br></br>
     /// The only keywords supported are the following:<br></br>
     /// - <b>type</b><br></br>
     /// - <b>$schema</b><br></br>
@@ -16,18 +16,6 @@ namespace JSON_Tools.JSON_Tools
     /// - <b>properties</b><br></br>
     /// - <b>required</b><br></br>
     /// - <b>anyOf</b><br></br>
-    /// <b>Currently known bug(s)</b>:<br></br>
-    /// 1. The "required" attribute for object schemas may be incorrect.<br></br>
-    /// Specifically, the "required" attribute for an object that is a child of an object and the ancestor of an array
-    /// will be wrong.<br></br>
-    /// Consider this JSON<br></br>
-    /// [<br></br>
-    ///     {'a': 3},<br></br> 
-    ///     {'a': 1, 'b': [{'a': {'b': 1, 'c': 2}}, {'a': {'b': 1}}]},<br></br>
-    ///     {'a': 1, 'b': [{'a': {'b': 1, 'c': 2, 'd': 3}}]},<br></br>
-    ///     { 'a': 2, 'c': 3}<br></br>
-    /// ]<br></br>
-    /// The most deeply nested object will have "required" listed as ["b", "c", "d"] when it is actually ["b"].
     /// </summary>
     public class JsonSchemaMaker
     {
@@ -498,12 +486,12 @@ namespace JSON_Tools.JSON_Tools
                 List<JNode> typelist = new List<JNode>();
                 if ((type & Dtype.BOOL) != 0)
                     typelist.Add(new JNode("boolean", Dtype.STR, 0));
-                if ((type & Dtype.FLOAT) != 0)
-                    typelist.Add(new JNode("number", Dtype.STR, 0));
                 if ((type & Dtype.INT) != 0)
                     typelist.Add(new JNode("integer", Dtype.STR, 0));
                 if ((type & Dtype.NULL) != 0)
                     typelist.Add(new JNode("null", Dtype.STR, 0));
+                if ((type & Dtype.FLOAT) != 0)
+                    typelist.Add(new JNode("number", Dtype.STR, 0));
                 if ((type & Dtype.STR) != 0)
                     typelist.Add(new JNode("string", Dtype.STR, 0));
                 return new JArray(0, typelist);

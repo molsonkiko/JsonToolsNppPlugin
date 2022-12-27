@@ -168,9 +168,11 @@ namespace JSON_Tools.JSON_Tools
             var optionalIncluded = new List<string>();
             if (optionalKeys.Count > 0)
             {
-                int numOptionalIncluded = random.Next(optionalKeys.Count);
+                int numOptionalIncluded = random.Next(optionalKeys.Count + 1);
                 var allOptional = optionalKeys.ToArray();
                 HashSet<int> indicesChosen = new HashSet<int>();
+                // choose a random subset of the optional keys to include in the object
+                // This may mean choosing no optional keys at all.
                 for (int ii = 0; ii < numOptionalIncluded; ii++)
                 {
                     int idx = random.Next(allOptional.Length);
@@ -181,7 +183,7 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             var result = new Dictionary<string, JNode>();
-            foreach (string k in requiredKeys.Concat(optionalKeys))
+            foreach (string k in requiredKeys.Concat(optionalIncluded))
             {
                 JNode subschema = propertiesObj[k];
                 result[k] = RandomJson(subschema, minArrayLength, maxArrayLength, extended_ascii_strings);

@@ -589,7 +589,7 @@ namespace JSON_Tools.JSON_Tools
         {
             [Dtype.SCALAR] = "scalar",
             [Dtype.ITERABLE] = "iterable",
-            [Dtype.NUM] = "numeric",
+            [Dtype.NUM] = "numeric", // mixed types come first, so that they're checked before pure
             [Dtype.ARR] = "array",
             [Dtype.BOOL] = "boolean",
             [Dtype.FLOAT] = "float",
@@ -604,13 +604,24 @@ namespace JSON_Tools.JSON_Tools
             [Dtype.DATETIME] = "datetime",
         };
 
+        /// <summary>
+        /// By default, a pure enum value (e.g., Dtype.INT) has INT as its string representation.<br></br>
+        /// However, the bitwise OR of multiple enum values just has an integer as its string repr.<br></br>
+        /// This function allows, e.g., Dtype.INT | Dtype.BOOL to be represented as "boolean|integer"
+        /// rather than 3 (its numeric value)
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static string FormatDtype(Dtype type)
         {
             List<string> typestrs = new List<string>();
+            // it's pure (or a mixture with a previously designated name)
             if (DtypeStrings.TryGetValue(type, out string val))
             {
                 return val;
             }
+            // it's an undesignated mixture.
+            // Cut it apart by making a list of each designated type/mixture it contains. 
             ushort typeint = (ushort)type;
             foreach (Dtype typ in DtypeStrings.Keys)
             {
@@ -619,6 +630,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     typestrs.Add(DtypeStrings[typ]);
                     typeint -= shortyp;
+                    // subtract to not double-count types that are in a designated mixture
                 }
             }
             return string.Join("|", typestrs);
