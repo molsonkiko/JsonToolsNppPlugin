@@ -389,7 +389,7 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 ## Validating JSON against JSON schema ##
 
-The plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
+As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
 
 This tool can only validate the following keywords:
 
@@ -401,6 +401,7 @@ This tool can only validate the following keywords:
 ### Keywords for objects
 * [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
 * [required](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-required)
+* [patternProperties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-patternproperties) (*added in version 4.8.2*)
 
 ### Keywords for arrays
 * [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)

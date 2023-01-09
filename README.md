@@ -58,6 +58,26 @@ Every version of the plugin works on Notepad++ 8.4.1 onward.
 
 Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#3721---2022-10-20) should work natively on Windows 8 or later (note: this is untested), or you must install [.NET Framework 4.0](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40). Every version beginning with [4.0.0](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#400---2022-10-24) works on [Windows 10 May 2019 update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) or later, or you must install [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48).
 
+## Alternative tools ##
+
+### Notepad++ ###
+
+[JSMinNPP](https://github.com/sunjw/jstoolnpp) is a good plugin with prettier pretty-printing and a much faster tree viewer. This plugin also features JavaScript minification.
+
+While not a JSON plugin per se, [PythonScript](https://github.com/bruderstein/PythonScript) enables Notepad++ users to customize the editor with Python scripts. Since Python has an excellent native JSON library, you could easily use this plugin to create custom scripts for working with JSON.
+
+### VSCode ###
+
+[Visual Studio Code](https://code.visualstudio.com/) has native support for JSON with comments. Just go down to where the language is listed in the right side of the taskbar, and select `JSON with Comments` from the drop-down menu that appears at the top of the screen.
+
+VSCode has many useful tools for working with JSON Schema. VSCode's JSON Schema validation is much more robust than what this plugin offers. You can also configure the editor to [automatically use a certain JSON schema to validate JSON with a certain file path](https://code.visualstudio.com/Docs/languages/json#_json-schemas-and-settings). For example, you could configure the editor to always parse files with names like `*tweet*.json` with the schema `tweet_schema.json`.
+
+The same person who made JSMinNPP also made a [JSON/JavaScript plugin for VSCode](https://github.com/sunjw/jstoolnpp).
+
+### Emacs ###
+
+Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [PLUGIN NAME](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
+
 ## Acknowledgments ##
 
 * [Kasper B. Graverson](https://github.com/kbilsted) for creating the [plugin pack](https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net) that this is based on.

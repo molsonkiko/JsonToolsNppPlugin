@@ -17,7 +17,6 @@ namespace JSON_Tools.Tests
             int ii = 0;
             int tests_failed = 0;
             JsonParser parser = new JsonParser();
-            JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
             string[] tests = new string[]
             {
                 "[1, \"a\"]",
@@ -40,7 +39,7 @@ namespace JSON_Tools.Tests
                 JObject schema;
                 try
                 {
-                    schema = (JObject)schemaMaker.GetSchema(node);
+                    schema = (JObject)JsonSchemaMaker.GetSchema(node);
                 }
                 catch (Exception ex2)
                 {
@@ -58,7 +57,7 @@ namespace JSON_Tools.Tests
                     // 2. No keys not in schema can be present
                     // 3. make sure that random objects have a random number of keys (if required is a proper subset of all possible keys)
                     // 4. Make sure that random objects sometimes have every possible key
-                    ii += 4;
+                    ii += 3;
                     try
                     {
                         JArray required_arr = (JArray)schema["required"];

@@ -178,7 +178,7 @@
     <Compile Include="JSONTools\JsonGrepper.cs" />
     <Compile Include="JSONTools\JsonParser.cs" />
     <Compile Include="JSONTools\RandomJsonFromSchema.cs" />
-    <Compile Include="JSONTools\JsonSchema.cs" />
+    <Compile Include="JSONTools\JsonSchemaMaker.cs" />
     <Compile Include="JSONTools\JsonSchemaValidator.cs" />
     <Compile Include="JSONTools\JsonTabularize.cs" />
     <Compile Include="JSONTools\RemesPath.cs" />

@@ -61,7 +61,6 @@ namespace JSON_Tools.Forms
             query_result = json;
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
-            schemaMaker = new JsonSchemaMaker();
             findReplaceForm = null;
             use_tree = Main.settings.use_tree;
             max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;

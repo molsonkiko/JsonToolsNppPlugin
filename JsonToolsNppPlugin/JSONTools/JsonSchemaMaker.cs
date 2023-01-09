@@ -108,7 +108,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="anyOf"></param>
         /// <returns></returns>
-        public List<object> CompactAnyOf(List<object> anyOf)
+        private static List<object> CompactAnyOf(List<object> anyOf)
         {
             var object_anyof = new Dictionary<string, object>();
             var array_anyof = new Dictionary<string, object>();
@@ -148,7 +148,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="s1"></param>
         /// <param name="s2"></param>
         /// <returns></returns>
-        public Dictionary<string, object> MergeSchemas(Dictionary<string, object> s1, Dictionary<string, object> s2)
+        private static Dictionary<string, object> MergeSchemas(Dictionary<string, object> s1, Dictionary<string, object> s2)
         {
             if (s1.Count == 0) return s2;
             if (s2.Count == 0) return s1;
@@ -381,7 +381,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        public Dictionary<string, object> BuildSchema(JNode json)
+        public static Dictionary<string, object> BuildSchema(JNode json)
         {
             Dtype tipe = json.type;
             var schema = new Dictionary<string, object> { { "type", tipe } };
@@ -432,7 +432,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private int SchemaComparer(JNode x, JNode y)
+        private static int SchemaComparer(JNode x, JNode y)
         {
             JObject xobj = (JObject)x;
             JObject yobj = (JObject)y;
@@ -477,7 +477,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="schema"></param>
         /// <returns></returns>
-        public JNode SchemaToJNode(object schema)
+        public static JNode SchemaToJNode(object schema)
         {
             if (schema is Dtype type)
             {
@@ -536,7 +536,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public JNode GetSchema(JNode obj)
+        public static JNode GetSchema(JNode obj)
         {
             var schema = new Dictionary<string, object>(BASE_SCHEMA);
             foreach (KeyValuePair<string, object> kv in BuildSchema(obj))

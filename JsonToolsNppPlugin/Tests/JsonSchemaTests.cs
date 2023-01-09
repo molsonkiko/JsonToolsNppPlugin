@@ -10,7 +10,6 @@ namespace JSON_Tools.Tests
         public static void Test()
         {
             JsonParser jsonParser = new JsonParser();
-            JsonSchemaMaker sch_maker = new JsonSchemaMaker();
             string[][] testcases = new string[][]
             {
                 new string[]{ "[1, \"1\"]", "{\"type\": \"array\", \"items\": {\"type\": [\"integer\", \"string\"]}}" },
@@ -193,7 +192,7 @@ namespace JSON_Tools.Tests
             };
             int ii = 0;
             int tests_failed = 0;
-            JObject base_schema_j = (JObject)sch_maker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
+            JObject base_schema_j = (JObject)JsonSchemaMaker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
             foreach (string[] test in testcases)
             {
                 string inp = test[0];
@@ -209,7 +208,7 @@ namespace JSON_Tools.Tests
                 JNode schema = new JNode();
                 try
                 {
-                    schema = sch_maker.GetSchema(jinp);
+                    schema = JsonSchemaMaker.GetSchema(jinp);
                     try
                     {
                         if (!schema.Equals(desired_schema))

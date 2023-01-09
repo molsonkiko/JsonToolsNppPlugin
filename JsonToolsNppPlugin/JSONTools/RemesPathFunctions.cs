@@ -1146,7 +1146,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode ToRecords(List<JNode> args)
         {
             JNode arg = args[0];
-            Dictionary<string, object> schema = new JsonSchemaMaker().BuildSchema(arg);
+            Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(arg);
             char strat = args[1].value == null ? 'd' : ((string)args[1].value)[0];
             switch (strat)
             {

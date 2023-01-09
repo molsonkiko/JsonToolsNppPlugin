@@ -424,7 +424,6 @@ namespace JSON_Tools.Tests
 			};
 			JsonParser jsonParser = new JsonParser();
 			JsonTabularizer tabularizer = new JsonTabularizer();
-			JsonSchemaMaker schema_maker = new JsonSchemaMaker();
 			int tests_failed = 0;
 			int ii = 0;
 			foreach (string[] test in testcases)
@@ -434,8 +433,8 @@ namespace JSON_Tools.Tests
 				string key_sep = test[2];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
-				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
-				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
+				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
+				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
 				JNode result = new JNode();
 				string base_message = $"Expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
@@ -668,8 +667,8 @@ namespace JSON_Tools.Tests
 				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
-				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
-				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
+				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
+				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
 				JNode result = new JNode();
 				string base_message = $"With recursive search turned off, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
@@ -728,8 +727,8 @@ namespace JSON_Tools.Tests
 				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
-				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
-				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
+				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
+				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
 				JNode result = new JNode();
 				string base_message = $"With full recursive strategy, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
@@ -811,8 +810,8 @@ namespace JSON_Tools.Tests
 				string desired_out = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
-				Dictionary<string, object> schema = schema_maker.BuildSchema(jinp);
-				//Npp.AddText($"schema for {inp}:\n{schema_maker.SchemaToJNode(schema).ToString()}");
+				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
+				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
 				JNode jdesired_out = jsonParser.Parse(desired_out);
 				JNode result = new JNode();
 				string base_message = $"With stringified iterables, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";

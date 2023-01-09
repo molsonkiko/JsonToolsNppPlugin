@@ -14,13 +14,11 @@ namespace JSON_Tools.Forms
     {
         public JsonTabularizer tabularizer;
         public JNode json;
-        public JsonSchemaMaker schemaMaker;
         public JsonToCsvForm(JNode json)
         {
             InitializeComponent();
             tabularizer = new JsonTabularizer();
             this.json = json;
-            schemaMaker = new JsonSchemaMaker();
             DelimBox.SelectedIndex = 0;
             StrategyBox.SelectedIndex = 0;
             //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
@@ -74,7 +72,7 @@ namespace JSON_Tools.Forms
             string csv = "";
             try
             {
-                Dictionary<string, object> schema = schemaMaker.BuildSchema(json);
+                Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(json);
                 JNode tab = tabularizer.BuildTable(json, schema, keysep);
                 csv = tabularizer.TableToCsv((JArray)tab, delim, '"', null, BoolsToIntsCheckBox.Checked);
             }

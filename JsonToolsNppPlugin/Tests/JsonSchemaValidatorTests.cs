@@ -342,6 +342,83 @@ namespace JSON_Tools.Tests
                     "}",
                     false // object expected in array, but got number
                 ),
+                new SchemaValidatesJson(
+                    "{\"a1\": 1.5, \"a2\": \"NA\", \"a3\": -7.3, \"foo\": true}",
+                    "{" +
+                        "\"type\": \"object\", " +
+                        "\"patternProperties\": {" +
+                            "\"a\\\\d+\": {\"type\": [\"number\", \"string\"]}" +
+                        "}, " +
+                        "\"properties\": {" +
+                            "\"foo\": {\"type\": \"boolean\"}" +
+                        "}," +
+                        "\"required\": [\"foo\"]" +
+                    "}", // test patternProperties with object that has pattern
+                         // keys and non-pattern keys
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "{\"foo\": true}",
+                    "{" +
+                        "\"type\": \"object\", " +
+                        "\"patternProperties\": {" +
+                            "\"a\\\\d+\": {\"type\": [\"number\", \"string\"]}" +
+                        "}, " +
+                        "\"properties\": {" +
+                            "\"foo\": {\"type\": \"boolean\"}" +
+                        "}," +
+                        "\"required\": [\"foo\"]" +
+                    "}", // test patternProperties with object that does not have 
+                         // pattern keys
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "{\"a1\": null, \"a2\": \"NA\", \"a3\": -7.3, \"foo\": true}",
+                    "{" +
+                        "\"type\": \"object\", " +
+                        "\"patternProperties\": {" +
+                            "\"a\\\\d+\": {\"type\": [\"number\", \"string\"]}" +
+                        "}, " +
+                        "\"properties\": {" +
+                            "\"foo\": {\"type\": \"boolean\"}" +
+                        "}," +
+                        "\"required\": [\"foo\"]" +
+                    "}", // test patternProperties with object that has pattern
+                         // keys and non-pattern keys, and a pattern key
+                         // violates its subschema
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "{\"a1\": 1.5, \"a2\": \"NA\", \"a3\": -7.3, \"b1\": null}",
+                    "{" +
+                        "\"type\": \"object\", " +
+                        "\"patternProperties\": {" +
+                            "\"a\\\\d+\": {\"type\": [\"number\", \"string\"]}, " +
+                            "\"b\\\\d+\": {\"type\": [\"null\", \"boolean\"]}" +
+                        "}, " +
+                        "\"properties\": {" +
+                            "\"foo\": {\"type\": \"boolean\"}" +
+                        "}" +
+                    "}", // test patternProperties with object that has
+                         // multiple patterns
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "{\"a1\": 1.5, \"a2\": \"NA\", \"a3\": -7.3, \"b1\": \"bad\"}",
+                    "{" +
+                        "\"type\": \"object\", " +
+                        "\"patternProperties\": {" +
+                            "\"a\\\\d+\": {\"type\": [\"number\", \"string\"]}, " +
+                            "\"b\\\\d+\": {\"type\": [\"null\", \"boolean\"]}" +
+                        "}, " +
+                        "\"properties\": {" +
+                            "\"foo\": {\"type\": \"boolean\"}" +
+                        "}" +
+                    "}", // test patternProperties with object that has
+                         // multiple patterns, and one pattern has a
+                         // nonconforming key
+                    false
+                ),
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
             string testfiles_path = @"plugins\JsonTools\testfiles\";

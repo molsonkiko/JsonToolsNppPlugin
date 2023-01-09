@@ -134,7 +134,7 @@ namespace JSON_Tools.Forms
                 // can only filter on values when in math mode, so don't consider KeysValsBothBox
                 if (RecursiveSearchBox.Checked)
                 {
-                    findQuery = $"(({root}..*)[is_num(@)])[@ {FindTextBox.Text}]";
+                    findQuery = $"((({root})..*)[is_num(@)])[@ {FindTextBox.Text}]";
                     return;
                 }
                 findQuery = $"(({root}.*)[is_num(@)])[@ {FindTextBox.Text}]";
@@ -171,7 +171,7 @@ namespace JSON_Tools.Forms
                 switch (KeysValsBothBox.SelectedIndex)
                 {
                     case 0: // keys
-                        findQuery = $"{root}..{keys_find_text}";
+                        findQuery = $"({root})..{keys_find_text}";
                         break;
                     case 1: // values
                         findQuery = $"(({root})..*){values_find_text}";

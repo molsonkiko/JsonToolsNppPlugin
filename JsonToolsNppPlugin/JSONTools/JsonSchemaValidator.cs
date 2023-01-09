@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -227,6 +228,8 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (json is JObject obj)
             {
+                if (!schema.children.TryGetValue("properties", out JNode properties))
+                    return true; // no properties keyword means anything goes
                 if (!schema.children.TryGetValue("required", out JNode required))
                     required = new JArray();
                 foreach (JNode required_key in ((JArray)required).children)
@@ -244,9 +247,27 @@ namespace JSON_Tools.JSON_Tools
                         return false;
                     }
                 }
-                if (!schema.children.TryGetValue("properties", out JNode properties))
-                    return true; // no properties keyword means anything goes
                 JObject props = (JObject)properties;
+                if (schema.children.TryGetValue("patternProperties", out JNode pattern_props_node)
+                    && pattern_props_node is JObject pattern_props)
+                {
+                    // "patternProperties" have regular expressions as keys.
+                    // If a key in an object matches one of the regexes
+                    // in patternProperties, the corresponding value in the object
+                    // must validate under that
+                    // pattern's subschema in patternProperties.
+                    foreach (string key in obj.children.Keys)
+                    {
+                        foreach (string pattern in pattern_props.children.Keys)
+                        {
+                            if (!new Regex(pattern.Replace("\\\\", "\\")).IsMatch(key))
+                                continue;
+                            JNode pattern_subschema = pattern_props[pattern];
+                            if (!Validates(obj[key], pattern_subschema, out vp))
+                                return false;
+                        }
+                    }
+                }
                 foreach (string key in props.children.Keys)
                 {
                     // for each property name in the schema, make sure that

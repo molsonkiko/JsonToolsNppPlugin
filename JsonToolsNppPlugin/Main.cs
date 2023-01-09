@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -30,7 +31,6 @@ namespace Kbg.NppPluginNET
                                                             false,
                                                             settings.allow_nan_inf);
         public static RemesParser remesParser = new RemesParser();
-        public static JsonSchemaMaker schemaMaker = new JsonSchemaMaker();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string active_fname = null;
         public static TreeViewer openTreeViewer = null;
@@ -38,11 +38,10 @@ namespace Kbg.NppPluginNET
         private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
         private static bool should_rename_grepperForm = false;
         public static GrepperForm grepperForm = null;
-        //public static Form nodeSelectedForm = null;
         public static bool grepperTreeViewJustOpened = false;
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
-
+        //public static JObject schemas_to_fname_patterns = new JObject();
         // toolbar icons
         static Bitmap tbBmp_tbTab = Resources.star_bmp;
         static Icon tbIcon = null;
@@ -81,7 +80,9 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(8, "Parse JSON Li&nes document", () => OpenJsonTree(true));
             PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "&Validate JSON against JSON schema", ValidateJson);
+            PluginBase.SetCommand(11, "&Validate JSON against JSON schema", () => ValidateJson());
+            //PluginBase.SetCommand(12, "Choose schemas to automatically validate &filename patterns",
+                //MapSchemasToFnamePatterns);
             PluginBase.SetCommand(12, "Generate sc&hema from JSON", GenerateJsonSchema);
             PluginBase.SetCommand(13, "Generate &random JSON from schema", GenerateRandomJson);
             PluginBase.SetCommand(14, "---", null);
@@ -89,9 +90,25 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(16, "Run &tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 16;
 
-            //// set mouse dwell time in preparation for mouse dwell related-methods
-            //Npp.editor.SetMouseDwellTime(400);
-            //nodeSelectedLabelId = 14;
+            //// read schemas_to_fname_patterns.json in config directory (if it exists)
+            //string config_dir = Npp.notepad.GetConfigDirectory();
+            //FileInfo schemas_to_fname_patterns_file = new FileInfo(Path.Combine(config_dir, Main.PluginName, "schemas_to_fname_patterns.json"));
+            //if (schemas_to_fname_patterns_file.Exists)
+            //{
+            //    using (var fp = new StreamReader(schemas_to_fname_patterns_file.OpenRead(), Encoding.UTF8, true))
+            //    {
+            //        try
+            //        {
+            //            JsonParser jParser = new JsonParser(allow_javascript_comments: true);
+            //            schemas_to_fname_patterns = (JObject)jParser.Parse(fp.ReadToEnd());
+            //        }
+            //        catch
+            //        {
+            //            schemas_to_fname_patterns_file.Delete();
+            //            return;
+            //        }
+            //    }
+            //}
         }
 
         public static void OnNotification(ScNotification notification)
@@ -160,6 +177,20 @@ namespace Kbg.NppPluginNET
                     }
                     grepperTreeViewJustOpened = false;
                     active_fname = new_fname;
+                    // check if this filename matches any filename patterns associated with any schema
+                    //foreach (string schema_fname in schemas_to_fname_patterns.children.Keys)
+                    //{
+                    //    JArray fname_patterns = (JArray)schemas_to_fname_patterns[schema_fname];
+                    //    foreach (JNode pat in fname_patterns.children)
+                    //    {
+                    //        if (!new Regex((string)pat.value).IsMatch(active_fname))
+                    //            continue;
+                    //        // the filename matches a pattern for this schema, so we'll try to validate
+                    //        // if validation succeeds, we'll say nothing. On failure, notify user.
+                    //        ValidateJson(schema_fname, false);
+                    //        return;
+                    //    }
+                    //}
                     return;
                 // when closing a file
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
@@ -269,6 +300,17 @@ namespace Kbg.NppPluginNET
                 treeViewers[key].Dispose();
                 treeViewers[key] = null;
             }
+            //if (schemas_to_fname_patterns.Length == 0) return;
+            //// save schemas_to_fname_patterns to a JSON file so it can be restored next time
+            //string config_dir = Npp.notepad.GetConfigDirectory();
+            //FileInfo schemas_to_fname_patterns_file = new FileInfo(Path.Combine(config_dir, Main.PluginName, "schemas_to_fname_patterns.json"));
+            //using (var fp = new StreamWriter(schemas_to_fname_patterns_file.OpenWrite(), Encoding.UTF8))
+            //{
+            //    fp.WriteLine("// each key should be the filename of a JSON schema file");
+            //    fp.WriteLine("// each value should be a list of valid POSIX regular expressions (e.g., [\".*blah.*\\.txt\"]");
+            //    fp.Write(schemas_to_fname_patterns.PrettyPrint());
+            //    fp.Flush();
+            //}
         }
         #endregion
 
@@ -493,18 +535,22 @@ namespace Kbg.NppPluginNET
         /// Send the user a message telling the user if validation succeeded,
         /// or if it failed, where the first error was.
         /// </summary>
-        static void ValidateJson()
+        static void ValidateJson(string schema_path=null, bool message_on_success=true)
         {
             JNode json = TryParseJson();
             if (json == null) return;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            FileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*";
-            openFileDialog.FilterIndex = 0;
-            openFileDialog.Title = "Select JSON schema file to validate against";
-            if (openFileDialog.ShowDialog() != DialogResult.OK || !openFileDialog.CheckFileExists)
-                return;
-            string schema_text = File.ReadAllText(openFileDialog.FileName);
+            if (schema_path == null)
+            {
+                FileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 0;
+                openFileDialog.Title = "Select JSON schema file to validate against";
+                if (openFileDialog.ShowDialog() != DialogResult.OK || !openFileDialog.CheckFileExists)
+                    return;
+                schema_path = openFileDialog.FileName;
+            }
+            string schema_text = File.ReadAllText(schema_path);
             JNode schema;
             try
             {
@@ -512,14 +558,8 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While trying to parse the schema at path {openFileDialog.FileName}, the following error occurred:\r\n{ex}", "error while trying to parse schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"While trying to parse the schema at path {schema_path}, the following error occurred:\r\n{ex}", "error while trying to parse schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
-            }
-            if (MessageBox.Show("Schema parsing successful. Open the schema in a new buffer?", "Open schema in a new buffer?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                Npp.notepad.FileNew();
-                int byte_count = Encoding.UTF8.GetByteCount(schema_text);
-                Npp.editor.AppendText(byte_count, schema_text);
             }
             bool validates;
             JsonSchemaValidator.ValidationProblem? problem;
@@ -529,18 +569,19 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception e)
             {
-                MessageBox.Show($"While validating JSON against the schema at path {openFileDialog.FileName}, the following error occurred:\r\n{e}",
+                MessageBox.Show($"While validating JSON against the schema at path {schema_path}, the following error occurred:\r\n{e}",
                     "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (!validates)
             {
                 Npp.editor.GotoLine((int)problem?.line_num);
-                MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {openFileDialog.FileName}. Problem description:\n{problem}",
+                MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {schema_path}. Problem description:\n{problem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            MessageBox.Show($"The JSON in file {cur_fname} validates against the schema at path {openFileDialog.FileName}.",
+            if (!message_on_success) return;
+            MessageBox.Show($"The JSON in file {cur_fname} validates against the schema at path {schema_path}.",
                 "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -554,7 +595,7 @@ namespace Kbg.NppPluginNET
             JNode schema = new JNode();
             try
             {
-                schema = schemaMaker.GetSchema(json);
+                schema = JsonSchemaMaker.GetSchema(json);
             }
             catch (Exception ex)
             {
@@ -594,7 +635,7 @@ namespace Kbg.NppPluginNET
                 {
                     // the most likely reason for an exception above is that the JSON file wasn't a schema at all.
                     // we will instead build a JSON schema from the file, and use that as the basis for generating random JSON.
-                    JNode schema = new JsonSchemaMaker().GetSchema(json);
+                    JNode schema = JsonSchemaMaker.GetSchema(json);
                     randomJson = RandomJsonFromSchema.RandomJson(schema, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings);
                 }
                 catch (Exception ex)
@@ -722,6 +763,34 @@ namespace Kbg.NppPluginNET
             aboutForm.ShowDialog();
             aboutForm.Focus();
         }
+
+        //static void MapSchemasToFnamePatterns()
+        //{
+        //    string config_dir = Npp.notepad.GetConfigDirectory();
+        //    FileInfo schemas_to_fname_patterns_file = new FileInfo(Path.Combine(config_dir, Main.PluginName, "schemas_to_fname_patterns.json"));
+        //    if (!schemas_to_fname_patterns_file.Exists)
+        //    {
+        //        schemas_to_fname_patterns_file.Create();
+        //    }
+        //    Npp.notepad.OpenFile(schemas_to_fname_patterns_file.FullName);
+        //    if (schemas_to_fname_patterns_file.Exists)
+        //    {
+        //        JNode schemas_to_fname_patterns_json = new JNode();
+        //        using (var fp = new StreamReader(schemas_to_fname_patterns_file.OpenRead(), Encoding.UTF8, true))
+        //        {
+        //            try
+        //            {
+        //                JsonParser jParser = new JsonParser(allow_javascript_comments: true);
+        //                schemas_to_fname_patterns = (JObject)jParser.Parse(fp.ReadToEnd());
+        //            }
+        //            catch
+        //            {
+        //                schemas_to_fname_patterns_file.Delete();
+        //                return;
+        //            }
+        //        }
+        //    }
+        //}
         #endregion
     }
 }   
