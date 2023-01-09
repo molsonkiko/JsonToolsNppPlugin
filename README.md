@@ -76,7 +76,7 @@ The same person who made JSMinNPP also made a [JSON/JavaScript plugin for VSCode
 
 ### Emacs ###
 
-Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [PLUGIN NAME](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
+Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [JSON mode](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
 
 ## Acknowledgments ##
 
