@@ -66,13 +66,19 @@ Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonTo
 
 While not a JSON plugin per se, [PythonScript](https://github.com/bruderstein/PythonScript) enables Notepad++ users to customize the editor with Python scripts. Since Python has an excellent native JSON library, you could easily use this plugin to create custom scripts for working with JSON.
 
+Because Python has good 3rd-party packages for working with [YAML](https://pypi.org/project/PyYAML/) and [TOML](https://pypi.org/project/toml/) (two good alternatives to JSON), PythonScript could potentially be used to allow this package to work with YAML and TOML.
+
 ### VSCode ###
 
 [Visual Studio Code](https://code.visualstudio.com/) has native support for JSON with comments. Just go down to where the language is listed in the right side of the taskbar, and select `JSON with Comments` from the drop-down menu that appears at the top of the screen.
 
+VSCode also has a built-in JSON tree viewer and some support for searching for keys and indices in JSON.
+
 VSCode has many useful tools for working with JSON Schema. VSCode's JSON Schema validation is much more robust than what this plugin offers. You can also configure the editor to [automatically use a certain JSON schema to validate JSON with a certain file path](https://code.visualstudio.com/Docs/languages/json#_json-schemas-and-settings). For example, you could configure the editor to always parse files with names like `*tweet*.json` with the schema `tweet_schema.json`.
 
-The same person who made JSMinNPP also made a [JSON/JavaScript plugin for VSCode](https://github.com/sunjw/jstoolnpp).
+The [JSON Tools](https://marketplace.visualstudio.com/items?itemName=eriklynd.json-tools) plugin provides the same pretty-print and minify functionalities as this plugin.
+
+Finally, the [Encode/Decode](https://github.com/mitchdenny/ecdc) plugin allows fast interconversion of YAML and JSON, among other things.
 
 ### Emacs ###
 
