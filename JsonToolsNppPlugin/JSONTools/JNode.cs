@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
+using System.Windows.Forms.VisualStyles;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -433,11 +434,18 @@ namespace JSON_Tools.JSON_Tools
                                 // 4.5036e15 (2 ^ 52) and 9.2234e18 (2 ^ 63)
                                 // can be precisely represented by longs but not by doubles,
                                 // so very large integers will have a loss of precision.
-                case Dtype.FLOAT: return Convert.ToDouble(value).CompareTo(Convert.ToDouble(other));
-                case Dtype.BOOL: return ((bool)value).CompareTo(Convert.ToBoolean(other));
+                case Dtype.FLOAT:
+                    if (!(other is long || other is double || other is bool))
+                        throw new ArgumentException("Can't compare numbers to non-numbers");
+                    return Convert.ToDouble(value).CompareTo(Convert.ToDouble(other));
+                case Dtype.BOOL:
+                    if (!(other is long || other is double || other is bool))
+                        throw new ArgumentException("Can't compare numbers to non-numbers");
+                    if ((bool)value) return (1.0).CompareTo(Convert.ToDouble(other));
+                    return (0.0).CompareTo(Convert.ToDouble(other));
                 case Dtype.NULL:
-                if (other != null) { throw new ArgumentException("Cannot compare null to non-null"); }
-                return 0;
+                    if (other != null) { throw new ArgumentException("Cannot compare null to non-null"); }
+                    return 0;
                 case Dtype.DATE: // return ((DateOnly)value).CompareTo((DateOnly)other);
                 case Dtype.DATETIME: return ((DateTime)value).CompareTo((DateTime)other);
                 default: throw new ArgumentException($"Cannot compare JNodes of type {type}");

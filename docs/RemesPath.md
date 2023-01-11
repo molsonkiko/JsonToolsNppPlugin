@@ -84,6 +84,10 @@ As in normal math, the unary minus operator (e.g., `-5`) has lower precedence th
 
 All binary operators are [left-associative](https://en.wikipedia.org/wiki/Operator_associativity) (evaluated left-to-right when precedence is tied), except exponentiation (`**`), which is right-associative.
 
+In general, binary operators *should* raise an exception when two objects of unequal type are compared. The only exception is that numbers (including booleans) may be freely compared to other numbers, and ints and floats can freely interoperate.
+
+If you find that a binary operator can operate on a number and a non-number without raising an exception, *this is a bug in my implementation.*
+
 
 ## Regular expressions and JSON literals ##
 

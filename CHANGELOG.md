@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#482---2022-01-09) to this project will be documented in this file.
+All [notable changes](#490---2022-01-11) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+
+## [4.9.0] - 2022-01-11
+
+### Changed
+
+1. Adding an integer to any non-integer, non-float type will now raise an error.
+2. true and false will be treated as 1 and 0 respectively for the purposes of comparison operations.
+3. Any comparison of an integer, boolean, or float to anything not of one of those types will raise an error.
 
 ## [4.8.2] - 2022-01-09
 

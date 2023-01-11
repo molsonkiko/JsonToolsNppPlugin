@@ -69,7 +69,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(aval) + Convert.ToInt64(bval), Dtype.INT, 0);
             }
-            if (((atype & Dtype.FLOAT_OR_INT) != 0) && ((atype & Dtype.FLOAT_OR_INT) != 0))
+            if (((atype & Dtype.FLOAT_OR_INT) != 0) && ((btype & Dtype.FLOAT_OR_INT) != 0))
             {
                 return new JNode(Convert.ToDouble(aval) + Convert.ToDouble(bval), Dtype.FLOAT, 0);
             }

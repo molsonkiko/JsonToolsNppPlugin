@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.JSON_Tools;
@@ -211,6 +212,49 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("str(range(3)) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
                 new Query_DesiredResult("str(@.foo[0]) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
                 new Query_DesiredResult("`a` + str(@.foo[0])", "[\"a0\", \"a1\", \"a2\"]"),
+                // comparison tests
+                // comparisons of booleans
+                new Query_DesiredResult("2 < true", "false"),
+                new Query_DesiredResult("2 > true", "true"),
+                new Query_DesiredResult("2 == true", "false"),
+                new Query_DesiredResult("true < 2", "true"),
+                new Query_DesiredResult("true > 2", "false"),
+                new Query_DesiredResult("true == 2", "false"),
+                new Query_DesiredResult("0.5 > true", "false"),
+                new Query_DesiredResult("0.5 < true", "true"),
+                new Query_DesiredResult("0.5 == true", "false"),
+                new Query_DesiredResult("1.0 == true", "true"),
+                new Query_DesiredResult("1.0 < true", "false"),
+                new Query_DesiredResult("1.0 > true", "false"),
+                new Query_DesiredResult("true == 1.0", "true"),
+                new Query_DesiredResult("true < 1.0", "false"),
+                new Query_DesiredResult("true > 1.0", "false"),
+                new Query_DesiredResult("0.0 == false", "true"),
+                new Query_DesiredResult("0.0 < false", "false"),
+                new Query_DesiredResult("0.0 > false", "false"),
+                new Query_DesiredResult("false == 0.0", "true"),
+                new Query_DesiredResult("false < 0.0", "false"),
+                new Query_DesiredResult("false > 0.0", "false"),
+                new Query_DesiredResult("false > true", "false"),
+                new Query_DesiredResult("false < true", "true"),
+                new Query_DesiredResult("false == true", "false"),
+                new Query_DesiredResult("-1 > false", "false"),
+                new Query_DesiredResult("-1 < false", "true"),
+                new Query_DesiredResult("-1 == false", "false"),
+                new Query_DesiredResult("false < -1", "false"),
+                new Query_DesiredResult("false > -1", "true"),
+                new Query_DesiredResult("false == -1", "false"),
+                // comparisons between ints and floats
+                new Query_DesiredResult("-1 < -0.6", "true"),
+                new Query_DesiredResult("-1 > -0.6", "false"),
+                new Query_DesiredResult("17 < 17.4", "true"),
+                new Query_DesiredResult("17.4 > 17", "true"),
+                new Query_DesiredResult("17 == 17.4", "false"),
+                new Query_DesiredResult("17.4 == 17", "false"),
+                new Query_DesiredResult("17 > 16.6", "true"),
+                new Query_DesiredResult("17 == 16.6", "false"),
+                new Query_DesiredResult("16.6 < 17", "true"),
+                new Query_DesiredResult("16.6 == 17", "false"),
                 // uminus tests
                 new Query_DesiredResult("-j`[1]`", "[-1]"),
                 new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -1/8]"),
@@ -414,14 +458,26 @@ namespace JSON_Tools.Tests
                 new string[] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
 });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
-            string[] invalid_others = new string[] { "{}", "[]", "\"\"" };
+            string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
             foreach (string other in invalid_others)
             {
                 foreach (string bop in Binop.BINOPS.Keys)
                 {
                     testcases.Add(new string[] { $"@ {bop} 1", $"[{other}]" });
+                    testcases.Add(new string[] { $"1 {bop} @", $"[{other}]" });
                     // now try it with JSON literals defined inside the query
                     testcases.Add(new string[] { $"j`[{other}]` {bop} 1", "null" });
+                    testcases.Add(new string[] { $"1 {bop} j`[{other}]`", "null" });
+                    // now do it for booleans
+                    testcases.Add(new string[] { $"@ {bop} true", $"[{other}]" });
+                    testcases.Add(new string[] { $"true {bop} @", $"[{other}]" });
+                    testcases.Add(new string[] { $"j`[{other}]` {bop} true", "null" });
+                    testcases.Add(new string[] { $"true {bop} j`[{other}]`", "null" });
+                    // now do it for doubles
+                    testcases.Add(new string[] { $"@ {bop} 1.0", $"[{other}]" });
+                    testcases.Add(new string[] { $"1.0 {bop} @", $"[{other}]" });
+                    testcases.Add(new string[] { $"j`[{other}]` {bop} 1.0", "null" });
+                    testcases.Add(new string[] { $"1.0 {bop} j`[{other}]`", "null" });
                 }
             }
             foreach (string[] test in testcases)
