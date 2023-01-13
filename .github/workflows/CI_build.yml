@@ -1,6 +1,11 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'testfiles/**'
 
 jobs:
   build:

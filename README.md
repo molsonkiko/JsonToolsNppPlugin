@@ -84,6 +84,13 @@ Finally, the [Encode/Decode](https://github.com/mitchdenny/ecdc) plugin allows f
 
 Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [JSON mode](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
 
+### Websites ###
+
+[This website](https://codebeautify.org/jsonviewer) offers (limited) JSON->CSV conversion, pretty-printing (appears to use the same algorithm as me), minifying, JSON->XML conversion, schema validation, and a pretty good tree viewer.
+
+I expect you could find plenty of other good websites if you did some research.
+
+
 ## Acknowledgments ##
 
 * [Kasper B. Graverson](https://github.com/kbilsted) for creating the [plugin pack](https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net) that this is based on.
