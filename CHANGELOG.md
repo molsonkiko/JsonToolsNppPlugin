@@ -33,6 +33,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
 
+## [4.9.1] - 2022-01-12
+
+### Fixed
+
+1. Problems with `stringify iterables` strategy of JSON->CSV with objects mapping to arrays where some of the arrays have unequal length.
+
 ## [4.9.0] - 2022-01-11
 
 ### Changed

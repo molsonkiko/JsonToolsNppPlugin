@@ -743,9 +743,9 @@ namespace JSON_Tools.JSON_Tools
 				foreach (string k in arr_dict.Keys)
 				{
 					JArray v = arr_dict[k];
-					// if one array is longer than others, the missing values from the short rows are filled by
-					// empty strings
-					if (ii > v.Length)
+					// if one array is longer than others, the missing values from the short rows
+					// are filled by empty strings
+					if (ii >= v.Length)
 						newrec[k] = new JNode("", Dtype.STR, 0);
                     else
                     {
@@ -758,7 +758,9 @@ namespace JSON_Tools.JSON_Tools
 							newrec[k] = subchild;
                     }
 				}
-				foreach (string k in not_arr_dict.Keys) { JNode v = not_arr_dict[k]; newrec[k] = v; }
+				// now add in all the non-array values
+				foreach (string k in not_arr_dict.Keys)
+					newrec[k] = not_arr_dict[k];
 				result.Add(new JObject(0, newrec));
 			}
 		}

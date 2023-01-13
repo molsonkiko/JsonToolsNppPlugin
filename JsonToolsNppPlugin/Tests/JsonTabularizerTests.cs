@@ -802,7 +802,36 @@ namespace JSON_Tools.Tests
                         "{\"a\": 1.5, \"b\": \"{\\\"y\\\": \\\"z\\\"}\", \"c\": \"c\"}" +
                     "]"
 				},
-		};
+				new string[]
+				{ // object with child arrays, one of which is longer than the others
+					"{\"a\": [\"x\", \"y\", \"z\"], \"b\": [[1], [2,3]], \"c\": [1.0,2.0,3.0,4.0]}",
+					"[" +
+						"{\"a\": \"x\", \"b\": \"[1]\", \"c\": 1.0}, " +
+                        "{\"a\": \"y\", \"b\": \"[2, 3]\", \"c\": 2.0}, " +
+                        "{\"a\": \"z\", \"b\": \"\", \"c\": 3.0}, " +
+                        "{\"a\": \"\", \"b\": \"\", \"c\": 4.0} " +
+                    "]"
+				},
+                new string[]
+                { // object with child arrays, one of which is longer than the others, and a non-array
+					"{\"a\": [\"x\", \"y\", \"z\"], \"b\": [[1], [2.2,3]], \"c\": NaN}",
+                    "[" +
+                        "{\"a\": \"x\", \"b\": \"[1]\", \"c\": NaN}, " +
+                        "{\"a\": \"y\", \"b\": \"[2.2, 3]\", \"c\": NaN}, " +
+                        "{\"a\": \"z\", \"b\": \"\", \"c\": NaN}" +
+                    "]"
+                },
+                new string[]{
+                "[" +
+                    "[1, [2.5], \"a\"]," +
+                    "[2, [3.5], \"b\"]" +
+                "]", // array of deep-nested arrays
+				"[" +
+                    "{\"col1\": 1, \"col2\": \"[2.5]\", \"col3\": \"a\"}," +
+                    "{\"col1\": 2, \"col2\": \"[3.5]\", \"col3\": \"b\"}" +
+                "]"
+                },
+        };
 
 			foreach (string[] test in stringify_iterables_testcases)
 			{
