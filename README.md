@@ -95,4 +95,5 @@ I expect you could find plenty of other good websites if you did some research.
 
 * [Kasper B. Graverson](https://github.com/kbilsted) for creating the [plugin pack](https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net) that this is based on.
 * [Bas de Reuver](https://github.com/BdR76) for making the excellent [CSVLint](https://github.com/BdR76/CSVLint) plugin that I've consulted extensively in writing the code.
+* Everyone who took the time to raise issues and help improve the plugin, especially [vinsworldcom](https://github.com/vinsworldcom).
 * And of course, Don Ho for creating [Notepad++](https://notepad-plus-plus.org/)!

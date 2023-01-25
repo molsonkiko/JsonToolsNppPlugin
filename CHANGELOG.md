@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
 
-## [4.9.1] - 2022-01-12
+## [4.9.0.1] - 2022-01-12
 
 ### Fixed
 
