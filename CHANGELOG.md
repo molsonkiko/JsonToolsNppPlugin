@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#490---2022-01-11) to this project will be documented in this file.
+All [notable changes](#491---2023-01-25) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
-- Various bugs with multi-instance/split view: most things only apply to one view, regardless of which one the user is currently using.
 - Fix bugs in YamlDumper.cs:
 	- fails when key contains quotes and colon
 	- fails when value contains quotes and newline
@@ -33,13 +32,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
 
-## [4.9.0.1] - 2022-01-12
+## [4.9.1] - 2023-01-25
+
+### Fixed
+
+1. Prior to this release, JsonTools didn't track the active view/instance if there were multiple views/instances open. Now the plugin will track which view/instance you are currently editing and perform plugin actions accordingly.
+
+## [4.9.0.1] - 2023-01-12
 
 ### Fixed
 
 1. Problems with `stringify iterables` strategy of JSON->CSV with objects mapping to arrays where some of the arrays have unequal length.
 
-## [4.9.0] - 2022-01-11
+## [4.9.0] - 2023-01-11
 
 ### Changed
 
@@ -47,7 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. true and false will be treated as 1 and 0 respectively for the purposes of comparison operations.
 3. Any comparison of an integer, boolean, or float to anything not of one of those types will raise an error.
 
-## [4.8.2] - 2022-01-09
+## [4.8.2] - 2023-01-09
 
 ### Added
 

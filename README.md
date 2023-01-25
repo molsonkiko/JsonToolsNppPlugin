@@ -84,6 +84,23 @@ Finally, the [Encode/Decode](https://github.com/mitchdenny/ecdc) plugin allows f
 
 Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [JSON mode](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
 
+### Python ###
+
+Python's standard library [JSON](https://docs.python.org/3/library/json.html) module is excellent, albeit limited to syntactically correct JSON according to the original JSON standard.
+
+Python's package ecosystem is incredibly rich, so I can't possibly list all the useful tools here. Three that I've enjoyed working with are:
+1. [Pandas](https://pandas.pydata.org/). *The* Python tool for working with pretty much any kind of data. 'Nuff said.
+2. [GenSON](https://github.com/wolverdude/GenSON). A really user-friendly tool for JSON schema generation. Includes a CLI tool for JSON schema generation and a programmatic API. Has some tools for, e.g., merging two schemas, but I haven't used those tools as much.
+3. [DeepDiff](https://zepworks.com/deepdiff/current/index.html). This is super cool! It allows fast (and I mean REALLY FAST) comparison of two JSON documents to find how they differ. For instance, DeepDiff would correctly show that
+```json
+{"a": [1, 2, {"b": [3, 4]}]}
+```
+and
+```json
+{"a": [1, 2, {"b": [4, 4]}]}
+```
+differ in that the first element of `root['a'][2]['b']` was changed from 3 to 4.
+
 ### Websites ###
 
 [This website](https://codebeautify.org/jsonviewer) offers (limited) JSON->CSV conversion, pretty-printing (appears to use the same algorithm as me), minifying, JSON->XML conversion, schema validation, and a pretty good tree viewer.

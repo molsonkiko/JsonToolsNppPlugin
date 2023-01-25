@@ -126,6 +126,10 @@ namespace Kbg.NppPluginNET
             switch (code)
             {
                 case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                    // When a new buffer is activated, we need to reset the connector to the Scintilla editing component.
+                    // This is usually unnecessary, but if there are multiple instances or multiple views,
+                    // we need to track which of the currently visible buffers are actually being edited.
+                    Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
                     string new_fname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
                     if (active_fname != null)
                     {
