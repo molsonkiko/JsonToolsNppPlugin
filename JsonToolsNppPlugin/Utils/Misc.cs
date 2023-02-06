@@ -33,6 +33,9 @@ namespace JSON_Tools.Utils
             editor.AppendTextAndMoveCursor(System.Environment.NewLine);
         }
 
+        /// <summary>
+        /// set the lexer language to JSON so the file looks nice
+        /// </summary>
         public static void SetLangJson()
         {
             notepad.SetCurrentLanguage(LangType.L_JSON);

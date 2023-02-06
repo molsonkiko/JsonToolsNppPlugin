@@ -480,9 +480,7 @@ namespace JSON_Tools.Forms
         private void SaveQueryResultButton_Click(object sender, EventArgs e)
         {
             if (query_result == null) return;
-            Npp.notepad.FileNew();
-            Npp.editor.AppendTextAndMoveCursor(query_result.PrettyPrint(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style));
-            Npp.SetLangJson();
+            Main.PrettyPrintJsonInNewFile(query_result);
         }
 
         private void FindReplaceButton_Click(object sender, EventArgs e)
@@ -831,29 +829,6 @@ namespace JSON_Tools.Forms
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             ********/
 }
-
-// not creating schemas at present because schemas produced may be invalid
-//private void SchemaButton_Click(object sender, EventArgs e)
-//{
-//    if (query_result == null) return;
-//    JNode schema = null;
-//    try
-//    {
-//        schema = schemaMaker.GetSchema(query_result);
-//    }
-//    catch (Exception ex)
-//    {
-//        string expretty = RemesParser.PrettifyException(ex);
-//        MessageBox.Show($"While creating JSON schema, encountered error:\n{expretty}",
-//                            "Exception while making JSON schema",
-//                            MessageBoxButtons.OK,
-//                            MessageBoxIcon.Error);
-//        return;
-//    }
-//    Npp.notepad.FileNew();
-//    Npp.editor.AppendTextAndMoveCursor(schema.PrettyPrint());
-//    Npp.SetLangJson();
-//}
 
 ///// <summary>
 ///// build the top layer of the tree out of JNodes.<br></br>

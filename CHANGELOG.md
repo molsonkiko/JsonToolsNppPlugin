@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed.
 - Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
 
+## [4.9.2] - 2023-02-06
+
+### Fixed
+
+1. Previously if you used the `Save query result` button in the tree viewer, and the JSON contained non-ascii characters like 😀, the JSON would cut off early. The `JSON from files and APIs` form had the same problem when viewing results in a buffer.
+
 ## [4.9.1] - 2023-01-25
 
 ### Fixed

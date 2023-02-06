@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -394,6 +393,21 @@ namespace Kbg.NppPluginNET
             return json;
         }
 
+        /// <summary>
+        /// create a new file and pretty-print this JSON in it, then set the lexer language to JSON.
+        /// </summary>
+        /// <param name="json"></param>
+        public static void PrettyPrintJsonInNewFile(JNode json)
+        {
+            string printed = json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
+            Npp.notepad.FileNew();
+            Npp.editor.SetText(printed);
+            Npp.SetLangJson();
+        }
+
+        /// <summary>
+        /// overwrite the current file with its JSON in pretty-printed format
+        /// </summary>
         static void PrettyPrintJson()
         {
             JNode json = TryParseJson();
@@ -402,6 +416,9 @@ namespace Kbg.NppPluginNET
             Npp.SetLangJson();
         }
 
+        /// <summary>
+        /// overwrite the current file with its JSON in compressed format
+        /// </summary>
         static void CompressJson()
         {
             JNode json = TryParseJson();
@@ -464,7 +481,7 @@ namespace Kbg.NppPluginNET
                 result = arr.ToJsonLines(settings.sort_keys, ":", ",");
             else
                 result = arr.ToJsonLines(settings.sort_keys);
-            Npp.editor.AppendText(result.Length, result);
+            Npp.editor.SetText(result);
         }
 
         //form opening stuff
@@ -611,10 +628,7 @@ namespace Kbg.NppPluginNET
                 );
                 return;
             }
-            Npp.notepad.FileNew();
-            string schema_str = schema.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
-            Npp.editor.AppendText(Encoding.UTF8.GetByteCount(schema_str), schema_str);
-            Npp.SetLangJson();
+            PrettyPrintJsonInNewFile(schema);
         }
 
         /// <summary>
@@ -648,11 +662,7 @@ namespace Kbg.NppPluginNET
                     return;
                 }
             }
-            Npp.notepad.FileNew();
-            string randomJsonStr = randomJson.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
-            int byteCount = Encoding.UTF8.GetByteCount(randomJsonStr);
-            Npp.editor.AppendText(byteCount, randomJsonStr);
-            Npp.SetLangJson();
+            PrettyPrintJsonInNewFile(randomJson);
         }
 
         /// <summary>

@@ -177,13 +177,7 @@ namespace JSON_Tools.Forms
         private void ViewResultsButton_Click(object sender, EventArgs e)
         {
             Main.grepperTreeViewJustOpened = true;
-            Npp.notepad.FileNew();
-            string result = grepper.fname_jsons.PrettyPrintAndChangeLineNumbers(
-                Main.settings.indent_pretty_print,
-                Main.settings.sort_keys,
-                Main.settings.pretty_print_style
-            );
-            Npp.AddLine(result);
+            Main.PrettyPrintJsonInNewFile(grepper.fname_jsons);
             if (tv != null && !tv.IsDisposed)
             {
                 Npp.notepad.HideDockingForm(tv);
