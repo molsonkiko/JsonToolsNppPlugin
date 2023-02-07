@@ -8,7 +8,7 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 * many built-in [functions](#functions), both [vectorized](#vectorized-functions) and not
 * [regular expression](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) functions
 * [recursive search](#recursive-search) for keys
-* SQL-like group_by capabilities (see non-vectorized functions)
+* SQL-like group_by capabilities (function in [non-vectorized functions](#non-vectorized-functions))
 * reshaping and summarization of JSON using [projections](#projections)
 * [editing of JSON](#editing-with-assignment-expressions)
 

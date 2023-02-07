@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#491---2023-01-25) to this project will be documented in this file.
+All [notable changes](#492---2023-02-06) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
-- Replace the folder browser dialog for the grepper form with a text box where the `Tab` key reveals a dropdown with all subfolders of the current folder starting with whatever substring is after the last `\\`. This could be easier to use and more friendly than the current `FolderBrowserDialog`.
 - Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 
 ### To Be Fixed

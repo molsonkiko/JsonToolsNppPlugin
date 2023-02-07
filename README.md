@@ -103,7 +103,7 @@ differ in that the first element of `root['a'][2]['b']` was changed from 3 to 4.
 
 ### Websites ###
 
-[This website](https://codebeautify.org/jsonviewer) offers (limited) JSON->CSV conversion, pretty-printing (appears to use the same algorithm as me), minifying, JSON->XML conversion, schema validation, and a pretty good tree viewer.
+[This website](https://codebeautify.org/jsonviewer) offers (limited) JSON->CSV conversion, pretty-printing (appears to use the same algorithm as me), minifying, JSON->XML conversion, and a pretty good tree viewer.
 
 I expect you could find plenty of other good websites if you did some research.
 

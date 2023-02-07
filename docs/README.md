@@ -3,7 +3,7 @@ JSON Tools Overview
 
 This documentation will walk you through a typical use case of this application.
 
-Consider the following JSON, hereafter called "silly_example.json".
+Consider the following JSON.
 ```json
 [
     {
@@ -74,7 +74,7 @@ If a node has a `+` or `-` sign next to it, you can click on that button to expa
 You'll notice that icons appear next to the nodes in the tree. They are as follows:
 * <span style="color:blue">Blue</span> square braces: __array__
 * <span style="color:green">Green</span> curly braces: __object__
-* Yin-yang symbol (half-black, half-white circle): __boolean__
+* ☯️ (yin-yang, half-black, half-white circle): __boolean__
 * <span style="color:red">123</span>: __integer__ (represented by 64-bit integer)
 * <span style="color:red">-3.5</span>: __float__ (represented by 64-bit floating point number)
 * abc: __string__
