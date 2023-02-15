@@ -135,7 +135,6 @@ namespace JSON_Tools.JSON_Tools
             while (ii < inp.Length)
             {
                 c = inp[ii];
-                // tried using if/else if, but it's slower
                 if (c == ' ' || c == '\t' || c == '\r') { ii++; }
                 else if (c == '\n') { ii++; line_num++; }
                 else { return; }
@@ -430,7 +429,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (parsed != 1)
                     {
-                        if (lint == null) throw new RemesLexerException(ii, inp, "Number with two decimal points");
+                        if (lint == null) throw new JsonParserException("Number with two decimal points", c, ii);
                         lint.Add(new JsonLint("Number with two decimal points", ii, line_num, c));
                         break;
                     }
@@ -515,7 +514,6 @@ namespace JSON_Tools.JSON_Tools
             {
                 ConsumeWhiteSpace(inp);
                 cur_c = inp[ii];
-                // tried using a switch statement instead of chained if/else if, but it's actually much slower
                 if (cur_c == ',')
                 {
                     if (already_seen_comma)
@@ -609,7 +607,6 @@ namespace JSON_Tools.JSON_Tools
             {
                 ConsumeWhiteSpace(inp);
                 cur_c = inp[ii];
-                // tried using a switch statement here - it turns out to be much slower
                 if (cur_c == ',')
                 {
                     if (already_seen_comma)
@@ -741,9 +738,9 @@ namespace JSON_Tools.JSON_Tools
             }
             // either a special scalar or a negative number
             next_c = inp[ii + 1];
-            if (cur_c == '-')
+            if (cur_c == '-' || (cur_c == '+' && lint != null))
             {
-                // try negative infinity or number
+                // try +/-infinity or number
                 if (next_c >= '0' && next_c <= '9')
                 {
                     return ParseNumber(inp);
@@ -752,17 +749,19 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!allow_nan_inf)
                     {
-                        throw new JsonParserException("-Infinity is not part of the original JSON specification.", next_c, ii);
+                        throw new JsonParserException("Infinity is not part of the original JSON specification.", next_c, ii);
                     }
                     else if (lint != null)
                     {
-                        lint.Add(new JsonLint("-Infinity is not part of the original JSON specification", ii, line_num, cur_c));
+                        lint.Add(new JsonLint("Infinity is not part of the original JSON specification", ii, line_num, cur_c));
                     }
                     ii += 9;
+                    if (cur_c == '+')
+                        return new JNode(NanInf.inf, Dtype.FLOAT, line_num);
                     return new JNode(NanInf.neginf, Dtype.FLOAT, line_num);
                 }
-                throw new JsonParserException("Expected literal starting with '-' to be negative number",
-                                              next_c, ii+1);
+                throw new JsonParserException("Expected literal starting with '-' or '+' to be a number",
+                    next_c, ii+1);
             }
             if (ii == inp.Length - 2)
             {

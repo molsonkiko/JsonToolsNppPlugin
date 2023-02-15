@@ -549,7 +549,7 @@ multiline comment
                 new object[]{ "[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"} },
                 new object[]{ "[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",
-                                  "-Infinity is not part of the original JSON specification",
+                                  "Infinity is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification" } },
                 new object[]{ "{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
                                                          "String literal starting at position 1 contains newline",
@@ -564,6 +564,7 @@ multiline comment
                                                                                                 "Unterminated object" } },
                 new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
                 new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
+                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2e3, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" } }
             };
 
             int tests_failed = 0;

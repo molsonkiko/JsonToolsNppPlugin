@@ -22,6 +22,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](h
     * non-string key in object
     * `]` closing an object or `}` closing an array
     * Unterminated arrays and objects (e.g. `{"a": [1`)
+    * Numbers with leading `+` signs.
 4. Get a report of all the syntax errors in the document (`linting` must be active).
 5. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. [Selecting a node](/docs/README.md#get-info-about-tree-nodes) in the tree navigates to the corresponding line in the document.
 6. [Get the path to the current line](/docs/README.md#path-to-current-line)

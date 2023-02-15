@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
@@ -204,25 +205,14 @@ namespace JSON_Tools.Forms
                     // need to add the root first because FullPath is undefined until root is in a TreeView
                     // but also FullPath depends on the text so we need to track that too
                     tree.Nodes.Add(root);
-                    //if (json is JArray arr)
-                    //{
-                    //    if (arr.Length > 0)
-                    //    {
-                    //        root.Nodes.Add(new TreeNode("")); // sentinel node
-                    //    }
-                    //}
-                    //else if (json is JObject obj)
-                    //{
-                    //    if (obj.Length > 0)
-                    //    {
-                    //        root.Nodes.Add(new TreeNode("")); // sentinel node
-                    //    }
-                    //}
-                    int json_len = Npp.editor.GetLength();
+                    int json_strlen = Npp.editor.GetLength();
+                    int json_len;
+                    if (json is JArray arr) json_len = arr.Length;
+                    else json_len = ((JObject)json).Length;
                     if (!use_tree)
                     { // allow for tree to be turned off altogether. Best performance for loss of quality of life
                     }
-                    else if (json_len > max_size_full_tree_MB * 1e6)
+                    else if ((json_strlen > max_size_full_tree_MB * 1e6) || (json_len > Main.settings.max_json_length_full_tree))
                         JsonTreePopulateHelper_DirectChildren(root, json, pathsToJNodes);
                     else
                         JsonTreePopulateHelper(root, json, pathsToJNodes);
@@ -249,9 +239,7 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// Recursively traverses the full JSON tree and adds corresponding TreeNodes to the treeview.<br></br>
-        /// This is the default because for small JSON files the latency is barely noticeable,<br></br>
-        /// but for very deep nested JSON files this option can be incredibly slow.
+        /// Recursively traverses the full JSON tree and adds corresponding TreeNodes to the treeview.
         /// </summary>
         /// <param name="root"></param>
         /// <param name="json"></param>
@@ -311,7 +299,9 @@ namespace JSON_Tools.Forms
         /// <summary>
         /// Populate only the direct children of the root JNode into the TreeView.<br></br>
         /// Useful for very large JSON files where recursively populating all subtrees would<br></br>
-        /// take an unacceptably long time and too much memory.
+        /// take an unacceptably long time and too much memory.<br></br>
+        /// For JSON with more than some large number (default 10_000) children of the root node,
+        /// only that many spaced children will be shown.
         /// </summary>
         /// <param name="root"></param>
         /// <param name="json"></param>
@@ -320,10 +310,15 @@ namespace JSON_Tools.Forms
                                                                  JNode json,
                                                                  Dictionary<string, JNode> pathsToJNodes)
         {
+            // the tree viewer is by far the heaviest and slowest part of this application.
+            // To save time, only some children will be shown
+            int interval;
             if (json is JArray)
             {
                 List<JNode> jar = ((JArray)json).children;
-                for (int ii = 0; ii < jar.Count; ii++)
+                interval = jar.Count / Main.settings.max_json_length_full_tree;
+                if (interval < 1) interval = 1;
+                for (int ii = 0; ii < jar.Count; ii += interval)
                 {
                     JNode child = jar[ii];
                     TreeNode child_node = (child is JObject || child is JArray)
@@ -336,8 +331,12 @@ namespace JSON_Tools.Forms
                 return;
             }
             Dictionary<string, JNode> jobj = ((JObject)json).children;
-            foreach (string key in jobj.Keys)
+            string[] keys = jobj.Keys.ToArray();
+            interval = keys.Length / 5000;
+            if (interval < 1) interval = 1;
+            for (int ii = 0; ii < keys.Length; ii += interval)
             {
+                string key = keys[ii];
                 JNode child = jobj[key];
                 TreeNode child_node = (child is JObject || child is JArray)
                     ? new TreeNode(key)

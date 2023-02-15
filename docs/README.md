@@ -180,6 +180,8 @@ At present the __Strategy__ option for the CSV Generation form has four options.
 
 Loading the full tree for very large, complex JSON can cause tremendous memory consumption and make Notepad++ unresponsive for a long time. Because of this, only the __direct children of the root__ are displayed by default for JSON files larger than 4 megabytes. This is reflected in the `View all subtrees` checkbox. You can change this in the settings.
 
+Beginning in version *4.10.0*, if a JSON array or object has more than `10,000` direct children (congigurable in `Settings->max_json_length_full_tree`), this setting will automatically be activated, and `10,000` evenly spaced top-level children will be displayed. For example, this would mean that an array with 200,000 children would result in a tree view with pointers to the first element, the 20th element, the 40th element, and so on.
+
 Populating the tree is *much* more expensive than parsing JSON or executing RemesPath queries, which means that rather small JSON files with a very large number of nodes (e.g., an array containing 1e5 instances of the number `1`) may take *much* longer to load than larger files with a smaller number of nodes.
 
 ![Only direct children of the root are displayed for a big file](/docs/partial%20tree%20load%20example.PNG)

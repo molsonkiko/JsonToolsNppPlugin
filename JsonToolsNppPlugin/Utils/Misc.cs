@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using Kbg.NppPluginNET;
 using Kbg.NppPluginNET.PluginInfrastructure;
 
 /// <summary>
@@ -34,11 +35,14 @@ namespace JSON_Tools.Utils
         }
 
         /// <summary>
-        /// set the lexer language to JSON so the file looks nice
+        /// set the lexer language to JSON so the file looks nice<br></br>
+        /// If the file is really big (default 4+ MB, configured by settings.max_size_full_tree_MB),
+        /// this is a no-op, because lexing big JSON files is very slow.
         /// </summary>
         public static void SetLangJson()
         {
-            notepad.SetCurrentLanguage(LangType.L_JSON);
+            if (editor.GetTextLength() < Main.settings.max_size_full_tree_MB * 1e6)
+                notepad.SetCurrentLanguage(LangType.L_JSON);
         }
 
         /// <summary>
@@ -110,7 +114,7 @@ namespace JSON_Tools.Utils
         {
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             while (version.EndsWith(".0"))
-                version = version.TrimEnd(new char[] { '.', '0' });
+                version = version.Substring(0, version.Length - 2);
             return version;
         }
 

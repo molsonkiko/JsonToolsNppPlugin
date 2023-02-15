@@ -33,13 +33,19 @@ namespace JSON_Tools.Utils
 
         #region TREE_VIEW_SETTINGS
         [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
-            "Larger files get only the direct children of the root added to the tree."),
+            "Larger files get only the direct children of the root added to the tree. " +
+            "Also, files bigger than this limit don't get colorized automatically."),
             Category("Tree View"), DefaultValue(4d)]
         public double max_size_full_tree_MB { get; set; }
 
         [Description("Whether or not to use the tree view at all."),
             Category("Tree View"), DefaultValue(true)]
         public bool use_tree { get; set; }
+
+        [Description("The longest length of a JSON array or object that gets its full tree added to the tree view. " +
+            "Larger files get only some of the direct children of the root added to the tree."),
+            Category("Tree View"), DefaultValue(10_000)]
+        public int max_json_length_full_tree { get; set; }
         #endregion
 
         #region JSON_FORMATTING_SETTINGS

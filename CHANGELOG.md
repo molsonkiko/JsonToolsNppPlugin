@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#492---2023-02-06) to this project will be documented in this file.
+All [notable changes](#4100---2023-02-15) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Show multiple validation problems. 
+1. Show multiple schema validation problems. 
 2. Add a thing that maps schema filenames to filename patterns, so that files with certain name patterns are automatically validated a la VSCode.
 3. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
@@ -28,8 +28,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
-	- This is also true if a file with a tree viewer is renamed.
-- Using the [Compare plugin](https://github.com/pnedev/comparePlus) causes the currently open tree view to close. Probably a problem on their end, no idea how to fix.
+	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
+- Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
+
+## [4.10.0] - 2023-02-15
+
+### Added
+
+1. Numbers (including `Infinity`) with leading `+` signs can now be parsed if linting is turned on. If linting is not active, they will still raise an error.
+
+### Changed
+
+2. For performance reasons, the plugin no longer automatically turns on the JSON lexer for very long JSON files when pretty-printing, compressing, or showing query results. This is configurable via `Settings->max_size_full_tree_MB`.
+3. Arrays and objects with a very large number of direct children no longer result in a tree view with pointers to every direct child. Instead, you just get pointers to a few evenly spaced children. Read more [here](/docs/README.md#changing-how-much-json-tree-is-displayed).
 
 ## [4.9.2] - 2023-02-06
 
