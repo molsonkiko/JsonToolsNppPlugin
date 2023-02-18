@@ -63,6 +63,8 @@ Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonTo
 
 ### Notepad++ ###
 
+This plugin is not the best for working with really huge JSON files (say 50+ megabytes). As of version `0.3.0`, my [HugeFiles](https://github.com/molsonkiko/HugeFiles) plugin can break a JSON file up into chunks such that every chunk is syntactically valid JSON. This way you don't need to read the entire file into the text editor, and you can look at one chunk at a time. The plugin does not (yet) allow the user to edit files that are opened this way, but that functionality is in the works.
+
 [JSMinNPP](https://github.com/sunjw/jstoolnpp) is a good plugin with prettier pretty-printing and a much faster tree viewer. This plugin also features JavaScript minification.
 
 While not a JSON plugin per se, [PythonScript](https://github.com/bruderstein/PythonScript) enables Notepad++ users to customize the editor with Python scripts. Since Python has an excellent native JSON library, you could easily use this plugin to create custom scripts for working with JSON.
