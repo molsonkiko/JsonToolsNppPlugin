@@ -300,7 +300,10 @@ namespace Kbg.NppPluginNET
                 grepperForm.Close();
             foreach (string key in treeViewers.Keys)
             {
-                treeViewers[key].Dispose();
+                TreeViewer tv = treeViewers[key];
+                if (tv == null || !tv.IsDisposed)
+                    continue;
+                tv.Dispose();
                 treeViewers[key] = null;
             }
             //if (schemas_to_fname_patterns.Length == 0) return;

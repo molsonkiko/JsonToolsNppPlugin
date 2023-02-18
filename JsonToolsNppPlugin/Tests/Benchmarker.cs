@@ -60,8 +60,8 @@ namespace JSON_Tools.Tests
             // display loading results
             string json_preview = json.ToString().Slice(":300") + "\n...";
             Npp.AddLine($"Preview of json: {json_preview}");
-            double[] mu_sd = GetMeanAndSd(load_times);
-            Npp.AddLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mu_sd[0])} +/- {ConvertTicks(mu_sd[1])} " +
+            (double mean, double sd) = GetMeanAndSd(load_times);
+            Npp.AddLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
                 $"ms over {load_times.Length} trials");
             var load_times_str = new string[load_times.Length];
             for (int ii = 0; ii < load_times.Length; ii++)
@@ -99,10 +99,8 @@ Performance tests for RemesPath ({description})
                     long t = watch.Elapsed.Ticks;
                     compile_times[ii] = t;
                 }
-                mu_sd = GetMeanAndSd(compile_times);
-                double mu = mu_sd[0];
-                double sd = mu_sd[1];
-                Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
+                (mean, sd)= GetMeanAndSd(compile_times);
+                Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
                 // time query execution
                 long[] query_times = new long[num_query_trials];
                 JNode result = new JNode();
@@ -123,10 +121,8 @@ Performance tests for RemesPath ({description})
                     query_times[ii] = t;
                 }
                 // display querying results
-                mu_sd = GetMeanAndSd(query_times);
-                mu = mu_sd[0];
-                sd = mu_sd[1];
-                Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mu)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
+                (mean, sd) = GetMeanAndSd(query_times);
+                Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
                 var query_times_str = new string[query_times.Length];
                 for (int ii = 0; ii < query_times.Length; ii++)
                 {
@@ -138,29 +134,29 @@ Performance tests for RemesPath ({description})
             }
         }
 
-        public static double[] GetMeanAndSd(long[] times)
+        public static (double mean, double sd) GetMeanAndSd(long[] times)
         {
-            double mu = 0;
-            foreach (int t in times) { mu += t; }
-            mu /= times.Length;
+            double mean = 0;
+            foreach (long t in times) { mean += t; }
+            mean /= times.Length;
             double sd = 0;
-            foreach (int t in times)
+            foreach (long t in times)
             {
-                double diff = t - mu;
+                double diff = t - mean;
                 sd += diff * diff;
             }
             sd = Math.Sqrt(sd / times.Length);
-            return new double[] { mu, sd };
+            return (mean, sd);
         }
 
         public static double ConvertTicks(double ticks, string new_unit = "ms", int sigfigs = 3)
         {
             switch (new_unit)
             {
-                case "ms": return Math.Round(ticks / 1e4, 3);
-                case "s": return Math.Round(ticks / 1e7, 3);
-                case "ns": return Math.Round(ticks * 100, 3);
-                case "mus": return Math.Round(ticks / 10, 3);
+                case "ms": return Math.Round(ticks / 1e4, sigfigs);
+                case "s": return Math.Round(ticks / 1e7, sigfigs);
+                case "ns": return Math.Round(ticks * 100, sigfigs);
+                case "mus": return Math.Round(ticks / 10, sigfigs);
                 default: throw new ArgumentException("Time unit must be s, mus, ms, or ns");
             }
         }
