@@ -63,7 +63,7 @@ Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonTo
 
 ### Notepad++ ###
 
-This plugin is not the best for working with really huge JSON files (say 50+ megabytes). As of version `0.3.0`, my [HugeFiles](https://github.com/molsonkiko/HugeFiles) plugin can break a JSON file up into chunks such that every chunk is syntactically valid JSON. This way you don't need to read the entire file into the text editor, and you can look at one chunk at a time. The plugin does not (yet) allow the user to edit files that are opened this way, but that functionality is in the works.
+This plugin is not the best for working with really huge JSON files (say 50+ megabytes). As of version `0.3.0`, my [HugeFiles](https://github.com/molsonkiko/HugeFiles) plugin can break a JSON file up into chunks such that every chunk is syntactically valid JSON. This way you don't need to read the entire file into the text editor, and you can look at one chunk at a time. You can also use this plugin to perform simple find/replace operations on the entire file (maybe eventually allowing control over which sections of the file to edit). Finally, the plugin allows a very large JSON file to be broken up into separate syntactically valid JSON files, which may be easier to use.
 
 [JSMinNPP](https://github.com/sunjw/jstoolnpp) is a good plugin with prettier pretty-printing and a much faster tree viewer. This plugin also features JavaScript minification.
 
