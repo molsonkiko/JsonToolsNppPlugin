@@ -1377,8 +1377,16 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Replaces all instances of string to_replace with string repl in the string value
-        /// of JNode node
+        /// first arg: a string<br></br>
+        /// second arg: a string or regex to be replaced<br></br>
+        /// third arg: a string<br></br>
+        /// Returns:<br></br>
+        /// * if arg 2 is a string, a new string with all instances of arg 2 in arg 1 replaced with arg 3<br></br>
+        /// * if arg 2 is a regex, a new string with all matches to that regex in arg 1 replaced with arg 3<br></br>
+        /// EXAMPLES:<br></br>
+        /// * StrSub("abbbbc", Regex("b+"), "z") -> "azc"<br></br>
+        /// * StrSub("123 123", "1", "z") -> "z23 z23"<br></br>
+        /// <i>NOTE: prior to JsonTools 4.10.1, it didn't matter whether arg 2 was a string or regex; it always treated it as a regex.</i> 
         /// </summary>
          /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
         public static JNode StrSub(List<JNode> args)
@@ -1389,7 +1397,7 @@ namespace JSON_Tools.JSON_Tools
             string val = (string)node.value;
             if (to_replace.type == Dtype.STR)
             {
-                return new JNode(Regex.Replace(val, (string)to_replace.value, (string)repl.value), Dtype.STR, 0);
+                return new JNode(val.Replace((string)to_replace.value, (string)repl.value), Dtype.STR, 0);
             }
             return new JNode(((JRegex)to_replace).regex.Replace(val, (string)repl.value), Dtype.STR, 0);
         }

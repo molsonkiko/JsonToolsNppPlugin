@@ -294,7 +294,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
                 new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
                 new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
-                new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"),
+                new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"), // regex to_replace
+                new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, `.`, ``)", "[\"120\", \"15\", \"2\"]"), // string to_replace with special char
+                new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, g`.`, ``)", "[\"\", \"\", \"\"]"), // regex to_replace with special char
                 new Query_DesiredResult("isna(@.foo[0])", "[false, false, false]"),
                 new Query_DesiredResult("s_slice(@.bar.b, 2)", "[\"g\", \"h\"]"),
                 new Query_DesiredResult("s_slice(@.bar.b, ::2)", "[\"ag\", \"bh\"]"),

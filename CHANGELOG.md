@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Hopefully eliminated crash bug that sometimes seems to happen because a file that had a tree viewer associated with it was renamed. This bug is really unpredictable, so it may not be gone.
+2. Changed [RemesPath `s_sub` function](/docs/RemesPath.md#vectorized-functions) so that it either does regex-replace or simple string-replace, depending on the type of the second parameter.
 
 ## [4.10.0] - 2023-02-15
 

@@ -527,6 +527,11 @@ Returns true if x is the floating-point Not-A-Number (represented in some JSON b
 
 Recall that `NaN` is *NOT* in the original JSON specification.
 
+---
+`isnull(x: anything) -> bool`
+
+Returns true if x is null, else false.
+
 ----
 `log(x: number, n: number = e) -> number`
 
@@ -608,7 +613,17 @@ Strips the whitespace off both ends of x.
 
 Replaces all instances of string/regex `to_replace` in `x` with `replacement`.
 
+If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101-unreleased---2023-mm-dd). Prior to that, this function treated `to_replace` as a regex no matter what.*
+
+If `to_replace` is a regex, replaces all matches to the `to_replace` pattern with `replacement`.
+
 See the [C# regular expressions reference on substitutions](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
+
+__Examples:__
+
+* ``s_sub(abbbbbc, g`b+`, z)`` returns `azc`.
+* ``s_sub(abbbbbc, `b+`, z)`` returns `abbbbbc`, because `b+` is not being matched as a regex. *Prior to version 4.10.1, this would return the same thing as ``s_sub(abbbbbc, g`b+`, z)``.*
+* ``s_sub(abbbbbc, b, z)`` returns `azzzzzc`, because every instance of `b` is replaced by `z`.
 
 ----
 `s_upper(x: string) -> string`
