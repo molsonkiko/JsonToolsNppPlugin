@@ -57,6 +57,8 @@ Alternatively, you can follow these [installation instructions](https://npp-user
 
 Every version of the plugin works on Notepad++ 8.4.1 onward.
 
+Versions of the plugin after [4.10.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/e2ffde3a5e529d94f018930dc5ba5e0b077e793c) are compatible with older Notepad++ (tested for [7.3.3](https://notepad-plus-plus.org/downloads/v7.3.3/), may be compatible with even older).
+
 Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#3721---2022-10-20) should work natively on Windows 8 or later (note: this is untested), or you must install [.NET Framework 4.0](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40). Every version beginning with [4.0.0](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#400---2022-10-24) works on [Windows 10 May 2019 update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) or later, or you must install [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48).
 
 ## Alternative tools ##
