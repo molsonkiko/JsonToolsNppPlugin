@@ -76,7 +76,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 for (int ii = 0; ii < length; ii++)
                 {
-                    char randChar = EXTENDED_ASCII[random.Next(256)];
+                    char randChar = EXTENDED_ASCII[random.Next(1, 256)]; // not allowing \x00 because that will terminate string early in C
                     sb.Append(randChar);
                 }
             }
@@ -227,6 +227,10 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        /// <summary>
+        /// choose a random schema from an anyOf list of schemas, and make random JSON based on that schema
+        /// </summary>
+        /// <returns></returns>
         private static JNode RandomAnyOf(JNode anyOf, int minArrayLength, int maxArrayLength, bool extended_ascii_strings)
         {
             JArray anyOfArr = (JArray)anyOf;

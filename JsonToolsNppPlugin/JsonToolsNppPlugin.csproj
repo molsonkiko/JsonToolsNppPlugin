@@ -97,6 +97,7 @@
     <Compile Include="Forms\TreeViewer.Designer.cs">
       <DependentUpon>TreeViewer.cs</DependentUpon>
     </Compile>
+    <Compile Include="JSONTools\Dson.cs" />
     <Compile Include="PluginInfrastructure\ClikeStringArray.cs" />
     <Compile Include="PluginInfrastructure\DllExport\DllExportAttribute.cs" />
     <Compile Include="PluginInfrastructure\Docking_h.cs" />
@@ -193,6 +194,7 @@
     <Compile Include="Tests\RandomJsonTests.cs" />
     <Compile Include="Tests\RemesPathTests.cs" />
     <Compile Include="Tests\SliceTests.cs" />
+    <Compile Include="Tests\DsonTests.cs" />
     <Compile Include="Tests\TestRunner.cs" />
     <Compile Include="JSONTools\YamlDumper.cs" />
     <Compile Include="Tests\YamlDumperTests.cs" />

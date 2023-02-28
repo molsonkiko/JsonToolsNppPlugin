@@ -14,6 +14,7 @@ using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Kbg.NppPluginNET
 {
@@ -49,7 +50,6 @@ namespace Kbg.NppPluginNET
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
         static internal int AboutFormId = -1;
-        //static internal int nodeSelectedLabelId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -87,7 +87,8 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(14, "---", null);
             PluginBase.SetCommand(15, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(16, "Run &tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 16;
+            PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 17;
+            PluginBase.SetCommand(18, "&Wow such doge", Dogeify);
 
             //// read schemas_to_fname_patterns.json in config directory (if it exists)
             //string config_dir = Npp.notepad.GetConfigDirectory();
@@ -356,7 +357,7 @@ namespace Kbg.NppPluginNET
         {
             int len = Npp.editor.GetLength();
             string fname = Npp.notepad.GetCurrentFilePath();
-            string text = Npp.editor.GetText(len);
+            string text = Npp.editor.GetText(len + 1);
             JNode json = new JNode();
             try
             {
@@ -779,6 +780,24 @@ namespace Kbg.NppPluginNET
             AboutForm aboutForm = new AboutForm();
             aboutForm.ShowDialog();
             aboutForm.Focus();
+        }
+
+        static void Dogeify()
+        {
+            JNode json = TryParseJson();
+            if (json == null) return;
+            try
+            {
+                string dson = Dson.Dump(json);
+                Npp.notepad.FileNew();
+                Npp.editor.SetText(dson);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{ex}",
+                    "such error very sad",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         //static void MapSchemasToFnamePatterns()

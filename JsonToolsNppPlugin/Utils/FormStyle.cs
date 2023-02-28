@@ -25,6 +25,9 @@ namespace JSON_Tools.Utils
         public static void ApplyStyle(Form form, bool use_npp_style)
         {
             if (form.IsDisposed) return;
+            int[] version = Npp.notepad.GetNppVersion();
+            if (version[0] < 8)
+                use_npp_style = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
             //foreach (PropertyInfo info in form.GetType().GetProperties())
             //{
             //    if (info.PropertyType.IsSubclassOf(form_type))

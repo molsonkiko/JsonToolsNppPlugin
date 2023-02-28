@@ -447,3 +447,11 @@ This JSON schema generator only produces schemas with the following keywords:
 * [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)
 
 ![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)
+
+## DSON ##
+
+JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.
+
+Currently the plugin only has a DSON emitter. Later I will add a DSON parser.
+
+![DSON example](/docs/DSON%20example.PNG)

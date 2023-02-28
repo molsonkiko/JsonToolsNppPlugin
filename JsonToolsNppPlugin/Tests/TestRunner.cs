@@ -132,6 +132,12 @@ Testing generation of random JSON from schema
             RandomJsonTests.TestRandomJson();
 
             Npp.AddLine(@"=========================
+Testing conversion of JSON to DSON (see https://dogeon.xyz/)
+=========================
+");
+            DsonTester.TestDump();
+
+            Npp.AddLine(@"=========================
 Performance tests for JsonParser
 =========================
 ");

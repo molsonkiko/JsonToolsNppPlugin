@@ -25,6 +25,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		Color GetDefaultForegroundColor();
 		Color GetDefaultBackgroundColor();
 		string GetConfigDirectory();
+		int[] GetNppVersion();
 	}
 
 	/// <summary>
@@ -174,6 +175,19 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MAX_PATH, sbIniFilePath);
 			return sbIniFilePath.ToString();
 		}
+
+		/// <summary>
+		/// 2-int array. First entry: major version. Second entry: minor version
+		/// </summary>
+		/// <returns></returns>
+		public int[] GetNppVersion()
+		{
+			// the low word (i.e., version & 0xffff
+			int version = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETNPPVERSION, 0, 0).ToInt32();
+			int minor = version & 0xffff;
+			int major = version >> 16;
+			return new int[] { major, minor };
+        }
 	}
 
 	/// <summary>
