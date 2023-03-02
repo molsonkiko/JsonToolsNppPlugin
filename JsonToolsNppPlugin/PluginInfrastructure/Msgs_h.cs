@@ -285,6 +285,13 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         NPPM_RELOADBUFFERID = Constants.NPPMSG + 61,
 
+        ///<summary>
+        ///wParam: BufferID to rename<br></br>
+        ///lParam: name to set (TCHAR*)<br></br>
+        ///Buffer must have been previously unnamed (eg "new 1" document types)
+        ///</summary>
+        NPPM_INTERNAL_SETFILENAME = Constants.NPPMSG + 63,
+
         /// <summary>
         /// INT NPPM_GETBUFFERLANGTYPE(UINT_PTR bufferID, 0)
         /// wParam: BufferID to get LangType from

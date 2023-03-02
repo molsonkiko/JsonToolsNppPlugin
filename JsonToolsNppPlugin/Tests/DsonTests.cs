@@ -42,14 +42,14 @@ namespace JSON_Tools.Tests
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    string msg = $"Tried to parse json\r\n{json}\r\nas dson\r\n{correctOut}\r\nbut got error:\r\n{ex}\r\n";
+                    string msg = $"Tried to parse json\r\n{input}\r\nas dson\r\n{correctOut}\r\nbut got error:\r\n{ex.ToString()}\r\n";
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                     continue;
                 }
                 if (dson != correctOut)
                 {
                     tests_failed++;
-                    string msg = $"Expected json\r\n{json}\r\nto be emitted\r\nas dson\r\n{correctOut}\r\nbut instead got \r\n{dson}\r\n";
+                    string msg = $"Expected json\r\n{input}\r\nto be emitted\r\nas dson\r\n{correctOut}\r\nbut instead got \r\n{dson}\r\n";
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
             }

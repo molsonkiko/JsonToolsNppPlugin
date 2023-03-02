@@ -786,15 +786,37 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
+            DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Notepad++",
+                "userDefineLangs"));
+            if (userDefinedLangPath.Exists)
+            {
+                FileInfo dsonUDLPath = new FileInfo(Path.Combine(
+                    Npp.notepad.GetNppPath(),
+                    "plugins",
+                    "JsonTools",
+                    "DSON UDL.xml"
+                ));
+                string targetPath = Path.Combine(userDefinedLangPath.FullName, "dson.xml");
+                if (dsonUDLPath.Exists && !File.Exists(targetPath))
+                {
+                    dsonUDLPath.CopyTo(targetPath);
+                }
+            }
+            // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
             try
             {
                 string dson = Dson.Dump(json);
                 Npp.notepad.FileNew();
                 Npp.editor.SetText(dson);
+                Npp.editor.AppendText(2, "\r\n");
+                string newName = Npp.notepad.GetCurrentFilePath() + ".dson";
+                Npp.notepad.SetCurrentBufferInternalName(newName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{ex}",
+                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{ex.ToString()}",
                     "such error very sad",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

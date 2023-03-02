@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4100---2023-02-15) to this project will be documented in this file.
+All [notable changes](#4101---2023-03-02) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.10.1] (UNRELEASED) - 2023-MM-DD
+## [4.10.1] - 2023-03-02
 
 ### Fixed
 
