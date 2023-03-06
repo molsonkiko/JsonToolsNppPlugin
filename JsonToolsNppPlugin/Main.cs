@@ -786,22 +786,26 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Notepad++",
-                "userDefineLangs"));
-            if (userDefinedLangPath.Exists)
+            int[] majorMinorVersion = Npp.notepad.GetNppVersion();
+            if (majorMinorVersion[0] >= 8)
             {
-                FileInfo dsonUDLPath = new FileInfo(Path.Combine(
-                    Npp.notepad.GetNppPath(),
-                    "plugins",
-                    "JsonTools",
-                    "DSON UDL.xml"
-                ));
-                string targetPath = Path.Combine(userDefinedLangPath.FullName, "dson.xml");
-                if (dsonUDLPath.Exists && !File.Exists(targetPath))
+                DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Notepad++",
+                    "userDefineLangs"));
+                if (userDefinedLangPath.Exists)
                 {
-                    dsonUDLPath.CopyTo(targetPath);
+                    FileInfo dsonUDLPath = new FileInfo(Path.Combine(
+                        Npp.notepad.GetNppPath(),
+                        "plugins",
+                        "JsonTools",
+                        "DSON UDL.xml"
+                    ));
+                    string targetPath = Path.Combine(userDefinedLangPath.FullName, "dson.xml");
+                    if (dsonUDLPath.Exists && !File.Exists(targetPath))
+                    {
+                        dsonUDLPath.CopyTo(targetPath);
+                    }
                 }
             }
             // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
