@@ -24,10 +24,10 @@
             <Keywords name="Folders in comment, open"></Keywords>
             <Keywords name="Folders in comment, middle"></Keywords>
             <Keywords name="Folders in comment, close"></Keywords>
-            <Keywords name="Keywords1">so and also many</Keywords>
-            <Keywords name="Keywords2">such is wow</Keywords>
-            <Keywords name="Keywords3">yes no</Keywords>
-            <Keywords name="Keywords4">empty</Keywords>
+            <Keywords name="Keywords1">so and also many</Keywords> <!-- arrays -->
+            <Keywords name="Keywords2">such is wow</Keywords> <!-- objects -->
+            <Keywords name="Keywords3">yes no</Keywords> <!-- booleans -->
+            <Keywords name="Keywords4">empty</Keywords> <!-- null -->
             <Keywords name="Keywords5"></Keywords>
             <Keywords name="Keywords6"></Keywords>
             <Keywords name="Keywords7"></Keywords>
