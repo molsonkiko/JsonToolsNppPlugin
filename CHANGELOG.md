@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Removed auto-installation of DSON UDL for Notepad++ older than `8.0`, because the UDL doesn't work anyway and the installation process causes an error message.
 
+### Changed
+
+1. [DSON](/docs/README.md#dson) is now sneakily hidden!
+
 ## [4.10.1] - 2023-03-02
 
 ### Fixed

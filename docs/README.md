@@ -452,6 +452,8 @@ This JSON schema generator only produces schemas with the following keywords:
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.
 
-Currently the plugin only has a DSON emitter. Later I will add a DSON parser.
+Currently the plugin only has a DSON emitter. Later I may add a DSON parser.
 
 ![DSON example](/docs/DSON%20example.PNG)
+
+Where is DSON generator? Don't know. Not on main plugin menu. So scared. Very confuse. 🐕🤷

@@ -88,7 +88,6 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(15, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(16, "Run &tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 17;
-            PluginBase.SetCommand(18, "&Wow such doge", Dogeify);
 
             //// read schemas_to_fname_patterns.json in config directory (if it exists)
             //string config_dir = Npp.notepad.GetConfigDirectory();
@@ -780,50 +779,6 @@ namespace Kbg.NppPluginNET
             AboutForm aboutForm = new AboutForm();
             aboutForm.ShowDialog();
             aboutForm.Focus();
-        }
-
-        static void Dogeify()
-        {
-            JNode json = TryParseJson();
-            if (json == null) return;
-            int[] majorMinorVersion = Npp.notepad.GetNppVersion();
-            if (majorMinorVersion[0] >= 8)
-            {
-                DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Notepad++",
-                    "userDefineLangs"));
-                if (userDefinedLangPath.Exists)
-                {
-                    FileInfo dsonUDLPath = new FileInfo(Path.Combine(
-                        Npp.notepad.GetNppPath(),
-                        "plugins",
-                        "JsonTools",
-                        "DSON UDL.xml"
-                    ));
-                    string targetPath = Path.Combine(userDefinedLangPath.FullName, "dson.xml");
-                    if (dsonUDLPath.Exists && !File.Exists(targetPath))
-                    {
-                        dsonUDLPath.CopyTo(targetPath);
-                    }
-                }
-            }
-            // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
-            try
-            {
-                string dson = Dson.Dump(json);
-                Npp.notepad.FileNew();
-                Npp.editor.SetText(dson);
-                Npp.editor.AppendText(2, "\r\n");
-                string newName = Npp.notepad.GetCurrentFilePath() + ".dson";
-                Npp.notepad.SetCurrentBufferInternalName(newName);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{ex.ToString()}",
-                    "such error very sad",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         //static void MapSchemasToFnamePatterns()

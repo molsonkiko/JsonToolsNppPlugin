@@ -31,9 +31,9 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AboutForm));
             this.Title = new System.Windows.Forms.Label();
             this.GitHubLink = new System.Windows.Forms.LinkLabel();
-            this.Thanks = new System.Windows.Forms.Label();
             this.Description = new System.Windows.Forms.Label();
             this.DebugInfoLabel = new System.Windows.Forms.Label();
+            this.Thanks = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // Title
@@ -60,17 +60,6 @@
             this.GitHubLink.UseCompatibleTextRendering = true;
             this.GitHubLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.GitHubLink_LinkClicked);
             // 
-            // Thanks
-            // 
-            this.Thanks.AutoSize = true;
-            this.Thanks.Location = new System.Drawing.Point(28, 259);
-            this.Thanks.Name = "Thanks";
-            this.Thanks.Size = new System.Drawing.Size(328, 80);
-            this.Thanks.TabIndex = 2;
-            this.Thanks.Text = "Special thanks to:\r\n* Don Ho for making Notepad++\r\n* kbilsted for making the plug" +
-    "in pack this is based on\r\n* And of course everyone who helped make this plugin\r\n" +
-    "   better!";
-            // 
             // Description
             // 
             this.Description.AutoSize = true;
@@ -91,14 +80,28 @@
             this.DebugInfoLabel.Text = "For info about your Notepad++ installation,\r\ngo to ? -> Debug Info on the main st" +
     "atus bar.";
             // 
+            // Thanks
+            // 
+            this.Thanks.AutoSize = true;
+            this.Thanks.LinkArea = new System.Windows.Forms.LinkArea(228, 234);
+            this.Thanks.LinkColor = System.Drawing.Color.Black;
+            this.Thanks.Location = new System.Drawing.Point(28, 255);
+            this.Thanks.Name = "Thanks";
+            this.Thanks.Size = new System.Drawing.Size(336, 108);
+            this.Thanks.TabIndex = 5;
+            this.Thanks.TabStop = true;
+            this.Thanks.Text = resources.GetString("Thanks.Text");
+            this.Thanks.UseCompatibleTextRendering = true;
+            this.Thanks.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ThanksWowLink_LinkClicked);
+            // 
             // AboutForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(399, 358);
+            this.ClientSize = new System.Drawing.Size(399, 389);
+            this.Controls.Add(this.Thanks);
             this.Controls.Add(this.DebugInfoLabel);
             this.Controls.Add(this.Description);
-            this.Controls.Add(this.Thanks);
             this.Controls.Add(this.GitHubLink);
             this.Controls.Add(this.Title);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -113,8 +116,8 @@
 
         private System.Windows.Forms.Label Title;
         private System.Windows.Forms.LinkLabel GitHubLink;
-        private System.Windows.Forms.Label Thanks;
         private System.Windows.Forms.Label Description;
         private System.Windows.Forms.Label DebugInfoLabel;
+        private System.Windows.Forms.LinkLabel Thanks;
     }
 }
