@@ -9,8 +9,8 @@ copy ".\DSON UDL.xml" ".\JsonToolsNppPlugin\bin\Release\DSON UDL.xml" /y
 : also copy directories to Downloads for easy access later
 cd JsonToolsNppPlugin\bin\Release-x64
 xcopy . "%userprofile%\Downloads\JsonTools NEWEST x64\" /s /y
-7z -r a ..\..\..\Release_x64.zip JsonTools.dll testfiles "DSON UDL.xml"
+7z -r a ..\..\Release_x64.zip JsonTools.dll testfiles "DSON UDL.xml"
 cd ..\Release
 xcopy . "%userprofile%\Downloads\JsonTools NEWEST x86\" /s /y
-7z -r a ..\..\..\Release_x86.zip JsonTools.dll testfiles "DSON UDL.xml"
+7z -r a ..\..\Release_x86.zip JsonTools.dll testfiles "DSON UDL.xml"
 cd ..\..\..
