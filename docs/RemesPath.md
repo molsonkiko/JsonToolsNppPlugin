@@ -613,7 +613,7 @@ Strips the whitespace off both ends of x.
 
 Replaces all instances of string/regex `to_replace` in `x` with `replacement`.
 
-If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101-unreleased---2023-mm-dd). Prior to that, this function treated `to_replace` as a regex no matter what.*
+If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101---2023-03-02). Prior to that, this function treated `to_replace` as a regex no matter what.*
 
 If `to_replace` is a regex, replaces all matches to the `to_replace` pattern with `replacement`.
 

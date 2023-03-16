@@ -38,13 +38,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-1. Find/replace form no longer requires a perfect match to the string to be found in order to perform a replacement when regular expressions are turned off. For example, find/replace searching for `M` and replacing with `Z` (regular expressions *off*) in the array `["MOO", "BOO"]` would previously have left the array unchanged, but now will change it into `["ZOO", "BOO"]`.
+1. [Find/replace form](/docs/README.md#find-and-replace-form) no longer requires a perfect match to the string to be found in order to perform a replacement when regular expressions are turned off. For example, find/replace searching for `M` and replacing with `Z` (regular expressions *off*) in the array `["MOO", "BOO"]` would previously have left the array unchanged, but now will change it into `["ZOO", "BOO"]`.
 2. [DSON](/docs/README.md#dson) is now sneakily hidden!
 
-### Addded
+### Added
 
-1. Auto-validation of JSON files against JSON schema.
-2. To accomodate people who still want exact matching without having to write a regular expression, a `Match exactly?` checkbox has been added to the find/replace form. This is disabled whenever the `regular expression` box is checked, and vice versa.
+1. [Auto-validation of JSON files against JSON schema](/docs/README.md#automatic-validation-of-json-against-json-schema).
+2. To accommodate people who still want exact matching without having to write a regular expression, a `Match exactly?` checkbox has been added to the find/replace form. This is disabled whenever the `regular expression` box is checked, and vice versa.
 
 ## [4.10.1] - 2023-03-02
 

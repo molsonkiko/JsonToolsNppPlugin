@@ -156,9 +156,11 @@ The default behavior of the form is to do a regular expression search on both ke
 
 ![Find/replace form math replace](/docs/find%20replace%20form%20math%20replace.PNG)
 
-If you don't do a regular expression search, your search term must match keys/values *exactly*. Substring matching of non-regular-expressions is *not* currently supported.
+Prior to version [4.11.0](/CHANGELOG.md#4110---2023-03-15), if you didn't do a regular expression search, your search term must match keys/values *exactly*. Substring matching of non-regular-expressions was *not* supported.
 
-![Find/replace form non-regex search must match exactly](/docs/find%20replace%20form%20nonregex%20exact.PNG)
+Starting in version [4.11.0](/CHANGELOG.md#4110---2023-03-15), non-regular-expression searching does not require strings to match exactly. Thus, you can now match the `"MOO"` in the array `["MOO", "ZOO"]` with the search term `M` with regular expressions turned off.
+
+![Find/replace form non-regex search must match exactly before v4.11.0](/docs/find%20replace%20form%20nonregex%20exact.PNG)
 
 The form has limited functionality. For example, you can't perform a search on keys and a replacement on values. However, the form generates RemesPath queries in the RemesPath query box in the tree viewer, so you can use those queries as a starting point.
 
@@ -478,4 +480,4 @@ Currently the plugin only has a DSON emitter. Later I may add a DSON parser.
 
 Where is DSON generator? Don't know. Not on main plugin menu. So scared. Very confuse. 🐕🤷
 
-DSON is first found in version [4.10.1](/CHANGELOG.md). molsonkiko such dedicated, much commitment to users, wow.
+DSON is first found in version [4.10.1](/CHANGELOG.md#4101---2023-03-02). molsonkiko such dedicated, much commitment to users, wow.

@@ -79,7 +79,7 @@ Because Python has good 3rd-party packages for working with [YAML](https://pypi.
 
 VSCode also has a built-in JSON tree viewer and some support for searching for keys and indices in JSON.
 
-VSCode has many useful tools for working with JSON Schema. VSCode's JSON Schema validation is much more robust than what this plugin offers. You can also configure the editor to [automatically use a certain JSON schema to validate JSON with a certain file path](https://code.visualstudio.com/Docs/languages/json#_json-schemas-and-settings). For example, you could configure the editor to always parse files with names like `*tweet*.json` with the schema `tweet_schema.json`.
+VSCode has many useful tools for working with JSON Schema. VSCode's JSON Schema validation is much more robust than what this plugin currently offers. You can also configure the editor to [automatically use a certain JSON schema to validate JSON with a certain file path](https://code.visualstudio.com/Docs/languages/json#_json-schemas-and-settings). For example, you could configure the editor to always parse files with names like `*tweet*.json` with the schema `tweet_schema.json`. *Note: as of version [4.11](/CHANGELOG.md#4110---2023-03-15), a similar feature exists in this plugin.*
 
 The [JSON Tools](https://marketplace.visualstudio.com/items?itemName=eriklynd.json-tools) plugin provides the same pretty-print and minify functionalities as this plugin.
 
@@ -87,7 +87,7 @@ Finally, the [Encode/Decode](https://github.com/mitchdenny/ecdc) plugin allows f
 
 ### Emacs ###
 
-Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [JSON mode](https://github.com/joshwnj/json-mode) inspired the `Path to current line` feature of this plugin.
+Consult [this list](https://github.com/emacs-tw/awesome-emacs). One Emacs plugin, [JSON mode](https://github.com/joshwnj/json-mode), inspired the `Path to current line` feature of this plugin.
 
 ### Python ###
 
