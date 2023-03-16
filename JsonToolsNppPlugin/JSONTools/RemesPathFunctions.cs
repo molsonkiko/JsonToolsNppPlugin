@@ -1575,6 +1575,10 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode((bool)obj, Dtype.BOOL, 0);
             }
+            if (obj is Regex)
+            {
+                return new JRegex((Regex)obj);
+            }
             if (obj is List<object>)
             {
                 var nodes = new List<JNode>();

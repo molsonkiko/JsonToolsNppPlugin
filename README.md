@@ -29,7 +29,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](h
 7. Query and edit JSON with a [find/replace form](/docs/README.md#find-and-replace-form) and the [RemesPath](/docs/RemesPath.md) query language.
 8. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
 9. [A form for gettting JSON from APIs or many different local files](/docs/README.md#get-json-from-files-and-apis).
-10. [JSON schema validation](/docs/README.md#validating-json-against-json-schema)
+10. [JSON schema validation](/docs/README.md#validating-json-against-json-schema), including [automatic validation based on filenames](/docs/README.md#automatic-validation-of-json-against-json-schema).
 11. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
 12. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
 

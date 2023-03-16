@@ -8,9 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Show multiple schema validation problems. 
-2. Add a thing that maps schema filenames to filename patterns, so that files with certain name patterns are automatically validated a la VSCode.
-3. Add parsing of unquoted strings when linter is active.
+1. Show multiple schema validation problems.
+2. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
  
 ### To Be Changed
@@ -31,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.10.2] (UNRELEASED) - 2023-MM-DD
+## [4.11.0] - 2023-03-15
 
 ### Fixed
 
@@ -39,7 +38,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-1. [DSON](/docs/README.md#dson) is now sneakily hidden!
+1. Find/replace form no longer requires a perfect match to the string to be found in order to perform a replacement when regular expressions are turned off. For example, find/replace searching for `M` and replacing with `Z` (regular expressions *off*) in the array `["MOO", "BOO"]` would previously have left the array unchanged, but now will change it into `["ZOO", "BOO"]`.
+2. [DSON](/docs/README.md#dson) is now sneakily hidden!
+
+### Addded
+
+1. Auto-validation of JSON files against JSON schema.
+2. To accomodate people who still want exact matching without having to write a regular expression, a `Match exactly?` checkbox has been added to the find/replace form. This is disabled whenever the `regular expression` box is checked, and vice versa.
 
 ## [4.10.1] - 2023-03-02
 

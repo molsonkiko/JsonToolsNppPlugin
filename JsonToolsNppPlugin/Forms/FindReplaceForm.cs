@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
@@ -19,9 +13,9 @@ namespace JSON_Tools.Forms
         public TreeViewer treeViewer;
         private string findQuery;
         private string replaceQuery;
-        private const int EXTENDED_HEIGHT = 402;
+        private const int EXTENDED_HEIGHT = 441;
         private const int COLLAPSED_HEIGHT = EXTENDED_HEIGHT - ADVANCED_CONTROLS_EXTENDED_HEIGHT + ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
-        private const int ADVANCED_CONTROLS_EXTENDED_HEIGHT = 126;
+        private const int ADVANCED_CONTROLS_EXTENDED_HEIGHT = 163;
         private const int ADVANCED_CONTROLS_COLLAPSED_HEIGHT = 11;
         int previousKeysValsBothBox_SelectedIndex = 2;
 
@@ -150,19 +144,36 @@ namespace JSON_Tools.Forms
                     keys_find_text = "g`" + FindTextBox.Text.Replace("`", "\\`") + '`';
                 values_find_text = $"[str(@) =~ {keys_find_text}]";
             }
-            else
+            else if (MatchExactlyBox.Checked)
             {
+                // exact matching is equivalent to regex matching
+                // with all special metacharacters escaped and anchors at the beginning and end
                 if (IgnoreCaseCheckBox.Checked)
                 {
-                    // case-insensitive non-regex matching is equivalent to regex matching
-                    // with the (?i) flag and anchors at both the end and beginning
-                    keys_find_text = "g`(?i)^" + FindTextBox.Text.Replace("`", "\\`") + "$`";
+                    // add the (?i) flag for case-insensitive matching
+                    keys_find_text = "g`(?i)^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
                     values_find_text = $"[str(@) =~ {keys_find_text}]";
                 }
                 else
                 {
-                    keys_find_text = '`' + FindTextBox.Text.Replace("`", "\\`") + '`';
-                    values_find_text = $"[str(@) == {keys_find_text}]";
+                    keys_find_text = "g`^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
+                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                }
+            }
+            else
+            {
+                // non-regex matching is equivalent to regex matching
+                // with all special metacharacters escaped
+                if (IgnoreCaseCheckBox.Checked)
+                {
+                    // add the (?i) flag for case-insensitive matching
+                    keys_find_text = "g`(?i)" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
+                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                }
+                else
+                {
+                    keys_find_text = "g`" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
+                    values_find_text = $"[str(@) =~ {keys_find_text}]";
                 }
             }
             replaceQuery = $"s_sub(@, {keys_find_text}, `" + ReplaceTextBox.Text.Replace("`", "\\`") + "`)";
@@ -215,7 +226,14 @@ namespace JSON_Tools.Forms
             int keysvals_index = KeysValsBothBox.SelectedIndex;
             KeysValsBothBox.SelectedIndex = 1;
             AssignFindReplaceQueries();
-            treeViewer.QueryBox.Text = findQuery + " = " + replaceQuery;
+            string root = (RecursiveSearchBox.Checked) ? $"(@{RootTextBox.Text})..*" : $"@{RootTextBox}";
+            // for math find/replace we want to filter before performing the operation
+            // for regex find/replace the s_sub function naturally filters (because it's only replacing the target substring)
+            // thus, we only want to use the findQuery to filter when doing math find/replace
+            treeViewer.QueryBox.Text = (MathBox.Checked)
+                ? findQuery + " = " + replaceQuery
+                : $"({root})[is_str(@)] = {replaceQuery}";
+            //treeViewer.QueryBox.Text = findQuery + " = " + replaceQuery;
             treeViewer.SubmitQueryButton.PerformClick();
             KeysValsBothBox.SelectedIndex = keysvals_index;
         }
@@ -225,6 +243,20 @@ namespace JSON_Tools.Forms
             string temp = FindTextBox.Text;
             FindTextBox.Text = ReplaceTextBox.Text;
             ReplaceTextBox.Text = temp;
+        }
+
+        private void MatchExactlyBox_CheckedChanged(object sender, EventArgs e)
+        {
+            // regex matching and whole word matching are mutually exclusive
+            if (MatchExactlyBox.Checked) RegexBox.Checked = false;
+            RegexBox.Enabled = !MatchExactlyBox.Checked;
+        }
+
+        private void RegexBox_CheckedChanged(object sender, EventArgs e)
+        {
+            // regex matching and whole word matching are mutually exclusive
+            if (RegexBox.Checked) MatchExactlyBox.Checked = false;
+            MatchExactlyBox.Enabled = !RegexBox.Checked;
         }
     }
 }

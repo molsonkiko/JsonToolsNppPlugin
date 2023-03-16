@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
-using System.Windows.Forms.VisualStyles;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -319,7 +318,7 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";
                 case Dtype.BOOL: return value.ToString().ToLower();
-                case Dtype.REGEX: return ((JRegex)this).regex.ToString();
+                case Dtype.REGEX: return new JNode(((JRegex)this).regex.ToString(), Dtype.STR, 0).ToString();
                 case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:mm:ss") + '"';
                 case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
                 default: return ((object)this).ToString(); // just show the type name for it
@@ -1156,6 +1155,7 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
+    [System.Diagnostics.DebuggerDisplay("JRegex({regex})")]
     /// <summary>
     /// A holder for Regex objects (assigned to the regex property).<br></br>
     /// The value is always null and the type is always Dtype.REGEX.
@@ -1171,6 +1171,10 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
+    [System.Diagnostics.DebuggerDisplay("JSlicer({slicer})")]
+    /// <summary>
+    /// A holder for arrays of 1-3 nullable ints. This is a convenience class for parsing of Remespath queries.
+    /// </summary>
     public class JSlicer : JNode
     {
         // has to be a separate property because arrays don't implement IComparable

@@ -45,13 +45,13 @@ namespace JSON_Tools.Tests
                 bool is_assignment_expr = false;
                 foreach (object desired_value in desired)
                 {
-                    if (desired_value is int || desired_value is long || desired_value is double || desired_value is string || desired_value == null)
+                    if (desired_value is int || desired_value is long || desired_value is double || desired_value is string || desired_value == null || desired_value is Regex)
                     {
                         sb_desired.Append(ArgFunction.ObjectsToJNode(desired_value).ToString());
                     }
-                    else if (desired_value is JNode)
+                    else if (desired_value is JNode node)
                     {
-                        sb_desired.Append(((JNode)desired_value).ToString());
+                        sb_desired.Append(node.ToString());
                     }
                     else
                     {

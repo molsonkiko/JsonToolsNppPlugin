@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -412,6 +414,30 @@ instead got
                     tests_failed++;
                     Npp.AddLine($"Expected {a.ToString()} == {b.ToString()} to be {a_equals_b}, but it was called {result}");
                 }
+            }
+            #endregion
+            #region TestJRegexToString
+            var arrayOfJRegexes = new JArray(0, new JNode[]{ 
+                new JRegex(new Regex(".")),
+                new JRegex(new Regex("(\")")),
+                new JRegex(new Regex("\\d+[a-z]\\\\"))
+            }.ToList());
+            var correctJRegexArrayRepr = "[\".\", \"(\\\")\", \"\\\\d+[a-z]\\\\\\\\\"]";
+            ii++;
+            string gotRepr = correctJRegexArrayRepr;
+            try
+            {
+                gotRepr = arrayOfJRegexes.ToString();
+            }
+            catch (Exception ex)
+            {
+                tests_failed++;
+                Npp.AddLine($"While trying to get the string representation of JRegex array {correctJRegexArrayRepr}\r\ngot error\r\n{ex}");
+            }
+            if (gotRepr != correctJRegexArrayRepr)
+            {
+                tests_failed++;
+                Npp.AddLine($"JRegex ToString() should return a string that would reproduce the original regex.\r\nExpected\r\n{correctJRegexArrayRepr}\r\nGot\r\n{gotRepr}");
             }
             #endregion
 

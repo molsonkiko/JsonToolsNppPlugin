@@ -448,6 +448,26 @@ This JSON schema generator only produces schemas with the following keywords:
 
 ![JSON schema generator](/docs/json%20viewer%20schema%20generator.PNG)
 
+## Automatic validation of JSON against JSON schema ##
+
+As of version [4.11.0](/CHANGELOG.md#4110---2023-03-15), you can set up this plugin to *automatically validate* JSON files with certain filenames whenever you open them.
+
+Let's try out this feature! We can use the plugin command `Choose schemas to automatically validate filename patterns`, which will open up a file that looks like this.
+
+![schemas to filename patterns file new](/docs/schemasToFnamePatterns%20with%20no%20fname%20patterns.PNG)
+
+Read the comments at the beginning of this file; it's self-documenting.
+
+Now let's map a schema file to a filename pattern.
+
+![schemas to filename patterns file successful validation](/docs/schemasToFnamePatterns%20example%20schema%20to%20example%20fname%20success.PNG)
+
+This configuration means that whenever I open a `.json` file with the substring `example` in its name (other than `example_schema.json` itself), the file will automatically be validated against `example_schema.json` (shown in the left of the bottom instance). We see in the right tab in the bottom instance that `example.json` does not have a pop-up message, because it validates against that schema.
+
+Below we can see an example of what happens when a file with a name that matches the pattern *does not validate* under the schema. We get a pop-up message indicating that the schema expected this JSON to be an array, but the JSON in this file is an object.
+
+![schemas to filenames patterns file failed validation](/docs/schemasToFnamePatterns%20example%20schema%20to%20example%20fname%20failure.PNG)
+
 ## DSON ##
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.
@@ -457,3 +477,5 @@ Currently the plugin only has a DSON emitter. Later I may add a DSON parser.
 ![DSON example](/docs/DSON%20example.PNG)
 
 Where is DSON generator? Don't know. Not on main plugin menu. So scared. Very confuse. 🐕🤷
+
+DSON is first found in version [4.10.1](/CHANGELOG.md). molsonkiko such dedicated, much commitment to users, wow.
