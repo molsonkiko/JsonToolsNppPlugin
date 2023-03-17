@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4101---2023-03-02) to this project will be documented in this file.
+All [notable changes](#4110---2023-03-15) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### To Be Added
 
 1. Show multiple schema validation problems.
-2. Add parsing of unquoted strings when linter is active.
+2. Cache schemas, checking if the last time the file was edited was more recent than the last time the file was accessed.
+3. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
  
 ### To Be Changed
@@ -29,6 +30,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
+
+## [4.11.1] - 2023-03-17
+
+### Fixed
+
+1. [Bug](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/30) where users who didn't have a JsonTools directory in the config folder would get a plugin crash on startup. Now a config subdirectory is automatically created if it doesn't already exist. This bug also existed with the `JSON from files and APIs` form, but now it has been solved in both places.
 
 ## [4.11.0] - 2023-03-15
 

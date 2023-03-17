@@ -211,6 +211,7 @@ namespace JSON_Tools.Forms
             // write directories visited to config file
             if (DirectoriesVisitedBox.Items.Count > 1)
             {
+                Npp.CreateConfigSubDirectoryIfNotExists();
                 using (var fp = new StreamWriter(directories_visited_file.OpenWrite(), Encoding.UTF8))
                 {
                     for (int ii = 1; ii < DirectoriesVisitedBox.Items.Count; ii++)

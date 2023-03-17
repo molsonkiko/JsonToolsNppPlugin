@@ -81,6 +81,7 @@ namespace JSON_Tools.Forms
             int[] majorMinorVersion = Npp.notepad.GetNppVersion();
             if (majorMinorVersion[0] >= 8)
             {
+                // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
                 DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "Notepad++",
@@ -100,7 +101,6 @@ namespace JSON_Tools.Forms
                     }
                 }
             }
-            // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
             try
             {
                 string dson = Dson.Dump(json);

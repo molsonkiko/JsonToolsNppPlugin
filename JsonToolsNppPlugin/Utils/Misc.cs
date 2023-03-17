@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
@@ -116,6 +117,14 @@ namespace JSON_Tools.Utils
             while (version.EndsWith(".0"))
                 version = version.Substring(0, version.Length - 2);
             return version;
+        }
+
+        public static void CreateConfigSubDirectoryIfNotExists()
+        {
+            var jsonToolsConfigDir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
+            var jsonToolsConfigDirInfo = new DirectoryInfo(jsonToolsConfigDir);
+            if (!jsonToolsConfigDirInfo.Exists)
+                jsonToolsConfigDirInfo.Create();
         }
 
         //public static DateTime LastSavedTime(string fname)

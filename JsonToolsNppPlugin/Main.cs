@@ -783,6 +783,7 @@ namespace Kbg.NppPluginNET
         /// <param name="schemasToPatterns">object where keys are names of JSON schema files and objects are lists of C# regex matching filenames</param>
         static void WriteSchemasToFnamePatternsFile(JObject schemasToPatterns)
         {
+            Npp.CreateConfigSubDirectoryIfNotExists();
             using (var fp = new StreamWriter(schemasToFnamePatternsFname, false, Encoding.UTF8))
             {
                 fp.WriteLine("// this file determines when automatic JSON validation should be performed");
@@ -888,7 +889,7 @@ namespace Kbg.NppPluginNET
 
         static void SetSchemasToFnamePatternsFname()
         {
-            string config_dir = Npp.notepad.GetConfigDirectory();
+            var config_dir = Npp.notepad.GetConfigDirectory();
             schemasToFnamePatternsFname = Path.Combine(config_dir, Main.PluginName, "schemasToFnamePatterns.json");
         }
         #endregion

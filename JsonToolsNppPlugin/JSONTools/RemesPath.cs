@@ -34,56 +34,6 @@ namespace JSON_Tools.JSON_Tools
     #endregion DATA_HOLDER_STRUCTS
     
     #region OTHER_HELPER_CLASSES
-    public class QueryCache
-    {
-        public int capacity;
-        public Dictionary<string, JNode> cache;
-        public LinkedList<string> use_order;
-
-        public QueryCache(int capacity = 64)
-        {
-            cache = new Dictionary<string, JNode>();
-            this.capacity = capacity;
-            this.use_order = new LinkedList<string>();
-        }
-
-        /// <summary>
-        /// Checks the cache to see if the string query has already been stored.
-        /// If so, return the value associated with it.
-        /// If not, return null.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        public JNode Check(string query)
-        {
-            if (cache.TryGetValue(query, out JNode existing_result))
-            {
-                return existing_result;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Check if the query is already in the cache. If it is, and capacity is full, purge the oldest query.<br></br>
-        /// Then add the query-result pair.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="result"></param>
-        public void Add(string query, JNode result)
-        {
-            if (cache.ContainsKey(query)) { return; }
-            if (use_order.Count == capacity)
-            {
-                string oldest_query = use_order.First();
-                use_order.RemoveFirst();
-                cache.Remove(oldest_query);
-            }
-            use_order.AddLast(query);
-            cache[query] = result;
-        }
-    }
-
     /// <summary>
     /// anything that filters the keys of an object or the indices of an array
     /// </summary>
@@ -234,20 +184,20 @@ namespace JSON_Tools.JSON_Tools
     public class RemesParser
     {
         public RemesPathLexer lexer;
-        /// <summary>
-        /// A LRU cache mapping queries to compiled results that the parser can check against
-        /// to save time on parsing.<br></br>
-        /// May not be used if parsing is really fast and so caching is unnecessary 
-        /// </summary>
-        public QueryCache cache;
+        // /// <summary>
+        // /// A LRU cache mapping queries to compiled results that the parser can check against
+        // /// to save time on parsing.<br></br>
+        // /// Not used, because parsing is really fast and so caching is unnecessary 
+        // /// </summary>
+        //public LruCache<string, JNode> cache;
 
-        /// <summary>
-        /// The cache_capacity indicates how many queries to store in the old query cache.
-        /// </summary>
-        /// <param name="cache_capacity"></param>
-        public RemesParser(int cache_capacity = 64)
+        ///// <summary>
+        ///// The cache_capacity indicates how many queries to store in the old query cache.
+        ///// </summary>
+        ///// <param name="cache_capacity"></param>
+        public RemesParser()//(int cache_capacity = 64)
         {
-            cache = new QueryCache();
+            //cache = new LruCache<string, JNode>();
             lexer = new RemesPathLexer();
         }
 
@@ -261,12 +211,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode Compile(List<object> toks)
         {
-            //// turns out compiling queries is very fast (tens of microseconds for a simple query),
-            //// so caching old queries doesn't save much time
-            // JNode old_result = cache.Check(query);
-            // if (old_result != null) { return old_result; }
             JNode result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
-            //cache.Add(query, result);
             return result;
         }
 

@@ -470,6 +470,8 @@ Below we can see an example of what happens when a file with a name that matches
 
 ![schemas to filenames patterns file failed validation](/docs/schemasToFnamePatterns%20example%20schema%20to%20example%20fname%20failure.PNG)
 
+*Note*: the first release where this feature was implemented without causing potential crashes at startup is [4.11.1](/CHANGELOG.md#4111---2023-03-17).
+
 ## DSON ##
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.
