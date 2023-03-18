@@ -63,6 +63,9 @@
             // 
             // UrlsBox
             // 
+            this.UrlsBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.UrlsBox.Location = new System.Drawing.Point(26, 133);
             this.UrlsBox.Multiline = true;
             this.UrlsBox.Name = "UrlsBox";
@@ -84,14 +87,15 @@
             // 
             // UrlsBoxLabel
             // 
-            this.UrlsBoxLabel.Location = new System.Drawing.Point(73, 85);
+            this.UrlsBoxLabel.Location = new System.Drawing.Point(36, 83);
             this.UrlsBoxLabel.Name = "UrlsBoxLabel";
-            this.UrlsBoxLabel.Size = new System.Drawing.Size(218, 35);
+            this.UrlsBoxLabel.Size = new System.Drawing.Size(285, 35);
             this.UrlsBoxLabel.TabIndex = 2;
-            this.UrlsBoxLabel.Text = "Enter URLs of APIs you want to request JSON from (one per line)";
+            this.UrlsBoxLabel.Text = "Enter URLs of APIs you want to request JSON from (one per line or as JSON array)";
             // 
             // SendRequestsButton
             // 
+            this.SendRequestsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.SendRequestsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.SendRequestsButton.Location = new System.Drawing.Point(114, 416);
             this.SendRequestsButton.Name = "SendRequestsButton";
@@ -104,6 +108,7 @@
             // 
             // GetJsonFromFilesTitle
             // 
+            this.GetJsonFromFilesTitle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.GetJsonFromFilesTitle.AutoSize = true;
             this.GetJsonFromFilesTitle.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GetJsonFromFilesTitle.Location = new System.Drawing.Point(377, 59);
@@ -114,6 +119,7 @@
             // 
             // RecursiveSearchCheckBox
             // 
+            this.RecursiveSearchCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RecursiveSearchCheckBox.AutoSize = true;
             this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(363, 98);
             this.RecursiveSearchCheckBox.Name = "RecursiveSearchCheckBox";
@@ -125,6 +131,7 @@
             // 
             // SearchPatternsBox
             // 
+            this.SearchPatternsBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SearchPatternsBox.Location = new System.Drawing.Point(363, 140);
             this.SearchPatternsBox.Multiline = true;
             this.SearchPatternsBox.Name = "SearchPatternsBox";
@@ -136,6 +143,7 @@
             // 
             // SearchPatternsBoxLabel
             // 
+            this.SearchPatternsBoxLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(466, 140);
             this.SearchPatternsBoxLabel.Name = "SearchPatternsBoxLabel";
             this.SearchPatternsBoxLabel.Size = new System.Drawing.Size(148, 56);
@@ -144,6 +152,7 @@
             // 
             // ChooseDirectoriesButton
             // 
+            this.ChooseDirectoriesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ChooseDirectoriesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ChooseDirectoriesButton.Location = new System.Drawing.Point(406, 209);
             this.ChooseDirectoriesButton.Name = "ChooseDirectoriesButton";
@@ -156,6 +165,7 @@
             // 
             // ChooseFilesTitle
             // 
+            this.ChooseFilesTitle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ChooseFilesTitle.AutoSize = true;
             this.ChooseFilesTitle.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ChooseFilesTitle.Location = new System.Drawing.Point(704, 51);
@@ -166,6 +176,8 @@
             // 
             // FilesFoundBox
             // 
+            this.FilesFoundBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.FilesFoundBox.FormattingEnabled = true;
             this.FilesFoundBox.HorizontalScrollbar = true;
             this.FilesFoundBox.ItemHeight = 16;
@@ -178,6 +190,7 @@
             // 
             // RemoveSelectedFilesButton
             // 
+            this.RemoveSelectedFilesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.RemoveSelectedFilesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.RemoveSelectedFilesButton.Location = new System.Drawing.Point(709, 416);
             this.RemoveSelectedFilesButton.Name = "RemoveSelectedFilesButton";
@@ -190,6 +203,7 @@
             // 
             // ViewResultsButton
             // 
+            this.ViewResultsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ViewResultsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ViewResultsButton.Location = new System.Drawing.Point(363, 416);
             this.ViewResultsButton.Name = "ViewResultsButton";
@@ -202,6 +216,7 @@
             // 
             // LeftCenterDivider
             // 
+            this.LeftCenterDivider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.LeftCenterDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.LeftCenterDivider.Location = new System.Drawing.Point(345, 51);
             this.LeftCenterDivider.Name = "LeftCenterDivider";
@@ -210,6 +225,7 @@
             // 
             // CenterRightDivider
             // 
+            this.CenterRightDivider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.CenterRightDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.CenterRightDivider.Location = new System.Drawing.Point(624, 51);
             this.CenterRightDivider.Name = "CenterRightDivider";
@@ -218,6 +234,7 @@
             // 
             // TopBottomDivider
             // 
+            this.TopBottomDivider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.TopBottomDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.TopBottomDivider.Location = new System.Drawing.Point(345, 289);
             this.TopBottomDivider.Name = "TopBottomDivider";
@@ -226,6 +243,7 @@
             // 
             // ViewErrorsButton
             // 
+            this.ViewErrorsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ViewErrorsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ViewErrorsButton.Location = new System.Drawing.Point(363, 368);
             this.ViewErrorsButton.Name = "ViewErrorsButton";
@@ -238,6 +256,7 @@
             // 
             // DocsButton
             // 
+            this.DocsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.DocsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.DocsButton.Location = new System.Drawing.Point(363, 314);
             this.DocsButton.Name = "DocsButton";
@@ -255,6 +274,7 @@
             // 
             // DirectoriesVisitedBox
             // 
+            this.DirectoriesVisitedBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.DirectoriesVisitedBox.FormattingEnabled = true;
             this.DirectoriesVisitedBox.Items.AddRange(new object[] {
             "Previously visited directories..."});

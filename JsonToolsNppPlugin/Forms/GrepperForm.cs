@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -16,6 +17,8 @@ namespace JSON_Tools.Forms
         public JsonGrepper grepper;
         HashSet<string> files_found;
         private readonly FileInfo directories_visited_file;
+        private readonly FileInfo urls_queried_file;
+        private List<string> urls_queried;
 
         public GrepperForm()
         {
@@ -25,8 +28,8 @@ namespace JSON_Tools.Forms
             );
             tv = null;
             files_found = new HashSet<string>();
-            DirectoriesVisitedBox.SelectedIndex = 0;
-            directories_visited_file = new FileInfo(Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName, $"{Main.PluginName} directories visited.txt"));
+            var config_subdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
+            directories_visited_file = new FileInfo(Path.Combine(config_subdir, $"{Main.PluginName} directories visited.txt"));
             int max_dirname_chars = DirectoriesVisitedBox.Items[0].ToString().Length;
             if (directories_visited_file.Exists)
             {
@@ -45,14 +48,40 @@ namespace JSON_Tools.Forms
                 }
             }
             DirectoriesVisitedBox.DropDownWidth = max_dirname_chars * 7;
+            urls_queried_file = new FileInfo(Path.Combine(config_subdir, $"{Main.PluginName} urls queried.txt"));
+            urls_queried = new List<string>();
+            if (urls_queried_file.Exists)
+            {
+                using (var fp2 = new StreamReader(urls_queried_file.OpenRead(), Encoding.UTF8, true))
+                {
+                    var urls_text = CleanUrlsBoxText(fp2.ReadToEnd().Split('\n'));
+                    UrlsBox.Text = urls_text;
+                    urls_queried.AddRange(UrlsBox.Lines);
+                }
+            }
+            DirectoriesVisitedBox.SelectedIndex = 0;
             //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)
         {
+            string[] urls;
             try
             {
-                await grepper.GetJsonFromApis(UrlsBox.Lines);
+                // try to parse the UrlsBox content as JSON.
+                var parser = new JsonParser(linting: true);
+                var parsed = (JArray)parser.Parse(UrlsBox.Text);
+                urls = parsed.children.Select((node) => (string)node.value).ToArray();
+            }
+            catch
+            {
+                // if JSON parsing fails, we fall back on treating urls box content as
+                // just a simple list with one url per line
+                urls = UrlsBox.Lines;
+            }
+            try
+            {
+                await grepper.GetJsonFromApis(urls);
             }
             catch (Exception ex)
             {
@@ -63,6 +92,19 @@ namespace JSON_Tools.Forms
                 );
             }
             AddFilesToFilesFound();
+        }
+
+        /// <summary>
+        /// remove all empty lines from inp
+        /// </summary>
+        /// <param name="inp">a series of lines</param>
+        /// <returns></returns>
+        private string CleanUrlsBoxText(IEnumerable<string> inp)
+        {
+            return string.Join("\r\n",
+                inp
+                .Select((x) => x.TrimEnd('\r'))
+                .Where((x) => x.Length > 0));
         }
 
         private void DocsButton_Click(object sender, EventArgs e)
@@ -92,8 +134,10 @@ namespace JSON_Tools.Forms
                 {
                     root_dir = FolderBrowserDialog1.SelectedPath;
                     DirectoriesVisitedBox.Items.Add(root_dir);
+                    // only track 10 most recently visited dirs
+                    // the count will be at most 11 because we always have the reminder as item at index 0.
                     if (DirectoriesVisitedBox.Items.Count > 11)
-                        DirectoriesVisitedBox.Items.RemoveAt(1); // only track 10 most recently visited dirs
+                        DirectoriesVisitedBox.Items.RemoveAt(1);
                     // increase the dropdown width as needed to accomodate the longest dirname
                     if (root_dir.Length * 7 > DirectoriesVisitedBox.DropDownWidth)
                         DirectoriesVisitedBox.DropDownWidth = root_dir.Length * 7;
@@ -221,6 +265,16 @@ namespace JSON_Tools.Forms
                     fp.Flush();
                 }
             }
+            if (UrlsBox.Text.Length > 0)
+            {
+                Npp.CreateConfigSubDirectoryIfNotExists();
+                using (var fp2 = new StreamWriter(urls_queried_file.OpenWrite(), Encoding.UTF8))
+                {
+                    fp2.Write(CleanUrlsBoxText(urls_queried));
+                    fp2.Write("\r\n");
+                    fp2.Flush();
+                }
+            }
         }
 
         private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
@@ -258,12 +312,21 @@ namespace JSON_Tools.Forms
 
         private void AddFilesToFilesFound()
         {
+            var url_regex = new Regex("^https?://");
             foreach (string fname in grepper.fname_jsons.children.Keys)
             {
                 if (!files_found.Contains(fname))
                 {
                     FilesFoundBox.Items.Add(fname);
                     files_found.Add(fname);
+                }
+                // if it's a URL, add it to the list
+                if (url_regex.IsMatch(fname) && !urls_queried.Contains(fname))
+                {
+                    urls_queried.Add(fname);
+                    // keep list of remembered URLs to <= 10
+                    if (urls_queried.Count > 10)
+                        urls_queried.RemoveAt(0);
                 }
             }
         }

@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4110---2023-03-15) to this project will be documented in this file.
+All [notable changes](#4111---2023-03-17) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
+
+## [4.11.2] (UNRELEASED) - 2023-MM-DD
+
+### Added
+
+1. Improvements to the `JSON from files and APIs` form:
+	- URLs can now be entered into the URLs box as a JSON array or one per line as before. This could be helpful if there is a simple pattern in how the URLs are constructed and you want to use e.g. Remespath to build a list of URLs.
+	- The last 10 URLs searched are now remembered, and the URLs box is populated with them at startup.
 
 ## [4.11.1] - 2023-03-17
 
