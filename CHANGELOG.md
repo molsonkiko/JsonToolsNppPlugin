@@ -10,7 +10,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Show multiple schema validation problems.
 2. Cache schemas, checking if the last time the file was edited was more recent than the last time the file was accessed.
-3. Add parsing of unquoted strings when linter is active.
+3. Add configurable startup actions for grepper form. Might look like
+```json
+// grepperFormStartupActions.json
+{
+    "query": "@.*[:]{foo: @.foo, len_bar: s_len(@.bar)}", // for each URL queried, get a JSON array, from which you select the foo attribute and the length of the bar attribute of each item
+    "urls": [
+        "https://foo.gov.api?user=bar",
+        "https://foo.gov.api?user=baz",
+    ]
+}
+```
+4. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
  
 ### To Be Changed
@@ -38,6 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Improvements to the `JSON from files and APIs` form:
 	- URLs can now be entered into the URLs box as a JSON array or one per line as before. This could be helpful if there is a simple pattern in how the URLs are constructed and you want to use e.g. Remespath to build a list of URLs.
 	- The last 10 URLs searched are now remembered, and the URLs box is populated with them at startup.
+2. Benchmarks for JSON schema validation and creation of random JSON.
 
 ## [4.11.1] - 2023-03-17
 

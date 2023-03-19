@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -9,7 +11,7 @@ using Kbg.NppPluginNET.PluginInfrastructure;
 namespace JSON_Tools.Tests
 {
     /// <summary>
-    /// contains benchmarking tests for RemesPath and JsonParser
+    /// contains benchmarking tests for RemesPath, JsonParser, and JsonSchemaValidator
     /// </summary>
     public class Benchmarker
     {
@@ -22,7 +24,7 @@ namespace JSON_Tools.Tests
         /// </summary>
         /// <param name="query"></param>
         /// <param name="num_parse_trials"></param>
-        public static void Benchmark(string[][] queries_and_descriptions, 
+        public static void BenchmarkParserAndRemesPath(string[][] queries_and_descriptions, 
                                      string fname,
                                      int num_parse_trials = 14,
                                      int num_query_trials = 42)
@@ -100,7 +102,9 @@ Performance tests for RemesPath ({description})
                     compile_times[ii] = t;
                 }
                 (mean, sd)= GetMeanAndSd(compile_times);
-                Npp.AddLine($"Compiling query \"{query}\" into took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_query_trials} trials");
+                double comp_mean = ConvertTicks(mean, "mus");
+                double comp_sd = ConvertTicks(sd, "mus");
+                Npp.AddLine($"Compiling query \"{query}\" into took {comp_mean} +/- {comp_sd} microseconds over {num_query_trials} trials");
                 // time query execution
                 long[] query_times = new long[num_query_trials];
                 JNode result = new JNode();
@@ -132,6 +136,43 @@ Performance tests for RemesPath ({description})
                 string result_preview = result.ToString().Slice(":300") + "\n...";
                 Npp.AddLine($"Preview of result: {result_preview}");
             }
+        }
+
+        public static void BenchmarkRandomJsonAndSchemaValidation(int num_trials)
+        {
+            var parser = new JsonParser();
+            var tweetSchema = (JObject)parser.Parse(File.ReadAllText(@"plugins\JsonTools\testfiles\tweet_schema.json"));
+            // restrict to exactly 15 tweets for consistency and 3 items per other array for consistency 
+            int num_tweets = 15;
+            tweetSchema["minItems"] = new JNode((long)num_tweets, Dtype.INT, 0);
+            tweetSchema["maxItems"] = new JNode((long)num_tweets, Dtype.INT, 0);
+            long[] make_random_times = new long[num_trials];
+            long[] validate_times = new long[num_trials];
+            JNode randomTweets = new JNode();
+            var watch = new Stopwatch();
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                randomTweets = RandomJsonFromSchema.RandomJson(tweetSchema, 3, 3, true);
+                watch.Stop();
+                make_random_times[ii] = watch.ElapsedTicks;
+                watch.Reset();
+                watch.Start();
+                // validation will succeed because the tweets are generated from that schema
+                if (!JsonSchemaValidator.Validates(randomTweets, tweetSchema, out JsonSchemaValidator.ValidationProblem? vp))
+                {
+                    Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n" + vp?.ToString());
+                    break;
+                }
+                watch.Stop();
+                validate_times[ii] = watch.ElapsedTicks;
+            }
+            var len = randomTweets.ToString().Length;
+            (double mean, double sd) = GetMeanAndSd(make_random_times);
+            Npp.AddLine($"To create a random set of tweet JSON of size {len} ({num_tweets} tweets) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
+            (mean, sd) = GetMeanAndSd(validate_times);
+            Npp.AddLine($"To validate tweet JSON of size {len} ({num_tweets} tweets) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
         }
 
         public static (double mean, double sd) GetMeanAndSd(long[] times)

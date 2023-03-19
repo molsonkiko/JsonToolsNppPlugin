@@ -143,11 +143,17 @@ Performance tests for JsonParser
 ");
             // use an absolute path to the location of this file in your repo
             string big_random_fname = @"plugins\JsonTools\testfiles\big_random.json";
-            Benchmarker.Benchmark(new string[][] {
+            Benchmarker.BenchmarkParserAndRemesPath(new string[][] {
                 new string[] { "@[@[:].a * @[:].q < @[:].e]", "float arithmetic" },
                 new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
             },
-            big_random_fname, 28, 56);
+            big_random_fname, 32, 64);
+
+            Npp.AddLine($@"=========================
+Performance tests for JsonSchemaValidator
+=========================
+");
+            Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);
             //because Visual Studio runs a whole bunch of other things in the background
             //     when I build my project, the benchmarking suite
             //     makes my code seem way slower than it actually is when it's running unhindered.
