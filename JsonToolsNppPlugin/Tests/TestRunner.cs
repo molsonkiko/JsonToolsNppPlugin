@@ -150,7 +150,7 @@ Performance tests for JsonParser
             big_random_fname, 32, 64);
 
             Npp.AddLine($@"=========================
-Performance tests for JsonSchemaValidator
+Performance tests for JsonSchemaValidator and random JSON creation
 =========================
 ");
             Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);

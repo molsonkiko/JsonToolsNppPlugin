@@ -90,19 +90,22 @@ namespace JSON_Tools.JSON_Tools
             return json_type == schema_type || json_type == "integer" && schema_type == "number";
         }
 
-        public static bool Validates(JNode json, JNode schema_, out ValidationProblem? vp)
+        private static Func<JNode, ValidationProblem?> CompileValidationFunc()
         {
-            vp = null;
+            throw new NotImplementedException();
+        }
+
+        public static ValidationProblem? Validates(JNode json, JNode schema_)
+        {
             if (!(schema_ is JObject schema))
             {
                 // the booleans are valid schemas.
                 // true validates everything, and false validates nothing
-                if ((bool)schema_.value) return true;
-                vp = new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), json.line_num);
-                return false;
+                if ((bool)schema_.value) return null;
+                return new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), json.line_num);
             }
             if (schema.Length == 0)
-                return true; // the empty schema validates everything
+                return null; // the empty schema validates everything
             schema.children.TryGetValue("type", out JNode type);
             string json_type_name = JsonSchemaMaker.TypeName(json.type);
             if (type == null)
@@ -115,9 +118,9 @@ namespace JSON_Tools.JSON_Tools
                 }
                 foreach (JNode subschema in ((JArray)anyOf).children)
                 {
-                    if (Validates(json, (JObject)subschema, out _)) return true;
+                    if (Validates(json, (JObject)subschema) is null) return null;
                 }
-                vp = new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                     new Dictionary<string, object>
                     {
                         { "found", json_type_name },
@@ -125,7 +128,6 @@ namespace JSON_Tools.JSON_Tools
                     },
                     json.line_num
                 );
-                return false;
             }
             if (type is JArray types)
             {
@@ -133,9 +135,9 @@ namespace JSON_Tools.JSON_Tools
                 foreach (JNode type_name in types.children)
                 {
                     if (TypeValidates(json_type_name, (string)type_name.value))
-                        return true;
+                        return null;
                 }
-                vp = new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                     new Dictionary<string, object>
                     {
                         { "found", json_type_name },
@@ -143,12 +145,11 @@ namespace JSON_Tools.JSON_Tools
                     }, 
                     json.line_num
                 );
-                return false;
             }
             string typestr = (string)type.value;
             if (!TypeValidates(json_type_name, typestr))
             {
-                vp = new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                     new Dictionary<string, object>
                     {
                         { "found", json_type_name },
@@ -156,7 +157,6 @@ namespace JSON_Tools.JSON_Tools
                     },
                     json.line_num
                 );
-                return false;
             }
             // we've established that the JSON has the right type
             // now do any additional validation as needed
@@ -167,9 +167,9 @@ namespace JSON_Tools.JSON_Tools
                 // one of the values in the associated array
                 foreach (JNode possible in enumarr.children)
                 {
-                    if (possible.Equals(json)) return true;
+                    if (possible.Equals(json)) return null;
                 }
-                vp = new ValidationProblem(
+                return new ValidationProblem(
                     ValidationProblemType.VALUE_NOT_IN_ENUM,
                     new Dictionary<string, object>
                     {
@@ -178,12 +178,11 @@ namespace JSON_Tools.JSON_Tools
                     },
                     json.line_num
                 );
-                return false;
             }
             if (json is JArray arr)
             {
                 if (!schema.children.TryGetValue("items", out JNode items))
-                    return true;
+                    return null;
                     // no "items" keyword means the array could hold anything or nothing
                 var len_ = arr.children.Count;
                 if (schema.children.TryGetValue("minItems", out JNode minItemsNode))
@@ -191,7 +190,7 @@ namespace JSON_Tools.JSON_Tools
                     var minItems = Convert.ToInt32(minItemsNode.value);
                     if (len_ < minItems) // minItems sets minimum length for array
                     {
-                        vp = new ValidationProblem(
+                        return new ValidationProblem(
                             ValidationProblemType.ARRAY_TOO_SHORT,
                             new Dictionary<string, object>
                             {
@@ -200,7 +199,6 @@ namespace JSON_Tools.JSON_Tools
                             },
                             json.line_num
                         );
-                        return false;
                     }
                 }
                 if (schema.children.TryGetValue("maxItems", out JNode maxItemsNode))
@@ -208,7 +206,7 @@ namespace JSON_Tools.JSON_Tools
                     var maxItems= Convert.ToInt32(maxItemsNode.value);
                     if (len_ > maxItems)
                     {
-                        vp = new ValidationProblem(
+                        return new ValidationProblem(
                             ValidationProblemType.ARRAY_TOO_LONG,
                             new Dictionary<string, object>
                             {
@@ -217,26 +215,26 @@ namespace JSON_Tools.JSON_Tools
                             },
                             json.line_num
                         );
-                        return false;
                     }
                 }
                 foreach (JNode child in arr.children)
                 {
-                    if (!Validates(child, items, out vp)) return false;
+                    var vp = Validates(child, items);
+                    if (vp != null) return vp;
                 }
-                return true;
+                return null;
             }
             else if (json is JObject obj)
             {
                 if (!schema.children.TryGetValue("properties", out JNode properties))
-                    return true; // no properties keyword means anything goes
+                    return null; // no properties keyword means anything goes
                 if (!schema.children.TryGetValue("required", out JNode required))
                     required = new JArray();
                 foreach (JNode required_key in ((JArray)required).children)
                 {
                     if (!obj.children.ContainsKey((string)required_key.value))
                     {
-                        vp = new ValidationProblem(
+                        return new ValidationProblem(
                             ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY,
                             new Dictionary<string, object>
                             {
@@ -244,7 +242,6 @@ namespace JSON_Tools.JSON_Tools
                             },
                             json.line_num
                         );
-                        return false;
                     }
                 }
                 JObject props = (JObject)properties;
@@ -263,8 +260,8 @@ namespace JSON_Tools.JSON_Tools
                             if (!new Regex(pattern.Replace("\\\\", "\\")).IsMatch(key))
                                 continue;
                             JNode pattern_subschema = pattern_props[pattern];
-                            if (!Validates(obj[key], pattern_subschema, out vp))
-                                return false;
+                            var vp = Validates(obj[key], pattern_subschema);
+                            if (vp != null) return vp;
                         }
                     }
                 }
@@ -276,12 +273,13 @@ namespace JSON_Tools.JSON_Tools
                     JObject prop_schema = (JObject)props.children[key];
                     if (!obj.children.TryGetValue(key, out JNode value))
                         continue;
-                    if (!Validates(value, prop_schema, out vp)) return false;
+                    var vp = Validates(value, prop_schema);
+                    if (vp != null) return vp;
                 }
-                return true;
+                return null;
             }
             // it's a scalar, and at present no extra validation is done on scalars
-            return true;
+            return null;
         }
     }
 }

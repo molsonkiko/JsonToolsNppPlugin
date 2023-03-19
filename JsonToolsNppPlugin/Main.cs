@@ -694,11 +694,10 @@ namespace Kbg.NppPluginNET
             }
             JNode schema = ParseSchemaFile(schema_path);
             if (schema == null) return;
-            bool validates;
             JsonSchemaValidator.ValidationProblem? problem;
             try
             {
-                validates = JsonSchemaValidator.Validates(json, schema, out problem);
+                problem = JsonSchemaValidator.Validates(json, schema);
             }
             catch (Exception e)
             {
@@ -706,7 +705,7 @@ namespace Kbg.NppPluginNET
                     "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (!validates)
+            if (problem != null)
             {
                 MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {schema_path}. Problem description:\n{problem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -822,7 +821,8 @@ namespace Kbg.NppPluginNET
             }
             // now validate schemasToFnamePatterns
             // (it must be an object, the keys must not be empty strings, and the children must be non-empty arrays of strings)
-            if (!JsonSchemaValidator.Validates(schemasToFnamePatterns, schemasToFnamePatterns_SCHEMA, out JsonSchemaValidator.ValidationProblem? vp))
+            var vp = JsonSchemaValidator.Validates(schemasToFnamePatterns, schemasToFnamePatterns_SCHEMA);
+            if (vp != null)
             {
                 MessageBox.Show($"Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere was the following validation problem:\r\n{vp?.ToString()}",
                     "schemas to fnames patterns JSON badly formatted",

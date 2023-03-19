@@ -117,8 +117,8 @@ namespace JSON_Tools.Tests
                 foreach (JNode rand in rands)
                 {
                     // make sure all random JSON validates under the schema
-                    bool validates = JsonSchemaValidator.Validates(rand, schema, out var vp);
-                    if (!validates)
+                    var vp = JsonSchemaValidator.Validates(rand, schema);
+                    if (vp != null)
                     {
                         tests_failed++;
                         Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema}\nGot validation problem:\n{vp.ToString()}");
