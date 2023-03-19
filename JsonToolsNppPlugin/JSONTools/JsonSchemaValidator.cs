@@ -81,6 +81,18 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        private struct RegexAndValidator
+        {
+            public Regex regex;
+            public Func<JNode, ValidationProblem?> validator;
+
+            public RegexAndValidator(Regex regex, Func<JNode, ValidationProblem?> validator)
+            {
+                this.regex = regex;
+                this.validator = validator;
+            }
+        }
+
         /// <summary>
         /// checks if the types are equal,
         /// OR if json_type is integer and schema_type is number
@@ -90,24 +102,18 @@ namespace JSON_Tools.JSON_Tools
             return json_type == schema_type || json_type == "integer" && schema_type == "number";
         }
 
-        private static Func<JNode, ValidationProblem?> CompileValidationFunc()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static ValidationProblem? Validates(JNode json, JNode schema_)
+        public static Func<JNode, ValidationProblem?> CompileValidationFunc(JNode schema_)
         {
             if (!(schema_ is JObject schema))
             {
                 // the booleans are valid schemas.
                 // true validates everything, and false validates nothing
-                if ((bool)schema_.value) return null;
-                return new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), json.line_num);
+                if ((bool)schema_.value) return (x) => null;
+                return (x) => new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), x.line_num);
             }
             if (schema.Length == 0)
-                return null; // the empty schema validates everything
+                return (x) => null; // the empty schema validates everything
             schema.children.TryGetValue("type", out JNode type);
-            string json_type_name = JsonSchemaMaker.TypeName(json.type);
             if (type == null)
             {
                 schema.children.TryGetValue("anyOf", out JNode anyOf);
@@ -116,170 +122,279 @@ namespace JSON_Tools.JSON_Tools
                 {
                     throw new SchemaValidationException("Each schema must have either an 'anyOf' or a 'type' keyword.");
                 }
-                foreach (JNode subschema in ((JArray)anyOf).children)
+                var subValidators = ((JArray)anyOf).children
+                    .Select((subschema) => CompileValidationFunc(subschema))
+                    .ToArray();
+                return (JNode json) =>
                 {
-                    if (Validates(json, (JObject)subschema) is null) return null;
-                }
-                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
-                    new Dictionary<string, object>
+                    foreach (var subValidator in subValidators)
                     {
-                        { "found", json_type_name },
-                        { "required", anyOf }
-                    },
-                    json.line_num
-                );
+                        if (subValidator(json) is null) return null;
+                    }
+                    return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                        new Dictionary<string, object>
+                        {
+                            { "found", JsonSchemaMaker.TypeName(json.type) },
+                            { "required", anyOf }
+                        },
+                        json.line_num
+                    );
+                };
             }
             if (type is JArray types)
             {
                 // an array of scalar types
-                foreach (JNode type_name in types.children)
+                var typeNames = types.children
+                    .Select((x) => (string)x.value)
+                    .ToArray();
+                return (JNode json) =>
                 {
-                    if (TypeValidates(json_type_name, (string)type_name.value))
-                        return null;
-                }
-                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
-                    new Dictionary<string, object>
+                    var jsonTypeName = JsonSchemaMaker.TypeName(json.type);
+                    foreach (string typeName in typeNames)
                     {
-                        { "found", json_type_name },
-                        { "required", types }
-                    }, 
-                    json.line_num
-                );
+                        if (TypeValidates(jsonTypeName, typeName))
+                            return null;
+                    }
+                    return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                        new Dictionary<string, object>
+                        {
+                            { "found", jsonTypeName },
+                            { "required", types }
+                        },
+                        json.line_num
+                    );
+                };
             }
-            string typestr = (string)type.value;
-            if (!TypeValidates(json_type_name, typestr))
-            {
-                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
-                    new Dictionary<string, object>
-                    {
-                        { "found", json_type_name },
-                        { "required", typestr }
-                    },
-                    json.line_num
-                );
-            }
-            // we've established that the JSON has the right type
+            string typeStr = (string)type.value;
             // now do any additional validation as needed
-            schema.children.TryGetValue("enum", out JNode enum_);
-            if (enum_ != null && enum_ is JArray enumarr)
+            if (schema.children.TryGetValue("enum", out JNode enum_) && enum_ is JArray enumarr)
             {
                 // the "enum" keyword means that the JSON must have
                 // one of the values in the associated array
-                foreach (JNode possible in enumarr.children)
+                var enumMembers = enumarr.children;
+                return (json) =>
                 {
-                    if (possible.Equals(json)) return null;
-                }
-                return new ValidationProblem(
-                    ValidationProblemType.VALUE_NOT_IN_ENUM,
-                    new Dictionary<string, object>
+                    foreach (JNode possible in enumMembers)
                     {
-                        { "found", json },
-                        { "enum", enumarr },
-                    },
-                    json.line_num
-                );
+                        if (possible.type != json.type) continue;
+                        if (possible.Equals(json)) return null;
+                    }
+                    return new ValidationProblem(
+                        ValidationProblemType.VALUE_NOT_IN_ENUM,
+                        new Dictionary<string, object>
+                        {
+                            { "found", json },
+                            { "enum", enumarr },
+                        },
+                        json.line_num
+                    );
+                };
             }
-            if (json is JArray arr)
+            // validation logic for arrays
+            if (typeStr == "array")
             {
-                if (!schema.children.TryGetValue("items", out JNode items))
-                    return null;
-                    // no "items" keyword means the array could hold anything or nothing
-                var len_ = arr.children.Count;
-                if (schema.children.TryGetValue("minItems", out JNode minItemsNode))
+                int maxItems = (schema.children.TryGetValue("maxItems", out JNode maxItemsNode))
+                    ? Convert.ToInt32(maxItemsNode.value)
+                    : int.MaxValue;
+                int minItems = (schema.children.TryGetValue("minItems", out JNode minItemsNode))
+                    ? Convert.ToInt32(minItemsNode.value)
+                    : 0;
+                Func<JArray, ValidationProblem?> ItemsRightLength;
+                if (minItems == 0 && maxItems == int.MaxValue)
+                    ItemsRightLength = (arr) => null;
+                else
                 {
-                    var minItems = Convert.ToInt32(minItemsNode.value);
-                    if (len_ < minItems) // minItems sets minimum length for array
+                    ItemsRightLength = (arr) =>
                     {
-                        return new ValidationProblem(
-                            ValidationProblemType.ARRAY_TOO_SHORT,
+                        var len_ = arr.children.Count;
+                        if (len_ < minItems) // minItems sets minimum length for array
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.ARRAY_TOO_SHORT,
+                                new Dictionary<string, object>
+                                {
+                                    { "found", len_ },
+                                    { "minItems", minItems },
+                                },
+                                arr.line_num
+                            );
+                        }
+                        if (len_ > maxItems) // maxItems sets maximum length for array
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.ARRAY_TOO_LONG,
+                                new Dictionary<string, object>
+                                {
+                                    { "found", len_ },
+                                    { "maxItems", maxItems },
+                                },
+                                arr.line_num
+                            );
+                        }
+                        return null;
+                    };
+                }
+                if (schema.children.TryGetValue("items", out JNode items))
+                {
+                    var itemsValidator = CompileValidationFunc(items);
+                    return (JNode json) =>
+                    {
+                        if (!(json is JArray arr))
+                        {
+                            return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                                new Dictionary<string, object>
+                                {
+                            { "found", JsonSchemaMaker.TypeName(json.type) },
+                            { "required", typeStr }
+                                },
+                                json.line_num
+                            );
+                        }
+                        var itemsRightLength = ItemsRightLength(arr);
+                        if (itemsRightLength != null)
+                            return itemsRightLength;
+                        foreach (JNode child in arr.children)
+                        {
+                            var vp = itemsValidator(child);
+                            if (vp != null) return vp;
+                        }
+                        return null;
+                    };
+                }
+                // no "items" keyword means the array could hold anything or nothing
+                else return (json) =>
+                {
+                    if (!(json is JArray arr))
+                    {
+                        return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                             new Dictionary<string, object>
                             {
-                                { "found", len_ },
-                                { "minItems", minItems }, 
+                            { "found", JsonSchemaMaker.TypeName(json.type) },
+                            { "required", typeStr }
                             },
                             json.line_num
                         );
                     }
-                }
-                if (schema.children.TryGetValue("maxItems", out JNode maxItemsNode))
-                {
-                    var maxItems= Convert.ToInt32(maxItemsNode.value);
-                    if (len_ > maxItems)
-                    {
-                        return new ValidationProblem(
-                            ValidationProblemType.ARRAY_TOO_LONG,
-                            new Dictionary<string, object>
-                            {
-                                { "found", len_ },
-                                { "maxItems", maxItems },
-                            },
-                            json.line_num
-                        );
-                    }
-                }
-                foreach (JNode child in arr.children)
-                {
-                    var vp = Validates(child, items);
-                    if (vp != null) return vp;
-                }
-                return null;
+                    return ItemsRightLength(arr);
+                };
             }
-            else if (json is JObject obj)
+            // validation logic for objects
+            if (typeStr == "object")
             {
-                if (!schema.children.TryGetValue("properties", out JNode properties))
-                    return null; // no properties keyword means anything goes
-                if (!schema.children.TryGetValue("required", out JNode required))
-                    required = new JArray();
-                foreach (JNode required_key in ((JArray)required).children)
+                var propsValidators = new Dictionary<string, Func<JNode, ValidationProblem?>>();
+                if (schema.children.TryGetValue("properties", out JNode properties))
                 {
-                    if (!obj.children.ContainsKey((string)required_key.value))
+                    JObject props = (JObject)properties;
+                    foreach (string key in props.children.Keys)
                     {
-                        return new ValidationProblem(
-                            ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY,
-                            new Dictionary<string, object>
-                            {
-                                { "required", required_key.value },
-                            },
-                            json.line_num
-                        );
+                        propsValidators[key] = CompileValidationFunc(props[key]);
                     }
                 }
-                JObject props = (JObject)properties;
-                if (schema.children.TryGetValue("patternProperties", out JNode pattern_props_node)
-                    && pattern_props_node is JObject pattern_props)
+                string[] required = schema.children.TryGetValue("required", out JNode requiredNode)
+                    ? ((JArray)requiredNode).children.Select((x) => (string)x.value).ToArray()
+                    : new string[0];
+                Func<JObject, ValidationProblem?> patternPropsValidate;
+                if (schema.children.TryGetValue("patternProperties", out JNode patternPropsNode)
+                    && patternPropsNode is JObject patternProps)
                 {
                     // "patternProperties" have regular expressions as keys.
                     // If a key in an object matches one of the regexes
                     // in patternProperties, the corresponding value in the object
                     // must validate under that
                     // pattern's subschema in patternProperties.
-                    foreach (string key in obj.children.Keys)
-                    {
-                        foreach (string pattern in pattern_props.children.Keys)
+                    var patternPropsValidators = patternProps.children
+                        .Select((kv) =>
                         {
-                            if (!new Regex(pattern.Replace("\\\\", "\\")).IsMatch(key))
-                                continue;
-                            JNode pattern_subschema = pattern_props[pattern];
-                            var vp = Validates(obj[key], pattern_subschema);
-                            if (vp != null) return vp;
+                            string pat = kv.Key.Replace("\\\\", "\\");
+                            var validator = CompileValidationFunc(kv.Value);
+                            return new RegexAndValidator(new Regex(pat, RegexOptions.Compiled), validator);
+                        })
+                        .ToArray();
+                    patternPropsValidate = (obj) =>
+                    {
+                        foreach (var regexAndValidator in patternPropsValidators)
+                        {
+                            var regex = regexAndValidator.regex;
+                            foreach (string key in obj.children.Keys)
+                            {
+                                if (regex.IsMatch(key))
+                                {
+                                    var vp = regexAndValidator.validator(obj[key]);
+                                    if (vp != null) return vp;
+                                }
+                            }
+                        }
+                        return null;
+                    };
+                }
+                else patternPropsValidate = (obj) => null;
+                return (json) =>
+                {
+                    if (!(json is JObject obj))
+                    {
+                        return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                            new Dictionary<string, object>
+                            {
+                            { "found", JsonSchemaMaker.TypeName(json.type) },
+                            { "required", typeStr }
+                            },
+                            json.line_num
+                        );
+                    }
+                    // check if object has all required keys
+                    foreach (string required_key in required)
+                    {
+                        if (!obj.children.ContainsKey(required_key))
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY,
+                                new Dictionary<string, object>
+                                {
+                                    { "required", required_key },
+                                },
+                                obj.line_num
+                            );
                         }
                     }
-                }
-                foreach (string key in props.children.Keys)
-                {
-                    // for each property name in the schema, make sure that
-                    // the JSON has the corresponding key and that the associated value
-                    // validates with the property name's subschema.
-                    JObject prop_schema = (JObject)props.children[key];
-                    if (!obj.children.TryGetValue(key, out JNode value))
-                        continue;
-                    var vp = Validates(value, prop_schema);
+                    var vp = patternPropsValidate(obj);
                     if (vp != null) return vp;
+                    foreach (string key in propsValidators.Keys)
+                    {
+                        // for each property name in the schema, make sure that
+                        // the JSON has the corresponding key and that the associated value
+                        // validates with the property name's subschema.
+                        if (!obj.children.TryGetValue(key, out JNode value))
+                            continue;
+                        vp = propsValidators[key](value);
+                        if (vp != null) return vp;
+                    }
+                    return null;
+                };
+            }
+            // we just check that the JSON has the right type
+            // it's a scalar, and at present no extra validation is done on scalars
+            return (JNode json) =>
+            {
+                string jsonTypeName = JsonSchemaMaker.TypeName(json.type);
+                if (!TypeValidates(jsonTypeName, typeStr))
+                {
+                    return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                        new Dictionary<string, object>
+                        {
+                        { "found", jsonTypeName },
+                        { "required", typeStr }
+                        },
+                        json.line_num
+                    );
                 }
                 return null;
-            }
-            // it's a scalar, and at present no extra validation is done on scalars
-            return null;
+            };
+        }
+
+        public static ValidationProblem? Validates(JNode json, JNode schema_)
+        {
+            var validator = CompileValidationFunc(schema_);
+            return validator(json);
         }
     }
 }

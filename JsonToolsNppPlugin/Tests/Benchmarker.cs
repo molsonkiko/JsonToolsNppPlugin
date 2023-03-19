@@ -148,22 +148,53 @@ Performance tests for RemesPath ({description})
             tweetSchema["maxItems"] = new JNode((long)num_tweets, Dtype.INT, 0);
             long[] make_random_times = new long[num_trials];
             long[] validate_times = new long[num_trials];
+            long[] compile_times = new long[num_trials];
             JNode randomTweets = new JNode();
             var watch = new Stopwatch();
             for (int ii = 0; ii < num_trials; ii++)
             {
                 watch.Reset();
                 watch.Start();
-                randomTweets = RandomJsonFromSchema.RandomJson(tweetSchema, 3, 3, true);
+                try
+                {
+                    randomTweets = RandomJsonFromSchema.RandomJson(tweetSchema, 3, 3, true);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While trying to create random tweets from tweet schema, got exception:\r\n{ex}");
+                    break;
+                }
                 watch.Stop();
                 make_random_times[ii] = watch.ElapsedTicks;
                 watch.Reset();
                 watch.Start();
                 // validation will succeed because the tweets are generated from that schema
-                var vp = JsonSchemaValidator.Validates(randomTweets, tweetSchema);
-                if (vp != null)
+                Func<JNode, JsonSchemaValidator.ValidationProblem?> validator;
+                try
                 {
-                    Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n" + vp?.ToString());
+                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While trying to compile tweet schema to validation function, got exception:\r\n{ex}");
+                    break;
+                }
+                watch.Stop();
+                compile_times[ii] = watch.ElapsedTicks;
+                watch.Reset();
+                watch.Start();
+                try
+                {
+                    var vp = validator(randomTweets);
+                    if (vp != null)
+                    {
+                        Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n" + vp?.ToString());
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While trying to validate random tweets under tweet schema, got exception:\r\n{ex}");
                     break;
                 }
                 watch.Stop();
@@ -172,8 +203,10 @@ Performance tests for RemesPath ({description})
             var len = randomTweets.ToString().Length;
             (double mean, double sd) = GetMeanAndSd(make_random_times);
             Npp.AddLine($"To create a random set of tweet JSON of size {len} ({num_tweets} tweets) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
+            (mean, sd) = GetMeanAndSd(compile_times);
+            Npp.AddLine($"To compile the tweet schema to a validation function took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
             (mean, sd) = GetMeanAndSd(validate_times);
-            Npp.AddLine($"To validate tweet JSON of size {len} ({num_tweets} tweets) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
+            Npp.AddLine($"To validate tweet JSON of size {len} ({num_tweets} tweets) based on the compiled schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
         }
 
         public static (double mean, double sd) GetMeanAndSd(long[] times)
