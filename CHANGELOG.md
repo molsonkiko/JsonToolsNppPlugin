@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Added support for [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) JSON Schema keyword, allowing validation of strings against a regular expression. 
-2. JSON schema validation is significantly faster due to optimizations and  pre-compilation of schemas into validation functions.
+2. If auto-validation has been configured, it will now occur whenever a file is saved or renamed as well as when it is opened.
+2. JSON schema validation is significantly faster due to optimizations, pre-compilation of schemas into validation functions, and caching of schemas to avoid unnecessary reads from disk.
 3. Improvements to the `JSON from files and APIs` form:
 	- URLs can now be entered into the URLs box as a JSON array or one per line as before. This could be helpful if there is a simple pattern in how the URLs are constructed and you want to use e.g. Remespath to build a list of URLs.
 	- The last 10 URLs searched are now remembered, and the URLs box is populated with them at startup.

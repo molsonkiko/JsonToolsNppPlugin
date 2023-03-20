@@ -44,7 +44,8 @@ namespace Kbg.NppPluginNET
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
-        private static readonly JObject schemasToFnamePatterns_SCHEMA = (JObject)new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"patternProperties\":{\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"},\"^$\":false},\"properties\":{},\"required\":[],\"type\":\"object\"}");
+        private static SchemaCache schemaCache = new SchemaCache(16);
+        private static readonly Func<JNode, JsonSchemaValidator.ValidationProblem?> schemasToFnamePatterns_SCHEMA = JsonSchemaValidator.CompileValidationFunc((JObject)new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"patternProperties\":{\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"},\"^$\":false},\"properties\":{},\"required\":[],\"type\":\"object\"}"));
         // toolbar icons
         static Bitmap tbBmp_tbTab = Resources.star_bmp;
         static Icon tbIcon = null;
@@ -169,20 +170,7 @@ namespace Kbg.NppPluginNET
                     }
                     grepperTreeViewJustOpened = false;
                     active_fname = new_fname;
-                    // check if this filename matches any filename patterns associated with any schema
-                    foreach (string schema_fname in schemasToFnamePatterns.children.Keys)
-                    {
-                        JArray fname_patterns = (JArray)schemasToFnamePatterns[schema_fname];
-                        foreach (JNode pat in fname_patterns.children)
-                        {
-                            var regex = (Regex)((JRegex)pat).regex;
-                            if (!regex.IsMatch(new_fname)) continue;
-                            // the filename matches a pattern for this schema, so we'll try to validate it.
-                            // if validation succeeds, we'll say nothing. On failure, notify user.
-                            ValidateJson(schema_fname, false);
-                            return;
-                        }
-                    }
+                    ValidateIfFilenameMatches(new_fname);
                     return;
                 // when closing a file
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
@@ -235,7 +223,7 @@ namespace Kbg.NppPluginNET
                 case (uint)NppMsg.NPPN_FILEBEFORERENAME:
                     IntPtr buffer_renamed_id = notification.Header.IdFrom;
                     string buffer_old_name = Npp.notepad.GetFilePath(buffer_renamed_id);
-                    if (treeViewers.TryGetValue(buffer_old_name, out TreeViewer tv))
+                    if (treeViewers.ContainsKey(buffer_old_name))
                     {
                         treeviewer_buffers_renamed[buffer_renamed_id] = buffer_old_name;
                     }
@@ -246,15 +234,16 @@ namespace Kbg.NppPluginNET
                         should_rename_grepperForm = true;
                     }
                     return;
-                // After the file is renamed or saved, change the fname attribute of any
-                // treeViewers that were renamed.
-                // Also remap the new fname to that treeviewer and remove the old
-                // fname from treeViewers.
-                // also, when the schemas to fname patterns file is saved, parse it and validate to make sure it's ok
+                // After the file is renamed or saved:
+                // 1. change the fname attribute of any treeViewers that were renamed.
+                // 2. Remap the new fname to that treeviewer and remove the old fname from treeViewers.
+                // 3. when the schemas to fname patterns file is saved, parse it and validate to make sure it's ok
+                // 4. if the file matches a pattern in schemasToFnamePatterns, validate with the appropriate schema
                 case (uint)NppMsg.NPPN_FILESAVED:
                 case (uint)NppMsg.NPPN_FILERENAMED:
                     buffer_renamed_id = notification.Header.IdFrom;
                     string buffer_new_name = Npp.notepad.GetFilePath(buffer_renamed_id);
+                    ValidateIfFilenameMatches(buffer_new_name);
                     if (buffer_new_name == schemasToFnamePatternsFname)
                     {
                         ParseSchemasToFnamePatternsFile();
@@ -654,7 +643,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="schema_path"></param>
         /// <returns></returns>
-        static JNode ParseSchemaFile(string schema_path)
+        public static JNode ParseSchemaFile(string schema_path)
         {
             string schema_text = File.ReadAllText(schema_path);
             JNode schema;
@@ -692,12 +681,15 @@ namespace Kbg.NppPluginNET
                     return;
                 schema_path = openFileDialog.FileName;
             }
-            JNode schema = ParseSchemaFile(schema_path);
-            if (schema == null) return;
+            if (!schemaCache.Get(schema_path, out var validator))
+            {
+                schemaCache.Add(schema_path);
+                validator = schemaCache[schema_path];
+            }
             JsonSchemaValidator.ValidationProblem? problem;
             try
             {
-                problem = JsonSchemaValidator.Validates(json, schema);
+                problem = validator(json);
             }
             catch (Exception e)
             {
@@ -724,7 +716,7 @@ namespace Kbg.NppPluginNET
         {
             JNode json = TryParseJson();
             if (json == null) return;
-            JNode schema = new JNode();
+            JNode schema;
             try
             {
                 schema = JsonSchemaMaker.GetSchema(json);
@@ -821,7 +813,7 @@ namespace Kbg.NppPluginNET
             }
             // now validate schemasToFnamePatterns
             // (it must be an object, the keys must not be empty strings, and the children must be non-empty arrays of strings)
-            var vp = JsonSchemaValidator.Validates(schemasToFnamePatterns, schemasToFnamePatterns_SCHEMA);
+            var vp = schemasToFnamePatterns_SCHEMA(schemasToFnamePatterns);
             if (vp != null)
             {
                 MessageBox.Show($"Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere was the following validation problem:\r\n{vp?.ToString()}",
@@ -851,6 +843,7 @@ namespace Kbg.NppPluginNET
                     schemasToFnamePatterns.children.Remove(fname);
                     continue;
                 }
+                schemaCache.Add(fname);
                 JArray patterns = (JArray)schemasToFnamePatterns[fname];
                 JArray regexes = new JArray();
                 foreach (JNode patternNode in patterns.children)
@@ -892,6 +885,86 @@ namespace Kbg.NppPluginNET
             var config_dir = Npp.notepad.GetConfigDirectory();
             schemasToFnamePatternsFname = Path.Combine(config_dir, Main.PluginName, "schemasToFnamePatterns.json");
         }
+
+        /// <summary>
+        /// check if this filename matches any filename patterns associated with any schema<br></br>
+        /// if it does, perform validation.<br></br>
+        /// if validation fails, notify the user. Don't do anything if validation succeeds.
+        /// </summary>
+        /// <param name="fname"></param>
+        static void ValidateIfFilenameMatches(string fname)
+        {
+            foreach (string schema_fname in schemasToFnamePatterns.children.Keys)
+            {
+                JArray fname_patterns = (JArray)schemasToFnamePatterns[schema_fname];
+                foreach (JNode pat in fname_patterns.children)
+                {
+                    var regex = ((JRegex)pat).regex;
+                    if (!regex.IsMatch(fname)) continue;
+                    // the filename matches a pattern for this schema, so we'll try to validate it.
+                    ValidateJson(schema_fname, false);
+                    return;
+                }
+            }
+        }
         #endregion
+    }
+
+    /// <summary>
+    /// a storage class for compiled JSON schemas that uses a least-recently-used cache for storage.<br></br>
+    /// If a request is made for a schema, the cache checks if the file was edited since the last time
+    /// it was compiled.<br></br>
+    /// If so, the file is re-cached with an updated schema.
+    /// </summary>
+    internal class SchemaCache
+    {
+        LruCache<string, Func<JNode, JsonSchemaValidator.ValidationProblem?>> cache;
+        Dictionary<string, DateTime> lastRetrieved;
+
+        public SchemaCache(int capacity)
+        {
+            cache = new LruCache<string, Func<JNode, JsonSchemaValidator.ValidationProblem?>>(capacity);
+            lastRetrieved = new Dictionary<string, DateTime>();
+        }
+
+        public bool Get(string fname, out Func<JNode, JsonSchemaValidator.ValidationProblem?> validator)
+        {
+            validator = null;
+            if (!cache.cache.ContainsKey(fname)) return false;
+            var fileInfo = new FileInfo(fname);
+            var retrieved = lastRetrieved[fname];
+            if (fileInfo.LastWriteTime > retrieved)
+            {
+                // the file has been edited since we cached it.
+                // thus, we need to read the file, parse and compile the schema, and then re-cache it.
+                Add(fname);
+            }
+            validator = cache[fname];
+            return true;
+        }
+
+        /// <summary>
+        /// read the schema file, parse it, and cache the compiled schema
+        /// </summary>
+        /// <param name="fname"></param>
+        public void Add(string fname)
+        {
+            JNode schema = Main.ParseSchemaFile(fname);
+            if (schema == null) return;
+            if (cache.isFull)
+            {
+                // the cache is about to have its oldest key purged
+                // we find out what that is so we can also purge it from lastRetrieved
+                string lastFnameAdded = cache.OldestKey();
+                lastRetrieved.Remove(lastFnameAdded);
+            }
+            lastRetrieved[fname] = DateTime.Now;
+            cache[fname] = JsonSchemaValidator.CompileValidationFunc(schema);
+        }
+
+        public Func<JNode, JsonSchemaValidator.ValidationProblem?> this[string fname]
+        {
+            get { return cache[fname]; }
+        }
     }
 }   
