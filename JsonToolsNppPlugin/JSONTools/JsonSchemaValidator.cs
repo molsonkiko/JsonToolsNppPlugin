@@ -25,6 +25,7 @@ namespace JSON_Tools.JSON_Tools
             ARRAY_TOO_SHORT,
             OBJECT_MISSING_REQUIRED_KEY,
             FALSE_SCHEMA, // nothing validates
+            STRING_DOESNT_MATCH_PATTERN,
         }
 
         public struct ValidationProblem
@@ -48,7 +49,7 @@ namespace JSON_Tools.JSON_Tools
                 switch (problemType)
                 {
                     case ValidationProblemType.TYPE_MISMATCH:
-                        var found_type = (Dtype)keywords["found"];
+                        var found_type = JsonSchemaMaker.TypeName((Dtype)keywords["found"]);
                         object required = keywords["required"];
                         if (required is JArray req_arr)
                         {
@@ -76,6 +77,10 @@ namespace JSON_Tools.JSON_Tools
                         return msg + $"object missing required key {key_missing}";
                     case ValidationProblemType.FALSE_SCHEMA:
                         return msg + "the schema is `false`, so nothing will validate.";
+                    case ValidationProblemType.STRING_DOESNT_MATCH_PATTERN:
+                        string str = (string)keywords["string"];
+                        Regex regex = (Regex)keywords["regex"];
+                        return msg + $"string '{str}' does not match regex '{regex}'";
                     default: throw new ArgumentException($"Unknown validation problem type {problemType}");
                 }
             }
@@ -113,12 +118,10 @@ namespace JSON_Tools.JSON_Tools
             }
             if (schema.Length == 0)
                 return (x) => null; // the empty schema validates everything
-            schema.children.TryGetValue("type", out JNode type);
-            if (type == null)
+            if (!schema.children.TryGetValue("type", out JNode type))
             {
-                schema.children.TryGetValue("anyOf", out JNode anyOf);
                 // an anyOf array of allowable schemas
-                if (anyOf == null)
+                if (!schema.children.TryGetValue("anyOf", out JNode anyOf))
                 {
                     throw new SchemaValidationException("Each schema must have either an 'anyOf' or a 'type' keyword.");
                 }
@@ -366,6 +369,38 @@ namespace JSON_Tools.JSON_Tools
                             continue;
                         vp = propsValidators[key](value);
                         if (vp != null) return vp;
+                    }
+                    return null;
+                };
+            }
+            if (dtype == Dtype.STR && schema.children.TryGetValue("pattern", out JNode pattern))
+            {
+                Regex regex = new Regex((string)pattern.value, RegexOptions.Compiled);
+                return (json) =>
+                {
+                    if (!(json.value is string str))
+                    {
+                        return new ValidationProblem(
+                            ValidationProblemType.TYPE_MISMATCH,
+                            new Dictionary<string, object>
+                            {
+                                { "found", json.type },
+                                { "required", dtype },
+                            },
+                            json.line_num
+                        );
+                    }
+                    if (!regex.IsMatch(str))
+                    {
+                        return new ValidationProblem(
+                            ValidationProblemType.STRING_DOESNT_MATCH_PATTERN,
+                            new Dictionary<string, object>
+                            {
+                                { "string", str },
+                                { "regex", regex }
+                            },
+                            json.line_num
+                        );
                     }
                     return null;
                 };

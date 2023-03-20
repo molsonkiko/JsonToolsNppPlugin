@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -423,6 +424,64 @@ namespace JSON_Tools.Tests
                          // multiple patterns, and one pattern has a
                          // nonconforming key
                     false
+                ),
+                new SchemaValidatesJson(
+                    "[\"abc\", \"abd\", \"a\", \"aa\"]",
+                    "{" +
+                        "\"type\": \"array\", " +
+                        "\"items\": {" +
+                            "\"type\": \"string\"," +
+                            "\"pattern\": \"^a\"" +
+                        "}" +
+                    "}",
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "[\"abc\", \"abd\", \"ca\", \"aa\"]",
+                    "{" +
+                        "\"type\": \"array\", " +
+                        "\"items\": {" +
+                            "\"type\": \"string\"," +
+                            "\"pattern\": \"^a\"" +
+                        "}" +
+                    "}",
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[\"abc\", \"abd\", \"ca\", \"aa\"]",
+                    "{" +
+                        "\"type\": \"array\", " +
+                        "\"items\": {" +
+                            "\"anyOf\": [" +
+                                "{\"type\": \"string\", \"pattern\": \"^a\"}," +
+                                "{\"type\": \"string\", \"pattern\": \"^c\"}" +
+                            "]" +
+                        "}" +
+                    "}",
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "[\"abc\", \"abd\", \"ca\", \"aa\", 1]",
+                    "{" +
+                        "\"type\": \"array\", " +
+                        "\"items\": {" +
+                            "\"anyOf\": [" +
+                                "{\"type\": \"string\", \"pattern\": \"^a\"}," +
+                                "{\"type\": \"string\", \"pattern\": \"^c\"}" +
+                            "]" +
+                        "}" +
+                    "}",
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "{\"a\": \"<h1>adfdsfkdjfdkfj</h1>\", \"b\": 2.5}",
+                    "{" +
+                        "\"type\": \"object\"," +
+                        "\"properties\": {" +
+                            "\"a\": {\"type\": \"string\", \"pattern\": \"<(h\\\\d)>.*?</\\\\1>\"}" +
+                        "}" +
+                    "}",
+                    true
                 ),
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;

@@ -412,6 +412,10 @@ This tool can only validate the following keywords:
 * [minItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minitems)
 * [maxItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxitems)
 
+### Keywords for strings
+
+* [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112-unreleased---2023-mm-dd)*)
+
 ![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
 
 ![Example of failed JSON schema validation](/docs/json%20schema%20validation%20failed.PNG)
