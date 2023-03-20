@@ -58,10 +58,9 @@ namespace JSON_Tools.Tests
                 {
                     ii++;
                     JObject schema = (JObject)jsonParser.Parse(basic_schema);
-                    string schema_type = (string)schema["type"].value;
-                    string json_type = JsonSchemaMaker.TypeName(basic_json.type);
+                    var schema_type = JsonSchemaMaker.typeNameToDtype[(string)schema["type"].value];
                     bool should_validate = JsonSchemaValidator.TypeValidates(
-                        json_type, schema_type
+                        basic_json.type, schema_type
                     );
                     vp = JsonSchemaValidator.Validates(basic_json, schema);
                     if (should_validate && (vp != null))

@@ -48,16 +48,16 @@ namespace JSON_Tools.JSON_Tools
                 switch (problemType)
                 {
                     case ValidationProblemType.TYPE_MISMATCH:
-                        string found_type = (string)keywords["found"];
+                        var found_type = (Dtype)keywords["found"];
                         object required = keywords["required"];
                         if (required is JArray req_arr)
                         {
                             return msg + $"found type {found_type}, expected one of the types {req_arr.ToString()}.";
                         }
-                        return msg + $"found type {found_type}, expected type {(string)required}.";
+                        return msg + $"found type {found_type}, expected type {JsonSchemaMaker.TypeName((Dtype)required)}.";
                     case ValidationProblemType.VALUE_NOT_IN_ENUM:
-                        JArray enum_ = (JArray)keywords["enum"];
-                        JNode found_node = (JNode)keywords["found"];
+                        var enum_ = (JArray)keywords["enum"];
+                        var found_node = (JNode)keywords["found"];
                         return msg + $"found value {found_node.ToString()}, but the only allowed values are {enum_.ToString()}.";
                     case ValidationProblemType.ARRAY_TOO_SHORT:
                         int found_length = (int)keywords["found"];
@@ -97,9 +97,9 @@ namespace JSON_Tools.JSON_Tools
         /// checks if the types are equal,
         /// OR if json_type is integer and schema_type is number
         /// </summary>
-        public static bool TypeValidates(string json_type, string schema_type)
+        public static bool TypeValidates(Dtype json_type, Dtype schema_type)
         {
-            return json_type == schema_type || json_type == "integer" && schema_type == "number";
+            return json_type == schema_type || json_type == Dtype.INT && schema_type == Dtype.FLOAT;
         }
 
         public static Func<JNode, ValidationProblem?> CompileValidationFunc(JNode schema_)
@@ -134,7 +134,7 @@ namespace JSON_Tools.JSON_Tools
                     return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
-                            { "found", JsonSchemaMaker.TypeName(json.type) },
+                            { "found", json.type },
                             { "required", anyOf }
                         },
                         json.line_num
@@ -144,28 +144,27 @@ namespace JSON_Tools.JSON_Tools
             if (type is JArray types)
             {
                 // an array of scalar types
-                var typeNames = types.children
-                    .Select((x) => (string)x.value)
+                var dtypes = types.children
+                    .Select((x) => JsonSchemaMaker.typeNameToDtype[(string)x.value])
                     .ToArray();
                 return (JNode json) =>
                 {
-                    var jsonTypeName = JsonSchemaMaker.TypeName(json.type);
-                    foreach (string typeName in typeNames)
+                    foreach (var dtype_ in dtypes)
                     {
-                        if (TypeValidates(jsonTypeName, typeName))
+                        if (TypeValidates(json.type, dtype_))
                             return null;
                     }
                     return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
-                            { "found", jsonTypeName },
+                            { "found", json.type },
                             { "required", types }
                         },
                         json.line_num
                     );
                 };
             }
-            string typeStr = (string)type.value;
+            var dtype = JsonSchemaMaker.typeNameToDtype[(string)type.value];
             // now do any additional validation as needed
             if (schema.children.TryGetValue("enum", out JNode enum_) && enum_ is JArray enumarr)
             {
@@ -191,7 +190,7 @@ namespace JSON_Tools.JSON_Tools
                 };
             }
             // validation logic for arrays
-            if (typeStr == "array")
+            if (dtype == Dtype.ARR)
             {
                 int maxItems = (schema.children.TryGetValue("maxItems", out JNode maxItemsNode))
                     ? Convert.ToInt32(maxItemsNode.value)
@@ -244,8 +243,8 @@ namespace JSON_Tools.JSON_Tools
                             return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                                 new Dictionary<string, object>
                                 {
-                            { "found", JsonSchemaMaker.TypeName(json.type) },
-                            { "required", typeStr }
+                                    { "found", json.type },
+                                    { "required", Dtype.ARR }
                                 },
                                 json.line_num
                             );
@@ -269,8 +268,8 @@ namespace JSON_Tools.JSON_Tools
                         return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                             new Dictionary<string, object>
                             {
-                            { "found", JsonSchemaMaker.TypeName(json.type) },
-                            { "required", typeStr }
+                                { "found", json.type },
+                                { "required", Dtype.ARR }
                             },
                             json.line_num
                         );
@@ -279,7 +278,7 @@ namespace JSON_Tools.JSON_Tools
                 };
             }
             // validation logic for objects
-            if (typeStr == "object")
+            if (dtype == Dtype.OBJ)
             {
                 var propsValidators = new Dictionary<string, Func<JNode, ValidationProblem?>>();
                 if (schema.children.TryGetValue("properties", out JNode properties))
@@ -335,8 +334,8 @@ namespace JSON_Tools.JSON_Tools
                         return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                             new Dictionary<string, object>
                             {
-                            { "found", JsonSchemaMaker.TypeName(json.type) },
-                            { "required", typeStr }
+                                { "found", json.type },
+                                { "required", Dtype.OBJ }
                             },
                             json.line_num
                         );
@@ -375,14 +374,13 @@ namespace JSON_Tools.JSON_Tools
             // it's a scalar, and at present no extra validation is done on scalars
             return (JNode json) =>
             {
-                string jsonTypeName = JsonSchemaMaker.TypeName(json.type);
-                if (!TypeValidates(jsonTypeName, typeStr))
+                if (!TypeValidates(json.type, dtype))
                 {
                     return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
-                        { "found", jsonTypeName },
-                        { "required", typeStr }
+                            { "found", json.type },
+                            { "required", dtype }
                         },
                         json.line_num
                     );

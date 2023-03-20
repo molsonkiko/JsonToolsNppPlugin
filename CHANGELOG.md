@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Improvements to the `JSON from files and APIs` form:
 	- URLs can now be entered into the URLs box as a JSON array or one per line as before. This could be helpful if there is a simple pattern in how the URLs are constructed and you want to use e.g. Remespath to build a list of URLs.
 	- The last 10 URLs searched are now remembered, and the URLs box is populated with them at startup.
-2. JSON schema validation is 15-25% faster due to pre-compilation of schemas into validation functions.
+2. JSON schema validation is significantly faster due to optimizations and  pre-compilation of schemas into validation functions.
 
 ## [4.11.1] - 2023-03-17
 
