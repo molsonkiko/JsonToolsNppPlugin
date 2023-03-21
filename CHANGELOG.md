@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4111---2023-03-17) to this project will be documented in this file.
+All [notable changes](#4112---2023-03-21) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Added support for ["definitions", "$defs", and "$ref" JSON Schema keywords](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs), allowing schema re-use and even validation of recursive self-referential schemas.
 3. If auto-validation has been configured, it will now occur whenever a file is saved or renamed as well as when it is opened.
 4. JSON schema validation is significantly faster due to optimizations, pre-compilation of schemas into validation functions, and caching of schemas to avoid unnecessary reads from disk.
-5. Improvements to the `JSON from files and APIs` form:
+5. Improvements to the `JSON from files and APIs` form (address [#32](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/32)):
 	- URLs can now be entered into the URLs box as a JSON array or one per line as before. This could be helpful if there is a simple pattern in how the URLs are constructed and you want to use e.g. Remespath to build a list of URLs.
 	- The last 10 URLs searched are now remembered, and the URLs box is populated with them at startup.
 

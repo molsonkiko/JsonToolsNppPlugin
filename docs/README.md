@@ -142,7 +142,7 @@ First, you can open a new buffer containing the query result.
 
 *Added in version 3.7.0*
 
-If you want to perform some simple search or find-and-replace operations on JSON without worrying about RemesPath syntax, you can use the find/replace form.
+If you want to perform some simple search or find-and-replace operations on JSON without worrying about [RemesPath](/docs/RemesPath.md) syntax, you can use the find/replace form.
 
 ![Find/replace form simple find](/docs/find%20replace%20form%20simple%20find.PNG)
 
@@ -349,7 +349,7 @@ The tool looks like this:
 
 ## Sending REST API requests ##
 
-Perhaps the most useful attribute of this tool is its ability to connect to APIs and extract useful data without the user needing to write a script. Just enter one URL per line in the box on the left.
+Perhaps the most useful attribute of this tool is its ability to connect to APIs and extract useful data without the user needing to write a script. Just enter one URL per line in the box on the left. *Added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21): URLs can also be entered as a JSON array.*
 
 **WARNING!!!** Before sending API requests, make sure you understand the correct way to format the URL, what type of JSON you expect to be getting, etc. *This tool has not been tested on private APIs*, so you should expect it to fail unless you can incorporate your API key and other authentication information into the URL.
 
@@ -395,13 +395,18 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
 
+As of version [4.11.2](/CHANGELOG.md#4112---2023-03-21), the recursion limit for validation is currently 64. Deeper JSON than that can't be validated, period. Very deep or recursive schemas will still compile.
+
 This tool can only validate the following keywords:
 
 ### Keywords for all JSON
 * type
 * [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
 * [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
-* [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*) (*note: `definitions` and `$defs` are equivalent*)
+* [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs)
+    * __Notes:__
+    * support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)
+    * `definitions` and `$defs` keywords are equivalent.
 
 ### Keywords for objects
 * [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
