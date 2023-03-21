@@ -17,6 +17,10 @@ namespace JSON_Tools.JSON_Tools
 
     public class JsonSchemaValidator
     {
+        private const int RECURSION_LIMIT = 64;
+        // the recursion limit is especially important because the "definitions" and "$ref" keywords
+        // allow recursive self-references, and we need to avoid infinite recursion
+
         public enum ValidationProblemType
         {
             TYPE_MISMATCH,
@@ -26,6 +30,7 @@ namespace JSON_Tools.JSON_Tools
             OBJECT_MISSING_REQUIRED_KEY,
             FALSE_SCHEMA, // nothing validates
             STRING_DOESNT_MATCH_PATTERN,
+            RECURSION_LIMIT_REACHED,
         }
 
         public struct ValidationProblem
@@ -81,6 +86,8 @@ namespace JSON_Tools.JSON_Tools
                         string str = (string)keywords["string"];
                         Regex regex = (Regex)keywords["regex"];
                         return msg + $"string '{str}' does not match regex '{regex}'";
+                    case ValidationProblemType.RECURSION_LIMIT_REACHED:
+                        return msg + "validation has a maximum depth of 128";
                     default: throw new ArgumentException($"Unknown validation problem type {problemType}");
                 }
             }
@@ -107,8 +114,36 @@ namespace JSON_Tools.JSON_Tools
             return json_type == schema_type || json_type == Dtype.INT && schema_type == Dtype.FLOAT;
         }
 
+        /// <summary>
+        /// Extracts all schemas with named definitions from a schema,
+        /// and then compiles the schema into a validation function.
+        /// </summary>
+        /// <param name="schema_">a JNode representing a parsed JSON schema</param>
+        /// <returns></returns>
         public static Func<JNode, ValidationProblem?> CompileValidationFunc(JNode schema_)
         {
+            if (!(schema_ is JObject obj) || !(
+                obj.children.TryGetValue("definitions", out JNode defs)
+                || obj.children.TryGetValue("$defs", out defs)))
+            {
+                // boolean schemas and schemas without a "$defs" or "definitions" keyword
+                return CompileValidationFuncHelper(schema_, new JObject(), 0);
+            }
+            return CompileValidationFuncHelper(schema_, (JObject)defs, 0);
+        }
+
+        /// <summary>
+        /// Compiles a schema into a validation function using named definitions for subschemas
+        /// (if any exist)
+        /// </summary>
+        /// <param name="schema_">a JNode representing a parsed JSON schema</param>
+        /// <param name="definitions"></param>
+        /// <returns></returns>
+        /// <exception cref="SchemaValidationException"></exception>
+        public static Func<JNode, ValidationProblem?> CompileValidationFuncHelper(JNode schema_, JObject definitions, int recursions)
+        {
+            if (recursions == RECURSION_LIMIT)
+                return (x) => new ValidationProblem(ValidationProblemType.RECURSION_LIMIT_REACHED, new Dictionary<string, object> { }, 0);
             if (!(schema_ is JObject schema))
             {
                 // the booleans are valid schemas.
@@ -118,15 +153,34 @@ namespace JSON_Tools.JSON_Tools
             }
             if (schema.Length == 0)
                 return (x) => null; // the empty schema validates everything
+            if (schema.children.TryGetValue("$ref", out JNode refnode))
+            {
+                // a $ref should go to a "valid schema location path"
+                // which would look something like "#/$defs/foo"
+                // or "#/definitions/bar".
+                // there's a lot of detail in the JSON schema specification
+                // at https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-references
+                // for our purposes, we assume that the "$ref" string
+                // is probably delimited by the '/' character, and whatever
+                // comes after the last delimiter is the actual reference.
+                var reference = ((string)refnode.value).Split('/').Last();
+                if (!definitions.children.TryGetValue(reference, out JNode def))
+                {
+                    throw new SchemaValidationException($"\"$ref\" {refnode} does not point to a definition defined in the definitions:\r\n{definitions}");
+                }
+                // we now use the schema that was pointed to
+                var func = CompileValidationFuncHelper(def, definitions, recursions);
+                return func;
+            }
             if (!schema.children.TryGetValue("type", out JNode type))
             {
                 // an anyOf array of allowable schemas
                 if (!schema.children.TryGetValue("anyOf", out JNode anyOf))
                 {
-                    throw new SchemaValidationException("Each schema must have either an 'anyOf' or a 'type' keyword.");
+                    throw new SchemaValidationException("Each schema must have one of the '$ref', 'anyOf', or 'type' keywords.");
                 }
                 var subValidators = ((JArray)anyOf).children
-                    .Select((subschema) => CompileValidationFunc(subschema))
+                    .Select((subschema) => CompileValidationFuncHelper(subschema, definitions, recursions))
                     .ToArray();
                 return (JNode json) =>
                 {
@@ -238,7 +292,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (schema.children.TryGetValue("items", out JNode items))
                 {
-                    var itemsValidator = CompileValidationFunc(items);
+                    var itemsValidator = CompileValidationFuncHelper(items, definitions, recursions + 1);
                     return (JNode json) =>
                     {
                         if (!(json is JArray arr))
@@ -289,7 +343,7 @@ namespace JSON_Tools.JSON_Tools
                     JObject props = (JObject)properties;
                     foreach (string key in props.children.Keys)
                     {
-                        propsValidators[key] = CompileValidationFunc(props[key]);
+                        propsValidators[key] = CompileValidationFuncHelper(props[key], definitions, recursions + 1);
                     }
                 }
                 string[] required = schema.children.TryGetValue("required", out JNode requiredNode)
@@ -308,7 +362,7 @@ namespace JSON_Tools.JSON_Tools
                         .Select((kv) =>
                         {
                             string pat = kv.Key.Replace("\\\\", "\\");
-                            var validator = CompileValidationFunc(kv.Value);
+                            var validator = CompileValidationFuncHelper(kv.Value, definitions, recursions + 1);
                             return new RegexAndValidator(new Regex(pat, RegexOptions.Compiled), validator);
                         })
                         .ToArray();

@@ -1,0 +1,27 @@
+{
+    "$defs": {
+        "foo": {
+            "properties": {
+                "bar": {
+                    "type": "integer"
+                },
+                "foo": {
+                    "anyOf": [
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "$ref": "#/$defs/foo"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "foo",
+                "bar"
+            ],
+            "type": "object"
+        }
+    },
+    "$ref": "#/$defs/foo"
+}

@@ -401,6 +401,7 @@ This tool can only validate the following keywords:
 * type
 * [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
 * [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
+* [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*) (*note: `definitions` and `$defs` are equivalent*)
 
 ### Keywords for objects
 * [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
@@ -414,7 +415,7 @@ This tool can only validate the following keywords:
 
 ### Keywords for strings
 
-* [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112-unreleased---2023-mm-dd)*)
+* [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*)
 
 ![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
 
@@ -456,7 +457,7 @@ This JSON schema generator only produces schemas with the following keywords:
 
 ## Automatic validation of JSON against JSON schema ##
 
-As of version [4.11.0](/CHANGELOG.md#4110---2023-03-15), you can set up this plugin to *automatically validate* JSON files with certain filenames whenever you open them. (*starting in version [4.11.2](/CHANGELOG.md#4112-unreleased---2023-mm-dd), auto-validation also occurs when files are saved or renamed*)
+As of version [4.11.0](/CHANGELOG.md#4110---2023-03-15), you can set up this plugin to *automatically validate* JSON files with certain filenames whenever you open them. (*starting in version [4.11.2](/CHANGELOG.md#4112---2023-03-21), auto-validation also occurs when files are saved or renamed*)
 
 Let's try out this feature! We can use the plugin command `Choose schemas to automatically validate filename patterns`, which will open up a file that looks like this.
 

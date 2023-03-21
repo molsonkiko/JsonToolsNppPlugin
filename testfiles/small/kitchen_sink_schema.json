@@ -1,0 +1,88 @@
+{
+    "$defs": {
+        "super_fancy": {
+            "properties": {
+                "b": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "pattern": "^a",
+                            "type": "string"
+                        },
+                        {
+                            "contains": {
+                                "enum": [
+                                    1,
+                                    2,
+                                    3
+                                ],
+                                "type": "integer"
+                            },
+                            "items": {
+                                "type": [
+                                    "integer",
+                                    "string"
+                                ]
+                            },
+                            "maxContains": 2,
+                            "maxItems": 4,
+                            "minContains": 1,
+                            "minItems": 1,
+                            "type": "array"
+                        }
+                    ]
+                },
+                "c": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "d": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "b"
+            ],
+            "type": "object"
+        }
+    },
+    "$schema": "http://json-schema.org/schema#",
+    "items": {
+        "patternProperties": {
+            "d\\d+": {
+                "type": "integer"
+            }
+        },
+        "properties": {
+            "a": {
+                "type": "number"
+            },
+            "b": {
+                "items": {
+                    "properties": {
+                        "a": {
+                            "$ref": "#/$defs/super_fancy"
+                        }
+                    },
+                    "required": [
+                        "a"
+                    ],
+                    "type": "object"
+                },
+                "type": "array"
+            },
+            "c": {
+                "type": "integer"
+            }
+        },
+        "required": [
+            "a"
+        ],
+        "type": "object"
+    },
+    "type": "array"
+}

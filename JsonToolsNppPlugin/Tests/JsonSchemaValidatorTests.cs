@@ -87,6 +87,36 @@ namespace JSON_Tools.Tests
                     "]}" +
                 "}" +
             "}"; // matches an object with key a and a value that's an int array, a string, an integer, or an object with key b and int value
+            var defs_ref_example_schema = "{" +
+                "\"type\": \"object\"," +
+                "\"definitions\": {" +
+                    "\"foo\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}," +
+                    "\"bar\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}" +
+                "}," +
+                "\"properties\": {}," +
+                "\"patternProperties\": {" +
+                    "\"foo\": {\"$ref\": \"#/definitions/foo\"}," +
+                    "\"bar\": {\"$ref\": \"bar\"}" +
+                // the "#/definitions/foo" syntax is probably more correct
+                // but we should be prepared for both
+                "}" +
+            "}";
+            var recursive_defs_ref_schema = "{" +
+                "\"$defs\": {" +
+                    "\"foo\": {" +
+                        "\"type\": \"object\"," +
+                        "\"properties\": {" +
+                            "\"bar\": {\"type\": \"integer\"}, " +
+                            "\"foo\": {\"anyOf\": [" +
+                                "{\"type\": \"null\"}," +
+                                "{\"$ref\": \"#/$defs/foo\"}" +
+                            "]}" +
+                        "}," +
+                        "\"required\": [\"foo\", \"bar\"]" +
+                    "}" +
+                "}," +
+                "\"$ref\": \"#/$defs/foo\"" +
+            "}";
             var testcases = new List<SchemaValidatesJson>
             {
                 new SchemaValidatesJson(
@@ -348,6 +378,9 @@ namespace JSON_Tools.Tests
                     "}",
                     false // object expected in array, but got number
                 ),
+                /*********************
+                 * "patternProperties" keyword
+                *********************/
                 new SchemaValidatesJson(
                     "{\"a1\": 1.5, \"a2\": \"NA\", \"a3\": -7.3, \"foo\": true}",
                     "{" +
@@ -425,6 +458,9 @@ namespace JSON_Tools.Tests
                          // nonconforming key
                     false
                 ),
+                /*********************
+                 * "pattern" keyword
+                *********************/
                 new SchemaValidatesJson(
                     "[\"abc\", \"abd\", \"a\", \"aa\"]",
                     "{" +
@@ -482,6 +518,40 @@ namespace JSON_Tools.Tests
                         "}" +
                     "}",
                     true
+                ),
+                /*********************
+                 * "$defs", "definitions", and "$ref" keywords
+                *********************/
+                new SchemaValidatesJson(
+                    "{\"foo1\": [1], \"bar1\": [\"a\"], \"foo2\": [2.5], \"bar2\": [\"b\"]}",
+                    defs_ref_example_schema,
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "{\"foo1\": [null], \"bar1\": [\"a\"], \"foo2\": [2.5], \"bar2\": [\"b\"]}",
+                    defs_ref_example_schema,
+                    false
+                ),
+                /***** self-referential schemas with $defs and $ref ****/
+                new SchemaValidatesJson(
+                    "{\"bar\": 0, \"foo\": {\"bar\": 1, \"foo\": {\"bar\": 2, \"foo\": {\"bar\": 3, \"foo\": null}}}}",
+                    recursive_defs_ref_schema,
+                    true
+                ),
+                new SchemaValidatesJson( // recursion missing required key
+                    "{\"bar\": 0, \"foo\": {\"baz\": 1, \"foo\": {\"bar\": 2, \"foo\": {\"bar\": 3, \"foo\": null}}}}",
+                    recursive_defs_ref_schema,
+                    false
+                ),
+                new SchemaValidatesJson( // base case of recursion is wrong
+                    "{\"bar\": 0, \"foo\": {\"bar\": 1, \"foo\": {\"bar\": 2, \"foo\": {\"bar\": 3, \"foo\": 1}}}}",
+                    recursive_defs_ref_schema,
+                    false
+                ),
+                new SchemaValidatesJson( // a type in one of the recursions is wrong
+                    "{\"bar\": 0, \"foo\": {\"bar\": 1.5, \"foo\": null}}",
+                    recursive_defs_ref_schema,
+                    false
                 ),
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
