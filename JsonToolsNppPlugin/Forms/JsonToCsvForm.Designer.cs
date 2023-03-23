@@ -139,7 +139,7 @@
             this.GenerateCSVButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GenerateCSVButton.Location = new System.Drawing.Point(30, 239);
             this.GenerateCSVButton.Name = "GenerateCSVButton";
-            this.GenerateCSVButton.Size = new System.Drawing.Size(120, 27);
+            this.GenerateCSVButton.Size = new System.Drawing.Size(127, 27);
             this.GenerateCSVButton.TabIndex = 8;
             this.GenerateCSVButton.Text = "Generate CSV";
             this.GenerateCSVButton.UseVisualStyleBackColor = true;
@@ -149,9 +149,9 @@
             // DocsButton
             // 
             this.DocsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DocsButton.Location = new System.Drawing.Point(226, 239);
+            this.DocsButton.Location = new System.Drawing.Point(221, 239);
             this.DocsButton.Name = "DocsButton";
-            this.DocsButton.Size = new System.Drawing.Size(69, 27);
+            this.DocsButton.Size = new System.Drawing.Size(74, 27);
             this.DocsButton.TabIndex = 9;
             this.DocsButton.Text = "Docs";
             this.DocsButton.UseVisualStyleBackColor = true;

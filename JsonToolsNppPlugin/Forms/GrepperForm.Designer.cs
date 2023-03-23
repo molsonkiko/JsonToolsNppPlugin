@@ -54,10 +54,11 @@
             // 
             // GrepperFormTitle
             // 
+            this.GrepperFormTitle.AutoSize = true;
             this.GrepperFormTitle.Font = new System.Drawing.Font("Segoe UI", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.GrepperFormTitle.Location = new System.Drawing.Point(339, 9);
             this.GrepperFormTitle.Name = "GrepperFormTitle";
-            this.GrepperFormTitle.Size = new System.Drawing.Size(288, 31);
+            this.GrepperFormTitle.Size = new System.Drawing.Size(281, 31);
             this.GrepperFormTitle.TabIndex = 0;
             this.GrepperFormTitle.Text = "JSON from files and APIs";
             // 
@@ -87,9 +88,9 @@
             // 
             // UrlsBoxLabel
             // 
-            this.UrlsBoxLabel.Location = new System.Drawing.Point(36, 83);
+            this.UrlsBoxLabel.Location = new System.Drawing.Point(27, 83);
             this.UrlsBoxLabel.Name = "UrlsBoxLabel";
-            this.UrlsBoxLabel.Size = new System.Drawing.Size(285, 35);
+            this.UrlsBoxLabel.Size = new System.Drawing.Size(303, 35);
             this.UrlsBoxLabel.TabIndex = 2;
             this.UrlsBoxLabel.Text = "Enter URLs of APIs you want to request JSON from (one per line or as JSON array)";
             // 
@@ -156,7 +157,7 @@
             this.ChooseDirectoriesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ChooseDirectoriesButton.Location = new System.Drawing.Point(406, 209);
             this.ChooseDirectoriesButton.Name = "ChooseDirectoriesButton";
-            this.ChooseDirectoriesButton.Size = new System.Drawing.Size(151, 32);
+            this.ChooseDirectoriesButton.Size = new System.Drawing.Size(156, 32);
             this.ChooseDirectoriesButton.TabIndex = 9;
             this.ChooseDirectoriesButton.Text = "Choose directory...";
             this.ChooseDirectoriesButton.UseVisualStyleBackColor = true;
@@ -194,7 +195,7 @@
             this.RemoveSelectedFilesButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.RemoveSelectedFilesButton.Location = new System.Drawing.Point(709, 416);
             this.RemoveSelectedFilesButton.Name = "RemoveSelectedFilesButton";
-            this.RemoveSelectedFilesButton.Size = new System.Drawing.Size(176, 33);
+            this.RemoveSelectedFilesButton.Size = new System.Drawing.Size(181, 33);
             this.RemoveSelectedFilesButton.TabIndex = 13;
             this.RemoveSelectedFilesButton.Text = "Remove selected files";
             this.RemoveSelectedFilesButton.UseVisualStyleBackColor = true;
