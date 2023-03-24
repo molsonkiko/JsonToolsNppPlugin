@@ -64,7 +64,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Tree.Location = new System.Drawing.Point(4, 95);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(433, 335);
+            this.Tree.Size = new System.Drawing.Size(457, 335);
             this.Tree.TabIndex = 6;
             this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
@@ -93,7 +93,7 @@
             this.QueryBox.Location = new System.Drawing.Point(4, 4);
             this.QueryBox.Multiline = true;
             this.QueryBox.Name = "QueryBox";
-            this.QueryBox.Size = new System.Drawing.Size(189, 74);
+            this.QueryBox.Size = new System.Drawing.Size(203, 74);
             this.QueryBox.TabIndex = 0;
             this.QueryBox.Text = "@";
             this.QueryBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryBox_KeyPress);
@@ -104,9 +104,9 @@
             this.SubmitQueryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SubmitQueryButton.AutoSize = true;
             this.SubmitQueryButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SubmitQueryButton.Location = new System.Drawing.Point(207, 4);
+            this.SubmitQueryButton.Location = new System.Drawing.Point(220, 4);
             this.SubmitQueryButton.Name = "SubmitQueryButton";
-            this.SubmitQueryButton.Size = new System.Drawing.Size(124, 26);
+            this.SubmitQueryButton.Size = new System.Drawing.Size(130, 26);
             this.SubmitQueryButton.TabIndex = 1;
             this.SubmitQueryButton.Text = "Submit query";
             this.SubmitQueryButton.UseVisualStyleBackColor = true;
@@ -117,9 +117,9 @@
             // 
             this.SaveQueryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SaveQueryButton.AutoSize = true;
-            this.SaveQueryButton.Location = new System.Drawing.Point(207, 36);
+            this.SaveQueryButton.Location = new System.Drawing.Point(220, 36);
             this.SaveQueryButton.Name = "SaveQueryButton";
-            this.SaveQueryButton.Size = new System.Drawing.Size(124, 27);
+            this.SaveQueryButton.Size = new System.Drawing.Size(130, 27);
             this.SaveQueryButton.TabIndex = 3;
             this.SaveQueryButton.Text = "Save query result";
             this.SaveQueryButton.UseVisualStyleBackColor = true;
@@ -130,9 +130,9 @@
             // 
             this.QueryToCsvButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.QueryToCsvButton.AutoSize = true;
-            this.QueryToCsvButton.Location = new System.Drawing.Point(337, 4);
+            this.QueryToCsvButton.Location = new System.Drawing.Point(359, 4);
             this.QueryToCsvButton.Name = "QueryToCsvButton";
-            this.QueryToCsvButton.Size = new System.Drawing.Size(100, 26);
+            this.QueryToCsvButton.Size = new System.Drawing.Size(103, 26);
             this.QueryToCsvButton.TabIndex = 2;
             this.QueryToCsvButton.Text = "Query to CSV";
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
@@ -143,7 +143,7 @@
             // 
             this.FullTreeCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.FullTreeCheckBox.AutoSize = true;
-            this.FullTreeCheckBox.Location = new System.Drawing.Point(207, 69);
+            this.FullTreeCheckBox.Location = new System.Drawing.Point(222, 69);
             this.FullTreeCheckBox.Name = "FullTreeCheckBox";
             this.FullTreeCheckBox.Size = new System.Drawing.Size(130, 20);
             this.FullTreeCheckBox.TabIndex = 5;
@@ -238,7 +238,7 @@
             this.CurrentPathBox.Location = new System.Drawing.Point(124, 436);
             this.CurrentPathBox.Name = "CurrentPathBox";
             this.CurrentPathBox.ReadOnly = true;
-            this.CurrentPathBox.Size = new System.Drawing.Size(313, 22);
+            this.CurrentPathBox.Size = new System.Drawing.Size(337, 22);
             this.CurrentPathBox.TabIndex = 8;
             this.CurrentPathBox.TabStop = false;
             // 
@@ -246,9 +246,9 @@
             // 
             this.RefreshButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RefreshButton.AutoSize = true;
-            this.RefreshButton.Location = new System.Drawing.Point(337, 36);
+            this.RefreshButton.Location = new System.Drawing.Point(359, 36);
             this.RefreshButton.Name = "RefreshButton";
-            this.RefreshButton.Size = new System.Drawing.Size(100, 27);
+            this.RefreshButton.Size = new System.Drawing.Size(103, 27);
             this.RefreshButton.TabIndex = 4;
             this.RefreshButton.Text = "Refresh";
             this.RefreshButton.UseVisualStyleBackColor = true;
@@ -271,7 +271,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(447, 461);
+            this.ClientSize = new System.Drawing.Size(471, 461);
             this.Controls.Add(this.FindReplaceButton);
             this.Controls.Add(this.RefreshButton);
             this.Controls.Add(this.CurrentPathBox);

@@ -122,7 +122,7 @@
             // 
             this.RecursiveSearchCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RecursiveSearchCheckBox.AutoSize = true;
-            this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(363, 98);
+            this.RecursiveSearchCheckBox.Location = new System.Drawing.Point(368, 95);
             this.RecursiveSearchCheckBox.Name = "RecursiveSearchCheckBox";
             this.RecursiveSearchCheckBox.Size = new System.Drawing.Size(180, 20);
             this.RecursiveSearchCheckBox.TabIndex = 6;
@@ -145,9 +145,9 @@
             // SearchPatternsBoxLabel
             // 
             this.SearchPatternsBoxLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(466, 140);
+            this.SearchPatternsBoxLabel.Location = new System.Drawing.Point(456, 140);
             this.SearchPatternsBoxLabel.Name = "SearchPatternsBoxLabel";
-            this.SearchPatternsBoxLabel.Size = new System.Drawing.Size(148, 56);
+            this.SearchPatternsBoxLabel.Size = new System.Drawing.Size(158, 56);
             this.SearchPatternsBoxLabel.TabIndex = 8;
             this.SearchPatternsBoxLabel.Text = "Enter search pattern(s)\r\n(one per line)";
             // 
@@ -228,7 +228,7 @@
             // 
             this.CenterRightDivider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.CenterRightDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.CenterRightDivider.Location = new System.Drawing.Point(624, 51);
+            this.CenterRightDivider.Location = new System.Drawing.Point(631, 51);
             this.CenterRightDivider.Name = "CenterRightDivider";
             this.CenterRightDivider.Size = new System.Drawing.Size(3, 350);
             this.CenterRightDivider.TabIndex = 18;
@@ -239,7 +239,7 @@
             this.TopBottomDivider.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.TopBottomDivider.Location = new System.Drawing.Point(345, 289);
             this.TopBottomDivider.Name = "TopBottomDivider";
-            this.TopBottomDivider.Size = new System.Drawing.Size(280, 3);
+            this.TopBottomDivider.Size = new System.Drawing.Size(287, 3);
             this.TopBottomDivider.TabIndex = 17;
             // 
             // ViewErrorsButton

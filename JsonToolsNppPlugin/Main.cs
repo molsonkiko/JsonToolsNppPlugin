@@ -16,6 +16,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
+using System.ComponentModel;
 
 namespace Kbg.NppPluginNET
 {
@@ -605,7 +606,6 @@ namespace Kbg.NppPluginNET
             }
 
             NppTbData _nppTbData = new NppTbData();
-            treeViewer.tbData = _nppTbData;
             _nppTbData.hClient = treeViewer.Handle;
             _nppTbData.pszName = title;
             // the dlgDlg should be the index of funcItem where the current function pointer is in
@@ -624,6 +624,7 @@ namespace Kbg.NppPluginNET
             // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
+            //treeViewer.JsonTreePopulateInBackground(json);
             Npp.notepad.ShowDockingForm(treeViewer);
             treeViewer.QueryBox.Focus();
             // select QueryBox on startup

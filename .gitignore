@@ -13,6 +13,7 @@ TestResults
 *.user
 *.sln.docstates
 *.vsidx
+.hypothesis
 JsonToolsNppPlugin/yamldotnet_example.cs
 
 # Obsidian vault
