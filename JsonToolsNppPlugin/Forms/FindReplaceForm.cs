@@ -32,7 +32,6 @@ namespace JSON_Tools.Forms
             Height = COLLAPSED_HEIGHT;
             findQuery = "";
             replaceQuery = "";
-            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         public static readonly Regex BinopRegex = new Regex(@"[\+\-\|&^%\*/]|\*\*|//|[<>]=?|[=!]=");

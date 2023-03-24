@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [4.11.3] (UNRELEASED) - 2023-MM-DD
 
+### Added
+
+1. Support for `$defs`, `definitions`, and `$ref` keywords for random JSON generation.
+
 ### Fixed
 
 1. Removed stupid dinging sounds when using control keys (tab, space, enter, escape) while in the tree view. Address [issues #11](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/11) and [#10](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/10)

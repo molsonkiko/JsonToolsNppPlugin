@@ -434,7 +434,25 @@ The plugin can also generate random JSON from a schema. The default minimum and 
 
 ![randomly generated JSON from a schema](/docs/random%20json%20from%20schema.PNG)
 
-In addition to the keywords supported for JSON schema [validation](#validating-json-against-json-schema), the following keywords are supported for random generation of *arrays*:
+The following keywords are supported for random JSON generation:
+
+### Keywords for all JSON
+* type
+* [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
+* [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
+* [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs)
+    * __Notes:__
+    * support added in version [4.11.3](/CHANGELOG.md#4112---2023-03-21)
+    * `definitions` and `$defs` keywords are equivalent.
+
+### Keywords for objects
+* [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
+* [required](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-required)
+
+### Keywords for arrays
+* [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)
+* [minItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minitems)
+* [maxItems](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxitems)
 * [contains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
 * [minContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
 * [maxContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)

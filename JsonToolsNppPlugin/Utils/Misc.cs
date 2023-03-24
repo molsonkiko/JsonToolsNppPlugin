@@ -126,12 +126,5 @@ namespace JSON_Tools.Utils
             if (!jsonToolsConfigDirInfo.Exists)
                 jsonToolsConfigDirInfo.Create();
         }
-
-        //public static DateTime LastSavedTime(string fname)
-        //{
-        //    DateTime now = DateTime.Now;
-        //    //NppMsg msg = NppMsg.
-        //    return now;
-        //}
     }
 }

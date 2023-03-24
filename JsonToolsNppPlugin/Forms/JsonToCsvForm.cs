@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Forms
 {
@@ -21,7 +19,6 @@ namespace JSON_Tools.Forms
             this.json = json;
             DelimBox.SelectedIndex = 0;
             StrategyBox.SelectedIndex = 0;
-            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
@@ -53,8 +50,6 @@ namespace JSON_Tools.Forms
                 case 0: delim = ','; break;
                 case 1: delim = '\t'; break;
                 case 2: delim = '|'; break;
-                    // I want to add the ability to let the user choose their own delimiter in addition to the options, but can't figure out how
-                    //case 3: delim = DelimBox.SelectedText[0]; break;
             }
             /*
             Default

@@ -60,7 +60,6 @@ namespace JSON_Tools.Forms
                 }
             }
             DirectoriesVisitedBox.SelectedIndex = 0;
-            //FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)

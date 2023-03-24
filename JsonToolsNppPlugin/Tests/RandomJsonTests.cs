@@ -3,10 +3,6 @@ using JSON_Tools.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace JSON_Tools.Tests
 {
@@ -17,7 +13,7 @@ namespace JSON_Tools.Tests
             int ii = 0;
             int tests_failed = 0;
             JsonParser parser = new JsonParser();
-            string[] tests = new string[]
+            var tests = new string[]
             {
                 "[1, \"a\"]",
                 "{\"a\": 1, \"b\": 2.5, \"c\": [1.5, 2.3, 7.8]}",
@@ -176,6 +172,41 @@ namespace JSON_Tools.Tests
                                     $"All keys: {allKeyString}");
                         tests_failed++;
                     }
+                }
+            }
+            // also test a schema that contains keywords that can't be generated randomly, like contains, minContains, minItems, maxItems, maxContains, and $defs/$ref
+            var kitchenSinkSchemaText = "{\"$defs\":{\"super_fancy\":{\"properties\":{\"b\":{\"anyOf\":[{\"type\":[\"integer\",\"string\"]},{\"contains\":{\"enum\":[1,2,3],\"type\":\"integer\"},\"items\":{\"type\":[\"integer\",\"string\"]},\"maxContains\":2,\"maxItems\":4,\"minContains\":1,\"minItems\":1,\"type\":\"array\"}]},\"c\":{\"type\":[\"integer\",\"null\"]},\"d\":{\"type\":\"boolean\"}},\"required\":[\"b\"],\"type\":\"object\"}},\"$schema\":\"http://json-schema.org/schema#\",\"items\":{\"properties\":{\"a\":{\"type\":\"number\"},\"b\":{\"items\":{\"properties\":{\"a\":{\"$ref\":\"#/$defs/super_fancy\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"},\"c\":{\"type\":\"integer\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"}";
+            var kitchenSinkSchema = parser.Parse(kitchenSinkSchemaText);
+            ii++;
+            for (int i = 0; i < 100; i++)
+            {
+                JNode randomFromKitchenSink;
+                try
+                {
+                    randomFromKitchenSink = RandomJsonFromSchema.RandomJson(kitchenSinkSchema, 0, 10, true);
+                }
+                catch (Exception ex)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchema}\r\ngot error\r\n{ex}");
+                    break;
+                }
+                JsonSchemaValidator.ValidationProblem? vp;
+                try
+                {
+                    vp = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema);
+                }
+                catch (Exception ex)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchema}\r\ngot error\r\n{ex}");
+                    break;
+                }
+                if (vp != null)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem\r\n{vp}");
+                    break;
                 }
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
