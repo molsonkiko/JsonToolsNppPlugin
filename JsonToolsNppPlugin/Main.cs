@@ -346,6 +346,11 @@ namespace Kbg.NppPluginNET
                                 "Error while trying to parse JSON",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
+                if (e is JsonParserException je)
+                    Npp.editor.GotoPos(je.Pos);
+                    // unfortunately, this position is going to be wrong if there are non-ASCII characters in the document.
+                    // that's because the position is the character number in the C# UTF-16 representation of the document,
+                    // and the version displayed in the editor will probably be UTF-8.
                 return null;
             }
             if (jsonParser.lint != null && jsonParser.lint.Count > 0)

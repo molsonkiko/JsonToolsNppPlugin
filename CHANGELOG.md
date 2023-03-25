@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Support for `$defs`, `definitions`, and `$ref` keywords for random JSON generation.
+2. When JSON parsing fails, jump to the position where the parsing stopped. *NOTE: this position will be wrong if the document contains non-ASCII characters, and there are no plans to fix that!*
 
 ### Fixed
 
