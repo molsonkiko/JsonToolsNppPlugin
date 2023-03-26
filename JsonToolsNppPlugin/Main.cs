@@ -28,7 +28,7 @@ namespace Kbg.NppPluginNET
         public static Settings settings = new Settings();
         public static JsonParser jsonParser = new JsonParser(settings.allow_datetimes,
                                                             settings.allow_singlequoted_str,
-                                                            settings.allow_javascript_comments,
+                                                            settings.allow_comments,
                                                             settings.linting,
                                                             false,
                                                             settings.allow_nan_inf);
@@ -365,7 +365,7 @@ namespace Kbg.NppPluginNET
                     sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
                     foreach (JsonLint lint in jsonParser.lint)
                     {
-                        sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.cur_char}): {lint.message}");
+                        sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.curChar}): {lint.message}");
                     }
                     Npp.AddLine(sb.ToString());
                     Npp.notepad.OpenFile(fname);
@@ -473,7 +473,7 @@ namespace Kbg.NppPluginNET
             settings.ShowDialog();
             jsonParser.allow_nan_inf = settings.allow_nan_inf;
             jsonParser.allow_datetimes = settings.allow_datetimes;
-            jsonParser.allow_javascript_comments = settings.allow_javascript_comments;
+            jsonParser.allow_comments = settings.allow_comments;
             jsonParser.allow_singlequoted_str = settings.allow_singlequoted_str;
             jsonParser.lint = settings.linting ? new List<JsonLint>() : null;
             // make sure grepperForm gets these new settings as well
@@ -808,7 +808,7 @@ namespace Kbg.NppPluginNET
             {
                 try
                 {
-                    JsonParser jParser = new JsonParser(allow_javascript_comments: true);
+                    JsonParser jParser = new JsonParser(allow_comments: true);
                     schemasToFnamePatterns = (JObject)jParser.Parse(fp.ReadToEnd());
                 }
                 catch (Exception ex)

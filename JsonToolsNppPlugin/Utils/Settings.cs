@@ -14,9 +14,9 @@ namespace JSON_Tools.Utils
             Category("JSON Parser"), DefaultValue(true)]
         public bool allow_nan_inf { get; set; }
 
-        [Description("Ignore JavaScript comments in JSON. If false, comments cause the parser to error out."),
+        [Description("Ignore comments ('#' Python-style comments or JavaScript-style '//' single-line and '/* */' multi-line) in JSON.\r\nIf false, comments cause the parser to error out."),
             Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_javascript_comments { get; set; }
+        public bool allow_comments { get; set; }
 
         [Description("Allow use of ' as well as \" for quoting strings."),
             Category("JSON Parser"), DefaultValue(false)]

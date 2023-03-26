@@ -17,26 +17,26 @@ namespace JSON_Tools.JSON_Tools
     public class JsonParserException : FormatException
     {
         public new string Message { get; set; }
-        public char Cur_char { get; set; }
+        public char CurChar { get; set; }
         public int Pos { get; set; }
 
-        public JsonParserException(string Message, char cur_char, int pos)
+        public JsonParserException(string Message, string text, int pos)
         {
             this.Message = Message;
-            this.Cur_char = cur_char;
-            this.Pos = pos;
+            this.CurChar = text[pos];
+            this.Pos = JsonParser.UTF8BytesUntil(text, pos);
         }
 
         public JsonParserException(string Message)
         {
             this.Message=Message;
-            this.Cur_char = '\x00';
+            this.CurChar = '\x00';
             this.Pos = 0;
         }
 
         public override string ToString()
         {
-            return $"{Message} at position {Pos} (char '{Cur_char}')";
+            return $"{Message} at position {Pos} (char '{CurChar}')";
         }
     }
 
@@ -48,19 +48,20 @@ namespace JSON_Tools.JSON_Tools
         public string message;
         public int pos;
         public int line;
-        public char cur_char;
+        public char curChar;
+
 
         public JsonLint(string message, int pos, int line, char cur_char)
         {
             this.message = message;
             this.pos = pos;
             this.line = line;
-            this.cur_char = cur_char;
+            this.curChar = cur_char;
         }
 
         public override string ToString()
         {
-            return $"JsonLint({message}, {pos}, {line}, '{cur_char}')";
+            return $"JsonLint({message}, {pos}, {line}, '{curChar}')";
         }
     }
 
@@ -80,9 +81,10 @@ namespace JSON_Tools.JSON_Tools
         public bool allow_nan_inf;
         /// <summary>
         /// If true, JavaScript single-line (preceded by "//") and multiline ("/* ... */") comments
-        /// will be ignored rather than raising an exception.
+        /// will be ignored rather than raising an exception.<br></br>
+        /// Python-style comments beginning with '#' are now also allowed.
         /// </summary>
-        public bool allow_javascript_comments;
+        public bool allow_comments;
         /// <summary>
         /// If true, Strings enquoted with ' rather than " will be tolerated rather than raising an exception.
         /// </summary>
@@ -113,12 +115,12 @@ namespace JSON_Tools.JSON_Tools
 
         public JsonParser(bool allow_datetimes = false,
                           bool allow_singlequoted_str = false,
-                          bool allow_javascript_comments = false,
+                          bool allow_comments = false,
                           bool linting = false,
                           bool allow_unquoted_str = false,
                           bool allow_nan_inf = true)
         {
-            this.allow_javascript_comments = allow_javascript_comments;
+            this.allow_comments = allow_comments;
             this.allow_singlequoted_str = allow_singlequoted_str;
             this.allow_unquoted_str = allow_unquoted_str; // not currently supported; may never be supported
             this.allow_datetimes = allow_datetimes;
@@ -128,6 +130,22 @@ namespace JSON_Tools.JSON_Tools
 
         #endregion
         #region HELPER_METHODS
+
+        public static int UTF8BytesUntil(string text, int pos)
+        {
+            int utf8Pos = pos;
+            for (int ii = 0; ii < pos; ii++)
+            {
+                char c = text[ii];
+                if (c > 127)
+                {
+                    if (c < 2048 || (c >= 0xd800 && c <= 0xdfff))
+                        utf8Pos++;
+                    else utf8Pos += 2;
+                }
+            }
+            return utf8Pos;
+        }
 
         private void ConsumeWhiteSpace(string inp)
         {
@@ -141,27 +159,27 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        private void ConsumeLine(string inp)
+        {
+            while (ii < inp.Length)
+            {
+                if (inp[ii] == '\n') break;
+                ii++;
+            }
+        }
+
         private void ConsumeComment(string inp)
         {
             char cur_c;
             char next_c;
-            while (ii < inp.Length - 1 && inp[ii] == '/')
+            while (ii < inp.Length - 1 && (inp[ii] == '/' || inp[ii] == '#'))
             {
                 next_c = inp[ii + 1];
-                if (next_c == '/')
+                if (inp[ii] == '#' || next_c == '/')
                 {
-                    // one or more single-line comments
+                    // Python-style comment or JavaScript-style single-line comment
                     ii++;
-                    while (ii < inp.Length)
-                    {
-                        cur_c = inp[ii];
-                        if (cur_c == '\n')
-                        {
-                            ConsumeWhiteSpace(inp);
-                            break;
-                        }
-                        ii++;
-                    }
+                    ConsumeLine(inp);
                 }
                 else if (next_c == '*')
                 {
@@ -184,7 +202,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if (!comment_ended)
                     {
-                        throw new JsonParserException("Unterminated multi-line comment", inp[ii], ii);
+                        throw new JsonParserException("Unterminated multi-line comment", inp, ii);
                     }
                 }
                 ConsumeWhiteSpace(inp);
@@ -193,16 +211,16 @@ namespace JSON_Tools.JSON_Tools
 
         private void MaybeConsumeComment(string inp)
         {
-            if (allow_javascript_comments || lint != null)
+            if (allow_comments || lint != null)
             {
                 if (lint != null)
                 {
-                    lint.Add(new JsonLint("JavaScript comments are not part of the original JSON specification", ii, line_num, '/'));
+                    lint.Add(new JsonLint("Comments are not part of the original JSON specification", ii, line_num, '/'));
                 }
                 ConsumeComment(inp);
                 return;
             }
-            throw new JsonParserException("JavaScript comments are not part of the original JSON specification", inp[ii], ii);
+            throw new JsonParserException("Comments are not part of the original JSON specification", inp, ii);
         }
 
         /// <summary>
@@ -243,7 +261,7 @@ namespace JSON_Tools.JSON_Tools
             catch
             {
                 throw new JsonParserException("Could not find valid hexadecimal of length " + length,
-                                              inp[end - 1], end - 1);
+                                              inp, end - 1);
             }
         }
 
@@ -315,7 +333,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (ii == inp.Length)
                 {
-                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp[ii - 1], ii - 1);
+                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii - 1);
                     lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii - 1, line_num, inp[ii - 1]));
                     break;
                 }
@@ -323,7 +341,7 @@ namespace JSON_Tools.JSON_Tools
                 if (cur_c == '\n')
                 {
                     // internal newlines are not allowed in JSON strings
-                    if (lint == null) throw new JsonParserException("Unterminated string literal", cur_c, ii);
+                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii);
                     line_num++;
                     lint.Add(new JsonLint($"String literal starting at position {start} contains newline", ii, line_num, inp[ii]));
                 }
@@ -335,7 +353,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (ii >= inp.Length - 2)
                     {
-                        if (lint == null) throw new JsonParserException("Unterminated string literal", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii);
                         lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii, line_num, inp[ii]));
                         break;
                     }
@@ -367,7 +385,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             if (lint != null && e is JsonParserException je)
                             {
-                                lint.Add(new JsonLint($"Invalid hexadecimal ending at {ii}", je.Pos, line_num, je.Cur_char));
+                                lint.Add(new JsonLint($"Invalid hexadecimal ending at {ii}", je.Pos, line_num, je.CurChar));
                                 ii = je.Pos;
                                 break;
                             }
@@ -375,7 +393,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else
                     {
-                        if (lint == null) throw new JsonParserException("Invalidly escaped char", next_char, ii+1);
+                        if (lint == null) throw new JsonParserException("Invalidly escaped char", inp, ii+1);
                         lint.Add(new JsonLint($"Invalidly escaped char {next_char}", ii+1, line_num, next_char));
                         ii++;
                         break;
@@ -429,7 +447,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (parsed != 1)
                     {
-                        if (lint == null) throw new JsonParserException("Number with two decimal points", c, ii);
+                        if (lint == null) throw new JsonParserException("Number with two decimal points", inp, ii);
                         lint.Add(new JsonLint("Number with two decimal points", ii, line_num, c));
                         break;
                     }
@@ -509,7 +527,7 @@ namespace JSON_Tools.JSON_Tools
             // need to do this to avoid stack overflow when presented with unreasonably deep nesting
             // stack overflow causes an unrecoverable panic, and we would rather fail gracefully
             if (recursion_depth == MAX_RECURSION_DEPTH)
-                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", cur_c, ii);
+                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii);
             while (ii < inp.Length)
             {
                 ConsumeWhiteSpace(inp);
@@ -518,13 +536,13 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException($"Two consecutive commas after element {children.Count - 1} of array", cur_c, ii);
+                        if (lint == null) throw new JsonParserException($"Two consecutive commas after element {children.Count - 1} of array", inp, ii);
                         lint.Add(new JsonLint($"Two consecutive commas after element {children.Count - 1} of array", ii, line_num, cur_c));
                     }
                     already_seen_comma = true;
                     if (children.Count == 0)
                     {
-                        if (lint == null) throw new JsonParserException("Comma before first value in array", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma before first value in array", inp, ii);
                         lint.Add(new JsonLint("Comma before first value in array", ii, line_num, cur_c));
                     }
                     ii++;
@@ -534,7 +552,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last element of array", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma after last element of array", inp, ii);
                         lint.Add(new JsonLint("Comma after last element of array", ii, line_num, cur_c));
                     }
                     JArray arr = new JArray(start_line_num, children);
@@ -544,10 +562,10 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else if (cur_c == '}')
                 {
-                    if (lint == null) throw new JsonParserException("Tried to terminate an array with '}'", cur_c, ii);
+                    if (lint == null) throw new JsonParserException("Tried to terminate an array with '}'", inp, ii);
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last element of array", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma after last element of array", inp, ii);
                         lint.Add(new JsonLint("Comma after last element of array", ii, line_num, cur_c));
                     }
                     lint.Add(new JsonLint("Tried to terminate an array with '}'", ii, line_num, cur_c));
@@ -555,12 +573,12 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                     return arr;
                 }
-                else if (cur_c == '/') MaybeConsumeComment(inp);
+                else if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
                 else
                 {
                     if (children.Count > 0 && !already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("No comma between array members", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("No comma between array members", inp, ii);
                         lint.Add(new JsonLint("No comma between array members", ii, line_num, cur_c));
                     }
                     // a new array member of some sort
@@ -572,7 +590,7 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             if (lint == null)
-                throw new JsonParserException("Unterminated array", cur_c, ii);
+                throw new JsonParserException("Unterminated array", inp, ii);
             lint.Add(new JsonLint("Unterminated array", ii, line_num, cur_c));
             return new JArray(start_line_num, children);
         }
@@ -601,7 +619,7 @@ namespace JSON_Tools.JSON_Tools
             bool already_seen_comma = false;
             char cur_c = inp[++ii];
             if (recursion_depth == MAX_RECURSION_DEPTH)
-                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", cur_c, ii);
+                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii);
             string child_key;
             while (ii < inp.Length)
             {
@@ -611,13 +629,13 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException($"Two consecutive commas after key-value pair {children.Count - 1} of object", cur_c, ii);
+                        if (lint == null) throw new JsonParserException($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii);
                         lint.Add(new JsonLint($"Two consecutive commas after key-value pair {children.Count - 1} of object", ii, line_num, cur_c));
                     }
                     already_seen_comma = true;
                     if (children.Count == 0)
                     {
-                        if (lint == null) throw new JsonParserException("Comma before first value in object", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma before first value in object", inp, ii);
                         lint.Add(new JsonLint("Comma before first value in object", ii, line_num, cur_c));
                     }
                     ii++;
@@ -627,7 +645,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", inp, ii);
                         lint.Add(new JsonLint("Comma after last key-value pair of object", ii, line_num, cur_c));
                     }
                     JObject obj = new JObject(start_line_num, children);
@@ -637,10 +655,10 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else if (cur_c == ']')
                 {
-                    if (lint == null) throw new JsonParserException("Tried to terminate object with ']'", cur_c, ii);
+                    if (lint == null) throw new JsonParserException("Tried to terminate object with ']'", inp, ii);
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", cur_c, ii);
+                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", inp, ii);
                         lint.Add(new JsonLint("Comma after last key-value pair of object", ii, line_num, cur_c));
                     }
                     lint.Add(new JsonLint("Tried to terminate object with ']'", ii, line_num, cur_c));
@@ -653,7 +671,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (children.Count > 0 && !already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException($"No comma after key-value pair {children.Count - 1} in object", cur_c, ii);
+                        if (lint == null) throw new JsonParserException($"No comma after key-value pair {children.Count - 1} in object", inp, ii);
                         lint.Add(new JsonLint($"No comma after key-value pair {children.Count - 1} in object", ii, line_num, cur_c));
                     }
                     if (cur_c == '\'' && lint != null)
@@ -670,32 +688,34 @@ namespace JSON_Tools.JSON_Tools
                         // avoid call overhead in most likely case where colon comes
                         // immediately after key
                         ConsumeWhiteSpace(inp);
-                        if (cur_c == '/') MaybeConsumeComment(inp);
+                        cur_c = inp[ii];
+                        if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
                     }
                     if (inp[ii] != ':')
                     {
-                        if (lint == null) throw new JsonParserException($"No ':' between key {children.Count} and value {children.Count} of object", inp[ii], ii);
+                        if (lint == null) throw new JsonParserException($"No ':' between key {children.Count} and value {children.Count} of object", inp, ii);
                         lint.Add(new JsonLint($"No ':' between key {children.Count} and value {children.Count} of object", ii, line_num, cur_c));
                         ii--;
                     }
                     ii++;
                     ConsumeWhiteSpace(inp);
-                    if (inp[ii] == '/') MaybeConsumeComment(inp);
+                    cur_c = inp[ii];
+                    if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
                     JNode new_obj = ParseSomething(inp, recursion_depth);
                     // Npp.AddText($"\nkey = {child_key}, obj = {new_obj.ToString()}");
                     children.Add(child_key, new_obj);
                     already_seen_comma = false;
                 }
-                else if (inp[ii] == '/') MaybeConsumeComment(inp);
+                else if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
                 else
                 {
-                    if (lint == null) throw new JsonParserException($"Key in object (would be key {children.Count}) must be string", cur_c, ii);
+                    if (lint == null) throw new JsonParserException($"Key in object (would be key {children.Count}) must be string", inp, ii);
                     lint.Add(new JsonLint($"Key in object (would be key {children.Count}) must be string", ii, line_num, cur_c));
                     ii++;
                 }
             }
             if (lint == null)
-                throw new JsonParserException("Unterminated object", cur_c, ii);
+                throw new JsonParserException("Unterminated object", inp, ii);
             lint.Add(new JsonLint($"Unterminated object", ii, line_num, cur_c));
             return new JObject(start_line_num, children);
         }
@@ -749,7 +769,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!allow_nan_inf)
                     {
-                        throw new JsonParserException("Infinity is not part of the original JSON specification.", next_c, ii);
+                        throw new JsonParserException("Infinity is not part of the original JSON specification.", inp, ii);
                     }
                     else if (lint != null)
                     {
@@ -761,11 +781,11 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(NanInf.neginf, Dtype.FLOAT, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with '-' or '+' to be a number",
-                    next_c, ii+1);
+                    inp, ii+1);
             }
             if (ii == inp.Length - 2)
             {
-                throw new JsonParserException("No valid literal", cur_c, ii);
+                throw new JsonParserException("No valid literal", inp, ii);
             }
             // OK, so maybe it's a special scalar like null or true or NaN?
             if (cur_c == 'n')
@@ -777,7 +797,7 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(null, Dtype.NULL, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with 'n' to be null",
-                                              next_c, ii+1);
+                                              inp, ii+1);
             }
             if (cur_c == 'N')
             {
@@ -786,7 +806,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!allow_nan_inf)
                     {
-                        throw new JsonParserException("NaN is not part of the original JSON specification.", next_c, ii);
+                        throw new JsonParserException("NaN is not part of the original JSON specification.", inp, ii);
                     }
                     else if (lint != null)
                     {
@@ -795,7 +815,7 @@ namespace JSON_Tools.JSON_Tools
                     ii += 3;
                     return new JNode(NanInf.nan, Dtype.FLOAT, line_num);
                 }
-                throw new JsonParserException("Expected literal starting with 'N' to be NaN", next_c, ii+1);
+                throw new JsonParserException("Expected literal starting with 'N' to be NaN", inp, ii+1);
             }
             if (cur_c == 'I')
             {
@@ -804,7 +824,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!allow_nan_inf)
                     {
-                        throw new JsonParserException("Infinity is not part of the original JSON specification.", next_c, ii);
+                        throw new JsonParserException("Infinity is not part of the original JSON specification.", inp, ii);
                     }
                     else if (lint != null)
                     {
@@ -814,7 +834,7 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(NanInf.inf, Dtype.FLOAT, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with 'I' to be Infinity",
-                                              next_c, ii+1);
+                                              inp, ii+1);
             }
             if (cur_c == 't')
             {
@@ -824,7 +844,7 @@ namespace JSON_Tools.JSON_Tools
                     ii += 4;
                     return new JNode(true, Dtype.BOOL, line_num);
                 }
-                throw new JsonParserException("Expected literal starting with 't' to be true", next_c, ii+1);
+                throw new JsonParserException("Expected literal starting with 't' to be true", inp, ii+1);
             }
             if (cur_c == 'f')
             {
@@ -835,9 +855,9 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(false, Dtype.BOOL, line_num);
                 }
                 throw new JsonParserException("Expected literal starting with 'f' to be false",
-                                              next_c, ii+1);
+                                              inp, ii+1);
             }
-            throw new JsonParserException("Badly located character", cur_c, ii);
+            throw new JsonParserException("Badly located character", inp, ii);
         }
 
         /// <summary>
@@ -856,19 +876,28 @@ namespace JSON_Tools.JSON_Tools
             ii = 0;
             line_num = 0;
             ConsumeWhiteSpace(inp);
-            if (inp[ii] == '/') MaybeConsumeComment(inp);
             if (ii >= inp.Length)
             {
                 throw new JsonParserException("Json string is only whitespace");
+            }
+            char cur_c = inp[ii];
+            if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+            if (ii >= inp.Length)
+            {
+                throw new JsonParserException("Json string is only whitespace and maybe comments");
             }
             try
             {
                 JNode json = ParseSomething(inp, 0);
                 ConsumeWhiteSpace(inp);
-                if (ii < inp.Length && inp[ii] == '/') MaybeConsumeComment(inp);
                 if (ii < inp.Length)
                 {
-                    throw new JsonParserException($"At end of valid JSON document, got {inp[ii]} instead of EOF", inp[ii], ii);
+                    cur_c = inp[ii];
+                    if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+                }
+                if (ii < inp.Length)
+                {
+                    throw new JsonParserException($"At end of valid JSON document, got {inp[ii]} instead of EOF", inp, ii);
                 }
                 return json;
             }
@@ -876,7 +905,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (e is IndexOutOfRangeException)
                 {
-                    throw new JsonParserException("Unexpected end of JSON", inp[inp.Length - 1], inp.Length - 1);
+                    throw new JsonParserException("Unexpected end of JSON", inp, inp.Length - 1);
                 }
                 throw;
             }
@@ -912,7 +941,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (e is IndexOutOfRangeException)
                     {
-                        throw new JsonParserException("Unexpected end of JSON", inp[inp.Length - 1], inp.Length - 1);
+                        throw new JsonParserException("Unexpected end of JSON", inp, inp.Length - 1);
                     }
                     throw;
                 }
@@ -924,7 +953,7 @@ namespace JSON_Tools.JSON_Tools
                         ii = inp.Length - 1;
                     throw new JsonParserException(
                         "JSON Lines document does not contain exactly one JSON document per line",
-                        inp[ii], ii
+                        inp, ii
                     );
                 }
                 ConsumeWhiteSpace(inp); // go to next line
@@ -937,7 +966,7 @@ namespace JSON_Tools.JSON_Tools
                     ii = inp.Length - 1;
                 throw new JsonParserException(
                     "JSON Lines document does not contain exactly one JSON document per line",
-                    inp[ii], ii
+                    inp, ii
                 );
             }
             return new JArray(0, arr);
@@ -953,7 +982,7 @@ namespace JSON_Tools.JSON_Tools
             return new JsonParser(
                 allow_datetimes,
                 allow_singlequoted_str,
-                allow_javascript_comments,
+                allow_comments,
                 linting,
                 allow_unquoted_str,
                 allow_nan_inf

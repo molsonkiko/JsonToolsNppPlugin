@@ -84,7 +84,7 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 By default, this app can parse a superset of JSON that is very slightly more permissive than the [original JSON specification](https://json.org). This app parses `NaN` as the floating point `Not-A-Number` and `Infinity` as the floating point Infinity.
 
-You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow JavaScript comments in the file. Thus, such JSON will cause our parser to throw an error.
+You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow comments in the file. Thus, such JSON will cause our parser to throw an error.
 
 ![The default parser settings don't allow singlequoted strings or comments](/docs/json%20parser%20error%20due%20to%20singlequotes.PNG)
 
@@ -93,6 +93,8 @@ We can fix that in the settings.
 ![Change the parser settings to allow singlequotes and comments](/docs/json%20parser%20settings%20allow%20singlequotes%20and%20comments.PNG)
 
 As you can see, you can also make the parser settings *stricter* than the default so that they don't accept the nonstandard NaN and Infinity. Just set `allow_nan_inf` to False.
+
+*NOTE: Python-style comments are first supported in version [4.12.0](/CHANGELOG.md#4120-unreleased---2023-mm-dd), while JavaScript comments have always been supported.*
 
 ## Viewing syntax errors in JSON ##
 

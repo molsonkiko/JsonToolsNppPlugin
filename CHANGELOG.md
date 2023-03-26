@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4113-unreleased---2023-mm-dd) to this project will be documented in this file.
+All [notable changes](#4120-unreleased---2023-mm-dd) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -42,12 +42,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.11.3] (UNRELEASED) - 2023-MM-DD
+## [4.12.0] (UNRELEASED) - 2023-MM-DD
 
 ### Added
 
 1. Support for `$defs`, `definitions`, and `$ref` keywords for random JSON generation.
-2. When JSON parsing fails, jump to the position where the parsing stopped. *NOTE: this position will be wrong if the document contains non-ASCII characters, and there are no plans to fix that!*
+2. When JSON parsing fails, jump to the position where the parsing stopped.
+3. Python-style `#` comments now supported with the `allow_comments` setting turned on.
+
+### Changed
+
+1. `allow_javascript_comments` setting name changed to `allow_comments` because Python-style `#` comments are now supported.
 
 ### Fixed
 

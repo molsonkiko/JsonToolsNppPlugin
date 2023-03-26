@@ -10,6 +10,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](h
 1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.
 2. [Compress JSON](/docs/README.md#minimal_whitespace_compression) so that it has little or no unnecessary whitespace.
 3. Change the settings to [enable the parsing of documents that have various syntax errors](/docs/README.md#parser-settings) (using the `linting` setting in settings):
+    * [JSON with comments](/docs/README.md#parser-settings) (both [Python-style](/CHANGELOG.md#4120-unreleased---2023-mm-dd) and JavaScript style)
     * string literals containing newlines
     * string literals enclosed by ' instead of "
     * unterminated string literals (lint shows location of starting quote)

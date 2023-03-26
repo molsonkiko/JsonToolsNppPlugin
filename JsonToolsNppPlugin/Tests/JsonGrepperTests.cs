@@ -76,7 +76,7 @@ namespace JSON_Tools.Tests
             }
 
             // test nonstandard JsonParser settings for the grepper
-            grepper.json_parser.allow_javascript_comments = true;
+            grepper.json_parser.allow_comments = true;
             grepper.json_parser.allow_singlequoted_str = true;
             string json_subdir_name = subdir.FullName.Replace("\\", "\\\\\\\\");
 

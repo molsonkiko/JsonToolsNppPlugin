@@ -507,12 +507,26 @@ multiline comment
                 new object[]{ "{'a': [ /* internal comment */ 2 ]}", TryParse("{\"a\": [2]}", simpleparser) },
                 new object[]{ "[1, 2] // trailing comment", TryParse("[1, 2]", simpleparser) },
                 new object[]{ "// the comments return!\n[2]", TryParse("[2]", simpleparser) },
+                new object[]{ "# python comment at start of file\n[2]", TryParse("[2]", simpleparser) },
+                new object[]{ "[1, 2] # python comment at end of file", TryParse("[1, 2]", simpleparser) },
+                new object[]{ "[1, 2]\r\n# python comment\r\n# another python comment", TryParse("[1, 2]", simpleparser) },
                 new object[]{ @"
                   /* multiline comment 
                    */
                   /* followed by another multiline comment */
                  // followed by a single line comment 
                  /* and then a multiline comment */ 
+                 [1, 2]
+                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) },
+                new object[]{ @"
+                  /* multiline comment 
+                   */
+                   # and a Python-style comment
+                // and a JavaScript-style single-line comment
+                 # then Python comment
+                 /* and then a multiline comment */ 
+            # another python comment
+                  # another python comment
                  [1, 2]
                  /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) }
             };
