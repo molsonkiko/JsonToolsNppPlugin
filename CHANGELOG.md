@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Show multiple schema validation problems.
-2. Add configurable startup actions for grepper form. Might look like
+1. Add `contains`, `minContains`, `maxContains` keywords for JSON schema *validation*.
+2. Show multiple schema validation problems.
+3. Add configurable startup actions for grepper form. Might look like
 ```json
 // grepperFormStartupActions.json
 {
@@ -49,6 +50,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Support for `$defs`, `definitions`, and `$ref` keywords for random JSON generation.
 2. When JSON parsing fails, jump to the position where the parsing stopped.
 3. Python-style `#` comments now supported with the `allow_comments` setting turned on.
+4. Option to turn off images on tree viewer.
+5. Arrays and objects now have `[length]` and `{length}` indicators of their lengths.
 
 ### Changed
 

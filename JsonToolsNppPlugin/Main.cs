@@ -629,7 +629,6 @@ namespace Kbg.NppPluginNET
             // now populate the tree and show it
             Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
-            //treeViewer.JsonTreePopulateInBackground(json);
             Npp.notepad.ShowDockingForm(treeViewer);
             treeViewer.QueryBox.Focus();
             // select QueryBox on startup

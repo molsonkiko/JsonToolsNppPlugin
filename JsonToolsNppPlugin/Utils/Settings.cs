@@ -46,6 +46,10 @@ namespace JSON_Tools.Utils
             "Larger files get only some of the direct children of the root added to the tree."),
             Category("Tree View"), DefaultValue(10_000)]
         public int max_json_length_full_tree { get; set; }
+
+        [Description("Should each node in the tree have an image associated with its type?"),
+            Category("Tree View"), DefaultValue(true)]
+        public bool tree_node_images { get; set; }
         #endregion
 
         #region JSON_FORMATTING_SETTINGS
