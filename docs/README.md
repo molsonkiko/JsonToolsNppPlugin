@@ -94,7 +94,7 @@ We can fix that in the settings.
 
 As you can see, you can also make the parser settings *stricter* than the default so that they don't accept the nonstandard NaN and Infinity. Just set `allow_nan_inf` to False.
 
-*NOTE: Python-style comments are first supported in version [4.12.0](/CHANGELOG.md#4120-unreleased---2023-mm-dd), while JavaScript comments have always been supported.*
+*NOTE: Python-style comments are first supported in version [4.12.0](/CHANGELOG.md#4120---2023-03-28), while JavaScript comments have always been supported.*
 
 ## Viewing syntax errors in JSON ##
 
@@ -428,6 +428,9 @@ This tool can only validate the following keywords:
 
 ![Example of failed JSON schema validation](/docs/json%20schema%20validation%20failed.PNG)
 
+### Keywords for numbers
+* [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
+
 ## Generating random JSON from a schema ##
 
 The plugin can also generate random JSON from a schema. The default minimum and maximum array lengths (for schemas where the `minItems` and `maxItems` keywords are omitted) are `0` and `10` respectively.
@@ -444,7 +447,7 @@ The following keywords are supported for random JSON generation:
 * [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
 * [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs)
     * __Notes:__
-    * support added in version [4.11.3](/CHANGELOG.md#4112---2023-03-21)
+    * support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)
     * `definitions` and `$defs` keywords are equivalent.
 
 ### Keywords for objects
@@ -459,6 +462,8 @@ The following keywords are supported for random JSON generation:
 * [minContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
 * [maxContains](https://json-schema.org/draft/2020-12/json-schema-core.html#name-contains)
 
+### Keywords for numbers
+* [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
 
 ## Generating JSON schema from JSON ##
 

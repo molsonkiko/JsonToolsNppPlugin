@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Runtime;
+using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -39,7 +40,27 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private static JNode RandomInt(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extended_ascii_strings)
         {
-            return new JNode(random.Next(-1_000_000, 1_000_001), Dtype.INT, 0);
+            return new JNode((long)random.Next(-1_000_000, 1_000_001), Dtype.INT, 0);
+        }
+        
+        private static JNode RandomNumberBetweenMinAndMax(double min, double max)
+        {
+            if (min == NanInf.neginf) min = -1e6;
+            if (max == NanInf.inf) max = 1e6;
+            if (min > max) min = max - 1e6;
+            var randNumber = random.NextDouble() * (max - min) + min;
+            if (random.NextDouble() < 0.5)
+                return new JNode(randNumber, Dtype.FLOAT, 0);
+            var rounded = Convert.ToInt64(randNumber);
+            return new JNode(rounded, Dtype.INT, 0);
+        }
+
+        private static JNode RandomIntegerBetweenMinAndMax(double min, double max)
+        {
+            var rand = RandomNumberBetweenMinAndMax(min, max);
+            if (rand.type == Dtype.FLOAT)
+                return new JNode(Convert.ToInt64(rand.value), Dtype.INT, 0);
+            return rand;
         }
 
         /// <summary>
@@ -281,7 +302,23 @@ namespace JSON_Tools.JSON_Tools
                 JNode typeChoice = typeArr.children[random.Next(typeArr.Length)];
                 return GENERATORS[(string)typeChoice.value](schema, refs, minArrayLength, maxArrayLength, extended_ascii_strings);
             }
-            var typeGenerator = GENERATORS[(string)typeNode.value];
+            string type = (string)typeNode.value;
+            bool type_int = type[0] == 'i';  // "integer" is the only type that starts with 'i'
+            if (type_int || type == "number")
+            {
+                var min = obj.children.TryGetValue("minimum", out JNode minNode)
+                    ? Convert.ToDouble(minNode.value)
+                    : NanInf.neginf;
+                var max = obj.children.TryGetValue("maximum", out JNode maxNode)
+                    ? Convert.ToDouble(maxNode.value)
+                    : NanInf.inf;
+                if (!double.IsInfinity(min) || !double.IsInfinity(max))
+                {
+                    if (type_int) return RandomIntegerBetweenMinAndMax(min, max);
+                    return RandomNumberBetweenMinAndMax(min, max);
+                }
+            }
+            var typeGenerator = GENERATORS[type];
             return typeGenerator(schema, refs, minArrayLength, maxArrayLength, extended_ascii_strings);
         }
 

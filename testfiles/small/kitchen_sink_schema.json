@@ -54,7 +54,9 @@
     "items": {
         "patternProperties": {
             "d\\d+": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": -5,
+                "maximum": 5
             }
         },
         "properties": {

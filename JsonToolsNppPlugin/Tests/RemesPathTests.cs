@@ -407,7 +407,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("j`{\"a\": [true, 2, [3]], \"b\": {\"c\": [\"d\", \"e\"], \"f\": null}}`..*", "[true, 2, 3, \"d\", \"e\", null]"),
                 new Query_DesiredResult("j`{\"a\": 1, \"b\": {\"c\": 2}}`..g`zzz`", "[]"), // return empty array if no keys match
                 new Query_DesiredResult("(range(len(@.foo)))[0]", "0"), // indexing on a paren-wrapped non-vectorized arg function result
-                new Query_DesiredResult("(2 // @.foo[0])[1]", "2"), // indexing on a paren-wrapped binop result
+                new Query_DesiredResult("(6 // @.foo[1])[1]", "1"), // indexing on a paren-wrapped binop result
                 new Query_DesiredResult("(3 * range(len(@.foo)))[2]", "6"), // indexing on a paren-wrapped result of a binop (scalar, non-vectorized arg function)
                 new Query_DesiredResult("(2 | s_len(str(@.foo[0])))[2]", "3"), // indexing on a paren-wrapped result of a binop (scalar, vectorized arg function)
                 new Query_DesiredResult("(range(len(@.foo)) ** 3)[2]", "8.0"), // indexing on a paren-wrapped result of a binop (non-vectorized arg function, scalar)
@@ -431,7 +431,7 @@ namespace JSON_Tools.Tests
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (result.type != jdesired_result.type || !result.Equals(jdesired_result))
+                if (!(result.type == jdesired_result.type && result.Equals(jdesired_result)))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +

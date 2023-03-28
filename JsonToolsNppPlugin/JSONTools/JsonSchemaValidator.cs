@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JSON_Tools.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -27,10 +28,13 @@ namespace JSON_Tools.JSON_Tools
             VALUE_NOT_IN_ENUM,
             ARRAY_TOO_LONG,
             ARRAY_TOO_SHORT,
+            CONTAINS_KEYWORD_VIOLATION,
             OBJECT_MISSING_REQUIRED_KEY,
             FALSE_SCHEMA, // nothing validates
             STRING_DOESNT_MATCH_PATTERN,
             RECURSION_LIMIT_REACHED,
+            NUMBER_LESS_THAN_MIN,
+            NUMBER_GREATER_THAN_MAX,
         }
 
         public struct ValidationProblem
@@ -77,6 +81,14 @@ namespace JSON_Tools.JSON_Tools
                         int maxItems = 0;
                         if (maxItemsObj != null) maxItems = (int)maxItemsObj;
                         return msg + $"array required to have no more than {maxItems} items, but it has {found_length} items.";
+                    case ValidationProblemType.CONTAINS_KEYWORD_VIOLATION:
+                        var contains_schema = (JNode)keywords["contains"];
+                        var minContains = (int)keywords["minContains"];
+                        var maxContains = (int)keywords["maxContains"];
+                        var quantifier = maxContains == Int32.MaxValue
+                            ? $"at least {minContains}"
+                            : $"between {minContains} and {maxContains}";
+                        return msg + $"Array must have {quantifier} items that match \"contains\" schema {contains_schema}";
                     case ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY:
                         string key_missing = (string)keywords["required"];
                         return msg + $"object missing required key {key_missing}";
@@ -88,6 +100,14 @@ namespace JSON_Tools.JSON_Tools
                         return msg + $"string '{str}' does not match regex '{regex}'";
                     case ValidationProblemType.RECURSION_LIMIT_REACHED:
                         return msg + "validation has a maximum depth of 128";
+                    case ValidationProblemType.NUMBER_LESS_THAN_MIN:
+                        var min = (double)keywords["min"];
+                        var num = (double)keywords["num"];
+                        return msg + $"number {num} less than minimum {min}";
+                    case ValidationProblemType.NUMBER_GREATER_THAN_MAX:
+                        var max = (double)keywords["max"];
+                        num = (double)keywords["num"];
+                        return msg + $"number {num} greater than maximum {max}";
                     default: throw new ArgumentException($"Unknown validation problem type {problemType}");
                 }
             }
@@ -201,16 +221,16 @@ namespace JSON_Tools.JSON_Tools
             if (type is JArray types)
             {
                 // an array of scalar types
-                var dtypes = types.children
-                    .Select((x) => JsonSchemaMaker.typeNameToDtype[(string)x.value])
-                    .ToArray();
+                var dtypes = Dtype.TYPELESS;
+                foreach (var typenode in types.children)
+                {
+                    var dtype_ = JsonSchemaMaker.typeNameToDtype[(string)typenode.value];
+                    dtypes = JsonSchemaMaker.DtypeUnion(dtypes, dtype_);
+                }
                 return (JNode json) =>
                 {
-                    foreach (var dtype_ in dtypes)
-                    {
-                        if (TypeValidates(json.type, dtype_))
-                            return null;
-                    }
+                    if ((json.type & dtypes) != 0 || ((json.type == Dtype.INT) && (dtypes & Dtype.FLOAT) != 0))
+                        return null;
                     return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
@@ -293,6 +313,55 @@ namespace JSON_Tools.JSON_Tools
                 if (schema.children.TryGetValue("items", out JNode items))
                 {
                     var itemsValidator = CompileValidationFuncHelper(items, definitions, recursions + 1);
+                    if (schema.children.TryGetValue("contains", out JNode contains))
+                    {
+                        var containsValidator = CompileValidationFuncHelper(contains, definitions, recursions + 1);
+                        var minContains = schema.children.TryGetValue("minContains", out JNode minContainsNode)
+                            ? Convert.ToInt32(minContainsNode.value)
+                            : 1;
+                        var maxContains = schema.children.TryGetValue("maxContains", out JNode maxContainsNode)
+                            ? Convert.ToInt32(maxContainsNode.value)
+                            : Int32.MaxValue;
+                        return (json) =>
+                        {
+                            if (!(json is JArray arr))
+                            {
+                                return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                                    new Dictionary<string, object>
+                                    {
+                                    { "found", json.type },
+                                    { "required", Dtype.ARR }
+                                    },
+                                    json.line_num
+                                );
+                            }
+                            var itemsRightLength = ItemsRightLength(arr);
+                            if (itemsRightLength != null)
+                                return itemsRightLength;
+                            var containsCount = 0;
+                            foreach (JNode child in arr.children)
+                            {
+                                if (containsValidator(child) != null)
+                                {
+                                    // it doesn't match the "contains" schema. Maybe it matches the normal "items" schema?
+                                    var vp = itemsValidator(child);
+                                    if (vp != null) return vp;
+                                }
+                                else containsCount++;
+                            }
+                            if (containsCount >= minContains && containsCount <= maxContains)
+                                return null;
+                            return new ValidationProblem(ValidationProblemType.CONTAINS_KEYWORD_VIOLATION,
+                                new Dictionary<string, object>
+                                {
+                                    { "contains", contains },
+                                    { "minContains", minContains },
+                                    { "maxContains", maxContains },
+                                },
+                                arr.line_num
+                            );
+                        };
+                    }
                     return (JNode json) =>
                     {
                         if (!(json is JArray arr))
@@ -459,8 +528,50 @@ namespace JSON_Tools.JSON_Tools
                     return null;
                 };
             }
+
+            if ((dtype & Dtype.FLOAT_OR_INT) != 0)
+            {
+                var minimum = schema.children.TryGetValue("minimum", out JNode minNode)
+                    ? Convert.ToDouble(minNode.value)
+                    : NanInf.neginf;
+                var maximum = schema.children.TryGetValue("maximum", out JNode maxNode)
+                    ? Convert.ToDouble(maxNode.value)
+                    : NanInf.inf;
+                if (!double.IsInfinity(minimum) || !double.IsInfinity(maximum))
+                {
+                    // the user specified minimum and/or maximum values for numbers, so we need to check that
+                    return (JNode json) =>
+                    {
+                        if (json.type != Dtype.INT && json.type != Dtype.FLOAT)
+                        {
+                            return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                                new Dictionary<string, object>
+                                {
+                                    { "found", json.type },
+                                    { "required", Dtype.FLOAT }
+                                },
+                                json.line_num
+                            );
+                        }
+                        var floatedValue = Convert.ToDouble(json.value);
+                        if (floatedValue < minimum)
+                            return new ValidationProblem(
+                                ValidationProblemType.NUMBER_LESS_THAN_MIN,
+                                new Dictionary<string, object> { { "min", minimum }, { "num", floatedValue } },
+                                json.line_num
+                            );
+                        if (floatedValue > maximum)
+                            return new ValidationProblem(
+                                ValidationProblemType.NUMBER_GREATER_THAN_MAX,
+                                new Dictionary<string, object> { { "max", maximum }, { "num", floatedValue } },
+                                json.line_num
+                            );
+                        return null;
+                    };
+                }
+            }
             // we just check that the JSON has the right type
-            // it's a scalar, and at present no extra validation is done on scalars
+            // it's a scalar schema with no extra fancy validation keywords
             return (JNode json) =>
             {
                 if (!TypeValidates(json.type, dtype))

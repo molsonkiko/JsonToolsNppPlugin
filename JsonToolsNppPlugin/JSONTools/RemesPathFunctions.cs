@@ -117,7 +117,7 @@ namespace JSON_Tools.JSON_Tools
         {
             if (((a.type & Dtype.FLOAT_OR_INT) == 0) || ((b.type & Dtype.FLOAT_OR_INT) == 0))
                 throw new RemesPathException($"Can't floor divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
-            return new JNode(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value)), Dtype.INT, 0);
+            return new JNode(Convert.ToInt64(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value))), Dtype.INT, 0);
         }
 
         public static JNode Pow(JNode a, JNode b)

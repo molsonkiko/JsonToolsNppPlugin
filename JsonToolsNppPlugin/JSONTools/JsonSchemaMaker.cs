@@ -81,7 +81,7 @@ namespace JSON_Tools.JSON_Tools
                 || x == Dtype.SLICE;
         }
 
-        private static Dtype DtypeUnion(Dtype a, Dtype b)
+        public static Dtype DtypeUnion(Dtype a, Dtype b)
         {
             var together = a | b;
             if ((together & Dtype.FLOAT_OR_INT) == Dtype.FLOAT_OR_INT)

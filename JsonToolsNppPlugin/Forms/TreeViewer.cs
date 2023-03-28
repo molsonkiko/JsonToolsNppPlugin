@@ -328,9 +328,9 @@ namespace JSON_Tools.Forms
         private static string TextForTreeNode(JNode node)
         {
             if (node is JArray arr)
-                return $" : [{arr.children.Count}]";
+                return arr.children.Count == 0 ? " : []" : $" : [{arr.children.Count}]";
             if (node is JObject obj)
-                return $" : {{{obj.children.Count}}}";
+                return obj.children.Count == 0 ? " : {}" : $" : {{{obj.children.Count}}}";
             return $" : {node.ToString()}";
         }
 

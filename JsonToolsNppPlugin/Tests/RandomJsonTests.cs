@@ -75,7 +75,6 @@ namespace JSON_Tools.Tests
                     }
                     allRequiredKeyString = string.Join(", ", required);
                     allKeyString = string.Join(", ", allKeys);
-                    //Npp.AddLine($"~~~~~~~~~~~~~~~~~~~~~~~~~~~\nOBJECT SCHEMA\n{schema.ToString()}\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                 }
                 var rands = new List<JNode>();
                 ii++;
@@ -117,7 +116,7 @@ namespace JSON_Tools.Tests
                     if (vp != null)
                     {
                         tests_failed++;
-                        Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema}\nGot validation problem:\n{vp.ToString()}");
+                        Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema.ToString()}\nGot validation problem:\n{vp.ToString()}");
                         break;
                     }
                     // test that the minArrayLength and maxArrayLength args to RandomJson do what they're supposed to
@@ -175,10 +174,10 @@ namespace JSON_Tools.Tests
                 }
             }
             // also test a schema that contains keywords that can't be generated randomly, like contains, minContains, minItems, maxItems, maxContains, and $defs/$ref
-            var kitchenSinkSchemaText = "{\"$defs\":{\"super_fancy\":{\"properties\":{\"b\":{\"anyOf\":[{\"type\":[\"integer\",\"string\"]},{\"contains\":{\"enum\":[1,2,3],\"type\":\"integer\"},\"items\":{\"type\":[\"integer\",\"string\"]},\"maxContains\":2,\"maxItems\":4,\"minContains\":1,\"minItems\":1,\"type\":\"array\"}]},\"c\":{\"type\":[\"integer\",\"null\"]},\"d\":{\"type\":\"boolean\"}},\"required\":[\"b\"],\"type\":\"object\"}},\"$schema\":\"http://json-schema.org/schema#\",\"items\":{\"properties\":{\"a\":{\"type\":\"number\"},\"b\":{\"items\":{\"properties\":{\"a\":{\"$ref\":\"#/$defs/super_fancy\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"},\"c\":{\"type\":\"integer\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"}";
+            var kitchenSinkSchemaText = "{\"$defs\":{\"super_fancy\":{\"properties\":{\"b\":{\"anyOf\":[{\"type\":[\"integer\",\"string\"]},{\"contains\":{\"enum\":[1,2,3],\"type\":\"integer\"},\"items\":{\"type\":[\"integer\",\"string\"]},\"maxContains\":2,\"maxItems\":4,\"minContains\":1,\"minItems\":1,\"type\":\"array\"}]},\"c\":{\"type\":[\"integer\",\"null\"]},\"d\":{\"type\":\"boolean\"}},\"required\":[\"b\"],\"type\":\"object\"}},\"$schema\":\"http://json-schema.org/schema#\",\"items\":{\"properties\":{\"a\":{\"type\":\"number\", \"minimum\": -20, \"maximum\": 20},\"b\":{\"items\":{\"properties\":{\"a\":{\"$ref\":\"#/$defs/super_fancy\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"},\"c\":{\"type\":\"integer\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"}";
             var kitchenSinkSchema = parser.Parse(kitchenSinkSchemaText);
             ii++;
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 200; i++)
             {
                 JNode randomFromKitchenSink;
                 try
@@ -188,7 +187,7 @@ namespace JSON_Tools.Tests
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchema}\r\ngot error\r\n{ex}");
+                    Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
                 JsonSchemaValidator.ValidationProblem? vp;
@@ -199,7 +198,7 @@ namespace JSON_Tools.Tests
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchema}\r\ngot error\r\n{ex}");
+                    Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
                 if (vp != null)

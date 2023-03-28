@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#4120-unreleased---2023-mm-dd) to this project will be documented in this file.
+All [notable changes](#4120---2023-03-28) to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -8,9 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Add `contains`, `minContains`, `maxContains` keywords for JSON schema *validation*.
-2. Show multiple schema validation problems.
-3. Add configurable startup actions for grepper form. Might look like
+1. Show multiple schema validation problems.
+2. Add configurable startup actions for grepper form. Might look like
 ```json
 // grepperFormStartupActions.json
 {
@@ -21,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     ]
 }
 ```
-4. Add parsing of unquoted strings when linter is active.
+3. Add parsing of unquoted strings when linter is active.
 	(would this cause too much of a performance hit?)
  
 ### To Be Changed
@@ -43,7 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.12.0] (UNRELEASED) - 2023-MM-DD
+## [4.12.0] - 2023-03-28
 
 ### Added
 
@@ -51,7 +50,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. When JSON parsing fails, jump to the position where the parsing stopped.
 3. Python-style `#` comments now supported with the `allow_comments` setting turned on.
 4. Option to turn off images on tree viewer.
-5. Arrays and objects now have `[length]` and `{length}` indicators of their lengths.
+5. Non-empty arrays and objects now have `[length]` and `{length}` indicators of their lengths.
+6. Support for `contains`, `minContains`, and `maxContains` keywords in JSON Schema *validation* of arrays.
+7. Support for `minimum` and `maximum` keywords in JSON Schema validation *and* random generation.
 
 ### Changed
 

@@ -117,6 +117,12 @@ namespace JSON_Tools.Tests
                 "}," +
                 "\"$ref\": \"#/$defs/foo\"" +
             "}";
+            var contains_schema_min_and_max = "{" +
+                "\"type\": \"array\"," +
+                "\"items\": {\"type\": \"number\"}," +
+                "\"contains\": {\"type\": \"string\"}," +
+                "\"minContains\": 2, \"maxContains\": 4" +
+            "}";
             var testcases = new List<SchemaValidatesJson>
             {
                 new SchemaValidatesJson(
@@ -552,6 +558,72 @@ namespace JSON_Tools.Tests
                     "{\"bar\": 0, \"foo\": {\"bar\": 1.5, \"foo\": null}}",
                     recursive_defs_ref_schema,
                     false
+                ),
+                /*** contains, minContains, maxContains keywords ***/
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\"]",
+                    contains_schema_min_and_max,
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\", \"\"]",
+                    contains_schema_min_and_max,
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\", \"\", \"\"]",
+                    contains_schema_min_and_max,
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\", \"\", \"\", \"\", \"\"]",
+                    contains_schema_min_and_max,
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\", \"\", \"\", \"\", \"\"]",
+                    contains_schema_min_and_max,
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3]",
+                    "{" +
+                        "\"type\": \"array\"," +
+                        "\"items\": {\"type\": \"number\"}," +
+                        "\"contains\": {\"type\": \"string\"}," +
+                        "\"maxContains\": 4" +
+                    "}",
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\"]",
+                    "{" +
+                        "\"type\": \"array\"," +
+                        "\"items\": {\"type\": \"number\"}," +
+                        "\"contains\": {\"type\": \"string\"}," +
+                        "\"maxContains\": 4" +
+                    "}",
+                    true
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\"]",
+                    "{" +
+                        "\"type\": \"array\"," +
+                        "\"items\": {\"type\": \"number\"}," +
+                        "\"contains\": {\"type\": \"string\"}," +
+                        "\"minContains\": 3" +
+                    "}",
+                    false
+                ),
+                new SchemaValidatesJson(
+                    "[1, 2, 3, \"\", \"\", \"\"]",
+                    "{" +
+                        "\"type\": \"array\"," +
+                        "\"items\": {\"type\": \"number\"}," +
+                        "\"contains\": {\"type\": \"string\"}," +
+                        "\"minContains\": 3" +
+                    "}",
+                    true
                 ),
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
