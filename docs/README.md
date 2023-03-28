@@ -424,12 +424,13 @@ This tool can only validate the following keywords:
 
 * [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*)
 
-![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
-
-![Example of failed JSON schema validation](/docs/json%20schema%20validation%20failed.PNG)
 
 ### Keywords for numbers
 * [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
+
+![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
+
+![Example of failed JSON schema validation](/docs/json%20schema%20validation%20failed.PNG)
 
 ## Generating random JSON from a schema ##
 
