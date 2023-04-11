@@ -42,6 +42,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
+## [4.13.0] (UNRELEASED) - 2023-MM-DD
+
+### Added
+
+1. __Automatic parsing and validation of JSON files__ every time the user stops acting for about 2 seconds after making a modification. This is disabled for large files, and can be disabled altogether if desired.
+
+### Changed
+
+1. `Settings->max_size_full_tree_MB` renamed to `Settings->max_file_size_MB_slow_actions` to better reflect the fact that it configures the maximum file size for *all* slow actions, including full tree, automatic use of the JSON lexer, and automatic parsing and validation.
+
 ## [4.12.0] - 2023-03-28
 
 ### Added

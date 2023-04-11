@@ -16,7 +16,6 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using System.ComponentModel;
 
 namespace Kbg.NppPluginNET
 {
@@ -24,7 +23,7 @@ namespace Kbg.NppPluginNET
     {
         #region " Fields "
         internal const string PluginName = "JsonTools";
-        // json tools related things
+        // general stuff things
         public static Settings settings = new Settings();
         public static JsonParser jsonParser = new JsonParser(settings.allow_datetimes,
                                                             settings.allow_singlequoted_str,
@@ -35,18 +34,28 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string active_fname = null;
+        public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
+        public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
+        // tree view stuff
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
-        private static bool should_rename_grepperForm = false;
+        // grepper form stuff
+        private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
         public static bool grepperTreeViewJustOpened = false;
-        public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
-        public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
+        // schemas stuff
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
         private static SchemaCache schemaCache = new SchemaCache(16);
         private static readonly Func<JNode, JsonSchemaValidator.ValidationProblem?> schemasToFnamePatterns_SCHEMA = JsonSchemaValidator.CompileValidationFunc((JObject)new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"patternProperties\":{\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"},\"^$\":false},\"properties\":{},\"required\":[],\"type\":\"object\"}"));
+        // stuff for periodically parsing and possibly validating a file
+        public static DateTime lastEditedTime = DateTime.MaxValue;
+        private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
+        private const long millisecondsAfterLastEditToParse = 2000;
+        private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl" };
+        private static bool currentFileTooBigToAutoParse = true;
+        private static bool bufferFinishedOpening = false;
         // toolbar icons
         static Bitmap tbBmp_tbTab = Resources.star_bmp;
         static Icon tbIcon = null;
@@ -115,7 +124,12 @@ namespace Kbg.NppPluginNET
             //// changing tabs
             switch (code)
             {
+                case (uint)NppMsg.NPPN_FILEBEFOREOPEN:
+                    bufferFinishedOpening = false;
+                    break;
                 case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                    bufferFinishedOpening = true;
+                    IsCurrentFileBig();
                     // When a new buffer is activated, we need to reset the connector to the Scintilla editing component.
                     // This is usually unnecessary, but if there are multiple instances or multiple views,
                     // we need to track which of the currently visible buffers are actually being edited.
@@ -171,7 +185,8 @@ namespace Kbg.NppPluginNET
                     }
                     grepperTreeViewJustOpened = false;
                     active_fname = new_fname;
-                    ValidateIfFilenameMatches(new_fname);
+                    if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
+                        ValidateIfFilenameMatches(new_fname);
                     return;
                 // when closing a file
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
@@ -232,7 +247,7 @@ namespace Kbg.NppPluginNET
                             && !grepperForm.tv.IsDisposed
                             && grepperForm.tv.fname == buffer_old_name)
                     {
-                        should_rename_grepperForm = true;
+                        shouldRenameGrepperForm = true;
                     }
                     return;
                 // After the file is renamed or saved:
@@ -257,23 +272,29 @@ namespace Kbg.NppPluginNET
                         treeViewers.Remove(buffer_old_name);
                         treeViewers[buffer_new_name] = renamed;
                     }
-                    else if (should_rename_grepperForm)
+                    else if (shouldRenameGrepperForm)
                     {
                         grepperForm.tv.fname = buffer_new_name;
-                        should_rename_grepperForm = false;
+                        shouldRenameGrepperForm = false;
                     }
                     return;
                 // if a treeviewer was slated for renaming, just cancel that
                 case (uint)NppMsg.NPPN_FILERENAMECANCEL:
                     buffer_renamed_id = notification.Header.IdFrom;
                     treeviewer_buffers_renamed.Remove(buffer_renamed_id);
-                    should_rename_grepperForm = false;
+                    shouldRenameGrepperForm = false;
                     return;
-                //if (code > int.MaxValue) // windows messages
-                //{
-                //    int wm = -(int)code;
-                //    }
-                //}
+                // if the user did nothing for a while (default 1 second) after editing,
+                // re-parse the file and also perform validation if that's enabled.
+                case (uint)SciMsg.SCN_MODIFIED:
+                    // only turn on the flag if the user performed the modification
+                    lastEditedTime = System.DateTime.UtcNow;
+                    break;
+                    //if (code > int.MaxValue) // windows messages
+                    //{
+                    //    int wm = -(int)code;
+                    //    }
+                    //}
             }
         }
 
@@ -281,7 +302,10 @@ namespace Kbg.NppPluginNET
         {
             //treeViewers.Clear();
             if (grepperForm != null && !grepperForm.IsDisposed)
+            {
                 grepperForm.Close();
+                grepperForm.Dispose();
+            }
             foreach (string key in treeViewers.Keys)
             {
                 TreeViewer tv = treeViewers[key];
@@ -291,6 +315,7 @@ namespace Kbg.NppPluginNET
                 treeViewers[key] = null;
             }
             WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
+            parseTimer.Dispose();
         }
         #endregion
 
@@ -326,9 +351,11 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="is_json_lines"></param>
         /// <returns></returns>
-        public static JNode TryParseJson(bool is_json_lines = false)
+        public static JNode TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
         {
             int len = Npp.editor.GetLength();
+            if (was_autotriggered && len > Main.settings.max_file_size_MB_slow_actions * 1e6)
+                return null;
             string fname = Npp.notepad.GetCurrentFilePath();
             string text = Npp.editor.GetText(len + 1);
             JNode json = new JNode();
@@ -384,6 +411,8 @@ namespace Kbg.NppPluginNET
             string printed = json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
             Npp.notepad.FileNew();
             Npp.editor.SetText(printed);
+            IsCurrentFileBig();
+            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
         }
 
@@ -395,6 +424,7 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
+            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
         }
 
@@ -409,6 +439,7 @@ namespace Kbg.NppPluginNET
                 Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys, null, ":", ","));
             else
                 Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys));
+            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
         }
 
@@ -464,6 +495,8 @@ namespace Kbg.NppPluginNET
             else
                 result = arr.ToJsonLines(settings.sort_keys);
             Npp.editor.SetText(result);
+            IsCurrentFileBig();
+            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
         }
 
         //form opening stuff
@@ -485,7 +518,7 @@ namespace Kbg.NppPluginNET
                 {
                     FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
                     grepperForm.tv.use_tree = settings.use_tree;
-                    grepperForm.tv.max_size_full_tree_MB = settings.max_size_full_tree_MB;
+                    grepperForm.tv.max_size_full_tree_MB = settings.max_file_size_MB_slow_actions;
                 }
             }
             // when the user changes their mind about whether to use editor styling
@@ -893,12 +926,15 @@ namespace Kbg.NppPluginNET
 
         /// <summary>
         /// check if this filename matches any filename patterns associated with any schema<br></br>
-        /// if it does, perform validation.<br></br>
-        /// if validation fails, notify the user. Don't do anything if validation succeeds.
+        /// if the filename matches, perform validation and return true.<br></br>
+        /// if validation fails, notify the user. Don't do anything if validation succeeds.<br></br>
+        /// if the filename doesn't match, return false.
         /// </summary>
         /// <param name="fname"></param>
-        static void ValidateIfFilenameMatches(string fname)
+        static bool ValidateIfFilenameMatches(string fname, bool was_autotriggered = false)
         {
+            if (was_autotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
+                return false;
             foreach (string schema_fname in schemasToFnamePatterns.children.Keys)
             {
                 JArray fname_patterns = (JArray)schemasToFnamePatterns[schema_fname];
@@ -908,9 +944,46 @@ namespace Kbg.NppPluginNET
                     if (!regex.IsMatch(fname)) continue;
                     // the filename matches a pattern for this schema, so we'll try to validate it.
                     ValidateJson(schema_fname, false);
-                    return;
+                    return true;
                 }
             }
+            return false;
+        }
+        #endregion
+        #region timer_stuff
+        /// <summary>
+        /// This callback fires once every second.<br></br>
+        /// It checks if the last edit was more than 2 seconds ago.<br></br>
+        /// If it was, it checks if the filename is one of ["json", "jsonc", "jsonl"]
+        /// and also if the filename is 
+        /// </summary>
+        /// <param name="state"></param>
+        private static void DelayedParseAfterEditing(object s)
+        {
+            DateTime now = DateTime.UtcNow;
+            if (!settings.auto_validate
+                || !bufferFinishedOpening
+                || currentFileTooBigToAutoParse
+                || lastEditedTime == DateTime.MaxValue // set when we don't want to edit it
+                || lastEditedTime.AddMilliseconds(millisecondsAfterLastEditToParse) > now)
+                return;
+            lastEditedTime = DateTime.MaxValue;
+            // an edit happened recently, so check if it's a json file
+            // and also check if the file matches a schema validation pattern
+            string fname = Npp.notepad.GetCurrentFilePath();
+            if (ValidateIfFilenameMatches(fname)
+                || !fileExtensionsToAutoParse.Any((ext) => fname.EndsWith(ext)))
+                return;
+            // filename matches but it's not associated with a schema, so just parse normally
+            TryParseJson(fname.EndsWith("jsonl"), true);
+        }
+
+        /// <summary>
+        /// sets currentFileTooBigToAutoParse to (Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6)
+        /// </summary>
+        public static void IsCurrentFileBig()
+        {
+            currentFileTooBigToAutoParse = Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6;
         }
         #endregion
     }

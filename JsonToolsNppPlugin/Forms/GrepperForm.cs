@@ -182,6 +182,8 @@ namespace JSON_Tools.Forms
                 Main.settings.pretty_print_style
             );
             Npp.AddLine(exc_str);
+            Main.IsCurrentFileBig();
+            Main.lastEditedTime = DateTime.MaxValue;
             Npp.SetLangJson();
         }
 

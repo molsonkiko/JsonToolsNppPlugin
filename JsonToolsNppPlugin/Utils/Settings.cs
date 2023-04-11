@@ -30,14 +30,20 @@ namespace JSON_Tools.Utils
             Category("JSON Parser"), DefaultValue(false)]
         public bool linting { get; set; }
         #endregion
+        #region PERFORMANCE
+        [Description("Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n" +
+            "* Adding a tree node in the JSON tree for every JSON node in the document. " +
+                "For large files, only some direct children of the root are added to the tree.\r\n" +
+            "* Automatically turning on the JSON lexer.\r\n" +
+            "* Automatic parsing of the file on opening and approximately 2 seconds after every edit."),
+            Category("Performance"), DefaultValue(4d)]
+        public double max_file_size_MB_slow_actions { get; set; }
 
+        [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
+            Category("Performance"), DefaultValue(true)]
+        public bool auto_validate { get; set; }
+        #endregion
         #region TREE_VIEW_SETTINGS
-        [Description("The largest size in megabytes of a JSON file that gets its full tree added to the tree view. " +
-            "Larger files get only the direct children of the root added to the tree. " +
-            "Also, files bigger than this limit don't get colorized automatically."),
-            Category("Tree View"), DefaultValue(4d)]
-        public double max_size_full_tree_MB { get; set; }
-
         [Description("Whether or not to use the tree view at all."),
             Category("Tree View"), DefaultValue(true)]
         public bool use_tree { get; set; }

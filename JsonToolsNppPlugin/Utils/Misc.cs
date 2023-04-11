@@ -42,7 +42,7 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static void SetLangJson()
         {
-            if (editor.GetTextLength() < Main.settings.max_size_full_tree_MB * 1e6)
+            if (editor.GetLength() < Main.settings.max_file_size_MB_slow_actions * 1e6)
                 notepad.SetCurrentLanguage(LangType.L_JSON);
         }
 

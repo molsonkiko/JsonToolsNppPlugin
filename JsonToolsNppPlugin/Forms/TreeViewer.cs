@@ -62,9 +62,9 @@ namespace JSON_Tools.Forms
             lexer = new RemesPathLexer();
             findReplaceForm = null;
             use_tree = Main.settings.use_tree;
-            max_size_full_tree_MB = Main.settings.max_size_full_tree_MB;
+            max_size_full_tree_MB = Main.settings.max_file_size_MB_slow_actions;
             int file_len = Npp.editor.GetLength();
-            if (file_len / 1e6 > max_size_full_tree_MB || use_tree == false)
+            if (file_len > max_size_full_tree_MB * 1e6 || use_tree == false)
             {
                 // show that the full tree isn't being showed if the conditions
                 // are not met for showing it
@@ -404,6 +404,7 @@ namespace JSON_Tools.Forms
                 json = query_func;
                 string new_json_str = query_func.PrettyPrintAndChangeLineNumbers(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
+                Main.lastEditedTime = DateTime.UtcNow;
                 JsonTreePopulate(query_func);
                 //JsonTreePopulateInBackground(query_func);
                 return;
