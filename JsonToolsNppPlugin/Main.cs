@@ -16,6 +16,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
+using System.Threading;
 
 namespace Kbg.NppPluginNET
 {
@@ -37,6 +38,7 @@ namespace Kbg.NppPluginNET
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
         // tree view stuff
+        public static Thread treeViewThread = null;
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
@@ -971,11 +973,12 @@ namespace Kbg.NppPluginNET
             // an edit happened recently, so check if it's a json file
             // and also check if the file matches a schema validation pattern
             string fname = Npp.notepad.GetCurrentFilePath();
+            string ext = Npp.FileExtension(fname);
             if (ValidateIfFilenameMatches(fname)
-                || !fileExtensionsToAutoParse.Any((ext) => fname.EndsWith(ext)))
+                || !fileExtensionsToAutoParse.Contains(ext))
                 return;
             // filename matches but it's not associated with a schema, so just parse normally
-            TryParseJson(fname.EndsWith("jsonl"), true);
+            TryParseJson(ext == "jsonl", true);
         }
 
         /// <summary>

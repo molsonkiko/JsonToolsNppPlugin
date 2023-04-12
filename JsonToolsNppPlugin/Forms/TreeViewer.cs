@@ -184,17 +184,28 @@ namespace JSON_Tools.Forms
                     // but also FullPath depends on the text so we need to track that too
                     tree.Nodes.Add(root);
                     int json_strlen = Npp.editor.GetLength();
-                    int json_len;
-                    if (json is JArray arr) json_len = arr.Length;
-                    else json_len = ((JObject)json).Length;
+                    //int nodeCount = CappedNodeCount(json, Main.settings.max_json_length_full_tree);
+                    int nodeCount;
+                    if (json is JArray arr)
+                        nodeCount = arr.Length;
+                    else if (json is JObject obj)
+                        nodeCount = obj.Length;
+                    else nodeCount = 1;
                     if (!use_tree)
                     { // allow for tree to be turned off altogether. Best performance for loss of quality of life
                         root.Text += TextForTreeNode(json);
                     }
-                    else if ((json_strlen > max_size_full_tree_MB * 1e6) || (json_len > Main.settings.max_json_length_full_tree))
+                    // JSON is too large for full tree, but show some top-level nodes
+                    else if ((json_strlen > max_size_full_tree_MB * 1e6)
+                        || (nodeCount >= Main.settings.max_json_length_full_tree))
+                    {
                         JsonTreePopulateHelper_DirectChildren(tree, root, json, pathsToJNodes);
+                    }
+                    // show everything
                     else
+                    {
                         JsonTreePopulateHelper(root, json, pathsToJNodes);
+                    }
                 }
                 else
                 {
@@ -289,8 +300,6 @@ namespace JSON_Tools.Forms
                                                                   JNode json,
                                                                   Dictionary<string, JNode> pathsToJNodes)
         {
-            // the tree viewer is by far the heaviest and slowest part of this application.
-            // To save time, only some children will be shown
             int interval;
             root.Text += TextForTreeNode(json);
             if (json is JArray)
@@ -798,5 +807,37 @@ namespace JSON_Tools.Forms
         {
             fname = new_fname;
         }
+
+        ///// <summary>
+        ///// recursively traverses a JSON tree and counts all children.<br></br>
+        ///// Stops counting when at least *limit* children have been found.
+        ///// </summary>
+        ///// <param name="json"></param>
+        ///// <param name="limit"></param>
+        ///// <param name="currentCount"></param>
+        ///// <returns></returns>
+        //private static int CappedNodeCount(JNode json, int limit, int currentCount=0)
+        //{
+        //    currentCount++;
+        //    if (json is JArray arr)
+        //    {
+        //        foreach (JNode child in arr.children)
+        //        {
+        //            currentCount = CappedNodeCount(child, limit, currentCount);
+        //            if (currentCount >= limit)
+        //                return currentCount;
+        //        }
+        //    }
+        //    else if (json is JObject obj)
+        //    {
+        //        foreach (JNode child in obj.children.Values)
+        //        {
+        //            currentCount = CappedNodeCount(child, limit, currentCount);
+        //            if (currentCount >= limit)
+        //                return currentCount;
+        //        }
+        //    }
+        //    return currentCount;
+        //}
     }
 }

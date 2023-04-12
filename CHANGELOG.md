@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.13.0] (UNRELEASED) - 2023-MM-DD
+## [5.0.0] (UNRELEASED) - 2023-MM-DD
 
 ### Added
 
@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. `Settings->max_size_full_tree_MB` renamed to `Settings->max_file_size_MB_slow_actions` to better reflect the fact that it configures the maximum file size for *all* slow actions, including full tree, automatic use of the JSON lexer, and automatic parsing and validation.
+2. The algorithm used for sorting the keys of objects has been changed because the old algorithm was very slow. As a result, there should be a 50-70% speedup in JSON compression and pretty-printing when the `sort_keys` setting is set to `true`. This has the side-effect of changing the sort order of some things. For example, `_` in a key now sorts *after* letters instead of *before* letters.
 
 ## [4.12.0] - 2023-03-28
 

@@ -789,8 +789,7 @@ namespace JSON_Tools.Tests
 				"]", // literal quote chars in string in stringified object
 				"[" +
 					"{\"foo\": \"bar\", \"baz\": " +
-						"\"{\\\"retweet_count\\\": 5, \\\"retweeted\\\": false, " +
-						"\\\"source\\\": \\\"<a href=\\\\\\\"http://twitter.com/download/android\\\\\\\" rel=\\\\\\\"nofollow\\\\\\\">Twitter for Android</a>\\\"}\"" +
+                        "\"{\\\"retweeted\\\": false, \\\"retweet_count\\\": 5, \\\"source\\\": \\\"<a href=\\\\\\\"http://twitter.com/download/android\\\\\\\" rel=\\\\\\\"nofollow\\\\\\\">Twitter for Android</a>\\\"}\"" +
 					"}" +
 				"]"
 				},

@@ -317,7 +317,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";
-                case Dtype.BOOL: return value.ToString().ToLower();
+                case Dtype.BOOL: return (bool)value ? "true" : "false";
                 case Dtype.REGEX: return new JNode(((JRegex)this).regex.ToString(), Dtype.STR, 0).ToString();
                 case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:mm:ss") + '"';
                 case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
@@ -687,7 +687,7 @@ namespace JSON_Tools.JSON_Tools
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, (x, y) => x.ToLower().CompareTo(y.ToLower()));
+            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase); //, (x, y) => x.ToLower().CompareTo(y.ToLower()));
             foreach (string k in keys)
             {
                 JNode v = children[k];
@@ -712,7 +712,7 @@ namespace JSON_Tools.JSON_Tools
             var sb = new StringBuilder();
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, (x, y) => x.ToLower().CompareTo(y.ToLower()));
+            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase); //, (x, y) => x.ToLower().CompareTo(y.ToLower()));
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}{{{NL}");
@@ -758,7 +758,7 @@ namespace JSON_Tools.JSON_Tools
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, (x, y) => x.ToLower().CompareTo(y.ToLower()));
+            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase); // (x, y) => x.ToLower().CompareTo(y.ToLower()));
             foreach (string k in keys)
             {
                 JNode v = children[k];
@@ -793,7 +793,7 @@ namespace JSON_Tools.JSON_Tools
             var sb = new StringBuilder();
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, (x, y) => x.ToLower().CompareTo(y.ToLower()));
+            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase); // (x, y) => x.ToLower().CompareTo(y.ToLower()));
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}{{{NL}");

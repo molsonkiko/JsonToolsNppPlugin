@@ -26,8 +26,8 @@ namespace JSON_Tools.Tests
         /// <param name="num_parse_trials"></param>
         public static void BenchmarkParserAndRemesPath(string[][] queries_and_descriptions, 
                                      string fname,
-                                     int num_parse_trials = 14,
-                                     int num_query_trials = 42)
+                                     int num_parse_trials,
+                                     int num_query_trials)
         {
             // setup
             JsonParser jsonParser = new JsonParser();
@@ -136,6 +136,75 @@ Performance tests for RemesPath ({description})
                 string result_preview = result.ToString().Slice(":300") + "\n...";
                 Npp.AddLine($"Preview of result: {result_preview}");
             }
+        }
+
+        public static void BenchmarkJNodeToString(int num_trials, string fname)
+        {
+            // setup
+            JsonParser jsonParser = new JsonParser();
+            Stopwatch watch = new Stopwatch();
+            if (!File.Exists(fname))
+            {
+                Npp.AddLine($"Can't run benchmark tests because file {fname}\ndoes not exist");
+                return;
+            }
+            string jsonstr = File.ReadAllText(fname);
+            int len = jsonstr.Length;
+            JNode json = new JNode();
+            try
+            {
+                json = jsonParser.Parse(jsonstr);
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
+                return;
+            }
+            string json_preview = json.ToString().Slice(":300") + "\n...";
+            Npp.AddLine($"Preview of json: {json_preview}");
+            // compression benchmark
+            long[] toString_times = new long[num_trials];
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                json.ToString(key_value_sep: ":", item_sep: ",");
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                toString_times[ii] = t;
+            }
+            (double mean, double sd) = GetMeanAndSd(toString_times);
+            Npp.AddLine($"To compress JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
+                $"ms over {toString_times.Length} trials (minimal whitespace, sort_keys=TRUE, new sorting method)");
+            // compression, but with sort_keys=False
+            long[] toString_noSort_times = new long[num_trials];
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                json.ToString(sort_keys:false, key_value_sep: ":", item_sep: ",");
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                toString_noSort_times[ii] = t;
+            }
+            (mean, sd) = GetMeanAndSd(toString_noSort_times);
+            Npp.AddLine($"To compress JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
+                $"ms over {toString_times.Length} trials (minimal whitespace, sort_keys=FALSE)");
+            // pretty-print benchmark
+            long[] prettyPrint_times = new long[num_trials];
+            for (int ii = 0; ii < num_trials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                json.PrettyPrint();
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                prettyPrint_times[ii] = t;
+            }
+            // display loading results
+            (mean, sd) = GetMeanAndSd(prettyPrint_times);
+            Npp.AddLine($"To pretty-print JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
+                $"ms over {prettyPrint_times.Length} trials (Google style, sort_keys=true, indent=4)");
         }
 
         public static void BenchmarkRandomJsonAndSchemaValidation(int num_trials)

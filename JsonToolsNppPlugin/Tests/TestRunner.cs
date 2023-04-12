@@ -149,6 +149,12 @@ Performance tests for JsonParser
             },
             big_random_fname, 32, 64);
 
+            Npp.AddLine(@"=========================
+Performance tests for JSON compression and pretty-printing
+=========================
+");
+            Benchmarker.BenchmarkJNodeToString(64, big_random_fname);
+
             Npp.AddLine($@"=========================
 Performance tests for JsonSchemaValidator and random JSON creation
 =========================
