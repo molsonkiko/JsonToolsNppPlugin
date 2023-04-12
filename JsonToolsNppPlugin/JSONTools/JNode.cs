@@ -687,7 +687,7 @@ namespace JSON_Tools.JSON_Tools
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase);
+            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
             foreach (string k in keys)
             {
                 JNode v = children[k];
@@ -712,7 +712,7 @@ namespace JSON_Tools.JSON_Tools
             var sb = new StringBuilder();
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase);
+            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}{{{NL}");
@@ -758,7 +758,7 @@ namespace JSON_Tools.JSON_Tools
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase);
+            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
             foreach (string k in keys)
             {
                 JNode v = children[k];
@@ -793,7 +793,7 @@ namespace JSON_Tools.JSON_Tools
             var sb = new StringBuilder();
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.OrdinalIgnoreCase);
+            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}{{{NL}");
