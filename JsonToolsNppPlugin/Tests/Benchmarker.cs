@@ -175,7 +175,7 @@ Performance tests for RemesPath ({description})
             }
             (double mean, double sd) = GetMeanAndSd(toString_times);
             Npp.AddLine($"To compress JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
-                $"ms over {toString_times.Length} trials (minimal whitespace, sort_keys=TRUE, new sorting method)");
+                $"ms over {toString_times.Length} trials (minimal whitespace, sort_keys=TRUE)");
             // compression, but with sort_keys=False
             long[] toString_noSort_times = new long[num_trials];
             for (int ii = 0; ii < num_trials; ii++)
