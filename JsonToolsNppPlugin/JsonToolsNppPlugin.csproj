@@ -200,7 +200,7 @@
     <Compile Include="Tests\YamlDumperTests.cs" />
     <Compile Include="Utils\FormStyle.cs" />
     <Compile Include="Utils\LruCache.cs" />
-    <Compile Include="Utils\Misc.cs" />
+    <Compile Include="Utils\Npp.cs" />
     <Compile Include="Utils\NanInf.cs" />
     <Compile Include="Utils\Settings.cs" />
     <Compile Include="Utils\Slice.cs" />

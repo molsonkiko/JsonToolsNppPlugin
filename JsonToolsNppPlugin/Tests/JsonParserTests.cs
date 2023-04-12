@@ -204,12 +204,11 @@ namespace JSON_Tools.Tests
                 JNode json = TryParse(input, parser);
                 if (json == null)
                 {
-                    ii += 2;
-                    tests_failed += 2;
+                    ii += 4;
+                    tests_failed += 4;
                     continue;
                 }
                 string norm_str_out = json.ToString();
-                string pprint_out = json.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
                 if (norm_str_out != norm_input)
                 {
                     tests_failed++;
@@ -222,6 +221,21 @@ Got
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(fullMsg), fullMsg);
                 }
                 ii++;
+                JNode json_from_norm_str_out = parser.Parse(norm_str_out);
+                if (!json_from_norm_str_out.Equals(json)
+                    && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
+                {
+                    tests_failed++;
+                    msg = String.Format(@"Test {0} (parsing ToString result returns original) failed:
+Expected Parse(Parse({1}).toString()) to return
+{1}
+Got
+{2}
+", ii + 1, norm_str_out, json_from_norm_str_out.ToString());
+                    Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
+                }
+                ii++;
+                string pprint_out = json.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
                 if (pprint_out != pprint_desired)
                 {
                     tests_failed++;
@@ -231,6 +245,20 @@ Expected
 Got
 {3}
 ", ii + 1, msg, pprint_desired, pprint_out);
+                    Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
+                }
+                ii++;
+                JNode json_from_pprint_out = parser.Parse(pprint_out);
+                if (!json_from_pprint_out.Equals(json)
+                    && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
+                {
+                    tests_failed++;
+                    msg = String.Format(@"Test {0} (parsing PrettyPrint result returns original) failed:
+Expected Parse(Parse({1}).PrettyPrint()) to return
+{1}
+Got
+{2}
+", ii + 1, norm_str_out, json_from_pprint_out.ToString());
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
                 ii++;

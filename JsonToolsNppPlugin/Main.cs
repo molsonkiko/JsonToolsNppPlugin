@@ -16,7 +16,6 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using System.Threading;
 
 namespace Kbg.NppPluginNET
 {
@@ -38,7 +37,6 @@ namespace Kbg.NppPluginNET
         public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
         // tree view stuff
-        public static Thread treeViewThread = null;
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
         private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
@@ -519,8 +517,6 @@ namespace Kbg.NppPluginNET
                 if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
                 {
                     FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
-                    grepperForm.tv.use_tree = settings.use_tree;
-                    grepperForm.tv.max_size_full_tree_MB = settings.max_file_size_MB_slow_actions;
                 }
             }
             // when the user changes their mind about whether to use editor styling
@@ -863,6 +859,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             // now make sure that all the regexes compile
+            // we're mutating the keys, so make an array first
             var fnames = schemasToFnamePatterns.children.Keys.ToArray<string>();
             foreach (string fname in fnames)
             {

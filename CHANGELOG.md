@@ -42,6 +42,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
+## [4.14.0] - 2023-04-12
+
+### Added
+
+1. __Lazy loading of tree view.__ This translates to a *massive* increase in responsiveness of the application. The tree viewer initially loads very quickly, but there is more latency expanding nodes that have not previously been expanded.
+2. Even if not all children of the root get their own tree node, the children that do can be expanded.
+
+### Changed
+
+1. The `use_tree` setting has been removed. It is no longer necessary, because loading of tree nodes is deferred until the user clicks on the tree.
+2. Very long arrays and objects besides the root are now affected by the `max_json_length_full_tree` setting. Previously, if the root was an array with one element, but one of its children was an array with 1 million elements, the tree view might have attempted to create a tree node for all 1 million elements, which would have caused insane latency and possibly consumption of all available memory. Now, a hypothetical non-root array with 1 million elements will get 10 thousand tree nodes, same as the root.
+
 ## [4.13.0] - 2023-04-11
 
 ### Added

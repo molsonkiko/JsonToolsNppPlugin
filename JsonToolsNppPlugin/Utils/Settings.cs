@@ -32,8 +32,6 @@ namespace JSON_Tools.Utils
         #endregion
         #region PERFORMANCE
         [Description("Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n" +
-            "* Adding a tree node in the JSON tree for every JSON node in the document. " +
-                "For large files, only some direct children of the root are added to the tree.\r\n" +
             "* Automatically turning on the JSON lexer.\r\n" +
             "* Automatic parsing of the file on opening and approximately 2 seconds after every edit."),
             Category("Performance"), DefaultValue(4d)]
@@ -44,12 +42,9 @@ namespace JSON_Tools.Utils
         public bool auto_validate { get; set; }
         #endregion
         #region TREE_VIEW_SETTINGS
-        [Description("Whether or not to use the tree view at all."),
-            Category("Tree View"), DefaultValue(true)]
-        public bool use_tree { get; set; }
 
-        [Description("The longest length of a JSON array or object that gets its full tree added to the tree view. " +
-            "Larger files get only some of the direct children of the root added to the tree."),
+        [Description("The longest length of a JSON array or object that gets all its children added to the tree view. " +
+            "Longer iterables get only some of their children added to the tree."),
             Category("Tree View"), DefaultValue(10_000)]
         public int max_json_length_full_tree { get; set; }
 

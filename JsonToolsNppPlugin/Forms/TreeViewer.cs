@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
@@ -37,10 +38,6 @@ namespace JSON_Tools.Forms
 
         public FindReplaceForm findReplaceForm;
 
-        public bool use_tree;
-
-        public double max_size_full_tree_MB;
-
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
@@ -61,17 +58,6 @@ namespace JSON_Tools.Forms
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             findReplaceForm = null;
-            use_tree = Main.settings.use_tree;
-            max_size_full_tree_MB = Main.settings.max_file_size_MB_slow_actions;
-            int file_len = Npp.editor.GetLength();
-            if (file_len > max_size_full_tree_MB * 1e6 || use_tree == false)
-            {
-                // show that the full tree isn't being showed if the conditions
-                // are not met for showing it
-                FullTreeCheckBox.Checked = false;
-            }
-            else
-                FullTreeCheckBox.Checked = true;
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
@@ -169,120 +155,29 @@ namespace JSON_Tools.Forms
                 7: everything else
                 */
             }
-            tree.BeginUpdate();
             tree.Nodes.Clear();
             TreeNode root = new TreeNode();
             if (Main.settings.tree_node_images)
                 SetImageOfTreeNode(root, json);
-            try
+            if (json is JArray arr)
             {
-                if (json is JArray || json is JObject)
-                {
-                    // recursively build tree for iterable JSON
-                    root.Text = "JSON";
-                    // need to add the root first because FullPath is undefined until root is in a TreeView
-                    // but also FullPath depends on the text so we need to track that too
-                    tree.Nodes.Add(root);
-                    int json_strlen = Npp.editor.GetLength();
-                    //int nodeCount = CappedNodeCount(json, Main.settings.max_json_length_full_tree);
-                    int nodeCount;
-                    if (json is JArray arr)
-                        nodeCount = arr.Length;
-                    else if (json is JObject obj)
-                        nodeCount = obj.Length;
-                    else nodeCount = 1;
-                    if (!use_tree)
-                    { // allow for tree to be turned off altogether. Best performance for loss of quality of life
-                        root.Text += TextForTreeNode(json);
-                    }
-                    // JSON is too large for full tree, but show some top-level nodes
-                    else if ((json_strlen > max_size_full_tree_MB * 1e6)
-                        || (nodeCount >= Main.settings.max_json_length_full_tree))
-                    {
-                        JsonTreePopulateHelper_DirectChildren(tree, root, json, pathsToJNodes);
-                    }
-                    // show everything
-                    else
-                    {
-                        JsonTreePopulateHelper(root, json, pathsToJNodes);
-                    }
-                }
-                else
-                {
-                    // just show the value for the scalar
-                    root.Text = json.ToString();
-                    tree.Nodes.Add(root);
-                }
+                root.Text = TextForTreeNode("JSON", json);
+                if (arr.Length > 0)
+                    root.Nodes.Add(""); // add the sentinel node
             }
-            catch (Exception ex)
+            else if (json is JObject obj)
             {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not populate JSON tree because of error:\n{expretty}",
-                                "Syntax error while populating tree",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                tree.Parent.UseWaitCursor = false;
-                return;
+                root.Text = TextForTreeNode("JSON", json);
+                if (obj.Length > 0)
+                    root.Nodes.Add("");
             }
+            else
+            {
+                // just show the value for the scalar
+                root.Text = json.ToString();
+            }
+            tree.Nodes.Add(root);
             pathsToJNodes[root.FullPath] = json;
-            tree.EndUpdate();
-        }
-
-        /// <summary>
-        /// Recursively traverses the full JSON tree and adds corresponding TreeNodes to the treeview.
-        /// </summary>
-        /// <param name="root"></param>
-        /// <param name="json"></param>
-        /// <param name="pathsToJNodes"></param>
-        private static void JsonTreePopulateHelper(//TreeView tree,
-                                                   TreeNode root, 
-                                                   JNode json,
-                                                   Dictionary<string, JNode> pathsToJNodes)
-        {
-            TreeNode child_node;
-            root.Text += TextForTreeNode(json);
-            if (json is JArray)
-            {
-                List<JNode> jar = ((JArray)json).children;
-                for (int ii = 0; ii < jar.Count; ii++)
-                {
-                    JNode child = jar[ii];
-                    if (child is JArray || child is JObject)
-                    {
-                        root.Nodes.Add(ii.ToString());
-                        child_node = root.Nodes[root.Nodes.Count - 1];
-                        JsonTreePopulateHelper(child_node, child, pathsToJNodes);
-                    }
-                    else
-                    {
-                        root.Nodes.Add($"{ii} : {child.ToString()}");
-                        child_node = root.LastNode;
-                    }
-                    if (Main.settings.tree_node_images)
-                        SetImageOfTreeNode(child_node, child);
-                    pathsToJNodes[child_node.FullPath] = child;
-                }
-                return;
-            }
-            Dictionary<string, JNode> jobj = ((JObject)json).children;
-            foreach (string key in jobj.Keys)
-            {
-                JNode child = jobj[key];
-                if (child is JArray || child is JObject)
-                {
-                    root.Nodes.Add(key, key);
-                    child_node = root.Nodes[root.Nodes.Count - 1];
-                    JsonTreePopulateHelper(child_node, child, pathsToJNodes);
-                }
-                else
-                {
-                    root.Nodes.Add(key, $"{key} : {child.ToString()}");
-                    child_node = root.LastNode;
-                }
-                if (Main.settings.tree_node_images)
-                    SetImageOfTreeNode(child_node, child);
-                pathsToJNodes[child_node.FullPath] = child;
-            }
         }
 
         /// <summary>
@@ -300,47 +195,77 @@ namespace JSON_Tools.Forms
                                                                   JNode json,
                                                                   Dictionary<string, JNode> pathsToJNodes)
         {
-            int interval;
-            root.Text += TextForTreeNode(json);
-            if (json is JArray)
+            tree.BeginUpdate();
+            try
             {
-                List<JNode> jar = ((JArray)json).children;
-                interval = jar.Count / Main.settings.max_json_length_full_tree;
-                if (interval < 1) interval = 1;
-                for (int ii = 0; ii < jar.Count; ii += interval)
+                int interval;
+                if (json is JArray arr)
                 {
-                    JNode child = jar[ii];
-                    TreeNode child_node = new TreeNode(ii.ToString() + TextForTreeNode(child));
-                    if (Main.settings.tree_node_images)
-                        SetImageOfTreeNode(child_node, child);
-                    root.Nodes.Add(child_node);
-                    pathsToJNodes[child_node.FullPath] = child;
+                    List<JNode> jar = arr.children;
+                    interval = jar.Count / Main.settings.max_json_length_full_tree;
+                    if (interval < 1) interval = 1;
+                    for (int ii = 0; ii < jar.Count; ii += interval)
+                    {
+                        JNode child = jar[ii];
+                        TreeNode child_node = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
+                        if ((child is JArray childarr && childarr.Length > 0) 
+                            || (child is JObject childobj && childobj.Length > 0))
+                        {
+                            // add a sentinel node so that this node can later be expanded
+                            child_node.Nodes.Add("");
+                        }
+                        if (Main.settings.tree_node_images)
+                            SetImageOfTreeNode(child_node, child);
+                        pathsToJNodes[child_node.FullPath] = child;
+                    }
                 }
-                return;
+                else if (json is JObject obj)
+                {
+                    Dictionary<string, JNode> jobj = obj.children;
+                    interval = jobj.Count / Main.settings.max_json_length_full_tree;
+                    if (interval < 1) interval = 1;
+                    int count = 0;
+                    foreach (string key in jobj.Keys)
+                    {
+                        // iterate through keys with a stepsize of interval (step over some)
+                        if (count++ % interval != 0)
+                            continue;
+                        JNode child = jobj[key];
+                        TreeNode child_node = root.Nodes.Add(key, TextForTreeNode(key, child));
+                        if ((child is JArray childarr && childarr.Length > 0)
+                            || (child is JObject childobj && childobj.Length > 0))
+                        {
+                            // add a sentinel node so that this node can later be expanded
+                            child_node.Nodes.Add("");
+                        }
+                        if (Main.settings.tree_node_images)
+                            SetImageOfTreeNode(child_node, child);
+                        pathsToJNodes[child_node.FullPath] = child;
+                    }
+                }
             }
-            Dictionary<string, JNode> jobj = ((JObject)json).children;
-            string[] keys = jobj.Keys.ToArray();
-            interval = keys.Length / 5000;
-            if (interval < 1) interval = 1;
-            for (int ii = 0; ii < keys.Length; ii += interval)
+            catch (Exception ex)
             {
-                string key = keys[ii];
-                JNode child = jobj[key];
-                TreeNode child_node = new TreeNode(key + TextForTreeNode(child));
-                if (Main.settings.tree_node_images)
-                    SetImageOfTreeNode(child_node, child);
-                root.Nodes.Add(child_node);
-                pathsToJNodes[child_node.FullPath] = child;
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not populate JSON tree because of error:\n{expretty}",
+                                "Error while populating tree",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
             }
+            tree.EndUpdate();
         }
 
-        private static string TextForTreeNode(JNode node)
+        private static string TextForTreeNode(string key, JNode node)
         {
             if (node is JArray arr)
-                return arr.children.Count == 0 ? " : []" : $" : [{arr.children.Count}]";
+                return arr.children.Count == 0
+                    ? $"{key} : []"
+                    : $"{key} : [{arr.children.Count}]";
             if (node is JObject obj)
-                return obj.children.Count == 0 ? " : {}" : $" : {{{obj.children.Count}}}";
-            return $" : {node.ToString()}";
+                return obj.children.Count == 0
+                    ? $"{key} : {{}}"
+                    : $"{key} : {{{obj.children.Count}}}";
+            return $"{key} : {node.ToString()}";
         }
 
         private void SubmitQueryButton_Click(object sender, EventArgs e)
@@ -415,7 +340,6 @@ namespace JSON_Tools.Forms
                 Npp.editor.SetText(new_json_str);
                 Main.lastEditedTime = DateTime.UtcNow;
                 JsonTreePopulate(query_func);
-                //JsonTreePopulateInBackground(query_func);
                 return;
             }
             // not an assignment expression, so executing the query changes the contents of the tree
@@ -455,7 +379,6 @@ namespace JSON_Tools.Forms
                 query_result = query_func;
             }
             JsonTreePopulate(query_result);
-            //JsonTreePopulateInBackground(query_result);
         }
 
         private void QueryToCsvButton_Click(object sender, EventArgs e)
@@ -479,41 +402,6 @@ namespace JSON_Tools.Forms
                 findReplaceForm.Show();
             }
             else findReplaceForm.Focus();
-        }
-
-        private void FullTreeCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!Visible) return;
-            if (FullTreeCheckBox.Checked)
-            {
-                int file_len = Npp.editor.GetLength();
-                double estimated_time = file_len / 5e5; // 2s per MB
-                string est_time_str = estimated_time.ToString("N2"); // round to 2 decimal places
-                if ((estimated_time > 5 
-                        && MessageBox.Show($"Loading the full tree for this document will make Notepad++ unresponsive " +
-                                    $"for an estimated {est_time_str} seconds. Are you sure you want to do this?",
-                                    "Loading the full tree could be slow",
-                                    MessageBoxButtons.OKCancel,
-                                    MessageBoxIcon.Warning)
-                            == DialogResult.OK)
-                    || estimated_time <= 5)
-                {
-                    max_size_full_tree_MB = 10_000;
-                    // make it large enough to ensure that the document's tree will fit
-                    use_tree = true;
-                    JsonTreePopulate(json); // replace with full tree
-                    //JsonTreePopulateInBackground(json);
-                }
-                else
-                    FullTreeCheckBox.Checked = false; // cancel the checking action
-            }
-            else
-            {
-                // replace the full tree with a partial tree
-                max_size_full_tree_MB = 0;
-                JsonTreePopulate(json);
-                //JsonTreePopulateInBackground(json);
-            }
         }
 
         /// <summary>
@@ -546,7 +434,20 @@ namespace JSON_Tools.Forms
 
         private void Tree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
+            ReplaceSentinelWithChildren(Tree, e.Node);
             Tree_NodeSelection(sender, e);
+        }
+
+        private void ReplaceSentinelWithChildren(TreeView tree, TreeNode node)
+        {
+            var nodes = node.Nodes;
+            if (nodes.Count == 1 && nodes[0].Text.Length == 0)
+            // it's a sentinel node, so replace it with the actual children
+            {
+                nodes.RemoveAt(0);
+                JNode jnode = pathsToJNodes[node.FullPath];
+                JsonTreePopulateHelper_DirectChildren(tree, node, jnode, pathsToJNodes);
+            }
         }
 
         /// <summary>
@@ -768,7 +669,6 @@ namespace JSON_Tools.Forms
             query_result = json;
             Main.fname_jsons[fname] = json;
             JsonTreePopulate(json);
-            //JsonTreePopulateInBackground(json);
         }
 
         // close the find/replace form when this becomes invisible
@@ -807,37 +707,5 @@ namespace JSON_Tools.Forms
         {
             fname = new_fname;
         }
-
-        ///// <summary>
-        ///// recursively traverses a JSON tree and counts all children.<br></br>
-        ///// Stops counting when at least *limit* children have been found.
-        ///// </summary>
-        ///// <param name="json"></param>
-        ///// <param name="limit"></param>
-        ///// <param name="currentCount"></param>
-        ///// <returns></returns>
-        //private static int CappedNodeCount(JNode json, int limit, int currentCount=0)
-        //{
-        //    currentCount++;
-        //    if (json is JArray arr)
-        //    {
-        //        foreach (JNode child in arr.children)
-        //        {
-        //            currentCount = CappedNodeCount(child, limit, currentCount);
-        //            if (currentCount >= limit)
-        //                return currentCount;
-        //        }
-        //    }
-        //    else if (json is JObject obj)
-        //    {
-        //        foreach (JNode child in obj.children.Values)
-        //        {
-        //            currentCount = CappedNodeCount(child, limit, currentCount);
-        //            if (currentCount >= limit)
-        //                return currentCount;
-        //        }
-        //    }
-        //    return currentCount;
-        //}
     }
 }

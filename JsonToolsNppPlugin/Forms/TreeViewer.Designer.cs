@@ -39,7 +39,6 @@
             this.SubmitQueryButton = new System.Windows.Forms.Button();
             this.SaveQueryButton = new System.Windows.Forms.Button();
             this.QueryToCsvButton = new System.Windows.Forms.Button();
-            this.FullTreeCheckBox = new System.Windows.Forms.CheckBox();
             this.NodeRightClickMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CopyValueMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CopyKeyItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -62,9 +61,9 @@
             this.Tree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Tree.Location = new System.Drawing.Point(4, 95);
+            this.Tree.Location = new System.Drawing.Point(4, 84);
             this.Tree.Name = "Tree";
-            this.Tree.Size = new System.Drawing.Size(457, 335);
+            this.Tree.Size = new System.Drawing.Size(457, 346);
             this.Tree.TabIndex = 6;
             this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
@@ -138,19 +137,6 @@
             this.QueryToCsvButton.UseVisualStyleBackColor = true;
             this.QueryToCsvButton.Click += new System.EventHandler(this.QueryToCsvButton_Click);
             this.QueryToCsvButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
-            // 
-            // FullTreeCheckBox
-            // 
-            this.FullTreeCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.FullTreeCheckBox.AutoSize = true;
-            this.FullTreeCheckBox.Location = new System.Drawing.Point(222, 69);
-            this.FullTreeCheckBox.Name = "FullTreeCheckBox";
-            this.FullTreeCheckBox.Size = new System.Drawing.Size(130, 20);
-            this.FullTreeCheckBox.TabIndex = 5;
-            this.FullTreeCheckBox.Text = "View all subtrees";
-            this.FullTreeCheckBox.UseVisualStyleBackColor = true;
-            this.FullTreeCheckBox.CheckedChanged += new System.EventHandler(this.FullTreeCheckBox_CheckedChanged);
-            this.FullTreeCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // NodeRightClickMenu
             // 
@@ -275,7 +261,6 @@
             this.Controls.Add(this.FindReplaceButton);
             this.Controls.Add(this.RefreshButton);
             this.Controls.Add(this.CurrentPathBox);
-            this.Controls.Add(this.FullTreeCheckBox);
             this.Controls.Add(this.QueryToCsvButton);
             this.Controls.Add(this.SaveQueryButton);
             this.Controls.Add(this.SubmitQueryButton);
@@ -296,7 +281,6 @@
         private System.Windows.Forms.ImageList TypeIconList;
         private System.Windows.Forms.Button SaveQueryButton;
         private System.Windows.Forms.Button QueryToCsvButton;
-        private System.Windows.Forms.CheckBox FullTreeCheckBox;
         private System.Windows.Forms.ContextMenuStrip NodeRightClickMenu;
         private System.Windows.Forms.ToolStripMenuItem CopyValueMenuItem;
         private System.Windows.Forms.ToolStripMenuItem CopyKeyItem;

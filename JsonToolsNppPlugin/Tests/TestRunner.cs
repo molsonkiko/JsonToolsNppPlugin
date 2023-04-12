@@ -161,11 +161,11 @@ Performance tests for JsonSchemaValidator and random JSON creation
 ");
             Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);
 
-            Npp.AddLine($@"=========================
-Performance tests for sorting arrays of strings with different algorithms
-=========================
-");
-            Benchmarker.BenchmarkIgnoreCaseStringComparisons(256, 20);
+//            Npp.AddLine($@"=========================
+//Performance tests for sorting arrays of strings with different algorithms
+//=========================
+//");
+//            Benchmarker.BenchmarkIgnoreCaseStringComparisons(256, 20);
             //because Visual Studio runs a whole bunch of other things in the background
             //     when I build my project, the benchmarking suite
             //     makes my code seem way slower than it actually is when it's running unhindered.

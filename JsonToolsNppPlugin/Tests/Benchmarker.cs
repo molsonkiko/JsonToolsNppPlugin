@@ -279,85 +279,6 @@ Performance tests for RemesPath ({description})
             Npp.AddLine($"To validate tweet JSON of size {len} ({num_tweets} tweets) based on the compiled schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
         }
 
-        public static void BenchmarkIgnoreCaseStringComparisons(int num_trials, int array_len)
-        {
-            var watch = new Stopwatch();
-            var random = new Random(42);
-            string[] makeRandomStrings()
-            {
-                var strings = new string[array_len];
-                for (int ii = 0; ii < array_len; ii++)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    var stringlen = random.Next(1, 7);
-                    for (int s = 0; s < stringlen; s++)
-                    {
-                        sb.Append("abcdefghijklmnopqrstuvwxyz"[random.Next(0, 26)]);
-                    }
-                    strings[ii] = sb.ToString();
-                }
-                return strings;
-            }
-            // the old slow algorithm I used to use for sorting object keys
-            var toLowerTimes = new long[num_trials];
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                var strings = makeRandomStrings();
-                watch.Reset();
-                watch.Start();
-                Array.Sort(strings, (x, y) => x.ToLower().CompareTo(y.ToLower()));
-                watch.Stop();
-                toLowerTimes[ii] = watch.ElapsedTicks;
-            }
-            (double mean, double sd) = GetMeanAndSd(toLowerTimes);
-            Npp.AddLine($"Sorting {array_len} strings with (x, y) => x.ToLower().CompareTo(y.ToLower()) took "
-                + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
-            // the fast algorithm that ignores cultural considerations
-            var ordinalTimes = new long[num_trials];
-            random = new Random(42);
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                var strings = makeRandomStrings();
-                watch.Reset();
-                watch.Start();
-                Array.Sort(strings, StringComparer.OrdinalIgnoreCase);
-                watch.Stop();
-                ordinalTimes[ii] = watch.ElapsedTicks;
-            }
-            (mean, sd) = GetMeanAndSd(ordinalTimes);
-            Npp.AddLine($"Sorting {array_len} strings with StringComparer.OrdinalIgnoreCase took "
-                + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
-            // another candidate, InvariantCultureIgnoreCase
-            var invariantCultureTimes = new long[num_trials];
-            random = new Random(42);
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                var strings = makeRandomStrings();
-                watch.Reset();
-                watch.Start();
-                Array.Sort(strings, StringComparer.InvariantCultureIgnoreCase);
-                watch.Stop();
-                invariantCultureTimes[ii] = watch.ElapsedTicks;
-            }
-            (mean, sd) = GetMeanAndSd(invariantCultureTimes);
-            Npp.AddLine($"Sorting {array_len} strings with StringComparer.InvariantCultureIgnoreCase) took "
-                + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
-            // the algorithm I currently use, CurrentCultureIgnoreCase
-            var currentCultureTimes = new long[num_trials];
-            random = new Random(42);
-            for (int ii = 0; ii < num_trials; ii++)
-            {
-                var strings = makeRandomStrings();
-                watch.Reset();
-                watch.Start();
-                Array.Sort(strings, StringComparer.CurrentCultureIgnoreCase);
-                watch.Stop();
-                currentCultureTimes[ii] = watch.ElapsedTicks;
-            }
-            (mean, sd) = GetMeanAndSd(currentCultureTimes);
-            Npp.AddLine($"Sorting {array_len} strings with StringComparer.CurrentCultureIgnoreCase) took "
-                + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
-        }
 
         public static (double mean, double sd) GetMeanAndSd(long[] times)
         {
@@ -385,5 +306,85 @@ Performance tests for RemesPath ({description})
                 default: throw new ArgumentException("Time unit must be s, mus, ms, or ns");
             }
         }
+
+        //public static void BenchmarkIgnoreCaseStringComparisons(int num_trials, int array_len)
+        //{
+        //    var watch = new Stopwatch();
+        //    var random = new Random(42);
+        //    string[] makeRandomStrings()
+        //    {
+        //        var strings = new string[array_len];
+        //        for (int ii = 0; ii < array_len; ii++)
+        //        {
+        //            StringBuilder sb = new StringBuilder();
+        //            var stringlen = random.Next(1, 7);
+        //            for (int s = 0; s < stringlen; s++)
+        //            {
+        //                sb.Append("abcdefghijklmnopqrstuvwxyz"[random.Next(0, 26)]);
+        //            }
+        //            strings[ii] = sb.ToString();
+        //        }
+        //        return strings;
+        //    }
+        //    // the old slow algorithm I used to use for sorting object keys
+        //    var toLowerTimes = new long[num_trials];
+        //    for (int ii = 0; ii < num_trials; ii++)
+        //    {
+        //        var strings = makeRandomStrings();
+        //        watch.Reset();
+        //        watch.Start();
+        //        Array.Sort(strings, (x, y) => x.ToLower().CompareTo(y.ToLower()));
+        //        watch.Stop();
+        //        toLowerTimes[ii] = watch.ElapsedTicks;
+        //    }
+        //    (double mean, double sd) = GetMeanAndSd(toLowerTimes);
+        //    Npp.AddLine($"Sorting {array_len} strings with (x, y) => x.ToLower().CompareTo(y.ToLower()) took "
+        //        + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
+        //    // the fast algorithm that ignores cultural considerations
+        //    var ordinalTimes = new long[num_trials];
+        //    random = new Random(42);
+        //    for (int ii = 0; ii < num_trials; ii++)
+        //    {
+        //        var strings = makeRandomStrings();
+        //        watch.Reset();
+        //        watch.Start();
+        //        Array.Sort(strings, StringComparer.OrdinalIgnoreCase);
+        //        watch.Stop();
+        //        ordinalTimes[ii] = watch.ElapsedTicks;
+        //    }
+        //    (mean, sd) = GetMeanAndSd(ordinalTimes);
+        //    Npp.AddLine($"Sorting {array_len} strings with StringComparer.OrdinalIgnoreCase took "
+        //        + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
+        //    // another candidate, InvariantCultureIgnoreCase
+        //    var invariantCultureTimes = new long[num_trials];
+        //    random = new Random(42);
+        //    for (int ii = 0; ii < num_trials; ii++)
+        //    {
+        //        var strings = makeRandomStrings();
+        //        watch.Reset();
+        //        watch.Start();
+        //        Array.Sort(strings, StringComparer.InvariantCultureIgnoreCase);
+        //        watch.Stop();
+        //        invariantCultureTimes[ii] = watch.ElapsedTicks;
+        //    }
+        //    (mean, sd) = GetMeanAndSd(invariantCultureTimes);
+        //    Npp.AddLine($"Sorting {array_len} strings with StringComparer.InvariantCultureIgnoreCase) took "
+        //        + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
+        //    // the algorithm I currently use, CurrentCultureIgnoreCase
+        //    var currentCultureTimes = new long[num_trials];
+        //    random = new Random(42);
+        //    for (int ii = 0; ii < num_trials; ii++)
+        //    {
+        //        var strings = makeRandomStrings();
+        //        watch.Reset();
+        //        watch.Start();
+        //        Array.Sort(strings, StringComparer.CurrentCultureIgnoreCase);
+        //        watch.Stop();
+        //        currentCultureTimes[ii] = watch.ElapsedTicks;
+        //    }
+        //    (mean, sd) = GetMeanAndSd(currentCultureTimes);
+        //    Npp.AddLine($"Sorting {array_len} strings with StringComparer.CurrentCultureIgnoreCase) took "
+        //        + ConvertTicks(mean, "mus") + " +/- " + ConvertTicks(sd, "mus") + $" microseconds over {num_trials} trials");
+        //}
     }
 }

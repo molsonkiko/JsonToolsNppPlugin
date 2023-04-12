@@ -212,18 +212,6 @@ namespace JSON_Tools.JSON_Tools
             this.value = null;
         }
 
-        public static Dictionary<char, string> TO_STRING_ESCAPE_MAP = new Dictionary<char, string>
-        {
-            ['\\'] = "\\\\",
-            ['\n'] = "\\n",
-            ['\r'] = "\\r",
-            ['\b'] = "\\b",
-            // ['/'] = "\\/", // the '/' char is often escaped in JSON
-            ['\t'] = "\\t",
-            ['"'] = "\\\"",
-            ['\f'] = "\\f",
-        };
-
         // in some places like Germany they use ',' as the normal decimal separator.
         // need to override this to ensure that we parse JSON correctly
         public static readonly NumberFormatInfo DOT_DECIMAL_SEP = new NumberFormatInfo
@@ -267,34 +255,35 @@ namespace JSON_Tools.JSON_Tools
                     sb.Append('"');
                     foreach (char c in (string)value)
                     {
-                        /* if (c > 0x7f)
+                        switch (c)
                         {
-                            // unfortunately things like y with umlaut (char 0xff)
-                            // confuse a lot of text editors because they can be
-                            // composed in different ways using Unicode.
-                            // The safest thing to do is to use \u notation for everything
-                            // that's not in standard 7-bit ASCII
-                            if (c < 0x10000)
-                                sb.Append($"\\u{ToHex(c, 4)}");
-                            else
-                            {
-                                    // make a surrogate pair for chars bigger
-                                    // than 0xffff
-                                    // see https://github.com/python/cpython/blob/main/Lib/json/decoder.py
-                                    int n = c - 0x10000;
-                                int s1 = 0xd800 | ((n >> 10) & 0x3ff);
-                                int s2 = 0xdc00 | (n & 0x3ff);
-                                return $"\\u{ToHex(s1, 4)}\\u{ToHex(s2, 4)}";
-                            }
-                        }
-                        else */
-                        if (TO_STRING_ESCAPE_MAP.TryGetValue(c, out string escape))
-                        {
-                            sb.Append(escape);
-                        }
-                        else
-                        {
-                            sb.Append(c);
+                            case '\\':
+                                sb.Append("\\\\");
+                                break;
+                            case '\n':
+                                sb.Append("\\n");
+                                break;
+                            case '\r':
+                                sb.Append("\\r");
+                                break;
+                            case '\b':
+                                sb.Append("\\b");
+                                break;
+                            //case '/': // '/' is often escaped in JSON
+                            //    sb.Append("\\/");
+                            //    break;
+                            case '\t':
+                                sb.Append("\\t");
+                                break;
+                            case '"':
+                                sb.Append("\\\"");
+                                break;
+                            case '\f':
+                                sb.Append("\\f");
+                                break;
+                            default:
+                                sb.Append(c);
+                                break;
                         }
                     }
                     sb.Append('"');

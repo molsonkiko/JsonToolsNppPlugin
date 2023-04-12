@@ -180,11 +180,14 @@ At present the __Strategy__ option for the CSV Generation form has four options.
 
 ## Changing how much JSON tree is displayed ##
 
-*Added in version 3.1.0*
+Beginning in version [4.13.1](/CHANGELOG.md#4140---2023-04-12), the tree view is loaded on-demand, whenever the user expands a tree node. The tree is thus very responsive and quick to load.
 
-Loading the full tree for very large, complex JSON can cause tremendous memory consumption and make Notepad++ unresponsive for a long time. Because of this, only the __direct children of the root__ are displayed by default for JSON files larger than 4 megabytes. This is reflected in the `View all subtrees` checkbox. You can change this in the settings.
+Beginning in version *4.10.0*, if a JSON array or object has more than `10 thousand` direct children (congigurable in `Settings->max_json_length_full_tree`), this setting will automatically be activated, and `10 thousand` evenly spaced children will be displayed. For example, this would mean that an array with 200 thousand children would result in a tree view with pointers to the first element, the 20th element, the 40th element, and so on.
 
-Beginning in version *4.10.0*, if a JSON array or object has more than `10,000` direct children (congigurable in `Settings->max_json_length_full_tree`), this setting will automatically be activated, and `10,000` evenly spaced top-level children will be displayed. For example, this would mean that an array with 200,000 children would result in a tree view with pointers to the first element, the 20th element, the 40th element, and so on.
+<details>
+<summary>How the tree view worked before <a href="/CHANGELOG.md#4131---2023-04-12">4.13.1</a></summary>
+
+Loading the full tree for very large, complex JSON can cause tremendous memory consumption and make Notepad++ unresponsive for a long time. Because of this, only the __direct children of the root__ are displayed by default for JSON files larger than 4 megabytes. This is reflected in the `View all subtrees` checkbox. You can change this in the settings. This was added in *version 3.1.0*.
 
 Populating the tree is *much* more expensive than parsing JSON or executing RemesPath queries, which means that rather small JSON files with a very large number of nodes (e.g., an array containing 1e5 instances of the number `1`) may take *much* longer to load than larger files with a smaller number of nodes.
 
@@ -199,6 +202,8 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 - This message box for canceling loading of the full tree will now also show up when you try to open the full tree for a document 2.5 MB or larger.
 - Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
 - This box does not change the global settings. It only changes the settings for that tree view.
+</details>
+
 
 ## Get info about tree nodes ##
 
@@ -289,7 +294,7 @@ If this is true, keys are sorted alphabetically like so:
 ```json
 {"A": 2, "a": 1, "ba": 4, "BA": 2, "c": 4, "C": 3}
 ```
-As you can see, the sort is unstable when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
+As you can see, the sort is *unstable* when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
 ## JSON Lines documents ##
 
