@@ -1,6 +1,6 @@
 # Change Log
-All [notable changes](#4120---2023-03-28) to this project will be documented in this file.
- 
+All [notable changes](#4140---2023-04-12) to this project will be documented in this file.
+
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
  
@@ -25,8 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
-- Make it so that RemesPath assignment queries like `@.foo = @ + 1` only change the parts of the tree viewer that were affected by the assignment. Would greatly reduce latency because that's the slowest operation.
 - If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
+- *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance. 
 
 ### To Be Fixed
 
@@ -37,10 +37,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when key contains singlequotes and doublequotes
 - The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
-- Get rid of __ALL__ dinging sounds from the forms, including the `TreeView` control in the TreeViewer.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
+
+## [4.14.1] (UNRELEASED) - 2023-MM-DD
+
+### Added
+
+1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
+2. Slight improvements to parsing and pretty-print/compression performance
 
 ## [4.14.0] - 2023-04-12
 

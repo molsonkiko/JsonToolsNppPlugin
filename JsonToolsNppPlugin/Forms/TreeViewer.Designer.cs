@@ -293,10 +293,10 @@
         private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
         private System.Windows.Forms.TextBox CurrentPathBox;
         private System.Windows.Forms.ToolStripMenuItem ToggleSubtreesItem;
-        private System.Windows.Forms.Button RefreshButton;
         internal System.Windows.Forms.TextBox QueryBox;
         private System.Windows.Forms.Button FindReplaceButton;
         internal System.Windows.Forms.TreeView Tree;
         internal System.Windows.Forms.Button SubmitQueryButton;
+        internal System.Windows.Forms.Button RefreshButton;
     }
 }

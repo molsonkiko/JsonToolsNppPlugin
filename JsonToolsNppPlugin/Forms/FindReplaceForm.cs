@@ -36,12 +36,20 @@ namespace JSON_Tools.Forms
 
         public static readonly Regex BinopRegex = new Regex(@"[\+\-\|&^%\*/]|\*\*|//|[<>]=?|[=!]=");
 
+        /// <summary>
+        /// suppress annoying ding when user hits escape or enter
+        /// </summary>
+        private void FindReplaceForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape)
+                e.SuppressKeyPress = true;
+        }
+
         private void FindReplaceForm_KeyUp(object sender, KeyEventArgs e)
         {
             // enter presses button
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true;
                 if (sender is Button btn)
                 {
                     // Enter has the same effect as clicking a selected button
@@ -55,7 +63,6 @@ namespace JSON_Tools.Forms
             // Escape -> go to editor
             else if (e.KeyData == Keys.Escape)
             {
-                e.SuppressKeyPress = true;
                 Npp.editor.GrabFocus();
             }
             // Tab -> go through controls, Shift+Tab -> go through controls backward
@@ -64,7 +71,6 @@ namespace JSON_Tools.Forms
                 Control next = GetNextControl((Control)sender, !e.Shift);
                 while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
                 next.Focus();
-                e.SuppressKeyPress = true;
             }
         }
 
@@ -145,18 +151,19 @@ namespace JSON_Tools.Forms
             }
             else if (MatchExactlyBox.Checked)
             {
-                // exact matching is equivalent to regex matching
-                // with all special metacharacters escaped and anchors at the beginning and end
                 if (IgnoreCaseCheckBox.Checked)
                 {
+                    // exact matching is equivalent to regex matching
+                    // with all special metacharacters escaped and anchors at the beginning and end
                     // add the (?i) flag for case-insensitive matching
                     keys_find_text = "g`(?i)^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
                     values_find_text = $"[str(@) =~ {keys_find_text}]";
                 }
                 else
                 {
-                    keys_find_text = "g`^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
-                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                    // simplest case; do normal hash map key search, or check if string equals find text exactly
+                    keys_find_text = FindTextBox.Text;
+                    values_find_text = $"[str(@) == {keys_find_text}]";
                 }
             }
             else
@@ -214,6 +221,7 @@ namespace JSON_Tools.Forms
 
         private void FindButton_Click(object sender, EventArgs e)
         {
+            treeViewer.RefreshButton.PerformClick();
             AssignFindReplaceQueries();
             treeViewer.QueryBox.Text = findQuery;
             treeViewer.SubmitQueryButton.PerformClick();
@@ -222,6 +230,7 @@ namespace JSON_Tools.Forms
 
         private void ReplaceButton_Click(object sender, EventArgs e)
         {
+            treeViewer.RefreshButton.PerformClick();
             int keysvals_index = KeysValsBothBox.SelectedIndex;
             KeysValsBothBox.SelectedIndex = 1;
             AssignFindReplaceQueries();
