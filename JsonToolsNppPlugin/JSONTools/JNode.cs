@@ -672,7 +672,7 @@ namespace JSON_Tools.JSON_Tools
         /// <inheritdoc/>
         public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(7 * Length);
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
@@ -698,7 +698,7 @@ namespace JSON_Tools.JSON_Tools
         public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
         {
             string dent = new string(' ', indent * depth);
-            var sb = new StringBuilder();
+            var sb = new StringBuilder((indent * depth  + 8) * Length);
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
             if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
@@ -743,7 +743,7 @@ namespace JSON_Tools.JSON_Tools
         {
             int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
             line_num = curline;
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(7 * Length);
             sb.Append('{');
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
@@ -779,7 +779,7 @@ namespace JSON_Tools.JSON_Tools
         {
             line_num = curline;
             string dent = new string(' ', indent * depth);
-            var sb = new StringBuilder();
+            var sb = new StringBuilder((indent * depth + 8) * Length);
             int ctr = 0;
             string[] keys = children.Keys.ToArray();
             if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
@@ -912,7 +912,7 @@ namespace JSON_Tools.JSON_Tools
         /// <inheritdoc/>
         public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(4 * Length);
             sb.Append('[');
             int ctr = 0;
             foreach (JNode v in children)
@@ -934,7 +934,7 @@ namespace JSON_Tools.JSON_Tools
         /// <inheritdoc/>
         public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder((indent * depth + 6) * Length);
             string dent = new string(' ', indent * depth);
             int ctr = 0;
             if (style == PrettyPrintStyle.Whitesmith)
@@ -1009,7 +1009,7 @@ namespace JSON_Tools.JSON_Tools
         {
             int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
             line_num = curline;
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(4 * Length);
             sb.Append('[');
             int ctr = 0;
             foreach (JNode v in children)
@@ -1042,7 +1042,7 @@ namespace JSON_Tools.JSON_Tools
         {
             line_num = curline;
             string dent = new string(' ', indent * depth);
-            var sb = new StringBuilder();
+            var sb = new StringBuilder((indent * depth + 6) * Length);
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}[" + NL);

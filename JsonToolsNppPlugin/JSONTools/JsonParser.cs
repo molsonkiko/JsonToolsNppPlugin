@@ -231,13 +231,8 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="JsonParserException"></exception>
         private int ParseHexadecimal(string inp, int length)
         {
-            var sb = new StringBuilder();
             int end = ii + length > inp.Length ? inp.Length : ii + length;
-            for ( ; ii < end; ii++)
-            {
-                sb.Append(inp[ii]);
-            }
-            string s = sb.ToString();
+            var s = inp.Substring(ii, end - ii);
             // Npp.AddText($"hex of length {length} = {s}, will go to char {inp[index + length - 1]}");
             int charval;
             try
@@ -620,7 +615,6 @@ namespace JSON_Tools.JSON_Tools
             char cur_c = inp[++ii];
             if (recursion_depth == MAX_RECURSION_DEPTH)
                 throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii);
-            string child_key;
             while (ii < inp.Length)
             {
                 ConsumeWhiteSpace(inp);
@@ -682,7 +676,7 @@ namespace JSON_Tools.JSON_Tools
                     JNode keystring = ParseString(inp, cur_c);
                     //child_key = (string)keystring.value;
                     string child_keystr = keystring.ToString();
-                    child_key = child_keystr.Substring(1, child_keystr.Length - 2);
+                    string key = child_keystr.Substring(1, child_keystr.Length - 2);
                     if (inp[ii] != ':')
                     {
                         // avoid call overhead in most likely case where colon comes
@@ -701,9 +695,8 @@ namespace JSON_Tools.JSON_Tools
                     ConsumeWhiteSpace(inp);
                     cur_c = inp[ii];
                     if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
-                    JNode new_obj = ParseSomething(inp, recursion_depth);
-                    // Npp.AddText($"\nkey = {child_key}, obj = {new_obj.ToString()}");
-                    children.Add(child_key, new_obj);
+                    JNode val = ParseSomething(inp, recursion_depth);
+                    children.Add(key, val);
                     already_seen_comma = false;
                 }
                 else if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
