@@ -33,6 +33,7 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](h
 10. [JSON schema validation](/docs/README.md#validating-json-against-json-schema), including [automatic validation based on filenames](/docs/README.md#automatic-validation-of-json-against-json-schema).
 11. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
 12. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
+13. [Automatic error checking after editing](/docs/README.md#automatically-check-for-errors-after-editing)
 
 [Read the docs.](/docs/README.md)
 

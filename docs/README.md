@@ -96,6 +96,12 @@ As you can see, you can also make the parser settings *stricter* than the defaul
 
 *NOTE: Python-style comments are first supported in version [4.12.0](/CHANGELOG.md#4120---2023-03-28), while JavaScript comments have always been supported.*
 
+## Automatically check for errors after editing ##
+
+*Added in [version 4.13.0](/CHANGELOG.md#4130---2023-04-11)*
+
+About 2 seconds after a not-very-large file (default less than 4 megabytes, configurable in settings) is opened, and after 2 seconds of inactivity following any modification of the file or styling, the plugin parses the document and performs [JSON Schema validation](#validating-json-against-json-schema) on the document. The user is notified of any errors when this happens, and no further notifications are sent until the user next modifies or re-styles the document. If desired, this feature can be turned off in the settings.
+
 ## Viewing syntax errors in JSON ##
 
 The `linting` attribute in Settings enables the built-in linter for the JSON parser, which catches various syntax errors in JSON and logs them.
