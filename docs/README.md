@@ -434,7 +434,8 @@ This tool can only validate the following keywords:
 ### Keywords for strings
 
 * [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*)
-
+* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) (*support not yet released, will be released in [4.14.1](/CHANGELOG.md#4141-unreleased---2023-mm-dd)*)
+* [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*support not yet released, will be released in [4.14.1](/CHANGELOG.md#4141-unreleased---2023-mm-dd)*)
 
 ### Keywords for numbers
 * [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)

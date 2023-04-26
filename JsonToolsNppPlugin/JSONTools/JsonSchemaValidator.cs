@@ -35,6 +35,8 @@ namespace JSON_Tools.JSON_Tools
             RECURSION_LIMIT_REACHED,
             NUMBER_LESS_THAN_MIN,
             NUMBER_GREATER_THAN_MAX,
+            STRING_TOO_LONG,
+            STRING_TOO_SHORT,
         }
 
         public struct ValidationProblem
@@ -108,6 +110,14 @@ namespace JSON_Tools.JSON_Tools
                         var max = (double)keywords["max"];
                         num = (double)keywords["num"];
                         return msg + $"number {num} greater than maximum {max}";
+                    case ValidationProblemType.STRING_TOO_LONG:
+                        var maxLength = (int)keywords["maxLength"];
+                        str = (string)keywords["string"];
+                        return msg + $"string {str} had greater than maxLength {maxLength}";
+                    case ValidationProblemType.STRING_TOO_SHORT:
+                        var minLength = (int)keywords["minLength"];
+                        str = (string)keywords["string"];
+                        return msg + $"string {str} had less than minLength {minLength}";
                     default: throw new ArgumentException($"Unknown validation problem type {problemType}");
                 }
             }
@@ -315,6 +325,8 @@ namespace JSON_Tools.JSON_Tools
                     var itemsValidator = CompileValidationFuncHelper(items, definitions, recursions + 1);
                     if (schema.children.TryGetValue("contains", out JNode contains))
                     {
+                        // "contains" keyword adds another schema that some members
+                        // must match instead of the "items" schema
                         var containsValidator = CompileValidationFuncHelper(contains, definitions, recursions + 1);
                         var minContains = schema.children.TryGetValue("minContains", out JNode minContainsNode)
                             ? Convert.ToInt32(minContainsNode.value)
@@ -362,6 +374,7 @@ namespace JSON_Tools.JSON_Tools
                             );
                         };
                     }
+                    // no "contains" keyword, just validate all items with "items" keyword
                     return (JNode json) =>
                     {
                         if (!(json is JArray arr))
@@ -409,6 +422,7 @@ namespace JSON_Tools.JSON_Tools
                 var propsValidators = new Dictionary<string, Func<JNode, ValidationProblem?>>();
                 if (schema.children.TryGetValue("properties", out JNode properties))
                 {
+                    // standard validation: one schema per key in "properties"
                     JObject props = (JObject)properties;
                     foreach (string key in props.children.Keys)
                     {
@@ -496,37 +510,107 @@ namespace JSON_Tools.JSON_Tools
                     return null;
                 };
             }
-            if (dtype == Dtype.STR && schema.children.TryGetValue("pattern", out JNode pattern))
+            if (dtype == Dtype.STR)
             {
-                Regex regex = new Regex((string)pattern.value, RegexOptions.Compiled);
-                return (json) =>
+                bool has_special_string_keywords = false;
+                // validation to test if string matches regex
+                Func<string, int, ValidationProblem?> regexValidator;
+                if (schema.children.TryGetValue("pattern", out JNode pattern))
                 {
-                    if (!(json.value is string str))
+                    has_special_string_keywords = true;
+                    Regex regex = new Regex((string)pattern.value, RegexOptions.Compiled);
+                    regexValidator = (str, line_num) =>
                     {
-                        return new ValidationProblem(
-                            ValidationProblemType.TYPE_MISMATCH,
-                            new Dictionary<string, object>
-                            {
-                                { "found", json.type },
-                                { "required", dtype },
-                            },
-                            json.line_num
-                        );
-                    }
-                    if (!regex.IsMatch(str))
+                        if (!regex.IsMatch(str))
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.STRING_DOESNT_MATCH_PATTERN,
+                                new Dictionary<string, object>
+                                {
+                                    { "string", str },
+                                    { "regex", regex }
+                                },
+                                line_num
+                            );
+                        }
+                        return null;
+                    };
+                }
+                else regexValidator = (a, b) => null;
+                // validation of string length
+                var minLength = schema.children.TryGetValue("minLength", out JNode minLengthNode)
+                    ? Convert.ToInt32(minLengthNode.value)
+                    : 0;
+                var maxLength = schema.children.TryGetValue("maxLength", out JNode maxLengthNode)
+                    ? Convert.ToInt32(maxLengthNode.value)
+                    : int.MaxValue;
+                Func<string, int, ValidationProblem?> lengthValidator;
+                if (minLength == 0 && maxLength == int.MaxValue)
+                {
+                    lengthValidator = (s, l) => null;
+                }
+                else
+                {
+                    has_special_string_keywords = true;
+                    lengthValidator = (string s, int line_num) =>
                     {
-                        return new ValidationProblem(
-                            ValidationProblemType.STRING_DOESNT_MATCH_PATTERN,
-                            new Dictionary<string, object>
-                            {
-                                { "string", str },
-                                { "regex", regex }
-                            },
-                            json.line_num
-                        );
-                    }
-                    return null;
-                };
+                        if (s.Length < minLength)
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.STRING_TOO_SHORT,
+                                new Dictionary<string, object>
+                                {
+                                    { "string", s },
+                                    { "minLength", minLength }
+                                },
+                                line_num
+                            );
+                        }
+                        if (s.Length > maxLength)
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.STRING_TOO_LONG,
+                                new Dictionary<string, object>
+                                {
+                                    { "string", s },
+                                    { "maxLength", maxLength }
+                                },
+                                line_num
+                            );
+                        }
+                        return null;
+                    };
+                }
+                if (has_special_string_keywords)
+                {
+                    return (json) =>
+                    {
+                        if (!(json.value is string str))
+                        {
+                            return new ValidationProblem(
+                                ValidationProblemType.TYPE_MISMATCH,
+                                new Dictionary<string, object>
+                                {
+                                    { "found", json.type },
+                                    { "required", dtype },
+                                },
+                                json.line_num
+                            );
+                        }
+                        var regexProblem = regexValidator(str, json.line_num);
+                        if (regexProblem != null)
+                        {
+                            return regexProblem;
+                        }
+                        var lengthProblem = lengthValidator(str, json.line_num);
+                        if (lengthProblem != null)
+                        {
+                            return lengthProblem;
+                        }
+                        return null;
+                    };
+                }
+                // otherwise no special validation, just check if it's a string
             }
 
             if ((dtype & Dtype.FLOAT_OR_INT) != 0)

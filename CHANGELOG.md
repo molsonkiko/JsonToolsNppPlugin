@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
 2. Slight improvements to parsing and pretty-print/compression performance
+3. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
 
 ## [4.14.0] - 2023-04-12
 

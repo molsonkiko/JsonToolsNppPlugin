@@ -625,6 +625,42 @@ namespace JSON_Tools.Tests
                     "}",
                     true
                 ),
+                /*******
+                 * minLength and maxLength string keywords
+                 *******/
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"minLength\": 2}", true
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"minLength\": 4}", false
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"maxLength\": 2}", false
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"maxLength\": 4}", true
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"minLength\": 2, \"maxLength\": 4}", true
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"minLength\": 4, \"maxLength\": 5}", false
+                ),
+                new SchemaValidatesJson( // pattern and minLength
+                    "\"abc\"", "{\"type\": \"string\", \"pattern\": \"[abc]+\", \"minLength\": 3}", true
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"pattern\": \"[abc]+\", \"minLength\": 4}", false
+                ),
+                new SchemaValidatesJson( // pattern and maxLength
+                    "\"abc\"", "{\"type\": \"string\", \"pattern\": \"[abc]+\", \"maxLength\": 4}", true
+                ),
+                new SchemaValidatesJson(
+                    "\"abc\"", "{\"type\": \"string\", \"pattern\": \"[abc]+\", \"maxLength\": 2}", false
+                ),
+                new SchemaValidatesJson( // minLength and maxLength are fine but pattern isn't
+                    "\"abc\"", "{\"type\": \"string\", \"pattern\": \"z\", \"minLength\": 2, \"maxLength\": 4}", false
+                ),
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
             string testfiles_path = @"plugins\JsonTools\testfiles\";
@@ -655,6 +691,20 @@ namespace JSON_Tools.Tests
                 testcases.Add(new SchemaValidatesJson(random_tweet_text, tweet_schema_text, true));
                 if (bad_random_tweet_text != null)
                     testcases.Add(new SchemaValidatesJson(bad_random_tweet_text, tweet_schema_text, false));
+            }
+            string kitchen_sink_example = null, kitchen_sink_schema = null;
+            try
+            {
+                kitchen_sink_schema = File.ReadAllText(testfiles_path + "small\\kitchen_sink_schema.json");
+                kitchen_sink_example = File.ReadAllText(testfiles_path + "small\\kitchen_sink_example.json");
+            }
+            catch
+            {
+                Npp.AddLine("Kitchen sink schema or example not found");
+            }
+            if (kitchen_sink_schema != null && kitchen_sink_example != null)
+            {
+                testcases.Add(new SchemaValidatesJson(kitchen_sink_example, kitchen_sink_schema, true));
             }
             foreach (SchemaValidatesJson test in testcases)
             {

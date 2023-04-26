@@ -132,7 +132,7 @@ Testing JsonSchema validator
 =========================
 
 Failed 0 tests.
-Passed 157 tests.
+Passed 175 tests.
 =========================
 Testing JSON tabularizer
 =========================
@@ -171,24 +171,24 @@ Performance tests for JsonParser
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 91926 into JNode took 3.816 +/- 1.317 ms over 32 trials
-Load times (ms): 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 4, 2, 4, 2, 6, 2, 4, 2, 4, 2, 3, 2, 4, 2, 5, 3
+To convert JSON string of size 91926 into JNode took 3.478 +/- 1.41 ms over 32 trials
+Load times (ms): 3, 5, 3, 5, 3, 4, 2, 5, 1, 4, 1, 3, 1, 4, 1, 3, 4, 7, 3, 2, 4, 1, 4, 1, 4, 1, 4, 1, 3, 1, 3, 1
 =========================
 Performance tests for RemesPath (float arithmetic)
 =========================
 
-Compiling query "@[@[:].a * @[:].q < @[:].e]" into took 4.073 +/- 3.266 microseconds over 64 trials
-To run pre-compiled query "@[@[:].a * @[:].q < @[:].e]" on JNode from JSON of size 91926 into took 0.036 +/- 0.008 ms over 64 trials
-Query times (ms): 0.067, 0.04, 0.03, 0.044, 0.026, 0.043, 0.028, 0.04, 0.032, 0.035, 0.037, 0.031, 0.04, 0.03, 0.042, 0.027, 0.042, 0.033, 0.042, 0.025, 0.041, 0.027, 0.055, 0.027, 0.045, 0.027, 0.042, 0.03, 0.038, 0.034, 0.034, 0.033, 0.036, 0.036, 0.032, 0.04, 0.029, 0.042, 0.026, 0.026, 0.048, 0.032, 0.038, 0.032, 0.036, 0.034, 0.035, 0.035, 0.048, 0.042, 0.041, 0.043, 0.027, 0.041, 0.033, 0.037, 0.034, 0.033, 0.04, 0.028, 0.043, 0.026, 0.042, 0.03
+Compiling query "@[@[:].a * @[:].q < @[:].e]" into took 4.839 +/- 8.587 microseconds over 64 trials
+To run pre-compiled query "@[@[:].a * @[:].q < @[:].e]" on JNode from JSON of size 91926 into took 0.038 +/- 0.023 ms over 64 trials
+Query times (ms): 0.091, 0.043, 0.041, 0.04, 0.084, 0.045, 0.053, 0.027, 0.038, 0.026, 0.027, 0.028, 0.029, 0.193, 0.032, 0.026, 0.026, 0.025, 0.026, 0.026, 0.025, 0.026, 0.026, 0.026, 0.025, 0.026, 0.025, 0.026, 0.026, 0.025, 0.026, 0.026, 0.025, 0.026, 0.026, 0.025, 0.025, 0.026, 0.025, 0.026, 0.05, 0.041, 0.042, 0.038, 0.04, 0.04, 0.04, 0.051, 0.042, 0.04, 0.04, 0.04, 0.039, 0.04, 0.043, 0.04, 0.039, 0.04, 0.04, 0.04, 0.043, 0.039, 0.04, 0.04
 Preview of result: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
 =========================
 Performance tests for RemesPath (string operations)
 =========================
 
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.058 +/- 2.013 microseconds over 64 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.067 +/- 0.052 ms over 64 trials
-Query times (ms): 0.111, 0.053, 0.051, 0.051, 0.051, 0.05, 0.068, 0.051, 0.051, 0.051, 0.051, 0.057, 0.051, 0.051, 0.052, 0.051, 0.05, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.05, 0.062, 0.051, 0.051, 0.05, 0.051, 0.05, 0.118, 0.057, 0.069, 0.142, 0.065, 0.064, 0.067, 0.072, 0.06, 0.058, 0.057, 0.449, 0.111, 0.077, 0.087, 0.057, 0.081, 0.052, 0.062, 0.119, 0.065, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.052, 0.051, 0.052, 0.051, 0.051
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.27 +/- 2.784 microseconds over 64 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.063 +/- 0.078 ms over 64 trials
+Query times (ms): 0.085, 0.054, 0.052, 0.052, 0.052, 0.052, 0.051, 0.051, 0.052, 0.051, 0.051, 0.058, 0.051, 0.052, 0.051, 0.052, 0.051, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.051, 0.051, 0.052, 0.052, 0.052, 0.051, 0.052, 0.051, 0.051, 0.052, 0.051, 0.051, 0.052, 0.051, 0.051, 0.052, 0.052, 0.052, 0.051, 0.052, 0.052, 0.052, 0.052, 0.072, 0.052, 0.052, 0.679, 0.057, 0.053, 0.052, 0.052, 0.052, 0.052, 0.052
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...
 =========================
@@ -197,13 +197,13 @@ Performance tests for JSON compression and pretty-printing
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To compress JNode from JSON string of 91926 took 4.552 +/- 0.757 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
-To compress JNode from JSON string of 91926 took 2.755 +/- 0.619 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
-To pretty-print JNode from JSON string of 91926 took 5.953 +/- 1.302 ms over 64 trials (Google style, sort_keys=true, indent=4)
+To compress JNode from JSON string of 91926 took 5.077 +/- 1.239 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
+To compress JNode from JSON string of 91926 took 2.922 +/- 0.978 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
+To pretty-print JNode from JSON string of 91926 took 5.634 +/- 1.605 ms over 64 trials (Google style, sort_keys=true, indent=4)
 =========================
 Performance tests for JsonSchemaValidator and random JSON creation
 =========================
 
-To create a random set of tweet JSON of size 140240 (15 tweets) based on the matching schema took 6.404 +/- 3.021 ms over 64 trials
-To compile the tweet schema to a validation function took 0.412 +/- 0.869 ms over 64 trials
-To validate tweet JSON of size 140240 (15 tweets) based on the compiled schema took 1.094 +/- 0.225 ms over 64 trials
+To create a random set of tweet JSON of size 161695 (15 tweets) based on the matching schema took 6.555 +/- 3.073 ms over 64 trials
+To compile the tweet schema to a validation function took 0.325 +/- 0.772 ms over 64 trials
+To validate tweet JSON of size 161695 (15 tweets) based on the compiled schema took 1.031 +/- 0.18 ms over 64 trials
