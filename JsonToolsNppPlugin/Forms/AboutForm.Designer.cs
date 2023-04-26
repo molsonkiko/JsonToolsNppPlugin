@@ -75,10 +75,10 @@
             this.DebugInfoLabel.AutoSize = true;
             this.DebugInfoLabel.Location = new System.Drawing.Point(28, 201);
             this.DebugInfoLabel.Name = "DebugInfoLabel";
-            this.DebugInfoLabel.Size = new System.Drawing.Size(264, 32);
+            this.DebugInfoLabel.Size = new System.Drawing.Size(333, 32);
             this.DebugInfoLabel.TabIndex = 4;
-            this.DebugInfoLabel.Text = "For info about your Notepad++ installation,\r\ngo to ? -> Debug Info on the main st" +
-    "atus bar.";
+            this.DebugInfoLabel.Text = "Notepad++ version: X.Y.Z. For more info about your\r\ninstallation, go to ? -> Debu" +
+    "g Info on the main status bar.";
             // 
             // Thanks
             // 

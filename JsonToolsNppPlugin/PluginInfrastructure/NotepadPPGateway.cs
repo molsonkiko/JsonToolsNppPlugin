@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 using JSON_Tools.PluginInfrastructure;
-using JSON_Tools.Utils;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {
@@ -179,16 +178,18 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		}
 
 		/// <summary>
-		/// 2-int array. First entry: major version. Second entry: minor version
+		/// 3-int array: {major, minor, bugfix}<br></br>
+		/// Thus GetNppVersion() would return {8, 5, 0} for version 8.5.0
+		/// and {7, 7, 1} for version 7.7.1
 		/// </summary>
 		/// <returns></returns>
 		public int[] GetNppVersion()
 		{
 			// the low word (i.e., version & 0xffff
 			int version = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETNPPVERSION, 0, 0).ToInt32();
-			int minor = version & 0xffff;
 			int major = version >> 16;
-			return new int[] { major, minor };
+			int minor = Math.DivRem(version & 0xffff, 10, out int bugfix);
+			return new int[] { major, minor, bugfix };
         }
 
 		/// <summary>

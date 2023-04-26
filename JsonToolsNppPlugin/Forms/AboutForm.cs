@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -10,10 +11,14 @@ namespace JSON_Tools.Forms
 {
     public partial class AboutForm : Form
     {
+        private static int[] nppVersion = Npp.notepad.GetNppVersion();
+
         public AboutForm()
         {
             InitializeComponent();
             Title.Text = Title.Text.Replace("X.Y.Z.A", Npp.AssemblyVersionString());
+            string nppVersionString = string.Join(".", nppVersion.Select((x) => x.ToString()));
+            DebugInfoLabel.Text = DebugInfoLabel.Text.Replace("X.Y.Z", nppVersionString);
         }
 
         /// <summary>
@@ -78,8 +83,7 @@ namespace JSON_Tools.Forms
         {
             JNode json = Main.TryParseJson();
             if (json == null) return;
-            int[] majorMinorVersion = Npp.notepad.GetNppVersion();
-            if (majorMinorVersion[0] >= 8)
+            if (nppVersion[0] >= 8)
             {
                 // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
                 DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(
