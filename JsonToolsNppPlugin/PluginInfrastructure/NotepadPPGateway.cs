@@ -185,7 +185,6 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		/// <returns></returns>
 		public int[] GetNppVersion()
 		{
-			// the low word (i.e., version & 0xffff
 			int version = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETNPPVERSION, 0, 0).ToInt32();
 			int major = version >> 16;
 			int minor = Math.DivRem(version & 0xffff, 10, out int bugfix);
