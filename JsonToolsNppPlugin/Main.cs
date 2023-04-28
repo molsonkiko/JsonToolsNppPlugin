@@ -218,10 +218,7 @@ namespace Kbg.NppPluginNET
                     return;
                 // the editor color scheme changed, so update the tree view colors
                 case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
-                    if (grepperForm != null && grepperForm.tv != null && !grepperForm.tv.IsDisposed)
-                    {
-                        FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
-                    }
+                    FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
                     foreach (TreeViewer treeViewer2 in treeViewers.Values)
                     {
                         if (treeViewer2 != null)
@@ -514,10 +511,7 @@ namespace Kbg.NppPluginNET
             {
                 grepperForm.grepper.json_parser = jsonParser.Copy();
                 grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
-                if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
-                {
-                    FormStyle.ApplyStyle(grepperForm.tv, settings.use_npp_styling);
-                }
+                FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
             }
             // when the user changes their mind about whether to use editor styling
             // for the tree viewer, reflect their decision immediately

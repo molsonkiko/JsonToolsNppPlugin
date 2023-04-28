@@ -23,6 +23,7 @@ namespace JSON_Tools.Forms
         public GrepperForm()
         {
             InitializeComponent();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             grepper = new JsonGrepper(Main.jsonParser.Copy(),
                 Main.settings.max_threads_parsing
             );
@@ -225,10 +226,12 @@ namespace JSON_Tools.Forms
             Main.PrettyPrintJsonInNewFile(grepper.fname_jsons);
             if (tv != null && !tv.IsDisposed)
             {
+                RemoveOwnedForm(tv);
                 Npp.notepad.HideDockingForm(tv);
                 tv.Close();
             }
             tv = new TreeViewer(grepper.fname_jsons);
+            AddOwnedForm(tv);
             Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree");
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                 Npp.notepad.HideDockingForm(Main.openTreeViewer);

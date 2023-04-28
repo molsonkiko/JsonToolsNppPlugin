@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET.PluginInfrastructure;
 using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Forms
@@ -22,6 +21,7 @@ namespace JSON_Tools.Forms
         public FindReplaceForm(TreeViewer treeViewer)
         {
             InitializeComponent();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             this.treeViewer = treeViewer;
             // if the user is querying a subset of the JSON, the find/replace is done on that subset
             if (treeViewer.Tree.SelectedNode == null || treeViewer.Tree.SelectedNode.FullPath == "JSON")

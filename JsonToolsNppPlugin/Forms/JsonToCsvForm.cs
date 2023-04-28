@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
+using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Forms
 {
@@ -15,6 +16,7 @@ namespace JSON_Tools.Forms
         public JsonToCsvForm(JNode json)
         {
             InitializeComponent();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             tabularizer = new JsonTabularizer();
             this.json = json;
             DelimBox.SelectedIndex = 0;

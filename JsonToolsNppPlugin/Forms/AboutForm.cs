@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -16,6 +17,8 @@ namespace JSON_Tools.Forms
         public AboutForm()
         {
             InitializeComponent();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
+            ThanksWowLinkLabel.LinkColor = ThanksWowLinkLabel.ForeColor; // hidden!
             Title.Text = Title.Text.Replace("X.Y.Z.A", Npp.AssemblyVersionString());
             string nppVersionString = string.Join(".", nppVersion.Select((x) => x.ToString()));
             DebugInfoLabel.Text = DebugInfoLabel.Text.Replace("X.Y.Z", nppVersionString);

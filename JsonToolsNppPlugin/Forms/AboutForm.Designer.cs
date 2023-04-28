@@ -33,7 +33,7 @@
             this.GitHubLink = new System.Windows.Forms.LinkLabel();
             this.Description = new System.Windows.Forms.Label();
             this.DebugInfoLabel = new System.Windows.Forms.Label();
-            this.Thanks = new System.Windows.Forms.LinkLabel();
+            this.ThanksWowLinkLabel = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // Title
@@ -49,7 +49,7 @@
             // GitHubLink
             // 
             this.GitHubLink.AutoSize = true;
-            this.GitHubLink.LinkArea = new System.Windows.Forms.LinkArea(34, 48);
+            this.GitHubLink.LinkArea = new System.Windows.Forms.LinkArea(34, 50);
             this.GitHubLink.Location = new System.Drawing.Point(31, 143);
             this.GitHubLink.Name = "GitHubLink";
             this.GitHubLink.Size = new System.Drawing.Size(321, 35);
@@ -80,26 +80,26 @@
             this.DebugInfoLabel.Text = "Notepad++ version: X.Y.Z. For more info about your\r\ninstallation, go to ? -> Debu" +
     "g Info on the main status bar.";
             // 
-            // Thanks
+            // ThanksWowLinkLabel
             // 
-            this.Thanks.AutoSize = true;
-            this.Thanks.LinkArea = new System.Windows.Forms.LinkArea(228, 234);
-            this.Thanks.LinkColor = System.Drawing.Color.Black;
-            this.Thanks.Location = new System.Drawing.Point(28, 255);
-            this.Thanks.Name = "Thanks";
-            this.Thanks.Size = new System.Drawing.Size(336, 108);
-            this.Thanks.TabIndex = 5;
-            this.Thanks.TabStop = true;
-            this.Thanks.Text = resources.GetString("Thanks.Text");
-            this.Thanks.UseCompatibleTextRendering = true;
-            this.Thanks.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ThanksWowLink_LinkClicked);
+            this.ThanksWowLinkLabel.AutoSize = true;
+            this.ThanksWowLinkLabel.LinkArea = new System.Windows.Forms.LinkArea(228, 234);
+            this.ThanksWowLinkLabel.LinkColor = System.Drawing.Color.Black;
+            this.ThanksWowLinkLabel.Location = new System.Drawing.Point(28, 255);
+            this.ThanksWowLinkLabel.Name = "ThanksWowLinkLabel";
+            this.ThanksWowLinkLabel.Size = new System.Drawing.Size(336, 108);
+            this.ThanksWowLinkLabel.TabIndex = 5;
+            this.ThanksWowLinkLabel.TabStop = true;
+            this.ThanksWowLinkLabel.Text = resources.GetString("ThanksWowLinkLabel.Text");
+            this.ThanksWowLinkLabel.UseCompatibleTextRendering = true;
+            this.ThanksWowLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ThanksWowLink_LinkClicked);
             // 
             // AboutForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(399, 389);
-            this.Controls.Add(this.Thanks);
+            this.Controls.Add(this.ThanksWowLinkLabel);
             this.Controls.Add(this.DebugInfoLabel);
             this.Controls.Add(this.Description);
             this.Controls.Add(this.GitHubLink);
@@ -118,6 +118,6 @@
         private System.Windows.Forms.LinkLabel GitHubLink;
         private System.Windows.Forms.Label Description;
         private System.Windows.Forms.Label DebugInfoLabel;
-        private System.Windows.Forms.LinkLabel Thanks;
+        private System.Windows.Forms.LinkLabel ThanksWowLinkLabel;
     }
 }

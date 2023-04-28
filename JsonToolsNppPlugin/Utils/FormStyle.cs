@@ -13,30 +13,24 @@ namespace JSON_Tools.Utils
             3 * SystemColors.Control.B / 4 + SystemColors.ControlDark.B / 4
         );
 
-        public static Type form_type = typeof(Form);
-
+        
         /// <summary>
-        /// Changes the background and text color of the tree viewer
-        /// and associated controls to match the editor window.<br></br>
-        /// Fires when the tree viewer is first opened
+        /// Changes the background and text color of the form
+        /// and any child forms to match the editor window.<br></br>
+        /// Fires when the form is first opened
         /// and also whenever the style is changed.<br></br>
         /// Heavily based on CsvQuery (https://github.com/jokedst/CsvQuery)
         /// </summary>
-        public static void ApplyStyle(Form form, bool use_npp_style)
+        public static void ApplyStyle(Form form, bool use_npp_style, bool darkMode=false)
         {
-            if (form.IsDisposed) return;
+            if (form == null || form.IsDisposed) return;
             int[] version = Npp.notepad.GetNppVersion();
             if (version[0] < 8)
                 use_npp_style = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
-            //foreach (PropertyInfo info in form.GetType().GetProperties())
-            //{
-            //    if (info.PropertyType.IsSubclassOf(form_type))
-            //    {
-            //        Form subform = (Form)info.GetValue(form, null);
-            //        if (subform != null)
-            //            ApplyStyle(subform, use_npp_style);
-            //    }
-            //}
+            foreach (Form childForm in form.OwnedForms)
+            {
+                ApplyStyle(childForm, use_npp_style, darkMode);
+            }
             Color back_color = Npp.notepad.GetDefaultBackgroundColor();
             if (!use_npp_style || (
                 back_color.R > 240 &&
@@ -45,7 +39,7 @@ namespace JSON_Tools.Utils
             {
                 // if the background is basically white,
                 // use the system defaults because they
-                // look best on a white background
+                // look best on a white or nearly white background
                 form.BackColor = SystemColors.Control;
                 form.ForeColor = SystemColors.ControlText;
                 foreach (Control ctrl in form.Controls)
@@ -55,6 +49,12 @@ namespace JSON_Tools.Utils
                     {
                         ctrl.BackColor = SystemColors.Window; // white background
                         ctrl.ForeColor = SystemColors.WindowText;
+                    }
+                    else if (ctrl is LinkLabel llbl)
+                    {
+                        llbl.LinkColor = Color.Blue;
+                        llbl.ActiveLinkColor = Color.Red;
+                        llbl.VisitedLinkColor = Color.Purple;
                     }
                     else
                     {
@@ -74,11 +74,17 @@ namespace JSON_Tools.Utils
             form.BackColor = back_color;
             foreach (Control ctrl in form.Controls)
             {
-                if (ctrl is Label || ctrl is GroupBox || ctrl is CheckBox)
+                if (ctrl is Label || ctrl is GroupBox || ctrl is CheckBox || ctrl is LinkLabel)
                     // these look better when then have the same background as the parent form
                     ctrl.BackColor = back_color;
                 else ctrl.BackColor = in_between;
                 ctrl.ForeColor = fore_color;
+                if (ctrl is LinkLabel llbl)
+                {
+                    llbl.LinkColor = fore_color;
+                    llbl.ActiveLinkColor = fore_color;
+                    llbl.VisitedLinkColor = fore_color;
+                }
             }
         }
     }

@@ -398,7 +398,9 @@ namespace JSON_Tools.Forms
         {
             if (findReplaceForm == null || findReplaceForm.IsDisposed)
             {
+                RemoveOwnedForm(findReplaceForm);
                 findReplaceForm = new FindReplaceForm(this);
+                AddOwnedForm(findReplaceForm);
                 findReplaceForm.Show();
             }
             else findReplaceForm.Focus();
