@@ -66,18 +66,10 @@ namespace JSON_Tools.Utils
                 return;
             }
             Color fore_color = Npp.notepad.GetDefaultForegroundColor();
-            Color in_between = Color.FromArgb(
-                (fore_color.R + back_color.R * 3) / 4,
-                (fore_color.G + back_color.G * 3) / 4,
-                (fore_color.B + back_color.B * 3) / 4
-            );
             form.BackColor = back_color;
             foreach (Control ctrl in form.Controls)
             {
-                if (ctrl is Label || ctrl is GroupBox || ctrl is CheckBox || ctrl is LinkLabel)
-                    // these look better when then have the same background as the parent form
-                    ctrl.BackColor = back_color;
-                else ctrl.BackColor = in_between;
+                ctrl.BackColor = back_color;
                 ctrl.ForeColor = fore_color;
                 if (ctrl is LinkLabel llbl)
                 {
