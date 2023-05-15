@@ -126,5 +126,19 @@ namespace JSON_Tools.Utils
             if (!jsonToolsConfigDirInfo.Exists)
                 jsonToolsConfigDirInfo.Create();
         }
+
+        /// <summary>
+        /// for some reason my methods occasionally add an SOH character ('\x01')
+        /// to the end of the file. Trim this off.
+        /// </summary>
+        public static void RemoveTrailingSOH()
+        {
+            int lastPos = editor.GetLength() - 1;
+            int lastChar = editor.GetCharAt(lastPos);
+            if (lastChar == 0x01)
+            {
+                editor.DeleteRange(lastPos, 1);
+            }
+        }
     }
 }

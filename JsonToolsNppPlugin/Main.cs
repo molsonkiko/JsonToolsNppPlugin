@@ -408,6 +408,7 @@ namespace Kbg.NppPluginNET
             string printed = json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
             Npp.notepad.FileNew();
             Npp.editor.SetText(printed);
+            Npp.RemoveTrailingSOH();
             IsCurrentFileBig();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
@@ -421,6 +422,7 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
+            Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
         }
@@ -433,9 +435,10 @@ namespace Kbg.NppPluginNET
             JNode json = TryParseJson();
             if (json == null) return;
             if (settings.minimal_whitespace_compression)
-                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys, null, ":", ","));
+                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys, ":", ","));
             else
                 Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys));
+            Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
         }
@@ -467,6 +470,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.editor.SetText(yaml);
+            Npp.RemoveTrailingSOH();
             Npp.notepad.SetCurrentLanguage(LangType.L_YAML);
         }
 
@@ -492,6 +496,7 @@ namespace Kbg.NppPluginNET
             else
                 result = arr.ToJsonLines(settings.sort_keys);
             Npp.editor.SetText(result);
+            Npp.RemoveTrailingSOH();
             IsCurrentFileBig();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
         }

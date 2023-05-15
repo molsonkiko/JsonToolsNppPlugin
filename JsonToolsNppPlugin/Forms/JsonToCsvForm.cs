@@ -85,6 +85,7 @@ namespace JSON_Tools.Forms
             Npp.notepad.FileNew();
             int out_len = Encoding.UTF8.GetByteCount(csv);
             Npp.editor.AppendText(out_len, csv);
+            Npp.RemoveTrailingSOH();
             Close();
         }
 

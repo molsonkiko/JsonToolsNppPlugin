@@ -10,17 +10,6 @@ using System.Globalization;
 
 namespace JSON_Tools.JSON_Tools
 {
-    public struct Str_Line
-    {
-        public string str;
-        public int line;
-        
-        public Str_Line(string str, int line)
-        {
-            this.str = str;
-            this.line = line;
-        }
-    }
     /// <summary>
     /// JNode type indicator
     /// </summary>
@@ -314,6 +303,12 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        internal virtual void ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_line_nums)
+        {
+            if (change_line_nums) line_num = 0;
+            sb.Append(ToString());
+        }
+
         /// <summary>
         /// Pretty-prints the JSON with each array value and object key-value pair on a separate line,
         /// and indentation proportional to nesting depth.<br></br>
@@ -333,6 +328,27 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// Called by JArray.PrettyPrintAndChangeLineNumbers and JObject.PrettyPrintAndChangeLineNumbers during recursions.<br></br>
+        /// Returns the number of the final line in this node's string representation and this JNode's PrettyPrint() string.<br></br>
+        /// The style argument controls various stylistic details of pretty-printing.
+        /// See the documentation for the PrettyPrintStyle enum and its members.<br></br>
+        /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
+        /// So for example, JArray(List({JNode(1), JNode(2), JNode(3)})).PrettyPrintChangeLinesHelper(4, 0, 0)<br></br>
+        /// would change the JArray's line_num to 0, the first element's line_num to 1, the second element's line_num to 2,<br></br>
+        /// the third element's line_num to 3, and return 4.<br></br>
+        /// </summary>
+        /// <param name="indent"></param>
+        /// <param name="depth"></param>
+        /// <param name="curline"></param>
+        /// <returns></returns>
+        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline, StringBuilder sb, bool change_line_nums)
+        {
+            if (change_line_nums) line_num = curline;
+            sb.Append(ToString());
+            return curline;
+        }
+
+        /// <summary>
         /// Compactly prints the JNode - see the documentation for ToString.<br></br>
         /// Also sets the line number of every child node equal to the line number of the root node,<br></br>
         /// because compactly printed JSON has every node on the same line.<br></br>
@@ -342,9 +358,9 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="cur_line_num"></param>
         /// <returns></returns>
-        public virtual string ToStringAndChangeLineNumbers(bool sort_keys = true, int? cur_line_num = null, string key_value_sep = ": ", string item_sep = ", ")
+        public virtual string ToStringAndChangeLineNumbers(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
-            if (cur_line_num != null) { line_num = (int)cur_line_num; }
+            line_num = 0;
             return ToString();
         }
 
@@ -365,30 +381,34 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="depth"></param>
         /// <param name="cur_line_number"></param>
         /// <returns></returns>
-        public virtual string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0, int? cur_line_num = null)
+        public virtual string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
         {
-            if (cur_line_num != null) line_num = (int)cur_line_num;
             return ToString();
         }
 
         /// <summary>
-        /// Called by JArray.PrettyPrintAndChangeLineNumbers and JObject.PrettyPrintAndChangeLineNumbers during recursions.<br></br>
-        /// Returns the number of the final line in this node's string representation and this JNode's PrettyPrint() string.<br></br>
-        /// The style argument controls various stylistic details of pretty-printing.
-        /// See the documentation for the PrettyPrintStyle enum and its members.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
-        /// So for example, JArray(List({JNode(1), JNode(2), JNode(3)})).PrettyPrintChangeLinesHelper(4, 0, 0)<br></br>
-        /// would change the JArray's line_num to 0, the first element's line_num to 1, the second element's line_num to 2,<br></br>
-        /// the third element's line_num to 3, and return 4.<br></br>
+        /// Create a preview of this JNode's string representation with length less than or equal to
+        /// the "length" argument
         /// </summary>
-        /// <param name="indent"></param>
-        /// <param name="depth"></param>
-        /// <param name="curline"></param>
+        /// <param name="length">max length of this preview</param>
+        /// <param name="sort_keys">whether to sort keys of objects</param>
+        /// <param name="key_value_sep">separation between keys and values of objects</param>
+        /// <param name="item_sep">separation between key-value pairs of objects</param>
         /// <returns></returns>
-        public virtual Str_Line PrettyPrintChangeLinesHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline)
+        public virtual string Preview(int length=100, bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
-            line_num = curline;
-            return new Str_Line(ToString(), curline);
+            string str = ToString();
+            return (str.Length <= length)
+                ? str
+                : str.Substring(0, length - 3) + "...";
+        }
+
+        public virtual void PreviewHelper(int length, bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb)
+        {
+            string str = ToString();
+            sb.Append((str.Length <= length)
+                ? str
+                : str.Substring(0, length - 3) + "...");
         }
 
         ///<summary>
@@ -673,134 +693,74 @@ namespace JSON_Tools.JSON_Tools
         public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
             var sb = new StringBuilder(7 * Length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false);
+            return sb.ToString();
+        }
+
+        internal override void ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_line_nums)
+        {
+            if (change_line_nums) line_num = 0;
             sb.Append('{');
             int ctr = 0;
-            string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
+            IEnumerable<string> keys;
+            if (sort_keys)
+            {
+                keys = children.Keys.ToArray();
+                Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
+            }
+            else keys = children.Keys;
             foreach (string k in keys)
             {
                 JNode v = children[k];
-                string vstr = v.ToString(sort_keys, key_value_sep, item_sep);
-                if (++ctr == children.Count)
+                sb.Append($"\"{k}\"{key_value_sep}");
+                v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_line_nums);
+                if (++ctr < children.Count)
                 {
-                    sb.Append($"\"{k}\"{key_value_sep}{vstr}");
-                }
-                else
-                {
-                    sb.Append($"\"{k}\"{key_value_sep}{vstr}{item_sep}");
+                    sb.Append(item_sep);
                 }
             }
             sb.Append('}');
-            return sb.ToString();
         }
 
         /// <inheritdoc/>
         public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
         {
-            string dent = new string(' ', indent * depth);
             var sb = new StringBuilder((indent * depth  + 8) * Length);
-            int ctr = 0;
-            string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
-            if (style == PrettyPrintStyle.Whitesmith)
-            {
-                sb.Append($"{dent}{{{NL}");
-                foreach (string k in keys)
-                {
-                    JNode v = children[k];
-                    string vstr = v.PrettyPrint(indent, sort_keys, style, depth + 1);
-                    if (v is JObject || v is JArray)
-                    {
-                        sb.Append($"{dent}\"{k}\":{NL}{vstr}");
-                    }
-                    else
-                    {
-                        sb.Append($"{dent}\"{k}\": {vstr}");
-                    }
-                    sb.Append((++ctr == children.Count) ? NL : "," + NL);
-                }
-                sb.Append($"{dent}}}");
-            }
-            else
-            {
-                string extra_dent = new string(' ', indent);
-                sb.Append('{');
-                sb.Append(NL);
-                foreach (string k in keys)
-                {
-                    JNode v = children[k];
-                    string vstr = v.PrettyPrint(indent, sort_keys, style, depth + 1);
-                    sb.Append($"{dent}{extra_dent}\"{k}\": {vstr}");
-                    sb.Append((++ctr == children.Count) ? NL : "," + NL);
-                }
-                sb.Append($"{dent}}}");
-            }
+            PrettyPrintHelper(indent, sort_keys, style, depth, line_num, sb, false);
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        public override string ToStringAndChangeLineNumbers(bool sort_keys = true, int? cur_line_num = null, string key_value_sep = ": ", string item_sep = ", ")
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline, StringBuilder sb, bool change_line_nums)
         {
-            int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
-            line_num = curline;
-            var sb = new StringBuilder(7 * Length);
-            sb.Append('{');
-            int ctr = 0;
-            string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
-            foreach (string k in keys)
-            {
-                JNode v = children[k];
-                string vstr = v.ToStringAndChangeLineNumbers(sort_keys, curline, key_value_sep, item_sep);
-                if (++ctr == children.Count)
-                {
-                    sb.Append($"\"{k}\"{key_value_sep}{vstr}");
-                }
-                else
-                {
-                    sb.Append($"\"{k}\"{key_value_sep}{vstr}{item_sep}");
-                }
-            }
-            sb.Append('}');
-            return sb.ToString();
-        }
-
-        /// <inheritdoc/>
-        public override string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0, int? cur_line_num = null)
-        {
-            // the cur_line_num is based off of the root node, whichever node originally called
-            // PrettyPrintAndChangeLineNumbers. If this is the root node, everything else's line number is based on this one's.
-            int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
-            return PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth, curline).str;
-        }
-
-        /// <inheritdoc/>
-        public override Str_Line PrettyPrintChangeLinesHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline)
-        {
-            line_num = curline;
+            if (change_line_nums) line_num = curline;
             string dent = new string(' ', indent * depth);
-            var sb = new StringBuilder((indent * depth + 8) * Length);
             int ctr = 0;
-            string[] keys = children.Keys.ToArray();
-            if (sort_keys) Array.Sort(keys, StringComparer.CurrentCultureIgnoreCase);
+            IEnumerable<string> keys;
+            if (sort_keys)
+            {
+                keys = children.Keys.ToArray();
+                Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
+            }
+            else keys = children.Keys;
             if (style == PrettyPrintStyle.Whitesmith)
             {
                 sb.Append($"{dent}{{{NL}");
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    Str_Line sline;
+                    int start_line;
                     if (v is JObject || v is JArray)
                     {
-                        sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, curline + 2);
-                        sb.Append($"{dent}\"{k}\":{NL}{sline.str}");
+                        start_line = curline + 2;
+                        sb.Append($"{dent}\"{k}\":{NL}");
                     }
                     else
                     {
-                        sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, curline + 1);
-                        sb.Append($"{dent}\"{k}\": {sline.str}");
+                        start_line = curline + 1;
+                        sb.Append($"{dent}\"{k}\": ");
                     }
-                    curline = sline.line;
+                    curline = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, start_line, sb, change_line_nums);
                     sb.Append((++ctr == children.Count) ? NL : "," + NL);
                 }
                 sb.Append($"{dent}}}");
@@ -813,16 +773,47 @@ namespace JSON_Tools.JSON_Tools
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    Str_Line sline;
-                    sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, curline + 1);
-                    sb.Append($"{dent}{extra_dent}\"{k}\": {sline.str}");
-                    curline = sline.line;
+                    sb.Append($"{dent}{extra_dent}\"{k}\": ");
+                    curline = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, curline + 1, sb, change_line_nums);
                     sb.Append((++ctr == children.Count) ? NL : "," + NL);
                 }
                 sb.Append($"{dent}}}");
             }
-            return new Str_Line(sb.ToString(), curline + 1);
+            return curline + 1;
         }
+
+        /// <inheritdoc/>
+        public override string ToStringAndChangeLineNumbers(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
+        {
+            var sb = new StringBuilder(7 * Length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true);
+            return sb.ToString();
+        }
+
+        /// <inheritdoc/>
+        public override string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
+        {
+            var sb = new StringBuilder((indent * depth + 8) * Length);
+            PrettyPrintHelper(indent, sort_keys, style, depth, line_num, sb, true);
+            return sb.ToString();
+        }
+
+        /////<inheritdoc/>
+        //public override string Preview(int length = 100, bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
+        //{
+        //    string str = ToString();
+        //    return (str.Length <= length)
+        //        ? str
+        //        : str.Substring(0, length - 3) + "...";
+        //}
+
+        //public virtual void PreviewHelper(int length, bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb)
+        //{
+        //    string str = ToString();
+        //    sb.Append((str.Length <= length)
+        //        ? str
+        //        : str.Substring(0, length - 3) + "...");
+        //}
 
         /// <summary>
         /// Returns true if and only if other is a JObject with all the same key-value pairs.<br></br>
@@ -913,21 +904,7 @@ namespace JSON_Tools.JSON_Tools
         public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
         {
             var sb = new StringBuilder(4 * Length);
-            sb.Append('[');
-            int ctr = 0;
-            foreach (JNode v in children)
-            {
-                string vstr = v.ToString(sort_keys, key_value_sep, item_sep);
-                if (++ctr == children.Count)
-                {
-                    sb.Append(vstr);
-                }
-                else
-                {
-                    sb.Append($"{vstr}{item_sep}");
-                }
-            }
-            sb.Append(']');
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false);
             return sb.ToString();
         }
 
@@ -935,10 +912,52 @@ namespace JSON_Tools.JSON_Tools
         public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
         {
             var sb = new StringBuilder((indent * depth + 6) * Length);
-            string dent = new string(' ', indent * depth);
+            PrettyPrintHelper(indent, sort_keys, style, depth, 0, sb, false);
+            return sb.ToString();
+        }
+
+        internal override void ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_line_nums)
+        {
+            if (change_line_nums) line_num = 0;
+            sb.Append('[');
             int ctr = 0;
+            foreach (JNode v in children)
+            {
+                v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_line_nums);
+                if (++ctr < children.Count)
+                {
+                    sb.Append(item_sep);
+                }
+            }
+            sb.Append(']');
+        }
+
+        /// <inheritdoc/>
+        public override string ToStringAndChangeLineNumbers(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
+        {
+            var sb = new StringBuilder(4 * Length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true);
+            return sb.ToString();
+        }
+
+        /// <inheritdoc/>
+        public override string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0)
+        {
+            // the cur_line_num is based off of the root node, whichever node originally called
+            // PrettyPrintAndChangeLineNumbers. If this is the root node, everything else's line number is based on this one's.
+            var sb = new StringBuilder((indent * depth + 6) * Length);
+            PrettyPrintHelper(indent, sort_keys, style, depth, line_num, sb, true);
+            return sb.ToString();
+        }
+
+        /// <inheritdoc/>
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline, StringBuilder sb, bool change_line_nums)
+        {
+            if (change_line_nums) line_num = curline;
+            string dent = new string(' ', indent * depth);
             if (style == PrettyPrintStyle.Whitesmith)
-            /*
+            {
+                /*
 {
 "a":
     {
@@ -956,19 +975,16 @@ namespace JSON_Tools.JSON_Tools
     }
 }
             */
-            {
                 sb.Append($"{dent}[" + NL);
+                int ctr = 0;
                 foreach (JNode v in children)
                 {
-                    string vstr = v.PrettyPrint(indent, sort_keys, style, depth + 1);
-                    if (v is JObject || v is JArray)
+                    // this child's string could be multiple lines, so we need to know what the final line of its string was.
+                    if (!(v is JObject || v is JArray))
                     {
-                        sb.Append(vstr);
+                        sb.Append(dent);
                     }
-                    else
-                    {
-                        sb.Append($"{dent}{vstr}");
-                    }
+                    curline = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, curline + 1, sb, change_line_nums);
                     sb.Append((++ctr == children.Count) ? NL : "," + NL);
                 }
                 sb.Append($"{dent}]");
@@ -990,98 +1006,19 @@ namespace JSON_Tools.JSON_Tools
 }
             */
             {
-                sb.Append('[');
-                sb.Append(NL);
-                string extra_dent = new string(' ', indent);
-                foreach (JNode v in children)
-                {
-                    string vstr = v.PrettyPrint(indent, sort_keys, style, depth + 1);
-                    sb.Append($"{dent}{extra_dent}{vstr}");
-                    sb.Append((++ctr == children.Count) ? NL : "," + NL);
-                }
-                sb.Append($"{dent}]");
-            }
-            return sb.ToString();
-        }
-
-        /// <inheritdoc/>
-        public override string ToStringAndChangeLineNumbers(bool sort_keys = true, int? cur_line_num = null, string key_value_sep = ": ", string item_sep = ", ")
-        {
-            int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
-            line_num = curline;
-            var sb = new StringBuilder(4 * Length);
-            sb.Append('[');
-            int ctr = 0;
-            foreach (JNode v in children)
-            {
-                string vstr = v.ToStringAndChangeLineNumbers(sort_keys, curline, key_value_sep, item_sep);
-                if (++ctr == children.Count)
-                {
-                    sb.Append(vstr);
-                }
-                else
-                {
-                    sb.Append($"{vstr}{item_sep}");
-                }
-            }
-            sb.Append(']');
-            return sb.ToString();
-        }
-
-        /// <inheritdoc/>
-        public override string PrettyPrintAndChangeLineNumbers(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int depth = 0, int? cur_line_num = null)
-        {
-            // the cur_line_num is based off of the root node, whichever node originally called
-            // PrettyPrintAndChangeLineNumbers. If this is the root node, everything else's line number is based on this one's.
-            int curline = (cur_line_num == null) ? line_num : (int)cur_line_num;
-            return PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth, curline).str;
-        }
-
-        /// <inheritdoc/>
-        public override Str_Line PrettyPrintChangeLinesHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, int curline)
-        {
-            line_num = curline;
-            string dent = new string(' ', indent * depth);
-            var sb = new StringBuilder((indent * depth + 6) * Length);
-            if (style == PrettyPrintStyle.Whitesmith)
-            {
-                sb.Append($"{dent}[" + NL);
-                int ctr = 0;
-                foreach (JNode v in children)
-                {
-                    Str_Line sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, ++curline);
-                    curline = sline.line;
-                    // this child's string could be multiple lines, so we need to know what the final line of its string was.
-                    if (v is JObject || v is JArray)
-                    {
-                        sb.Append(sline.str);
-                    }
-                    else
-                    {
-                        sb.Append($"{dent}{sline.str}");
-                    }
-                    curline = sline.line;
-                    sb.Append((++ctr == children.Count) ? NL : "," + NL);
-                }
-                sb.Append($"{dent}]");
-            }
-            else
-            {
                 sb.Append('[' + NL);
                 string extra_dent = new string(' ', indent);
                 int ctr = 0;
                 foreach (JNode v in children)
                 {
-                    Str_Line sline = v.PrettyPrintChangeLinesHelper(indent, sort_keys, style, depth + 1, ++curline);
-                    curline = sline.line;
                     // this child's string could be multiple lines, so we need to know what the final line of its string was.
-                    sb.Append($"{dent}{extra_dent}{sline.str}");
-                    curline = sline.line;
+                    sb.Append($"{dent}{extra_dent}");
+                    curline = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, curline + 1, sb, change_line_nums);
                     sb.Append((++ctr == children.Count) ? NL : "," + NL);
                 }
                 sb.Append($"{dent}]");
             }
-            return new Str_Line(sb.ToString(), curline + 1);
+            return curline + 1;
         }
 
         /// <summary>

@@ -113,7 +113,9 @@ namespace JSON_Tools.Forms
                 string dson = Dson.Dump(json);
                 Npp.notepad.FileNew();
                 Npp.editor.SetText(dson);
+                Npp.RemoveTrailingSOH();
                 Npp.editor.AppendText(2, "\r\n");
+                Npp.RemoveTrailingSOH();
                 string newName = Npp.notepad.GetCurrentFilePath() + ".dson";
                 Npp.notepad.SetCurrentBufferInternalName(newName);
             }

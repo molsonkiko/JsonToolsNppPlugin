@@ -41,13 +41,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [4.14.1] (UNRELEASED) - 2023-MM-DD
+## [5.0.0] (UNRELEASED) - 2023-MM-DD
 
 ### Added
 
 1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
-2. Slight improvements to parsing and pretty-print/compression performance
+2. Slight improvement to parsing performance, major improvement to pretty-print/compression performance
 3. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
+
+### Fixed
+1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
 
 ## [4.14.0] - 2023-04-12
 
