@@ -463,7 +463,7 @@ namespace JSON_Tools.Tests
 			}
 
 			// TEST CSV CREATION
-			JsonParser fancyParser = new JsonParser(true);
+			JsonParser fancyParser = new JsonParser(LoggerLevel.JSON5);
 
 			var csv_testcases = new object[][]
 			{

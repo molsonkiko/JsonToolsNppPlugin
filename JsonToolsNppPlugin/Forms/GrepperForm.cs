@@ -69,7 +69,7 @@ namespace JSON_Tools.Forms
             try
             {
                 // try to parse the UrlsBox content as JSON.
-                var parser = new JsonParser(linting: true);
+                var parser = new JsonParser(LoggerLevel.JSON5);
                 var parsed = (JArray)parser.Parse(UrlsBox.Text);
                 urls = parsed.children.Select((node) => (string)node.value).ToArray();
             }
@@ -177,7 +177,7 @@ namespace JSON_Tools.Forms
                 return;
             }
             Npp.notepad.FileNew();
-            string exc_str = grepper.exceptions.PrettyPrintAndChangeLineNumbers(
+            string exc_str = grepper.exceptions.PrettyPrintAndChangePositions(
                 Main.settings.indent_pretty_print,
                 Main.settings.sort_keys,
                 Main.settings.pretty_print_style
@@ -212,7 +212,7 @@ namespace JSON_Tools.Forms
                 tv.json = grepper.fname_jsons;
                 string file_open = Npp.notepad.GetCurrentFilePath();
                 Npp.notepad.OpenFile(tv.fname);
-                Npp.editor.SetText(tv.json.PrettyPrintAndChangeLineNumbers());
+                Npp.editor.SetText(tv.json.PrettyPrintAndChangePositions());
                 tv.SubmitQueryButton.PerformClick();
                 Npp.notepad.OpenFile(file_open);
                 if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)

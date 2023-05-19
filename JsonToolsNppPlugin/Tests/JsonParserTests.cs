@@ -23,15 +23,15 @@ namespace JSON_Tools.Tests
             catch (Exception e)
             {
                 Npp.AddLine($"While parsing input {input}\nthrew error {e}");
+                return null;
             }
-            return null;
         }
 
         public static void TestJNodeCopy()
         {
             int ii = 0;
             int tests_failed = 0;
-            JsonParser parser = new JsonParser(true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
             string[] tests = new string[]
             {
                 "2",
@@ -51,7 +51,12 @@ namespace JSON_Tools.Tests
             foreach (string test in tests)
             {
                 ii++;
-                JNode node = parser.Parse(test);
+                JNode node = TryParse(test, parser);
+                if (node == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 JNode cp = node.Copy();
                 if (!node.Equals(cp))
                 {
@@ -278,6 +283,11 @@ Got
                 string inp = test[0];
                 string compact_desired = test[1];
                 JNode json = TryParse(inp, parser);
+                if (json == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 string compact_true = json.ToString(true, ":", ",");
                 if (compact_true != compact_desired)
                 {
@@ -304,6 +314,12 @@ Got
                 string inp = test[0];
                 string unsorted_desired = test[1];
                 JNode json = TryParse(inp, parser);
+                ii++;
+                if (json == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 string unsorted_true = json.ToString(false);
                 if (unsorted_true != unsorted_desired)
                 {
@@ -315,7 +331,6 @@ Got
 {2} ",
                                      ii + 1, unsorted_desired, unsorted_true));
                 }
-                ii++;
             }
             #endregion
             #region PrettyPrintTests
@@ -325,12 +340,12 @@ Got
             {
                 JObject obj = (JObject)onode;
                 string pp = obj.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
-                string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Whitesmith);
+                string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
                 if (pp != pp_ch_line)
                 {
                     tests_failed++;
                     Npp.AddLine(String.Format(@"Test {0} failed:
-Expected PrettyPrintAndChangeLineNumbers({1}) to return
+Expected PrettyPrintAndChangePositions({1}) to return
 {2}
 instead got
 {3}",
@@ -340,33 +355,33 @@ instead got
 
                 var keylines = new object[][]
                 {
-                new object[]{"a", 2, 1 },
-                // key, correct line in Whitesmith style, correct line in Google style
-                new object[]{ "b", 8, 6 },
-                new object[]{ "c", 11, 8 },
-                new object[]{"d", 13, 10 }
+                    // key, correct position in Whitesmith style, correct position in Google style
+                    new object[]{"a", 2, 1 },
+                    new object[]{ "b", 8, 6 },
+                    new object[]{ "c", 11, 8 },
+                    new object[]{"d", 13, 10 }
                 };
                 foreach (object[] kl in keylines)
                 {
                     string key = (string)kl[0];
                     int expected_line = (int)kl[1];
-                    int true_line = obj[key].line_num;
+                    int true_line = obj[key].position;
                     if (true_line != expected_line)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                        Npp.AddLine($"After PrettyPrintAndChangePositions({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
                     }
                     ii++;
                 }
 
                 string tostr = obj.ToString();
-                string tostr_ch_line = obj.ToStringAndChangeLineNumbers();
+                string tostr_ch_line = obj.ToStringAndChangePositions();
                 ii++;
                 if (tostr != tostr_ch_line)
                 {
                     tests_failed++;
                     Npp.AddLine(String.Format(@"Test {0} failed:
-Expected ToStringAndChangeLineNumbers({1}) to return
+Expected ToStringAndChangePositions({1}) to return
 {2}
 instead got
 {3}",
@@ -376,11 +391,11 @@ instead got
                 {
                     string key = (string)kl[0];
                     ii++;
-                    int true_line = obj[key].line_num;
+                    int true_line = obj[key].position;
                     if (true_line != 0)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangeLineNumbers({objstr}), expected the line of child {key} to be 0, got {true_line}.");
+                        Npp.AddLine($"After ToStringAndChangePositions({objstr}), expected the line of child {key} to be 0, got {true_line}.");
                     }
                 }
 
@@ -393,26 +408,26 @@ instead got
                     {
                         string key = (string)kl[0];
                         int expected_line = (int)kl[1];
-                        int true_line = pp_obj[key].line_num;
+                        int true_line = pp_obj[key].position;
                         ii++;
                         if (true_line != expected_line)
                         {
                             tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                            Npp.AddLine($"After PrettyPrintAndChangePositions({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
                         }
                     }
-                    pp_obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Google);
+                    pp_obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
                     // test that Google style gives right line numbers
                     foreach (object[] kl in keylines)
                     {
                         string key = (string)kl[0];
                         int expected_line = (int)kl[2];
-                        int true_line = pp_obj[key].line_num;
+                        int true_line = pp_obj[key].position;
                         ii++;
                         if (true_line != expected_line)
                         {
                             tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}) with Google style, expected the line of child {key} to be {expected_line}, got {true_line}.");
+                            Npp.AddLine($"After PrettyPrintAndChangePositions({pp}) with Google style, expected the line of child {key} to be {expected_line}, got {true_line}.");
                         }
                     }
                 }
@@ -420,7 +435,6 @@ instead got
                 {
                     ii += keylines.Length;
                     tests_failed += keylines.Length;
-                    return;
                 }
             }
             else
@@ -500,7 +514,8 @@ instead got
                 "\"abc\\", // escape at end of unterminated string
                 "\"abc\" d", // something other than EOF after string document
                 "[1] [1]", // something other than EOF after string document
-                $"{new string('[', 1000)}1{new string(']', 1000)}", // too much recursion
+                $"{new string('[', 1000)}1{new string(']', 1000)}", // too much recursion in array
+                $"{new string('{', 1000)}\"a\": 1{new string('}', 1000)}", // too much recursion in object
             };
 
             foreach (string test in testcases)
@@ -522,7 +537,7 @@ instead got
         public static void TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
             var testcases = new object[][]
             {
                 new object[]{ "{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}") },
@@ -590,10 +605,14 @@ multiline comment
                 JNode desired_out = (JNode)test[1];
                 ii++;
                 JNode result = new JNode();
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out.ToString()}\n";
+                string base_message = $"Expected JsonParser(ParserState.JSON5).Parse({inp})\nto return\n{desired_out.ToString()}\n";
                 try
                 {
                     result = parser.Parse(inp);
+                    if (parser.fatal)
+                    {
+
+                    }
                     try
                     {
                         if (!desired_out.Equals(result))
@@ -622,7 +641,7 @@ multiline comment
         public static void TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true, true);
+            JsonParser parser = new JsonParser(LoggerLevel.OK, true, false, false);
             var testcases = new object[][]
             {
                 new object[]{ "[1, 2]", "[1, 2]", new string[]{ } }, // syntactically valid JSON
@@ -650,7 +669,14 @@ multiline comment
                                                                                                 "Unterminated object" } },
                 new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
                 new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2e3, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" } }
+                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2e3, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" } },
+                new object[]{ "[1] // comment", new string[] { "Comments are not part of the original JSON specification" } },
+                new object[]{ "{\"a\": 1,,\"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" } },
+                new object[]{ "[1]\r\n# Python comment", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." } },
+                new object[]{ "[1] /* unterminated multiline", new string[] { "Unterminated multi-line comment" }  },
+                new object[]{ "\"\\u043\"", new string[] { "Could not find valid hexadecimal of length 4" } },
+                new object[]{ "'abc'", new string[] { "Singlequoted strings are only allowed in JSON5" } },
+                new object[]{ "  \"a\n\"", new string[] { "String literal starting at position 2 contains newline" } }
             };
 
             int tests_failed = 0;
@@ -673,10 +699,10 @@ multiline comment
                 try
                 {
                     result = parser.Parse(inp);
-                    if (parser.lint == null)
+                    if (parser.lint.Count == 0)
                     {
                         tests_failed++;
-                        Npp.AddLine(base_message + "Lint was null");
+                        Npp.AddLine(base_message + "Parser had no lint");
                         continue;
                     }
                     StringBuilder lint_sb = new StringBuilder();

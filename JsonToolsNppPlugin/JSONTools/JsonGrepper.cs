@@ -36,7 +36,7 @@ namespace JSON_Tools.JSON_Tools
             exceptions = new JObject();
 			if (json_parser == null)
             {
-				this.json_parser = new JsonParser(true, true, true, true, true, true);
+				this.json_parser = new JsonParser(LoggerLevel.JSON5, true);
 			}
             else
             {
@@ -92,7 +92,7 @@ namespace JSON_Tools.JSON_Tools
 			foreach (object fnameobj in assigned_fnames)
             {
                 string fname = (string)fnameobj;
-				string json_str = fname_strings[fname];
+                string json_str = fname_strings[fname];
                 // need to make sure the key is formatted properly and doesn't contain any unescaped special chars
                 // by default Windows paths have '\\' as path sep so those need to be escaped
                 try

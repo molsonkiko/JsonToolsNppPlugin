@@ -43,6 +43,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [5.0.0] (UNRELEASED) - 2023-MM-DD
 
+### MAJOR CHANGE
+
+Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
+1. __The parser tracks the cursor position of JSON elements instead of the line number.__
+    * This is the cursor position of the start of the element in the UTF-8 encoding of the document.
+	* This makes navigating the document using the tree view *much better* because it is useful for navigation even when the entire document is one line.
+2. __Errors while parsing need not throw errors__
+    * Instead the parser has a `state` attribute that tracks how well the JSON string complies with JSON specifications of varying degrees of strictness.
+	* The parser also has a `logger_level` attribute that determines how strictly the parser will enforce the JSON spec.
+	* If the parser's `state` ever reaches `FATAL`, parsing is immediately aborted and whatever has been parsed so far is returned.
+	* *The user can choose to throw an error if the state ever exceeds `logger_level`.*
+	* __Advantages of the new approach:__
+	    1. The parser can return all the valid parts of invalid JSON up to the point where the fatal error occurred.
+		2. The plugin can use the status bar to show how severely the JSON deviates from the JSON standard.
+		3. Tracking of errors in the parser's `lint` attribute is now independent of the strictness of the parser.
+3. __The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
+    * They have been replaced by the `logger_level` setting, which has 4 levels (each a proper superset of the previous):
+		1. __OK__: Parse only JSON that complies with the original JSON spec.
+    	2. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
+        3. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
+		4. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
+			* singlequoted strings
+			* commas after the last element of an array or object
+			* unquoted object keys
+			* see https://json5.org/ for more.
+	* There are two other states that only `state` can have, because they *always* lead to errors being logged.
+		5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
+			* Python-style '#' comments
+			* missing commas between array members
+			* missing ']' or '}' at the ends of arrays and objects
+			* a bunch of other common syntax errors
+
 ### Added
 
 1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used

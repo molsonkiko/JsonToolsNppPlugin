@@ -3,40 +3,40 @@ A parser and linter for JSON.
 */
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
+using static System.Windows.Forms.LinkLabel;
 
 namespace JSON_Tools.JSON_Tools
 {
     /// <summary>
-    /// An exception thrown when the parser encounters syntactically invalid JSON.
+    /// An exception that may be thrown when the parser encounters syntactically invalid JSON.
     /// Subclasses FormatException.
     /// </summary>
     public class JsonParserException : FormatException
     {
         public new string Message { get; set; }
         public char CurChar { get; set; }
-        public int Pos { get; set; }
+        public int Position { get; set; }
 
-        public JsonParserException(string Message, string text, int pos)
+        public JsonParserException(string Message, char c, int pos)
         {
             this.Message = Message;
-            this.CurChar = text[pos];
-            this.Pos = JsonParser.UTF8BytesUntil(text, pos);
+            this.CurChar = c;
+            this.Position = pos;
         }
 
         public JsonParserException(string Message)
         {
-            this.Message=Message;
+            this.Message = Message;
             this.CurChar = '\x00';
-            this.Pos = 0;
+            this.Position = 0;
         }
 
         public override string ToString()
         {
-            return $"{Message} at position {Pos} (char '{CurChar}')";
+            return $"{Message} at position {Position} (char '{CurChar}')";
         }
     }
 
@@ -47,22 +47,110 @@ namespace JSON_Tools.JSON_Tools
     {
         public string message;
         public int pos;
-        public int line;
         public char curChar;
+        public ParserState severity;
 
-
-        public JsonLint(string message, int pos, int line, char cur_char)
+        public JsonLint(string message, int pos, char curChar, ParserState severity)
         {
             this.message = message;
             this.pos = pos;
-            this.line = line;
-            this.curChar = cur_char;
+            this.curChar = curChar;
+            this.severity = severity;
         }
 
         public override string ToString()
         {
-            return $"JsonLint({message}, {pos}, {line}, '{curChar}')";
+
+            string charDisplay;
+            switch (curChar)
+            {
+                case '\x00': charDisplay = "''";    break; 
+                case '\t':   charDisplay = "'\\t'"; break;
+                case '\r':   charDisplay = "'\\r'"; break;
+                case '\n':   charDisplay = "'\\n'"; break;
+                case '\'':   charDisplay = "'\\''"; break;
+                default:     charDisplay = $"'{curChar}'"; break;
+            }
+            return $"Syntax error (severity = {severity}) at position {pos} (char {charDisplay}): {message}";
         }
+    }
+
+    /// <summary>
+    /// Any errors above this level are reported by a JsonParser.<br></br>
+    /// The integer value of a state reflects how seriously the input deviates from the original JSON spec.
+    /// </summary>
+    public enum LoggerLevel
+    {
+        /// <summary>
+        /// Valid according to the original JSON specification
+        /// </summary>
+        OK,
+        /// <summary>
+        /// Standard JSON plus NaN, Infinity, and -Infinity.
+        /// </summary>
+        NAN_INF,
+        /// <summary>
+        /// JSON with JavaScript comments.<br></br>
+        /// NaN and +/-Infinity are also allowed.<br></br>
+        /// Note that this differs slightly from the standard JSONC spec
+        /// because NaN and +/-Infinity are not part of that spec.
+        /// </summary>
+        JSONC,
+        /// <summary>
+        /// JSON that follows the specification described here: https://json5.org/<br></br>
+        /// The most notable deviations from main spec include:<br></br>
+        /// * unquoted object keys<br></br>
+        /// * comma after last element of iterable<br></br>
+        /// * singlequoted strings
+        /// </summary>
+        JSON5,
+        ///// <summary>
+        ///// JSON with syntax errors that my parser can handle, such as:<br></br>
+        ///// * unterminated strings<br></br>
+        ///// * missing commas after array elements<br></br>
+        ///// * Python-style single-line comments (start with '#')
+        ///// </summary>
+        //BAD
+    }
+
+    /// <summary>
+    /// the sequence of states the JSON parser can be in.<br></br>
+    /// The first four states (OK, NAN_INF, JSONC, JSON5) have the same
+    /// meaning as in the LoggerLevel enum.
+    /// The last two states (BAD and FATAL) reflect errors that are
+    /// <i>always logged</i> and thus do not belong in the LoggerLevel enum.
+    /// </summary>
+    public enum ParserState
+    {
+        /// <summary>
+        /// see LoggerLevel.OK
+        /// </summary>
+        OK,
+        /// <summary>
+        /// see LoggerLevel.NAN_INF
+        /// </summary>
+        NAN_INF,
+        /// <summary>
+        /// see LoggerLevel.JSONC
+        /// </summary>
+        JSONC,
+        /// <summary>
+        /// see LoggerLevel.JSON5
+        /// </summary>
+        JSON5,
+        /// <summary>
+        /// JSON with syntax errors that my parser can handle but that should always be logged, such as:<br></br>
+        /// * unterminated strings<br></br>
+        /// * missing commas after array elements<br></br>
+        /// * Python-style single-line comments (start with '#')
+        /// </summary>
+        BAD,
+        /// <summary>
+        /// errors that are always fatal, such as:<br></br>
+        /// * recursion depth hits the recursion limit
+        /// * empty input
+        /// </summary>
+        FATAL
     }
 
     /// <summary>
@@ -70,114 +158,202 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public class JsonParser
     {
-        // need to track recursion depth because stack overflow causes a panic that makes Notepad++ crash
+        /// <summary>
+        /// need to track recursion depth because stack overflow causes a panic that makes Notepad++ crash
+        /// </summary>
         public const int MAX_RECURSION_DEPTH = 512;
+
         #region JSON_PARSER_ATTRS
-        ///<summary>
-        /// If true, float NaN (not a number) and float infinity and -infinity are allowed
-        /// in JSON as the strings "NaN", "Infinity", and "-Infinity" respectively.
-        /// These are not part of the official JSON spec, so they can be disallowed.
-        ///</summary>
-        public bool allow_nan_inf;
-        /// <summary>
-        /// If true, JavaScript single-line (preceded by "//") and multiline ("/* ... */") comments
-        /// will be ignored rather than raising an exception.<br></br>
-        /// Python-style comments beginning with '#' are now also allowed.
-        /// </summary>
-        public bool allow_comments;
-        /// <summary>
-        /// If true, Strings enquoted with ' rather than " will be tolerated rather than raising an exception.
-        /// </summary>
-        public bool allow_singlequoted_str;
-        /// <summary>
-        /// If true, Strings consisting only of ASCII letters and underscores without any surrounding quotes will be tolerated.
-        /// </summary>
-        public bool allow_unquoted_str;
         /// <summary>
         /// If true, any strings in the standard formats of ISO 8601 dates (yyyy-MM-dd) and datetimes (yyyy-MM-dd hh:mm:ss.sss)
         ///  will be automatically parsed as the appropriate type.
         ///  Not currently supported. May never be.
         /// </summary>
-        public bool allow_datetimes;
+        public bool parse_datetimes;
+
         /// <summary>
-        /// If "linting" is true, most forms of invalid syntax will not cause the parser to stop, but instead the syntax error will be recorded in a list.
+        /// If line is not null, most forms of invalid syntax will not cause the parser to stop,<br></br>
+        /// but instead the syntax error will be recorded in a list.
         /// </summary>
         public List<JsonLint> lint;
-        //public Dictionary<char, char> escape_map 
-        // no customization for date culture will be available - dates will be recognized as yyyy-mm-dd
-        // and datetimes will be recognized as YYYY-MM-DDThh:mm:ss.sssZ (the Z at the end indicates that it's UTC)
-        // see https://stackoverflow.com/questions/10286204/what-is-the-right-json-date-format
+
         /// <summary>
         /// position in JSON string
         /// </summary>
-        public int ii = 0;
-        public int line_num = 0;
+        private int ii;
+        
+        /// <summary>
+        /// the number of extra bytes in the UTF-8 encoding of the text consumed
+        /// so far.<br></br>
+        /// For example, if<br></br>
+        /// "words": "Thế nào rồi?"<br></br>
+        /// has been consumed, utf8ExtraBytes is 5 because all the characters
+        /// are 1-byte ASCII<br></br>
+        /// except 'ồ' and 'ế', which are both 3-byte characters<br></br>
+        /// and 'à' which is a 2-byte character
+        /// </summary>
+        private int utf8_extra_bytes;
 
-        public JsonParser(bool allow_datetimes = false,
-                          bool allow_singlequoted_str = false,
-                          bool allow_comments = false,
-                          bool linting = false,
-                          bool allow_unquoted_str = false,
-                          bool allow_nan_inf = true)
+        private ParserState state;
+        
+        /// <summary>
+        /// errors above this 
+        /// </summary>
+        public LoggerLevel logger_level;
+
+        /// <summary>
+        /// Any error above the logger level causes an error to be thrown.<br></br>
+        /// If false, parse functions will return everything logged up until a fatal error
+        /// and will parse everything if there were no fatal errors.<br></br>
+        /// Present primarily for backwards compatibility.
+        /// </summary>
+        private bool throw_if_logged;
+
+        private bool throw_if_fatal;
+        
+        /// <summary>
+        /// the number of bytes in the utf-8 representation
+        /// before the current position in the current document
+        /// </summary>
+        public int utf8_pos { get { return ii + utf8_extra_bytes; } }
+
+        public bool fatal
         {
-            this.allow_comments = allow_comments;
-            this.allow_singlequoted_str = allow_singlequoted_str;
-            this.allow_unquoted_str = allow_unquoted_str; // not currently supported; may never be supported
-            this.allow_datetimes = allow_datetimes;
-            this.allow_nan_inf = allow_nan_inf;
-            lint = linting ? new List<JsonLint>() : null;
+            get { return state == ParserState.FATAL; }
+        }
+
+        /// <summary>
+        /// if parsing failed, this will be the final error logged. If parsing succeeded, this is null.
+        /// </summary>
+        public JsonLint? fatal_error
+        {
+            get
+            {
+                if (fatal)
+                    return lint[lint.Count - 1];
+                return null;
+            }
+        }
+
+        public JsonParser(LoggerLevel logger_level = LoggerLevel.NAN_INF, bool parse_datetimes = false, bool throw_if_logged = true, bool throw_if_fatal = true)
+        {
+            this.logger_level = logger_level;
+            this.parse_datetimes = parse_datetimes;
+            this.throw_if_logged = throw_if_logged;
+            this.throw_if_fatal = throw_if_fatal;
+            ii = 0;
+            lint = new List<JsonLint>();
+            state = ParserState.OK;
+            utf8_extra_bytes = 0;
         }
 
         #endregion
         #region HELPER_METHODS
 
-        public static int UTF8BytesUntil(string text, int pos)
+        public static int ExtraUTF8Bytes(char c)
         {
-            int utf8Pos = pos;
-            for (int ii = 0; ii < pos; ii++)
+            return (c < 128)
+                ? 0
+                : (c > 2047)
+                    ? // check if it's in the surrogate pair region
+                      (c >= 0xd800 && c <= 0xdfff)
+                        ? 1 // each member of a surrogate pair counts as 2 bytes
+                            // for a total of 4 bytes for the unicode characters over 65535
+                        : 2 // other chars bigger than 2047 take up 3 bytes
+                    : 1; // non-ascii chars less than 2048 take up 2 bytes
+        }
+
+        public static int ExtraUTF8BytesBetween(string inp, int start, int end)
+        {
+            int count = 0;
+            for (int ii = start; ii < end; ii++)
             {
-                char c = text[ii];
-                if (c > 127)
+                count += ExtraUTF8Bytes(inp[ii]);
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Set the parser's state to severity, unless the state was already higher.<br></br>
+        /// If the severity is above the parser's logger_level:<br></br>
+        ///     * if throw_if_logged or (FATAL and throw_if_fatal), throw a JsonParserException<br></br>
+        ///     * otherwise, add new JsonLint with the appropriate message, position, curChar, and severity.<br></br>
+        /// Return whether current state is FATAL.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="inp"></param>
+        /// <param name="pos"></param>
+        /// <param name="severity"></param>
+        /// <exception cref="JsonParserException"/>
+        private bool HandleError(string message, string inp, int pos, ParserState severity)
+        {
+            if (state < severity)
+                state = severity;
+            bool fatal = this.fatal;
+            if ((int)state > (int)logger_level)
+            {
+                char c = (pos >= inp.Length)
+                    ? '\x00'
+                    : inp[pos];
+                lint.Add(new JsonLint(message, utf8_pos, c, severity));
+                if (throw_if_logged || (fatal && throw_if_fatal))
                 {
-                    if (c < 2048 || (c >= 0xd800 && c <= 0xdfff))
-                        utf8Pos++;
-                    else utf8Pos += 2;
+                    throw new JsonParserException(message, c, utf8_pos);
                 }
             }
-            return utf8Pos;
+            return fatal;
         }
 
         private void ConsumeWhiteSpace(string inp)
         {
-            char c;
             while (ii < inp.Length)
             {
-                c = inp[ii];
-                if (c == ' ' || c == '\t' || c == '\r') { ii++; }
-                else if (c == '\n') { ii++; line_num++; }
+                char c = inp[ii];
+                if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+                    ii++;
                 else { return; }
             }
         }
 
         private void ConsumeLine(string inp)
         {
-            while (ii < inp.Length)
+            while (ii < inp.Length && inp[ii] != '\n')
             {
-                if (inp[ii] == '\n') break;
                 ii++;
             }
+            ii++;
         }
 
-        private void ConsumeComment(string inp)
+        /// <summary>
+        /// return false if the comment could not be consumed.<br></br>
+        /// return true if it was consumed and the parser is still in
+        /// an acceptable state.
+        /// </summary>
+        /// <param name="inp"></param>
+        /// <returns></returns>
+        private bool MaybeConsumeComment(string inp)
         {
+            if (HandleError("Comments are not part of the original JSON specification", inp, ii, ParserState.JSONC))
+                return false;
             char cur_c;
             char next_c;
             while (ii < inp.Length - 1 && (inp[ii] == '/' || inp[ii] == '#'))
             {
                 next_c = inp[ii + 1];
-                if (inp[ii] == '#' || next_c == '/')
+                if (next_c == '/')
                 {
-                    // Python-style comment or JavaScript-style single-line comment
+                    // JavaScript-style single-line comment
+                    ii++;
+                    ConsumeLine(inp);
+                }
+                else if (next_c == '#')
+                {
+                    // Python-style single-line comment
+                    if (HandleError("Python-style '#' comments are not part of any well-accepted JSON specification.",
+                        inp, ii, ParserState.BAD))
+                    {
+                        return false;
+                    }
                     ii++;
                     ConsumeLine(inp);
                 }
@@ -189,8 +365,7 @@ namespace JSON_Tools.JSON_Tools
                     while (ii < inp.Length - 1)
                     {
                         cur_c = inp[ii++];
-                        if (cur_c == '\n') { line_num++; }
-                        else if (cur_c == '*')
+                        if (cur_c == '*')
                         {
                             if (inp[ii] == '/')
                             {
@@ -202,91 +377,51 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if (!comment_ended)
                     {
-                        throw new JsonParserException("Unterminated multi-line comment", inp, ii);
+                        HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.FATAL);
+                        return false;
                     }
                 }
                 ConsumeWhiteSpace(inp);
             }
-        }
-
-        private void MaybeConsumeComment(string inp)
-        {
-            if (allow_comments || lint != null)
-            {
-                if (lint != null)
-                {
-                    lint.Add(new JsonLint("Comments are not part of the original JSON specification", ii, line_num, '/'));
-                }
-                ConsumeComment(inp);
-                return;
-            }
-            throw new JsonParserException("Comments are not part of the original JSON specification", inp, ii);
+            return true;
         }
 
         /// <summary>
         /// read a hexadecimal integer representation of length `length` at position `index` in `inp`.
-        /// Throws an JsonParserException of the integer is not valid hexadecimal
+        /// sets the parser's state to FATAL if the integer is not valid hexadecimal
         /// or if `index` is less than `length` from the end of `inp`.
         /// </summary>
-        /// <exception cref="JsonParserException"></exception>
         private int ParseHexadecimal(string inp, int length)
         {
             int end = ii + length > inp.Length ? inp.Length : ii + length;
-            var s = inp.Substring(ii, end - ii);
-            // Npp.AddText($"hex of length {length} = {s}, will go to char {inp[index + length - 1]}");
+            var hexNum = inp.Substring(ii, end - ii);
+            ii = end - 1;
+            // the -1 is because ParseString increments by 1 after every escaped sequence anyway
             int charval;
             try
             {
-                charval = int.Parse(s, System.Globalization.NumberStyles.HexNumber);
-                if (0xd800 <= charval && charval <= 0xdbff
-                    && inp[end - 1] == '\\' && inp[end] == 'u')
-                {
-                    // see https://github.com/python/cpython/blob/main/Lib/json/encoder.py
-                    // Characters bigger than 0xffff are encoded as surrogate pairs
-                    // of 2-byte characters, and this is a way to tell that you're going
-                    // to see a surrogate pair
-                    ii = end + 1;
-                    int charval2 = ParseHexadecimal(inp, 4);
-                    return 0x10000 + (((charval - 0xd800) << 10) | (charval2 - 0xdc00));
-                }
-                ii = end - 1;
-                return charval;
-                // the -1 is because ParseString increments by 1 after every escaped sequence anyway
+                charval = int.Parse(hexNum, System.Globalization.NumberStyles.HexNumber);
             }
             catch
             {
-                throw new JsonParserException("Could not find valid hexadecimal of length " + length,
-                                              inp, end - 1);
+                HandleError("Could not find valid hexadecimal of length " + length,
+                                              inp, ii, ParserState.BAD);
+                return -1;
             }
-        }
-
-        private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date
-                                                           (?:[T ](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d # hours, minutes, seconds
-                                                           (?:\.\d{1,3})?Z?)?$ # milliseconds",
-                                                         RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-        private static JNode TryParseDateOrDateTime(string maybe_datetime, int line_num)
-        {
-            Match mtch = DATE_TIME_REGEX.Match(maybe_datetime);
-            int len = maybe_datetime.Length;
-            if (mtch.Success)
+            if (0xd800 <= charval && charval <= 0xdbff
+                && inp[ii] == '\\' && inp[end] == 'u')
             {
-                try
-                {
-                    if (len == 10)
-                    {
-                        // yyyy-mm-dd dates have length 10
-                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATE, line_num);
-                    }
-                    if (len >= 19 && len <= 23)
-                    {
-                        // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sss has length 23
-                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATETIME, line_num);
-                    }
-                }
-                catch { } // it was an invalid date, i guess
+                // see https://github.com/python/cpython/blob/main/Lib/json/encoder.py
+                // Characters bigger than 0xffff are encoded as surrogate pairs
+                // of 2-byte characters, and this is a way to tell that you're going
+                // to see a surrogate pair
+                ii = end + 1;
+                int charval2 = ParseHexadecimal(inp, 4);
+                if (charval2 == -1)
+                    return charval; 
+                return 0x10000 + (((charval - 0xd800) << 10) | (charval2 - 0xdc00));
             }
-            // it didn't match, so it's just a normal string
-            return new JNode(maybe_datetime, Dtype.STR, line_num);
+            return charval;
         }
 
         public static Dictionary<char, char> ESCAPE_MAP = new Dictionary<char, char>
@@ -304,130 +439,151 @@ namespace JSON_Tools.JSON_Tools
         #endregion
         #region PARSER_FUNCTIONS
 
-
-
         /// <summary>
         /// Parse a string literal in a JSON string.<br></br>
-        /// Throws a JsonParserException for any of the following reasons:<br></br>
-        /// 1. Unterminated (no closing ")<br></br>
-        /// 2. Contains invalid hexadecimal<br></br>
-        /// 3. Contains "\\" escaping a character other than 'n', 'b', 'r', '\', '/', '"', 'f', or 't'.<br></br>
+        /// Sets the parser's state to BAD if:<br></br>
+        /// 1. The end of the input is reached before the closing quote char<br></br>
+        /// 2. A '\n' is encountered before the closing quote char
+        /// 3. Contains invalid hexadecimal<br></br>
+        /// 4. Contains "\\" escaping a character other than 'n', 'b', 'r', '\', '/', '"', 'f', or 't'.
         /// </summary>
         /// <param name="inp">the json string</param>
-        /// <param name="startpos">the current location in the string</param>
-        /// <param name="line_num">the current line number in the string</param>
         /// <returns>a JNode of type Dtype.STR, and the position of the end of the string literal</returns>
-        /// <exception cref="JsonParserException">
         /// </exception>
-        public JNode ParseString(string inp, char quote_char = '"')
+        public JNode ParseString(string inp)
         {
-            int start = ii++;
-            char cur_c;
+            int start_utf8_pos = ii + utf8_extra_bytes;
+            char quote_char = inp[ii++];
+            if (quote_char == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
+            {
+                return new JNode("", Dtype.STR, utf8_pos);
+            }
             StringBuilder sb = new StringBuilder();
             while (true)
             {
-                if (ii == inp.Length)
+                if (ii >= inp.Length)
                 {
-                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii - 1);
-                    lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii - 1, line_num, inp[ii - 1]));
+                    HandleError($"Unterminated string literal starting at position {start_utf8_pos}", inp, ii - 1, ParserState.BAD);
                     break;
                 }
-                cur_c = inp[ii];
-                if (cur_c == '\n')
+                char c = inp[ii];
+                if (c == '\n')
                 {
                     // internal newlines are not allowed in JSON strings
-                    if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii);
-                    line_num++;
-                    lint.Add(new JsonLint($"String literal starting at position {start} contains newline", ii, line_num, inp[ii]));
+                    if (HandleError($"String literal starting at position {start_utf8_pos} contains newline", inp, ii, ParserState.BAD))
+                    {
+                        break;
+                    }
                 }
-                if (cur_c == quote_char)
+                if (c == quote_char)
                 {
                     break;
                 }
-                else if (cur_c == '\\')
+                else if (c == '\\')
                 {
                     if (ii >= inp.Length - 2)
                     {
-                        if (lint == null) throw new JsonParserException("Unterminated string literal", inp, ii);
-                        lint.Add(new JsonLint($"Unterminated string literal starting at position {start}", ii, line_num, inp[ii]));
+                        HandleError($"Unterminated string literal starting at position {start_utf8_pos}", inp, inp.Length - 1, ParserState.BAD);
                         break;
                     }
                     char next_char = inp[ii + 1];
                     if (next_char == quote_char)
                     {
                         sb.Append(next_char);
-                        ii += 2;
-                        continue;
+                        ii += 1;
                     }
-                    if (ESCAPE_MAP.TryGetValue(next_char, out char escaped_char))
+                    else if (ESCAPE_MAP.TryGetValue(next_char, out char escaped_char))
                     {
                         sb.Append(escaped_char);
-                        ii += 2;
-                        continue;
+                        ii += 1;
                     }
-                    int next_hex;
-                    if (next_char == 'u')
+                    else if (next_char == 'u')
                     {
                         // 2-byte unicode of the form \uxxxx
                         // \x and \U escapes are not part of the JSON standard
-                        try
+                        ii += 2;
+                        int next_hex = ParseHexadecimal(inp, 4);
+                        if (next_hex < 0)
                         {
-                            ii += 2;
-                            next_hex = ParseHexadecimal(inp, 4);
-                            sb.Append((char)next_hex);
+                            // if next_hex is -1, that means it was invalid
+                            break;
                         }
-                        catch (Exception e)
-                        {
-                            if (lint != null && e is JsonParserException je)
-                            {
-                                lint.Add(new JsonLint($"Invalid hexadecimal ending at {ii}", je.Pos, line_num, je.CurChar));
-                                ii = je.Pos;
-                                break;
-                            }
-                        }
+                        sb.Append((char)next_hex);
                     }
-                    else
-                    {
-                        if (lint == null) throw new JsonParserException("Invalidly escaped char", inp, ii+1);
-                        lint.Add(new JsonLint($"Invalidly escaped char {next_char}", ii+1, line_num, next_char));
-                        ii++;
+                    //else if (next_char == '\n'
+                    //     && HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, (int)ParserState.JSON5))
+                    //{
+                    //    break;
+                    //}
+                    else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
                         break;
-                    }
                 }
                 else
                 {
-                    sb.Append(cur_c);
+                    utf8_extra_bytes += ExtraUTF8Bytes(c);
+                    sb.Append(c);
                 }
                 ii++;
             }
             ii++;
-            if (allow_datetimes)
+            if (parse_datetimes)
             {
-                return TryParseDateOrDateTime(sb.ToString(), line_num);
+                return TryParseDateOrDateTime(sb.ToString(), start_utf8_pos);
             }
-            return new JNode(sb.ToString(), Dtype.STR, line_num);
+            return new JNode(sb.ToString(), Dtype.STR, start_utf8_pos);
+        }
+
+        private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date
+                                                           (?:[T ](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d # hours, minutes, seconds
+                                                           (?:\.\d{1,3})?Z?)?$ # milliseconds",
+                                                         RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        private JNode TryParseDateOrDateTime(string maybe_datetime, int start_utf8_pos)
+        {
+            Match mtch = DATE_TIME_REGEX.Match(maybe_datetime);
+            int len = maybe_datetime.Length;
+            if (mtch.Success)
+            {
+                try
+                {
+                    if (len == 10)
+                    {
+                        // yyyy-mm-dd dates have length 10
+                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATE, start_utf8_pos);
+                    }
+                    if (len >= 19 && len <= 23)
+                    {
+                        // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sss has length 23
+                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATETIME, start_utf8_pos);
+                    }
+                }
+                catch { } // it was an invalid date, i guess
+            }
+            // it didn't match, so it's just a normal string
+            return new JNode(maybe_datetime, Dtype.STR, start_utf8_pos);
         }
 
         /// <summary>
         /// Parse a number in a JSON string.
         /// </summary>
         /// <param name="inp">the JSON string</param>
-        /// <param name="startpos">The starting position</param>
-        /// <param name="line_num">The starting line number</param>
         /// <returns>a JNode with type = Dtype.INT or Dtype.FLOAT, and the position of the end of the number.
         /// </returns>
         public JNode ParseNumber(string inp)
         {
-            StringBuilder sb = new StringBuilder();
             // parsed tracks which portions of a number have been parsed.
             // So if the int part has been parsed, it will be 1.
             // If the int and decimal point parts have been parsed, it will be 3.
             // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
             int parsed = 1;
+            int start = ii;
+            int start_utf8_pos = start + utf8_extra_bytes;
             char c = inp[ii];
             if (c == '-' || c == '+')
             {
-                sb.Append(c);
+                if (c == '+' && HandleError("Leading + signs in numbers are not allowed except in JSON5.", inp, ii, ParserState.JSON5))
+                {
+                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                }
                 ii++;
             }
             while (ii < inp.Length)
@@ -435,19 +591,16 @@ namespace JSON_Tools.JSON_Tools
                 c = inp[ii];
                 if (c >= '0' && c <= '9')
                 {
-                    sb.Append(c);
                     ii++;
                 }
                 else if (c == '.')
                 {
                     if (parsed != 1)
                     {
-                        if (lint == null) throw new JsonParserException("Number with two decimal points", inp, ii);
-                        lint.Add(new JsonLint("Number with two decimal points", ii, line_num, c));
+                        HandleError("Number with a decimal point in the wrong place", inp, ii, ParserState.FATAL);
                         break;
                     }
                     parsed = 3;
-                    sb.Append('.');
                     ii++;
                 }
                 else if (c == 'e' || c == 'E')
@@ -457,13 +610,11 @@ namespace JSON_Tools.JSON_Tools
                         break;
                     }
                     parsed += 4;
-                    sb.Append('e');
                     if (ii < inp.Length - 1)
                     {
                         c = inp[++ii];
                         if (c == '+' || c == '-')
                         {
-                            sb.Append(c);
                             ii++;
                         }
                     }
@@ -471,36 +622,38 @@ namespace JSON_Tools.JSON_Tools
                 else if (c == '/')
                 {
                     // fractions are part of the JSON language specification
-                    double numer = double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP);
+                    double numer = double.Parse(inp.Substring(start, ii - start), JNode.DOT_DECIMAL_SEP);
                     JNode denom_node;
                     ii++;
                     denom_node = ParseNumber(inp);
                     double denom = Convert.ToDouble(denom_node.value);
-                    return new JNode(numer / denom, Dtype.FLOAT, line_num);
+                    return new JNode(numer / denom, Dtype.FLOAT, start_utf8_pos);
                 }
                 else
                 {
                     break;
                 }
             }
+            string numstr = inp.Substring(start, ii - start);
             if (parsed == 1)
             {
                 try
                 {
-                    return new JNode(long.Parse(sb.ToString()), Dtype.INT, line_num);
+                    return new JNode(long.Parse(numstr), Dtype.INT, start_utf8_pos);
                 }
                 catch (OverflowException)
                 {
-                    // doubles can represent much larger numbers than 64-bit ints, albeit with loss of precision
-                    return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, line_num);
+                    // doubles can represent much larger numbers than 64-bit ints,
+                    // albeit with loss of precision
+                    return new JNode(double.Parse(numstr), Dtype.FLOAT, start_utf8_pos);
                 }
             }
-            return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, line_num);
+            return new JNode(double.Parse(numstr, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, start_utf8_pos);
         }
 
         /// <summary>
         /// Parse an array in a JSON string.<br></br>
-        /// May raise a JsonParserException for any of the following reasons:<br></br>
+        /// Parsing may fail for any of the following reasons:<br></br>
         /// 1. The array is not terminated by ']'.<br></br>
         /// 2. The array is terminated with '}' instead of ']'.<br></br>
         /// 3. Two commas with nothing but whitespace in between.<br></br>
@@ -509,36 +662,42 @@ namespace JSON_Tools.JSON_Tools
         /// 6. Two values with no comma in between.
         /// </summary>
         /// <param name="inp">the JSON string</param>
-        /// <param name="startpos">The starting position</param>
-        /// <param name="line_num">The starting line number</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
-        /// <exception cref="JsonParserException"></exception>
         public JArray ParseArray(string inp, int recursion_depth)
         {
             var children = new List<JNode>();
+            JArray arr = new JArray(ii + utf8_extra_bytes, children);
             bool already_seen_comma = false;
-            int start_line_num = line_num;
-            char cur_c = inp[++ii];
-            // need to do this to avoid stack overflow when presented with unreasonably deep nesting
-            // stack overflow causes an unrecoverable panic, and we would rather fail gracefully
+            if (ii >= inp.Length - 1)
+            {
+                HandleError("Unterminated array", inp, inp.Length - 1, ParserState.BAD);
+                return arr;
+            }
+            ii++;
+            char cur_c;
             if (recursion_depth == MAX_RECURSION_DEPTH)
-                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii);
+            {
+                // Need to do this to avoid stack overflow when presented with unreasonably deep nesting.
+                // Stack overflow causes an unrecoverable panic, and we would rather fail gracefully.
+                HandleError($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii, ParserState.FATAL);
+                return arr;
+            }
             while (ii < inp.Length)
             {
                 ConsumeWhiteSpace(inp);
                 cur_c = inp[ii];
                 if (cur_c == ',')
                 {
-                    if (already_seen_comma)
+                    if (already_seen_comma
+                        && HandleError($"Two consecutive commas after element {children.Count - 1} of array", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException($"Two consecutive commas after element {children.Count - 1} of array", inp, ii);
-                        lint.Add(new JsonLint($"Two consecutive commas after element {children.Count - 1} of array", ii, line_num, cur_c));
+                        return arr;
                     }
                     already_seen_comma = true;
-                    if (children.Count == 0)
+                    if (children.Count == 0
+                        && HandleError("Comma before first value in array", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException("Comma before first value in array", inp, ii);
-                        lint.Add(new JsonLint("Comma before first value in array", ii, line_num, cur_c));
+                        return arr;
                     }
                     ii++;
                     continue;
@@ -547,53 +706,50 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last element of array", inp, ii);
-                        lint.Add(new JsonLint("Comma after last element of array", ii, line_num, cur_c));
+                        HandleError("Comma after last element of array", inp, ii, ParserState.JSON5);
                     }
-                    JArray arr = new JArray(start_line_num, children);
-                    // Npp.AddText("Returning array " + arr.ToString());
                     ii++;
                     return arr;
                 }
                 else if (cur_c == '}')
                 {
-                    if (lint == null) throw new JsonParserException("Tried to terminate an array with '}'", inp, ii);
+                    HandleError("Tried to terminate an array with '}'", inp, ii, ParserState.BAD);
                     if (already_seen_comma)
                     {
-                        if (lint == null) throw new JsonParserException("Comma after last element of array", inp, ii);
-                        lint.Add(new JsonLint("Comma after last element of array", ii, line_num, cur_c));
+                        HandleError("Comma after last element of array", inp, ii, ParserState.JSON5);
                     }
-                    lint.Add(new JsonLint("Tried to terminate an array with '}'", ii, line_num, cur_c));
-                    JArray arr = new JArray(start_line_num, children);
                     ii++;
                     return arr;
                 }
-                else if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+                else if (cur_c == '/' || cur_c == '#'
+                    && !MaybeConsumeComment(inp))
+                {
+                    return arr;
+                }
                 else
                 {
-                    if (children.Count > 0 && !already_seen_comma)
+                    if (children.Count > 0 && !already_seen_comma
+                        && HandleError("No comma between array members", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException("No comma between array members", inp, ii);
-                        lint.Add(new JsonLint("No comma between array members", ii, line_num, cur_c));
+                        return arr;
                     }
                     // a new array member of some sort
                     already_seen_comma = false;
                     JNode new_obj;
                     new_obj = ParseSomething(inp, recursion_depth);
-                    // Npp.AddText("\nobj = "+new_obj.ToString());
                     children.Add(new_obj);
+                    if (fatal)
+                        return arr;
                 }
             }
-            if (lint == null)
-                throw new JsonParserException("Unterminated array", inp, ii);
-            lint.Add(new JsonLint("Unterminated array", ii, line_num, cur_c));
-            return new JArray(start_line_num, children);
+            HandleError("Unterminated array", inp, inp.Length - 1, ParserState.BAD);
+            return arr;
         }
 
         /// <summary>
         /// Parse an object in a JSON string.<br></br>
-        /// May raise a JsonParserException for any of the following reasons:<br></br>
-        /// 1. The object is not terminated by ']'.<br></br>
+        /// Parsing may fail for any of the following reasons:<br></br>
+        /// 1. The object is not terminated by '}'.<br></br>
         /// 2. The object is terminated with ']' instead of '}'.<br></br>
         /// 3. Two commas with nothing but whitespace in between.<br></br>
         /// 4. A comma before the first key-value pair.<br></br>
@@ -603,34 +759,39 @@ namespace JSON_Tools.JSON_Tools
         /// 8. A key that's not a string.
         /// </summary>
         /// <param name="inp">the JSON string</param>
-        /// <param name="startpos">The starting position</param>
-        /// <param name="line_num">The starting line number</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
-        /// <exception cref="JsonParserException"></exception>
         public JObject ParseObject(string inp, int recursion_depth)
         {
-            int start_line_num = line_num;
             var children = new Dictionary<string, JNode>();
+            JObject obj = new JObject(ii + utf8_extra_bytes, children);
             bool already_seen_comma = false;
+            if (ii >= inp.Length - 1)
+            {
+                HandleError("Unterminated object", inp, inp.Length - 1, ParserState.BAD);
+                return obj;
+            }
             char cur_c = inp[++ii];
             if (recursion_depth == MAX_RECURSION_DEPTH)
-                throw new JsonParserException($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii);
+            {
+                HandleError($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii, ParserState.FATAL);
+                return obj;
+            }
             while (ii < inp.Length)
             {
                 ConsumeWhiteSpace(inp);
                 cur_c = inp[ii];
                 if (cur_c == ',')
                 {
-                    if (already_seen_comma)
+                    if (already_seen_comma
+                        && HandleError($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii);
-                        lint.Add(new JsonLint($"Two consecutive commas after key-value pair {children.Count - 1} of object", ii, line_num, cur_c));
+                        return obj;
                     }
                     already_seen_comma = true;
-                    if (children.Count == 0)
+                    if (children.Count == 0
+                        && HandleError("Comma before first value in object", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException("Comma before first value in object", inp, ii);
-                        lint.Add(new JsonLint("Comma before first value in object", ii, line_num, cur_c));
+                        return obj;
                     }
                     ii++;
                     continue;
@@ -638,42 +799,27 @@ namespace JSON_Tools.JSON_Tools
                 else if (cur_c == '}')
                 {
                     if (already_seen_comma)
-                    {
-                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", inp, ii);
-                        lint.Add(new JsonLint("Comma after last key-value pair of object", ii, line_num, cur_c));
-                    }
-                    JObject obj = new JObject(start_line_num, children);
-                    // Npp.AddText("Returning array " + obj.ToString());
+                        HandleError("Comma after last key-value pair of object", inp, ii, ParserState.JSON5);
                     ii++;
                     return obj;
                 }
                 else if (cur_c == ']')
                 {
-                    if (lint == null) throw new JsonParserException("Tried to terminate object with ']'", inp, ii);
+                    HandleError("Tried to terminate object with ']'", inp, ii, ParserState.BAD);
                     if (already_seen_comma)
-                    {
-                        if (lint == null) throw new JsonParserException("Comma after last key-value pair of object", inp, ii);
-                        lint.Add(new JsonLint("Comma after last key-value pair of object", ii, line_num, cur_c));
-                    }
-                    lint.Add(new JsonLint("Tried to terminate object with ']'", ii, line_num, cur_c));
-                    JObject obj = new JObject(start_line_num, children);
+                        HandleError("Comma after last key-value pair of object", inp, ii, ParserState.JSON5);
                     ii++;
                     return obj;
                 }
-                else if (cur_c == '"' 
-                    || ((allow_singlequoted_str || lint != null) && cur_c == '\''))
+                else if (cur_c == '"' || state >= ParserState.JSON5)
                 {
-                    if (children.Count > 0 && !already_seen_comma)
+                    if (children.Count > 0 && !already_seen_comma
+                        && HandleError($"No comma after key-value pair {children.Count - 1} in object", inp, ii, ParserState.BAD))
                     {
-                        if (lint == null) throw new JsonParserException($"No comma after key-value pair {children.Count - 1} in object", inp, ii);
-                        lint.Add(new JsonLint($"No comma after key-value pair {children.Count - 1} in object", ii, line_num, cur_c));
-                    }
-                    if (cur_c == '\'' && lint != null)
-                    {
-                        lint.Add(new JsonLint("Strings must be quoted with \" rather than '", ii, line_num, cur_c));
+                        return obj;
                     }
                     // a new key-value pair
-                    JNode keystring = ParseString(inp, cur_c);
+                    JNode keystring = ParseString(inp);
                     //child_key = (string)keystring.value;
                     string child_keystr = keystring.ToString();
                     string key = child_keystr.Substring(1, child_keystr.Length - 2);
@@ -683,59 +829,76 @@ namespace JSON_Tools.JSON_Tools
                         // immediately after key
                         ConsumeWhiteSpace(inp);
                         cur_c = inp[ii];
-                        if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+                        if (cur_c == '/' || cur_c == '#'
+                            && !MaybeConsumeComment(inp))
+                        {
+                            return obj;
+                        }
                     }
                     if (inp[ii] != ':')
                     {
-                        if (lint == null) throw new JsonParserException($"No ':' between key {children.Count} and value {children.Count} of object", inp, ii);
-                        lint.Add(new JsonLint($"No ':' between key {children.Count} and value {children.Count} of object", ii, line_num, cur_c));
-                        ii--;
+                        if (HandleError($"No ':' between key {children.Count} and value {children.Count} of object", inp, ii, ParserState.BAD))
+                        {
+                            return obj;
+                        }
+                        else
+                        {
+                            ii--;
+                        }
                     }
                     ii++;
                     ConsumeWhiteSpace(inp);
                     cur_c = inp[ii];
-                    if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+                    if (cur_c == '/' || cur_c == '#'
+                        && !MaybeConsumeComment(inp))
+                    {
+                        return obj;
+                    }
                     JNode val = ParseSomething(inp, recursion_depth);
                     children.Add(key, val);
+                    if (fatal)
+                    {
+                        return obj;
+                    }
                     already_seen_comma = false;
                 }
-                else if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
-                else
+                else if (cur_c == '/' || cur_c == '#'
+                    && MaybeConsumeComment(inp))
                 {
-                    if (lint == null) throw new JsonParserException($"Key in object (would be key {children.Count}) must be string", inp, ii);
-                    lint.Add(new JsonLint($"Key in object (would be key {children.Count}) must be string", ii, line_num, cur_c));
-                    ii++;
+                    return obj;
+                }
+                else // some inappropriate character
+                {
+                    HandleError($"Key in object (would be key {children.Count}) must be string", inp, ii, ParserState.FATAL);
+                    return obj;
                 }
             }
-            if (lint == null)
-                throw new JsonParserException("Unterminated object", inp, ii);
-            lint.Add(new JsonLint($"Unterminated object", ii, line_num, cur_c));
-            return new JObject(start_line_num, children);
+            HandleError("Unterminated object", inp, inp.Length - 1, ParserState.BAD);
+            return obj;
         }
 
         /// <summary>
         /// Parse anything (a scalar, null, an object, or an array) in a JSON string.<br></br>
-        /// May raise a JsonParserException for any of the following reasons:<br></br>
+        /// Parsing may fail (causing this to return a null JNode) for any of the following reasons:<br></br>
         /// 1. Whatever reasons ParseObject, ParseArray, or ParseString might throw an error.<br></br>
         /// 2. An unquoted string other than true, false, null, NaN, Infinity, -Infinity.<br></br>
         /// 3. The JSON string contains only blankspace or is empty.
         /// </summary>
         /// <param name="inp">the JSON string</param>
-        /// <param name="startpos">The starting position</param>
-        /// <param name="line_num">The starting line number</param>
-        /// <returns>a JArray, and the position of the end of the array.</returns>
-        /// <exception cref="JsonParserException"></exception>
+        /// <returns>a JNode.</returns>
         public JNode ParseSomething(string inp, int recursion_depth)
         {
-            char cur_c = inp[ii]; // could throw IndexOutOfRangeException, but we'll handle that elsewhere
-            char next_c;
-            if (cur_c == '"' || ((allow_singlequoted_str || lint != null) && cur_c == '\''))
+            int start_utf8_pos = ii + utf8_extra_bytes;
+            if (ii >= inp.Length)
             {
-                if (cur_c == '\'' && lint != null)
-                {
-                    lint.Add(new JsonLint("Strings must be quoted with \" rather than '", ii, line_num, cur_c));
-                }
-                return ParseString(inp, cur_c);
+                HandleError("Unexpected end of file", inp, inp.Length - 1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
+            char cur_c = inp[ii];
+            char next_c;
+            if (cur_c == '"' || cur_c == '\'')
+            {
+                return ParseString(inp);
             }
             if (cur_c >= '0' && cur_c <= '9')
             {
@@ -749,9 +912,10 @@ namespace JSON_Tools.JSON_Tools
             {
                 return ParseObject(inp, recursion_depth + 1);
             }
+            // no valid JSON other than a 1-digit number (which was already covered) can be one character
             // either a special scalar or a negative number
             next_c = inp[ii + 1];
-            if (cur_c == '-' || (cur_c == '+' && lint != null))
+            if (cur_c == '-' || cur_c == '+')
             {
                 // try +/-infinity or number
                 if (next_c >= '0' && next_c <= '9')
@@ -760,97 +924,93 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (next_c == 'I' && inp.Substring(ii + 2, 7) == "nfinity")
                 {
-                    if (!allow_nan_inf)
+                    if (HandleError("Infinity is not part of the original JSON specification.", inp, ii, ParserState.NAN_INF))
                     {
-                        throw new JsonParserException("Infinity is not part of the original JSON specification.", inp, ii);
-                    }
-                    else if (lint != null)
-                    {
-                        lint.Add(new JsonLint("Infinity is not part of the original JSON specification", ii, line_num, cur_c));
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
                     ii += 9;
                     if (cur_c == '+')
-                        return new JNode(NanInf.inf, Dtype.FLOAT, line_num);
-                    return new JNode(NanInf.neginf, Dtype.FLOAT, line_num);
+                        return new JNode(NanInf.inf, Dtype.FLOAT, start_utf8_pos);
+                    return new JNode(NanInf.neginf, Dtype.FLOAT, start_utf8_pos);
                 }
-                throw new JsonParserException("Expected literal starting with '-' or '+' to be a number",
-                    inp, ii+1);
+                HandleError("Expected literal starting with '-' or '+' to be a number",
+                    inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
-            if (ii == inp.Length - 2)
+            if (ii >= inp.Length - 3)
             {
-                throw new JsonParserException("No valid literal", inp, ii);
+                HandleError("No valid literal possible", inp, ii, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             // OK, so maybe it's a special scalar like null or true or NaN?
             if (cur_c == 'n')
             {
                 // try null
-                if (next_c == 'u' && inp.Substring(ii + 2, 2) == "ll")
+                if (ii < inp.Length - 3 && next_c == 'u' && inp[ii + 2] == 'l' && inp[ii + 3] == 'l')
                 {
                     ii += 4;
-                    return new JNode(null, Dtype.NULL, line_num);
+                    return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
-                throw new JsonParserException("Expected literal starting with 'n' to be null",
-                                              inp, ii+1);
+                HandleError("Expected literal starting with 'n' to be null",
+                                              inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
+            if (cur_c == 't')
+            {
+                // try true
+                if (ii < inp.Length - 3 && next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
+                {
+                    ii += 4;
+                    return new JNode(true, Dtype.BOOL, start_utf8_pos);
+                }
+                HandleError("Expected literal starting with 't' to be true", inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
+            if (cur_c == 'f')
+            {
+                // try false
+                if (ii < inp.Length - 4 && next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
+                {
+                    ii += 5;
+                    return new JNode(false, Dtype.BOOL, start_utf8_pos);
+                }
+                HandleError("Expected literal starting with 'f' to be false",
+                                              inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             if (cur_c == 'N')
             {
                 // try NaN
                 if (next_c == 'a' && inp[ii + 2] == 'N')
                 {
-                    if (!allow_nan_inf)
+                    if (HandleError("NaN is not part of the original JSON specification.", inp, ii, ParserState.NAN_INF))
                     {
-                        throw new JsonParserException("NaN is not part of the original JSON specification.", inp, ii);
-                    }
-                    else if (lint != null)
-                    {
-                        lint.Add(new JsonLint("NaN is not part of the original JSON specification", ii, line_num, cur_c));
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
                     ii += 3;
-                    return new JNode(NanInf.nan, Dtype.FLOAT, line_num);
+                    return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
                 }
-                throw new JsonParserException("Expected literal starting with 'N' to be NaN", inp, ii+1);
+                HandleError("Expected literal starting with 'N' to be NaN", inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             if (cur_c == 'I')
             {
                 // try Infinity
-                if (next_c == 'n' && inp.Substring(ii + 2, 6) == "finity")
+                if (ii < inp.Length - 6 && next_c == 'n' && inp.Substring(ii + 2, 6) == "finity")
                 {
-                    if (!allow_nan_inf)
+                    if (HandleError("Infinity is not part of the original JSON specification.", inp, ii, ParserState.NAN_INF))
                     {
-                        throw new JsonParserException("Infinity is not part of the original JSON specification.", inp, ii);
-                    }
-                    else if (lint != null)
-                    {
-                        lint.Add(new JsonLint("Infinity is not part of the original JSON specification", ii, line_num, cur_c));
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
                     ii += 8;
-                    return new JNode(NanInf.inf, Dtype.FLOAT, line_num);
+                    return new JNode(NanInf.inf, Dtype.FLOAT, start_utf8_pos);
                 }
-                throw new JsonParserException("Expected literal starting with 'I' to be Infinity",
-                                              inp, ii+1);
+                HandleError("Expected literal starting with 'I' to be Infinity",
+                                              inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
-            if (cur_c == 't')
-            {
-                // try true
-                if (next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
-                {
-                    ii += 4;
-                    return new JNode(true, Dtype.BOOL, line_num);
-                }
-                throw new JsonParserException("Expected literal starting with 't' to be true", inp, ii+1);
-            }
-            if (cur_c == 'f')
-            {
-                // try false
-                if (next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
-                {
-                    ii += 5;
-                    return new JNode(false, Dtype.BOOL, line_num);
-                }
-                throw new JsonParserException("Expected literal starting with 'f' to be false",
-                                              inp, ii+1);
-            }
-            throw new JsonParserException("Badly located character", inp, ii);
+            HandleError("Badly located character", inp, ii, ParserState.FATAL);
+            return new JNode(null, Dtype.NULL, start_utf8_pos);
         }
 
         /// <summary>
@@ -858,50 +1018,43 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns></returns>
-        /// <exception cref="JsonParserException"></exception>
         public JNode Parse(string inp)
         {
-            if (lint != null) lint.Clear();
+            Reset();
             if (inp.Length == 0)
             {
-                throw new JsonParserException("no input");
+                HandleError("No input", inp, 0, ParserState.FATAL);
+                return new JNode();
             }
-            ii = 0;
-            line_num = 0;
             ConsumeWhiteSpace(inp);
             if (ii >= inp.Length)
             {
-                throw new JsonParserException("Json string is only whitespace");
+                HandleError("Json string is only whitespace", inp, inp.Length - 1, ParserState.FATAL);
+                return new JNode();
             }
             char cur_c = inp[ii];
-            if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
+            if ((cur_c == '/' || cur_c == '#')
+                && !MaybeConsumeComment(inp))
+            {
+                return new JNode();
+            }
             if (ii >= inp.Length)
             {
-                throw new JsonParserException("Json string is only whitespace and maybe comments");
+                HandleError("Json string is only whitespace and maybe comments", inp, inp.Length - 1, ParserState.FATAL);
+                return new JNode();
             }
-            try
+            JNode json = ParseSomething(inp, 0);
+            ConsumeWhiteSpace(inp);
+            if (ii < inp.Length)
             {
-                JNode json = ParseSomething(inp, 0);
-                ConsumeWhiteSpace(inp);
-                if (ii < inp.Length)
-                {
-                    cur_c = inp[ii];
-                    if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
-                }
-                if (ii < inp.Length)
-                {
-                    throw new JsonParserException($"At end of valid JSON document, got {inp[ii]} instead of EOF", inp, ii);
-                }
-                return json;
+                cur_c = inp[ii];
+                if (cur_c == '/' || cur_c == '#') MaybeConsumeComment(inp);
             }
-            catch (Exception e)
+            if (ii < inp.Length)
             {
-                if (e is IndexOutOfRangeException)
-                {
-                    throw new JsonParserException("Unexpected end of JSON", inp, inp.Length - 1);
-                }
-                throw;
+                HandleError($"At end of valid JSON document, got {inp[ii]} instead of EOF", inp, ii, ParserState.BAD);
             }
+            return json;
         }
 
         /// <summary>
@@ -914,55 +1067,70 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode ParseJsonLines(string inp)
         {
-            if (lint != null)
-                lint.Clear();
+            Reset();
             if (inp.Length == 0)
             {
-                throw new JsonParserException("no input");
+                HandleError("No input", inp, 0, ParserState.FATAL);
+                return new JNode();
             }
-            ii = 0;
-            line_num = 0;
-            JNode json = new JNode();
-            List<JNode> arr = new List<JNode>();
+            int last_ii = 0;
+            JNode json;
+            List<JNode> children = new List<JNode>();
+            JArray arr = new JArray(0, children);
+            int line_num = 0;
             while (ii < inp.Length)
             {
-                try
+                json = ParseSomething(inp, 0);
+                children.Add(json);
+                if (fatal)
                 {
-                    json = ParseSomething(inp, 0);
+                    return arr;
                 }
-                catch (Exception e)
+                for (; last_ii < ii; last_ii++)
                 {
-                    if (e is IndexOutOfRangeException)
-                    {
-                        throw new JsonParserException("Unexpected end of JSON", inp, inp.Length - 1);
-                    }
-                    throw;
+                    if (inp[ii] == '\n')
+                        line_num++;
                 }
-                arr.Add(json);
                 // make sure this document was all in one line
-                if (line_num != arr.Count - 1)
+                if (line_num != arr.Length - 1)
                 {
                     if (ii > inp.Length - 1)
                         ii = inp.Length - 1;
-                    throw new JsonParserException(
+                    HandleError(
                         "JSON Lines document does not contain exactly one JSON document per line",
-                        inp, ii
+                        inp, ii, ParserState.FATAL
                     );
+                    return arr;
                 }
                 ConsumeWhiteSpace(inp); // go to next line
             }
+            for (; last_ii < ii; last_ii++)
+            {
+                if (inp[ii] == '\n')
+                    line_num++;
+            }
             // one last check to make sure the document has one JSON doc per line
             // it's fine for the document to have one empty line at the end
-            if (line_num != arr.Count - 1 && line_num != arr.Count)
+            if (line_num != arr.Length - 1 && line_num != arr.Length)
             {
                 if (ii > inp.Length - 1)
                     ii = inp.Length - 1;
-                throw new JsonParserException(
+                HandleError(
                     "JSON Lines document does not contain exactly one JSON document per line",
-                    inp, ii
+                    inp, ii, ParserState.FATAL
                 );
             }
-            return new JArray(0, arr);
+            return arr;
+        }
+
+        /// <summary>
+        /// reset the lint, position, and utf8_extra_bytes of this parser
+        /// </summary>
+        public void Reset()
+        {
+            lint.Clear();
+            utf8_extra_bytes = 0;
+            ii = 0;
         }
 
         /// <summary>
@@ -971,15 +1139,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JsonParser Copy()
         {
-            bool linting = lint != null;
-            return new JsonParser(
-                allow_datetimes,
-                allow_singlequoted_str,
-                allow_comments,
-                linting,
-                allow_unquoted_str,
-                allow_nan_inf
-            );
+            return new JsonParser(logger_level, parse_datetimes, throw_if_logged);
         }
     }
     #endregion

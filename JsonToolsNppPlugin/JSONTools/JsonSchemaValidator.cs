@@ -43,20 +43,20 @@ namespace JSON_Tools.JSON_Tools
         {
             public ValidationProblemType problemType;
             public Dictionary<string, object> keywords;
-            public int line_num;
+            public int position;
 
             public ValidationProblem(ValidationProblemType problemType, 
                 Dictionary<string, object> keywords,
-                int line_num)
+                int position)
             {
                 this.problemType = problemType;
                 this.keywords = keywords;
-                this.line_num = line_num;
+                this.position = position;
             }
 
             public override string ToString()
             {
-                string msg = $"At line {line_num + 1}, ";
+                string msg = $"At position {position}, ";
                 switch (problemType)
                 {
                     case ValidationProblemType.TYPE_MISMATCH:
@@ -179,7 +179,7 @@ namespace JSON_Tools.JSON_Tools
                 // the booleans are valid schemas.
                 // true validates everything, and false validates nothing
                 if ((bool)schema_.value) return (x) => null;
-                return (x) => new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), x.line_num);
+                return (x) => new ValidationProblem(ValidationProblemType.FALSE_SCHEMA, new Dictionary<string, object>(), x.position);
             }
             if (schema.Length == 0)
                 return (x) => null; // the empty schema validates everything
@@ -224,7 +224,7 @@ namespace JSON_Tools.JSON_Tools
                             { "found", json.type },
                             { "required", anyOf }
                         },
-                        json.line_num
+                        json.position
                     );
                 };
             }
@@ -247,7 +247,7 @@ namespace JSON_Tools.JSON_Tools
                             { "found", json.type },
                             { "required", types }
                         },
-                        json.line_num
+                        json.position
                     );
                 };
             }
@@ -272,7 +272,7 @@ namespace JSON_Tools.JSON_Tools
                             { "found", json },
                             { "enum", enumarr },
                         },
-                        json.line_num
+                        json.position
                     );
                 };
             }
@@ -302,7 +302,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", len_ },
                                     { "minItems", minItems },
                                 },
-                                arr.line_num
+                                arr.position
                             );
                         }
                         if (len_ > maxItems) // maxItems sets maximum length for array
@@ -314,7 +314,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", len_ },
                                     { "maxItems", maxItems },
                                 },
-                                arr.line_num
+                                arr.position
                             );
                         }
                         return null;
@@ -344,7 +344,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", json.type },
                                     { "required", Dtype.ARR }
                                     },
-                                    json.line_num
+                                    json.position
                                 );
                             }
                             var itemsRightLength = ItemsRightLength(arr);
@@ -370,7 +370,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "minContains", minContains },
                                     { "maxContains", maxContains },
                                 },
-                                arr.line_num
+                                arr.position
                             );
                         };
                     }
@@ -385,7 +385,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", json.type },
                                     { "required", Dtype.ARR }
                                 },
-                                json.line_num
+                                json.position
                             );
                         }
                         var itemsRightLength = ItemsRightLength(arr);
@@ -410,7 +410,7 @@ namespace JSON_Tools.JSON_Tools
                                 { "found", json.type },
                                 { "required", Dtype.ARR }
                             },
-                            json.line_num
+                            json.position
                         );
                     }
                     return ItemsRightLength(arr);
@@ -477,7 +477,7 @@ namespace JSON_Tools.JSON_Tools
                                 { "found", json.type },
                                 { "required", Dtype.OBJ }
                             },
-                            json.line_num
+                            json.position
                         );
                     }
                     // check if object has all required keys
@@ -491,7 +491,7 @@ namespace JSON_Tools.JSON_Tools
                                 {
                                     { "required", required_key },
                                 },
-                                obj.line_num
+                                obj.position
                             );
                         }
                     }
@@ -594,15 +594,15 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", json.type },
                                     { "required", dtype },
                                 },
-                                json.line_num
+                                json.position
                             );
                         }
-                        var regexProblem = regexValidator(str, json.line_num);
+                        var regexProblem = regexValidator(str, json.position);
                         if (regexProblem != null)
                         {
                             return regexProblem;
                         }
-                        var lengthProblem = lengthValidator(str, json.line_num);
+                        var lengthProblem = lengthValidator(str, json.position);
                         if (lengthProblem != null)
                         {
                             return lengthProblem;
@@ -634,7 +634,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "found", json.type },
                                     { "required", Dtype.FLOAT }
                                 },
-                                json.line_num
+                                json.position
                             );
                         }
                         var floatedValue = Convert.ToDouble(json.value);
@@ -642,13 +642,13 @@ namespace JSON_Tools.JSON_Tools
                             return new ValidationProblem(
                                 ValidationProblemType.NUMBER_LESS_THAN_MIN,
                                 new Dictionary<string, object> { { "min", minimum }, { "num", floatedValue } },
-                                json.line_num
+                                json.position
                             );
                         if (floatedValue > maximum)
                             return new ValidationProblem(
                                 ValidationProblemType.NUMBER_GREATER_THAN_MAX,
                                 new Dictionary<string, object> { { "max", maximum }, { "num", floatedValue } },
-                                json.line_num
+                                json.position
                             );
                         return null;
                     };
@@ -666,7 +666,7 @@ namespace JSON_Tools.JSON_Tools
                             { "found", json.type },
                             { "required", dtype }
                         },
-                        json.line_num
+                        json.position
                     );
                 }
                 return null;

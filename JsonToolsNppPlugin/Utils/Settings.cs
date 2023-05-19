@@ -10,25 +10,24 @@ namespace JSON_Tools.Utils
     public class Settings : SettingsBase
     {
         #region JSON_PARSER_SETTINGS
-        [Description("Parse NaN and Infinity in JSON. If false, those raise an error."),
-            Category("JSON Parser"), DefaultValue(true)]
-        public bool allow_nan_inf { get; set; }
-
-        [Description("Ignore comments ('#' Python-style comments or JavaScript-style '//' single-line and '/* */' multi-line) in JSON.\r\nIf false, comments cause the parser to error out."),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_comments { get; set; }
-
-        [Description("Allow use of ' as well as \" for quoting strings."),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_singlequoted_str { get; set; }
+        [Description("Suppress logging of errors at or below this level.\r\n" +
+            "OK: Log all deviations from the original JSON spec.\r\n" + 
+            "NAN_INF: Do not log errors when NaN, Infinity, and -Infinity are parsed.\r\n" +
+            "JSONC: The following errors are not logged:\r\n" +
+            "    * JavaScript single-line '//' and multi-line '/*...*/' comments\r\n" +
+            "    * NaN and +/-Infinity\r\n" +
+            "JSON5: Everything in the JSONC and NAN_INF levels is not logged, as well as the following:\r\n" +
+            "    * singlequoted strings\r\n" +
+            "    * commas after the last element of an array or object\r\n" +
+            "    * unquoted object keys\r\n" +
+            "    * see https://json5.org/ for more."
+            ),
+            Category("JSON Parser"), DefaultValue(LoggerLevel.NAN_INF)]
+        public LoggerLevel logger_level { get; set; }
 
         [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),
             Category("JSON Parser"), DefaultValue(false)]
         public bool allow_datetimes { get; set; }
-
-        [Description("Track the locations where any JSON syntax errors were found"),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool linting { get; set; }
         #endregion
         #region PERFORMANCE
         [Description("Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n" +
@@ -40,6 +39,10 @@ namespace JSON_Tools.Utils
         [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
             Category("Performance"), DefaultValue(true)]
         public bool auto_validate { get; set; }
+
+        [Description("How many seconds of user inactivity before the plugin re-parses the document. Minimum 1."),
+            Category("Performance"), DefaultValue(2)]
+        public int inactivity_seconds_before_parse { get; set; }
         #endregion
         #region TREE_VIEW_SETTINGS
 

@@ -19,7 +19,7 @@ namespace JSON_Tools.Forms
         public string fname;
         
         /// <summary>
-        /// Maps the path of a TreeNode to the line number of the corresponding JNode
+        /// Maps the path of a TreeNode to the corresponding JNode
         /// </summary>
         public Dictionary<string, JNode> pathsToJNodes;
 
@@ -332,11 +332,13 @@ namespace JSON_Tools.Forms
                 }
                 else
                 {
-                    // it's not a function of the input JSON.
+                    // it's a constant, not a function of the input JSON.
                     query_func = mutation_func;
                 }
                 json = query_func;
-                string new_json_str = query_func.PrettyPrintAndChangeLineNumbers(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
+                Main.fname_jsons[fname] = query_func;
+                query_result = query_func;
+                string new_json_str = query_func.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
                 Main.lastEditedTime = DateTime.UtcNow;
                 JsonTreePopulate(query_func);
@@ -407,7 +409,7 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// Snap the caret to the line of the JNode corresponding to the TreeNode selected.<br></br>
+        /// Snap the caret to the position of the JNode corresponding to the TreeNode selected.<br></br>
         /// Also populate the current path box with the path to the selected node.<br></br>
         /// This happens when a node is clicked, expanded, or selected by arrow keys
         /// </summary>
@@ -424,7 +426,7 @@ namespace JSON_Tools.Forms
             catch { return; }
             if (node == null) return;
             string path = node.FullPath;
-            Npp.editor.GotoLine(pathsToJNodes[path].line_num);
+            Npp.editor.GotoPos(pathsToJNodes[path].position);
             // might also want to make it so that the selected line is scrolled to the top
             CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
         }

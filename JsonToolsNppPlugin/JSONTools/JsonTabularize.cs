@@ -809,8 +809,7 @@ namespace JSON_Tools.JSON_Tools
 				foreach (string pathstr in tab_paths.Keys)
 				{
 					JsonFormat clsname = tab_paths[pathstr];
-					jsonParser.ii = 0;
-					jsonParser.line_num = 0;
+					jsonParser.Reset();
 					path = jsonParser.ParseArray(pathstr, 0);
 					cls = clsname;
 				}

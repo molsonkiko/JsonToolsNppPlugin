@@ -57,10 +57,11 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected.
 
 __NOTES__
-1. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
-2. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries and then undo your change with `Ctrl+Z` or similar, that will not undo the changes to the JSON. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
+1. __*JsonTools only works with UTF-8 encoded JSON.*__
+2. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
+3. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries *and then undo your change with `Ctrl+Z` or similar, the undo action will not undo the changes to the JSON*. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
     - As of version 3.5.0, you can use the `Refresh` button to refresh the tree with the most recently parsed JSON, rather than closing and re-opening the tree.
-3. Keyboard shortcuts (*added in v3.5.0*):
+4. Keyboard shortcuts (*added in v3.5.0*):
     - `Ctrl+Enter` in the query box submits the query.
     - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
     - Up and down arrow keys can also navigate the tree.
