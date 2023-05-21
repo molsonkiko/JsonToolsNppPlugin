@@ -37,7 +37,7 @@ namespace JSON_Tools.Utils
         public double max_file_size_MB_slow_actions { get; set; }
 
         [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
-            Category("Performance"), DefaultValue(true)]
+            Category("Performance"), DefaultValue(false)]
         public bool auto_validate { get; set; }
 
         [Description("How many seconds of user inactivity before the plugin re-parses the document. Minimum 1."),

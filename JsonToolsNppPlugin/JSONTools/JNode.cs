@@ -308,14 +308,14 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int curpos)
+        internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            if (change_positions) position = curpos;
+            if (change_positions) position = sb.Length + extra_utf8_bytes;
             var str = ToString();
             sb.Append(str);
             if (type == Dtype.STR)
-                return curpos + Encoding.UTF8.GetByteCount(str);
-            return curpos + str.Length; // only ASCII characters in non-strings
+                return extra_utf8_bytes + JsonParser.ExtraUTF8BytesBetween(str, 0, str.Length);
+            return extra_utf8_bytes; // only ASCII characters in non-strings
         }
 
         /// <summary>
@@ -345,11 +345,11 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="indent"></param>
         /// <param name="depth"></param>
-        /// <param name="curpos"></param>
+        /// <param name="extra_utf8_bytes"></param>
         /// <returns></returns>
-        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int curpos)
+        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            return ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, curpos);
+            return ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes);
         }
 
         /// <summary>
@@ -507,24 +507,29 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="style"></param>
         /// <param name="keys_so_far"></param>
         /// <returns></returns>
-        public string PathToPosition(int pos, List<string> keys_so_far, KeyStyle style = KeyStyle.Python)
+        public string PathToPosition(int pos, KeyStyle style = KeyStyle.Python)
+        {
+            return PathToPositionHelper(pos, style, new List<object>());
+        }
+
+        public string PathToPositionHelper(int pos, KeyStyle style, List<object> path)
         {
             string result;
-            List<string> new_keys_so_far;
+            if (position == pos)
+                return FormatPath(path, style);
             if (this is JArray arr)
             {
-                for (int ii = 0; ii < arr.Length; ii++)
+                int ii = 0;
+                while (ii < arr.Length - 1 && arr[ii + 1].position <= pos)
                 {
-                    // parsed JSON arrays are naturally sorted by position; we can take advantage of this
-                    if (ii < arr.Length - 1 && arr[ii + 1].position < pos)
-                        continue;
-                    JNode child = arr[ii];
-                    new_keys_so_far = new List<string>(keys_so_far);
-                    new_keys_so_far.Add($"[{ii}]");
-                    result = child.PathToPosition(pos, new_keys_so_far, style);
-                    if (result.Length > 0)
-                        return result;
+                    ii++;
                 }
+                JNode child = arr[ii];
+                path.Add(ii);
+                result = child.PathToPositionHelper(pos, style, path);
+                if (result.Length > 0)
+                    return result;
+                path.RemoveAt(path.Count - 1);
                 return "";
             }
             else if (this is JObject obj)
@@ -532,27 +537,39 @@ namespace JSON_Tools.JSON_Tools
                 foreach (string key in obj.children.Keys)
                 {
                     JNode val = obj[key];
-                    new_keys_so_far = new List<string>(keys_so_far);
-                    new_keys_so_far.Add(FormatKey(key, style));
-                    result = val.PathToPosition(pos, new_keys_so_far, style);
+                    path.Add(key);
+                    result = val.PathToPositionHelper(pos, style, path);
                     if (result.Length > 0)
                         return result;
+                    path.RemoveAt(path.Count - 1);
                 }
                 return "";
             }
-            if (position < pos)
-                return "";
-            if (position == pos)
-                return string.Join("", keys_so_far);
             string str = ToString();
             int utf8len = (type == Dtype.STR)
                 ? Encoding.UTF8.GetByteCount(str)
                 : str.Length;
-            if (pos <= position + utf8len)
-                return string.Join("", keys_so_far);
+            if (pos > position && pos <= position + utf8len)
+                return FormatPath(path, style);
             return "";
         }
 
+        private static string FormatPath(List<object> path, KeyStyle style)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (object member in path)
+            {
+                if (member is int ii)
+                {
+                    sb.Append($"[{ii}]");
+                }
+                else if (member is string key)
+                {
+                    sb.Append(FormatKey(key, style));
+                }
+            }
+            return sb.ToString();
+        }
 
         /// <summary>
         /// Get the key in square brackets or prefaced by a quote as determined by the style.<br></br>
@@ -702,10 +719,9 @@ namespace JSON_Tools.JSON_Tools
             return sb.ToString();
         }
 
-        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int curpos)
+        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            if (change_positions) position = curpos;
-            curpos += 1;
+            if (change_positions) position = sb.Length + extra_utf8_bytes;
             sb.Append('{');
             int ctr = 0;
             IEnumerable<string> keys;
@@ -719,17 +735,13 @@ namespace JSON_Tools.JSON_Tools
             {
                 JNode v = children[k];
                 sb.Append($"\"{k}\"{key_value_sep}");
-                int k_len = Encoding.UTF8.GetByteCount(k) + 2;
-                curpos += k_len + key_value_sep.Length;
-                curpos = v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, curpos);
+                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
+                extra_utf8_bytes = v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, extra_utf8_bytes);
                 if (++ctr < children.Count)
-                {
-                    curpos += item_sep.Length;
                     sb.Append(item_sep);
-                }
             }
             sb.Append('}');
-            return curpos + 1;
+            return extra_utf8_bytes;
         }
 
         /// <inheritdoc/>
@@ -741,12 +753,9 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int curpos)
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            if (change_positions) position = curpos;
-            int dent_len = indent * depth;
-            int nl_len = NL.Length;
-            string dent = new string(' ', dent_len);
+            string dent = new string(' ', indent * depth);
             int ctr = 0;
             IEnumerable<string> keys;
             if (sort_keys)
@@ -756,7 +765,6 @@ namespace JSON_Tools.JSON_Tools
             }
             else keys = children.Keys;
             if (style == PrettyPrintStyle.Whitesmith)
-            {
                 /*
 {
 "a":
@@ -775,35 +783,26 @@ namespace JSON_Tools.JSON_Tools
     }
 }
             */
-                sb.Append($"{dent}{{{NL}");
-                curpos += dent_len + nl_len + 1;
+            {
+                sb.Append(dent);
+                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                sb.Append('{');
+                sb.Append(NL);
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    int k_len = Encoding.UTF8.GetByteCount(k) + 3;
-                    curpos += dent_len + k_len;
+                    extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
                     sb.Append($"{dent}\"{k}\":");
                     if (v is JObject || v is JArray)
-                    {
-                        curpos += nl_len;
                         sb.Append(NL);
-                    }
                     else
-                    {
-                        curpos += 1;
                         sb.Append(' ');
-                    }
-                    curpos = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, curpos);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes);
                     if (++ctr < children.Count)
-                    {
                         sb.Append(',');
-                        curpos += 1;
-                    }
                     sb.Append(NL);
-                    curpos += nl_len;
                 }
                 sb.Append($"{dent}}}");
-                curpos += dent_len + 1;
             }
             else // if (style == PrettyPrintStyle.GOOGLE)
             /*
@@ -822,29 +821,23 @@ namespace JSON_Tools.JSON_Tools
 }
             */
             {
+                if (change_positions) position = sb.Length + extra_utf8_bytes;
                 sb.Append('{');
                 sb.Append(NL);
-                curpos += nl_len + 1;
                 string extra_dent = new string(' ', indent);
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    int k_len = Encoding.UTF8.GetByteCount(k) + 3;
-                    curpos += dent_len + indent + k_len + 1;
+                    extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
                     sb.Append($"{dent}{extra_dent}\"{k}\": ");
-                    curpos = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, curpos);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes);
                     if (++ctr < children.Count)
-                    {
                         sb.Append(',');
-                        curpos += 1;
-                    }
                     sb.Append(NL);
-                    curpos += nl_len;
                 }
-                curpos += dent_len + 1;
                 sb.Append($"{dent}}}");
             }
-            return curpos;
+            return extra_utf8_bytes;
         }
 
         /// <inheritdoc/>
@@ -981,23 +974,19 @@ namespace JSON_Tools.JSON_Tools
             return sb.ToString();
         }
 
-        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int curpos)
+        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            if (change_positions) position = 0;
-            curpos += 1;
+            if (change_positions) position = sb.Length + extra_utf8_bytes;
             sb.Append('[');
             int ctr = 0;
             foreach (JNode v in children)
             {
-                v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, curpos);
+                v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, extra_utf8_bytes);
                 if (++ctr < children.Count)
-                {
-                    curpos += item_sep.Length;
                     sb.Append(item_sep);
-                }
             }
             sb.Append(']');
-            return curpos + 1;
+            return extra_utf8_bytes;
         }
 
         /// <inheritdoc/>
@@ -1017,61 +1006,46 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int curpos)
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes)
         {
-            if (change_positions) position = curpos;
-            int dent_len = indent * depth;
-            int nl_len = NL.Length;
-            string dent = new string(' ', dent_len);
+            string dent = new string(' ', indent * depth);
             if (style == PrettyPrintStyle.Whitesmith)
             {
-                sb.Append($"{dent}[{NL}");
-                curpos += dent_len + 1 + nl_len;
+                sb.Append(dent);
+                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                sb.Append('[');
+                sb.Append(NL);
                 int ctr = 0;
                 foreach (JNode v in children)
                 {
-                    // this child's string could be multiple lines, so we need to know what the final line of its string was.
                     if (!(v is JObject || v is JArray))
-                    {
                         sb.Append(dent);
-                        curpos += dent_len;
-                    }
-                    curpos = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, curpos);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes);
                     if (++ctr < children.Count)
-                    {
-                        curpos += 1;
                         sb.Append(',');
-                    }
-                    curpos += nl_len;
                     sb.Append(NL);
                 }
-                curpos += dent_len + 1;
                 sb.Append($"{dent}]");
             }
             else
             {
-                sb.Append('[' + NL);
-                curpos += nl_len + 1;
+                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                sb.Append('[');
+                sb.Append(NL);
                 string extra_dent = new string(' ', indent);
                 int ctr = 0;
                 foreach (JNode v in children)
                 {
                     // this child's string could be multiple lines, so we need to know what the final line of its string was.
                     sb.Append($"{dent}{extra_dent}");
-                    curpos += dent_len + indent;
-                    curpos = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, curpos);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes);
                     if (++ctr < children.Count)
-                    {
-                        curpos += 1;
                         sb.Append(',');
-                    }
-                    curpos += nl_len;
                     sb.Append(NL);
                 }
-                curpos += dent_len + 1;
                 sb.Append($"{dent}]");
             }
-            return curpos;
+            return extra_utf8_bytes;
         }
 
         /// <summary>

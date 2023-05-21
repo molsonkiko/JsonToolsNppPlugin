@@ -353,27 +353,50 @@ instead got
                 }
                 ii++;
 
-                var keylines = new object[][]
+                var keylines = new (string key,
+                    int whitesmith_pos, int google_pos,
+                    int tostring_miniwhite_pos, int tostring_pos)[]
                 {
-                    // key, correct position in Whitesmith style, correct position in Google style
-                    new object[]{"a", 2, 1 },
-                    new object[]{ "b", 8, 6 },
-                    new object[]{ "c", 11, 8 },
-                    new object[]{"d", 13, 10 }
+                    ("a", 13, 12, 5, 6),
+                    ("b", 57, 67, 17, 22),
+                    ("c", 78, 87, 24, 31),
+                    ("d", 94, 107, 31, 40)
                 };
-                foreach (object[] kl in keylines)
+                foreach ((string key, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos) in keylines)
                 {
-                    string key = (string)kl[0];
-                    int expected_line = (int)kl[1];
-                    int true_line = obj[key].position;
-                    if (true_line != expected_line)
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
+                    int got_pos = obj[key].position;
+                    if (got_pos != whitesmith_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After PrettyPrintAndChangePositions({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions({objstr}), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
+                    got_pos = obj[key].position;
+                    if (got_pos != google_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions({objstr}), expected the position of child {key} to be {google_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.ToStringAndChangePositions(true);
+                    got_pos = obj[key].position;
+                    if (got_pos != tostring_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After ToStringAndChangePositions({objstr}), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.ToStringAndChangePositions(true, ":", ",");
+                    got_pos = obj[key].position;
+                    if (got_pos != tostring_miniwhite_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions({objstr}), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
                     }
                     ii++;
                 }
-
                 string tostr = obj.ToString();
                 string tostr_ch_line = obj.ToStringAndChangePositions();
                 ii++;
@@ -381,66 +404,12 @@ instead got
                 {
                     tests_failed++;
                     Npp.AddLine(String.Format(@"Test {0} failed:
-Expected ToStringAndChangePositions({1}) to return
-{2}
-instead got
-{3}",
+    Expected ToStringAndChangePositions({1}) to return
+    {2}
+    instead got
+    {3}",
                                                     ii + 1, objstr, tostr, tostr_ch_line));
                 }
-                foreach (object[] kl in keylines)
-                {
-                    string key = (string)kl[0];
-                    ii++;
-                    int true_line = obj[key].position;
-                    if (true_line != 0)
-                    {
-                        tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangePositions({objstr}), expected the line of child {key} to be 0, got {true_line}.");
-                    }
-                }
-
-                // test if the parser correctly counts line numbers in nested JSON
-                JNode pp_node = TryParse(pp_ch_line, parser);
-                if (pp_node != null)
-                {
-                    JObject pp_obj = (JObject)pp_node;
-                    foreach (object[] kl in keylines)
-                    {
-                        string key = (string)kl[0];
-                        int expected_line = (int)kl[1];
-                        int true_line = pp_obj[key].position;
-                        ii++;
-                        if (true_line != expected_line)
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangePositions({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
-                        }
-                    }
-                    pp_obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
-                    // test that Google style gives right line numbers
-                    foreach (object[] kl in keylines)
-                    {
-                        string key = (string)kl[0];
-                        int expected_line = (int)kl[2];
-                        int true_line = pp_obj[key].position;
-                        ii++;
-                        if (true_line != expected_line)
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangePositions({pp}) with Google style, expected the line of child {key} to be {expected_line}, got {true_line}.");
-                        }
-                    }
-                }
-                else
-                {
-                    ii += keylines.Length;
-                    tests_failed += keylines.Length;
-                }
-            }
-            else
-            {
-                tests_failed += 14;
-                ii += 14;
             }
             #endregion
             #region EqualityTests
@@ -537,49 +506,49 @@ instead got
         public static void TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
-            var testcases = new object[][]
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
+            var testcases = new (string inp, JNode desired_out)[]
             {
-                new object[]{ "{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}") },
-                new object[]{ @"[1,
+                ("{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}")),
+                (@"[1,
 /* this is a
 multiline comment
 */
 2]",
                     simpleparser.Parse("[1, 2]")
-                },
-                new object[]{ "\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0) },
-                new object[]{ "\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0) },
-                new object[]{ "\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0) }, // bad date- month too high
-                new object[]{ "\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0) }, // bad datetime- hour too high
-                new object[]{ "\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0) }, // bad date- has space at end
-                new object[]{ "['abc', 2, '1999-01-03']", // single-quoted strings 
+                ),
+                ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
+                ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)),
+                ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
+                ("\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0)), // bad datetime- hour too high
+                ("\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0)), // bad date- has space at end
+                ("['abc', 2, '1999-01-03']", // single-quoted strings 
                     new JArray(0, new List<JNode>(new JNode[]{new JNode("abc", Dtype.STR, 0),
                                                           new JNode(Convert.ToInt64(2), Dtype.INT, 0),
-                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))},
-                new object[]{ "{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
-                    simpleparser.Parse("{\"a\": \"1\", \"b\": 2}") },
-                new object[]{ @"{'a':
+                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))),
+                ("{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
+                    simpleparser.Parse("{\"a\": \"1\", \"b\": 2}")),
+                (@"{'a':
                   // one comment
                   // wow, another single-line comment?
                   // go figure
                   [2]}",
-                simpleparser.Parse("{\"a\": [2]}")},
-                new object[]{ "{'a': [ /* internal comment */ 2 ]}", TryParse("{\"a\": [2]}", simpleparser) },
-                new object[]{ "[1, 2] // trailing comment", TryParse("[1, 2]", simpleparser) },
-                new object[]{ "// the comments return!\n[2]", TryParse("[2]", simpleparser) },
-                new object[]{ "# python comment at start of file\n[2]", TryParse("[2]", simpleparser) },
-                new object[]{ "[1, 2] # python comment at end of file", TryParse("[1, 2]", simpleparser) },
-                new object[]{ "[1, 2]\r\n# python comment\r\n# another python comment", TryParse("[1, 2]", simpleparser) },
-                new object[]{ @"
+                simpleparser.Parse("{\"a\": [2]}")),
+                ("{'a': [ /* internal comment */ 2 ]}", TryParse("{\"a\": [2]}", simpleparser)),
+                ("[1, 2] // trailing comment", TryParse("[1, 2]", simpleparser)),
+                ("// the comments return!\n[2]", TryParse("[2]", simpleparser)),
+                ("# python comment at start of file\n[2]", TryParse("[2]", simpleparser)),
+                ("[1, 2] # python comment at end of file", TryParse("[1, 2]", simpleparser)),
+                ("[1, 2]\r\n# python comment\r\n# another python comment", TryParse("[1, 2]", simpleparser)),
+                (@"
                   /* multiline comment 
                    */
                   /* followed by another multiline comment */
                  // followed by a single line comment 
                  /* and then a multiline comment */ 
                  [1, 2]
-                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) },
-                new object[]{ @"
+                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
+                (@"
                   /* multiline comment 
                    */
                    # and a Python-style comment
@@ -589,30 +558,30 @@ multiline comment
             # another python comment
                   # another python comment
                  [1, 2]
-                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) }
+                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
+                 ("{//\n}", new JObject()), // empty single-line comment at end of object
+                 ("[//\n]", new JObject()), // empty single-line comment at end of array
+                 ("{//\n'a'//\n://\n [//\n1 2 {\"a\" //\n1//\n} \n\"a\"//\n\n//\n5]//\n]//", // empty single-line comments everywhere
+                    TryParse("{\"a\":[1,2,{\"a\":1},4,5]}", simpleparser)),
+                 ("[1// single-line comment immediately after number\n,2]", TryParse("[1,2]", simpleparser)),
+                 ("[1/* multiline comment immediately after number*/,2]", TryParse("[1,2]", simpleparser)),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((string inp, JNode desired_out) in testcases)
             {
-                string inp = (string)test[0];
-                if (test[1] is null)
+                if (desired_out == null)
                 {
                     ii += 1;
                     tests_failed += 1;
                     continue;
                 }
-                JNode desired_out = (JNode)test[1];
                 ii++;
                 JNode result = new JNode();
                 string base_message = $"Expected JsonParser(ParserState.JSON5).Parse({inp})\nto return\n{desired_out.ToString()}\n";
                 try
                 {
                     result = parser.Parse(inp);
-                    if (parser.fatal)
-                    {
-
-                    }
                     try
                     {
                         if (!desired_out.Equals(result))
@@ -669,7 +638,7 @@ multiline comment
                                                                                                 "Unterminated object" } },
                 new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
                 new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2e3, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" } },
+                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", new string[]{ "Infinity is not part of the original JSON specification" } },
                 new object[]{ "[1] // comment", new string[] { "Comments are not part of the original JSON specification" } },
                 new object[]{ "{\"a\": 1,,\"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" } },
                 new object[]{ "[1]\r\n# Python comment", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." } },

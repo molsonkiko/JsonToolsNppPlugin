@@ -138,6 +138,12 @@ Testing conversion of JSON to DSON (see https://dogeon.xyz/)
             DsonTester.TestDump();
 
             Npp.AddLine(@"=========================
+Testing JNode PathToPosition method
+=========================
+");
+            FormatPathTester.Test();
+
+            Npp.AddLine(@"=========================
 Performance tests for JsonParser
 =========================
 ");

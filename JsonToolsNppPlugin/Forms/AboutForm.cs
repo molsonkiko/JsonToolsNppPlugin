@@ -84,8 +84,8 @@ namespace JSON_Tools.Forms
         /// </summary>
         static void Dogeify()
         {
-            JNode json = Main.TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = Main.TryParseJson();
+            if (fatal || json == null) return;
             if (nppVersion[0] >= 8)
             {
                 // add the UDL file to the userDefinedLangs folder so that it can colorize the new file

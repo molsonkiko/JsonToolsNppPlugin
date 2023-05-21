@@ -191,6 +191,7 @@
     <Compile Include="Tests\JsonSchemaTests.cs" />
     <Compile Include="Tests\JsonSchemaValidatorTests.cs" />
     <Compile Include="Tests\JsonTabularizerTests.cs" />
+    <Compile Include="Tests\FormatPathTester.cs" />
     <Compile Include="Tests\RandomJsonTests.cs" />
     <Compile Include="Tests\RemesPathTests.cs" />
     <Compile Include="Tests\SliceTests.cs" />

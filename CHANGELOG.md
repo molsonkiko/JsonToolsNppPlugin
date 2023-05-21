@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
-- Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
 ## [5.0.0] (UNRELEASED) - 2023-MM-DD
 
@@ -83,6 +82,10 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
+2. Comments immediately after numbers no longer throw an error
+3. Empty unclosed arrays and objects no longer throw an error
+4. Paths to treenodes including an empty string key (e.g., `{"": 1}`) no longer throw an error
+5. Better handling of comments, especially empty comments
 
 ## [4.14.0] - 2023-04-12
 

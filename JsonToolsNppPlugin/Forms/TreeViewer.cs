@@ -17,7 +17,7 @@ namespace JSON_Tools.Forms
         /// the name of the file holding the JSON that this is associated with
         /// </summary>
         public string fname;
-        
+
         /// <summary>
         /// Maps the path of a TreeNode to the corresponding JNode
         /// </summary>
@@ -208,7 +208,7 @@ namespace JSON_Tools.Forms
                     {
                         JNode child = jar[ii];
                         TreeNode child_node = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
-                        if ((child is JArray childarr && childarr.Length > 0) 
+                        if ((child is JArray childarr && childarr.Length > 0)
                             || (child is JObject childobj && childobj.Length > 0))
                         {
                             // add a sentinel node so that this node can later be expanded
@@ -628,31 +628,40 @@ namespace JSON_Tools.Forms
         /// </summary>
         /// <param name="style"></param>
         /// <returns></returns>
-        public string PathToTreeNode(TreeNode node, KeyStyle style = KeyStyle.Python, List<string> keys = null)
+        public string PathToTreeNode(TreeNode node, KeyStyle style = KeyStyle.Python, List<string> path = null)
         {
-            if (keys == null)
-                keys = new List<string>();
+            if (path == null)
+                path = new List<string>();
             if (node.Parent == null)
             {
-                if (keys.Count == 0)
+                if (path.Count == 0)
                     return "";
-                keys.Reverse(); // cuz they were added from the node to the root
-                return string.Join("", keys);
+                path.Reverse(); // cuz they were added from the node to the root
+                return string.Join("", path);
             }
-            keys.Add(KeyOfTreeNode(node, style));
-            return PathToTreeNode(node.Parent, style, keys);
+            path.Add(KeyOfTreeNode(node, style));
+            return PathToTreeNode(node.Parent, style, path);
         }
 
         /// <summary>
-        /// See FormatKey, but uses the key of a TreeNode
+        /// See JNode.FormatKey, but uses the key of a TreeNode
         /// </summary>
         /// <param name="node"></param>
         /// <param name="style"></param>
         /// <returns></returns>
         public string KeyOfTreeNode(TreeNode node, KeyStyle style)
         {
-            if (node.Name == "")
-                return $"[{node.Index}]";
+            if (node.Name == "" // TreeNodes representing array members have no name
+                // but we need to be careful because an object could have the empty string as a key
+                && node.Parent != null && pathsToJNodes[node.Parent.FullPath] is JArray)
+            {
+                // we get the index of the node this way because the treenodes can
+                // be a sparse representation of its JArray, where there is only
+                // one treenode for every i^th JNode in the JArray. 
+                string[] parts = node.Text.Split(' ', ':');
+                int idx = int.Parse(parts[0]);
+                return $"[{idx}]";
+            }
             return JNode.FormatKey(node.Name, style);
         }
 
@@ -665,7 +674,7 @@ namespace JSON_Tools.Forms
         private void RefreshButton_Click(object sender, EventArgs e)
         {
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            JNode new_json = Main.TryParseJson();
+            (bool _, JNode new_json) = Main.TryParseJson();
             if (new_json == null)
                 return;
             fname = cur_fname;
