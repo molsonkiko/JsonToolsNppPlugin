@@ -75,10 +75,6 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 			* missing ']' or '}' at the ends of arrays and objects
 			* a bunch of other common syntax errors
 
-### Minor changes
-
-1. Dropped support for fractional numbers of the form `a/b`. This was never part of any JSON specification and it was only my inattention that led me to believe that it was.
-
 ### Added
 
 1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used

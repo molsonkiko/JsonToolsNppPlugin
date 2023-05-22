@@ -531,7 +531,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else if (next_char == '\n')
                     {
-                        if (HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
+                        if (HandleError("Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
                             break;
                         sb.Append('\n');
                         ii++;
@@ -703,9 +703,12 @@ namespace JSON_Tools.JSON_Tools
                 bool negative = false;
                 if (c == '-' || c == '+')
                 {
-                    if (c == '+' && HandleError("Leading + signs in numbers are not allowed except in JSON5", inp, ii, ParserState.JSON5))
+                    if (c == '+')
                     {
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        if (HandleError("Leading + signs in numbers are not allowed except in JSON5", inp, ii, ParserState.JSON5))
+                        {
+                            return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        }
                     }
                     else negative = true;
                     ii++;
@@ -727,7 +730,7 @@ namespace JSON_Tools.JSON_Tools
                                                   inp, ii + 1, ParserState.FATAL);
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
-                if (c == 'N')
+                if (inp[ii] == 'N')
                 {
                     // try NaN
                     if (ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'N')
@@ -803,6 +806,30 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Scientific notation 'e' with no number following", inp, inp.Length - 1, ParserState.FATAL);
                         return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
+                }
+                else if (c == '/' && ii < inp.Length - 1)
+                {
+                    char next_c = inp[ii + 1];
+                    // make sure prospective denominator is also a number (we won't allow NaN or Infinity as denominator)
+                    if (!((next_c >= '0' && next_c <= '9')
+                        || next_c == '-' || next_c == '.' || next_c == '+'))
+                    {
+                        break;
+                    }
+                    if (HandleError("Fractions of the form 1/3 are not part of any JSON specification", inp, start_utf8_pos, ParserState.BAD))
+                    {
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    }
+                    double numer = double.Parse(inp.Substring(start, ii - start), JNode.DOT_DECIMAL_SEP);
+                    JNode denom_node;
+                    ii++;
+                    denom_node = ParseNumber(inp);
+                    if (fatal)
+                    {
+                        return new JNode(numer, Dtype.FLOAT, start_utf8_pos);
+                    }
+                    double denom = Convert.ToDouble(denom_node.value);
+                    return new JNode(numer / denom, Dtype.FLOAT, start_utf8_pos);
                 }
                 else
                 {
@@ -1029,7 +1056,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             ii++;
                         }
-                        else if (HandleError("Expected ':' between object key and object value", inp, ii, ParserState.BAD))
+                        else if (HandleError($"No ':' between key {children.Count} and value {children.Count} of object", inp, ii, ParserState.BAD))
                         {
                             return obj;
                         }
@@ -1194,6 +1221,15 @@ namespace JSON_Tools.JSON_Tools
                 HandleError("No input", inp, 0, ParserState.FATAL);
                 return new JNode();
             }
+            if (!ConsumeInsignificantChars(inp))
+            {
+                return new JNode();
+            }
+            if (ii >= inp.Length)
+            {
+                HandleError("Json string is only whitespace and maybe comments", inp, inp.Length - 1, ParserState.FATAL);
+                return new JNode();
+            }
             int last_ii = 0;
             JNode json;
             List<JNode> children = new List<JNode>();
@@ -1202,6 +1238,7 @@ namespace JSON_Tools.JSON_Tools
             while (ii < inp.Length)
             {
                 json = ParseSomething(inp, 0);
+                ConsumeInsignificantChars(inp);
                 children.Add(json);
                 if (fatal)
                 {
@@ -1209,13 +1246,14 @@ namespace JSON_Tools.JSON_Tools
                 }
                 for (; last_ii < ii; last_ii++)
                 {
-                    if (inp[ii] == '\n')
+                    if (inp[last_ii] == '\n')
                         line_num++;
                 }
                 // make sure this document was all in one line
-                if (line_num != arr.Length - 1)
+                if (!(line_num == arr.Length
+                    || (ii >= inp.Length && line_num == arr.Length - 1)))
                 {
-                    if (ii > inp.Length - 1)
+                    if (ii >= inp.Length)
                         ii = inp.Length - 1;
                     HandleError(
                         "JSON Lines document does not contain exactly one JSON document per line",
@@ -1227,22 +1265,6 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return arr;
                 }
-            }
-            for (; last_ii < ii; last_ii++)
-            {
-                if (inp[ii] == '\n')
-                    line_num++;
-            }
-            // one last check to make sure the document has one JSON doc per line
-            // it's fine for the document to have one empty line at the end
-            if (line_num != arr.Length - 1 && line_num != arr.Length)
-            {
-                if (ii > inp.Length - 1)
-                    ii = inp.Length - 1;
-                HandleError(
-                    "JSON Lines document does not contain exactly one JSON document per line",
-                    inp, ii, ParserState.FATAL
-                );
             }
             return arr;
         }

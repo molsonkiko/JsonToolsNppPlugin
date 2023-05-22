@@ -562,8 +562,8 @@ multiline comment
                  /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
                  ("{//\n}", new JObject()), // empty single-line comment at end of object
                  ("[//\n]", new JArray()), // empty single-line comment at end of array
-                 ("{//\n'a'//\n://\n [//\n1 2 {\"a\" //\n1//\n} \n\"a\"//\n\n//\n5]//\n]//", // empty single-line comments everywhere
-                    TryParse("{\"a\":[1,2,{\"a\":1},\"a\",5]}", simpleparser)),
+                 ("{//\n'a'//\n://\n [//\n1 2 {\"a\" //\n1//\n} \n4//\n\n//\n5]//\n]//", // empty single-line comments everywhere
+                    TryParse("{\"a\":[1,2,{\"a\":1},4,5]}", simpleparser)),
                  ("[1// single-line comment immediately after number\n,2]", TryParse("[1,2]", simpleparser)),
                  ("[1/* multiline comment immediately after number*/,2]", TryParse("[1,2]", simpleparser)),
             };
@@ -611,7 +611,7 @@ multiline comment
         public static void TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(LoggerLevel.OK, true, false, false);
+            JsonParser parser = new JsonParser(LoggerLevel.STRICT, true, false, false);
             var testcases = new (string inp, string desired_out, string[] desired_lint)[]
             {
                 ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON
@@ -621,45 +621,51 @@ multiline comment
                 ("[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"}),
                 ("{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"}),
                 ("{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" }),
-                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"}),
+                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification"}),
                 ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification" }),
-                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
-                                                         "String literal starting at position 1 contains newline",
-                                                         "Comma after last element of array",
-                                                         "Tried to terminate an array with '}'",
-                                                         "Comma after last key-value pair of object",
-                                                         "Tried to terminate object with ']'" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']', Comma after last key-value pair of object" }),
                 ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
                 ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
                 ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
                                                                                                 "Unterminated array", 
                                                                                                 "Unterminated object" }),
-                ("{", "{}", new string[] { "Unexpected end of JSON" }),
-                ("[", "[]", new string[] { "Unexpected end of JSON" }),
-                ("[+1.5, +2e3, +Infinity]", "[1.5, 2000, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" }),
-                ("[1] // comment", "[]", new string[] { "Comments are not part of the original JSON specification" }),
+                ("{", "{}", new string[] { "Unterminated object", "At end of valid JSON document, got { instead of EOF" }),
+                ("[", "[]", new string[] { "Unterminated array", "At end of valid JSON document, got [ instead of EOF" }),
+                ("[+1.5, +2e3, +Infinity, +7.5/-3]", "[1.5, 2000.0, Infinity, -2.5]", new string[]{ "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Infinity is not part of the original JSON specification", "Leading + signs in numbers are not allowed except in JSON5", "Fractions of the form 1/3 are not part of any JSON specification" }),
+                ("[1] // comment", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification" }),
                 ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
-                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." }),
-                ("[1] /* unterminated multiline", "[1]", new string[] { "Unterminated multi-line comment" }),
-                ("\"\\u043\"", "null", new string[] { "Could not find valid hexadecimal of length 4" }),
+                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification" }),
+                ("[1] /* unterminated multiline", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification", "Unterminated multi-line comment" }),
+                ("\"\\u043\"", "\"\"", new string[] { "Could not find valid hexadecimal of length 4" }),
                 ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
-                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal starting at position 2 contains newline" }),
+                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal starting at position 2 contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification" }),
                 ("[.75, 0xff, +9]", "[0.75, 255, 9]", new string[]
                 {
-                    "leading decimal point",
-                    "hex number",
-                    "leading + sign"
+                    "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5"
                 }),
-                ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"excaped newline"}),
-                ("{\"\\u0009\t\": \"\\u0009\t\"}", "{\"\\u0009\\t\": \"\\t\\t\"}", new string[]{
+                ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"Escaped newline characters are only allowed in JSON5"}),
+                ("{\"\u000c\t\": \"\u0008\t\u0009\"}", "{\"\\f\\t\": \"\\b\\t\\u0009\"}", new string[]{
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                 }),
+                ("Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("-Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("NaU", "null", new string[]{"Expected literal starting with 'N' to be NaN"}),
+                ("-Nae", "null", new string[]{"Expected literal starting with 'N' to be NaN"}),
+                ("trno", "null", new string[]{"Expected literal starting with 't' to be true"}),
+                ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
+                ("nurnoe", "null", new string[]{"Expected literal starting with 'n' to be null"}),
+                ("Hugre", "null", new string[]{"Badly located character"}),
+                ("\"\\i\"", "\"i\"", new string[]{"Invalidly escaped char"}),
+                ("", "null", new string[]{"No input"}),
+                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
+                ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
             };
 
             int tests_failed = 0;
@@ -680,7 +686,7 @@ multiline comment
                 try
                 {
                     result = parser.Parse(inp);
-                    if (parser.lint.Count == 0)
+                    if (parser.lint.Count == 0 && expected_lint.Length != 0)
                     {
                         tests_failed++;
                         Npp.AddLine(base_message + "Parser had no lint");

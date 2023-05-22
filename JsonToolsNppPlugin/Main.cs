@@ -337,7 +337,7 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines).<br></br>
+        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines or the file extension is ".jsonl").<br></br>
         /// If parsing fails, throw up a message box telling the user what happened.<br></br>
         /// If linting is active and the linter catches anything, throw up a message box
         /// asking the user if they want to view the caught errors in a new buffer.<br></br>
@@ -354,6 +354,8 @@ namespace Kbg.NppPluginNET
             string fname = Npp.notepad.GetCurrentFilePath();
             string text = Npp.editor.GetText(len + 1);
             JNode json = new JNode();
+            // always parse ".jsonl" documents as Json Lines 
+            is_json_lines |= Npp.FileExtension() == "jsonl";
             if (is_json_lines)
                 json = jsonParser.ParseJsonLines(text);
             else
@@ -547,7 +549,7 @@ namespace Kbg.NppPluginNET
             }
             if (json == null)
             {
-                (fatal, json) = TryParseJson(Npp.FileExtension() == "jsonl");
+                (fatal, json) = TryParseJson();
                 if (fatal || json == null)
                     return "";
             }
@@ -597,8 +599,6 @@ namespace Kbg.NppPluginNET
                     return;
                 }
             }
-            if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
-                is_json_lines = true;
             (bool _, JNode json) = TryParseJson(is_json_lines);
             if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
@@ -967,7 +967,7 @@ namespace Kbg.NppPluginNET
                 || !fileExtensionsToAutoParse.Contains(ext))
                 return;
             // filename matches but it's not associated with a schema, so just parse normally
-            TryParseJson(ext == "jsonl", true);
+            TryParseJson(false, true);
         }
 
         /// <summary>

@@ -26,104 +26,13 @@ Passed 25 tests.
 Testing JSON parser's linter functionality
 =========================
 
-Expected JsonParser(LoggerLevel.STRICT).Parse([1, 2])
-to return
-[1, 2] and have lint []
-Parser had no lint
-Expected JsonParser(LoggerLevel.STRICT).Parse({"a" 1})
-to return
-{"a": 1} and have lint [No ':' between key 0 and value 0 of object]
-Instead returned
-{"a": 1} and had lint [Expected ':' between object key and object value]
-Expected JsonParser(LoggerLevel.STRICT).Parse([1  "a
-"])
-to return
-[1, "a\n"] and have lint [No comma between array members, String literal starting at position 4 contains newline]
-Instead returned
-[1, "a\n"] and had lint [No comma between array members, String literal starting at position 4 contains newline, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification]
-Expected JsonParser(LoggerLevel.STRICT).Parse({'a
-':[1,2,},])
-to return
-{"a\n": [1,2]} and have lint [Strings must be quoted with " rather than ', String literal starting at position 1 contains newline, Comma after last element of array, Tried to terminate an array with '}', Comma after last key-value pair of object, Tried to terminate object with ']']
-Instead returned
-{"a\n": [1, 2]} and had lint [Singlequoted strings are only allowed in JSON5, Object key contains newline, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification, Tried to terminate an array with '}', Comma after last element of array, Tried to terminate object with ']', Comma after last key-value pair of object]
-Expected JsonParser(LoggerLevel.STRICT).Parse({)
-to return
-{} and have lint [Unexpected end of JSON]
-Instead returned
-{} and had lint [Unterminated object, At end of valid JSON document, got { instead of EOF]
-Expected JsonParser(LoggerLevel.STRICT).Parse([)
-to return
-[] and have lint [Unexpected end of JSON]
-Instead returned
-[] and had lint [Unterminated array, At end of valid JSON document, got [ instead of EOF]
-Expected JsonParser(LoggerLevel.STRICT).Parse([+1.5, +2e3, +Infinity])
-to return
-[1.5, 2000, Infinity, 0.75] and have lint [Infinity is not part of the original JSON specification]
-Instead returned
-[1.5, 2000.0, -Infinity] and had lint [Leading + signs in numbers are not allowed except in JSON5, Leading + signs in numbers are not allowed except in JSON5, Leading + signs in numbers are not allowed except in JSON5, Infinity is not part of the original JSON specification]
-Expected JsonParser(LoggerLevel.STRICT).Parse([1] // comment)
-to return
-[] and have lint [Comments are not part of the original JSON specification]
-Instead returned
-[1] and had lint [JavaScript comments are not part of the original JSON specification]
-Expected JsonParser(LoggerLevel.STRICT).Parse([1]
-# Python comment)
-to return
-[1] and have lint [Python-style '#' comments are not part of any well-accepted JSON specification.]
-Instead returned
-[1] and had lint [Python-style '#' comments are not part of any well-accepted JSON specification]
-Expected JsonParser(LoggerLevel.STRICT).Parse([1] /* unterminated multiline)
-to return
-[1] and have lint [Unterminated multi-line comment]
-Instead returned
-[1] and had lint [JavaScript comments are not part of the original JSON specification, Unterminated multi-line comment]
-Expected JsonParser(LoggerLevel.STRICT).Parse("\u043")
-to return
-null and have lint [Could not find valid hexadecimal of length 4]
-Instead returned
-"" and had lint [Could not find valid hexadecimal of length 4]
-Expected JsonParser(LoggerLevel.STRICT).Parse(  "a
-")
-to return
-"a\n" and have lint [String literal starting at position 2 contains newline]
-Instead returned
-"a\n" and had lint [String literal starting at position 2 contains newline, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification]
-Expected JsonParser(LoggerLevel.STRICT).Parse([.75, 0xff, +9])
-to return
-[0.75, 255, 9] and have lint [leading decimal point, hex number, leading + sign]
-Instead returned
-[0.75, 255, 9] and had lint [Numbers with a leading decimal point are only part of JSON5, Hexadecimal numbers are only part of JSON5, Leading + signs in numbers are not allowed except in JSON5]
-Expected JsonParser(LoggerLevel.STRICT).Parse([1,"b\
-b"])
-to return
-[1, "b\nb"] and have lint [excaped newline]
-Instead returned
-[1, "b\nb"] and had lint [Escaped newline characters are only allowed in JSON5]
-Expected JsonParser(LoggerLevel.STRICT).Parse({"\u0009	": "\u0009	"})
-to return
-{"\u0009\t": "\t\t"} and have lint [Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification, Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification]
-Parser had no lint
-Failed 15 tests.
-Passed 11 tests.
+Failed 0 tests.
+Passed 38 tests.
 =========================
 Testing JSON Lines parser
 =========================
 
-While parsing input ["a", "b"]
-{"a": false, "b": 2}
-null
-1.5
-threw error JSON Lines document does not contain exactly one JSON document per line at position 32 (char '\r')
-While parsing input [1, 2]
-[3, 4]
-
-threw error JSON Lines document does not contain exactly one JSON document per line at position 6 (char '\n')
-While parsing input {"a": [1, 2], "b": -7.8}
-threw error System.IndexOutOfRangeException: Index was outside the bounds of the array.
-   at JSON_Tools.JSON_Tools.JsonParser.ParseJsonLines(String inp)
-   at JSON_Tools.Tests.JsonParserTester.TryParse(String input, JsonParser parser, Boolean is_json_lines)
-Failed 3 tests.
+Failed 0 tests.
 Passed 8 tests.
 =========================
 Testing YAML dumper
@@ -258,24 +167,24 @@ Performance tests for JsonParser
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 91926 into JNode took 2.044 +/- 0.905 ms over 32 trials
-Load times (ms): 3, 4, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1
+To convert JSON string of size 91926 into JNode took 2.055 +/- 0.917 ms over 32 trials
+Load times (ms): 2, 1, 1, 3, 1, 1, 1, 3, 1, 1, 5, 1, 2, 1, 2, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3
 =========================
 Performance tests for RemesPath (float arithmetic)
 =========================
 
-Compiling query "@[@[:].a * @[:].t < @[:].e]" into took 7.2 +/- 4.451 microseconds over 64 trials
-To run pre-compiled query "@[@[:].a * @[:].t < @[:].e]" on JNode from JSON of size 91926 into took 0.104 +/- 0.45 ms over 64 trials
-Query times (ms): 0.123, 0.058, 0.062, 0.051, 0.046, 0.042, 0.06, 0.074, 0.046, 0.046, 0.046, 0.045, 3.672, 0.057, 0.045, 0.044, 0.045, 0.045, 0.045, 0.044, 0.044, 0.046, 0.046, 0.044, 0.046, 0.044, 0.046, 0.045, 0.045, 0.046, 0.045, 0.044, 0.045, 0.045, 0.045, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.044, 0.045, 0.044, 0.044, 0.044, 0.045, 0.045, 0.044, 0.044, 0.044, 0.044, 0.044, 0.045, 0.042
+Compiling query "@[@[:].a * @[:].t < @[:].e]" into took 4.259 +/- 3.483 microseconds over 64 trials
+To run pre-compiled query "@[@[:].a * @[:].t < @[:].e]" on JNode from JSON of size 91926 into took 0.038 +/- 0.02 ms over 64 trials
+Query times (ms): 0.065, 0.028, 0.034, 0.027, 0.028, 0.027, 0.027, 0.027, 0.026, 0.026, 0.027, 0.027, 0.027, 0.026, 0.027, 0.026, 0.026, 0.026, 0.027, 0.027, 0.046, 0.104, 0.028, 0.028, 0.045, 0.112, 0.042, 0.055, 0.054, 0.041, 0.047, 0.045, 0.04, 0.053, 0.094, 0.042, 0.08, 0.066, 0.052, 0.027, 0.04, 0.027, 0.027, 0.027, 0.029, 0.04, 0.056, 0.074, 0.026, 0.026, 0.026, 0.027, 0.026, 0.026, 0.026, 0.026, 0.026, 0.027, 0.025, 0.026, 0.026, 0.026, 0.026, 0.026
 Preview of result: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
 =========================
 Performance tests for RemesPath (string operations)
 =========================
 
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.747 +/- 3.795 microseconds over 64 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.07 +/- 0.024 ms over 64 trials
-Query times (ms): 0.097, 0.054, 0.052, 0.052, 0.058, 0.051, 0.052, 0.052, 0.052, 0.051, 0.052, 0.052, 0.052, 0.051, 0.052, 0.052, 0.052, 0.052, 0.051, 0.052, 0.052, 0.052, 0.053, 0.051, 0.052, 0.051, 0.052, 0.052, 0.052, 0.052, 0.052, 0.053, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.051, 0.052, 0.084, 0.099, 0.093, 0.093, 0.094, 0.093, 0.093, 0.093, 0.099, 0.092, 0.093, 0.093, 0.093, 0.094, 0.094, 0.093, 0.112, 0.12, 0.115, 0.118, 0.105, 0.124, 0.114
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.283 +/- 2.131 microseconds over 64 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.065 +/- 0.034 ms over 64 trials
+Query times (ms): 0.094, 0.086, 0.069, 0.052, 0.053, 0.075, 0.053, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.058, 0.052, 0.052, 0.053, 0.095, 0.054, 0.13, 0.064, 0.065, 0.068, 0.057, 0.268, 0.062, 0.118, 0.054, 0.066, 0.064, 0.061, 0.186, 0.054, 0.052, 0.052, 0.052, 0.052, 0.052, 0.052, 0.053, 0.052, 0.063, 0.052, 0.052, 0.052, 0.052, 0.052, 0.071, 0.052, 0.052, 0.052, 0.051, 0.052, 0.053, 0.052, 0.052, 0.052, 0.052, 0.052, 0.062, 0.052
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...
 =========================
@@ -284,13 +193,13 @@ Performance tests for JSON compression and pretty-printing
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To compress JNode from JSON string of 91926 took 5.041 +/- 1.328 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
-To compress JNode from JSON string of 91926 took 2.546 +/- 0.96 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
-To pretty-print JNode from JSON string of 91926 took 5.151 +/- 1.176 ms over 64 trials (Google style, sort_keys=true, indent=4)
+To compress JNode from JSON string of 91926 took 3.96 +/- 0.363 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
+To compress JNode from JSON string of 91926 took 2.056 +/- 0.167 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
+To pretty-print JNode from JSON string of 91926 took 4.973 +/- 0.834 ms over 64 trials (Google style, sort_keys=true, indent=4)
 =========================
 Performance tests for JsonSchemaValidator and random JSON creation
 =========================
 
-To create a random set of tweet JSON of size 201759 (15 tweets) based on the matching schema took 7.03 +/- 3.834 ms over 64 trials
-To compile the tweet schema to a validation function took 0.465 +/- 1.051 ms over 64 trials
-To validate tweet JSON of size 201759 (15 tweets) based on the compiled schema took 1.048 +/- 0.185 ms over 64 trials
+To create a random set of tweet JSON of size 174435 (15 tweets) based on the matching schema took 6.402 +/- 2.828 ms over 64 trials
+To compile the tweet schema to a validation function took 0.268 +/- 0.433 ms over 64 trials
+To validate tweet JSON of size 174435 (15 tweets) based on the compiled schema took 0.992 +/- 0.165 ms over 64 trials
