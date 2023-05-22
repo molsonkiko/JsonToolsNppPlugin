@@ -150,7 +150,7 @@ Performance tests for JsonParser
             // use an absolute path to the location of this file in your repo
             string big_random_fname = @"plugins\JsonTools\testfiles\big_random.json";
             Benchmarker.BenchmarkParserAndRemesPath(new string[][] {
-                new string[] { "@[@[:].a * @[:].q < @[:].e]", "float arithmetic" },
+                new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic" },
                 new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
             },
             big_random_fname, 32, 64);

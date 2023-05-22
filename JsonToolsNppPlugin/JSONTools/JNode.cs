@@ -232,6 +232,52 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// string representation of any characters in JSON
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public static string CharToString(char c)
+        {
+            switch (c)
+            {
+                case '\\':   return "\\\\";
+                case '"':    return "\\\"";
+                case '\x01': return "\\u0001";
+                case '\x02': return "\\u0002";
+                case '\x03': return "\\u0003";
+                case '\x04': return "\\u0004";
+                case '\x05': return "\\u0005";
+                case '\x06': return "\\u0006";
+                case '\x07': return "\\u0007";
+                case '\x08': return "\\b";
+                case '\x09': return "\\t";
+                case '\x0A': return "\\n";
+                case '\x0B': return "\\u000B";
+                case '\x0C': return "\\f";
+                case '\x0D': return "\\r";
+                case '\x0E': return "\\u000E";
+                case '\x0F': return "\\u000F";
+                case '\x10': return "\\u0010";
+                case '\x11': return "\\u0011";
+                case '\x12': return "\\u0012";
+                case '\x13': return "\\u0013";
+                case '\x14': return "\\u0014";
+                case '\x15': return "\\u0015";
+                case '\x16': return "\\u0016";
+                case '\x17': return "\\u0017";
+                case '\x18': return "\\u0018";
+                case '\x19': return "\\u0019";
+                case '\x1A': return "\\u001A";
+                case '\x1B': return "\\u001B";
+                case '\x1C': return "\\u001C";
+                case '\x1D': return "\\u001D";
+                case '\x1E': return "\\u001E";
+                case '\x1F': return "\\u001F";
+                default: return new string(c, 1);
+            }
+        }
+
+        /// <summary>
         /// Compactly prints the JSON.<br></br>
         /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
@@ -248,38 +294,7 @@ namespace JSON_Tools.JSON_Tools
                     // wrap it in double quotes
                     sb.Append('"');
                     foreach (char c in (string)value)
-                    {
-                        switch (c)
-                        {
-                            case '\\':
-                                sb.Append("\\\\");
-                                break;
-                            case '\n':
-                                sb.Append("\\n");
-                                break;
-                            case '\r':
-                                sb.Append("\\r");
-                                break;
-                            case '\b':
-                                sb.Append("\\b");
-                                break;
-                            //case '/': // '/' is often escaped in JSON
-                            //    sb.Append("\\/");
-                            //    break;
-                            case '\t':
-                                sb.Append("\\t");
-                                break;
-                            case '"':
-                                sb.Append("\\\"");
-                                break;
-                            case '\f':
-                                sb.Append("\\f");
-                                break;
-                            default:
-                                sb.Append(c);
-                                break;
-                        }
-                    }
+                        sb.Append(CharToString(c));
                     sb.Append('"');
                     return sb.ToString();
                 }

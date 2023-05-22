@@ -1923,7 +1923,12 @@ namespace JSON_Tools.JSON_Tools
                             opo = ParseExprOrScalarFunc(toks, pos + 1);
                             JNode val = (JNode)opo.obj;
                             pos = opo.pos;
-                            children.Add(new Key_Node((string)key.value, val));
+                            string keystr_in_quotes = key.ToString();
+                            string keystr = keystr_in_quotes.Substring(1, keystr_in_quotes.Length - 2);
+                            // do proper JSON string representation of characters that should not be in JSON keys
+                            // (e.g., '\n', '\t', '\f')
+                            // in case the user uses such a character in the projection keys in their query
+                            children.Add(new Key_Node(keystr, val));
                             is_object_proj = true;
                             nt = PeekNextToken(toks, pos - 1);
                             if (!(nt is char))

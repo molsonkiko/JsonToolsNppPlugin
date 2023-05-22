@@ -158,7 +158,6 @@ namespace JSON_Tools.Tests
             var testcases = new string[][]
             {
                 new string[]{ example, norm_example, pprint_example, "general parsing" },
-                new string[] { "1/2", "0.5", "0.5", "fractions" },
                 new string[] { "[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" },
                 new string[] { "\"abc\"", "\"abc\"", "\"abc\"", "scalar string" },
                 new string[] { "1", "1", "1", "scalar int" },
@@ -423,7 +422,7 @@ instead got
                 new object[] { "\"a\"", "\"b\"", false },
                 new object[] { "[[1, 2], [3, 4]]", "[[1,2],[3,4]]", true },
                 new object[] { "[1, 2, 3, 4]", "[[1,2], [3,4]]", false },
-                new object[] { "{\"a\": 1, \"b\": Infinity, \"c\": 0.5}", "{\"b\": Infinity, \"a\": 1, \"c\": 1/2}", true },
+                new object[] { "{\"a\": 1, \"b\": Infinity, \"c\": 0.5}", "{\"b\": Infinity, \"a\": 1, \"c\": 0.5}", true },
                 new object[] { "[\"z\\\"\"]", "[\"z\\\"\"]", true },
                 new object[] { "{}", "{" + NL + "   }", true },
                 new object[] { "[]", "[ ]", true },
@@ -640,7 +639,7 @@ multiline comment
                                                                                                 "Unterminated object" }),
                 ("{", "{}", new string[] { "Unexpected end of JSON" }),
                 ("[", "[]", new string[] { "Unexpected end of JSON" }),
-                ("[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2000, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" }),
+                ("[+1.5, +2e3, +Infinity]", "[1.5, 2000, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" }),
                 ("[1] // comment", "[]", new string[] { "Comments are not part of the original JSON specification" }),
                 ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
                 ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." }),
@@ -655,6 +654,12 @@ multiline comment
                     "leading + sign"
                 }),
                 ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"excaped newline"}),
+                ("{\"\\u0009\t\": \"\\u0009\t\"}", "{\"\\u0009\\t\": \"\\t\\t\"}", new string[]{
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                }),
             };
 
             int tests_failed = 0;
@@ -671,7 +676,7 @@ multiline comment
                 }
                 JNode result = new JNode();
                 string expected_lint_str = "[" + string.Join(", ", expected_lint) + "]";
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
+                string base_message = $"Expected JsonParser(LoggerLevel.STRICT).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
                 try
                 {
                     result = parser.Parse(inp);

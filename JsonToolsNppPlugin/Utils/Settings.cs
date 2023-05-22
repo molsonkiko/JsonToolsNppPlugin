@@ -11,7 +11,9 @@ namespace JSON_Tools.Utils
     {
         #region JSON_PARSER_SETTINGS
         [Description("Suppress logging of errors at or below this level.\r\n" +
-            "OK: Log all deviations from the original JSON spec.\r\n" + 
+            "STRICT: Log all deviations from the original JSON spec.\r\n" + 
+            "OK: The original JSON spec plus the following:\r\n" +
+            "    * strings can contain characters with ASCII values less than 0x20 (includes '\\t')\r\n" +
             "NAN_INF: Do not log errors when NaN, Infinity, and -Infinity are parsed.\r\n" +
             "JSONC: The following errors are not logged:\r\n" +
             "    * JavaScript single-line '//' and multi-line '/*...*/' comments\r\n" +

@@ -58,11 +58,12 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 		2. The plugin can use the status bar to show how severely the JSON deviates from the JSON standard.
 		3. Tracking of errors in the parser's `lint` attribute is now independent of the strictness of the parser.
 3. __The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
-    * They have been replaced by the `logger_level` setting, which has 4 levels (each a proper superset of the previous):
-		1. __OK__: Parse only JSON that complies with the original JSON spec.
-    	2. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
-        3. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
-		4. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
+    * They have been replaced by the `logger_level` setting, which has 5 levels (each a proper superset of the previous):
+		1. __STRICT__: Parse only JSON that complies with the original JSON spec.
+		2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
+    	3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
+        4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
+		5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
 			* singlequoted strings
 			* commas after the last element of an array or object
 			* unquoted object keys
@@ -73,6 +74,10 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 			* missing commas between array members
 			* missing ']' or '}' at the ends of arrays and objects
 			* a bunch of other common syntax errors
+
+### Minor changes
+
+1. Dropped support for fractional numbers of the form `a/b`. This was never part of any JSON specification and it was only my inattention that led me to believe that it was.
 
 ### Added
 

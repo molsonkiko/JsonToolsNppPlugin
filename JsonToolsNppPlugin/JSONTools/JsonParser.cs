@@ -82,7 +82,14 @@ namespace JSON_Tools.JSON_Tools
     public enum LoggerLevel
     {
         /// <summary>
-        /// Valid according to the original JSON specification
+        /// Valid according to the <i>exact</i> original JSON specification.<br></br>
+        /// This is pretty annoying to use because horizontal tabs ('\t') are forbidden.
+        /// </summary>
+        STRICT,
+        /// <summary>
+        /// Valid according to a <i>slightly relaxed</i> version of the JSON specification.<br></br>
+        /// In addition to the JSON spec, it tolerates:<br></br>
+        /// * control characters with ASCII codes below 0x20
         /// </summary>
         OK,
         /// <summary>
@@ -104,24 +111,21 @@ namespace JSON_Tools.JSON_Tools
         /// * singlequoted strings
         /// </summary>
         JSON5,
-        ///// <summary>
-        ///// JSON with syntax errors that my parser can handle, such as:<br></br>
-        ///// * unterminated strings<br></br>
-        ///// * missing commas after array elements<br></br>
-        ///// * Python-style single-line comments (start with '#')
-        ///// </summary>
-        //BAD
     }
 
     /// <summary>
     /// the sequence of states the JSON parser can be in.<br></br>
-    /// The first four states (OK, NAN_INF, JSONC, JSON5) have the same
+    /// The first five states (STRICT, OK, NAN_INF, JSONC, JSON5) have the same
     /// meaning as in the LoggerLevel enum.
     /// The last two states (BAD and FATAL) reflect errors that are
     /// <i>always logged</i> and thus do not belong in the LoggerLevel enum.
     /// </summary>
     public enum ParserState
     {
+        /// <summary>
+        /// see LoggerLevel.STRICT
+        /// </summary>
+        STRICT,
         /// <summary>
         /// see LoggerLevel.OK
         /// </summary>
@@ -253,7 +257,7 @@ namespace JSON_Tools.JSON_Tools
             this.throw_if_fatal = throw_if_fatal;
             ii = 0;
             lint = new List<JsonLint>();
-            state = ParserState.OK;
+            state = ParserState.STRICT;
             utf8_extra_bytes = 0;
         }
 
@@ -455,7 +459,6 @@ namespace JSON_Tools.JSON_Tools
             { 'r', '\r' },
             { 'b', '\b' },
             { 't', '\t' },
-            // { '"', '"' }, // handled separately inside of ToString
             { 'f', '\f' },
             { '/', '/' }, // the '/' char is often escaped in JSON
         };
@@ -505,7 +508,7 @@ namespace JSON_Tools.JSON_Tools
                     char next_char = inp[ii + 1];
                     if (next_char == quote_char)
                     {
-                        sb.Append(next_char);
+                        sb.Append(quote_char);
                         ii += 1;
                     }
                     else if (ESCAPE_MAP.TryGetValue(next_char, out char escaped_char))
@@ -536,13 +539,18 @@ namespace JSON_Tools.JSON_Tools
                     else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
                         break;
                 }
-                else if (c == '\n')
+                else if (c < 0x20) // control characters
                 {
-                    // internal newlines are not allowed in JSON strings
-                    if (HandleError($"String literal starting at position {start_utf8_pos} contains newline", inp, ii, ParserState.BAD))
+                    if (c == '\n'
+                        && HandleError($"String literal starting at position {start_utf8_pos} contains newline", inp, ii, ParserState.BAD))
                     {
                         break;
                     }
+                    if (HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
+                    {
+                        break;
+                    }
+                    sb.Append(c);
                 }
                 else
                 {
@@ -557,6 +565,92 @@ namespace JSON_Tools.JSON_Tools
                 return TryParseDateOrDateTime(sb.ToString(), start_utf8_pos);
             }
             return new JNode(sb.ToString(), Dtype.STR, start_utf8_pos);
+        }
+
+        public string ParseKey(string inp)
+        {
+            char quote_char = inp[ii++];
+            if (quote_char == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
+            {
+                return null;
+            }
+            if (quote_char != '\'' && quote_char != '"')
+            {
+                HandleError("Object keys must be strings", inp, ii - 1, ParserState.FATAL);
+                return null;
+            }
+            var sb = new StringBuilder();
+            while (true)
+            {
+                if (ii >= inp.Length)
+                {
+                    HandleError($"Unterminated object key", inp, ii - 1, ParserState.FATAL);
+                    return null;
+                }
+                char c = inp[ii];
+                if (c == quote_char)
+                {
+                    break;
+                }
+                else if (c == '\\')
+                {
+                    if (ii >= inp.Length - 2)
+                    {
+                        HandleError($"Unterminated object key", inp, inp.Length - 1, ParserState.FATAL);
+                        return null;
+                    }
+                    char next_char = inp[ii + 1];
+                    if (next_char == quote_char)
+                    {
+                        sb.Append(JNode.CharToString(quote_char));
+                        ii++;
+                    }
+                    else if (ESCAPE_MAP.TryGetValue(next_char, out _))
+                    {
+                        sb.Append('\\');
+                        sb.Append(next_char);
+                        ii += 1;
+                    }
+                    else if (next_char == 'u')
+                    {
+                        // 2-byte unicode of the form \uxxxx
+                        // \x and \U escapes are not part of the JSON standard
+                        ii += 2;
+                        int next_hex = ParseHexChar(inp, 4, false);
+                        if (next_hex < 0)
+                        {
+                            break;
+                        }
+                        sb.Append(JNode.CharToString((char)next_hex));
+                    }
+                    else if (next_char == '\n')
+                    {
+                        if (HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
+                            break;
+                        sb.Append("\\n");
+                        ii++;
+                    }
+                    else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
+                        break;
+                }
+                else if (c < 0x20) // control characters
+                {
+                    if ((c == '\n' && HandleError($"Object key contains newline", inp, ii, ParserState.BAD))
+                        || HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
+                    {
+                        break;
+                    }
+                    sb.Append(JNode.CharToString(c));
+                }
+                else
+                {
+                    utf8_extra_bytes += ExtraUTF8Bytes(c);
+                    sb.Append(c);
+                }
+                ii++;
+            }
+            ii++;
+            return sb.ToString();
         }
 
         private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date
@@ -709,19 +803,6 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Scientific notation 'e' with no number following", inp, inp.Length - 1, ParserState.FATAL);
                         return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
-                }
-                else if (c == '/'
-                    && ii < inp.Length - 1
-                    && !(inp[ii + 1] == '/' || inp[ii + 1] == '*'))
-                    // need to make sure it's not the first '/' of the '//' or '/*' for a JavaScript comment
-                {
-                    // fractions are part of the JSON language specification
-                    double numer = double.Parse(inp.Substring(start, ii - start), JNode.DOT_DECIMAL_SEP);
-                    JNode denom_node;
-                    ii++;
-                    denom_node = ParseNumber(inp);
-                    double denom = Convert.ToDouble(denom_node.value);
-                    return new JNode(numer / denom, Dtype.FLOAT, start_utf8_pos);
                 }
                 else
                 {
@@ -923,14 +1004,11 @@ namespace JSON_Tools.JSON_Tools
                         return obj;
                     }
                     // a new key-value pair
-                    JNode keystring = ParseString(inp);
-                    if (fatal || keystring.type != Dtype.STR)
+                    string key = ParseKey(inp);
+                    if (fatal || key == null)
                     {
-                        HandleError("Object keys must be strings", inp, ii, ParserState.FATAL);
                         return obj;
                     }
-                    string child_keystr = keystring.ToString();
-                    string key = child_keystr.Substring(1, child_keystr.Length - 2);
                     if (ii >= inp.Length)
                     {
                         break;
@@ -1175,7 +1253,7 @@ namespace JSON_Tools.JSON_Tools
         public void Reset()
         {
             lint.Clear();
-            state = ParserState.OK;
+            state = ParserState.STRICT;
             utf8_extra_bytes = 0;
             ii = 0;
         }
