@@ -517,6 +517,8 @@ multiline comment
 2]",
                     simpleparser.Parse("[1, 2]")
                 ),
+                ("[.75, 0xff, +9]", simpleparser.Parse("[0.75, 255, 9]")), // leading decimal points, hex numbers, leading + sign
+                ("[1,\"b\\\nb\"]", simpleparser.Parse("[1, \"b\\nb\"]")), // escaped newlines
                 ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
                 ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)),
                 ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
@@ -560,9 +562,9 @@ multiline comment
                  [1, 2]
                  /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
                  ("{//\n}", new JObject()), // empty single-line comment at end of object
-                 ("[//\n]", new JObject()), // empty single-line comment at end of array
+                 ("[//\n]", new JArray()), // empty single-line comment at end of array
                  ("{//\n'a'//\n://\n [//\n1 2 {\"a\" //\n1//\n} \n\"a\"//\n\n//\n5]//\n]//", // empty single-line comments everywhere
-                    TryParse("{\"a\":[1,2,{\"a\":1},4,5]}", simpleparser)),
+                    TryParse("{\"a\":[1,2,{\"a\":1},\"a\",5]}", simpleparser)),
                  ("[1// single-line comment immediately after number\n,2]", TryParse("[1,2]", simpleparser)),
                  ("[1/* multiline comment immediately after number*/,2]", TryParse("[1,2]", simpleparser)),
             };
@@ -611,49 +613,54 @@ multiline comment
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.OK, true, false, false);
-            var testcases = new object[][]
+            var testcases = new (string inp, string desired_out, string[] desired_lint)[]
             {
-                new object[]{ "[1, 2]", "[1, 2]", new string[]{ } }, // syntactically valid JSON
-                new object[]{ "[1 2]", "[1, 2]", new string[]{"No comma between array members" } },
-                new object[]{ "[1, , 2]", "[1, 2]", new string[]{$"Two consecutive commas after element 0 of array"} },
-                new object[]{ "[1, 2,]", "[1, 2]", new string[]{"Comma after last element of array"} },
-                new object[]{ "[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"} },
-                new object[]{ "{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"} },
-                new object[]{ "{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" } },
-                new object[]{ "[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"} },
-                new object[]{ "[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
+                ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON
+                ("[1 2]", "[1, 2]", new string[]{"No comma between array members" }),
+                ("[1, , 2]", "[1, 2]", new string[]{$"Two consecutive commas after element 0 of array"}),
+                ("[1, 2,]", "[1, 2]", new string[]{"Comma after last element of array"}),
+                ("[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"}),
+                ("{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"}),
+                ("{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" }),
+                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"}),
+                ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification",
-                                  "Infinity is not part of the original JSON specification" } },
-                new object[]{ "{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
+                                  "Infinity is not part of the original JSON specification" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
                                                          "String literal starting at position 1 contains newline",
                                                          "Comma after last element of array",
                                                          "Tried to terminate an array with '}'",
                                                          "Comma after last key-value pair of object",
-                                                         "Tried to terminate object with ']'"} },
-                new object[]{ "[1, 2", "[1, 2]", new string[]{ "Unterminated array" } },
-                new object[]{ "{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" } },
-                new object[]{ "{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
+                                                         "Tried to terminate object with ']'" }),
+                ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
+                ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
+                ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
                                                                                                 "Unterminated array", 
-                                                                                                "Unterminated object" } },
-                new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", new string[]{ "Infinity is not part of the original JSON specification" } },
-                new object[]{ "[1] // comment", new string[] { "Comments are not part of the original JSON specification" } },
-                new object[]{ "{\"a\": 1,,\"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" } },
-                new object[]{ "[1]\r\n# Python comment", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." } },
-                new object[]{ "[1] /* unterminated multiline", new string[] { "Unterminated multi-line comment" }  },
-                new object[]{ "\"\\u043\"", new string[] { "Could not find valid hexadecimal of length 4" } },
-                new object[]{ "'abc'", new string[] { "Singlequoted strings are only allowed in JSON5" } },
-                new object[]{ "  \"a\n\"", new string[] { "String literal starting at position 2 contains newline" } }
+                                                                                                "Unterminated object" }),
+                ("{", "{}", new string[] { "Unexpected end of JSON" }),
+                ("[", "[]", new string[] { "Unexpected end of JSON" }),
+                ("[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2000, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" }),
+                ("[1] // comment", "[]", new string[] { "Comments are not part of the original JSON specification" }),
+                ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
+                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification." }),
+                ("[1] /* unterminated multiline", "[1]", new string[] { "Unterminated multi-line comment" }),
+                ("\"\\u043\"", "null", new string[] { "Could not find valid hexadecimal of length 4" }),
+                ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
+                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal starting at position 2 contains newline" }),
+                ("[.75, 0xff, +9]", "[0.75, 255, 9]", new string[]
+                {
+                    "leading decimal point",
+                    "hex number",
+                    "leading + sign"
+                }),
+                ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"excaped newline"}),
             };
 
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((string inp, string desired_out, string[] expected_lint) in testcases)
             {
-                string inp = (string)test[0], desired_out = (string)test[1];
-                string[] expected_lint = (string[])test[2];
                 ii++;
                 JNode jdesired = TryParse(desired_out, simpleparser);
                 if (jdesired == null)

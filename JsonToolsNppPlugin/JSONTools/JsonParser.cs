@@ -526,11 +526,13 @@ namespace JSON_Tools.JSON_Tools
                         }
                         sb.Append((char)next_hex);
                     }
-                    //else if (next_char == '\n'
-                    //     && HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, (int)ParserState.JSON5))
-                    //{
-                    //    break;
-                    //}
+                    else if (next_char == '\n')
+                    {
+                        if (HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
+                            break;
+                        sb.Append('\n');
+                        ii++;
+                    }
                     else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
                         break;
                 }
@@ -647,6 +649,24 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
             }
+            else if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
+            {
+                if (HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5))
+                {
+                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                }
+                ii += 2;
+                start = ii;
+                while (ii < inp.Length)
+                {
+                    c = inp[ii];
+                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c < 'F')))
+                        break;
+                    ii++;
+                }
+                var hexnum = long.Parse(inp.Substring(start, ii - start), System.Globalization.NumberStyles.HexNumber);
+                return new JNode(hexnum, Dtype.INT, start + utf8_extra_bytes);
+            }
             while (ii < inp.Length)
             {
                 c = inp[ii];
@@ -660,6 +680,10 @@ namespace JSON_Tools.JSON_Tools
                     {
                         HandleError("Number with a decimal point in the wrong place", inp, ii, ParserState.FATAL);
                         break;
+                    }
+                    if (ii == start && HandleError("Numbers with a leading decimal point are only part of JSON5", inp, start_utf8_pos, ParserState.JSON5))
+                    {
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
                     parsed = 3;
                     ii++;
@@ -978,7 +1002,8 @@ namespace JSON_Tools.JSON_Tools
             }
             if (cur_c >= '0' && cur_c <= '9'
                 || cur_c == '-' || cur_c == '+'
-                || cur_c == 'N' || cur_c == 'I') // NaN, Infinity
+                || cur_c == 'N' || cur_c == 'I' // NaN, Infinity
+                || cur_c == '.') // leading decimal point JSON5 numbers
             {
                 return ParseNumber(inp);
             }

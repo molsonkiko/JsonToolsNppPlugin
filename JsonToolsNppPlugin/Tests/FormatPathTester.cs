@@ -15,7 +15,7 @@ namespace JSON_Tools.Tests
         public static void Test()
         {
             JsonParser parser = new JsonParser();
-            JNode json = parser.Parse("{\"a\":1,\"b \":\"f\",\"cu\":[false,true,[{\"\":{\"bufrear\":null}}]],\"d\":-1.5,\"e\\\"\":[NaN,Infinity,-Infinity]}");
+            JNode json = parser.Parse("{\"a\":1,\"b \":\"f\",\"cu\":[false,true,[{\"\":{\"bufrear\":null}}]],\"d'\":-1.5,\"e\\\"\":[NaN,Infinity,-Infinity]}");
             var testcases = new (int pos, KeyStyle style, string correct_path)[]
             {
                 (6, KeyStyle.JavaScript, ".a"),
@@ -40,7 +40,7 @@ namespace JSON_Tools.Tests
                 (66, KeyStyle.RemesPath, "[`d'`]"),
                 (66, KeyStyle.Python, "[\"d'\"]"),
                 (93, KeyStyle.JavaScript, "['e\"'][2]"),
-                (93, KeyStyle.RemesPath, "[`e\\\"`][2]"),
+                (93, KeyStyle.RemesPath, "[`e\\\\\"`][2]"),
                 (93, KeyStyle.Python, "['e\"'][2]"),
             };
             int ii = 0;
