@@ -379,7 +379,7 @@ namespace JSON_Tools.JSON_Tools
                             }
                             if (!comment_ended)
                             {
-                                HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.FATAL);
+                                HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.BAD);
                                 ii++;
                                 return false;
                             }
@@ -595,16 +595,16 @@ namespace JSON_Tools.JSON_Tools
 
         public string ParseKey(string inp)
         {
-            char quote_char = inp[ii++];
+            char quote_char = inp[ii];
             if (quote_char == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
             {
                 return null;
             }
             if (quote_char != '\'' && quote_char != '"')
             {
-                HandleError("Object keys must be strings", inp, ii - 1, ParserState.FATAL);
-                return null;
+                return ParseUnquotedKey(inp);
             }
+            ii++;
             var sb = new StringBuilder();
             while (true)
             {
@@ -677,6 +677,23 @@ namespace JSON_Tools.JSON_Tools
             }
             ii++;
             return sb.ToString();
+        }
+
+        private static Regex UNQUOTED_KEY_REGEX = new Regex(@"[_\$\w][_\$\w\d\u200c\u200d]*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        public string ParseUnquotedKey(string inp)
+        {
+            var match = UNQUOTED_KEY_REGEX.Match(inp, ii);
+            if (!match.Success)
+            {
+                HandleError($"No valid unquoted key beginning at {ii}", inp, ii, ParserState.FATAL);
+                return null;
+            }
+            HandleError("Unquoted keys are only supported in JSON5", inp, ii, ParserState.JSON5);
+            var result = inp.Substring(ii, match.Length);
+            utf8_extra_bytes += ExtraUTF8BytesBetween(result, 0, result.Length);
+            ii += result.Length;
+            return result;
         }
 
         private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date

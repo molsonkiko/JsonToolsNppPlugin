@@ -1,7 +1,7 @@
 { // this file has ALL the bad things
-"a" false, # yes, all of them
+草 false, # yes, all of them
 "b": "3" /* so much bad */
-"6草": 7,
+"6a": 7,
 '9': "ball", 
 "😀"
       { 
@@ -30,8 +30,8 @@ u":
             Infinity
             -Infinity
             ],
-      // unquoted_keys: "are *very naughty*"
-      "status": "jubaЯ"
+      $unquồted_‍keys "are *very naughty*"
+      _status‌_ｪ: "jubaЯ"
       ],
 "9\"a\"	": 2,
 "blutentharst":

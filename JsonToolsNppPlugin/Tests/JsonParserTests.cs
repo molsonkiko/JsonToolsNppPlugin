@@ -700,6 +700,13 @@ multiline comment
 "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
 "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
                 }),
+                ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3}", "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3}", new string[]
+                {
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5"
+                })
             };
 
             int tests_failed = 0;

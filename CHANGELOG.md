@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- __Make it so unquoted string parsing *really matches the JSON5 standard (https://262.ecma-international.org/5.1/#sec-7.6)*__
 - Fix bugs in YamlDumper.cs:
 	- fails when key contains quotes and colon
 	- fails when value contains quotes and newline
@@ -89,6 +90,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 	* Numbers with leading decimal point, e.g. `.75` is equivalent to `0.75`
 	* Escaped newlines in strings are equivalent to `\\n`. *Note that this will not work if you are using Windows CRLF newline!*
 	* More whitespace characters allowed besides the usual `\r\n \t`
+	* unquoted keys, e.g. `{foo: 1, bar: 2, $baz: 3}` is parsed as `{"foo": 1, "bar": 2, "$baz": 3}`
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
