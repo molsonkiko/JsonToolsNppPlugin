@@ -91,6 +91,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 	* Escaped newlines in strings are equivalent to `\\n`. *Note that this will not work if you are using Windows CRLF newline!*
 	* More whitespace characters allowed besides the usual `\r\n \t`
 	* unquoted keys, e.g. `{foo: 1, bar: 2, $baz: 3}` is parsed as `{"foo": 1, "bar": 2, "$baz": 3}`
+5. Support for the `undefined` literal, which is parsed as `null`.
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
