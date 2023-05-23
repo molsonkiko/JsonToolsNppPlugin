@@ -99,6 +99,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 3. Empty unclosed arrays and objects no longer throw an error
 4. Paths to treenodes including an empty string key (e.g., `{"": 1}`) no longer throw an error
 5. Better handling of comments, especially empty comments
+6. Performance bug (introduced in [4.14.0](#4140---2023-04-12)) in `Expand/Collapse all subtreees` tree node right-click menu option
 
 ## [4.14.0] - 2023-04-12
 
