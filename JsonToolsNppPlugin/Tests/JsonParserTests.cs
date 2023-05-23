@@ -103,7 +103,7 @@ namespace JSON_Tools.Tests
 
         public static void Test()
         {
-            JsonParser parser = new JsonParser();
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true);
             // includes:
             // 1. hex
             // 2. all other backslash escape sequences
@@ -332,12 +332,32 @@ Got
                 }
             }
             #endregion
-            #region PrettyPrintTests
-            string objstr = "{\"a\": [1, 2, 3], \"b\": {}, \"c\": [], \"d\": 3}";
+            #region JNode Position Tests
+            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": 3}";
+            // also includes some weird space like '\xa0' only allowed in JSON5
             JNode onode = TryParse(objstr, parser);
             if (onode != null)
             {
+                var keylines = new (string key,
+                    int original_pos, int whitesmith_pos, int google_pos,
+                    int tostring_miniwhite_pos, int tostring_pos)[]
+                {
+                    ("a", 9, 13, 12, 5, 6),
+                    ("b", 27, 57, 67, 17, 22),
+                    ("Я草", 43, 82, 91, 28, 35),
+                    ("😀", 55, 101, 114, 38, 47)
+                };
                 JObject obj = (JObject)onode;
+                foreach ((string key, int original_position, _, _, _, _) in keylines)
+                {
+                    ii++;
+                    int got_pos = obj[key].position;
+                    if (got_pos != original_position)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After parsing of {objstr}, expected the position of child {key} to be {original_position}, got {got_pos}.");
+                    }
+                }
                 string pp = obj.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
                 string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
                 if (pp != pp_ch_line)
@@ -352,16 +372,7 @@ instead got
                 }
                 ii++;
 
-                var keylines = new (string key,
-                    int whitesmith_pos, int google_pos,
-                    int tostring_miniwhite_pos, int tostring_pos)[]
-                {
-                    ("a", 13, 12, 5, 6),
-                    ("b", 57, 67, 17, 22),
-                    ("c", 78, 87, 24, 31),
-                    ("d", 94, 107, 31, 40)
-                };
-                foreach ((string key, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos) in keylines)
+                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos) in keylines)
                 {
                     obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
                     int got_pos = obj[key].position;
@@ -632,8 +643,8 @@ multiline comment
                 ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
                                                                                                 "Unterminated array", 
                                                                                                 "Unterminated object" }),
-                ("{", "{}", new string[] { "Unterminated object", "At end of valid JSON document, got { instead of EOF" }),
-                ("[", "[]", new string[] { "Unterminated array", "At end of valid JSON document, got [ instead of EOF" }),
+                ("{", "{}", new string[] { "Unterminated object" }),
+                ("[", "[]", new string[] { "Unterminated array" }),
                 ("[+1.5, +2e3, +Infinity, +7.5/-3]", "[1.5, 2000.0, Infinity, -2.5]", new string[]{ "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Infinity is not part of the original JSON specification", "Leading + signs in numbers are not allowed except in JSON5", "Fractions of the form 1/3 are not part of any JSON specification" }),
                 ("[1] // comment", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification" }),
                 ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
@@ -642,9 +653,9 @@ multiline comment
                 ("\"\\u043\"", "\"\"", new string[] { "Could not find valid hexadecimal of length 4" }),
                 ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
                 ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal starting at position 2 contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification" }),
-                ("[.75, 0xff, +9]", "[0.75, 255, 9]", new string[]
+                ("[.75, 0xabcdef, +9, -0xABCDEF, +0x0123456789]", "[0.75, 11259375, 9, -11259375, 4886718345]", new string[]
                 {
-                    "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5"
+                    "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5",
                 }),
                 ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"Escaped newline characters are only allowed in JSON5"}),
                 ("{\"\u000c\t\": \"\u0008\t\u0009\"}", "{\"\\f\\t\": \"\\b\\t\\u0009\"}", new string[]{
@@ -667,6 +678,28 @@ multiline comment
                 ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
                 ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
                 ("[undefined, underpants]", "[null, null]", new string[]{"undefined is not part of any JSON specification", "Expected literal starting with 'u' to be undefined"}),
+                ("\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", "\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", new string[]
+                {
+                    "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+                }),
             };
 
             int tests_failed = 0;

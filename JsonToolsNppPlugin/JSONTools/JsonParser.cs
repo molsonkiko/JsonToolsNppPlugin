@@ -93,19 +93,18 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         OK,
         /// <summary>
-        /// Standard JSON plus NaN, Infinity, and -Infinity.
+        /// Everything at the OK level plus NaN, Infinity, and -Infinity.
         /// </summary>
         NAN_INF,
         /// <summary>
-        /// JSON with JavaScript comments.<br></br>
-        /// NaN and +/-Infinity are also allowed.<br></br>
+        /// Everything at the NAN_INF level, plus JavaScript comments.<br></br>
         /// Note that this differs slightly from the standard JSONC spec
         /// because NaN and +/-Infinity are not part of that spec.
         /// </summary>
         JSONC,
         /// <summary>
         /// JSON that follows the specification described here: https://json5.org/<br></br>
-        /// The most notable deviations from main spec include:<br></br>
+        /// Includes everything at the JSONC level, plus various things, including:<br></br>
         /// * unquoted object keys<br></br>
         /// * comma after last element of iterable<br></br>
         /// * singlequoted strings
@@ -304,7 +303,7 @@ namespace JSON_Tools.JSON_Tools
             if (state < severity)
                 state = severity;
             bool fatal = this.fatal;
-            if (has_logged)
+            if ((int)severity > (int)logger_level)
             {
                 char c = (pos >= inp.Length)
                     ? '\x00'
@@ -381,6 +380,7 @@ namespace JSON_Tools.JSON_Tools
                             if (!comment_ended)
                             {
                                 HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.FATAL);
+                                ii++;
                                 return false;
                             }
                         }
@@ -398,6 +398,31 @@ namespace JSON_Tools.JSON_Tools
                             return false;
                         }
                         ConsumeLine(inp);
+                        break;
+                    case '\u2028': // line separator
+                    case '\u2029': // paragraph separator
+                    case '\ufeff': // Byte-order mark
+                    // the next 16 (plus '\x20', normal whitespace) comprise the unicode space separator category
+                    case '\xa0': // non-breaking space
+                    case '\u1680': // Ogham Space Mark
+                    case '\u2000': // En Quad
+                    case '\u2001': // Em Quad
+                    case '\u2002': // En Space
+                    case '\u2003': // Em Space
+                    case '\u2004': // Three-Per-Em Space
+                    case '\u2005': // Four-Per-Em Space
+                    case '\u2006': // Six-Per-Em Space
+                    case '\u2007': // Figure Space
+                    case '\u2008': // Punctuation Space
+                    case '\u2009': // Thin Space
+                    case '\u200A': // Hair Space
+                    case '\u202F': // Narrow No-Break Space
+                    case '\u205F': // Medium Mathematical Space
+                    case '\u3000': // Ideographic Space
+                        if (HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5))
+                            return false;
+                        utf8_extra_bytes += ExtraUTF8Bytes(c);
+                        ii++;
                         break;
                     default: return true;
                 }
@@ -503,7 +528,8 @@ namespace JSON_Tools.JSON_Tools
                     if (ii >= inp.Length - 2)
                     {
                         HandleError($"Unterminated string literal starting at position {start_utf8_pos}", inp, inp.Length - 1, ParserState.BAD);
-                        break;
+                        ii++;
+                        continue;
                     }
                     char next_char = inp[ii + 1];
                     if (next_char == quote_char)
@@ -698,9 +724,9 @@ namespace JSON_Tools.JSON_Tools
             int start = ii;
             int start_utf8_pos = start + utf8_extra_bytes;
             char c = inp[ii];
+            bool negative = false;
             if (c < '0' || c > '9')
             {
-                bool negative = false;
                 if (c == '-' || c == '+')
                 {
                     if (c == '+')
@@ -713,7 +739,8 @@ namespace JSON_Tools.JSON_Tools
                     else negative = true;
                     ii++;
                 }
-                if (inp[ii] == 'I')
+                c = inp[ii];
+                if (c == 'I')
                 {
                     // try Infinity
                     if (ii <= inp.Length - 8 && inp[ii + 1] == 'n' && inp.Substring(ii + 2, 6) == "finity")
@@ -730,7 +757,7 @@ namespace JSON_Tools.JSON_Tools
                                                   inp, ii + 1, ParserState.FATAL);
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
-                if (inp[ii] == 'N')
+                else if (c == 'N')
                 {
                     // try NaN
                     if (ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'N')
@@ -746,7 +773,7 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
             }
-            else if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
+            if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
             {
                 if (HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5))
                 {
@@ -757,12 +784,12 @@ namespace JSON_Tools.JSON_Tools
                 while (ii < inp.Length)
                 {
                     c = inp[ii];
-                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c < 'F')))
+                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
                         break;
                     ii++;
                 }
                 var hexnum = long.Parse(inp.Substring(start, ii - start), System.Globalization.NumberStyles.HexNumber);
-                return new JNode(hexnum, Dtype.INT, start + utf8_extra_bytes);
+                return new JNode(negative ? -hexnum : hexnum, Dtype.INT, start_utf8_pos);
             }
             while (ii < inp.Length)
             {
@@ -850,7 +877,17 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(double.Parse(numstr), Dtype.FLOAT, start_utf8_pos);
                 }
             }
-            return new JNode(double.Parse(numstr, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, start_utf8_pos);
+            double num;
+            try
+            {
+                num = double.Parse(numstr, JNode.DOT_DECIMAL_SEP);
+            }
+            catch
+            {
+                HandleError($"Number {numstr} had bad format", inp, start_utf8_pos, ParserState.BAD);
+                num = NanInf.nan;
+            }
+            return new JNode(num, Dtype.FLOAT, start_utf8_pos);
         }
 
         /// <summary>
@@ -870,11 +907,6 @@ namespace JSON_Tools.JSON_Tools
             var children = new List<JNode>();
             JArray arr = new JArray(ii + utf8_extra_bytes, children);
             bool already_seen_comma = false;
-            if (ii >= inp.Length - 1)
-            {
-                HandleError("Unterminated array", inp, inp.Length - 1, ParserState.BAD);
-                return arr;
-            }
             ii++;
             char cur_c;
             if (recursion_depth == MAX_RECURSION_DEPTH)
@@ -946,6 +978,7 @@ namespace JSON_Tools.JSON_Tools
                         return arr;
                 }
             }
+            ii++;
             HandleError("Unterminated array", inp, inp.Length - 1, ParserState.BAD);
             return arr;
         }
@@ -969,11 +1002,6 @@ namespace JSON_Tools.JSON_Tools
             var children = new Dictionary<string, JNode>();
             JObject obj = new JObject(ii + utf8_extra_bytes, children);
             bool already_seen_comma = false;
-            if (ii >= inp.Length - 1)
-            {
-                HandleError("Unterminated object", inp, inp.Length - 1, ParserState.BAD);
-                return obj;
-            }
             ii++;
             char cur_c;
             if (recursion_depth == MAX_RECURSION_DEPTH)
@@ -1078,6 +1106,7 @@ namespace JSON_Tools.JSON_Tools
                     already_seen_comma = false;
                 }
             }
+            ii++;
             HandleError("Unterminated object", inp, inp.Length - 1, ParserState.BAD);
             return obj;
         }
@@ -1300,7 +1329,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JsonParser Copy()
         {
-            return new JsonParser(logger_level, parse_datetimes, throw_if_logged);
+            return new JsonParser(logger_level, parse_datetimes, throw_if_logged, throw_if_fatal);
         }
     }
     #endregion

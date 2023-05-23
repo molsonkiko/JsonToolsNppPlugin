@@ -75,6 +75,10 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 			* missing ']' or '}' at the ends of arrays and objects
 			* a bunch of other common syntax errors
 
+### Minor changes
+
+1. Changed the default value of `minimal_whitespace_compression` to `true`.
+
 ### Added
 
 1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
@@ -83,7 +87,8 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 4. Support for more of the JSON5 specification:
 	* Hex numbers with leading `0x`, e.g., `[0xff, 0xe]` is equivalent to `[255, 14]`.
 	* Numbers with leading decimal point, e.g. `.75` is equivalent to `0.75`
-	* Escaped newlines in strings are equivalent to `\\n`. *Note that this will not work if you are using Windows CRLF newline!* 
+	* Escaped newlines in strings are equivalent to `\\n`. *Note that this will not work if you are using Windows CRLF newline!*
+	* More whitespace characters allowed besides the usual `\r\n \t`
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.

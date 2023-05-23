@@ -64,7 +64,7 @@ namespace JSON_Tools.Utils
         public int indent_pretty_print { get; set; }
 
         [Description("If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays"),
-            Category("JSON formatting"), DefaultValue(false)]
+            Category("JSON formatting"), DefaultValue(true)]
         public bool minimal_whitespace_compression { get; set; }
 
         [Description("Sort the keys of objects alphabetically when pretty-printing or compressing"),

@@ -508,7 +508,7 @@ namespace Kbg.NppPluginNET
             // make sure grepperForm gets these new settings as well
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
-                grepperForm.grepper.json_parser = new JsonParser(settings.logger_level, settings.allow_datetimes);
+                grepperForm.grepper.json_parser = jsonParser.Copy();
                 grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
                 FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
             }
