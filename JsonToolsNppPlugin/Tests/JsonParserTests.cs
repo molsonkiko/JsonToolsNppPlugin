@@ -666,6 +666,7 @@ multiline comment
                 ("", "null", new string[]{"No input"}),
                 ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
                 ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
+                ("[undefined, underpants]", "[null, null]", new string[]{"undefined is not part of any JSON specification", "Expected literal starting with 'u' to be undefined"}),
             };
 
             int tests_failed = 0;

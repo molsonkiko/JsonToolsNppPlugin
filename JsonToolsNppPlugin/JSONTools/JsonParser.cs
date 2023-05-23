@@ -1163,6 +1163,20 @@ namespace JSON_Tools.JSON_Tools
                                               inp, ii+1, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
+            if (cur_c == 'u')
+            {
+                // try undefined, because apparently some people want that?
+                // https://github.com/kapilratnani/JSON-Viewer/pull/146
+                // it will be parsed as null
+                if (ii <= inp.Length - 9 && next_c == 'n' && inp.Substring(ii + 2, 7) == "defined")
+                {
+                    ii += 9;
+                    HandleError("undefined is not part of any JSON specification", inp, start_utf8_pos - utf8_extra_bytes, ParserState.BAD);
+                }
+                else HandleError("Expected literal starting with 'u' to be undefined",
+                                              inp, ii + 1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
             HandleError("Badly located character", inp, ii, ParserState.FATAL);
             return new JNode(null, Dtype.NULL, start_utf8_pos);
         }
