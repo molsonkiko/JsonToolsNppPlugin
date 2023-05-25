@@ -118,6 +118,7 @@ namespace JSON_Tools.Forms
         {
             if (e.KeyChar == '\t')
                 e.Handled = true;
+            // TODO: maybe add some way to highlight unclosed braces?
         }
 
         public static void SetImageOfTreeNode(TreeNode root, JNode json)
@@ -723,13 +724,13 @@ namespace JSON_Tools.Forms
                             else
                             {
                                 // node.ExpandAll() is VERY VERY SLOW if we don't do it this way
-                                JNode json = pathsToJNodes[node.FullPath];
                                 Tree.BeginUpdate();
-                                JsonTreePopulate_FullRecursive(Tree, node, json, pathsToJNodes);
-                                Tree.EndUpdate();
                                 isExpandingAllSubtrees = true;
+                                JNode json = pathsToJNodes[node.FullPath];
+                                JsonTreePopulate_FullRecursive(Tree, node, json, pathsToJNodes);
                                 node.ExpandAll();
                                 isExpandingAllSubtrees = false;
+                                Tree.EndUpdate();
                             }
                         }
                     }

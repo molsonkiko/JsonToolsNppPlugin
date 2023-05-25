@@ -52,6 +52,23 @@ Syntax error at position 3: Number with two decimal points
 
     public class RemesPathLexer
     {
+        public struct StringToken
+        {
+            public string value;
+            public bool quoted;
+
+            public StringToken(string value, bool quoted)
+            {
+                this.value = value;
+                this.quoted = quoted;
+            }
+
+            public override string ToString()
+            {
+                return JNode.StrToString(value, true);
+            }
+        }
+
         public const int MAX_RECURSION_DEPTH = JsonParser.MAX_RECURSION_DEPTH;
         /// <summary>
         /// position in query string
@@ -60,8 +77,8 @@ Syntax error at position 3: Number with two decimal points
 
         public RemesPathLexer() { }
 
-        // note that '-' sign is not part of this num regex. That's because '-' is its own token and is handled
-        // separately from numbers
+        // note that '-' sign is not part of this num regex.
+        // That's because '-' is its own token and is handled separately from numbers
         public static readonly Regex NUM_REGEX = new Regex(@"^(-?(?:0|[1-9]\d*))" + // any int or 0
                 @"(\.\d+)?" + // optional decimal point and digits after
                 @"([eE][-+]?\d+)?$", // optional scientific notation
@@ -147,7 +164,7 @@ Syntax error at position 3: Number with two decimal points
             return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
         }
 
-        public JNode ParseQuotedString(string q)
+        public StringToken ParseQuotedString(string q)
         {
             bool escaped = false;
             char c;
@@ -158,7 +175,7 @@ Syntax error at position 3: Number with two decimal points
                 if (c == '`')
                 {
                     if (!escaped) {
-                        return new JNode(sb.ToString(), Dtype.STR, 0);
+                        return new StringToken(sb.ToString(), true);
                     }
                     sb.Append(c);
                     escaped = false;
@@ -179,6 +196,9 @@ Syntax error at position 3: Number with two decimal points
             throw new RemesLexerException(ii, q, "Unterminated quoted string");
         }
 
+        private static readonly Regex UNQUOTED_STRING_REGEX = new Regex(@"[a-z_][a-z_\d]*",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         /// <summary>
         /// Parses a reference to a named function, or an unquoted string, or a reference to a constant like true or false or NaN
         /// </summary>
@@ -187,23 +207,11 @@ Syntax error at position 3: Number with two decimal points
         /// <returns></returns>
         public object ParseUnquotedString(string q)
         {
-            char c = q[ii++];
-            StringBuilder sb = new StringBuilder();
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'))
-            {
-                sb.Append(c);
-            }
-            while (ii < q.Length)
-            {
-                c = q[ii];
-                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_') || (c >= '0' && c <= '9'))
-                {
-                    sb.Append(c);
-                    ii++;
-                }
-                else { break; }
-            }
-            string uqs = sb.ToString();
+            Match m = UNQUOTED_STRING_REGEX.Match(q, ii);
+            if (!m.Success)
+                throw new RemesLexerException(ii, q, "Failed to match unquoted string");
+            ii += m.Length;
+            string uqs = m.Value;
             if (CONSTANTS.ContainsKey(uqs))
             {
                 object con = CONSTANTS[uqs];
@@ -224,13 +232,9 @@ Syntax error at position 3: Number with two decimal points
             {
                 return Binop.BINOPS[uqs];
             }
-            else if (ArgFunction.FUNCTIONS.ContainsKey(uqs))
-            {
-                return ArgFunction.FUNCTIONS[uqs];
-            }
             else
             {
-                return new JNode(uqs, Dtype.STR, 0);
+                return new StringToken(uqs, false);
             }
         }
 
@@ -260,7 +264,7 @@ Syntax error at position 3: Number with two decimal points
             var tokens = new List<object>();
             ii = 0;
             char c;
-            JNode quoted_string;
+            StringToken quoted_string;
             object unquoted_string;
             Binop bop;
             int parens_opened = 0;
@@ -331,7 +335,7 @@ Syntax error at position 3: Number with two decimal points
                     {
                         ii++;
                         quoted_string = ParseQuotedString(q);
-                        tokens.Add(new JRegex(new Regex((string)quoted_string.value)));
+                        tokens.Add(new JRegex(new Regex(quoted_string.value)));
                     }
                     else
                     {
@@ -346,7 +350,7 @@ Syntax error at position 3: Number with two decimal points
                     {
                         ii++;
                         quoted_string = ParseQuotedString(q);
-                        tokens.Add(jsonParser.Parse((string)quoted_string.value));
+                        tokens.Add(jsonParser.Parse(quoted_string.value));
                     }
                     else
                     {

@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
-using System.Runtime.InteropServices;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -278,6 +277,24 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// the string representation of a JNode with value s,
+        /// with or without the enclosing quotes that a Dtype.STR JNode normally has
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static string StrToString(IEnumerable<char> s, bool quoted)
+        {
+            var sb = new StringBuilder();
+            if (quoted)
+                sb.Append('"');
+            foreach (char c in s)
+                sb.Append(CharToString(c));
+            if (quoted)
+                sb.Append('"');
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Compactly prints the JSON.<br></br>
         /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
@@ -291,7 +308,6 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.STR:
                 {
                     var sb = new StringBuilder();
-                    // wrap it in double quotes
                     sb.Append('"');
                     foreach (char c in (string)value)
                         sb.Append(CharToString(c));
@@ -316,7 +332,7 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";
                 case Dtype.BOOL: return (bool)value ? "true" : "false";
-                case Dtype.REGEX: return new JNode(((JRegex)this).regex.ToString(), Dtype.STR, 0).ToString();
+                case Dtype.REGEX: return StrToString(((JRegex)this).regex.ToString(), true);
                 case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:mm:ss") + '"';
                 case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
                 default: return ((object)this).ToString(); // just show the type name for it
@@ -549,11 +565,10 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (this is JObject obj)
             {
-                foreach (string key in obj.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in obj.children)
                 {
-                    JNode val = obj[key];
-                    path.Add(key);
-                    result = val.PathToPositionHelper(pos, style, path);
+                    path.Add(kv.Key);
+                    result = kv.Value.PathToPositionHelper(pos, style, path);
                     if (result.Length > 0)
                         return result;
                     path.RemoveAt(path.Count - 1);
@@ -897,20 +912,18 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="ArgumentException"></exception>
         public override bool Equals(JNode other)
         {
-            if (other.type != Dtype.OBJ)
+            if (!(other is JObject othobj))
             {
                 throw new ArgumentException($"Cannot compare object {ToString()} to non-object {other.ToString()}");
             }
-            var othobj = (JObject)other;
             if (children.Count != othobj.children.Count)
             {
                 return false;
             }
-            foreach (string key in children.Keys)
+            foreach (KeyValuePair<string, JNode> kv in children)
             {
-                JNode val = children[key];
-                bool other_haskey = othobj.children.TryGetValue(key, out JNode valobj);
-                if (!other_haskey || !val.Equals(valobj))
+                bool other_haskey = othobj.children.TryGetValue(kv.Key, out JNode valobj);
+                if (!other_haskey || !kv.Value.Equals(valobj))
                 {
                     return false;
                 }
@@ -922,23 +935,11 @@ namespace JSON_Tools.JSON_Tools
         public override JNode Copy()
         {
             JObject copy = new JObject();
-            foreach (string key in children.Keys)
+            foreach (KeyValuePair<string, JNode> kv in children)
             {
-                copy[key] = children[key].Copy();
+                copy[kv.Key] = kv.Value.Copy();
             }
             return copy;
-        }
-
-        /// <summary>
-        /// you need to make sure that a string has all characters properly escaped and whatnot
-        /// before you can use it as a key in JSON
-        /// </summary>
-        /// <param name="k"></param>
-        /// <returns></returns>
-        public static string FormatAsKey(string k)
-        {
-            string result = new JNode(k, Dtype.STR, 0).ToString();
-            return result.Substring(1, result.Length - 2);
         }
     }
 

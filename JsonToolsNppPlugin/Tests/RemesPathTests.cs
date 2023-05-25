@@ -19,7 +19,7 @@ namespace JSON_Tools.Tests
                 ( "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], 2L}), "cur_json binop scalar" ),
                 ( "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" ),
                 ( "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" ),
-                ( "len(null, Infinity)", new List<object>(new object[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" ),
+                ( "len(null, Infinity)", new List<object>(new object[]{"len", '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" ),
                 ( "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" ),
                 ( "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" ),
                 ( " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" ),
@@ -27,7 +27,7 @@ namespace JSON_Tools.Tests
                 ( "3blue", new List<object>(new object[]{3L, "blue"}), "number immediately followed by string" ),
                 ( "2.5+-2", new List<object>(new object[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}), "number binop binop number, no whitespace" ),
                 ( "`a`+@", new List<object>(new object[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace" ),
-                ( "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], ArgFunction.FUNCTIONS["in"], Binop.BINOPS["=~"]}), "two-character binops and argfunction in" ),
+                ( "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}), "two-character binops and argfunction in" ),
                 ( "@[1,2]/3", new List<object>(new object[]{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}), "numbers and delimiters then binop number, no whitespace" ),
                 ( "2 <=3!=", new List < object >(new object[] {2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }), "!=" ),
                 ( "8 = @ * 79 ==", new List<object>(new object[] {8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}), "assignment operator" ),
@@ -79,9 +79,9 @@ namespace JSON_Tools.Tests
                 var sb_output = new StringBuilder();
                 foreach (object value in output)
                 {
-                    if (value is JNode && !(value is CurJson))
+                    if (value is JNode jnode && !(value is CurJson))
                     {
-                        sb_output.Append(((JNode)value).ToString());
+                        sb_output.Append(jnode.ToString());
                     }
                     else
                     {
@@ -409,6 +409,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("(2 | s_len(str(@.foo[0])))[2]", "3"), // indexing on a paren-wrapped result of a binop (scalar, vectorized arg function)
                 new Query_DesiredResult("(range(len(@.foo)) ** 3)[2]", "8.0"), // indexing on a paren-wrapped result of a binop (non-vectorized arg function, scalar)
                 new Query_DesiredResult("(s_len(str(@.foo[0])) ^ 3)[2]", "2"), // indexing on a paren-wrapped result of a binop (vectorized arg function, scalar)
+                new Query_DesiredResult("j`{\"items\": [\"a\", 1]}`.items", "[\"a\", 1]"), // using an ArgFunction name as a string rather than an ArgFunction
             };
             int ii = 0;
             int tests_failed = 0;
@@ -455,7 +456,8 @@ namespace JSON_Tools.Tests
                 new string[] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
                 new string[] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
                 new string[] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
-});
+                new string[] {"blahrurn(@, a)", "{}"}, // something that's not the name of an ArgFunction used where an ArgFunction was expected
+            });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
             foreach (string other in invalid_others)
@@ -641,20 +643,17 @@ namespace JSON_Tools.Tests
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true");
             JNode jfalse = jsonParser.Parse("false");
-            var testcases = new object[][]
+            var testcases = new (List<JNode> args, ArgFunction f, JNode desired_output)[]
             {
-                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
-                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
-                new object[]{ new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
-                new object[]{ new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
+                ( new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) ),
+                ( new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") ),
+                ( new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") ),
+                ( new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) ),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((List<JNode> args, ArgFunction f, JNode desired_output) in testcases)
             {
-                List<JNode> args = (List<JNode>)test[0];
-                ArgFunction f = (ArgFunction)test[1];
-                JNode desired = (JNode)test[2];
                 JNode output = f.Call(args);
                 var sb = new StringBuilder();
                 sb.Append('{');
@@ -666,7 +665,7 @@ namespace JSON_Tools.Tests
                 }
                 sb.Append('}');
                 string argstrings = sb.ToString();
-                string str_desired = desired.ToString();
+                string str_desired = desired_output.ToString();
                 string str_output = output.ToString();
                 if (str_desired != str_output)
                 {

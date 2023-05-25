@@ -61,7 +61,7 @@ namespace JSON_Tools.Tests
                         schema["required"] = required_arr;
                         foreach (string possibleKey in ((JObject)schema["properties"]).children.Keys)
                         {
-                            allKeys.Add((string)possibleKey);
+                            allKeys.Add(possibleKey);
                         }
                         foreach (JNode keynode in required_arr.children)
                         {

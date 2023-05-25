@@ -20,8 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     ]
 }
 ```
-3. Add parsing of unquoted strings when linter is active.
-	(would this cause too much of a performance hit?)
  
 ### To Be Changed
 
@@ -100,6 +98,8 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 4. Paths to treenodes including an empty string key (e.g., `{"": 1}`) no longer throw an error
 5. Better handling of comments, especially empty comments
 6. Performance bug (introduced in [4.14.0](#4140---2023-04-12)) in `Expand/Collapse all subtreees` tree node right-click menu option
+7. Better RemesPath error message when user tries to use a function that doesn't exist
+8. RemesPath function names can be used unquoted when they're not being called as functions. For example, `@.items` would have raised an error previously because `items` is a function name, but now there's no problem.
 
 ## [4.14.0] - 2023-04-12
 

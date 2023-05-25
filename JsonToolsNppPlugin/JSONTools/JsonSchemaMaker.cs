@@ -419,9 +419,9 @@ namespace JSON_Tools.JSON_Tools
             else if (json is JObject obj)
             {
                 var props = new Dictionary<string, object>();
-                foreach (string k in obj.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in obj.children)
                 {
-                    props[k] = BuildSchema(obj[k]);
+                    props[kv.Key] = BuildSchema(kv.Value);
                 }
                 if (props.Count > 0)
                 {

@@ -424,9 +424,9 @@ namespace JSON_Tools.JSON_Tools
                 {
                     // standard validation: one schema per key in "properties"
                     JObject props = (JObject)properties;
-                    foreach (string key in props.children.Keys)
+                    foreach (KeyValuePair<string, JNode> kv in props.children)
                     {
-                        propsValidators[key] = CompileValidationFuncHelper(props[key], definitions, recursions + 1);
+                        propsValidators[kv.Key] = CompileValidationFuncHelper(kv.Value, definitions, recursions + 1);
                     }
                 }
                 string[] required = schema.children.TryGetValue("required", out JNode requiredNode)
@@ -454,11 +454,11 @@ namespace JSON_Tools.JSON_Tools
                         foreach (var regexAndValidator in patternPropsValidators)
                         {
                             var regex = regexAndValidator.regex;
-                            foreach (string key in obj.children.Keys)
+                            foreach (KeyValuePair<string, JNode> kv in obj.children)
                             {
-                                if (regex.IsMatch(key))
+                                if (regex.IsMatch(kv.Key))
                                 {
-                                    var vp = regexAndValidator.validator(obj[key]);
+                                    var vp = regexAndValidator.validator(kv.Value);
                                     if (vp != null) return vp;
                                 }
                             }

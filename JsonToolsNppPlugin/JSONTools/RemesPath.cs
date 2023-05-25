@@ -280,11 +280,11 @@ namespace JSON_Tools.JSON_Tools
         #region INDEXER_FUNCTIONS
         private Func<JNode, IEnumerable<Key_Node>> ApplyMultiIndex(object inds, bool is_varname_list, bool is_recursive = false)
         {
-            if (inds is CurJson)
+            if (inds is CurJson cj)
             {
                 IEnumerable<Key_Node> multi_idx_func(JNode x)
                 {
-                    return ApplyMultiIndex(((CurJson)inds).function(x), is_varname_list, is_recursive)(x);
+                    return ApplyMultiIndex(cj.function(x), is_varname_list, is_recursive)(x);
                 }
                 return multi_idx_func;
             }
@@ -295,43 +295,39 @@ namespace JSON_Tools.JSON_Tools
                 {
                     IEnumerable<Key_Node> multi_idx_func(JNode x, string path, HashSet<string> paths_visited)
                     {
-                        if (x is JArray)
+                        if (x is JArray xarr)
                         {
                             // a varname list can only match dict keys, not array indices
                             // we'll just recursively search from each child of this array
-                            JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
-                                foreach (Key_Node kv in multi_idx_func(xarr[ii], path + ',' + ii.ToString(), paths_visited))
+                                foreach (Key_Node kv in multi_idx_func(xarr[ii], $"{path},{ii}", paths_visited))
                                 {
                                     yield return kv;
                                 }
                             }
                         }
-                        else if (x is JObject)
+                        else if (x is JObject xobj)
                         {
-                            JObject xobj = (JObject)x;
                             // yield each key or regex match in this dict
                             // recursively descend from each key that doesn't match
                             foreach (object v in children)
                             {
-                                if (v is string)
+                                if (v is string strv)
                                 {
-                                    string strv = (string)v;
-                                    if (path == "") path = strv;
-                                    foreach (string k in xobj.children.Keys)
+                                    if (path.Length == 0) path = strv;
+                                    foreach (KeyValuePair<string, JNode> kv in xobj.children)
                                     {
-                                        JNode val = xobj[k];
-                                        string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
-                                        if (k == strv)
+                                        string newpath = $"{path},{kv.Key}";
+                                        if (kv.Key == strv)
                                         {
                                             if (!paths_visited.Contains(newpath))
-                                                yield return new Key_Node(0, val);
+                                                yield return new Key_Node(0, kv.Value);
                                             paths_visited.Add(newpath);
                                         }
                                         else
                                         {
-                                            foreach (Key_Node ono in multi_idx_func(val, newpath, paths_visited))
+                                            foreach (Key_Node ono in multi_idx_func(kv.Value, newpath, paths_visited))
                                                 yield return new Key_Node(0, ono.node);
                                         }
                                     }
@@ -339,20 +335,19 @@ namespace JSON_Tools.JSON_Tools
                                 else
                                 {
                                     Regex regv = (Regex)v;
-                                    if (path == "") path = regv.ToString();
-                                    foreach (string k in xobj.children.Keys)
+                                    if (path.Length == 0) path = regv.ToString();
+                                    foreach (KeyValuePair<string, JNode> kv in xobj.children)
                                     {
-                                        JNode val = xobj[k];
-                                        string newpath = path + ',' + new JNode(k, Dtype.STR, 0).ToString();
-                                        if (regv.IsMatch(k))
+                                        string newpath = $"{path},{kv.Key}";
+                                        if (regv.IsMatch(kv.Key))
                                         {
                                             if (!paths_visited.Contains(newpath))
-                                                yield return new Key_Node(0, val);
+                                                yield return new Key_Node(0, kv.Value);
                                             paths_visited.Add(newpath);
                                         }
                                         else
                                         {
-                                            foreach (Key_Node ono in multi_idx_func(val, newpath, paths_visited))
+                                            foreach (Key_Node ono in multi_idx_func(kv.Value, newpath, paths_visited))
                                             {
                                                 yield return new Key_Node(0, ono.node);
                                             }
@@ -371,9 +366,8 @@ namespace JSON_Tools.JSON_Tools
                         var xobj = (JObject)x;
                         foreach (object v in children)
                         {
-                            if (v is string)
+                            if (v is string vstr)
                             {
-                                string vstr = (string)v;
                                 if (xobj.children.TryGetValue(vstr, out JNode val))
                                 {
                                     yield return new Key_Node(vstr, val);
@@ -404,10 +398,10 @@ namespace JSON_Tools.JSON_Tools
                     JArray xarr = (JArray)x;
                     foreach (object ind in children)
                     {
-                        if (ind is int?[])
+                        if (ind is int?[] slicer)
                         {
                             // it's a slice, so yield all the JNodes in that slice
-                            foreach (JNode subind in xarr.children.LazySlice((int?[])ind))
+                            foreach (JNode subind in xarr.children.LazySlice(slicer))
                             {
                                 yield return new Key_Node(0, subind);
                             }
@@ -427,12 +421,11 @@ namespace JSON_Tools.JSON_Tools
 
         private IEnumerable<Key_Node> ApplyRegexIndex(JObject obj, Regex regex)
         {
-            foreach (string ok in obj.children.Keys)
+            foreach (KeyValuePair<string, JNode> kv in obj.children)
             {
-                JNode val = obj[ok];
-                if (regex.IsMatch(ok))
+                if (regex.IsMatch(kv.Key))
                 {
-                    yield return new Key_Node(ok, val);
+                    yield return new Key_Node(kv.Key, kv.Value);
                 }
             }
         }
@@ -441,29 +434,23 @@ namespace JSON_Tools.JSON_Tools
         {
             IEnumerable<Key_Node> bool_idxr_func(JNode x)
             {
-                JNode newinds = inds;
-                if (inds is CurJson)
-                {
-                    CurJson jinds = (CurJson)inds;
-                    Func<JNode, JNode> indfunc = jinds.function;
-                    newinds = indfunc(x);
-                }
-                if (newinds.type == Dtype.BOOL)
+                JNode newinds = (inds is CurJson cj)
+                    ? cj.function(x)
+                    : inds;
+                if (newinds.value is bool newibool)
                 {
                     // to allow for boolean indices that filter on the entire object/array, like @.bar == @.foo or sum(@) == 0
-                    if ((bool)newinds.value)
+                    if (newibool)
                     {
-                        if (x.type == Dtype.OBJ)
+                        if (x is JObject xobj)
                         {
-                            JObject xobj = (JObject)x;
-                            foreach (string key in xobj.children.Keys)
+                            foreach (KeyValuePair<string, JNode> kv in xobj.children)
                             {
-                                yield return new Key_Node(key, xobj[key]);
+                                yield return new Key_Node(kv.Key, kv.Value);
                             }
                         }
-                        else if (x.type == Dtype.ARR)
+                        else if (x is JArray xarr)
                         {
-                            JArray xarr = (JArray)x;
                             for (int ii = 0; ii < xarr.Length; ii++)
                             {
                                 yield return new Key_Node(ii, xarr[ii]);
@@ -473,35 +460,32 @@ namespace JSON_Tools.JSON_Tools
                     // if the condition is false, yield nothing
                     yield break;
                 }
-                else if (newinds.type == Dtype.OBJ)
+                else if (newinds is JObject iobj)
                 {
-                    JObject iobj = (JObject)newinds;
                     JObject xobj= (JObject)x;
                     if (iobj.Length != xobj.Length)
                     {
                         throw new VectorizedArithmeticException($"bool index length {iobj.Length} does not match object/array length {xobj.Length}.");
                     }
-                    foreach (string key in xobj.children.Keys)
+                    foreach (KeyValuePair<string, JNode> kv in xobj.children)
                     {
-                        JNode xval = xobj[key];
-                        bool i_has_key = iobj.children.TryGetValue(key, out JNode ival);
+                        bool i_has_key = iobj.children.TryGetValue(kv.Key, out JNode ival);
                         if (i_has_key)
                         {
-                            if (ival.type != Dtype.BOOL)
+                            if (!(ival.value is bool ibool))
                             {
                                 throw new VectorizedArithmeticException("bool index contains non-booleans");
                             }
-                            if ((bool)ival.value)
+                            if (ibool)
                             {
-                                yield return new Key_Node(key, xval);
+                                yield return new Key_Node(kv.Key, kv.Value);
                             }
                         }
                     }
                     yield break;
                 }
-                else if (newinds.type == Dtype.ARR)
+                else if (newinds is JArray iarr)
                 {
-                    JArray iarr = (JArray)newinds;
                     JArray xarr = (JArray)x;
                     if (iarr.Length != xarr.Length)
                     {
@@ -528,12 +512,11 @@ namespace JSON_Tools.JSON_Tools
 
         private IEnumerable<Key_Node> ApplyStarIndexer(JNode x)
         {
-            if (x.type == Dtype.OBJ)
+            if (x is JObject xobj)
             {
-                var xobj = (JObject)x;
-                foreach (string key in xobj.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in xobj.children)
                 {
-                    yield return new Key_Node(key, xobj[key]);
+                    yield return new Key_Node(kv.Key, kv.Value);
                 }
                 yield break;
             }
@@ -597,8 +580,8 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         private static int ObjectOrArrayEmpty(JNode x)
         {
-            if (x.type == Dtype.OBJ) { return (((JObject)x).Length == 0) ? 1 : 0; }
-            if (x.type == Dtype.ARR) { return (((JArray)x).Length == 0) ? 1 : 0; }
+            if (x is JObject obj) { return (obj.Length == 0) ? 1 : 0; }
+            if (x is JArray arr)  { return (arr.Length == 0) ? 1 : 0; }
             return 2;
         }
 
@@ -741,24 +724,22 @@ namespace JSON_Tools.JSON_Tools
             {
                 return BinopScalarJson(b, left, right);
             }
-            if (right.type == Dtype.OBJ)
+            if (right is JObject robj)
             {
                 var dic = new Dictionary<string, JNode>();
-                var robj = (JObject)right;
                 var lobj = (JObject)left;
                 if (robj.Length != lobj.Length)
                 {
                     throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
                 }
-                foreach (string key in robj.children.Keys)
+                foreach (KeyValuePair<string, JNode> rkv in robj.children)
                 {
-                    JNode right_val = robj[key];
-                    bool left_has_key = lobj.children.TryGetValue(key, out JNode left_val);
+                    bool left_has_key = lobj.children.TryGetValue(rkv.Key, out JNode left_val);
                     if (!left_has_key)
                     {
                         throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
                     }
-                    dic[key] = b.Call(left_val, right_val);
+                    dic[rkv.Key] = b.Call(left_val, rkv.Value);
                 }
                 return new JObject(0, dic);
             }
@@ -778,13 +759,12 @@ namespace JSON_Tools.JSON_Tools
 
         private JNode BinopJsonScalar(Binop b, JNode left, JNode right)
         {
-            if (left.type == Dtype.OBJ)
+            if (left is JObject lobj)
             {
                 var dic = new Dictionary<string, JNode>();
-                var lobj = (JObject)left;
-                foreach (string key in lobj.children.Keys)
+                foreach (KeyValuePair<string, JNode> lkv in lobj.children)
                 {
-                    dic[key] = b.Call(lobj[key], right);
+                    dic[lkv.Key] = b.Call(lkv.Value, right);
                 }
                 return new JObject(0, dic);
             }
@@ -799,13 +779,12 @@ namespace JSON_Tools.JSON_Tools
 
         private JNode BinopScalarJson(Binop b, JNode left, JNode right)
         {
-            if (right.type == Dtype.OBJ)
+            if (right is JObject robj)
             {
                 var dic = new Dictionary<string, JNode>();
-                var robj = (JObject)right;
-                foreach (string key in robj.children.Keys)
+                foreach (KeyValuePair<string, JNode> rkv in robj.children)
                 {
-                    dic[key] = b.Call(left, robj[key]);
+                    dic[rkv.Key] = b.Call(left, rkv.Value);
                 }
                 return new JObject(0, dic);
             }
@@ -908,30 +887,27 @@ namespace JSON_Tools.JSON_Tools
             bool left_itbl = (left.type & Dtype.ITERABLE) != 0;
             bool right_itbl = (right.type & Dtype.ITERABLE) != 0;
             Dtype out_type = BinopOutType(b, left.type, right.type);
-            if (left is CurJson)
+            if (left is CurJson lcur)
             {
-                CurJson lcur = (CurJson)left;
-                if (right is CurJson)
+                if (right is CurJson rcur_)
                 {
-                    // both are functions of the current JSON
-                    CurJson rcur = (CurJson)right;
                     if (left_itbl)
                     {
                         if (right_itbl)
                         {
                             // they're both iterables or unknown type
-                            return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur.function(x)));
+                            return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
                         }
                         // only left is an iterable and unknown type
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur.function(x)));
+                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
                     }
                     if (right_itbl)
                     {
                         // right is iterable or unknown, but left is not iterable
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur.function(x)));
+                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
                     }
                     // they're both scalars
-                    return new CurJson(out_type, (JNode x) => b.Call(lcur.function(x), rcur.function(x)));
+                    return new CurJson(out_type, (JNode x) => b.Call(lcur.function(x), rcur_.function(x)));
                 }
                 // right is not a function of the current JSON, but left is
                 if (left_itbl)
@@ -948,10 +924,9 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return new CurJson(out_type, (JNode x) => b.Call(lcur.function(x), right));
             }
-            if (right is CurJson)
+            if (right is CurJson rcur)
             {
                 // left is not a function of the current JSON, but right is
-                CurJson rcur = (CurJson)right;
                 if (left_itbl)
                 {
                     if (right_itbl)
@@ -992,13 +967,13 @@ namespace JSON_Tools.JSON_Tools
         {
             object left = b.left;
             object right = b.right;
-            if (left is BinopWithArgs)
+            if (left is BinopWithArgs bwl)
             {
-                left = ResolveBinopTree((BinopWithArgs)left);
+                left = ResolveBinopTree(bwl);
             }
-            if (right is BinopWithArgs)
+            if (right is BinopWithArgs bwr)
             {
-                right = ResolveBinopTree((BinopWithArgs)right);
+                right = ResolveBinopTree(bwr);
             }
             return ResolveBinop(b.binop, (JNode)left, (JNode)right);
         }
@@ -1026,9 +1001,8 @@ namespace JSON_Tools.JSON_Tools
                 all_args.Add(null);
             if (func.function.is_vectorized)
             {
-                if (x is CurJson)
+                if (x is CurJson xcur)
                 {
-                    CurJson xcur = (CurJson)x;
                     if (other_callables)
                     {
                         // x is a function of the current JSON, as is at least one other argument
@@ -1038,23 +1012,20 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                             }
-                            if (itbl.type == Dtype.OBJ)
+                            if (itbl is JObject otbl)
                             {
                                 var dic = new Dictionary<string, JNode>();
-                                var otbl = (JObject)itbl;
-                                foreach (string key in otbl.children.Keys)
+                                foreach (KeyValuePair<string, JNode> okv in otbl.children)
                                 {
-                                    all_args[0] = otbl[key];
-                                    dic[key] = func.function.Call(all_args);
+                                    dic[okv.Key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
                             }
-                            else if (itbl.type == Dtype.ARR)
+                            else if (itbl is JArray atbl)
                             {
                                 var arr = new List<JNode>();
-                                var atbl = (JArray)itbl;
                                 foreach (JNode val in atbl.children)
                                 {
                                     all_args[0] = val;
@@ -1082,21 +1053,19 @@ namespace JSON_Tools.JSON_Tools
                         {
                             
                             var itbl = xcur.function(inp);
-                            if (itbl.type == Dtype.OBJ)
+                            if (itbl is JObject otbl)
                             {
                                 var dic = new Dictionary<string, JNode>();
-                                var otbl = (JObject)itbl;
-                                foreach (string key in otbl.children.Keys)
+                                foreach (KeyValuePair<string, JNode> okv in otbl.children)
                                 {
-                                    all_args[0] = otbl[key];
-                                    dic[key] = func.function.Call(all_args);
+                                    all_args[0] = okv.Value;
+                                    dic[okv.Key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);
                             }
-                            else if (itbl.type == Dtype.ARR)
+                            else if (itbl is JArray atbl)
                             {
                                 var arr = new List<JNode>();
-                                var atbl = (JArray)itbl;
                                 foreach (JNode val in atbl.children)
                                 {
                                     all_args[0] = val;
@@ -1123,12 +1092,12 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                             }
-                            foreach (string key in xobj.children.Keys)
+                            foreach (KeyValuePair<string, JNode> xkv in xobj.children)
                             {
-                                all_args[0] = xobj[key];
-                                dic[key] = func.function.Call(all_args);
+                                all_args[0] = xkv.Value;
+                                dic[xkv.Key] = func.function.Call(all_args);
                             }
                             return new JObject(0, dic);
                         }
@@ -1144,7 +1113,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                             }
                             foreach (JNode val in xarr.children)
                             {
@@ -1163,7 +1132,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                             }
                             all_args[0] = x;
                             return func.function.Call(all_args);
@@ -1179,20 +1148,18 @@ namespace JSON_Tools.JSON_Tools
                         JNode other_arg = other_args[ii];
                         all_args[ii + 1] = other_arg;
                     }
-                    if (x.type == Dtype.OBJ)
+                    if (x is JObject xobj)
                     {
-                        var xobj = (JObject)x;
                         var dic = new Dictionary<string, JNode>();
-                        foreach (string key in xobj.children.Keys)
+                        foreach (KeyValuePair<string, JNode> xkv in xobj.children)
                         {
-                            all_args[0] = xobj[key];
-                            dic[key] = func.function.Call(all_args);
+                            all_args[0] = xobj[xkv.Key];
+                            dic[xkv.Key] = func.function.Call(all_args);
                         }
                         return new JObject(0, dic);
                     }
-                    else if (x.type == Dtype.ARR)
+                    else if (x is JArray xarr)
                     {
-                        var xarr = (JArray)x;
                         var arr = new List<JNode>();
                         foreach (JNode val in xarr.children)
                         {
@@ -1209,9 +1176,8 @@ namespace JSON_Tools.JSON_Tools
             else
             {
                 // this is NOT a vectorized arg function (it's something like len or mean)
-                if (x is CurJson)
+                if (x is CurJson xcur)
                 {
-                    CurJson xcur = (CurJson)x;
                     if (other_callables)
                     {
                         JNode arg_outfunc(JNode inp)
@@ -1219,7 +1185,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                             }
                             all_args[0] = xcur.function(inp);
                             return func.function.Call(all_args);
@@ -1250,7 +1216,7 @@ namespace JSON_Tools.JSON_Tools
                         for (int ii = 0; ii < other_args.Count; ii++)
                         {
                             JNode other_arg = other_args[ii];
-                            all_args[ii + 1] = other_arg is CurJson ? ((CurJson)other_arg).function(inp) : other_arg;
+                            all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
                         }
                         all_args[0] = x;
                         return func.function.Call(all_args);
@@ -1285,9 +1251,8 @@ namespace JSON_Tools.JSON_Tools
             while (pos < toks.Count)
             {
                 object t = toks[pos];
-                if (t is char)
+                if (t is char tval)
                 {
-                    char tval = (char)t;
                     if (tval == ':')
                     {
                         slicer[slots_filled++] = last_num;
@@ -1341,31 +1306,32 @@ namespace JSON_Tools.JSON_Tools
         {
             object t = toks[pos];
             object nt;
-            if (!(t is char))
+            if (!(t is char d))
             {
                 throw new RemesPathException("Expected delimiter at the start of indexer");
             }
-            char d = (char)t;
             List<object> children = new List<object>();
             if (d == '.')
             {
                 nt = PeekNextToken(toks, pos);
                 if (nt != null)
                 {
-                    if (nt is Binop && ((Binop)nt).name == "*")
+                    if (nt is Binop bnt && bnt.name == "*")
                     {
                         // it's a '*' indexer, which means select all keys/indices
                         return new Obj_Pos(new StarIndexer(), pos + 2);
                     }
-                    JNode jnt = (JNode)nt;
+                    JNode jnt = (nt is RemesPathLexer.StringToken st)
+                        ? new JNode(st.value, Dtype.STR, 0)
+                        : (JNode)nt;
                     if ((jnt.type & Dtype.STR_OR_REGEX) == 0)
                     {
                         throw new RemesPathException("'.' syntax for indexers requires that the indexer be a string, " +
                                                     "regex, or '*'");
                     }
-                    if (jnt is JRegex)
+                    if (jnt is JRegex jnreg)
                     {
-                        children.Add(((JRegex)jnt).regex);
+                        children.Add(jnreg.regex);
                     }
                     else
                     {
@@ -1387,11 +1353,11 @@ namespace JSON_Tools.JSON_Tools
             JNode jlast_tok;
             Dtype last_type = Dtype.UNKNOWN;
             t = toks[++pos];
-            if (t is Binop && ((Binop)t).name == "*")
+            if (t is Binop b && b.name == "*")
             {
                 // it was '*', indicating a star indexer
                 nt = PeekNextToken(toks, pos);
-                if (nt is char && (char)nt  == ']')
+                if (nt is char nd && nd  == ']')
                 {
                     return new Obj_Pos(new StarIndexer(), pos + 2);
                 }
@@ -1515,25 +1481,23 @@ namespace JSON_Tools.JSON_Tools
             }
             object t = toks[pos];
             JNode last_tok = null;
-            if (t is Binop)
+            if (t is Binop b)
             {
-                throw new RemesPathException($"Binop {(Binop)t} without appropriate left operand");
+                throw new RemesPathException($"Binop {b} without appropriate left operand");
             }
-            if (t is char)
+            if (t is char delim)
             {
-                char d = (char)t;
-                if (d != '(')
+                if (delim != '(')
                 {
-                    throw new RemesPathException($"Invalid token {d} at position {pos}");
+                    throw new RemesPathException($"Invalid token {delim} at position {pos}");
                 }
                 int unclosed_parens = 1;
                 List<object> subquery = new List<object>();
                 for (int end = pos + 1; end < toks.Count; end++)
                 {
                     object subtok = toks[end];
-                    if (subtok is char)
+                    if (subtok is char subd)
                     {
-                        char subd = (char)subtok;
                         if (subd == '(')
                         {
                             unclosed_parens++;
@@ -1551,11 +1515,30 @@ namespace JSON_Tools.JSON_Tools
                     subquery.Add(subtok);
                 }
             }
-            else if (t is ArgFunction)
+            else if (t is RemesPathLexer.StringToken st)
             {
-                Obj_Pos opo = ParseArgFunction(toks, pos+1, (ArgFunction)t);
-                last_tok = (JNode)opo.obj;
-                pos = opo.pos;
+                if (!st.quoted
+                    && pos < toks.Count - 1
+                    && toks[pos + 1] is char c && c == '(')
+                {
+                    // an unquoted string followed by an open paren
+                    // *might* be an ArgFunction; we need to check
+                    if (ArgFunction.FUNCTIONS.TryGetValue(st.value, out ArgFunction af))
+                    {
+                        Obj_Pos opo = ParseArgFunction(toks, pos + 1, af);
+                        last_tok = (JNode)opo.obj;
+                        pos = opo.pos;
+                    }
+                    else
+                    {
+                        throw new RemesPathException($"'{st.value}' is not the name of a RemesPath function.");
+                    }
+                }
+                else
+                {
+                    last_tok = new JNode(st.value, Dtype.STR, 0);
+                    pos++;
+                }
             }
             else
             {
@@ -1572,15 +1555,15 @@ namespace JSON_Tools.JSON_Tools
                 var idxrs = new List<IndexerFunc>();
                 object nt = PeekNextToken(toks, pos - 1);
                 object nt2, nt3;
-                while (nt != null && nt is char && INDEXER_STARTERS.Contains((char)nt))
+                while (nt != null && nt is char nd && INDEXER_STARTERS.Contains(nd))
                 {
                     nt2 = PeekNextToken(toks, pos);
                     bool is_recursive = false;
-                    if (nt2 is char && (char)nt2 == '.' && (char)nt == '.')
+                    if (nt2 is char nd2 && nd2 == '.' && nd == '.')
                     {
                         is_recursive = true;
                         nt3 = PeekNextToken(toks, pos + 1);
-                        pos += (nt3 is char && (char)nt3 == '[') ? 2 : 1;
+                        pos += (nt3 is char nd3 && nd3 == '[') ? 2 : 1;
                     }
                     Obj_Pos opo= ParseIndexer(toks, pos);
                     Indexer cur_idxr = (Indexer)opo.obj;
@@ -1617,15 +1600,15 @@ namespace JSON_Tools.JSON_Tools
                         Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
                         idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
                     }
-                    else if (cur_idxr is BooleanIndex)
+                    else if (cur_idxr is BooleanIndex boodex)
                     {
-                        object boodex_fun = ((BooleanIndex)cur_idxr).value;
-                        Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyBooleanIndex((JNode)boodex_fun);
+                        JNode boodex_fun = (JNode)boodex.value;
+                        Func<JNode, IEnumerable<Key_Node>> idx_func = ApplyBooleanIndex(boodex_fun);
                         idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
                     }
-                    else if (cur_idxr is Projection)
+                    else if (cur_idxr is Projection proj)
                     {
-                        Func<JNode, IEnumerable<Key_Node>> proj_func = ((Projection)cur_idxr).proj_func;
+                        Func<JNode, IEnumerable<Key_Node>> proj_func = proj.proj_func;
                         idxrs.Add(new IndexerFunc(proj_func, false, true, false, false));
                     }
                     else
@@ -1639,20 +1622,20 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (idxrs.Count > 0)
                 {
-                    if (last_tok is CurJson)
+                    Func<JNode, JNode> idxrs_func = ApplyIndexerList(idxrs);
+                    if (last_tok is CurJson lcur)
                     {
-                        CurJson lcur = (CurJson)last_tok;
                         JNode idx_func(JNode inp)
                         {
-                            return ApplyIndexerList(idxrs)(lcur.function(inp));
+                            return idxrs_func(lcur.function(inp));
                         }
                         return new Obj_Pos(new CurJson(lcur.type, idx_func), pos);
                     }
-                    if (last_tok is JObject)
+                    if (last_tok is JObject last_obj)
                     {
-                        return new Obj_Pos(ApplyIndexerList(idxrs)((JObject)last_tok), pos);
+                        return new Obj_Pos(idxrs_func(last_obj), pos);
                     }
-                    return new Obj_Pos(ApplyIndexerList(idxrs)((JArray)last_tok), pos);
+                    return new Obj_Pos(idxrs_func((JArray)last_tok), pos);
                 }
             }
             return new Obj_Pos(last_tok, pos);
@@ -1666,9 +1649,13 @@ namespace JSON_Tools.JSON_Tools
             // e.g., in @[0,1,2], all of 0, 1, and 2 are immediately followed by an expr func ender
             // and in @.foo.bar the bar is followed by EOF
             // MAKE THE COMMON CASE FAST!
-            if (nt == null || (nt is char && EXPR_FUNC_ENDERS.Contains((char)nt)))
+            if (nt == null || (nt is char nd && EXPR_FUNC_ENDERS.Contains(nd)))
             {
                 curtok = toks[pos];
+                if (curtok is RemesPathLexer.StringToken st)
+                {
+                    curtok = new JNode(st.value, Dtype.STR, 0);
+                }
                 if (!(curtok is JNode))
                 {
                     throw new RemesPathException($"Invalid token {curtok} where JNode expected");
@@ -1682,12 +1669,11 @@ namespace JSON_Tools.JSON_Tools
             BinopWithArgs root = null;
             BinopWithArgs leaf = null;
             object[] children = new object[2];
-            Binop func;
             while (pos < toks.Count)
             {
                 left_tok = curtok;
                 curtok = toks[pos];
-                if (curtok is char && EXPR_FUNC_ENDERS.Contains((char)curtok))
+                if (curtok is char curd && EXPR_FUNC_ENDERS.Contains(curd))
                 {
                     if (left_tok == null)
                     {
@@ -1696,9 +1682,8 @@ namespace JSON_Tools.JSON_Tools
                     curtok = left_tok;
                     break;
                 }
-                if (curtok is Binop)
+                if (curtok is Binop func)
                 {
-                    func = (Binop)curtok;
                     if (left_tok == null || left_tok is Binop)
                     {
                         if (func.name != "-")
@@ -1764,7 +1749,7 @@ namespace JSON_Tools.JSON_Tools
                     if (uminus)
                     {
                         nt = PeekNextToken(toks, pos - 1);
-                        if (!(nt != null && nt is Binop && ((Binop)nt).name == "**"))
+                        if (!(nt != null && nt is Binop bnt && bnt.name == "**"))
                         {
                             // applying unary minus to this expr/scalar has higher precedence than everything except
                             // exponentiation.
@@ -1791,11 +1776,7 @@ namespace JSON_Tools.JSON_Tools
 
         private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun)
         {
-            object t = toks[pos];
-            if (!(t is char && (char)t == '('))
-            {
-                throw new RemesPathException($"Function {fun.name} must have parens surrounding arguments");
-            }
+            object t;
             pos++;
             int arg_num = 0;
             Dtype[] intypes = fun.input_types();
@@ -1822,7 +1803,7 @@ namespace JSON_Tools.JSON_Tools
                     if ((Dtype.SLICE & type_options) != 0)
                     {
                         object nt = PeekNextToken(toks, pos - 1);
-                        if (nt is char && (char)nt == ':')
+                        if (nt is char nd && nd == ':')
                         {
                             int? first_num;
                             if (cur_arg == null)
@@ -1852,9 +1833,8 @@ namespace JSON_Tools.JSON_Tools
                 t = toks[pos];
                 bool comma = false;
                 bool close_paren = false;
-                if (t is char)
+                if (t is char d)
                 {
-                    char d = (char)t;
                     comma = d == ',';
                     close_paren = d == ')';
                 }
@@ -1909,9 +1889,8 @@ namespace JSON_Tools.JSON_Tools
                 JNode key = (JNode)opo.obj;
                 pos = opo.pos;
                 object nt = PeekNextToken(toks, pos - 1);
-                if (nt is char)
+                if (nt is char nd)
                 {
-                    char nd = (char)nt;
                     if (nd == ':')
                     {
                         if (children.Count > 0 && !is_object_proj)
@@ -1955,7 +1934,7 @@ namespace JSON_Tools.JSON_Tools
                             {
                                 object k = kv.obj;
                                 JNode v = kv.node;
-                                yield return new Key_Node(k, (v is CurJson) ? ((CurJson)v).function(obj) : v); 
+                                yield return new Key_Node(k, v is CurJson cjv ? cjv.function(obj) : v); 
                             }
                         }
                         return new Obj_Pos(new Projection(proj_func), pos + 1);
@@ -2012,9 +1991,8 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="op"></param>
         private JNode ApplyAssignmentExpression(JNode x, JNode op)
         {
-            if (x is CurJson)
+            if (x is CurJson cjx)
             {
-                CurJson cjx = (CurJson)x;
                 Func<JNode, JNode> outfunc = (JNode inp) =>
                 {
                     ApplyAssignmentExpression(cjx.function(inp), op);
@@ -2025,16 +2003,16 @@ namespace JSON_Tools.JSON_Tools
             if (op is CurJson cjop)
             {
                 var func = cjop.function;
-                if (x is JObject)
+                if (x is JObject xobj_)
                 {
-                    foreach (JNode v in ((JObject)x).children.Values)
+                    foreach (JNode v in xobj_.children.Values)
                     {
                         TransferJNodeProperties(v, func(v));
                     }
                 }
-                else if (x is JArray)
+                else if (x is JArray xarr)
                 {
-                    foreach (JNode v in ((JArray)x).children)
+                    foreach (JNode v in xarr.children)
                     {
                         TransferJNodeProperties(v, func(v));
                     }

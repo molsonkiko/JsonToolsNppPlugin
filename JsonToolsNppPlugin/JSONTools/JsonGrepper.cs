@@ -97,11 +97,11 @@ namespace JSON_Tools.JSON_Tools
                 // by default Windows paths have '\\' as path sep so those need to be escaped
                 try
                 {
-					fname_json_map[JObject.FormatAsKey(fname)] = json_parser.Parse(json_str);
+					fname_json_map[JNode.StrToString(fname, false)] = json_parser.Parse(json_str);
                 }
                 catch (Exception ex)
                 {
-                    fname_exception_map[JObject.FormatAsKey(fname)] = new JNode(ex.ToString(), Dtype.STR, 0);
+                    fname_exception_map[JNode.StrToString(fname, false)] = new JNode(ex.ToString(), Dtype.STR, 0);
                 }
             }
         }
@@ -181,7 +181,7 @@ namespace JSON_Tools.JSON_Tools
 		public async Task GetJsonStringFromApiAsync(string url)
         {
             InitializeHttpClient(httpClient);
-            string formatted_url = JObject.FormatAsKey(url);
+            string formatted_url = JNode.StrToString(url, false);
             try
             {
                 Task<string> stringTask = httpClient.GetStringAsync(url);

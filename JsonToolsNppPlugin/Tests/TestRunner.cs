@@ -152,6 +152,7 @@ Performance tests for JsonParser
             Benchmarker.BenchmarkParserAndRemesPath(new string[][] {
                 new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic" },
                 new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
+                new string[] { "@..*", "basic recursive search" },
             },
             big_random_fname, 32, 64);
 
