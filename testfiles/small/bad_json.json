@@ -1,5 +1,5 @@
 { // this file has ALL the bad things
-草 false, # yes, all of them
+\u0348z草 false, # yes, all of them
 "b": "3" /* so much bad */
 '9': "ball", 
 "😀"
@@ -8,7 +8,7 @@
 y":
             [
             1
-            "FOOBAR
+            "FO\x4fBAR
    "         +2,　
             NaN,
             .75 
@@ -21,19 +21,18 @@ u":
                   [
                   6,
                         {
-                        "y": 'b
-',
+                        "y": 'b\9\x0a',
                         "m8": 9,
                         }
                   ],
             Infinity
             -Infinity
             ],
-      $unquồted_‍keys "are *very naughty*"
-      _status‌_ｪ: "jubaЯ"
+      $unquồted_‍key\u00df "are *very naughty*"
+      _st\u1eb2tus‌_ｪ: "jubaЯ"
       ],
 "9\"a\"	": 2,
-"blutentharst":
+"\u0042lutentharst":
       [
       "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
       true,

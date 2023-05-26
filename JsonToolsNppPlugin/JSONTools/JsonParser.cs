@@ -3,6 +3,7 @@ A parser and linter for JSON.
 */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
@@ -435,12 +436,12 @@ namespace JSON_Tools.JSON_Tools
         /// sets the parser's state to FATAL if the integer is not valid hexadecimal
         /// or if `index` is less than `length` from the end of `inp`.
         /// </summary>
-        private int ParseHexChar(string inp, int length, bool is_second_surrogate)
+        private int ParseHexChar(string inp, int length)
         {
-            if (ii > inp.Length - length)
+            if (ii >= inp.Length - length)
             {
                 HandleError("Could not find valid hexadecimal of length " + length,
-                                              inp, ii, ParserState.BAD);
+                                              inp, ii, ParserState.FATAL);
                 return -1;
             }
             int end = ii + length > inp.Length
@@ -452,29 +453,41 @@ namespace JSON_Tools.JSON_Tools
             int charval;
             try
             {
-                charval = int.Parse(hexNum, System.Globalization.NumberStyles.HexNumber);
+                charval = int.Parse(hexNum, NumberStyles.HexNumber);
             }
             catch
             {
                 HandleError("Could not find valid hexadecimal of length " + length,
-                                              inp, ii, ParserState.BAD);
+                                              inp, ii, ParserState.FATAL);
                 return -1;
             }
-            if (0xd800 <= charval && charval <= 0xdbff
-                && inp[ii] == '\\' && inp[end] == 'u'
-                && !is_second_surrogate)
-            {
-                // see https://github.com/python/cpython/blob/main/Lib/json/encoder.py
-                // Characters bigger than 0xffff are encoded as surrogate pairs
-                // of 2-byte characters, and this is a way to tell that you're going
-                // to see a surrogate pair
-                ii = end + 1;
-                int charval2 = ParseHexChar(inp, 4, true);
-                if (charval2 == -1)
-                    return charval; 
-                return 0x10000 + (((charval - 0xd800) << 10) | (charval2 - 0xdc00));
-            }
             return charval;
+        }
+
+        /// <summary>
+        /// check if char c is a control character (less than 0x20)
+        /// and then check if it is '\n' or the null character or negative.
+        /// Handle errors accordingly.
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="inp"></param>
+        /// <param name="ii"></param>
+        /// <param name="start_utf8_pos"></param>
+        /// <returns></returns>
+        private bool HandleCharErrors(int c, string inp, int ii)
+        {
+            if (c < 0x20)
+            {
+                if (c == '\n')
+                    return HandleError($"String literal contains newline", inp, ii, ParserState.BAD);
+                if (c == 0)
+                    return HandleError("'\\x00' is the null character, which is illegal in JsonTools", inp, ii, ParserState.FATAL);
+                if (c < 0)
+                    return true;
+                return HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    inp, ii, ParserState.OK);
+            }
+            return false;
         }
 
         public static Dictionary<char, char> ESCAPE_MAP = new Dictionary<char, char>
@@ -486,6 +499,9 @@ namespace JSON_Tools.JSON_Tools
             { 't', '\t' },
             { 'f', '\f' },
             { '/', '/' }, // the '/' char is often escaped in JSON
+            { 'v', '\x0b' }, // vertical tab
+            { '\'', '\'' },
+            { '"', '"' },
         };
 
         #endregion
@@ -545,41 +561,39 @@ namespace JSON_Tools.JSON_Tools
                     else if (next_char == 'u')
                     {
                         // 2-byte unicode of the form \uxxxx
-                        // \x and \U escapes are not part of the JSON standard
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 4, false);
-                        if (next_hex < 0)
-                        {
-                            // if next_hex is -1, that means it was invalid
+                        int next_hex = ParseHexChar(inp, 4);
+                        if (HandleCharErrors(next_hex, inp, ii))
                             break;
-                        }
                         sb.Append((char)next_hex);
                     }
-                    else if (next_char == '\n')
+                    else if (next_char == '\n' || next_char == '\r')
                     {
                         if (HandleError("Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
                             break;
-                        sb.Append('\n');
                         ii++;
+                        if (next_char == '\r'
+                            && ii < inp.Length - 1 && inp[ii + 1] == '\n')
+                            ii++;
                     }
-                    else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
-                        break;
-                }
-                else if (c < 0x20) // control characters
-                {
-                    if (c == '\n'
-                        && HandleError($"String literal starting at position {start_utf8_pos} contains newline", inp, ii, ParserState.BAD))
+                    else if (next_char == 'x')
                     {
-                        break;
+                        // 1-byte unicode (allowed only in JSON5)
+                        ii += 2;
+                        int next_hex = ParseHexChar(inp, 2);
+                        if (HandleCharErrors(next_hex, inp, ii))
+                            break;
+                        if (HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5))
+                            break;
+                        sb.Append((char)next_hex);
                     }
-                    if (HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
-                    {
+                    else if (HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5))
                         break;
-                    }
-                    sb.Append(c);
                 }
                 else
                 {
+                    if (HandleCharErrors(c, inp, ii))
+                        break;
                     utf8_extra_bytes += ExtraUTF8Bytes(c);
                     sb.Append(c);
                 }
@@ -642,30 +656,42 @@ namespace JSON_Tools.JSON_Tools
                         // 2-byte unicode of the form \uxxxx
                         // \x and \U escapes are not part of the JSON standard
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 4, false);
-                        if (next_hex < 0)
-                        {
+                        int next_hex = ParseHexChar(inp, 4);
+                        if (HandleCharErrors(next_hex, inp, ii))
                             break;
-                        }
                         sb.Append(JNode.CharToString((char)next_hex));
                     }
-                    else if (next_char == '\n')
+                    else if (next_char == '\n' || next_char == '\r')
                     {
                         if (HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
                             break;
-                        sb.Append("\\n");
                         ii++;
+                        if (next_char == '\r'
+                            && ii < inp.Length - 1 && inp[ii + 1] == '\n')
+                            ii++; // skip \r\n as one
                     }
-                    else if (HandleError("Invalidly escaped char", inp, ii + 1, ParserState.BAD))
+                    else if (next_char == 'x')
+                    {
+                        ii += 2;
+                        int next_hex = ParseHexChar(inp, 2);
+                        if (HandleCharErrors(next_hex, inp, ii))
+                            break;
+                        if (HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5))
+                            break;
+                        sb.Append(JNode.CharToString((char)next_hex));
+                    }
+                    else if (HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5))
                         break;
                 }
                 else if (c < 0x20) // control characters
                 {
-                    if ((c == '\n' && HandleError($"Object key contains newline", inp, ii, ParserState.BAD))
-                        || HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
+                    if (c == '\n')
                     {
-                        break;
+                        if (HandleError($"Object key contains newline", inp, ii, ParserState.BAD))
+                            break;
                     }
+                    else if (HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
+                        break;
                     sb.Append(JNode.CharToString(c));
                 }
                 else
@@ -679,7 +705,11 @@ namespace JSON_Tools.JSON_Tools
             return sb.ToString();
         }
 
-        private static Regex UNQUOTED_KEY_REGEX = new Regex(@"[_\$\w][_\$\w\d\u200c\u200d]*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private const string UNQUOTED_START = @"(?:[_\$\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]|\\u[\da-f]{4})";
+
+        private static Regex UNICODE_ESCAPES = new Regex(@"(?<=\\u)[\da-f]{4}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static Regex UNQUOTED_KEY_REGEX = new Regex($@"{UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{UNQUOTED_START})*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public string ParseUnquotedKey(string inp)
         {
@@ -690,9 +720,31 @@ namespace JSON_Tools.JSON_Tools
                 return null;
             }
             HandleError("Unquoted keys are only supported in JSON5", inp, ii, ParserState.JSON5);
-            var result = inp.Substring(ii, match.Length);
-            utf8_extra_bytes += ExtraUTF8BytesBetween(result, 0, result.Length);
+            var result = match.Value;
             ii += result.Length;
+            utf8_extra_bytes += ExtraUTF8BytesBetween(result, 0, result.Length);
+            if (result.Contains("\\u")) // fix unicode escapes
+            {
+                StringBuilder sb = new StringBuilder();
+                Match m = UNICODE_ESCAPES.Match(result);
+                int start = 0;
+                while (m.Success)
+                {
+                    if (m.Index > start + 2)
+                    {
+                        sb.Append(result, start, m.Index - start - 2);
+                    }
+                    char hexval = (char)int.Parse(m.Value, NumberStyles.HexNumber);
+                    if (HandleCharErrors(hexval, inp, ii))
+                        return null;
+                    sb.Append(JNode.CharToString(hexval));
+                    start = m.Index + 4;
+                    m = m.NextMatch();
+                }
+                if (start < result.Length)
+                    sb.Append(result, start, result.Length - start);
+                result = sb.ToString();
+            }
             return result;
         }
 
@@ -805,7 +857,7 @@ namespace JSON_Tools.JSON_Tools
                         break;
                     ii++;
                 }
-                var hexnum = long.Parse(inp.Substring(start, ii - start), System.Globalization.NumberStyles.HexNumber);
+                var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
                 return new JNode(negative ? -hexnum : hexnum, Dtype.INT, start_utf8_pos);
             }
             while (ii < inp.Length)
@@ -1070,8 +1122,9 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else // expecting a key
                 {
-                    if (children.Count > 0 && !already_seen_comma
-                        && HandleError($"No comma after key-value pair {children.Count - 1} in object", inp, ii, ParserState.BAD))
+                    int child_count = children.Count;
+                    if (child_count > 0 && !already_seen_comma
+                        && HandleError($"No comma after key-value pair {child_count - 1} in object", inp, ii, ParserState.BAD))
                     {
                         return obj;
                     }
@@ -1101,7 +1154,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             ii++;
                         }
-                        else if (HandleError($"No ':' between key {children.Count} and value {children.Count} of object", inp, ii, ParserState.BAD))
+                        else if (HandleError($"No ':' between key {child_count} and value {child_count} of object", inp, ii, ParserState.BAD))
                         {
                             return obj;
                         }
@@ -1119,6 +1172,10 @@ namespace JSON_Tools.JSON_Tools
                     if (fatal)
                     {
                         return obj;
+                    }
+                    if (children.Count == child_count)
+                    {
+                        HandleError($"Object has multiple of key \"{key}\"", inp, ii, ParserState.BAD);
                     }
                     already_seen_comma = false;
                 }

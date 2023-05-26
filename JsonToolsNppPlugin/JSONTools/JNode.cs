@@ -212,24 +212,6 @@ namespace JSON_Tools.JSON_Tools
             NumberDecimalSeparator = "."
         };
 
-        private const string HEX_CHARS = "0123456789abcdef";
-        /// <summary>
-        /// Return the hexadecimal string representation of an integer
-        /// </summary>
-        /// <param name="x">the int to represent</param>
-        /// <param name="out_len">the number of zeros to left-pad the hex number with</param>
-        /// <returns></returns> 
-        public static string ToHex(int x, int out_len)
-        {
-            var sb = new char[out_len];
-            for (int pow = out_len - 1; pow > -1; pow--)
-            {
-                x = Math.DivRem(x, 16, out int rem);
-                sb[pow] = HEX_CHARS[rem];
-            }
-            return new string(sb);
-        }
-
         /// <summary>
         /// string representation of any characters in JSON
         /// </summary>
@@ -251,7 +233,7 @@ namespace JSON_Tools.JSON_Tools
                 case '\x08': return "\\b";
                 case '\x09': return "\\t";
                 case '\x0A': return "\\n";
-                case '\x0B': return "\\u000B";
+                case '\x0B': return "\\v";
                 case '\x0C': return "\\f";
                 case '\x0D': return "\\r";
                 case '\x0E': return "\\u000E";

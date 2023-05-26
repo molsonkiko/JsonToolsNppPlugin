@@ -528,7 +528,6 @@ multiline comment
                     simpleparser.Parse("[1, 2]")
                 ),
                 ("[.75, 0xff, +9]", simpleparser.Parse("[0.75, 255, 9]")), // leading decimal points, hex numbers, leading + sign
-                ("[1,\"b\\\nb\"]", simpleparser.Parse("[1, \"b\\nb\"]")), // escaped newlines
                 ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
                 ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)),
                 ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
@@ -632,12 +631,12 @@ multiline comment
                 ("[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"}),
                 ("{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"}),
                 ("{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" }),
-                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification"}),
+                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal contains newline"}),
                 ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification" }),
-                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']', Comma after last key-value pair of object" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']', Comma after last key-value pair of object" }),
                 ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
                 ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
                 ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
@@ -652,12 +651,11 @@ multiline comment
                 ("[1] /* unterminated multiline", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification", "Unterminated multi-line comment" }),
                 ("\"\\u043\"", "\"\"", new string[] { "Could not find valid hexadecimal of length 4" }),
                 ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
-                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal starting at position 2 contains newline", "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification" }),
+                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal contains newline" }),
                 ("[.75, 0xabcdef, +9, -0xABCDEF, +0x0123456789]", "[0.75, 11259375, 9, -11259375, 4886718345]", new string[]
                 {
                     "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5",
                 }),
-                ("[1,\"b\\\nb\"]", "[1, \"b\\nb\"]", new string[]{"Escaped newline characters are only allowed in JSON5"}),
                 ("{\"\u000c\t\": \"\u0008\t\u0009\"}", "{\"\\f\\t\": \"\\b\\t\\u0009\"}", new string[]{
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
@@ -665,6 +663,10 @@ multiline comment
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                 }),
+                ("{\"\u000a\": \"\u000a\"}", "{\"\\n\": \"\\n\"}", // newlines as unicode escapes
+                    new string[]{
+                        "Object key contains newline",
+                        "String literal contains newline"}),
                 ("Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
                 ("-Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
                 ("NaU", "null", new string[]{"Expected literal starting with 'N' to be NaN"}),
@@ -673,7 +675,7 @@ multiline comment
                 ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
                 ("nurnoe", "null", new string[]{"Expected literal starting with 'n' to be null"}),
                 ("Hugre", "null", new string[]{"Badly located character"}),
-                ("\"\\i\"", "\"i\"", new string[]{"Invalidly escaped char"}),
+                ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
                 ("", "null", new string[]{"No input"}),
                 ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
                 ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
@@ -700,13 +702,63 @@ multiline comment
 "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
 "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
                 }),
-                ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3}", "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3}", new string[]
+                ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6}",
+                 "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 6}",
+                 new string[]{
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "String literal contains newline", // the \u000a in \\b\\u000a is secretly a newline
+                }),
+                ("[1,\"b\\\nb\\\rb\\\r\nb\"]", "[1, \"bbbb\"]",
+                new string[]
                 {
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5"
-                })
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                }),
+                ("{\"b\\\nb\\\rb\\\r\n  b\": 3}", "{\"bbb  b\": 3}",
+                new string[]
+                {
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                }),
+                ("[\"a\\x00b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
+                ("[\"a\\u0000b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
+                ("{\"\\1\\A\": \"\\7\\B\"}", "{\"1A\": \"7B\"}",
+                new string[]{
+                    "Escaped char '1' is only valid in JSON5",
+                    "Escaped char 'A' is only valid in JSON5",
+                    "Escaped char '7' is only valid in JSON5",
+                    "Escaped char 'B' is only valid in JSON5",
+                }),
+                ("{\"\\x51ED\\v\": \"\\x51ED\\v\"}", "{\"QED\\v\": \"QED\\v\"}",
+                new string[]{
+                    "\\x escapes are only allowed in JSON5",
+                    "\\x escapes are only allowed in JSON5",
+                }),
+                ("{\"j\\u004\": 1}", "{}",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 4",
+                }),
+                ("[\"j\\x3\"]", "[\"j\"]",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 2",
+                }),
+                ("{\"j\\x\": 34}", "{}",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 2",
+                }),
+                ("{\"a\": 1, \"a\": 2}", "{\"a\": 2}", new string[]{"Object has multiple of key \"a\""}),
             };
 
             int tests_failed = 0;
