@@ -778,7 +778,9 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Parse a number in a JSON string.
+        /// Parse a number in a JSON string, including NaN or Infinity<br></br>
+        /// Also parses the Python literal None (which we parse as null)
+        /// because it starts with N too and it's convenient to do it this way.
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns>a JNode with type = Dtype.INT or Dtype.FLOAT, and the position of the end of the number.
@@ -838,7 +840,14 @@ namespace JSON_Tools.JSON_Tools
                         ii += 3;
                         return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
                     }
-                    HandleError("Expected literal starting with 'N' to be NaN", inp, ii + 1, ParserState.FATAL);
+                    // try None
+                    if (ii <= inp.Length - 4 && inp[ii + 1] == 'o' && inp[ii + 2] == 'n' && inp[ii + 3] == 'e')
+                    {
+                        ii += 4;
+                        HandleError("'None' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    }
+                    HandleError("Expected literal starting with 'N' to be NaN or None", inp, ii + 1, ParserState.FATAL);
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
             }
@@ -1203,14 +1212,13 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             char cur_c = inp[ii];
-            char next_c;
             if (cur_c == '"' || cur_c == '\'')
             {
                 return ParseString(inp);
             }
             if (cur_c >= '0' && cur_c <= '9'
                 || cur_c == '-' || cur_c == '+'
-                || cur_c == 'N' || cur_c == 'I' // NaN, Infinity
+                || cur_c == 'I' || cur_c == 'N' // Infinity, NaN and None
                 || cur_c == '.') // leading decimal point JSON5 numbers
             {
                 return ParseNumber(inp);
@@ -1223,14 +1231,13 @@ namespace JSON_Tools.JSON_Tools
             {
                 return ParseObject(inp, recursion_depth + 1);
             }
-            // null, true, false
-            next_c = inp[ii + 1];
+            char next_c = inp[ii + 1];
             if (ii > inp.Length - 4)
             {
                 HandleError("No valid literal possible", inp, ii, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
-            // OK, so maybe it's a special scalar like null or true or NaN?
+            // misc literals. In strict JSON, only null, true, or false
             if (cur_c == 'n')
             {
                 // try null
@@ -1239,8 +1246,7 @@ namespace JSON_Tools.JSON_Tools
                     ii += 4;
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
-                HandleError("Expected literal starting with 'n' to be null",
-                                              inp, ii+1, ParserState.FATAL);
+                HandleError("Expected literal starting with 'n' to be null", inp, ii+1, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             if (cur_c == 't')
@@ -1262,8 +1268,31 @@ namespace JSON_Tools.JSON_Tools
                     ii += 5;
                     return new JNode(false, Dtype.BOOL, start_utf8_pos);
                 }
-                HandleError("Expected literal starting with 'f' to be false",
-                                              inp, ii+1, ParserState.FATAL);
+                HandleError("Expected literal starting with 'f' to be false", inp, ii+1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
+            if (cur_c == 'T')
+            {
+                // try True from Python
+                if (next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
+                {
+                    ii += 4;
+                    HandleError("'True' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                    return new JNode(true, Dtype.BOOL, start_utf8_pos);
+                }
+                HandleError("Expected literal starting with 'T' to be True", inp, ii + 1, ParserState.FATAL);
+                return new JNode(null, Dtype.NULL, start_utf8_pos);
+            }
+            if (cur_c == 'F')
+            {
+                // try False from Python
+                if (ii <= inp.Length - 5 && next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
+                {
+                    ii += 5;
+                    HandleError("'False' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                    return new JNode(false, Dtype.BOOL, start_utf8_pos);
+                }
+                HandleError("Expected literal starting with 'F' to be False", inp, ii + 1, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
             if (cur_c == 'u')

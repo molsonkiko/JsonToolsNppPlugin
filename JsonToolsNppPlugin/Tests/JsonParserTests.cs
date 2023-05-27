@@ -719,19 +719,25 @@ multiline comment
                     new string[]{
                         "Object key contains newline",
                         "String literal contains newline"}),
-                ("Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
-                ("-Inf", "null", new string[]{"Expected literal starting with 'I' to be Infinity"}),
-                ("NaU", "null", new string[]{"Expected literal starting with 'N' to be NaN"}),
-                ("-Nae", "null", new string[]{"Expected literal starting with 'N' to be NaN"}),
-                ("trno", "null", new string[]{"Expected literal starting with 't' to be true"}),
+                ("Inf", "null",   new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("-Inf", "null",  new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("NaU", "null",   new string[]{"Expected literal starting with 'N' to be NaN or None"}),
+                ("-Nae", "null",  new string[]{"Expected literal starting with 'N' to be NaN or None"}),
+                ("trno", "null",  new string[]{"Expected literal starting with 't' to be true"}),
+                ("Trno", "null",  new string[]{"Expected literal starting with 'T' to be True"}),
                 ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
-                ("nurnoe", "null", new string[]{"Expected literal starting with 'n' to be null"}),
+                ("Froeu", "null", new string[]{"Expected literal starting with 'F' to be False"}),
+                ("nurnoe", "null",new string[]{"Expected literal starting with 'n' to be null"}),
                 ("Hugre", "null", new string[]{"Badly located character"}),
+                ("[undefined, underpants]", "[null, null]",
+                new string[]{
+                    "undefined is not part of any JSON specification",
+                    "Expected literal starting with 'u' to be undefined"
+                }),
                 ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
                 ("", "null", new string[]{"No input"}),
                 ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
                 ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
-                ("[undefined, underpants]", "[null, null]", new string[]{"undefined is not part of any JSON specification", "Expected literal starting with 'u' to be undefined"}),
                 ("\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", "\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", new string[]
                 {
                     "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
@@ -811,6 +817,13 @@ multiline comment
                     "Could not find valid hexadecimal of length 2",
                 }),
                 ("{\"a\": 1, \"a\": 2}", "{\"a\": 2}", new string[]{"Object has multiple of key \"a\""}),
+                ("[True, False, None]", "[true, false, null]",
+                new string[]
+                {
+                    "'True' is not an accepted part of any JSON specification",
+                    "'False' is not an accepted part of any JSON specification",
+                    "'None' is not an accepted part of any JSON specification"
+                }),
             };
 
             int tests_failed = 0;

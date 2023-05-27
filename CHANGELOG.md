@@ -56,22 +56,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 		2. The plugin can use the status bar to show how severely the JSON deviates from the JSON standard.
 		3. Tracking of errors in the parser's `lint` attribute is now independent of the strictness of the parser.
 3. __The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
-    * They have been replaced by the `logger_level` setting, which has 5 levels (each a proper superset of the previous):
-		1. __STRICT__: Parse only JSON that complies with the original JSON spec.
-		2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
-    	3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
-        4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
-		5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
-			* singlequoted strings
-			* commas after the last element of an array or object
-			* unquoted object keys
-			* see https://json5.org/ for more.
-	* There are two other states that only `state` can have, because they *always* lead to errors being logged.
-		5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
-			* Python-style '#' comments
-			* missing commas between array members
-			* missing ']' or '}' at the ends of arrays and objects
-			* a bunch of other common syntax errors
+    * They have been replaced by the `logger_level` setting, [described here](/docs/README.md#parser-settings)
 
 ### Minor changes
 
@@ -86,7 +71,8 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 5. Support for the rest of the JSON5 specification, with the following exception(s):
 	* Escaped newlines in strings are ignored. *Note that this will not work if you are using newlines other than `\r`, `\n`, or `\r\n`!*
 	* Escaped digits are simply treated as digits, no matter what.
-5. Support for the `undefined` literal, which is parsed as `null`.
+5. Support for the `undefined` and `None` literals, which are parsed as `null`.
+6. Support for the `True` and `False` literals. Since `None` is now also supported, __Python-style JSON documents are now fully supported.__
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.

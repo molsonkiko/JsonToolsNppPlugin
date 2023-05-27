@@ -1,7 +1,7 @@
 { // this file has ALL the bad things
 \u0348z草 false, # yes, all of them
-"b": "3" /* so much bad */
-'9': "ball", 
+"b": None /* so much bad */
+'9': False, 
 "😀"
       { 
       "u\
@@ -31,11 +31,11 @@ u":
       $unquồted_‍key\u00df "are *very naughty*"
       _st\u1eb2tus‌_ｪ: "jubaЯ"
       ],
-"9\"a\"	": 2,
+"9\"a\"	": null,
 "\u0042lutentharst":
       [
       "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
-      true,
+      True,
       undefined
       [ // some unclosed things too
       { /* 

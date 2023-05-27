@@ -54,11 +54,11 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 
 ![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG)
 
-You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected.
+You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected. *New in [version 5](/CHANGELOG.md#500-unreleased---2023-mm-dd): snaps to position instead.*
 
 __NOTES__
 1. __*JsonTools only works with UTF-8 encoded JSON.*__
-2. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct line.
+2. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct position.
 3. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries *and then undo your change with `Ctrl+Z` or similar, the undo action will not undo the changes to the JSON*. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
     - As of version 3.5.0, you can use the `Refresh` button to refresh the tree with the most recently parsed JSON, rather than closing and re-opening the tree.
 4. Keyboard shortcuts (*added in v3.5.0*):
@@ -83,6 +83,40 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 ## Parser settings ##
 
+Starting in [v5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
+
+When you parse a document that contains syntax errors, you'll be asked if you want to see the syntax errors caught by the linter.
+
+![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
+
+If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught.
+
+![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
+
+Error reporting can be customized with the `logger_level` setting, which has 5 levels, each a superset of the previous:
+1. __STRICT__: Parse only JSON that complies with the original JSON spec.
+2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
+3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
+4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
+5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
+    * singlequoted strings
+    * commas after the last element of an array or object
+    * unquoted object keys
+    * see https://json5.org/ for more.
+* There are two other states that *cannot be chosen* for `logger_level`, because they *always* lead to errors being logged.
+5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
+    * Python-style '#' comments
+    * missing commas between array members
+    * missing ']' or '}' at the ends of arrays and objects
+    * a bunch of other common syntax errors
+6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
+    * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, and `undefined`.
+    * Something other than a JavaScript comment after `/`
+
+<details><summary>pre-version 5.0.0 system for configuring JSON parser</summary>
+
+## Parser settings ##
+
 By default, this app can parse a superset of JSON that is very slightly more permissive than the [original JSON specification](https://json.org). This app parses `NaN` as the floating point `Not-A-Number` and `Infinity` as the floating point Infinity.
 
 You can change the settings to make the parser more or less inclusive. For example, the original spec doesn't allow strings to be surrounded in single quotes, nor does it allow comments in the file. Thus, such JSON will cause our parser to throw an error.
@@ -97,24 +131,33 @@ As you can see, you can also make the parser settings *stricter* than the defaul
 
 *NOTE: Python-style comments are first supported in version [4.12.0](/CHANGELOG.md#4120---2023-03-28), while JavaScript comments have always been supported.*
 
+## Viewing syntax errors in JSON ##
+
+The `linting` attribute in Settings enables the built-in linter for the JSON parser, which catches various syntax errors in JSON and logs them.
+
+**NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
+</details>
+
 ## Automatically check for errors after editing ##
 
 *Added in [version 4.13.0](/CHANGELOG.md#4130---2023-04-11)*
 
-About 2 seconds after a not-very-large file (default less than 4 megabytes, configurable in settings) is opened, and after 2 seconds of inactivity following any modification of the file or styling, the plugin parses the document and performs [JSON Schema validation](#validating-json-against-json-schema) on the document. The user is notified of any errors when this happens, and no further notifications are sent until the user next modifies or re-styles the document. If desired, this feature can be turned off in the settings.
+About 2 seconds after a not-very-large file (default less than 4 megabytes, configurable in settings) is opened, and after 2 seconds of inactivity following any modification of the file or styling, the plugin can parse the document and performs [JSON Schema validation](#validating-json-against-json-schema) on the document. The user is notified of any errors when this happens, and no further notifications are sent until the user next modifies or re-styles the document.
 
-## Viewing syntax errors in JSON ##
+This is off by default. If desired, this feature can be turned on in the settings.
 
-The `linting` attribute in Settings enables the built-in linter for the JSON parser, which catches various syntax errors in JSON and logs them.
-When you parse a document that contains syntax errors like the one we saw above, you'll be asked if you want to see the syntax errors caught by the linter.
 
-![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
+## Path to current position ##
 
-If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught.
+*Added in version v5.0.0*
 
-![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
+The `Path to current position` menu option lets you fill the clipboard with the path to the current position in the document.
 
-**NOTE:** The JSON linter allows the parser to continue parsing even when it encounters syntax errors. That means that the parser will parse some documents that are not valid JSON until the syntax errors are corrected.
+This replaced the old `Path to current line` menu option.
+
+![Path to current position example](/docs/path%20to%20current%20position.PNG)
+
+<details><summary>Path to current line, Removed in v5.0.0</summary>
 
 ## Path to current line ##
 
@@ -123,6 +166,7 @@ If you click "Yes", a new file will open in a separate tab containing details on
 The `Path to current line` menu option lets you fill the clipboard with the path to the first node on the current line. This is most helpful when your JSON is already [pretty-printed](/docs/README.md#pretty_print_style) so no two nodes share a line.
 
 ![Getting the path to current line](/docs/path%20to%20current%20line.PNG)
+</details>
 
 ### Key style ###
 
@@ -453,8 +497,8 @@ This tool can only validate the following keywords:
 ### Keywords for strings
 
 * [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*)
-* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) (*support not yet released, will be released in [4.14.1](/CHANGELOG.md#4141-unreleased---2023-mm-dd)*)
-* [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*support not yet released, will be released in [4.14.1](/CHANGELOG.md#4141-unreleased---2023-mm-dd)*)
+* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) (*added in [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)*)
+* [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)*)
 
 ### Keywords for numbers
 * [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
