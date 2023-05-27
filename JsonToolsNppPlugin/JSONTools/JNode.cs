@@ -122,7 +122,7 @@ namespace JSON_Tools.JSON_Tools
         ///{
         ///    "algorithm": [
         ///        ["start", "each", "child", "on", "a", "new", "line"],
-        ///        ["if", "the", "child", "has", "length", "at", "least", 80],
+        ///        ["if", "the", "line", "would", "have", "length", "at", "least", 80],
         ///        [
         ///            "follow",
         ///            "this",

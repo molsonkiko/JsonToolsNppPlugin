@@ -263,7 +263,7 @@ With minimal_whitespace_compression, __all__ unnecessary whitespace is removed:
 ### pretty_print_style ###
 There are many different [styles](http://astyle.sourceforge.net/astyle.html#_style) for pretty-printing JSON that vary in how they indent and where they put braces.
 
-At present, two different styles are supported:
+At present, three different styles are supported:
 
 [`Google` style](http://astyle.sourceforge.net/astyle.html#_style=google)
 ```json
@@ -293,7 +293,7 @@ At present, two different styles are supported:
 {
     "algorithm": [
         ["start", "each", "child", "on", "a", "new", "line"],
-        ["if", "the", "child", "has", "length", "at", "least", 80],
+        ["if", "the", "line", "would", "have", "length", "at", "least", 80],
         [
             "follow",
             "this",
