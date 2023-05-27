@@ -14,36 +14,32 @@ namespace JSON_Tools.Tests
         {
             JsonParser jsonParser = new JsonParser();
             RemesPathLexer lexer = new RemesPathLexer();
-            var testcases = new object[][]
+            var testcases = new (string input, List<object> desired_tokens, string msg)[]
             {
-                new object[] { "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], 2L}), "cur_json binop scalar" },
-                new object[] { "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" },
-                new object[] { "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" },
-                new object[] { "len(null, Infinity)", new List<object>(new object[]{ArgFunction.FUNCTIONS["len"], '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" },
-                new object[] { "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" },
-                new object[] { "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" },
-                new object[] { " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" },
-                new object[] { ". []", new List<object>(new object[]{'.', '[', ']'}), "more delimiters" },
-                new object[] { "3blue", new List<object>(new object[]{3L, "blue"}), "number immediately followed by string" },
-                new object[] { "2.5+-2", new List<object>(new object[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}), "number binop binop number, no whitespace" },
-                new object[] { "`a`+@", new List<object>(new object[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace" },
-                new object[] { "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], ArgFunction.FUNCTIONS["in"], Binop.BINOPS["=~"]}), "two-character binops and argfunction in" },
-                new object[] { "@[1,2]/3", new List<object>(new object[]{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}), "numbers and delimiters then binop number, no whitespace" },
-                new object[] { "2 <=3!=", new List < object >(new object[] {2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }), "!=" },
-                new object[] { "8 = @ * 79 ==", new List<object>(new object[] {8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}), "assignment operator" },
+                ( "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], 2L}), "cur_json binop scalar" ),
+                ( "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" ),
+                ( "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" ),
+                ( "len(null, Infinity)", new List<object>(new object[]{"len", '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" ),
+                ( "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" ),
+                ( "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" ),
+                ( " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" ),
+                ( ". []", new List<object>(new object[]{'.', '[', ']'}), "more delimiters" ),
+                ( "3blue", new List<object>(new object[]{3L, "blue"}), "number immediately followed by string" ),
+                ( "2.5+-2", new List<object>(new object[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}), "number binop binop number, no whitespace" ),
+                ( "`a`+@", new List<object>(new object[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace" ),
+                ( "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}), "two-character binops and argfunction in" ),
+                ( "@[1,2]/3", new List<object>(new object[]{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}), "numbers and delimiters then binop number, no whitespace" ),
+                ( "2 <=3!=", new List < object >(new object[] {2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }), "!=" ),
+                ( "8 = @ * 79 ==", new List<object>(new object[] {8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}), "assignment operator" ),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((string input, List<object> desired_tokens, string msg) in testcases)
             {
-                //(string input, List<object> desired, string msg)
-                ii++;
-                string input = (string)test[0], msg = (string)test[2];
-                List<object> desired = (List<object>)test[1];
                 var sb_desired = new StringBuilder();
                 bool should_be_assignment_expr = false;
                 bool is_assignment_expr = false;
-                foreach (object desired_value in desired)
+                foreach (object desired_value in desired_tokens)
                 {
                     if (desired_value is int || desired_value is long || desired_value is double || desired_value is string || desired_value == null || desired_value is Regex)
                     {
@@ -83,9 +79,9 @@ namespace JSON_Tools.Tests
                 var sb_output = new StringBuilder();
                 foreach (object value in output)
                 {
-                    if (value is JNode && !(value is CurJson))
+                    if (value is JNode jnode && !(value is CurJson))
                     {
-                        sb_output.Append(((JNode)value).ToString());
+                        sb_output.Append(jnode.ToString());
                     }
                     else
                     {
@@ -198,7 +194,7 @@ namespace JSON_Tools.Tests
             {
                 // binop precedence tests
                 new Query_DesiredResult("2 - 4 * 3.5", "-12.0"),
-                new Query_DesiredResult("2 / 3 - 4 * 5 ** 1", "-58/3"),
+                new Query_DesiredResult("2 / 3 - 4 * 5 ** 1", "-19.333333333333332"),
                 new Query_DesiredResult("5 ** (6 - 2)", "625.0"),
                 // binop two jsons, binop json scalar, binop scalar json tests
                 new Query_DesiredResult("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
@@ -257,9 +253,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("16.6 == 17", "false"),
                 // uminus tests
                 new Query_DesiredResult("-j`[1]`", "[-1]"),
-                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -1/8]"),
+                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -0.125]"),
                 new Query_DesiredResult("-@.foo[2]", "[-6.0, -7.0, -8.0]"),
-                new Query_DesiredResult("2/--3", "2/3"),
+                new Query_DesiredResult("2/--4", "0.5"),
                 // indexing tests
                 new Query_DesiredResult("@.baz", "\"z\""),
                 new Query_DesiredResult("@.foo[0]", "[0, 1, 2]"),
@@ -306,7 +302,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
                 new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
                 new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
-                new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\tbah\""),
+                new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\\tbah\""),
                 new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
                 new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
                 new Query_DesiredResult("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
@@ -395,6 +391,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("len(@.foo[:]{blah: 1})", "3"),
                 new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
+                new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
                 // recursive search
                 new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
                 new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
@@ -412,6 +409,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("(2 | s_len(str(@.foo[0])))[2]", "3"), // indexing on a paren-wrapped result of a binop (scalar, vectorized arg function)
                 new Query_DesiredResult("(range(len(@.foo)) ** 3)[2]", "8.0"), // indexing on a paren-wrapped result of a binop (non-vectorized arg function, scalar)
                 new Query_DesiredResult("(s_len(str(@.foo[0])) ^ 3)[2]", "2"), // indexing on a paren-wrapped result of a binop (vectorized arg function, scalar)
+                new Query_DesiredResult("j`{\"items\": [\"a\", 1]}`.items", "[\"a\", 1]"), // using an ArgFunction name as a string rather than an ArgFunction
             };
             int ii = 0;
             int tests_failed = 0;
@@ -458,7 +456,8 @@ namespace JSON_Tools.Tests
                 new string[] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
                 new string[] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
                 new string[] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
-});
+                new string[] {"blahrurn(@, a)", "{}"}, // something that's not the name of an ArgFunction used where an ArgFunction was expected
+            });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
             foreach (string other in invalid_others)
@@ -568,12 +567,15 @@ namespace JSON_Tools.Tests
             }
 
             // test throws errors when expected
-            foostr = "{\"foo\": [1]}";
+            foostr = "{\"foo\": [1], \"bar\": {\"a\": 1}}";
             string[][] fail_cases = new string[][]
             {
                 new string[]{"@.foo = len(@)", foostr},
                 new string[]{"@.foo = @{a: len(@)}", foostr},
                 new string[]{"@.foo[0] = j`[1]`", foostr},
+                new string[]{"@.bar = len(@)", foostr},
+                new string[]{"@.bar = j`[1]`", foostr},
+                new string[]{"@.bar.a = j`[1]`", foostr},
             };
 
             foreach (string[] test in fail_cases)
@@ -644,20 +646,17 @@ namespace JSON_Tools.Tests
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true");
             JNode jfalse = jsonParser.Parse("false");
-            var testcases = new object[][]
+            var testcases = new (List<JNode> args, ArgFunction f, JNode desired_output)[]
             {
-                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) },
-                new object[]{ new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") },
-                new object[]{ new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") },
-                new object[]{ new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) },
+                ( new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) ),
+                ( new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") ),
+                ( new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") ),
+                ( new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) ),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((List<JNode> args, ArgFunction f, JNode desired_output) in testcases)
             {
-                List<JNode> args = (List<JNode>)test[0];
-                ArgFunction f = (ArgFunction)test[1];
-                JNode desired = (JNode)test[2];
                 JNode output = f.Call(args);
                 var sb = new StringBuilder();
                 sb.Append('{');
@@ -669,7 +668,7 @@ namespace JSON_Tools.Tests
                 }
                 sb.Append('}');
                 string argstrings = sb.ToString();
-                string str_desired = desired.ToString();
+                string str_desired = desired_output.ToString();
                 string str_output = output.ToString();
                 if (str_desired != str_output)
                 {

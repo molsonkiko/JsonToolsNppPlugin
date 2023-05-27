@@ -3,6 +3,7 @@ Reads a JSON document and outputs YAML that can be serialized back to
 equivalent (or very nearly equivalent) JSON.
 */
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -44,7 +45,7 @@ namespace JSON_Tools.JSON_Tools
 
         private bool IsIterable(JNode x)
         {
-            return (x == null) ? false : x is JObject || x is JArray;
+            return x != null && x is JObject || x is JArray;
         }
 
         private bool StartsOrEndsWith(string x, string suf_or_pref)
@@ -167,35 +168,32 @@ namespace JSON_Tools.JSON_Tools
         {
             // start the line with depth * indent blank spaces
             string indent_space = new string(' ', indent * depth);
-            if (tok is JObject)
+            if (tok is JObject o)
             {
-                var o = (JObject)tok;
                 if (o.children.Count == 0)
                 {
                     sb.Append(indent_space + "{}\n");
                     return;
                 }
-                foreach (string k in o.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in o.children)
                 {
-                    JNode v = o[k];
                     // Console.WriteLine("k = " + k);
-                    if (IsIterable(v))
+                    if (IsIterable(kv.Value))
                     {
-                        sb.Append(String.Format("{0}{1}:\n", indent_space, YamlKeyRepr(k)));
-                        BuildYaml(sb, v, depth + 1, indent);
+                        sb.Append(String.Format("{0}{1}:\n", indent_space, YamlKeyRepr(kv.Key)));
+                        BuildYaml(sb, kv.Value, depth + 1, indent);
                     }
                     else
                     {
                         sb.Append(String.Format("{0}{1}: {2}\n",
                                              indent_space,
-                                             YamlKeyRepr(k),
-                                             YamlValRepr(v)));
+                                             YamlKeyRepr(kv.Key),
+                                             YamlValRepr(kv.Value)));
                     }
                 }
             }
-            else if (tok is JArray)
+            else if (tok is JArray a)
             {
-                JArray a = (JArray)tok;
                 if (a.children.Count == 0)
                 {
                     sb.Append(indent_space + "[]\n");

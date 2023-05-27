@@ -10,25 +10,26 @@ namespace JSON_Tools.Utils
     public class Settings : SettingsBase
     {
         #region JSON_PARSER_SETTINGS
-        [Description("Parse NaN and Infinity in JSON. If false, those raise an error."),
-            Category("JSON Parser"), DefaultValue(true)]
-        public bool allow_nan_inf { get; set; }
-
-        [Description("Ignore comments ('#' Python-style comments or JavaScript-style '//' single-line and '/* */' multi-line) in JSON.\r\nIf false, comments cause the parser to error out."),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_comments { get; set; }
-
-        [Description("Allow use of ' as well as \" for quoting strings."),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_singlequoted_str { get; set; }
+        [Description("Suppress logging of errors at or below this level.\r\n" +
+            "STRICT: Log all deviations from the original JSON spec.\r\n" + 
+            "OK: The original JSON spec plus the following:\r\n" +
+            "    * strings can contain characters with ASCII values less than 0x20 (includes '\\t')\r\n" +
+            "NAN_INF: Do not log errors when NaN, Infinity, and -Infinity are parsed.\r\n" +
+            "JSONC: The following errors are not logged:\r\n" +
+            "    * JavaScript single-line '//' and multi-line '/*...*/' comments\r\n" +
+            "    * NaN and +/-Infinity\r\n" +
+            "JSON5: Everything in the JSONC and NAN_INF levels is not logged, as well as the following:\r\n" +
+            "    * singlequoted strings\r\n" +
+            "    * commas after the last element of an array or object\r\n" +
+            "    * unquoted object keys\r\n" +
+            "    * see https://json5.org/ for more."
+            ),
+            Category("JSON Parser"), DefaultValue(LoggerLevel.NAN_INF)]
+        public LoggerLevel logger_level { get; set; }
 
         [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),
             Category("JSON Parser"), DefaultValue(false)]
         public bool allow_datetimes { get; set; }
-
-        [Description("Track the locations where any JSON syntax errors were found"),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool linting { get; set; }
         #endregion
         #region PERFORMANCE
         [Description("Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n" +
@@ -38,8 +39,12 @@ namespace JSON_Tools.Utils
         public double max_file_size_MB_slow_actions { get; set; }
 
         [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
-            Category("Performance"), DefaultValue(true)]
+            Category("Performance"), DefaultValue(false)]
         public bool auto_validate { get; set; }
+
+        [Description("How many seconds of user inactivity before the plugin re-parses the document. Minimum 1."),
+            Category("Performance"), DefaultValue(2)]
+        public int inactivity_seconds_before_parse { get; set; }
         #endregion
         #region TREE_VIEW_SETTINGS
 
@@ -59,7 +64,7 @@ namespace JSON_Tools.Utils
         public int indent_pretty_print { get; set; }
 
         [Description("If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays"),
-            Category("JSON formatting"), DefaultValue(false)]
+            Category("JSON formatting"), DefaultValue(true)]
         public bool minimal_whitespace_compression { get; set; }
 
         [Description("Sort the keys of objects alphabetically when pretty-printing or compressing"),
@@ -75,7 +80,7 @@ namespace JSON_Tools.Utils
             "            2\r\n" +
             "        ]\r\n" +
             "    ]\r\n" +
-            "}\r\n\r\n" +
+            "}\r\n" +
             "Whitesmith style:\r\n" +
             "{\r\n" +
             "\"a\":\r\n" +
@@ -85,7 +90,9 @@ namespace JSON_Tools.Utils
             "        2\r\n" +
             "        ]\r\n" +
             "    ]\r\n" +
-            "}"),
+            "}\r\n" +
+            "PPrint style:\r\n" +
+            "{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}"),
             Category("JSON formatting"), DefaultValue(PrettyPrintStyle.Google)]
         public PrettyPrintStyle pretty_print_style { get; set; }
         #endregion

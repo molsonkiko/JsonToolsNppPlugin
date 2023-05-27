@@ -192,20 +192,23 @@ Performance tests for RemesPath ({description})
             Npp.AddLine($"To compress JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
                 $"ms over {toString_times.Length} trials (minimal whitespace, sort_keys=FALSE)");
             // pretty-print benchmark
-            long[] prettyPrint_times = new long[num_trials];
-            for (int ii = 0; ii < num_trials; ii++)
+            foreach (var style in new[] {PrettyPrintStyle.Google, PrettyPrintStyle.Whitesmith, PrettyPrintStyle.PPrint})
             {
-                watch.Reset();
-                watch.Start();
-                json.PrettyPrint();
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                prettyPrint_times[ii] = t;
+                long[] prettyPrint_times = new long[num_trials];
+                for (int ii = 0; ii < num_trials; ii++)
+                {
+                    watch.Reset();
+                    watch.Start();
+                    json.PrettyPrint(style:style);
+                    watch.Stop();
+                    long t = watch.Elapsed.Ticks;
+                    prettyPrint_times[ii] = t;
+                }
+                // display loading results
+                (mean, sd) = GetMeanAndSd(prettyPrint_times);
+                Npp.AddLine($"To {style}-style pretty-print JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
+                    $"ms over {prettyPrint_times.Length} trials (sort_keys=true, indent=4)");
             }
-            // display loading results
-            (mean, sd) = GetMeanAndSd(prettyPrint_times);
-            Npp.AddLine($"To pretty-print JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
-                $"ms over {prettyPrint_times.Length} trials (Google style, sort_keys=true, indent=4)");
         }
 
         public static void BenchmarkRandomJsonAndSchemaValidation(int num_trials)

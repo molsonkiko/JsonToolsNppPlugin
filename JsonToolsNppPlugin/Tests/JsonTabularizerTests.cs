@@ -463,7 +463,7 @@ namespace JSON_Tools.Tests
 			}
 
 			// TEST CSV CREATION
-			JsonParser fancyParser = new JsonParser(true);
+			JsonParser fancyParser = new JsonParser(LoggerLevel.JSON5);
 
 			var csv_testcases = new object[][]
 			{
@@ -503,11 +503,11 @@ namespace JSON_Tools.Tests
 				"b,\"a,b\"\na,1\nb,2\n",
 				',', '"', new string[]{"b", "a,b"}, false
 				},
-				new object[] { "[{\"a\tb\": 1, \"b\": \"a\"}, {\"a\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
+				new object[] { "[{\"a\\tb\": 1, \"b\": \"a\"}, {\"a\\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
 				"a\\tb\tb\n1\ta\n2\tb\n",
 				'\t', '"', null, false
 				},
-				new object[] { "[{\"a\": 1, \"b\": \"a\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
+				new object[] { "[{\"a\": 1, \"b\": \"a\\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
 				"a\tb\n1\t\"a\tb\"\n2\tc\n",
 				'\t', '"', null, false
 				},

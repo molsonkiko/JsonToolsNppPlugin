@@ -8,36 +8,29 @@ Passed 12 tests.
 Testing JSON parser
 =========================
 
+obj =
+{"a":  [1, 2, 3],  "b": {}, 　"Я草": [], "😀": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]]}
+
 Failed 0 tests.
-Passed 78 tests.
+Passed 85 tests.
 =========================
 Testing if JSON parser throws errors on bad inputs
 =========================
 
 Failed 0 tests.
-Passed 4 tests.
+Passed 5 tests.
 =========================
 Testing JSON parser advanced options (javascript comments, dates, datetimes, singlequoted strings)
 =========================
 
 Failed 0 tests.
-Passed 18 tests.
+Passed 24 tests.
 =========================
 Testing JSON parser's linter functionality
 =========================
 
-Expected JsonParser(true, true, true, true).Parse({)
-to return
-{} and have lint [Unexpected end of JSON]
-Instead threw exception
-Unexpected end of JSON at position 0 (char '{')
-Expected JsonParser(true, true, true, true).Parse([)
-to return
-[] and have lint [Unexpected end of JSON]
-Instead threw exception
-Unexpected end of JSON at position 0 (char '[')
-Failed 2 tests.
-Passed 14 tests.
+Failed 0 tests.
+Passed 54 tests.
 =========================
 Testing JSON Lines parser
 =========================
@@ -108,19 +101,19 @@ Testing RemesPath parser and compiler
 
 The queried JSON in the RemesParser tests is:{"_": {"0": 0}, "7": [{"foo": 2}, 1], "bar": {"a": false, "b": ["a`g", "bah"]}, "baz": "z", "foo": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], "guzo": [[[1]], [[2], [3]]], "jub": [], "quz": {}}
 Failed 0 tests.
-Passed 201 tests.
+Passed 203 tests.
 =========================
 Testing that RemesPath throws errors on bad inputs
 =========================
 
 Failed 0 tests.
-Passed 616 tests.
+Passed 617 tests.
 =========================
 Testing RemesPath assignment operations
 =========================
 
 Failed 0 tests.
-Passed 17 tests.
+Passed 20 tests.
 =========================
 Testing JsonSchema generator
 =========================
@@ -166,30 +159,45 @@ Testing conversion of JSON to DSON (see https://dogeon.xyz/)
 Failed 0 tests.
 Passed 8 tests.
 =========================
+Testing JNode PathToPosition method
+=========================
+
+Failed 0 tests.
+Passed 24 tests.
+=========================
 Performance tests for JsonParser
 =========================
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 91926 into JNode took 3.017 +/- 1.035 ms over 32 trials
-Load times (ms): 2, 3, 2, 5, 1, 3, 5, 2, 3, 2, 3, 1, 3, 2, 3, 1, 3, 1, 4, 2, 3, 4, 1, 3, 1, 3, 1, 3, 2, 3, 2, 2
+To convert JSON string of size 91926 into JNode took 2.044 +/- 0.821 ms over 32 trials
+Load times (ms): 2, 1, 1, 1, 2, 2, 1, 4, 1, 1, 1, 2, 3, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1
 =========================
 Performance tests for RemesPath (float arithmetic)
 =========================
 
-Compiling query "@[@[:].a * @[:].q < @[:].e]" into took 4.719 +/- 4.442 microseconds over 64 trials
-To run pre-compiled query "@[@[:].a * @[:].q < @[:].e]" on JNode from JSON of size 91926 into took 0.028 +/- 0.006 ms over 64 trials
-Query times (ms): 0.06, 0.029, 0.028, 0.04, 0.054, 0.026, 0.027, 0.027, 0.026, 0.027, 0.027, 0.03, 0.027, 0.027, 0.027, 0.026, 0.026, 0.033, 0.027, 0.027, 0.026, 0.026, 0.027, 0.026, 0.026, 0.026, 0.026, 0.026, 0.035, 0.036, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.027, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026
+Compiling query "@[@[:].a * @[:].t < @[:].e]" into took 4.706 +/- 2.742 microseconds over 64 trials
+To run pre-compiled query "@[@[:].a * @[:].t < @[:].e]" on JNode from JSON of size 91926 into took 0.066 +/- 0.312 ms over 64 trials
+Query times (ms): 0.065, 0.028, 0.028, 0.027, 0.028, 0.028, 0.027, 0.028, 0.027, 0.028, 2.544, 0.03, 0.027, 0.028, 0.027, 0.027, 0.027, 0.027, 0.027, 0.027, 0.027, 0.028, 0.027, 0.027, 0.027, 0.028, 0.027, 0.026, 0.026, 0.027, 0.027, 0.027, 0.027, 0.027, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.025, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026, 0.026
 Preview of result: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
 =========================
 Performance tests for RemesPath (string operations)
 =========================
 
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.741 +/- 3.308 microseconds over 64 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.082 +/- 0.188 ms over 64 trials
-Query times (ms): 0.109, 0.054, 0.086, 0.091, 0.064, 0.062, 0.063, 0.062, 0.069, 0.072, 0.064, 0.061, 0.062, 0.061, 0.064, 0.062, 0.062, 0.062, 0.064, 0.063, 0.063, 1.569, 0.057, 0.052, 0.052, 0.051, 0.052, 0.051, 0.051, 0.069, 0.051, 0.051, 0.051, 0.051, 0.052, 0.066, 0.059, 0.082, 0.052, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.052, 0.051, 0.051, 0.051, 0.051, 0.051, 0.063, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 2.65 +/- 2.808 microseconds over 64 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 91926 into took 0.057 +/- 0.008 ms over 64 trials
+Query times (ms): 0.092, 0.054, 0.053, 0.052, 0.052, 0.052, 0.051, 0.051, 0.051, 0.051, 0.052, 0.058, 0.051, 0.052, 0.052, 0.051, 0.051, 0.051, 0.052, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.052, 0.052, 0.051, 0.051, 0.051, 0.051, 0.051, 0.051, 0.078, 0.079, 0.069, 0.061, 0.062, 0.061, 0.062, 0.062, 0.062, 0.061, 0.062, 0.061, 0.062, 0.061, 0.062, 0.061, 0.069, 0.074, 0.062, 0.061, 0.062, 0.06, 0.062, 0.061, 0.062, 0.06, 0.062
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
+...
+=========================
+Performance tests for RemesPath (basic recursive search)
+=========================
+
+Compiling query "@..*" into took 0.638 +/- 1.147 microseconds over 64 trials
+To run pre-compiled query "@..*" on JNode from JSON of size 91926 into took 0.546 +/- 0.157 ms over 64 trials
+Query times (ms): 0.51, 0.493, 0.481, 0.478, 0.477, 1.012, 0.477, 0.478, 0.476, 0.479, 0.477, 1.247, 0.661, 0.481, 0.481, 0.481, 0.478, 0.479, 0.478, 0.478, 0.486, 0.479, 0.933, 0.48, 0.484, 0.481, 0.477, 0.479, 0.798, 0.478, 0.477, 0.476, 0.477, 0.475, 0.477, 0.771, 0.477, 0.477, 0.474, 0.484, 0.483, 0.862, 0.66, 0.509, 0.485, 0.48, 0.478, 0.479, 0.881, 0.48, 0.477, 0.5, 0.479, 0.49, 0.811, 0.481, 0.485, 0.476, 0.481, 0.48, 0.476, 0.794, 0.486, 0.476
+Preview of result: [1850111954, 9318359041, 7974777124, 2670309238, 6958410336, 8050244728, 3799657125, 2612807147, 7785993340, 9842767454, 2257474583, 2736529372, 4821265864, 3302084501, 1506933286, 7851467140, 0.449658025041282, 0.889524736382732, 0.153807552183378, 0.201077552261751, 0.110978036654776, 0.5091727002
 ...
 =========================
 Performance tests for JSON compression and pretty-printing
@@ -197,13 +205,15 @@ Performance tests for JSON compression and pretty-printing
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To compress JNode from JSON string of 91926 took 3.993 +/- 0.463 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
-To compress JNode from JSON string of 91926 took 2.074 +/- 0.335 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
-To pretty-print JNode from JSON string of 91926 took 4.506 +/- 0.242 ms over 64 trials (Google style, sort_keys=true, indent=4)
+To compress JNode from JSON string of 91926 took 4.035 +/- 0.351 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
+To compress JNode from JSON string of 91926 took 2.016 +/- 0.107 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
+To Google-style pretty-print JNode from JSON string of 91926 took 4.074 +/- 0.196 ms over 64 trials (sort_keys=true, indent=4)
+To Whitesmith-style pretty-print JNode from JSON string of 91926 took 4.075 +/- 0.137 ms over 64 trials (sort_keys=true, indent=4)
+To PPrint-style pretty-print JNode from JSON string of 91926 took 5.776 +/- 0.421 ms over 64 trials (sort_keys=true, indent=4)
 =========================
 Performance tests for JsonSchemaValidator and random JSON creation
 =========================
 
-To create a random set of tweet JSON of size 178648 (15 tweets) based on the matching schema took 6.315 +/- 2.994 ms over 64 trials
-To compile the tweet schema to a validation function took 0.365 +/- 0.652 ms over 64 trials
-To validate tweet JSON of size 178648 (15 tweets) based on the compiled schema took 1.009 +/- 0.197 ms over 64 trials
+To create a random set of tweet JSON of size 149240 (15 tweets) based on the matching schema took 6.077 +/- 2.69 ms over 64 trials
+To compile the tweet schema to a validation function took 0.255 +/- 0.492 ms over 64 trials
+To validate tweet JSON of size 149240 (15 tweets) based on the compiled schema took 0.957 +/- 0.168 ms over 64 trials

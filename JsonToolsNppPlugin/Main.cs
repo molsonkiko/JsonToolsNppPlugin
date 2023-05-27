@@ -25,12 +25,10 @@ namespace Kbg.NppPluginNET
         internal const string PluginName = "JsonTools";
         // general stuff things
         public static Settings settings = new Settings();
-        public static JsonParser jsonParser = new JsonParser(settings.allow_datetimes,
-                                                            settings.allow_singlequoted_str,
-                                                            settings.allow_comments,
-                                                            settings.linting,
-                                                            false,
-                                                            settings.allow_nan_inf);
+        public static JsonParser jsonParser = new JsonParser(settings.logger_level,
+                                                             settings.allow_datetimes,
+                                                             false,
+                                                             false);
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string active_fname = null;
@@ -51,8 +49,8 @@ namespace Kbg.NppPluginNET
         private static readonly Func<JNode, JsonSchemaValidator.ValidationProblem?> schemasToFnamePatterns_SCHEMA = JsonSchemaValidator.CompileValidationFunc((JObject)new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"patternProperties\":{\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"},\"^$\":false},\"properties\":{},\"required\":[],\"type\":\"object\"}"));
         // stuff for periodically parsing and possibly validating a file
         public static DateTime lastEditedTime = DateTime.MaxValue;
+        private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
-        private const long millisecondsAfterLastEditToParse = 2000;
         private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl" };
         private static bool currentFileTooBigToAutoParse = true;
         private static bool bufferFinishedOpening = false;
@@ -83,7 +81,7 @@ namespace Kbg.NppPluginNET
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
             PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
             PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "Path to current &line", CopyPathToCurrentLine, new ShortcutKey(true, true, true, Keys.L));
+            PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L));
             // Here you insert a separator
             PluginBase.SetCommand(3, "---", null);
             PluginBase.SetCommand(4, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
@@ -339,7 +337,7 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines).<br></br>
+        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines or the file extension is ".jsonl").<br></br>
         /// If parsing fails, throw up a message box telling the user what happened.<br></br>
         /// If linting is active and the linter catches anything, throw up a message box
         /// asking the user if they want to view the caught errors in a new buffer.<br></br>
@@ -348,39 +346,25 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="is_json_lines"></param>
         /// <returns></returns>
-        public static JNode TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
+        public static (bool fatal, JNode node) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
         {
             int len = Npp.editor.GetLength();
             if (was_autotriggered && len > Main.settings.max_file_size_MB_slow_actions * 1e6)
-                return null;
+                return (false, null);
             string fname = Npp.notepad.GetCurrentFilePath();
             string text = Npp.editor.GetText(len + 1);
             JNode json = new JNode();
-            try
-            {
-                if (is_json_lines)
-                    json = jsonParser.ParseJsonLines(text);
-                else
-                    json = jsonParser.Parse(text);
-            }
-            catch (Exception e)
-            {
-                string expretty = RemesParser.PrettifyException(e);
-                MessageBox.Show($"Could not parse the document because of error\n{expretty}",
-                                "Error while trying to parse JSON",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                if (e is JsonParserException je)
-                    Npp.editor.GotoPos(je.Pos);
-                    // unfortunately, this position is going to be wrong if there are non-ASCII characters in the document.
-                    // that's because the position is the character number in the C# UTF-16 representation of the document,
-                    // and the version displayed in the editor will probably be UTF-8.
-                return null;
-            }
-            if (jsonParser.lint != null && jsonParser.lint.Count > 0)
+            // always parse ".jsonl" documents as Json Lines 
+            is_json_lines |= Npp.FileExtension() == "jsonl";
+            if (is_json_lines)
+                json = jsonParser.ParseJsonLines(text);
+            else
+                json = jsonParser.Parse(text);
+            int lintCount = jsonParser.lint.Count;
+            if (lintCount > 0)
             {
                 fname_lints[fname] = jsonParser.lint.ToArray();
-                string msg = $"There were {jsonParser.lint.Count} syntax errors in the document. Would you like to see them?";
+                string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
                 if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                     == DialogResult.Yes)
                 {
@@ -389,14 +373,25 @@ namespace Kbg.NppPluginNET
                     sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
                     foreach (JsonLint lint in jsonParser.lint)
                     {
-                        sb.AppendLine($"Syntax error on line {lint.line} (position {lint.pos}, char {lint.curChar}): {lint.message}");
+                        sb.AppendLine(lint.ToString());
                     }
                     Npp.AddLine(sb.ToString());
                     Npp.notepad.OpenFile(fname);
                 }
             }
+            if (jsonParser.fatal)
+            {
+                // unacceptable error, show message box
+                string errorMessage = jsonParser.fatal_error?.ToString();
+                MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
+                                "Error while trying to parse JSON",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
             fname_jsons[fname] = json;
-            return json;
+            if (treeViewers.TryGetValue(fname, out var tv))
+                tv.json = json;
+            return (jsonParser.fatal, json);
         }
 
         /// <summary>
@@ -405,7 +400,7 @@ namespace Kbg.NppPluginNET
         /// <param name="json"></param>
         public static void PrettyPrintJsonInNewFile(JNode json)
         {
-            string printed = json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
+            string printed = json.PrettyPrintAndChangePositions(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
             Npp.notepad.FileNew();
             Npp.editor.SetText(printed);
             Npp.RemoveTrailingSOH();
@@ -419,9 +414,9 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void PrettyPrintJson()
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
-            Npp.editor.SetText(json.PrettyPrintAndChangeLineNumbers(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
+            Npp.editor.SetText(json.PrettyPrintAndChangePositions(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
@@ -432,12 +427,12 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void CompressJson()
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             if (settings.minimal_whitespace_compression)
-                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys, ":", ","));
+                Npp.editor.SetText(json.ToStringAndChangePositions(settings.sort_keys, ":", ","));
             else
-                Npp.editor.SetText(json.ToStringAndChangeLineNumbers(settings.sort_keys));
+                Npp.editor.SetText(json.ToStringAndChangePositions(settings.sort_keys));
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();
@@ -452,8 +447,8 @@ namespace Kbg.NppPluginNET
                             MessageBoxIcon.Warning)
                 == DialogResult.Cancel)
                 return;
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             Npp.notepad.FileNew();
             string yaml = "";
             try
@@ -480,8 +475,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void DumpJsonLines()
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             if (!(json is JArray arr))
             {
                 MessageBox.Show("Only JSON arrays can be converted to JSON Lines format.",
@@ -506,11 +501,10 @@ namespace Kbg.NppPluginNET
         static void OpenSettings()
         {
             settings.ShowDialog();
-            jsonParser.allow_nan_inf = settings.allow_nan_inf;
-            jsonParser.allow_datetimes = settings.allow_datetimes;
-            jsonParser.allow_comments = settings.allow_comments;
-            jsonParser.allow_singlequoted_str = settings.allow_singlequoted_str;
-            jsonParser.lint = settings.linting ? new List<JsonLint>() : null;
+            jsonParser = new JsonParser(settings.logger_level, settings.allow_datetimes, false, false);
+            millisecondsAfterLastEditToParse = (settings.inactivity_seconds_before_parse < 1)
+                    ? 1000
+                    : 1000 * settings.inactivity_seconds_before_parse;
             // make sure grepperForm gets these new settings as well
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
@@ -524,13 +518,13 @@ namespace Kbg.NppPluginNET
                 FormStyle.ApplyStyle(treeViewer, settings.use_npp_styling);
         }
 
-        private static void CopyPathToCurrentLine()
+        private static void CopyPathToCurrentPosition()
         {
-            int line = Npp.editor.GetCurrentLineNumber();
-            string result = PathToLine(line);
+            int pos = Npp.editor.GetCurrentPos();
+            string result = PathToPosition(pos);
             if (result.Length == 0)
             {
-                MessageBox.Show($"Did not find a node on line {line} of this file",
+                MessageBox.Show($"Did not find a node at position {pos} of this file",
                     "Could not find a node on this line",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -539,10 +533,11 @@ namespace Kbg.NppPluginNET
             Npp.TryCopyToClipboard(result);
         }
 
-        private static string PathToLine(int line)
+        private static string PathToPosition(int pos)
         {
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
+            bool fatal;
             if (!fname_jsons.TryGetValue(fname, out json))
             {
                 if (grepperForm != null 
@@ -554,11 +549,11 @@ namespace Kbg.NppPluginNET
             }
             if (json == null)
             {
-                json = TryParseJson(Npp.FileExtension() == "jsonl");
-                if (json == null)
+                (fatal, json) = TryParseJson();
+                if (fatal || json == null)
                     return "";
             }
-            return json.PathToFirstNodeOnLine(line, new List<string>(), Main.settings.key_style);
+            return json.PathToPosition(pos, Main.settings.key_style);
         }
 
         /// <summary>
@@ -604,10 +599,8 @@ namespace Kbg.NppPluginNET
                     return;
                 }
             }
-            if (Npp.FileExtension() == "jsonl") // jsonl is the canonical file path for JSON Lines docs
-                is_json_lines = true;
-            JNode json = TryParseJson(is_json_lines);
-            if (json == null)
+            (bool _, JNode json) = TryParseJson(is_json_lines);
+            if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
             treeViewers[active_fname] = openTreeViewer;
@@ -703,8 +696,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void ValidateJson(string schema_path = null, bool message_on_success = true)
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             if (schema_path == null)
             {
@@ -736,7 +729,7 @@ namespace Kbg.NppPluginNET
             {
                 MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {schema_path}. Problem description:\n{problem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                Npp.editor.GotoLine((int)problem?.line_num);
+                Npp.editor.GotoPos((int)problem?.position);
                 return;
             }
             if (!message_on_success) return;
@@ -749,8 +742,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateJsonSchema()
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             JNode schema;
             try
             {
@@ -777,8 +770,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateRandomJson()
         {
-            JNode json = TryParseJson();
-            if (json == null) return;
+            (bool fatal, JNode json) = TryParseJson();
+            if (fatal || json == null) return;
             JNode randomJson = new JNode();
             try
             {
@@ -837,7 +830,7 @@ namespace Kbg.NppPluginNET
             {
                 try
                 {
-                    JsonParser jParser = new JsonParser(allow_comments: true);
+                    JsonParser jParser = new JsonParser(LoggerLevel.JSON5);
                     schemasToFnamePatterns = (JObject)jParser.Parse(fp.ReadToEnd());
                 }
                 catch (Exception ex)
@@ -974,7 +967,7 @@ namespace Kbg.NppPluginNET
                 || !fileExtensionsToAutoParse.Contains(ext))
                 return;
             // filename matches but it's not associated with a schema, so just parse normally
-            TryParseJson(ext == "jsonl", true);
+            TryParseJson(false, true);
         }
 
         /// <summary>

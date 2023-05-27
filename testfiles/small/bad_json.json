@@ -1,33 +1,43 @@
-{
-"a": false,
-"b": "3",
-"6": 7,
-"9": "ball",
-"jub":
-      {
-      "uy":
+{ // this file has ALL the bad things
+\u0348z草 false, # yes, all of them
+"b": None /* so much bad */
+'9': False, 
+"😀"
+      { 
+      "u\
+y":
             [
-            1,
-            2,
-            NaN
-            ],
-      "yu":
+            1
+            "FO\x4fBAR
+   "         +2,　
+            NaN,
+            .75 
+-0xF            +0xabcde
+0xABCDE
+            },
+      "y
+u":
             [
                   [
                   6,
                         {
-                        "y": "b",
-                        "m8": 9
+                        "y": 'b\9\x0a',
+                        "m8": 9,
                         }
                   ],
-            null
+            Infinity
+            -Infinity
             ],
-      "status": "jubar"
-      },
-"9\"a\"": 2,
-"blutentharst":
+      $unquồted_‍key\u00df "are *very naughty*"
+      _st\u1eb2tus‌_ｪ: "jubaЯ"
+      ],
+"9\"a\"	": null,
+"\u0042lutentharst":
       [
-      "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
-      true
-      ]
-}
+      "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
+      True,
+      undefined
+      [ // some unclosed things too
+      { /* 
+      and finally an unclosed multiline comment
+      

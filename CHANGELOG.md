@@ -20,8 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     ]
 }
 ```
-3. Add parsing of unquoted strings when linter is active.
-	(would this cause too much of a performance hit?)
  
 ### To Be Changed
 
@@ -39,18 +37,52 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
-- Linter doesn't work on *empty* arrays or objects with no close bracket (e.g., `[1` is parsed as `[1]` but `[` raises an error)
 
-## [5.0.0] (UNRELEASED) - 2023-MM-DD
+## [5.0.0] - 2023-05-26
+
+### MAJOR CHANGE
+
+Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
+1. __The parser tracks the cursor position of JSON elements instead of the line number.__
+    * This is the cursor position of the start of the element in the UTF-8 encoding of the document.
+	* This makes navigating the document using the tree view *much better* because it is useful for navigation even when the entire document is one line.
+2. __Errors while parsing need not throw errors__
+    * Instead the parser has a `state` attribute that tracks how well the JSON string complies with JSON specifications of varying degrees of strictness.
+	* The parser also has a `logger_level` attribute that determines how strictly the parser will enforce the JSON spec.
+	* If the parser's `state` ever reaches `FATAL`, parsing is immediately aborted and whatever has been parsed so far is returned.
+	* *The user can choose to throw an error if the state ever exceeds `logger_level`.*
+	* __Advantages of the new approach:__
+	    1. The parser can return all the valid parts of invalid JSON up to the point where the fatal error occurred.
+		2. The plugin can use the status bar to show how severely the JSON deviates from the JSON standard.
+		3. Tracking of errors in the parser's `lint` attribute is now independent of the strictness of the parser.
+3. __The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
+    * They have been replaced by the `logger_level` setting, [described here](/docs/README.md#parser-settings)
+
+### Minor changes
+
+1. Changed the default value of `minimal_whitespace_compression` to `true`.
 
 ### Added
 
-1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
-2. Slight improvement to parsing performance, major improvement to pretty-print/compression performance
-3. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
+1. New pretty-printing mode, [PPrint](/docs/README.md#pretty_print_style).
+2. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
+3. Slight improvement to parsing performance, major improvement to pretty-print/compression performance
+4. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
+5. Support for the rest of the JSON5 specification, with the following exception(s):
+	* Escaped newlines in strings are ignored. *Note that this will not work if you are using newlines other than `\r`, `\n`, or `\r\n`!*
+	* Escaped digits are simply treated as digits, no matter what.
+5. Support for the `undefined` and `None` literals, which are parsed as `null`.
+6. Support for the `True` and `False` literals. Since `None` is now also supported, __Python-style JSON documents are now fully supported.__
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
+2. Comments immediately after numbers no longer throw an error
+3. Empty unclosed arrays and objects no longer throw an error
+4. Paths to treenodes including an empty string key (e.g., `{"": 1}`) no longer throw an error
+5. Better handling of comments, especially empty comments
+6. Performance bug (introduced in [4.14.0](#4140---2023-04-12)) in `Expand/Collapse all subtreees` tree node right-click menu option
+7. Better RemesPath error message when user tries to use a function that doesn't exist
+8. RemesPath function names can be used unquoted when they're not being called as functions. For example, `@.items` would have raised an error previously because `items` is a function name, but now there's no problem.
 
 ## [4.14.0] - 2023-04-12
 

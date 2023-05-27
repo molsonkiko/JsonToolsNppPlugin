@@ -71,11 +71,10 @@ namespace JSON_Tools.JSON_Tools
                     sb.Append("such ");
                     int delimIdx = 0;
                     JObject obj = (JObject)json;
-                    foreach (string key in obj.children.Keys)
+                    foreach (KeyValuePair<string, JNode> kv in obj.children)
                     {
-                        JNode value = obj[key];
-                        sb.Append($"\"{key}\" is ");
-                        sb.Append(Dump(value));
+                        sb.Append($"\"{kv.Key}\" is ");
+                        sb.Append(Dump(kv.Value));
                         sb.Append(KeyValuePairDelims[delimIdx % 4] + " ");
                         delimIdx++;
                     }

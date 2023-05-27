@@ -23,15 +23,15 @@ namespace JSON_Tools.Tests
             catch (Exception e)
             {
                 Npp.AddLine($"While parsing input {input}\nthrew error {e}");
+                return null;
             }
-            return null;
         }
 
         public static void TestJNodeCopy()
         {
             int ii = 0;
             int tests_failed = 0;
-            JsonParser parser = new JsonParser(true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
             string[] tests = new string[]
             {
                 "2",
@@ -51,7 +51,12 @@ namespace JSON_Tools.Tests
             foreach (string test in tests)
             {
                 ii++;
-                JNode node = parser.Parse(test);
+                JNode node = TryParse(test, parser);
+                if (node == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 JNode cp = node.Copy();
                 if (!node.Equals(cp))
                 {
@@ -98,7 +103,7 @@ namespace JSON_Tools.Tests
 
         public static void Test()
         {
-            JsonParser parser = new JsonParser();
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true);
             // includes:
             // 1. hex
             // 2. all other backslash escape sequences
@@ -153,7 +158,6 @@ namespace JSON_Tools.Tests
             var testcases = new string[][]
             {
                 new string[]{ example, norm_example, pprint_example, "general parsing" },
-                new string[] { "1/2", "0.5", "0.5", "fractions" },
                 new string[] { "[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" },
                 new string[] { "\"abc\"", "\"abc\"", "\"abc\"", "scalar string" },
                 new string[] { "1", "1", "1", "scalar int" },
@@ -278,6 +282,11 @@ Got
                 string inp = test[0];
                 string compact_desired = test[1];
                 JNode json = TryParse(inp, parser);
+                if (json == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 string compact_true = json.ToString(true, ":", ",");
                 if (compact_true != compact_desired)
                 {
@@ -304,6 +313,12 @@ Got
                 string inp = test[0];
                 string unsorted_desired = test[1];
                 JNode json = TryParse(inp, parser);
+                ii++;
+                if (json == null)
+                {
+                    tests_failed++;
+                    continue;
+                }
                 string unsorted_true = json.ToString(false);
                 if (unsorted_true != unsorted_desired)
                 {
@@ -315,118 +330,148 @@ Got
 {2} ",
                                      ii + 1, unsorted_desired, unsorted_true));
                 }
-                ii++;
             }
             #endregion
-            #region PrettyPrintTests
-            string objstr = "{\"a\": [1, 2, 3], \"b\": {}, \"c\": [], \"d\": 3}";
+            #region JNode Position Tests
+            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]]}";
+            // pprint-style leads to this:
+            /*
+{
+    "a": [1, 2, 3],
+    "b": {},
+    "Я草": [],
+    "😀": [
+        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],
+        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],
+        [
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+                [113, 114]
+        ]
+    ]
+}
+            */
+            // also includes some weird space like '\xa0' only allowed in JSON5
             JNode onode = TryParse(objstr, parser);
-            if (onode != null)
+            if (onode != null && onode is JObject obj)
             {
-                JObject obj = (JObject)onode;
-                string pp = obj.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
-                string pp_ch_line = obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Whitesmith);
-                if (pp != pp_ch_line)
+                Npp.AddLine($"obj =\r\n{objstr}\r\n");
+                string correct_pprint_objstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ]\r\n}";
+                ii++;
+                string actual_pprint_objstr = obj.PrettyPrint(4, false, PrettyPrintStyle.PPrint);
+                if (actual_pprint_objstr != correct_pprint_objstr)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
-Expected PrettyPrintAndChangeLineNumbers({1}) to return
-{2}
-instead got
-{3}",
-                                                    ii + 1, objstr, pp, pp_ch_line));
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected PPrint-style PrettyPrintAndChangePositions(obj) to return
+    {1}
+    instead got
+    {2}",
+                        ii + 1, correct_pprint_objstr, actual_pprint_objstr));
                 }
-                ii++;
-
-                var keylines = new object[][]
+                var keylines = new (string key,
+                    int original_pos, int whitesmith_pos, int google_pos,
+                    int tostring_miniwhite_pos, int tostring_pos, int pprint_pos)[]
                 {
-                new object[]{"a", 2, 1 },
-                // key, correct line in Whitesmith style, correct line in Google style
-                new object[]{ "b", 8, 6 },
-                new object[]{ "c", 11, 8 },
-                new object[]{"d", 13, 10 }
+                    ("a", 9, 13, 12, 5, 6, 12),
+                    ("b", 27, 57, 67, 17, 22, 33),
+                    ("Я草", 43, 82, 91, 28, 35, 51),
+                    ("😀", 55, 106, 114, 38, 47, 68)
                 };
-                foreach (object[] kl in keylines)
+                foreach ((string key, int original_position, _, _, _, _, _) in keylines)
                 {
-                    string key = (string)kl[0];
-                    int expected_line = (int)kl[1];
-                    int true_line = obj[key].line_num;
-                    if (true_line != expected_line)
+                    ii++;
+                    int got_pos = obj[key].position;
+                    if (got_pos != original_position)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({objstr}), expected the line of child {key} to be {expected_line}, got {true_line}.");
+                        Npp.AddLine($"After parsing of obj, expected the position of child {key} to be {original_position}, got {got_pos}.");
+                    }
+                }
+                foreach (PrettyPrintStyle style in new[] {PrettyPrintStyle.Whitesmith, PrettyPrintStyle.Google, PrettyPrintStyle.PPrint })
+                {
+                    string pp = obj.PrettyPrint(4, true, style);
+                    string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, style);
+                    if (pp != pp_ch_line)
+                    {
+                        tests_failed++;
+                        Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected {1}-style PrettyPrintAndChangePositions(obj) to return
+    {2}
+    instead got
+    {3}",
+                                                        ii + 1, style, pp, pp_ch_line));
                     }
                     ii++;
                 }
 
+                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos) in keylines)
+                {
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
+                    int got_pos = obj[key].position;
+                    if (got_pos != whitesmith_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
+                    got_pos = obj[key].position;
+                    if (got_pos != google_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {google_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.ToStringAndChangePositions(true);
+                    got_pos = obj[key].position;
+                    if (got_pos != tostring_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.ToStringAndChangePositions(true, ":", ",");
+                    got_pos = obj[key].position;
+                    if (got_pos != tostring_miniwhite_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.PPrint);
+                    got_pos = obj[key].position;
+                    if (got_pos != pprint_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After PPrint-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {pprint_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                }
                 string tostr = obj.ToString();
-                string tostr_ch_line = obj.ToStringAndChangeLineNumbers();
+                string tostr_ch_line = obj.ToStringAndChangePositions();
                 ii++;
                 if (tostr != tostr_ch_line)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
-Expected ToStringAndChangeLineNumbers({1}) to return
-{2}
-instead got
-{3}",
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected ToStringAndChangePositions({1}) to return
+    {2}
+    instead got
+    {3}",
                                                     ii + 1, objstr, tostr, tostr_ch_line));
                 }
-                foreach (object[] kl in keylines)
-                {
-                    string key = (string)kl[0];
-                    ii++;
-                    int true_line = obj[key].line_num;
-                    if (true_line != 0)
-                    {
-                        tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangeLineNumbers({objstr}), expected the line of child {key} to be 0, got {true_line}.");
-                    }
-                }
-
-                // test if the parser correctly counts line numbers in nested JSON
-                JNode pp_node = TryParse(pp_ch_line, parser);
-                if (pp_node != null)
-                {
-                    JObject pp_obj = (JObject)pp_node;
-                    foreach (object[] kl in keylines)
-                    {
-                        string key = (string)kl[0];
-                        int expected_line = (int)kl[1];
-                        int true_line = pp_obj[key].line_num;
-                        ii++;
-                        if (true_line != expected_line)
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}), expected the line of child {key} to be {expected_line}, got {true_line}.");
-                        }
-                    }
-                    pp_obj.PrettyPrintAndChangeLineNumbers(4, true, PrettyPrintStyle.Google);
-                    // test that Google style gives right line numbers
-                    foreach (object[] kl in keylines)
-                    {
-                        string key = (string)kl[0];
-                        int expected_line = (int)kl[2];
-                        int true_line = pp_obj[key].line_num;
-                        ii++;
-                        if (true_line != expected_line)
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"After PrettyPrintAndChangeLineNumbers({pp}) with Google style, expected the line of child {key} to be {expected_line}, got {true_line}.");
-                        }
-                    }
-                }
-                else
-                {
-                    ii += keylines.Length;
-                    tests_failed += keylines.Length;
-                    return;
-                }
-            }
-            else
-            {
-                tests_failed += 14;
-                ii += 14;
             }
             #endregion
             #region EqualityTests
@@ -440,7 +485,7 @@ instead got
                 new object[] { "\"a\"", "\"b\"", false },
                 new object[] { "[[1, 2], [3, 4]]", "[[1,2],[3,4]]", true },
                 new object[] { "[1, 2, 3, 4]", "[[1,2], [3,4]]", false },
-                new object[] { "{\"a\": 1, \"b\": Infinity, \"c\": 0.5}", "{\"b\": Infinity, \"a\": 1, \"c\": 1/2}", true },
+                new object[] { "{\"a\": 1, \"b\": Infinity, \"c\": 0.5}", "{\"b\": Infinity, \"a\": 1, \"c\": 0.5}", true },
                 new object[] { "[\"z\\\"\"]", "[\"z\\\"\"]", true },
                 new object[] { "{}", "{" + NL + "   }", true },
                 new object[] { "[]", "[ ]", true },
@@ -500,7 +545,8 @@ instead got
                 "\"abc\\", // escape at end of unterminated string
                 "\"abc\" d", // something other than EOF after string document
                 "[1] [1]", // something other than EOF after string document
-                $"{new string('[', 1000)}1{new string(']', 1000)}", // too much recursion
+                $"{new string('[', 1000)}1{new string(']', 1000)}", // too much recursion in array
+                $"{new string('{', 1000)}\"a\": 1{new string('}', 1000)}", // too much recursion in object
             };
 
             foreach (string test in testcases)
@@ -522,49 +568,50 @@ instead got
         public static void TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true);
-            var testcases = new object[][]
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
+            var testcases = new (string inp, JNode desired_out)[]
             {
-                new object[]{ "{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}") },
-                new object[]{ @"[1,
+                ("{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}")),
+                (@"[1,
 /* this is a
 multiline comment
 */
 2]",
                     simpleparser.Parse("[1, 2]")
-                },
-                new object[]{ "\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0) },
-                new object[]{ "\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0) },
-                new object[]{ "\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0) }, // bad date- month too high
-                new object[]{ "\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0) }, // bad datetime- hour too high
-                new object[]{ "\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0) }, // bad date- has space at end
-                new object[]{ "['abc', 2, '1999-01-03']", // single-quoted strings 
+                ),
+                ("[.75, 0xff, +9]", simpleparser.Parse("[0.75, 255, 9]")), // leading decimal points, hex numbers, leading + sign
+                ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
+                ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)),
+                ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
+                ("\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0)), // bad datetime- hour too high
+                ("\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0)), // bad date- has space at end
+                ("['abc', 2, '1999-01-03']", // single-quoted strings 
                     new JArray(0, new List<JNode>(new JNode[]{new JNode("abc", Dtype.STR, 0),
                                                           new JNode(Convert.ToInt64(2), Dtype.INT, 0),
-                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))},
-                new object[]{ "{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
-                    simpleparser.Parse("{\"a\": \"1\", \"b\": 2}") },
-                new object[]{ @"{'a':
+                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))),
+                ("{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
+                    simpleparser.Parse("{\"a\": \"1\", \"b\": 2}")),
+                (@"{'a':
                   // one comment
                   // wow, another single-line comment?
                   // go figure
                   [2]}",
-                simpleparser.Parse("{\"a\": [2]}")},
-                new object[]{ "{'a': [ /* internal comment */ 2 ]}", TryParse("{\"a\": [2]}", simpleparser) },
-                new object[]{ "[1, 2] // trailing comment", TryParse("[1, 2]", simpleparser) },
-                new object[]{ "// the comments return!\n[2]", TryParse("[2]", simpleparser) },
-                new object[]{ "# python comment at start of file\n[2]", TryParse("[2]", simpleparser) },
-                new object[]{ "[1, 2] # python comment at end of file", TryParse("[1, 2]", simpleparser) },
-                new object[]{ "[1, 2]\r\n# python comment\r\n# another python comment", TryParse("[1, 2]", simpleparser) },
-                new object[]{ @"
+                simpleparser.Parse("{\"a\": [2]}")),
+                ("{'a': [ /* internal comment */ 2 ]}", TryParse("{\"a\": [2]}", simpleparser)),
+                ("[1, 2] // trailing comment", TryParse("[1, 2]", simpleparser)),
+                ("// the comments return!\n[2]", TryParse("[2]", simpleparser)),
+                ("# python comment at start of file\n[2]", TryParse("[2]", simpleparser)),
+                ("[1, 2] # python comment at end of file", TryParse("[1, 2]", simpleparser)),
+                ("[1, 2]\r\n# python comment\r\n# another python comment", TryParse("[1, 2]", simpleparser)),
+                (@"
                   /* multiline comment 
                    */
                   /* followed by another multiline comment */
                  // followed by a single line comment 
                  /* and then a multiline comment */ 
                  [1, 2]
-                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) },
-                new object[]{ @"
+                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
+                (@"
                   /* multiline comment 
                    */
                    # and a Python-style comment
@@ -574,23 +621,27 @@ multiline comment
             # another python comment
                   # another python comment
                  [1, 2]
-                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser) }
+                 /* and one last multiline comment */", TryParse("[1, 2]", simpleparser)),
+                 ("{//\n}", new JObject()), // empty single-line comment at end of object
+                 ("[//\n]", new JArray()), // empty single-line comment at end of array
+                 ("{//\n'a'//\n://\n [//\n1 2 {\"a\" //\n1//\n} \n4//\n\n//\n5]//\n]//", // empty single-line comments everywhere
+                    TryParse("{\"a\":[1,2,{\"a\":1},4,5]}", simpleparser)),
+                 ("[1// single-line comment immediately after number\n,2]", TryParse("[1,2]", simpleparser)),
+                 ("[1/* multiline comment immediately after number*/,2]", TryParse("[1,2]", simpleparser)),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((string inp, JNode desired_out) in testcases)
             {
-                string inp = (string)test[0];
-                if (test[1] is null)
+                if (desired_out == null)
                 {
                     ii += 1;
                     tests_failed += 1;
                     continue;
                 }
-                JNode desired_out = (JNode)test[1];
                 ii++;
                 JNode result = new JNode();
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out.ToString()}\n";
+                string base_message = $"Expected JsonParser(ParserState.JSON5).Parse({inp})\nto return\n{desired_out.ToString()}\n";
                 try
                 {
                     result = parser.Parse(inp);
@@ -622,43 +673,163 @@ multiline comment
         public static void TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(true, true, true, true);
-            var testcases = new object[][]
+            JsonParser parser = new JsonParser(LoggerLevel.STRICT, true, false, false);
+            var testcases = new (string inp, string desired_out, string[] desired_lint)[]
             {
-                new object[]{ "[1, 2]", "[1, 2]", new string[]{ } }, // syntactically valid JSON
-                new object[]{ "[1 2]", "[1, 2]", new string[]{"No comma between array members" } },
-                new object[]{ "[1, , 2]", "[1, 2]", new string[]{$"Two consecutive commas after element 0 of array"} },
-                new object[]{ "[1, 2,]", "[1, 2]", new string[]{"Comma after last element of array"} },
-                new object[]{ "[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"} },
-                new object[]{ "{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"} },
-                new object[]{ "{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" } },
-                new object[]{ "[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal starting at position 4 contains newline"} },
-                new object[]{ "[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
+                ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON
+                ("[1 2]", "[1, 2]", new string[]{"No comma between array members" }),
+                ("[1, , 2]", "[1, 2]", new string[]{$"Two consecutive commas after element 0 of array"}),
+                ("[1, 2,]", "[1, 2]", new string[]{"Comma after last element of array"}),
+                ("[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"}),
+                ("{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"}),
+                ("{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" }),
+                ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal contains newline"}),
+                ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification",
-                                  "Infinity is not part of the original JSON specification" } },
-                new object[]{ "{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Strings must be quoted with \" rather than '",
-                                                         "String literal starting at position 1 contains newline",
-                                                         "Comma after last element of array",
-                                                         "Tried to terminate an array with '}'",
-                                                         "Comma after last key-value pair of object",
-                                                         "Tried to terminate object with ']'"} },
-                new object[]{ "[1, 2", "[1, 2]", new string[]{ "Unterminated array" } },
-                new object[]{ "{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" } },
-                new object[]{ "{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
+                                  "Infinity is not part of the original JSON specification" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']', Comma after last key-value pair of object" }),
+                ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
+                ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
+                ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
                                                                                                 "Unterminated array", 
-                                                                                                "Unterminated object" } },
-                new object[]{ "{", "{}", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[", "[]", new string[] { "Unexpected end of JSON" } },
-                new object[]{ "[+1.5, +2e3, +Infinity, +3/+4]", "[1.5, 2e3, Infinity, 0.75]", new string[]{ "Infinity is not part of the original JSON specification" } }
+                                                                                                "Unterminated object" }),
+                ("{", "{}", new string[] { "Unterminated object" }),
+                ("[", "[]", new string[] { "Unterminated array" }),
+                ("[+1.5, +2e3, +Infinity, +7.5/-3]", "[1.5, 2000.0, Infinity, -2.5]", new string[]{ "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Infinity is not part of the original JSON specification", "Leading + signs in numbers are not allowed except in JSON5", "Fractions of the form 1/3 are not part of any JSON specification" }),
+                ("[1] // comment", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification" }),
+                ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
+                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification" }),
+                ("[1] /* unterminated multiline", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification", "Unterminated multi-line comment" }),
+                ("\"\\u043\"", "\"\"", new string[] { "Could not find valid hexadecimal of length 4" }),
+                ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
+                ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal contains newline" }),
+                ("[.75, 0xabcdef, +9, -0xABCDEF, +0x0123456789]", "[0.75, 11259375, 9, -11259375, 4886718345]", new string[]
+                {
+                    "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5",
+                }),
+                ("{\"\u000c\t\": \"\u0008\t\u0009\"}", "{\"\\f\\t\": \"\\b\\t\\u0009\"}", new string[]{
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                }),
+                ("{\"\u000a\": \"\u000a\"}", "{\"\\n\": \"\\n\"}", // newlines as unicode escapes
+                    new string[]{
+                        "Object key contains newline",
+                        "String literal contains newline"}),
+                ("Inf", "null",   new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("-Inf", "null",  new string[]{"Expected literal starting with 'I' to be Infinity"}),
+                ("NaU", "null",   new string[]{"Expected literal starting with 'N' to be NaN or None"}),
+                ("-Nae", "null",  new string[]{"Expected literal starting with 'N' to be NaN or None"}),
+                ("trno", "null",  new string[]{"Expected literal starting with 't' to be true"}),
+                ("Trno", "null",  new string[]{"Expected literal starting with 'T' to be True"}),
+                ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
+                ("Froeu", "null", new string[]{"Expected literal starting with 'F' to be False"}),
+                ("nurnoe", "null",new string[]{"Expected literal starting with 'n' to be null"}),
+                ("Hugre", "null", new string[]{"Badly located character"}),
+                ("[undefined, underpants]", "[null, null]",
+                new string[]{
+                    "undefined is not part of any JSON specification",
+                    "Expected literal starting with 'u' to be undefined"
+                }),
+                ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
+                ("", "null", new string[]{"No input"}),
+                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
+                ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
+                ("\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", "\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", new string[]
+                {
+                    "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+"Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
+                }),
+                ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6}",
+                 "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 6}",
+                 new string[]{
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only supported in JSON5",
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "String literal contains newline", // the \u000a in \\b\\u000a is secretly a newline
+                }),
+                ("[1,\"b\\\nb\\\rb\\\r\nb\"]", "[1, \"bbbb\"]",
+                new string[]
+                {
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                }),
+                ("{\"b\\\nb\\\rb\\\r\n  b\": 3}", "{\"bbb  b\": 3}",
+                new string[]
+                {
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                    "Escaped newline characters are only allowed in JSON5",
+                }),
+                ("[\"a\\x00b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
+                ("[\"a\\u0000b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
+                ("{\"\\1\\A\": \"\\7\\B\"}", "{\"1A\": \"7B\"}",
+                new string[]{
+                    "Escaped char '1' is only valid in JSON5",
+                    "Escaped char 'A' is only valid in JSON5",
+                    "Escaped char '7' is only valid in JSON5",
+                    "Escaped char 'B' is only valid in JSON5",
+                }),
+                ("{\"\\x51ED\\v\": \"\\x51ED\\v\"}", "{\"QED\\v\": \"QED\\v\"}",
+                new string[]{
+                    "\\x escapes are only allowed in JSON5",
+                    "\\x escapes are only allowed in JSON5",
+                }),
+                ("{\"j\\u004\": 1}", "{}",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 4",
+                }),
+                ("[\"j\\x3\"]", "[\"j\"]",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 2",
+                }),
+                ("{\"j\\x\": 34}", "{}",
+                new string[]
+                {
+                    "Could not find valid hexadecimal of length 2",
+                }),
+                ("{\"a\": 1, \"a\": 2}", "{\"a\": 2}", new string[]{"Object has multiple of key \"a\""}),
+                ("[True, False, None]", "[true, false, null]",
+                new string[]
+                {
+                    "'True' is not an accepted part of any JSON specification",
+                    "'False' is not an accepted part of any JSON specification",
+                    "'None' is not an accepted part of any JSON specification"
+                }),
             };
 
             int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
+            foreach ((string inp, string desired_out, string[] expected_lint) in testcases)
             {
-                string inp = (string)test[0], desired_out = (string)test[1];
-                string[] expected_lint = (string[])test[2];
                 ii++;
                 JNode jdesired = TryParse(desired_out, simpleparser);
                 if (jdesired == null)
@@ -669,14 +840,14 @@ multiline comment
                 }
                 JNode result = new JNode();
                 string expected_lint_str = "[" + string.Join(", ", expected_lint) + "]";
-                string base_message = $"Expected JsonParser(true, true, true, true).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
+                string base_message = $"Expected JsonParser(LoggerLevel.STRICT).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
                 try
                 {
                     result = parser.Parse(inp);
-                    if (parser.lint == null)
+                    if (parser.lint.Count == 0 && expected_lint.Length != 0)
                     {
                         tests_failed++;
-                        Npp.AddLine(base_message + "Lint was null");
+                        Npp.AddLine(base_message + "Parser had no lint");
                         continue;
                     }
                     StringBuilder lint_sb = new StringBuilder();

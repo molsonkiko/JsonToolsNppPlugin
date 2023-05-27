@@ -376,26 +376,23 @@ namespace JSON_Tools.JSON_Tools
 		private Dictionary<string, JNode> ResolveHang(Dictionary<string, JNode> hanging_row, string key_sep = ".")
 		{
 			var result = new Dictionary<string, JNode>();
-			foreach (string k in hanging_row.Keys)
+			foreach (KeyValuePair<string, JNode> kv in hanging_row)
 			{
-				JNode v = hanging_row[k];
-				if (v is JObject)
+				if (kv.Value is JObject dv)
 				{
-					var dv = (JObject)v;
-					foreach (string subk in dv.children.Keys)
+					foreach (KeyValuePair<string, JNode> subkv in dv.children)
 					{
-						JNode subv = dv[subk];
-						string new_key = $"{k}{key_sep}{subk}";
+						string new_key = $"{kv.Key}{key_sep}{subkv.Key}";
 						if (result.ContainsKey(new_key))
 						{
 							throw new ArgumentException($"Attempted to create hanging row with synthetic key {new_key}, but {new_key} was already a key in {hanging_row}");
 						}
-						result[new_key] = subv;
+						result[new_key] = subkv.Value;
 					}
 				}
 				else
 				{
-					result[k] = v;
+					result[kv.Key] = kv.Value;
 				}
 			}
 			return result;
@@ -421,15 +418,11 @@ namespace JSON_Tools.JSON_Tools
 				// arrays of flat objects - this is what we're aiming for
 				foreach (object rec in aobj.children)
 				{
-					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
+					var newrec = new Dictionary<string, JNode>(rest_of_row);
 					JObject orec = (JObject)rec;
-					foreach (string k in orec.children.Keys)
+					foreach (KeyValuePair<string, JNode> kv in orec.children)
 					{
-						newrec[keyformat(k)] = orec[k];
-					}
-					foreach (string k in rest_of_row.Keys)
-					{
-						newrec[k] = rest_of_row[k];
+						newrec[keyformat(kv.Key)] = kv.Value;
 					}
 					result.Add(new JObject(0, newrec));
 				}
@@ -439,21 +432,19 @@ namespace JSON_Tools.JSON_Tools
 				// a dict mapping some number of keys to scalars and the rest to arrays
 				// some keys may be mapped to hanging all-scalar dicts and not scalars
 				JObject oobj = (JObject)obj;
-				Dictionary<string, JArray> arr_dict = new Dictionary<string, JArray>();
-				Dictionary<string, JNode> not_arr_dict = new Dictionary<string, JNode>();
+				var arr_dict = new Dictionary<string, JArray>();
+				var not_arr_dict = new Dictionary<string, JNode>();
 				int len_arr = 0;
-				foreach (string k in oobj.children.Keys)
+				foreach (KeyValuePair<string, JNode> kv in oobj.children)
 				{
-					JNode v = oobj[k];
-					if (v is JArray)
+					if (kv.Value is JArray varr)
 					{
-						JArray varr = (JArray)v;
-						arr_dict[k] = varr;
+						arr_dict[kv.Key] = varr;
 						if (varr.Length > len_arr) { len_arr = varr.Length; }
 					}
 					else
 					{
-						not_arr_dict[keyformat(k)] = v;
+						not_arr_dict[keyformat(kv.Key)] = kv.Value;
 					}
 				}
 				not_arr_dict = ResolveHang(not_arr_dict, key_sep);
@@ -468,7 +459,7 @@ namespace JSON_Tools.JSON_Tools
                 }
 				for (int ii = 0; ii < len_arr; ii++)
 				{
-					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
+					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>(rest_of_row);
 					foreach (string k in arr_dict.Keys)
 					{
 						JArray v = arr_dict[k];
@@ -476,8 +467,10 @@ namespace JSON_Tools.JSON_Tools
 						// empty strings
 						newrec[keyformat(k)] = ii >= v.Length ? new JNode("", Dtype.STR, 0) : v[ii];
 					}
-					foreach (string k in not_arr_dict.Keys) { JNode v = not_arr_dict[k]; newrec[k] = v; }
-					foreach (string k in rest_of_row.Keys) { JNode v = rest_of_row[k]; newrec[k] = v; }
+					foreach (KeyValuePair<string, JNode> kv in not_arr_dict)
+					{
+						newrec[kv.Key] = kv.Value;
+					}
 					result.Add(new JObject(0, newrec));
 				}
 			}
@@ -487,11 +480,7 @@ namespace JSON_Tools.JSON_Tools
 				JArray aobj = (JArray)obj;
 				foreach (JNode arr in aobj.children)
 				{
-					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>();
-					foreach (string k in rest_of_row.Keys)
-					{
-						newrec[k] = rest_of_row[k];
-					}
+					var newrec = new Dictionary<string, JNode>(rest_of_row);
 					List<JNode> children = ((JArray)arr).children;
 					for (int ii = 0; ii < children.Count; ii++)
 					{
@@ -509,7 +498,7 @@ namespace JSON_Tools.JSON_Tools
 		/// This function is used by the DEFAULT and NO_RECURSION JsonTabularizerStrategy's<br></br>
 		/// but the NO_RECURSION strategy does not try to do recursive search.
 		/// </summary>
-		/// <param name="obj"></param>
+		/// <param name="json"></param>
 		/// <param name="cls"></param>
 		/// <param name="depth"></param>
 		/// <param name="tab_path"></param>
@@ -517,7 +506,7 @@ namespace JSON_Tools.JSON_Tools
 		/// <param name="rest_of_row"></param>
 		/// <param name="super_keylist"></param>
 		/// <param name="key_sep"></param>
-		private void BuildTableHelper_DEFAULT(JNode obj,
+		private void BuildTableHelper_DEFAULT(JNode json,
 									JsonFormat cls,
 									int depth,
 									JArray tab_path,
@@ -526,52 +515,49 @@ namespace JSON_Tools.JSON_Tools
 									List<string> super_keylist,
 									string key_sep)
 		{
-			List<string> new_super_keylist = new List<string>(super_keylist);
-			Dictionary<string, JNode> new_rest_of_row = new Dictionary<string, JNode>(rest_of_row);
+			var new_rest_of_row = new Dictionary<string, JNode>(rest_of_row);
 			if (depth == tab_path.Length)
 			{
-				AnyTableToRecord(obj, cls, new_rest_of_row, result, new_super_keylist, key_sep);
+				AnyTableToRecord(json, cls, new_rest_of_row, result, super_keylist, key_sep);
 				return;
 			}
 			else
 			{
-				if (obj is JArray)
+				if (json is JArray arr)
 				{
-					foreach (JNode subobj in ((JArray)obj).children)
+					foreach (JNode subobj in arr.children)
 					{
-						BuildTableHelper_DEFAULT(subobj, cls, depth + 1, tab_path, result, new_rest_of_row, new_super_keylist, key_sep);
+						BuildTableHelper_DEFAULT(subobj, cls, depth + 1, tab_path, result, new_rest_of_row, super_keylist, key_sep);
 					}
 				}
 				else
 				{
 					string new_key = (string)tab_path[depth].value;
-					string super_key = string.Join(key_sep, new_super_keylist);
-					Dictionary<string, JNode> children = ((JObject)obj).children;
-					foreach (string k in children.Keys)
+					string super_key = string.Join(key_sep, super_keylist);
+					Dictionary<string, JNode> children = ((JObject)json).children;
+					foreach (KeyValuePair<string, JNode> kv in children)
 					{
-						JNode v = children[k];
-						if (k == new_key) continue;
-						string newk = FormatKey(k, super_key, key_sep);
-						if (v.type == Dtype.OBJ)
+						if (kv.Key == new_key) continue;
+						string newk = FormatKey(kv.Key, super_key, key_sep);
+						if (kv.Value is JObject ov)
 						{
-							JObject ov = (JObject)v;
-							foreach (string subk in ov.children.Keys)
+							foreach (KeyValuePair<string, JNode> subkv in ov.children)
 							{
-								JNode subv = ov[subk];
 								// add hanging scalar dicts to rest_of_row
-								if ((subv.type & Dtype.ARR_OR_OBJ) == 0)
+								if (!(subkv.Value is JArray || subkv.Value is JObject))
 								{
-									new_rest_of_row[$"{newk}{key_sep}{subk}"] = subv;
+									new_rest_of_row[$"{newk}{key_sep}{subkv.Key}"] = subkv.Value;
 								}
 							}
 						}
-						else if (v.type != Dtype.ARR)
+						else if (kv.Value.type != Dtype.ARR)
 						{
-							new_rest_of_row[newk] = v;
+							new_rest_of_row[newk] = kv.Value;
 						}
 					}
-					new_super_keylist.Add(new_key);
-					BuildTableHelper_DEFAULT(children[new_key], cls, depth + 1, tab_path, result, new_rest_of_row, new_super_keylist, key_sep);
+					super_keylist.Add(new_key);
+					BuildTableHelper_DEFAULT(children[new_key], cls, depth + 1, tab_path, result, new_rest_of_row, super_keylist, key_sep);
+					super_keylist.RemoveAt(super_keylist.Count - 1);
 				}
 			}
 		}
@@ -591,40 +577,38 @@ namespace JSON_Tools.JSON_Tools
 		{
 			string super_key = string.Join(key_sep, super_keylist);
 			Func<string, string> keyformat = (string x) => FormatKey(x, super_key, key_sep);
-			if (row is JArray)
+			if (row is JArray arow)
 			{
-				JArray arow = (JArray)row;
 				for (int ii = 0; ii < arow.Length; ii++)
 				{
 					JNode child = arow[ii];
+					string colname = $"col{ii + 1}";
 					if (child is JArray || child is JObject)
 					{
-						List<string> new_super_keylist = new List<string>(super_keylist);
-						new_super_keylist.Add($"col{ii + 1}");
-						FlattenSingleRow_FULL_RECURSIVE(child, key_sep, rest_of_row, new_super_keylist);
+						super_keylist.Add(colname);
+						FlattenSingleRow_FULL_RECURSIVE(child, key_sep, rest_of_row, super_keylist);
+						super_keylist.RemoveAt(super_keylist.Count - 1);
 					}
 					else
 					{
-						string key = keyformat($"col{ii + 1}");
+						string key = keyformat(colname);
 						rest_of_row[key] = child;
 					}
 				}
 			}
-			else if (row is JObject)
+			else if (row is JObject orow)
 			{
-				JObject orow = (JObject)row;
-				foreach (string key in orow.children.Keys)
+				foreach (KeyValuePair<string, JNode> rowkv in orow.children)
 				{
-					JNode child = orow[key];
-					if (child is JArray || child is JObject)
+					if (rowkv.Value is JArray || rowkv.Value is JObject)
 					{
-						List<string> new_super_keylist = new List<string>(super_keylist);
-						new_super_keylist.Add(key);
-						FlattenSingleRow_FULL_RECURSIVE(child, key_sep, rest_of_row, new_super_keylist);
+						super_keylist.Add(rowkv.Key);
+						FlattenSingleRow_FULL_RECURSIVE(rowkv.Value, key_sep, rest_of_row, super_keylist);
+						super_keylist.RemoveAt(super_keylist.Count - 1);
 					}
 					else
 					{
-						rest_of_row[keyformat(key)] = child;
+						rest_of_row[keyformat(rowkv.Key)] = rowkv.Value;
 					}
 				}
 			}
@@ -673,9 +657,8 @@ namespace JSON_Tools.JSON_Tools
 				foreach (JNode child in ((JArray)obj).children)
 				{
 					Dictionary<string, JNode> row = new Dictionary<string, JNode>();
-					if (child is JArray)
+					if (child is JArray achild)
 					{
-						JArray achild = (JArray)child;
 						for (int ii = 0; ii < achild.Length; ii++)
 						{
 							string key = $"col{ii + 1}";
@@ -690,19 +673,17 @@ namespace JSON_Tools.JSON_Tools
 							}
 						}
 					}
-					else if (child is JObject)
+					else if (child is JObject ochild)
 					{
-						JObject ochild = (JObject)child;
-						foreach (string key in ochild.children.Keys)
+						foreach (KeyValuePair<string, JNode> subkv in ochild.children)
 						{
-							JNode subchild = ochild[key];
-							if (subchild is JArray || subchild is JObject)
+							if (subkv.Value is JArray || subkv.Value is JObject)
 							{
-								row[key] = new JNode(subchild.ToString(), Dtype.STR, 0); //.Replace("\"", "\\\""), Dtype.STR, 0);
+								row[subkv.Key] = new JNode(subkv.Value.ToString(), Dtype.STR, 0); //.Replace("\"", "\\\""), Dtype.STR, 0);
 							}
 							else
 							{
-								row[key] = subchild;
+								row[subkv.Key] = subkv.Value;
 							}
 						}
 					}
@@ -713,20 +694,19 @@ namespace JSON_Tools.JSON_Tools
 			JObject oobj = (JObject)obj;
 			// obj is a dict mapping some number of keys to scalars and the rest to arrays
 			// some keys may be mapped to hanging all-scalar dicts and not scalars
-			Dictionary<string, JArray> arr_dict = new Dictionary<string, JArray>();
-			Dictionary<string, JNode> not_arr_dict = new Dictionary<string, JNode>();
+			var arr_dict = new Dictionary<string, JArray>();
+			var not_arr_dict = new Dictionary<string, JNode>();
 			int len_arr = 0;
-			foreach (string k in oobj.children.Keys)
+			foreach (KeyValuePair<string, JNode> kv in oobj.children)
 			{
-				JNode v = oobj[k];
-				if (v is JArray varr)
+				if (kv.Value is JArray varr)
 				{
-					arr_dict[k] = varr;
+					arr_dict[kv.Key] = varr;
 					if (varr.Length > len_arr) { len_arr = varr.Length; }
 				}
 				else
 				{
-					not_arr_dict[k] = v;
+					not_arr_dict[kv.Key] = kv.Value;
 				}
 			}
 			not_arr_dict = ResolveHang(not_arr_dict, key_sep);
@@ -809,8 +789,7 @@ namespace JSON_Tools.JSON_Tools
 				foreach (string pathstr in tab_paths.Keys)
 				{
 					JsonFormat clsname = tab_paths[pathstr];
-					jsonParser.ii = 0;
-					jsonParser.line_num = 0;
+					jsonParser.Reset();
 					path = jsonParser.ParseArray(pathstr, 0);
 					cls = clsname;
 				}
@@ -830,7 +809,6 @@ namespace JSON_Tools.JSON_Tools
 		/// <returns></returns>
 		private string ApplyQuotesIfNeeded(string s, char delim, char quote_char)
 		{
-			string squote_char = new string(quote_char, 1);
 			StringBuilder sb = new StringBuilder();
 			if (s.Contains(delim))
 			{

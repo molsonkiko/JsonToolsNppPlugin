@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET.PluginInfrastructure;
@@ -200,9 +201,9 @@ namespace JSON_Tools.Tests
                 ii++;
                 JNode jinp = jsonParser.Parse(inp);
                 JObject desired_schema = (JObject)jsonParser.Parse(desired_out);
-                foreach (string k in base_schema_j.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in base_schema_j.children)
                 {
-                    desired_schema[k] = base_schema_j[k];
+                    desired_schema[kv.Key] = kv.Value;
                 }
                 string desired_sch_str = desired_schema.ToString();
                 JNode schema = new JNode();

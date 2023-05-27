@@ -30,7 +30,7 @@ namespace JSON_Tools.Tests
                 string jsontxt = File.ReadAllText(f.FullName);
                 try
                 {
-                    all_jsons[JObject.FormatAsKey(f.FullName)] = jparser.Parse(jsontxt);
+                    all_jsons[JNode.StrToString(f.FullName, false)] = jparser.Parse(jsontxt);
                 }
                 catch { }
             }
@@ -40,7 +40,7 @@ namespace JSON_Tools.Tests
                 string jsontxt = File.ReadAllText(f.FullName);
                 try
                 {
-                    all_jsons[JObject.FormatAsKey(f.FullName)] = jparser.Parse(jsontxt);
+                    all_jsons[JNode.StrToString(f.FullName, false)] = jparser.Parse(jsontxt);
                 }
                 catch { }
             }
@@ -76,8 +76,7 @@ namespace JSON_Tools.Tests
             }
 
             // test nonstandard JsonParser settings for the grepper
-            grepper.json_parser.allow_comments = true;
-            grepper.json_parser.allow_singlequoted_str = true;
+            grepper.json_parser = new JsonParser(LoggerLevel.JSON5, false);
             string json_subdir_name = subdir.FullName.Replace("\\", "\\\\\\\\");
 
             var special_testcases = new Dictionary<string, JNode>

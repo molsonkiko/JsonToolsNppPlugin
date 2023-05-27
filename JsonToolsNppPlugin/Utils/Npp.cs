@@ -31,8 +31,8 @@ namespace JSON_Tools.Utils
         /// <param name="inp"></param>
         public static void AddLine(string inp)
         {
-            editor.AppendTextAndMoveCursor(inp);
-            editor.AppendTextAndMoveCursor(System.Environment.NewLine);
+            editor.AppendText(Encoding.UTF8.GetByteCount(inp), inp);
+            editor.AppendText(Environment.NewLine.Length, Environment.NewLine);
         }
 
         /// <summary>

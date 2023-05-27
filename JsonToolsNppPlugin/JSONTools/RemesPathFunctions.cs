@@ -205,22 +205,22 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode LessThan(JNode a, JNode b)
         {
-            return new JNode(a.LessThan(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) < 0, Dtype.BOOL, 0);
         }
 
         public static JNode GreaterThan(JNode a, JNode b)
         {
-            return new JNode(a.GreaterThan(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) > 0, Dtype.BOOL, 0);
         }
 
         public static JNode GreaterThanOrEqual(JNode a, JNode b)
         {
-            return new JNode(a.GreaterEquals(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) >= 0, Dtype.BOOL, 0);
         }
 
         public static JNode LessThanOrEqual(JNode a, JNode b)
         {
-            return new JNode(a.LessEquals(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) <= 0, Dtype.BOOL, 0);
         }
 
         public static JNode IsEqual(JNode a, JNode b)
@@ -739,8 +739,7 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode Values(List<JNode> args)
         {
-            var vals = new JArray();
-            vals.children.AddRange(((JObject)args[0]).children.Values);
+            var vals = new JArray(0, ((JObject)args[0]).children.Values.ToList());
             return vals;
         }
 
@@ -768,13 +767,12 @@ namespace JSON_Tools.JSON_Tools
         {
             var its = new List<JNode>();
             JObject obj = (JObject)args[0];
-            foreach (string k in obj.children.Keys)
+            foreach (KeyValuePair<string, JNode> kv in obj.children)
             {
-                JNode v = obj[k];
-                JNode knode = new JNode(k, Dtype.STR, 0);
+                JNode knode = new JNode(kv.Key, Dtype.STR, 0);
                 var subarr = new List<JNode>();
                 subarr.Add(knode);
-                subarr.Add(v);
+                subarr.Add(kv.Value);
                 its.Add(new JArray(0, subarr));
             }
             return new JArray(0, its);
@@ -1083,11 +1081,11 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!(args[ii] is JObject obj))
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
-                    foreach (string key in obj.children.Keys)
+                    foreach (KeyValuePair<string, JNode> kv in obj.children)
                     {
                         // this can overwrite the same key in any earlier arg.
                         // TODO: maybe consider raising if multiple iterables have same key?
-                        new_obj[key] = obj[key];
+                        new_obj[kv.Key] = kv.Value;
                     }
                 }
                 return new JObject(0, new_obj);
@@ -1171,7 +1169,7 @@ namespace JSON_Tools.JSON_Tools
                     JArray subarr = (JArray)item;
                     JNode bynode = subarr[by];
                     string key = bynode.type == Dtype.STR
-                        ? JObject.FormatAsKey((string)bynode.value)
+                        ? JNode.StrToString((string)bynode.value, false)
                         : bynode.ToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
@@ -1196,7 +1194,7 @@ namespace JSON_Tools.JSON_Tools
                     JObject subobj = (JObject)item;
                     JNode bynode = subobj[by];
                     string key = bynode.type == Dtype.STR
-                        ? JObject.FormatAsKey((string)bynode.value)
+                        ? JNode.StrToString((string)bynode.value, false)
                         : bynode.ToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
@@ -1563,35 +1561,34 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(obj), Dtype.INT, 0);
             }
-            if (obj is double)
+            if (obj is double d)
             {
-                return new JNode((double)obj, Dtype.FLOAT, 0);
+                return new JNode(d, Dtype.FLOAT, 0);
             }
-            if (obj is string)
+            if (obj is string s)
             {
-                return new JNode((string)obj, Dtype.STR, 0);
+                return new JNode(s, Dtype.STR, 0);
             }
-            if (obj is bool)
+            if (obj is bool b)
             {
-                return new JNode((bool)obj, Dtype.BOOL, 0);
+                return new JNode(b, Dtype.BOOL, 0);
             }
-            if (obj is Regex)
+            if (obj is Regex rex)
             {
-                return new JRegex((Regex)obj);
+                return new JRegex(rex);
             }
-            if (obj is List<object>)
+            if (obj is List<object> list)
             {
                 var nodes = new List<JNode>();
-                foreach (object child in (List<object>)obj)
+                foreach (object child in list)
                 {
                     nodes.Add(ObjectsToJNode(child));
                 }
                 return new JArray(0, nodes);
             }
-            else if (obj is Dictionary<string, object>)
+            else if (obj is Dictionary<string, object> dobj)
             {
                 var nodes = new Dictionary<string, JNode>();
-                var dobj = (Dictionary<string, object>)obj;
                 foreach (string key in dobj.Keys)
                 {
                     nodes[key] = ObjectsToJNode(dobj[key]);
@@ -1618,13 +1615,12 @@ namespace JSON_Tools.JSON_Tools
             {
                 return (CurJson)node;
             }
-            if (node.type == Dtype.OBJ)
+            if (node is JObject onode)
             {
                 var dic = new Dictionary<string, object>();
-                JObject onode = (JObject)node;
-                foreach (string key in onode.children.Keys)
+                foreach (KeyValuePair<string, JNode> kv in onode.children)
                 {
-                    dic[key] = JNodeToObjects(onode[key]);
+                    dic[kv.Key] = JNodeToObjects(kv.Value);
                 }
                 return dic;
             }

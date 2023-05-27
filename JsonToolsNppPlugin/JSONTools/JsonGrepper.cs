@@ -36,7 +36,7 @@ namespace JSON_Tools.JSON_Tools
             exceptions = new JObject();
 			if (json_parser == null)
             {
-				this.json_parser = new JsonParser(true, true, true, true, true, true);
+				this.json_parser = new JsonParser(LoggerLevel.JSON5, true);
 			}
             else
             {
@@ -92,16 +92,16 @@ namespace JSON_Tools.JSON_Tools
 			foreach (object fnameobj in assigned_fnames)
             {
                 string fname = (string)fnameobj;
-				string json_str = fname_strings[fname];
+                string json_str = fname_strings[fname];
                 // need to make sure the key is formatted properly and doesn't contain any unescaped special chars
                 // by default Windows paths have '\\' as path sep so those need to be escaped
                 try
                 {
-					fname_json_map[JObject.FormatAsKey(fname)] = json_parser.Parse(json_str);
+					fname_json_map[JNode.StrToString(fname, false)] = json_parser.Parse(json_str);
                 }
                 catch (Exception ex)
                 {
-                    fname_exception_map[JObject.FormatAsKey(fname)] = new JNode(ex.ToString(), Dtype.STR, 0);
+                    fname_exception_map[JNode.StrToString(fname, false)] = new JNode(ex.ToString(), Dtype.STR, 0);
                 }
             }
         }
@@ -181,7 +181,7 @@ namespace JSON_Tools.JSON_Tools
 		public async Task GetJsonStringFromApiAsync(string url)
         {
             InitializeHttpClient(httpClient);
-            string formatted_url = JObject.FormatAsKey(url);
+            string formatted_url = JNode.StrToString(url, false);
             try
             {
                 Task<string> stringTask = httpClient.GetStringAsync(url);

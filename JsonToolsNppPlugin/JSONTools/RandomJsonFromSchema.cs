@@ -173,10 +173,8 @@ namespace JSON_Tools.JSON_Tools
                 // an object with no "properties" keyword could contain anything
             }
             var propertiesObj = (JObject)properties;
-            HashSet<string> optionalKeys = new HashSet<string>();
+            HashSet<string> optionalKeys = new HashSet<string>(propertiesObj.children.Keys);
             HashSet<string> requiredKeys = new HashSet<string>();
-            foreach (string key in propertiesObj.children.Keys)
-                optionalKeys.Add(key);
             if (children.TryGetValue("required", out JNode requiredNode) && requiredNode is JArray requiredArr)
             {
                 foreach (JNode req in requiredArr.children)
