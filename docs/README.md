@@ -54,7 +54,7 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 
 ![JSON tree view immediately after creation](/docs/tree%20first%20view.PNG)
 
-You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected. *New in [version 5](/CHANGELOG.md#500-unreleased---2023-mm-dd): snaps to position instead.*
+You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected. *New in [version 5](/CHANGELOG.md#500---2023-05-26): snaps to position instead.*
 
 __NOTES__
 1. __*JsonTools only works with UTF-8 encoded JSON.*__
@@ -83,7 +83,7 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 ## Parser settings ##
 
-Starting in [v5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
+Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
 
 When you parse a document that contains syntax errors, you'll be asked if you want to see the syntax errors caught by the linter.
 
@@ -332,7 +332,7 @@ At present, three different styles are supported:
     ]
 }
 ```
-`PPrint` style (introduced in version [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)): inspired by [Python's pprint module](https://docs.python.org/3/library/pprint.html)
+`PPrint` style (introduced in version [5.0.0](/CHANGELOG.md#500---2023-05-26)): inspired by [Python's pprint module](https://docs.python.org/3/library/pprint.html)
 ```json
 {
     "algorithm": [
@@ -497,8 +497,8 @@ This tool can only validate the following keywords:
 ### Keywords for strings
 
 * [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)*)
-* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) (*added in [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)*)
-* [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)*)
+* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) (*added in [5.0.0](/CHANGELOG.md#500---2023-05-26)*)
+* [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [5.0.0](/CHANGELOG.md#500---2023-05-26)*)
 
 ### Keywords for numbers
 * [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
