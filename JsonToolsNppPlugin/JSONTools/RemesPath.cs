@@ -1957,23 +1957,25 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Changes the type and value of v to the type and value of vnew.<br></br>
-        /// Cannot mutate an object or array.
+        /// Cannot change a non-iterable into an iterable.<br></br>
+        /// Cannot change an array into a non-array.<br></br>
+        /// Cannot change an object into a non-object.
         /// </summary>
         /// <param name="v"></param>
         /// <param name="vnew"></param>
         /// <exception cref="RemesPathException"></exception>
         private static void TransferJNodeProperties(JNode v, JNode vnew)
         {
-            if (v is JArray)
+            if (v.type == Dtype.ARR)
             {
                 throw new RemesPathException("Can't mutate an array.");
             }
-            if (v is JObject)
+            if (v.type == Dtype.OBJ)
             {
                 throw new RemesPathException("Can't mutate an object.");
             }
             // v is a scalar
-            if (vnew is JArray || vnew is JObject)
+            if ((vnew.type & Dtype.ARR_OR_OBJ) != 0)
                 throw new RemesPathException("Can't convert a scalar to an array or object.");
             v.type = vnew.type;
             v.value = vnew.value;
@@ -2020,7 +2022,7 @@ namespace JSON_Tools.JSON_Tools
                 else // x is a scalar
                 {
                     JNode xnew = func(x);
-                    if (xnew is JArray || xnew is JObject)
+                    if ((x.type & Dtype.ARR_OR_OBJ) != 0)
                         throw new RemesPathException("Can't convert a scalar to an array or object");
                     x.type = xnew.type;
                     x.value = xnew.value;
@@ -2045,7 +2047,7 @@ namespace JSON_Tools.JSON_Tools
             else
             {
                 // x is a scalar
-                if (op is JArray || op is JObject)
+                if ((op.type & Dtype.ARR_OR_OBJ) != 0)
                     throw new RemesPathException("Can't convert a scalar to an array or object");
                 x.type = op.type;
                 x.value = op.value;

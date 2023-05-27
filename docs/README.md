@@ -265,7 +265,7 @@ There are many different [styles](http://astyle.sourceforge.net/astyle.html#_sty
 
 At present, two different styles are supported:
 
-[Google style](http://astyle.sourceforge.net/astyle.html#_style=google)
+[`Google` style](http://astyle.sourceforge.net/astyle.html#_style=google)
 ```json
 {
     "a": [
@@ -276,7 +276,7 @@ At present, two different styles are supported:
     ]
 }
 ```
-[Whitesmith style](http://astyle.sourceforge.net/astyle.html#_style=whitesmith)
+[`Whitesmith` style](http://astyle.sourceforge.net/astyle.html#_style=whitesmith)
 ```json
 {
 "a":
@@ -286,6 +286,24 @@ At present, two different styles are supported:
         2
         ]
     ]
+}
+```
+`PPrint` style (introduced in version [5.0.0](/CHANGELOG.md#500-unreleased---2023-mm-dd)): inspired by [Python's pprint module](https://docs.python.org/3/library/pprint.html)
+```json
+{
+    "algorithm": [
+        ["start", "each", "child", "on", "a", "new", "line"],
+        ["if", "the", "child", "has", "length", "at", "least", 80],
+        [
+            "follow",
+            "this",
+            "algorithm",
+            ["starting", "from", "the", "beginning"]
+        ],
+        ["else", "print", "it", "out", "on", 1, "line"]
+    ],
+    "style": "PPrint",
+    "useful": true
 }
 ```
 ### sort_keys ###

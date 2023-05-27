@@ -333,53 +333,97 @@ Got
             }
             #endregion
             #region JNode Position Tests
-            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": 3}";
+            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]]}";
+            // pprint-style leads to this:
+            /*
+{
+    "a": [1, 2, 3],
+    "b": {},
+    "Я草": [],
+    "😀": [
+        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],
+        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],
+        [
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+                [113, 114]
+        ]
+    ]
+}
+            */
             // also includes some weird space like '\xa0' only allowed in JSON5
             JNode onode = TryParse(objstr, parser);
-            if (onode != null)
+            if (onode != null && onode is JObject obj)
             {
+                Npp.AddLine($"obj =\r\n{objstr}\r\n");
+                string correct_pprint_objstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ]\r\n}";
+                ii++;
+                string actual_pprint_objstr = obj.PrettyPrint(4, false, PrettyPrintStyle.PPrint);
+                if (actual_pprint_objstr != correct_pprint_objstr)
+                {
+                    tests_failed++;
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected PPrint-style PrettyPrintAndChangePositions(obj) to return
+    {1}
+    instead got
+    {2}",
+                        ii + 1, correct_pprint_objstr, actual_pprint_objstr));
+                }
                 var keylines = new (string key,
                     int original_pos, int whitesmith_pos, int google_pos,
-                    int tostring_miniwhite_pos, int tostring_pos)[]
+                    int tostring_miniwhite_pos, int tostring_pos, int pprint_pos)[]
                 {
-                    ("a", 9, 13, 12, 5, 6),
-                    ("b", 27, 57, 67, 17, 22),
-                    ("Я草", 43, 82, 91, 28, 35),
-                    ("😀", 55, 101, 114, 38, 47)
+                    ("a", 9, 13, 12, 5, 6, 12),
+                    ("b", 27, 57, 67, 17, 22, 33),
+                    ("Я草", 43, 82, 91, 28, 35, 51),
+                    ("😀", 55, 106, 114, 38, 47, 68)
                 };
-                JObject obj = (JObject)onode;
-                foreach ((string key, int original_position, _, _, _, _) in keylines)
+                foreach ((string key, int original_position, _, _, _, _, _) in keylines)
                 {
                     ii++;
                     int got_pos = obj[key].position;
                     if (got_pos != original_position)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After parsing of {objstr}, expected the position of child {key} to be {original_position}, got {got_pos}.");
+                        Npp.AddLine($"After parsing of obj, expected the position of child {key} to be {original_position}, got {got_pos}.");
                     }
                 }
-                string pp = obj.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
-                string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
-                if (pp != pp_ch_line)
+                foreach (PrettyPrintStyle style in new[] {PrettyPrintStyle.Whitesmith, PrettyPrintStyle.Google, PrettyPrintStyle.PPrint })
                 {
-                    tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
-Expected PrettyPrintAndChangePositions({1}) to return
-{2}
-instead got
-{3}",
-                                                    ii + 1, objstr, pp, pp_ch_line));
+                    string pp = obj.PrettyPrint(4, true, style);
+                    string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, style);
+                    if (pp != pp_ch_line)
+                    {
+                        tests_failed++;
+                        Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected {1}-style PrettyPrintAndChangePositions(obj) to return
+    {2}
+    instead got
+    {3}",
+                                                        ii + 1, style, pp, pp_ch_line));
+                    }
+                    ii++;
                 }
-                ii++;
 
-                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos) in keylines)
+                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos) in keylines)
                 {
                     obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
                     int got_pos = obj[key].position;
                     if (got_pos != whitesmith_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions({objstr}), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
+                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
                     }
                     ii++;
                     obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
@@ -387,7 +431,7 @@ instead got
                     if (got_pos != google_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions({objstr}), expected the position of child {key} to be {google_pos}, got {got_pos}.");
+                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {google_pos}, got {got_pos}.");
                     }
                     ii++;
                     obj.ToStringAndChangePositions(true);
@@ -395,7 +439,7 @@ instead got
                     if (got_pos != tostring_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangePositions({objstr}), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
+                        Npp.AddLine($"After ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
                     }
                     ii++;
                     obj.ToStringAndChangePositions(true, ":", ",");
@@ -403,7 +447,15 @@ instead got
                     if (got_pos != tostring_miniwhite_pos)
                     {
                         tests_failed++;
-                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions({objstr}), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
+                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.PPrint);
+                    got_pos = obj[key].position;
+                    if (got_pos != pprint_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After PPrint-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {pprint_pos}, got {got_pos}.");
                     }
                     ii++;
                 }
@@ -413,7 +465,7 @@ instead got
                 if (tostr != tostr_ch_line)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
+                    Npp.AddLine(string.Format(@"Test {0} failed:
     Expected ToStringAndChangePositions({1}) to return
     {2}
     instead got

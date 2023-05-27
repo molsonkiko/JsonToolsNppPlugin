@@ -567,12 +567,15 @@ namespace JSON_Tools.Tests
             }
 
             // test throws errors when expected
-            foostr = "{\"foo\": [1]}";
+            foostr = "{\"foo\": [1], \"bar\": {\"a\": 1}}";
             string[][] fail_cases = new string[][]
             {
                 new string[]{"@.foo = len(@)", foostr},
                 new string[]{"@.foo = @{a: len(@)}", foostr},
                 new string[]{"@.foo[0] = j`[1]`", foostr},
+                new string[]{"@.bar = len(@)", foostr},
+                new string[]{"@.bar = j`[1]`", foostr},
+                new string[]{"@.bar.a = j`[1]`", foostr},
             };
 
             foreach (string[] test in fail_cases)

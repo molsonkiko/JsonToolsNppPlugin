@@ -79,10 +79,11 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 
 ### Added
 
-1. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
-2. Slight improvement to parsing performance, major improvement to pretty-print/compression performance
-3. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
-4. Support for the rest of the JSON5 specification, with the following exception(s):
+1. New pretty-printing mode, [PPrint](/docs/README.md#pretty_print_style).
+2. Find/replace form now automatically refreshes tree view on use, to ensure most up-to-date JSON is used
+3. Slight improvement to parsing performance, major improvement to pretty-print/compression performance
+4. Support for `minLength` and `maxLength` keywords in JSON Schema validation of *strings*.
+5. Support for the rest of the JSON5 specification, with the following exception(s):
 	* Escaped newlines in strings are ignored. *Note that this will not work if you are using newlines other than `\r`, `\n`, or `\r\n`!*
 	* Escaped digits are simply treated as digits, no matter what.
 5. Support for the `undefined` literal, which is parsed as `null`.

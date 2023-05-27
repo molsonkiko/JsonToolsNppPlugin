@@ -205,22 +205,22 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode LessThan(JNode a, JNode b)
         {
-            return new JNode(a.LessThan(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) < 0, Dtype.BOOL, 0);
         }
 
         public static JNode GreaterThan(JNode a, JNode b)
         {
-            return new JNode(a.GreaterThan(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) > 0, Dtype.BOOL, 0);
         }
 
         public static JNode GreaterThanOrEqual(JNode a, JNode b)
         {
-            return new JNode(a.GreaterEquals(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) >= 0, Dtype.BOOL, 0);
         }
 
         public static JNode LessThanOrEqual(JNode a, JNode b)
         {
-            return new JNode(a.LessEquals(b), Dtype.BOOL, 0);
+            return new JNode(a.CompareTo(b) <= 0, Dtype.BOOL, 0);
         }
 
         public static JNode IsEqual(JNode a, JNode b)
@@ -1561,35 +1561,34 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Convert.ToInt64(obj), Dtype.INT, 0);
             }
-            if (obj is double)
+            if (obj is double d)
             {
-                return new JNode((double)obj, Dtype.FLOAT, 0);
+                return new JNode(d, Dtype.FLOAT, 0);
             }
-            if (obj is string)
+            if (obj is string s)
             {
-                return new JNode((string)obj, Dtype.STR, 0);
+                return new JNode(s, Dtype.STR, 0);
             }
-            if (obj is bool)
+            if (obj is bool b)
             {
-                return new JNode((bool)obj, Dtype.BOOL, 0);
+                return new JNode(b, Dtype.BOOL, 0);
             }
-            if (obj is Regex)
+            if (obj is Regex rex)
             {
-                return new JRegex((Regex)obj);
+                return new JRegex(rex);
             }
-            if (obj is List<object>)
+            if (obj is List<object> list)
             {
                 var nodes = new List<JNode>();
-                foreach (object child in (List<object>)obj)
+                foreach (object child in list)
                 {
                     nodes.Add(ObjectsToJNode(child));
                 }
                 return new JArray(0, nodes);
             }
-            else if (obj is Dictionary<string, object>)
+            else if (obj is Dictionary<string, object> dobj)
             {
                 var nodes = new Dictionary<string, JNode>();
-                var dobj = (Dictionary<string, object>)obj;
                 foreach (string key in dobj.Keys)
                 {
                     nodes[key] = ObjectsToJNode(dobj[key]);
