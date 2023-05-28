@@ -60,12 +60,14 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 	    1. The parser can return all the valid parts of invalid JSON up to the point where the fatal error occurred.
 		2. The plugin can use the status bar to show how severely the JSON deviates from the JSON standard.
 		3. Tracking of errors in the parser's `lint` attribute is now independent of the strictness of the parser.
-3. __The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
+3. The `allow_comments`, `allow_unquoted_string`, `allow_nan_inf`, and `linting` settings have been eliminated.
     * They have been replaced by the `logger_level` setting, [described here](/docs/README.md#parser-settings)
+4. Parsing appears to be about 30% faster.
 
 ### Minor changes
 
 1. Changed the default value of `minimal_whitespace_compression` to `true`.
+2. Made it so that automatic parsing and schema validation is off by default.
 
 ### Added
 
@@ -78,6 +80,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 	* Escaped digits are simply treated as digits, no matter what.
 5. Support for the `undefined` and `None` literals, which are parsed as `null`.
 6. Support for the `True` and `False` literals. Since `None` is now also supported, __Python-style JSON documents are now fully supported.__
+7. Forms other than tree views are now colored to match the Notepad++ theme.
 
 ### Fixed
 1. Remove annoying bug where SOH characters (Ascii code `\x01`) were sometimes added to the end of the document when pretty-printing or compressing.
@@ -88,6 +91,7 @@ Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 6. Performance bug (introduced in [4.14.0](#4140---2023-04-12)) in `Expand/Collapse all subtreees` tree node right-click menu option
 7. Better RemesPath error message when user tries to use a function that doesn't exist
 8. RemesPath function names can be used unquoted when they're not being called as functions. For example, `@.items` would have raised an error previously because `items` is a function name, but now there's no problem.
+9. Fixed annoying dinging when using Tab key to navigate Find/replace form.
 
 ## [4.14.0] - 2023-04-12
 
