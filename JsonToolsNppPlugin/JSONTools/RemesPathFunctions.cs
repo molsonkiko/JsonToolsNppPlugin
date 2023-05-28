@@ -97,9 +97,12 @@ namespace JSON_Tools.JSON_Tools
         {
             object aval = a.value; object bval = b.value;
             Dtype atype = a.type; Dtype btype = b.type;
-            if (atype == Dtype.INT && btype == Dtype.INT)
+            if (btype == Dtype.INT)
             {
-                return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
+                if (atype == Dtype.INT)
+                    return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
+                else if (atype == Dtype.STR) // can multiply string by int, but not int by string
+                    return ArgFunction.StrMulHelper(a, b);
             }
             if (((atype & Dtype.FLOAT_OR_INT) == 0) || ((btype & Dtype.FLOAT_OR_INT) == 0))
                 throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
@@ -330,7 +333,7 @@ namespace JSON_Tools.JSON_Tools
             this.Input_types = input_types;
         }
 
-        public Dtype[] input_types()
+        public Dtype[] InputTypes()
         {
             var intypes = new Dtype[Input_types.Length];
             for (int i = 0; i < intypes.Length; i++)
@@ -770,9 +773,7 @@ namespace JSON_Tools.JSON_Tools
             foreach (KeyValuePair<string, JNode> kv in obj.children)
             {
                 JNode knode = new JNode(kv.Key, Dtype.STR, 0);
-                var subarr = new List<JNode>();
-                subarr.Add(knode);
-                subarr.Add(kv.Value);
+                var subarr = new List<JNode> { knode, kv.Value };
                 its.Add(new JArray(0, subarr));
             }
             return new JArray(0, its);
@@ -994,7 +995,7 @@ namespace JSON_Tools.JSON_Tools
             List<JArray> arrs = new List<JArray>();
             foreach (JNode arg in args)
             {
-                if (arg is JArray) arrs.Add((JArray)arg);
+                if (arg is JArray arrrg) arrs.Add(arrrg);
             }
             // check equal lengths
             foreach (JArray arr in arrs)
@@ -1263,6 +1264,18 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(Convert.ToInt64(((string)node.value).Length), Dtype.INT, 0);
         }
 
+        public static JNode StrMulHelper(JNode node, JNode n)
+        {
+            string s = (string)node.value;
+            int num = Convert.ToInt32(n.value);
+            var sb = new StringBuilder(s.Length * num);
+            for (int i = 0; i < num; i++)
+            {
+                sb.Append(s);
+            }
+            return new JNode(sb.ToString(), Dtype.STR, 0);
+        }
+
         /// <summary>
         /// Returns a string made by joining one string to itself n times.<br></br>
         /// Thus StrMul("ab", 3) -> "ababab"
@@ -1273,15 +1286,7 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="ArgumentException"></exception>
         public static JNode StrMul(List<JNode> args)
         {
-            JNode node = args[0];
-            JNode n = args[1];
-            string s = (string)node.value;
-            var sb = new StringBuilder();
-            for (int i = 0; i < Convert.ToInt32(n.value); i++)
-            {
-                sb.Append(s);
-            }
-            return new JNode(sb.ToString(), Dtype.STR, 0);
+            return StrMulHelper(args[0], args[1]);
         }
 
         /// <summary>

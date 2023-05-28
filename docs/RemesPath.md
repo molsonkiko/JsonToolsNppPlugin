@@ -86,6 +86,8 @@ All binary operators are [left-associative](https://en.wikipedia.org/wiki/Operat
 
 In general, binary operators *should* raise an exception when two objects of unequal type are compared. The only exception is that numbers (including booleans) may be freely compared to other numbers, and ints and floats can freely interoperate.
 
+*Beginning in [v5.0.1](/CHANGELOG.md#501---unreleased-yyyy-mm-dd), the `*` operator in supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` will return `["a", "bb", "ccc"]`.
+
 If you find that a binary operator can operate on a number and a non-number without raising an exception, *this is a bug in my implementation.*
 
 

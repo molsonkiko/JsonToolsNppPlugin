@@ -349,8 +349,7 @@ namespace JSON_Tools.JSON_Tools
 			var props = (Dictionary<string, object>)schema["properties"];
 			foreach (string k in props.Keys)
 			{
-				List<object> newpath = new List<object>(path);
-				newpath.Add(k);
+				List<object> newpath = new List<object>(path) { k };
 				FindTabsInSchemaHelper((Dictionary<string, object>)props[k], newpath, tab_paths);
 			}
 		}

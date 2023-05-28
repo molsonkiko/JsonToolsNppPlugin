@@ -172,7 +172,7 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString()
         {
-            string fmt_dtype = JNode.FormatDtype(func.input_types()[arg_num]);
+            string fmt_dtype = JNode.FormatDtype(func.InputTypes()[arg_num]);
             return $"For argument {arg_num} of function {func.name}, expected {fmt_dtype}, instead {description}";
         }
     }
@@ -1779,7 +1779,7 @@ namespace JSON_Tools.JSON_Tools
             object t;
             pos++;
             int arg_num = 0;
-            Dtype[] intypes = fun.input_types();
+            Dtype[] intypes = fun.InputTypes();
             List<JNode> args = new List<JNode>(fun.min_args);
             JNode cur_arg = null;
             while (pos < toks.Count)

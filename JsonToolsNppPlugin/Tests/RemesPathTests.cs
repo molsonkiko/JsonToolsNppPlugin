@@ -16,21 +16,21 @@ namespace JSON_Tools.Tests
             RemesPathLexer lexer = new RemesPathLexer();
             var testcases = new (string input, List<object> desired_tokens, string msg)[]
             {
-                ( "@ + 2", new List<object>(new object[]{new CurJson(), Binop.BINOPS["+"], 2L}), "cur_json binop scalar" ),
-                ( "2.5 7e5 3.2e4 ", new List<object>(new object[]{2.5, 7e5, 3.2e4}), "all float formats" ),
-                ( "abc_2 `ab\\`c`", new List<object>(new object[]{"abc_2", "ab`c"}), "unquoted and quoted strings" ),
-                ( "len(null, Infinity)", new List<object>(new object[]{"len", '(', null, ',', NanInf.inf, ')'}), "arg function, constants, delimiters" ),
-                ( "j`[1,\"a\\`\"]`", new List<object>(new object[]{jsonParser.Parse("[1,\"a`\"]")}), "json string" ),
-                ( "g`a?[b\\`]`", new List<object>(new object[]{new Regex(@"a?[b`]") }), "regex" ),
-                ( " - /", new List<object>(new object[]{Binop.BINOPS["-"], Binop.BINOPS["/"]}), "more binops" ),
-                ( ". []", new List<object>(new object[]{'.', '[', ']'}), "more delimiters" ),
-                ( "3blue", new List<object>(new object[]{3L, "blue"}), "number immediately followed by string" ),
-                ( "2.5+-2", new List<object>(new object[]{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}), "number binop binop number, no whitespace" ),
-                ( "`a`+@", new List<object>(new object[]{"a", Binop.BINOPS["+"], new CurJson()}), "quoted string binop curjson, no whitespace" ),
-                ( "== in =~", new List<object>(new object[]{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}), "two-character binops and argfunction in" ),
-                ( "@[1,2]/3", new List<object>(new object[]{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}), "numbers and delimiters then binop number, no whitespace" ),
-                ( "2 <=3!=", new List < object >(new object[] {2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }), "!=" ),
-                ( "8 = @ * 79 ==", new List<object>(new object[] {8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}), "assignment operator" ),
+                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, "cur_json binop scalar" ),
+                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, "all float formats" ),
+                ( "abc_2 `ab\\`c`", new List<object>{"abc_2", "ab`c"}, "unquoted and quoted strings" ),
+                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, "arg function, constants, delimiters" ),
+                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, "json string" ),
+                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, "regex" ),
+                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, "more binops" ),
+                ( ". []", new List<object>{'.', '[', ']'}, "more delimiters" ),
+                ( "3blue", new List<object>{3L, "blue"}, "number immediately followed by string" ),
+                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, "number binop binop number, no whitespace" ),
+                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, "quoted string binop curjson, no whitespace" ),
+                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, "two-character binops and argfunction in" ),
+                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, "numbers and delimiters then binop number, no whitespace" ),
+                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, "!=" ),
+                ( "8 = @ * 79 ==", new List<object>{8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}, "assignment operator" ),
             };
             int tests_failed = 0;
             int ii = 0;
@@ -208,6 +208,10 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("str(range(3)) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
                 new Query_DesiredResult("str(@.foo[0]) + `a`", "[\"0a\", \"1a\", \"2a\"]"),
                 new Query_DesiredResult("`a` + str(@.foo[0])", "[\"a0\", \"a1\", \"a2\"]"),
+                new Query_DesiredResult("j`[\"a\", \"b\", \"c\"]` * 2", "[\"aa\", \"bb\", \"cc\"]"),
+                new Query_DesiredResult("a * j`[1, 2, 3]`", "[\"a\", \"aa\", \"aaa\"]"),
+                new Query_DesiredResult("ab * 2", "\"abab\""),
+                new Query_DesiredResult("j`[\"a\", \"b\"]` * j`[1, 2]`", "[\"a\", \"bb\"]"),
                 // comparison tests
                 // comparisons of booleans
                 new Query_DesiredResult("2 < true", "false"),
@@ -464,10 +468,12 @@ namespace JSON_Tools.Tests
             {
                 foreach (string bop in Binop.BINOPS.Keys)
                 {
-                    testcases.Add(new string[] { $"@ {bop} 1", $"[{other}]" });
+                    if (!(other == "\"1\"" && bop == "*"))
+                        testcases.Add(new string[] { $"@ {bop} 1", $"[{other}]" });
                     testcases.Add(new string[] { $"1 {bop} @", $"[{other}]" });
                     // now try it with JSON literals defined inside the query
-                    testcases.Add(new string[] { $"j`[{other}]` {bop} 1", "null" });
+                    if (!(other == "\"1\"" && bop == "*"))
+                        testcases.Add(new string[] { $"j`[{other}]` {bop} 1", "null" });
                     testcases.Add(new string[] { $"1 {bop} j`[{other}]`", "null" });
                     // now do it for booleans
                     testcases.Add(new string[] { $"@ {bop} true", $"[{other}]" });
