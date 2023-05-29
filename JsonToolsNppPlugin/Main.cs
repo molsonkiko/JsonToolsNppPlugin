@@ -31,9 +31,9 @@ namespace Kbg.NppPluginNET
                                                              false);
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
-        public static string active_fname = null;
-        public static Dictionary<string, JsonLint[]> fname_lints = new Dictionary<string, JsonLint[]>();
-        public static Dictionary<string, JNode> fname_jsons = new Dictionary<string, JNode>();
+        public static string activeFname = null;
+        public static Dictionary<string, JsonLint[]> fnameLints = new Dictionary<string, JsonLint[]>();
+        public static Dictionary<string, JNode> fnameJsons = new Dictionary<string, JNode>();
         // tree view stuff
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
@@ -99,6 +99,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(16, "JSON to &YAML", DumpYaml);
             PluginBase.SetCommand(17, "Run &tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(18, "A&bout", ShowAboutForm); AboutFormId = 18;
+            PluginBase.SetCommand(19, "See most recent syntax &errors in this file", () => ShowLintForFile(activeFname, false, false));
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -133,7 +134,7 @@ namespace Kbg.NppPluginNET
                     // we need to track which of the currently visible buffers are actually being edited.
                     Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
                     string new_fname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
-                    if (active_fname != null)
+                    if (activeFname != null)
                     {
                         // check to see if there was a treeview for the file
                         // we just navigated away from
@@ -182,7 +183,7 @@ namespace Kbg.NppPluginNET
                         }
                     }
                     grepperTreeViewJustOpened = false;
-                    active_fname = new_fname;
+                    activeFname = new_fname;
                     if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
                         ValidateIfFilenameMatches(new_fname);
                     return;
@@ -204,7 +205,7 @@ namespace Kbg.NppPluginNET
                         return;
                     }
                     // clean up data associated with the buffer that was just closed
-                    fname_jsons.Remove(buffer_closed);
+                    fnameJsons.Remove(buffer_closed);
                     if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
                         return;
                     if (!closed_tv.IsDisposed)
@@ -216,14 +217,7 @@ namespace Kbg.NppPluginNET
                     return;
                 // the editor color scheme changed, so update the tree view colors
                 case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
-                    FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
-                    foreach (TreeViewer treeViewer2 in treeViewers.Values)
-                    {
-                        if (treeViewer2 != null)
-                        {
-                            FormStyle.ApplyStyle(treeViewer2, settings.use_npp_styling);
-                        }
-                    }
+                    RestyleEverything();
                     return;
                 // Before a file is renamed or saved, add a note of the
                 // buffer id of the associated treeviewer and what its old name was.
@@ -284,6 +278,8 @@ namespace Kbg.NppPluginNET
                 case (uint)SciMsg.SCN_MODIFIED:
                     // only turn on the flag if the user performed the modification
                     lastEditedTime = System.DateTime.UtcNow;
+                    if (openTreeViewer != null)
+                        openTreeViewer.shouldRefresh = true;
                     break;
                     //if (code > int.MaxValue) // windows messages
                     //{
@@ -361,22 +357,14 @@ namespace Kbg.NppPluginNET
             else
                 json = jsonParser.Parse(text);
             int lintCount = jsonParser.lint.Count;
-            if (lintCount > 0)
+            fnameLints[fname] = jsonParser.lint.ToArray();
+            if (lintCount > 0 && settings.offer_to_show_lint)
             {
-                fname_lints[fname] = jsonParser.lint.ToArray();
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
                 if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                     == DialogResult.Yes)
                 {
-                    Npp.notepad.FileNew();
-                    var sb = new StringBuilder();
-                    sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
-                    foreach (JsonLint lint in jsonParser.lint)
-                    {
-                        sb.AppendLine(lint.ToString());
-                    }
-                    Npp.AddLine(sb.ToString());
-                    Npp.notepad.OpenFile(fname);
+                    ShowLintForFile(activeFname, true, true);
                 }
             }
             if (jsonParser.fatal)
@@ -388,7 +376,7 @@ namespace Kbg.NppPluginNET
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             }
-            fname_jsons[fname] = json;
+            fnameJsons[fname] = json;
             if (treeViewers.TryGetValue(fname, out var tv))
                 tv.json = json;
             return (jsonParser.fatal, json);
@@ -510,12 +498,50 @@ namespace Kbg.NppPluginNET
             {
                 grepperForm.grepper.json_parser = jsonParser.Copy();
                 grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
-                FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
             }
-            // when the user changes their mind about whether to use editor styling
-            // for the tree viewer, reflect their decision immediately
-            foreach (TreeViewer treeViewer in treeViewers.Values)
-                FormStyle.ApplyStyle(treeViewer, settings.use_npp_styling);
+            RestyleEverything();
+        }
+
+        /// <summary>
+        /// Apply the appropriate styling
+        /// (either generic control styling or Notepad++ styling as the case may be)
+        /// to all forms.
+        /// </summary>
+        private static void RestyleEverything()
+        {
+            if (grepperForm != null && !grepperForm.IsDisposed)
+                FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
+            foreach (TreeViewer tv in treeViewers.Values)
+            {
+                if (tv != null && !tv.IsDisposed)
+                {
+                    FormStyle.ApplyStyle(tv, settings.use_npp_styling);
+                }
+            }
+        }
+
+        private static void ShowLintForFile(string fname, bool toggleBackToStartFile, bool wasAutoTriggered)
+        {
+            if ((!fnameLints.TryGetValue(activeFname, out JsonLint[] lintArr)
+                || lintArr.Length == 0)
+                && !wasAutoTriggered)
+            {
+
+                MessageBox.Show($"No JSON syntax errors for {fname}",
+                    "No JSON syntax errors for this file",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            Npp.notepad.FileNew();
+            var sb = new StringBuilder();
+            sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
+            foreach (JsonLint lint in lintArr)
+            {
+                sb.AppendLine(lint.ToString());
+            }
+            Npp.AddLine(sb.ToString());
+            if (toggleBackToStartFile)
+                Npp.notepad.OpenFile(fname);
         }
 
         private static void CopyPathToCurrentPosition()
@@ -538,7 +564,7 @@ namespace Kbg.NppPluginNET
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
             bool fatal;
-            if (!fname_jsons.TryGetValue(fname, out json))
+            if (!fnameJsons.TryGetValue(fname, out json))
             {
                 if (grepperForm != null 
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
@@ -570,7 +596,7 @@ namespace Kbg.NppPluginNET
                 else
                     Npp.notepad.HideDockingForm(openTreeViewer);
             }
-            treeViewers.TryGetValue(active_fname, out TreeViewer treeViewer);
+            treeViewers.TryGetValue(activeFname, out TreeViewer treeViewer);
             if (treeViewer != null && !treeViewer.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
@@ -595,7 +621,7 @@ namespace Kbg.NppPluginNET
                 if (openTreeViewer != null && treeViewer == openTreeViewer)
                 {
                     openTreeViewer = null;
-                    treeViewers.Remove(active_fname);
+                    treeViewers.Remove(activeFname);
                     return;
                 }
             }
@@ -603,7 +629,7 @@ namespace Kbg.NppPluginNET
             if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
-            treeViewers[active_fname] = openTreeViewer;
+            treeViewers[activeFname] = openTreeViewer;
             DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}");
         }
 

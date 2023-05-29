@@ -27,6 +27,10 @@ namespace JSON_Tools.Utils
             Category("JSON Parser"), DefaultValue(LoggerLevel.NAN_INF)]
         public LoggerLevel logger_level { get; set; }
 
+        [Description("When the document is parsed, show a prompt to see syntax errors in the document."),
+            Category("JSON Parser"), DefaultValue(false)]
+        public bool offer_to_show_lint { get; set; }
+
         [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),
             Category("JSON Parser"), DefaultValue(false)]
         public bool allow_datetimes { get; set; }

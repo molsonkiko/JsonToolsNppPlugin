@@ -43,6 +43,13 @@ namespace JSON_Tools.Forms
         /// </summary>
         private bool isExpandingAllSubtrees;
 
+        /// <summary>
+        /// If the user performs an undo or redo action,
+        /// this will be set to true so that the next time the user performs a RemesPath query,
+        /// the treeview is reset beforehand.
+        /// </summary>
+        public bool shouldRefresh;
+
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
@@ -283,6 +290,8 @@ namespace JSON_Tools.Forms
         private void SubmitQueryButton_Click(object sender, EventArgs e)
         {
             if (json == null) return;
+            if (shouldRefresh)
+                RefreshButton.PerformClick();
             string query = QueryBox.Text;
             JNode query_func = null;
             List<object> toks = null;
@@ -348,7 +357,7 @@ namespace JSON_Tools.Forms
                     query_func = mutation_func;
                 }
                 json = query_func;
-                Main.fname_jsons[fname] = query_func;
+                Main.fnameJsons[fname] = query_func;
                 query_result = query_func;
                 string new_json_str = query_func.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
@@ -800,6 +809,7 @@ namespace JSON_Tools.Forms
         /// <param name="e"></param>
         private void RefreshButton_Click(object sender, EventArgs e)
         {
+            shouldRefresh = false;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             (bool _, JNode new_json) = Main.TryParseJson();
             if (new_json == null)
@@ -807,7 +817,7 @@ namespace JSON_Tools.Forms
             fname = cur_fname;
             json = new_json;
             query_result = json;
-            Main.fname_jsons[fname] = json;
+            Main.fnameJsons[fname] = json;
             JsonTreePopulate(json);
         }
 

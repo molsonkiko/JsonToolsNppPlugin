@@ -230,7 +230,6 @@ namespace JSON_Tools.Forms
 
         private void ReplaceButton_Click(object sender, EventArgs e)
         {
-            treeViewer.RefreshButton.PerformClick();
             int keysvals_index = KeysValsBothBox.SelectedIndex;
             KeysValsBothBox.SelectedIndex = 1;
             AssignFindReplaceQueries();

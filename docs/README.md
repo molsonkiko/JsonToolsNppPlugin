@@ -85,11 +85,11 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
 
-When you parse a document that contains syntax errors, you'll be asked if you want to see the syntax errors caught by the linter.
+When you parse a document that contains syntax errors, you may be asked if you want to see the syntax errors caught by the linter. Starting in [v5.1.0](/CHANGELOG.md#510---unreleased-yyyy-mm-dd), this prompt can be suppressed with the `offer_to_show_lint` setting.
 
 ![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
 
-If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught.
+If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---unreleased-yyyy-mm-dd), errors can also be shown for the current document with a new plugin menu option.
 
 ![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
 

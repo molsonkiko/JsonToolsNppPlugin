@@ -33,19 +33,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when value contains quotes and newline
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
-- The tree view doesn't automatically reset when the user does an undo or redo action. You have to close and reopen the treeview or hit the `Refresh` button for the changes to be reflected. This is annoying, but I can't seem to get my [Main.OnNotification](/JsonToolsNppPlugin/Main.cs) method to respond to undo and redo actions.
 - Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.0.1] - (UNRELEASED) YYYY-MM-DD
+## [5.1.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 1. The `*` multiplication operator in RemesPath now supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` returns `["a", "bb", "ccc"]`.
+2. Setting, `offer_to_show_lint` to disable the pop-up prompt that asks if the user wants to see syntax errors.
+3. Menu option to open a new document with the most recently found syntax errors for the current document.
+
+### Changed
+1. Whenever the user modifies a document that has an active tree viewer, a flag is set so that the document will be re-parsed the next time the user executes a query (including when the find/replace form is used).
 
 ## [5.0.0] - 2023-05-26
 
-### MAJOR CHANGE
+### MAJOR CHANGES
 
 Parsing is completely overhauled in version `5.0.0`. Here are the key changes:
 1. __The parser tracks the cursor position of JSON elements instead of the line number.__
