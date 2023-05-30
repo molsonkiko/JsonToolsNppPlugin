@@ -565,14 +565,14 @@ namespace JSON_Tools.JSON_Tools
 
         private Func<JNode, JNode> ApplyIndexerList(List<IndexerFunc> indexers)
         {
-            JNode idxr_list_func(JNode obj, List<IndexerFunc> idxrs)
+            JNode idxr_list_func(JNode obj, List<IndexerFunc> idxrs, int ii)
             {
-                IndexerFunc ix = idxrs[0];
+                IndexerFunc ix = idxrs[ii];
                 var inds = ix.idxr(obj).GetEnumerator();
                 // IEnumerator<T>.MoveNext returns a bool indicating if the enumerator has passed the end of the collection
                 if (!inds.MoveNext())
                 {
-                    // the IndexerFunc couldn't find
+                    // the IndexerFunc couldn't find anything
                     if (ix.is_dict)
                     {
                         return new JObject();
@@ -588,7 +588,7 @@ namespace JSON_Tools.JSON_Tools
                 bool is_dict = (ix.is_dict || k1 is string) && !ix.is_recursive;
                 var arr = new List<JNode>();
                 var dic = new Dictionary<string, JNode>();
-                if (idxrs.Count == 1)
+                if (ii == idxrs.Count - 1)
                 {
                     if (ix.has_one_option)
                     {
@@ -606,40 +606,37 @@ namespace JSON_Tools.JSON_Tools
                         }
                         return new JObject(0, dic);
                     }
-                    arr = new List<JNode>();
-                    arr.Add(v1);
+                    arr = new List<JNode> { v1 };
                     while (inds.MoveNext())
                     {
                         arr.Add(inds.Current.node);
                     }
                     return new JArray(0, arr);
                 }
-                var remaining_idxrs = new List<IndexerFunc>();
-                for (int ii = 1; ii < idxrs.Count; ii++)
-                    remaining_idxrs.Add(idxrs[ii]);
                 if (ix.is_projection)
                 {
                     if (is_dict)
                     {
-                        dic = new Dictionary<string, JNode>();
-                        dic[(string)k1] = v1;
+                        dic = new Dictionary<string, JNode>
+                        {
+                            [(string)k1] = v1
+                        };
                         while (inds.MoveNext())
                         {
                             kv = inds.Current;
                             dic[(string)kv.obj] = kv.node;
                         }
                         // recursively search this projection using the remaining indexers
-                        return idxr_list_func(new JObject(0, dic), remaining_idxrs);
+                        return idxr_list_func(new JObject(0, dic), idxrs, ii + 1);
                     }
-                    arr = new List<JNode>();
-                    arr.Add(v1);
+                    arr = new List<JNode> { v1 };
                     while (inds.MoveNext())
                     {
                         arr.Add(inds.Current.node);
                     }
-                    return idxr_list_func(new JArray(0, arr), remaining_idxrs);
+                    return idxr_list_func(new JArray(0, arr), idxrs, ii + 1);
                 }
-                JNode v1_subdex = idxr_list_func(v1, remaining_idxrs);
+                JNode v1_subdex = idxr_list_func(v1, idxrs, ii + 1);
                 if (ix.has_one_option)
                 {
                     return v1_subdex;
@@ -656,7 +653,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         k = inds.Current.obj;
                         v = inds.Current.node;
-                        JNode subdex = idxr_list_func(v, remaining_idxrs);
+                        JNode subdex = idxr_list_func(v, idxrs, ii + 1);
                         is_empty = ObjectOrArrayEmpty(subdex);
                         if (is_empty != 1)
                         {
@@ -674,7 +671,7 @@ namespace JSON_Tools.JSON_Tools
                 while (inds.MoveNext())
                 {
                     v = inds.Current.node;
-                    JNode subdex = idxr_list_func(v, remaining_idxrs);
+                    JNode subdex = idxr_list_func(v, idxrs, ii + 1);
                     is_empty = ObjectOrArrayEmpty(subdex);
                     if (is_empty != 1)
                     {
@@ -683,7 +680,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return new JArray(0, arr);
             }
-            return (JNode obj) => idxr_list_func(obj, indexers);
+            return (JNode obj) => idxr_list_func(obj, indexers, 0);
         }
 
         #endregion
