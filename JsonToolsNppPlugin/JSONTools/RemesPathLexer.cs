@@ -41,35 +41,25 @@ Syntax error at position 3: Number with two decimal points
         }
     }
 
-    //public struct Delimiter
-    //{
-    //    public string value;
+    public struct UnquotedString
+    {
+        public string value;
 
-    //    public Delimiter(string value) { this.value = value; }
+        public UnquotedString(string value)
+        {
+            this.value = value;
+        }
 
-    //    public override string ToString() { return $"Delimiter(\"{value}\")"; }
-    //}
+        public override string ToString()
+        {
+            return JNode.StrToString(value, true);
+        }
+    }
 
     public class RemesPathLexer
     {
-        public struct StringToken
-        {
-            public string value;
-            public bool quoted;
-
-            public StringToken(string value, bool quoted)
-            {
-                this.value = value;
-                this.quoted = quoted;
-            }
-
-            public override string ToString()
-            {
-                return JNode.StrToString(value, true);
-            }
-        }
-
         public const int MAX_RECURSION_DEPTH = JsonParser.MAX_RECURSION_DEPTH;
+        
         /// <summary>
         /// position in query string
         /// </summary>
@@ -164,7 +154,7 @@ Syntax error at position 3: Number with two decimal points
             return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
         }
 
-        public StringToken ParseQuotedString(string q)
+        public JNode ParseQuotedString(string q)
         {
             bool escaped = false;
             char c;
@@ -175,7 +165,7 @@ Syntax error at position 3: Number with two decimal points
                 if (c == '`')
                 {
                     if (!escaped) {
-                        return new StringToken(sb.ToString(), true);
+                        return new JNode(sb.ToString(), Dtype.STR, 0);
                     }
                     sb.Append(c);
                     escaped = false;
@@ -234,7 +224,7 @@ Syntax error at position 3: Number with two decimal points
             }
             else
             {
-                return new StringToken(uqs, false);
+                return new UnquotedString(uqs);
             }
         }
 
@@ -242,7 +232,7 @@ Syntax error at position 3: Number with two decimal points
         {
             char c;
             string bs = "";
-            string newbs = "";
+            string newbs;
             while (ii < q.Length)
             {
                 c = q[ii];
@@ -257,14 +247,16 @@ Syntax error at position 3: Number with two decimal points
             return Binop.BINOPS[bs];
         }
 
-        public List<object> Tokenize(string q, out bool is_assignment_expr)
+        public (List<object> selector_toks, List<object> mutator_toks) Tokenize(string q)
         {
-            is_assignment_expr = false;
+            var selector_toks = new List<object>();
+            List<object> mutator_toks = null;
+            List<object> toks = selector_toks;
+            bool is_assignment_expr = false;
             JsonParser jsonParser = new JsonParser();
-            var tokens = new List<object>();
             ii = 0;
             char c;
-            StringToken quoted_string;
+            JNode quoted_string;
             object unquoted_string;
             Binop bop;
             int parens_opened = 0;
@@ -279,18 +271,17 @@ Syntax error at position 3: Number with two decimal points
                 if (WHITESPACE.Contains(c)) { continue; }
                 else if (c == '@')
                 {
-                    tokens.Add(new CurJson());
+                    toks.Add(new CurJson());
                 } 
                 else if (c >= '0' && c <= '9')
                 {
-                    object curtok;
                     ii--;
-                    curtok = ParseNumber(q);
-                    tokens.Add(curtok);
+                    object curtok = ParseNumber(q);
+                    toks.Add(curtok);
                 }
                 else if (DELIMITERS.Contains(c))
                 {
-                    tokens.Add(c);
+                    toks.Add(c);
                     // check for unmatched parentheses, do counting
                     switch (c)
                     {
@@ -335,13 +326,13 @@ Syntax error at position 3: Number with two decimal points
                     {
                         ii++;
                         quoted_string = ParseQuotedString(q);
-                        tokens.Add(new JRegex(new Regex(quoted_string.value)));
+                        toks.Add(new JRegex(new Regex((string)quoted_string.value)));
                     }
                     else
                     {
                         ii--;
                         unquoted_string = ParseUnquotedString(q);
-                        tokens.Add(unquoted_string);
+                        toks.Add(unquoted_string);
                     }
                 }
                 else if (c == 'j')
@@ -350,25 +341,25 @@ Syntax error at position 3: Number with two decimal points
                     {
                         ii++;
                         quoted_string = ParseQuotedString(q);
-                        tokens.Add(jsonParser.Parse(quoted_string.value));
+                        toks.Add(jsonParser.Parse((string)quoted_string.value));
                     }
                     else
                     {
                         ii--;
                         unquoted_string = ParseUnquotedString(q);
-                        tokens.Add(unquoted_string);
+                        toks.Add(unquoted_string);
                     }
                 }
                 else if (c == '`')
                 {
                     quoted_string = ParseQuotedString(q);
-                    tokens.Add(quoted_string);
+                    toks.Add(quoted_string);
                 }
                 else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'))
                 {
                     ii--;
                     unquoted_string = ParseUnquotedString(q);
-                    tokens.Add(unquoted_string);
+                    toks.Add(unquoted_string);
                 }
                 else if (BINOP_START_CHARS.Contains(c))
                 {
@@ -383,18 +374,20 @@ Syntax error at position 3: Number with two decimal points
                             {
                                 throw new RemesLexerException(ii, q, "RemesPath queries can contain at most one assignment expression");
                             }
-                            if (tokens.Count == 0)
+                            if (toks.Count == 0)
                             {
                                 throw new RemesLexerException(ii, q, "Assignment expression with no left-hand side");
                             }
                             is_assignment_expr = true;
-                            tokens.Add('=');
+                            // all toks after the assignment operator are the tokens that will compile to the mutator function
+                            mutator_toks = new List<object>();
+                            toks = mutator_toks;
                             continue;
                         }
                     }
                     ii--;
                     bop = ParseBinop(q);
-                    tokens.Add(bop);
+                    toks.Add(bop);
                 }
                 else
                 {
@@ -413,11 +406,51 @@ Syntax error at position 3: Number with two decimal points
             {
                 throw new RemesLexerException(last_unclosed_squarebrace, q, "Unclosed '['");
             }
-            if (tokens[tokens.Count - 1] is char last_c && last_c == '=')
+            if (is_assignment_expr && mutator_toks.Count == 0)
             {
-                throw new RemesLexerException(ii, q, "Assignment expression with no right-hand side");
+                throw new RemesLexerException(q.Length - 1, q, "Assignment expression with no right-hand side");
             }
-            return tokens;
+            if (selector_toks.Count == 0)
+            {
+                throw new RemesLexerException(q.Length - 1, q, "Invalid query");
+            }
+            return (selector_toks, mutator_toks);
+        }
+
+        public static string TokensToString(List<object> tokens)
+        {
+            if (tokens == null)
+                return "null";
+            var sb = new StringBuilder();
+            foreach (object tok in tokens)
+            {
+                if (tok is int || tok is long || tok is double || tok is string || tok == null || tok is Regex)
+                {
+                    sb.Append(ArgFunction.ObjectsToJNode(tok).ToString());
+                }
+                else if (tok is UnquotedString uqs)
+                {
+                    sb.Append(uqs.ToString());
+                }
+                else if (tok is JNode node)
+                {
+                    sb.Append(node.ToString());
+                }
+                else if (tok is Binop bop)
+                {
+                    sb.Append(bop.ToString());
+                }
+                else if (tok is char c)
+                {
+                    sb.Append($"'{JNode.CharToString(c)}'");
+                }
+                else
+                {
+                    sb.Append(tok);
+                }
+                sb.Append(", ");
+            }
+            return sb.ToString();
         }
     }
 }

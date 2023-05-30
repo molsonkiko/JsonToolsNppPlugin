@@ -14,99 +14,63 @@ namespace JSON_Tools.Tests
         {
             JsonParser jsonParser = new JsonParser();
             RemesPathLexer lexer = new RemesPathLexer();
-            var testcases = new (string input, List<object> desired_tokens, string msg)[]
+            var testcases = new (string input, List<object> sel_toks, List<object> mut_toks, string msg)[]
             {
-                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, "cur_json binop scalar" ),
-                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, "all float formats" ),
-                ( "abc_2 `ab\\`c`", new List<object>{"abc_2", "ab`c"}, "unquoted and quoted strings" ),
-                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, "arg function, constants, delimiters" ),
-                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, "json string" ),
-                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, "regex" ),
-                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, "more binops" ),
-                ( ". []", new List<object>{'.', '[', ']'}, "more delimiters" ),
-                ( "3blue", new List<object>{3L, "blue"}, "number immediately followed by string" ),
-                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, "number binop binop number, no whitespace" ),
-                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, "quoted string binop curjson, no whitespace" ),
-                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, "two-character binops and argfunction in" ),
-                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, "numbers and delimiters then binop number, no whitespace" ),
-                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, "!=" ),
-                ( "8 = @ * 79 ==", new List<object>{8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="]}, "assignment operator" ),
+                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, null, "cur_json binop scalar" ),
+                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, null, "all float formats" ),
+                ( "abc_2 `ab\\`c`", new List<object>{"abc_2", "ab`c"}, null, "unquoted and quoted strings" ),
+                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, null, "arg function, constants, delimiters" ),
+                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, null, "json string" ),
+                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, null, "regex" ),
+                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, null, "more binops" ),
+                ( ". []", new List<object>{'.', '[', ']'}, null, "more delimiters" ),
+                ( "3blue", new List<object>{3L, "blue"}, null, "number immediately followed by string" ),
+                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, null, "number binop binop number, no whitespace" ),
+                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, null, "quoted string binop curjson, no whitespace" ),
+                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, null, "two-character binops and argfunction in" ),
+                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, null, "numbers and delimiters then binop number, no whitespace" ),
+                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, null, "!=" ),
+                ( "8 = @ * 79 ==", new List<object>{ 8L }, new List<object>{ new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="] }, "assignment operator" ),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach ((string input, List<object> desired_tokens, string msg) in testcases)
+            foreach ((string input, List<object> sel_toks, List<object> mut_toks, string msg) in testcases)
             {
-                var sb_desired = new StringBuilder();
-                bool should_be_assignment_expr = false;
-                bool is_assignment_expr = false;
-                foreach (object desired_value in desired_tokens)
-                {
-                    if (desired_value is int || desired_value is long || desired_value is double || desired_value is string || desired_value == null || desired_value is Regex)
-                    {
-                        sb_desired.Append(ArgFunction.ObjectsToJNode(desired_value).ToString());
-                    }
-                    else if (desired_value is JNode node)
-                    {
-                        sb_desired.Append(node.ToString());
-                    }
-                    else
-                    {
-                        if (desired_value is char c && c == '=') should_be_assignment_expr = true;
-                        sb_desired.Append(desired_value.ToString());
-                    }
-                    sb_desired.Append(", ");
-                }
-                string str_desired = sb_desired.ToString();
-                List<object> output = null;
+                string sel_str = RemesPathLexer.TokensToString(sel_toks);
+                string mut_str = RemesPathLexer.TokensToString(mut_toks);
+                List<object> got_sel_toks = null;
+                List<object> got_mut_toks = null;
+                ii++;
                 try
                 {
-                    output = lexer.Tokenize(input, out is_assignment_expr);
+                    (got_sel_toks, got_mut_toks) = lexer.Tokenize(input);
                 }
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (input \"{1}\", {2}) failed:\n" +
-                                            "Expected\n{3}\nInstead raised exception\n{4}",
-                                            ii, input, msg, str_desired, ex));
+                    Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
+                                $"Expected sel_toks = {sel_str}\r\nExpected mut_toks = {mut_str}\r\n" +
+                                $"Instead raised exception\r\n{ex}");
                     continue;
                 }
-                if (is_assignment_expr != should_be_assignment_expr)
-                {
-                    Npp.AddLine(String.Format("Test {0} (input \"{1}\", {2}) failed:\n" +
-                                            "Expected is_assignment_expr = {3} but instead got is_assignment_expr = {4}",
-                                            ii, input, msg, str_desired, should_be_assignment_expr, is_assignment_expr));
-                }
-                var sb_output = new StringBuilder();
-                foreach (object value in output)
-                {
-                    if (value is JNode jnode && !(value is CurJson))
-                    {
-                        sb_output.Append(jnode.ToString());
-                    }
-                    else
-                    {
-                        sb_output.Append((value == null) ? "null" : value.ToString());
-                    }
-                    sb_output.Append(", ");
-                }
-                string str_output = sb_output.ToString();
-                if (str_output != str_desired)
+                string got_sel_str = RemesPathLexer.TokensToString(got_sel_toks);
+                string got_mut_str = RemesPathLexer.TokensToString(got_mut_toks);
+                if (sel_str != got_sel_str || mut_str != got_mut_str)
                 {
 
                     tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (input \"{1}\", {2}) failed:\n" +
-                                                    "Expected\n{3}\nGot\n{4}",
-                                                    ii, input, msg, str_desired, str_output));
+                    Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
+                                $"Expected sel_toks = {sel_str}\r\nInstead got sel_toks = {got_sel_str}\r\n" +
+                                $"Expected mut_toks = {mut_str}\r\nInstead got mut_toks = {got_mut_str}");
                 }
             }
             // test exeptions related to unmatched brackets
-            ii = testcases.Length;
             foreach (string paren in new string[] { "(", ")", "[", "]", "{", "}" })
             {
                 ii++;
                 try
                 {
-                    lexer.Tokenize(paren, out bool _);
+                    lexer.Tokenize(paren);
                     Npp.AddLine($"Test {ii} (query \"{paren}\") failed, expected exception due to unmatched '{paren}'");
                     tests_failed++;
                 }
@@ -118,7 +82,7 @@ namespace JSON_Tools.Tests
             try
             {
                 query = "1.5.2";
-                lexer.Tokenize(query, out bool _);
+                lexer.Tokenize(query);
                 tests_failed++;
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to number with two decimal points");
             }
@@ -128,7 +92,7 @@ namespace JSON_Tools.Tests
             try
             {
                 query = "@[@ =~ a] = 5 = 7";
-                lexer.Tokenize(query, out bool _);
+                lexer.Tokenize(query);
                 tests_failed++;
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to more than one assignment expression");
             }
@@ -138,7 +102,7 @@ namespace JSON_Tools.Tests
             try
             {
                 query = "@ *3 = ";
-                lexer.Tokenize(query, out bool _);
+                lexer.Tokenize(query);
                 tests_failed++;
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to assignment expression with no RHS");
             }
@@ -148,7 +112,7 @@ namespace JSON_Tools.Tests
             try
             {
                 query = "= @ *3";
-                lexer.Tokenize(query, out bool _);
+                lexer.Tokenize(query);
                 tests_failed++;
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to assignment expression with no LHS");
             }
@@ -158,7 +122,7 @@ namespace JSON_Tools.Tests
             try
             {
                 query = $"{new string('(', 1000)}1{new string(')', 1000)}";
-                lexer.Tokenize(query, out bool _);
+                lexer.Tokenize(query);
                 tests_failed++;
                 Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to exceeding recursion limit with too many unclosed parentheses");
             }
@@ -424,7 +388,7 @@ namespace JSON_Tools.Tests
                 JNode jdesired_result = jsonParser.Parse(qd.desired_result);
                 try
                 {
-                    result = remesparser.Search(qd.query, foo, out bool _);
+                    result = remesparser.Search(qd.query, foo);
                 }
                 catch (Exception ex)
                 {
@@ -505,7 +469,7 @@ namespace JSON_Tools.Tests
                 }
                 try
                 {
-                    JNode bad_result = remesParser.Search(query, inp, out bool _);
+                    JNode bad_result = remesParser.Search(query, inp);
                     tests_failed++;
                     Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {bad_result.ToString()}");
                 }
@@ -549,7 +513,7 @@ namespace JSON_Tools.Tests
                 ii += 2;
                 try
                 {
-                    result = remesParser.Search(query, inp, out bool _);
+                    result = remesParser.Search(query, inp);
                 }
                 catch (Exception ex)
                 {
@@ -592,7 +556,7 @@ namespace JSON_Tools.Tests
                     string query = test[0];
                     string inpstr = test[1];
                     JNode inp = jsonParser.Parse(inpstr);
-                    JNode bad_result = remesParser.Search(query, inp, out bool _);
+                    JNode bad_result = remesParser.Search(query, inp);
                     tests_failed++;
                     Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {bad_result.ToString()}");
                 }

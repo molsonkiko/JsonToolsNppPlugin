@@ -176,6 +176,13 @@ namespace JSON_Tools.JSON_Tools
             return $"For argument {arg_num} of function {func.name}, expected {fmt_dtype}, instead {description}";
         }
     }
+
+    public class InvalidMutationException : RemesPathException
+    {
+        public InvalidMutationException(string description) : base(description) { }
+
+        public override string ToString() { return description; }
+    }
     #endregion
     /// <summary>
     /// RemesPath is similar to JMESPath, but more fully featured.<br></br>
@@ -209,10 +216,15 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public JNode Compile(List<object> toks)
+        public JNode Compile(List<object> selector_toks, List<object> mutator_toks = null)
         {
-            JNode result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
-            return result;
+            if (mutator_toks != null)
+            {
+                var selector = Compile(selector_toks);
+                var mutator = Compile(mutator_toks);
+                return new JMutator(selector, mutator);
+            }
+            return (JNode)ParseExprOrScalarFunc(selector_toks, 0).obj;
         }
 
         /// <summary>
@@ -223,54 +235,20 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="query"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public JNode Search(string query, JNode obj, out bool is_assignment_expr)
+        public JNode Search(string query, JNode obj)
         {
-            List<object> toks = lexer.Tokenize(query, out is_assignment_expr);
-            foreach (object tok in toks)
-            {
-                if (tok is char c && c == '=')
-                {
-                    is_assignment_expr = true;
-                    break;
-                }
-            }
-            if (is_assignment_expr)
-            {
-                JNode mutation_func = CompileAssignmentExpr(toks);
-                // cache.Add(query, mutation_func);
-                if (mutation_func is CurJson cjmut)
-                {
-                    return cjmut.function(obj);
-                }
-                return mutation_func;
-            }
-            JNode result = Compile(toks);
-            if (result is CurJson cjres)
-            {
-                return ((CurJson)result).function(obj);
-            }
-            return result;
-        }
 
-        public JNode CompileAssignmentExpr(List<object> toks)
-        {
-            bool before_assignment_operator = true;
-            List<object> lhs_toks = new List<object>();
-            List<object> rhs_toks = new List<object>();
-            foreach (object tok in toks)
+            (List<object> selector_toks, List<object> mutator_toks) = lexer.Tokenize(query);
+            JNode compiled_query = Compile(selector_toks, mutator_toks);
+            if (compiled_query is CurJson cjres)
             {
-                if (tok is char c && c == '=')
-                {
-                    before_assignment_operator = false;
-                    continue;
-                }
-                if (before_assignment_operator)
-                    lhs_toks.Add(tok);
-                else rhs_toks.Add(tok);
+                return cjres.function(obj);
             }
-            JNode lhs = Compile(lhs_toks);
-            JNode rhs = Compile(rhs_toks);
-            return ApplyAssignmentExpression(lhs, rhs);
+            else if (compiled_query is JMutator mut)
+            {
+                return mut.Mutate(obj);
+            }
+            return compiled_query;
         } 
 
         public static string EXPR_FUNC_ENDERS = "]:},)";
@@ -1321,7 +1299,7 @@ namespace JSON_Tools.JSON_Tools
                         // it's a '*' indexer, which means select all keys/indices
                         return new Obj_Pos(new StarIndexer(), pos + 2);
                     }
-                    JNode jnt = (nt is RemesPathLexer.StringToken st)
+                    JNode jnt = (nt is UnquotedString st)
                         ? new JNode(st.value, Dtype.STR, 0)
                         : (JNode)nt;
                     if ((jnt.type & Dtype.STR_OR_REGEX) == 0)
@@ -1515,10 +1493,9 @@ namespace JSON_Tools.JSON_Tools
                     subquery.Add(subtok);
                 }
             }
-            else if (t is RemesPathLexer.StringToken st)
+            else if (t is UnquotedString st)
             {
-                if (!st.quoted
-                    && pos < toks.Count - 1
+                if (pos < toks.Count - 1
                     && toks[pos + 1] is char c && c == '(')
                 {
                     // an unquoted string followed by an open paren
@@ -1534,7 +1511,7 @@ namespace JSON_Tools.JSON_Tools
                         throw new RemesPathException($"'{st.value}' is not the name of a RemesPath function.");
                     }
                 }
-                else
+                else // unquoted string just being used as a string
                 {
                     last_tok = new JNode(st.value, Dtype.STR, 0);
                     pos++;
@@ -1652,9 +1629,9 @@ namespace JSON_Tools.JSON_Tools
             if (nt == null || (nt is char nd && EXPR_FUNC_ENDERS.Contains(nd)))
             {
                 curtok = toks[pos];
-                if (curtok is RemesPathLexer.StringToken st)
+                if (curtok is UnquotedString uqs)
                 {
-                    curtok = new JNode(st.value, Dtype.STR, 0);
+                    curtok = new JNode(uqs.value, Dtype.STR, 0);
                 }
                 if (!(curtok is JNode))
                 {
@@ -1952,109 +1929,6 @@ namespace JSON_Tools.JSON_Tools
             }
             throw new RemesPathException("Unterminated projection");
         }
-        #endregion
-        #region ASSIGNMENT_EXPRESSIONS
-
-        /// <summary>
-        /// Changes the type and value of v to the type and value of vnew.<br></br>
-        /// Cannot change a non-iterable into an iterable.<br></br>
-        /// Cannot change an array into a non-array.<br></br>
-        /// Cannot change an object into a non-object.
-        /// </summary>
-        /// <param name="v"></param>
-        /// <param name="vnew"></param>
-        /// <exception cref="RemesPathException"></exception>
-        private static void TransferJNodeProperties(JNode v, JNode vnew)
-        {
-            if (v.type == Dtype.ARR)
-            {
-                throw new RemesPathException("Can't mutate an array.");
-            }
-            if (v.type == Dtype.OBJ)
-            {
-                throw new RemesPathException("Can't mutate an object.");
-            }
-            // v is a scalar
-            if ((vnew.type & Dtype.ARR_OR_OBJ) != 0)
-                throw new RemesPathException("Can't convert a scalar to an array or object.");
-            v.type = vnew.type;
-            v.value = vnew.value;
-        }
-
-        /// <summary>
-        /// An assignment expression is a valid RemesPath expression that contains the token '='.<br></br>
-        /// Assignment expressions are vectorized,<br></br>
-        /// so @ = @ * 2 will:<br></br>
-        /// * change [1, 2, 3] to [2, 4, 6]<br></br>
-        /// * change {"a": 1.5, "b": -4.6} to {"a": 3.0, "b": -9.2}<br></br>
-        /// * change 2 to 4
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="op"></param>
-        private JNode ApplyAssignmentExpression(JNode x, JNode op)
-        {
-            if (x is CurJson cjx)
-            {
-                Func<JNode, JNode> outfunc = (JNode inp) =>
-                {
-                    ApplyAssignmentExpression(cjx.function(inp), op);
-                    return inp;
-                };
-                return new CurJson(Dtype.UNKNOWN, outfunc);
-            }
-            if (op is CurJson cjop)
-            {
-                var func = cjop.function;
-                if (x is JObject xobj_)
-                {
-                    foreach (JNode v in xobj_.children.Values)
-                    {
-                        TransferJNodeProperties(v, func(v));
-                    }
-                }
-                else if (x is JArray xarr)
-                {
-                    foreach (JNode v in xarr.children)
-                    {
-                        TransferJNodeProperties(v, func(v));
-                    }
-                }
-                else // x is a scalar
-                {
-                    JNode xnew = func(x);
-                    if ((x.type & Dtype.ARR_OR_OBJ) != 0)
-                        throw new RemesPathException("Can't convert a scalar to an array or object");
-                    x.type = xnew.type;
-                    x.value = xnew.value;
-                }
-                return x;
-            }
-            // op is an unchanging value, so just perform the same change x or all children of x
-            if (x is JObject xobj)
-            {
-                foreach (JNode v in xobj.children.Values)
-                {
-                    TransferJNodeProperties(v, op);
-                }
-            }
-            else if (x is JArray xarr)
-            {
-                foreach (JNode v in xarr.children)
-                {
-                    TransferJNodeProperties(v, op);
-                }
-            }
-            else
-            {
-                // x is a scalar
-                if ((op.type & Dtype.ARR_OR_OBJ) != 0)
-                    throw new RemesPathException("Can't convert a scalar to an array or object");
-                x.type = op.type;
-                x.value = op.value;
-            }
-            return x;
-        }
-
         #endregion
         #region EXCEPTION_PRETTIFIER
         // extracts the origin and target of the cast from an InvalidCastException

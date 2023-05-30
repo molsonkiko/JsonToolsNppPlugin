@@ -82,7 +82,7 @@ namespace JSON_Tools.Tests
 Performance tests for RemesPath ({description})
 =========================
 ");
-                Func<JNode, JNode> query_func = null;
+                JNode query_func = null;
                 long[] compile_times = new long[num_query_trials];
                 for (int ii = 0; ii < num_query_trials; ii++)
                 {
@@ -90,8 +90,8 @@ Performance tests for RemesPath ({description})
                     watch.Start();
                     try
                     {
-                        List<object> toks = parser.lexer.Tokenize(query, out bool _);
-                        query_func = ((CurJson)parser.Compile(toks)).function;
+                        (List<object> sel_toks, List<object> mut_toks) = parser.lexer.Tokenize(query);
+                        query_func = parser.Compile(sel_toks, mut_toks);
                     }
                     catch (Exception ex)
                     {
@@ -115,7 +115,14 @@ Performance tests for RemesPath ({description})
                     watch.Start();
                     try
                     {
-                        result = query_func(json);
+                        if (query_func is CurJson selector)
+                        {
+                            result = selector.function(json);
+                        }
+                        else if (query_func is JMutator mutator)
+                        {
+                            result = mutator.Mutate(json);
+                        }
                     }
                     catch (Exception ex)
                     {

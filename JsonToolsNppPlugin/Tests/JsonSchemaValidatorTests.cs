@@ -664,19 +664,29 @@ namespace JSON_Tools.Tests
             };
             string random_tweet_text = null, tweet_schema_text = null, bad_random_tweet_text = null;
             string testfiles_path = @"plugins\JsonTools\testfiles\";
+            JNode bad_random_tweet = null;
             try
             {
                 random_tweet_text = File.ReadAllText(testfiles_path + "random_tweet.json");
                 // make a copy of the tweet that violates the schema
-                JNode bad_random_tweet = jsonParser.Parse(random_tweet_text);
+                bad_random_tweet = jsonParser.Parse(random_tweet_text);
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"While trying to parse {testfiles_path}random_tweet.json\r\n" +
+                            $"got exception {ex}");
+            }
+            try
+            {
                 var rparser = new RemesParser();
                 // set a value deep in the tweet to an invalid type
-                rparser.Search("@[1].entities.media[1].sizes.small.w = `THIS SHOULD BE AN INTEGER`", bad_random_tweet, out bool _);
+                rparser.Search("@[1].entities.media[1].sizes.small.w = `THIS SHOULD BE AN INTEGER`", bad_random_tweet);
                 bad_random_tweet_text = bad_random_tweet.ToString(); bad_random_tweet.ToString();
             }
-            catch
+            catch (Exception ex)
             {
-                Npp.AddLine($"File not found at {testfiles_path}random_tweet.json");
+                Npp.AddLine($"While trying to mutate the JSON from {testfiles_path}random_tweet.json\r\n" +
+                            $"got exception {ex}");
             }
             try
             {

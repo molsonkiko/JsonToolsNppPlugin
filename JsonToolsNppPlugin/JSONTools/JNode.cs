@@ -233,7 +233,7 @@ namespace JSON_Tools.JSON_Tools
         {
             NumberDecimalSeparator = "."
         };
-
+        #region TOSTRING_FUNCS
         /// <summary>
         /// string representation of any characters in JSON
         /// </summary>
@@ -421,7 +421,7 @@ namespace JSON_Tools.JSON_Tools
         {
             return ToStringHelper(sort_keys, ":", ",", sb, change_positions, extra_utf8_bytes, int.MaxValue);
         }
-
+        #endregion
         ///<summary>
         /// A magic method called behind the scenes when sorting things.<br></br>
         /// It only works if other also implements IComparable.<br></br>
@@ -436,9 +436,9 @@ namespace JSON_Tools.JSON_Tools
         ///</exception>
         public int CompareTo(object other)
         {
-            if (other is JNode)
+            if (other is JNode jother)
             {
-                return CompareTo(((JNode)other).value);
+                return CompareTo(jother.value);
             }
             switch (type)
             {
@@ -463,7 +463,8 @@ namespace JSON_Tools.JSON_Tools
                     if ((bool)value) return (1.0).CompareTo(Convert.ToDouble(other));
                     return (0.0).CompareTo(Convert.ToDouble(other));
                 case Dtype.NULL:
-                    if (other != null) { throw new ArgumentException("Cannot compare null to non-null"); }
+                    if (other != null)
+                        throw new ArgumentException("Cannot compare null to non-null");
                     return 0;
                 case Dtype.DATE: // return ((DateOnly)value).CompareTo((DateOnly)other);
                 case Dtype.DATETIME: return ((DateTime)value).CompareTo((DateTime)other);
@@ -491,7 +492,7 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(value, type, position);
         }
 
-        #region HELPER_FUNCS
+        #region MISC_FUNCS
         private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
         // "dot compatible" means a string that starts with a letter or underscore
         // and contains only letters, underscores, and digits
@@ -671,6 +672,33 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             return string.Join("|", typestrs);
+        }
+
+        /// <summary>
+        /// Changes the type and value of this to the type and value of vnew.<br></br>
+        /// This and vnew are still separate objects.<br></br>
+        /// Cannot change a non-iterable into an iterable.<br></br>
+        /// Cannot change an array into a non-array.<br></br>
+        /// Cannot change an object into a non-object.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="vnew"></param>
+        /// <exception cref="InvalidMutationException">if this or vnew is a JArray or JObject</exception>
+        public void MutateInto(JNode vnew)
+        {
+            if (type == Dtype.ARR)
+            {
+                throw new InvalidMutationException("Can't mutate an array.");
+            }
+            if (type == Dtype.OBJ)
+            {
+                throw new InvalidMutationException("Can't mutate an object.");
+            }
+            // v is a scalar
+            if ((vnew.type & Dtype.ARR_OR_OBJ) != 0)
+                throw new InvalidMutationException("Can't convert a scalar to an array or object.");
+            type = vnew.type;
+            value = vnew.value;
         }
         #endregion
     }
@@ -1182,6 +1210,137 @@ namespace JSON_Tools.JSON_Tools
         public JSlicer(int?[] slicer) : base(null, Dtype.SLICE, 0)
         {
             this.slicer = slicer;
+        }
+    }
+
+    /// <summary>
+    /// A stand-in for an object that is a function of the user's input.
+    /// This can take on any value, including a scalar (e.g., len(@) is CurJson of type Dtype.INT).
+    /// The Function field must take any object or null as input and return an object of the type reflected
+    /// in the CurJson's type field.
+    /// So for example, a CurJson node standing in for len(@) would be initialized as follows:
+    /// CurJson(Dtype.INT, obj => obj.Length)
+    /// </summary>
+    public class CurJson : JNode
+    {
+        public Func<JNode, JNode> function;
+        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
+        {
+            this.function = function;
+        }
+
+        /// <summary>
+        /// A CurJson node that simply stands in for the current json itself (represented by @)
+        /// Its function is the identity function.
+        /// </summary>
+        public CurJson() : base(null, Dtype.UNKNOWN, 0)
+        {
+            function = Identity;
+        }
+
+        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        {
+            return $"CurJson(type = {type}, function = {function.Method.Name})";
+        }
+
+        public static JNode Identity(JNode obj)
+        {
+            return obj;
+        }
+    }
+
+    /// <summary>
+    /// A JNode that is produced by compilation of an assignment expression,
+    /// e.g. "@[@ < 2] = @ + 3"
+    /// In this example above, the Mutator produced would have
+    /// selector: CurJson(function=(function that selects all direct children with numeric values less than 2)),
+    /// mutator: CurJson(function=(function that adds 3 to the value of a numeric JNode))
+    /// The type of a Mutator is always UNKNOWN, the value is always null, and the position is always 0.
+    /// </summary>
+    public class JMutator : JNode
+    {
+        /// <summary>
+        /// One of the following:<br></br>
+        /// 1. A constant value that is transformed by mutator<br></br>
+        /// 2. a function that selects children to be mutated from the input JSON
+        /// </summary>
+        public JNode selector;
+
+        /// <summary>
+        /// One of the following:<br></br>
+        /// 1. A constant value that all children of selector are turned into<br></br>
+        /// 2. a function that mutates each child that was selected by selector
+        /// </summary>
+        public JNode mutator;
+
+        public JMutator(JNode selector, JNode mutator) : base(null, Dtype.UNKNOWN, 0)
+        {
+            this.selector = selector;
+            this.mutator = mutator;
+        }
+
+        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        {
+            return $"JMutator(selector = {selector.ToString()}, mutator = {mutator.ToString()})";
+        }
+
+        /// <summary>
+        /// Performs an in-place mutation of inp by selecting children with selector and mutating each selected child with mutator.<br></br>
+        /// Returns inp, the JNode that was passed in, after mutation.<br></br>
+        /// Assignment expressions are vectorized,<br></br>
+        /// so @ = @ * 2 will:<br></br>
+        /// * change [1, 2, 3] to [2, 4, 6]<br></br>
+        /// * change {"a": 1.5, "b": -4.6} to {"a": 3.0, "b": -9.2}<br></br>
+        /// * change 2 to 4
+        /// </summary>
+        public JNode Mutate(JNode inp)
+        {
+            JNode selected = selector is CurJson cjsel
+                ? cjsel.function(inp) // selector filters input
+                : selector.Copy();   // selector is a constant JNode indepenedent of input
+            if (mutator is CurJson cjmut)
+            {
+                var func = cjmut.function;
+                if (selected is JObject xobj_)
+                {
+                    foreach (JNode v in xobj_.children.Values)
+                    {
+                        v.MutateInto(func(v));
+                    }
+                }
+                else if (selected is JArray xarr)
+                {
+                    foreach (JNode v in xarr.children)
+                    {
+                        v.MutateInto(func(v));
+                    }
+                }
+                else // x is a scalar
+                {
+                    selected.MutateInto(func(selected));
+                }
+                return inp;
+            }
+            // mutator is an unchanging value, so just perform the same change x or all children of x
+            if (selected is JObject xobj)
+            {
+                foreach (JNode v in xobj.children.Values)
+                {
+                    v.MutateInto(mutator);
+                }
+            }
+            else if (selected is JArray xarr)
+            {
+                foreach (JNode v in xarr.children)
+                {
+                    v.MutateInto(mutator);
+                }
+            }
+            else
+            {
+                selected.MutateInto(mutator);
+            }
+            return inp;
         }
     }
 }

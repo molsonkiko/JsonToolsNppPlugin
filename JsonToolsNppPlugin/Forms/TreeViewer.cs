@@ -293,12 +293,12 @@ namespace JSON_Tools.Forms
             if (shouldRefresh)
                 RefreshButton.PerformClick();
             string query = QueryBox.Text;
-            JNode query_func = null;
-            List<object> toks = null;
-            bool is_assignment_expr = false;
+            JNode query_func;
+            List<object> sel_toks;
+            List<object> mut_toks;
             try
             {
-                toks = lexer.Tokenize(query, out is_assignment_expr);
+                (sel_toks, mut_toks) = lexer.Tokenize(query);
             }
             catch (Exception ex)
             {
@@ -309,78 +309,34 @@ namespace JSON_Tools.Forms
                                 MessageBoxIcon.Error);
                 return;
             }
-            foreach (object tok in toks)
+            try
             {
-                if (tok is char c && c == '=')
-                {
-                    is_assignment_expr = true;
-                    break;
-                }
+                query_func = remesParser.Compile(sel_toks, mut_toks);
+            }
+            catch (Exception ex)
+            {
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"Could not execute query {query} because of runtime error:\n{expretty}",
+                                "Runtime error in RemesPath query",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
             }
             // if the query is an assignment expression, we need to overwrite the file with the
             // modified JSON after the query has been executed
-            if (is_assignment_expr)
+            if (query_func is JMutator mut)
             {
-                JNode mutation_func = null;
-                try
-                {
-                    mutation_func = remesParser.CompileAssignmentExpr(toks);
-                }
-                catch (Exception ex)
-                {
-                    string expretty = RemesParser.PrettifyException(ex);
-                    MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
-                                "Syntax error in RemesPath query",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                    return;
-                }
-                if (mutation_func is CurJson cjmut)
-                {
-                    try
-                    {
-                        query_func = cjmut.function(json);
-                    }
-                    catch (Exception ex)
-                    {
-                        string expretty = RemesParser.PrettifyException(ex);
-                        MessageBox.Show($"While executing query {query}, encountered error:\n{expretty}",
-                                        "Runtime error while executing query",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-                else
-                {
-                    // it's a constant, not a function of the input JSON.
-                    query_func = mutation_func;
-                }
+                query_func = mut.Mutate(json);
                 json = query_func;
                 Main.fnameJsons[fname] = query_func;
                 query_result = query_func;
                 string new_json_str = query_func.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
                 Main.lastEditedTime = DateTime.UtcNow;
-                JsonTreePopulate(query_func);
-                return;
             }
             // not an assignment expression, so executing the query changes the contents of the tree
             // but leaves the text of the document unchanged
-            try
-            {
-                query_func = remesParser.Compile(toks);
-            }
-            catch (Exception ex)
-            {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
-                                "Syntax error in RemesPath query",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                return;
-            }
-            if (query_func is CurJson qf)
+            else if (query_func is CurJson qf)
             {
                 try
                 {

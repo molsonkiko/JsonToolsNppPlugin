@@ -37,16 +37,21 @@ namespace Kbg.NppPluginNET
         // tree view stuff
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
-        private static Dictionary<IntPtr, string> treeviewer_buffers_renamed = new Dictionary<IntPtr, string>();
+        private static Dictionary<IntPtr, string> treeviewerBuffersRenamed = new Dictionary<IntPtr, string>();
         // grepper form stuff
         private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
         public static bool grepperTreeViewJustOpened = false;
-        // schemas stuff
+        // schema auto-validation stuff
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
         private static SchemaCache schemaCache = new SchemaCache(16);
-        private static readonly Func<JNode, JsonSchemaValidator.ValidationProblem?> schemasToFnamePatterns_SCHEMA = JsonSchemaValidator.CompileValidationFunc((JObject)new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"patternProperties\":{\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"},\"^$\":false},\"properties\":{},\"required\":[],\"type\":\"object\"}"));
+        private static readonly Func<JNode, JsonSchemaValidator.ValidationProblem?> schemasToFnamePatterns_SCHEMA = JsonSchemaValidator.CompileValidationFunc(new JsonParser().Parse("{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\"," +
+            "\"properties\":{},\"required\":[],\"type\":\"object\"," + // must be object
+            "\"patternProperties\":{" +
+                "\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"}," + // nonzero-length keys must be mapped to non-empty string arrays
+                "\"^$\":false" + // zero-length keys are not allowed
+            "}}"));
         // stuff for periodically parsing and possibly validating a file
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
@@ -230,7 +235,7 @@ namespace Kbg.NppPluginNET
                     string buffer_old_name = Npp.notepad.GetFilePath(buffer_renamed_id);
                     if (treeViewers.ContainsKey(buffer_old_name))
                     {
-                        treeviewer_buffers_renamed[buffer_renamed_id] = buffer_old_name;
+                        treeviewerBuffersRenamed[buffer_renamed_id] = buffer_old_name;
                     }
                     else if (grepperForm != null && grepperForm.tv != null 
                             && !grepperForm.tv.IsDisposed
@@ -253,9 +258,9 @@ namespace Kbg.NppPluginNET
                     {
                         ParseSchemasToFnamePatternsFile();
                     }
-                    if (treeviewer_buffers_renamed.TryGetValue(buffer_renamed_id, out buffer_old_name))
+                    if (treeviewerBuffersRenamed.TryGetValue(buffer_renamed_id, out buffer_old_name))
                     {
-                        treeviewer_buffers_renamed.Remove(buffer_renamed_id);
+                        treeviewerBuffersRenamed.Remove(buffer_renamed_id);
                         TreeViewer renamed = treeViewers[buffer_old_name];
                         renamed.Rename(buffer_new_name);
                         treeViewers.Remove(buffer_old_name);
@@ -270,7 +275,7 @@ namespace Kbg.NppPluginNET
                 // if a treeviewer was slated for renaming, just cancel that
                 case (uint)NppMsg.NPPN_FILERENAMECANCEL:
                     buffer_renamed_id = notification.Header.IdFrom;
-                    treeviewer_buffers_renamed.Remove(buffer_renamed_id);
+                    treeviewerBuffersRenamed.Remove(buffer_renamed_id);
                     shouldRenameGrepperForm = false;
                     return;
                 // if the user did nothing for a while (default 1 second) after editing,

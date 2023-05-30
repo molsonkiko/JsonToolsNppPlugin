@@ -29,7 +29,7 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString() 
         { 
-            return $"Binop(\"{this.name}\")";
+            return $"Binop(\"{name}\")";
         }
 
         public JNode Call(JNode left, JNode right)
@@ -1720,38 +1720,6 @@ namespace JSON_Tools.JSON_Tools
         public JNode Call()
         {
             return function.Call(args);
-        }
-    }
-
-
-    /// <summary>
-    /// A stand-in for an object that is a function of the user's input.
-    /// This can take on any value, including a scalar (e.g., len(@) is CurJson of type Dtype.INT).
-    /// The Function field must take any object or null as input and return an object of the type reflected
-    /// in the CurJson's type field.
-    /// So for example, a CurJson node standing in for len(@) would be initialized as follows:
-    /// CurJson(Dtype.INT, obj => obj.Length)
-    /// </summary>
-    public class CurJson : JNode
-    {
-        public Func<JNode, JNode> function;
-        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
-        {
-            this.function = function;
-        }
-
-        /// <summary>
-        /// A CurJson node that simply stands in for the current json itself (represented by @)
-        /// Its function is the identity function.
-        /// </summary>
-        public CurJson() : base(null, Dtype.UNKNOWN, 0)
-        {
-            function = Identity;
-        }
-
-        public JNode Identity(JNode obj)
-        {
-            return obj;
         }
     }
 }

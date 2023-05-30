@@ -46,10 +46,10 @@ namespace JSON_Tools.Tests
             }
             var testcases = new object[][]
             {
-                new object[]{"*.json", false, rparser.Search("keys(@)[@ =~ `.json$` & not(@ =~ `subsmall`)]", all_jsons, out bool _)}, // fnames w/o submall but ending in .json
-				new object[]{"*.ipynb", false, rparser.Search("keys(@)[@ =~ `ipynb$` & not(@ =~ `subsmall`)]", all_jsons, out bool _) }, // fnames w/o subsmall but ending in .ipynb
-				new object[]{"*.json", true, rparser.Search("keys(@)[@ =~ `json$`]", all_jsons, out bool _)}, // fnames ending in .json
-				new object[]{"*.txt", true, rparser.Search("keys(@)[@ =~ `txt$`]", all_jsons, out bool _) }, // fnames ending in .txt
+                new object[]{"*.json", false, rparser.Search("keys(@)[@ =~ `.json$` & not(@ =~ `subsmall`)]", all_jsons)}, // fnames w/o submall but ending in .json
+				new object[]{"*.ipynb", false, rparser.Search("keys(@)[@ =~ `ipynb$` & not(@ =~ `subsmall`)]", all_jsons) }, // fnames w/o subsmall but ending in .ipynb
+				new object[]{"*.json", true, rparser.Search("keys(@)[@ =~ `json$`]", all_jsons)}, // fnames ending in .json
+				new object[]{"*.txt", true, rparser.Search("keys(@)[@ =~ `txt$`]", all_jsons) }, // fnames ending in .txt
             };
             // test string slicer
             int tests_failed = 0;
@@ -62,7 +62,7 @@ namespace JSON_Tools.Tests
                 JNode desired_files = (JNode)test[2];
                 grepper.Reset();
                 grepper.Grep(smalldir.FullName, recursive, search_pattern);
-                JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons, out bool _);
+                JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
                 ((JArray)found_files).children.Sort();
                 ((JArray)desired_files).children.Sort();
                 if (found_files.ToString() != desired_files.ToString())
@@ -90,7 +90,7 @@ namespace JSON_Tools.Tests
                 JNode desired_files = kv.Value;
                 grepper.Reset();
                 grepper.Grep(subdir.FullName, false, search_pattern);
-                JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons, out bool _);
+                JNode found_files = rparser.Search("keys(@)", grepper.fname_jsons);
                 ((JArray)found_files).children.Sort();
                 ((JArray)desired_files).children.Sort();
                 if (found_files.ToString() != desired_files.ToString())
