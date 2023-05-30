@@ -316,8 +316,8 @@ namespace JSON_Tools.Forms
             catch (Exception ex)
             {
                 string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not execute query {query} because of runtime error:\n{expretty}",
-                                "Runtime error in RemesPath query",
+                MessageBox.Show($"Could not execute query {query} because of compilation error:\n{expretty}",
+                                "Compilation error in RemesPath query",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                 return;
@@ -326,7 +326,19 @@ namespace JSON_Tools.Forms
             // modified JSON after the query has been executed
             if (query_func is JMutator mut)
             {
-                query_func = mut.Mutate(json);
+                try
+                {
+                    query_func = mut.Mutate(json);
+                }
+                catch (Exception ex)
+                {
+                    string expretty = RemesParser.PrettifyException(ex);
+                    MessageBox.Show($"While executing query {query}, encountered runtime error:\n{expretty}",
+                                    "Runtime error while executing query",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                    return;
+                }
                 json = query_func;
                 Main.fnameJsons[fname] = query_func;
                 query_result = query_func;

@@ -468,6 +468,8 @@ namespace JSON_Tools.JSON_Tools
                     return 0;
                 case Dtype.DATE: // return ((DateOnly)value).CompareTo((DateOnly)other);
                 case Dtype.DATETIME: return ((DateTime)value).CompareTo((DateTime)other);
+                case Dtype.ARR:
+                case Dtype.OBJ: throw new ArgumentException("Cannot compare JArrays or JObjects");
                 default: throw new ArgumentException($"Cannot compare JNodes of type {type}");
             }
         }
