@@ -35,6 +35,8 @@ namespace JSON_Tools.JSON_Tools
             RECURSION_LIMIT_REACHED,
             NUMBER_LESS_THAN_MIN,
             NUMBER_GREATER_THAN_MAX,
+            NUMBER_LESSEQ_EXCLUSIVE_MIN,
+            NUMBER_GREATEREQ_EXCLUSIVE_MAX,
             STRING_TOO_LONG,
             STRING_TOO_SHORT,
         }
@@ -118,7 +120,15 @@ namespace JSON_Tools.JSON_Tools
                         var minLength = (int)keywords["minLength"];
                         str = (string)keywords["string"];
                         return msg + $"string {str} had less than minLength {minLength}";
-                    default: throw new ArgumentException($"Unknown validation problem type {problemType}");
+                    case ValidationProblemType.NUMBER_LESSEQ_EXCLUSIVE_MIN:
+                        var exMin = (double)keywords["exMin"];
+                        num = (double)keywords["num"];
+                        return msg + $"number {num} less than or equal to exclusive minimum {exMin}";
+                    case ValidationProblemType.NUMBER_GREATEREQ_EXCLUSIVE_MAX:
+                        var exMax = (double)keywords["exMax"];
+                        num = (double)keywords["num"];
+                        return msg + $"number {num} greater than or equal to exclusive maximum {exMax}";
+                default: throw new ArgumentException($"Unknown validation problem type {problemType}");
                 }
             }
         }
@@ -621,18 +631,25 @@ namespace JSON_Tools.JSON_Tools
                 var maximum = schema.children.TryGetValue("maximum", out JNode maxNode)
                     ? Convert.ToDouble(maxNode.value)
                     : NanInf.inf;
-                if (!double.IsInfinity(minimum) || !double.IsInfinity(maximum))
+                var exclusiveMin = schema.children.TryGetValue("exclusiveMinimum", out JNode exclMinNode)
+                    ? Convert.ToDouble(exclMinNode.value)
+                    : NanInf.neginf;
+                var exclusiveMax = schema.children.TryGetValue("exclusiveMaximum", out JNode exclMaxNode)
+                    ? Convert.ToDouble(exclMaxNode.value)
+                    : NanInf.inf;
+                if (!double.IsInfinity(minimum) || !double.IsInfinity(maximum) ||
+                    !double.IsInfinity(exclusiveMin) || !double.IsInfinity(exclusiveMax))
                 {
                     // the user specified minimum and/or maximum values for numbers, so we need to check that
                     return (JNode json) =>
                     {
-                        if (json.type != Dtype.INT && json.type != Dtype.FLOAT)
+                        if (!TypeValidates(json.type, dtype))
                         {
                             return new ValidationProblem(ValidationProblemType.TYPE_MISMATCH,
                                 new Dictionary<string, object>
                                 {
                                     { "found", json.type },
-                                    { "required", Dtype.FLOAT }
+                                    { "required", dtype }
                                 },
                                 json.position
                             );
@@ -648,6 +665,18 @@ namespace JSON_Tools.JSON_Tools
                             return new ValidationProblem(
                                 ValidationProblemType.NUMBER_GREATER_THAN_MAX,
                                 new Dictionary<string, object> { { "max", maximum }, { "num", floatedValue } },
+                                json.position
+                            );
+                        if (floatedValue <= exclusiveMin)
+                            return new ValidationProblem(
+                                ValidationProblemType.NUMBER_LESSEQ_EXCLUSIVE_MIN,
+                                new Dictionary<string, object> { { "exMin", exclusiveMin }, { "num", floatedValue } },
+                                json.position
+                            );
+                        if (floatedValue >= exclusiveMax)
+                            return new ValidationProblem(
+                                ValidationProblemType.NUMBER_GREATEREQ_EXCLUSIVE_MAX,
+                                new Dictionary<string, object> { { "exMax", exclusiveMax }, { "num", floatedValue } },
                                 json.position
                             );
                         return null;

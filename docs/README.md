@@ -85,11 +85,11 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
 
-When you parse a document that contains syntax errors, you may be asked if you want to see the syntax errors caught by the linter. Starting in [v5.1.0](/CHANGELOG.md#510---unreleased-yyyy-mm-dd), this prompt can be suppressed with the `offer_to_show_lint` setting.
+When you parse a document that contains syntax errors, you may be asked if you want to see the syntax errors caught by the linter. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), this prompt can be suppressed with the `offer_to_show_lint` setting.
 
 ![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
 
-If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---unreleased-yyyy-mm-dd), errors can also be shown for the current document with a new plugin menu option.
+If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), errors can also be shown for the current document with a new plugin menu option.
 
 ![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
 
@@ -501,7 +501,8 @@ This tool can only validate the following keywords:
 * [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [5.0.0](/CHANGELOG.md#500---2023-05-26)*)
 
 ### Keywords for numbers
-* [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
+* [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-exclusiveMinimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28), but both bugged until [5.1.0](/CHANGELOG.md#510---2023-06-02)*)
+* [exclusiveMinimum and exclusiveMaximum](https://json-schema.org/understanding-json-schema/reference/numeric.html#id7) (*Both added in version [5.1.0](/CHANGELOG.md#510---2023-06-02)*)
 
 ![Example of successful JSON schema validation](/docs/json%20schema%20validation%20succeeded.PNG)
 

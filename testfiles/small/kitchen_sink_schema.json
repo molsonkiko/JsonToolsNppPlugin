@@ -61,7 +61,9 @@
         },
         "properties": {
             "a": {
-                "type": "number"
+                "type": "number",
+                "exclusiveMaximum": 100,
+                "exclusiveMinimum": 0
             },
             "b": {
                 "items": {

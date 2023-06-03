@@ -37,15 +37,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.1.0] - (UNRELEASED) YYYY-MM-DD
+## [5.1.0] - 2023-06-02
 
 ### Added
 1. The `*` multiplication operator in RemesPath now supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` returns `["a", "bb", "ccc"]`.
 2. Setting, `offer_to_show_lint` to disable the pop-up prompt that asks if the user wants to see syntax errors.
 3. Menu option to open a new document with the most recently found syntax errors for the current document.
+4. Dramatic improvement in speed of recursive search in RemesPath, which in turn improves the find/replace form.
+5. Support for *validation* of the `exclusiveMinimum` and `exclusiveMaximum` keywords for numbers, but not random JSON generation that observes those keywords.
+6. Further improvement of error messages from RemesPath queries.
 
 ### Changed
 1. Whenever the user modifies a document that has an active tree viewer, a flag is set so that the document will be re-parsed the next time the user executes a query (including when the find/replace form is used).
+
+### Fixed
+1. Bug where numbers did not have their type validated correctly when using `minimum` and `maximum` keywords.
 
 ## [5.0.0] - 2023-05-26
 

@@ -125,6 +125,99 @@ namespace JSON_Tools.Tests
             "}";
             var testcases = new List<SchemaValidatesJson>
             {
+                /********
+                 * maximum, minimum, exclusiveMaximum, exclusiveMinimum for numbers and integers
+                ********/
+                new SchemaValidatesJson("5", "{\"type\": \"number\", \"minimum\": 5, \"maximum\": 7, \"exclusiveMinimum\": -100, \"exclusiveMaximum\": 100}",
+                    true // check that integer is validated as subset of number with min and max
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"minimum\": 5}",
+                    false // check that schema type is still validated when minimum is in place
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"maximum\": 6}",
+                    false // check that schema type is still validated when maximum is in place
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"minimum\": 4, \"maximum\": 6}",
+                    false // check that schema type is still validated with minimum and maximum
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"minimum\": 5}",
+                    true
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"maximum\": 6}",
+                    true
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"minimum\": 4, \"maximum\": 6}",
+                    true
+                ),
+                new SchemaValidatesJson("4", "{\"type\": \"integer\", \"minimum\": 5}",
+                    false
+                ),
+                new SchemaValidatesJson("7", "{\"type\": \"integer\", \"maximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("3", "{\"type\": \"integer\", \"minimum\": 4, \"maximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("7", "{\"type\": \"integer\", \"minimum\": 4, \"maximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"exclusiveMinimum\": 5}",
+                    false // check that schema type is still validated when exclusiveMinimum is in place
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"exclusiveMaximum\": 6}",
+                    false // check that schema type is still validated when exclusiveMaximum is in place
+                ),
+                new SchemaValidatesJson("5.5", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"exclusiveMaximum\": 6}",
+                    false // check that schema type is still validated with exclusiveMinimum and exclusiveMaximum
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"exclusiveMinimum\": 4}",
+                    true
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"exclusiveMaximum\": 6}",
+                    true
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"exclusiveMaximum\": 6}",
+                    true
+                ),
+                new SchemaValidatesJson("5", "{\"type\": \"integer\", \"exclusiveMinimum\": 5}",
+                    false
+                ),
+                new SchemaValidatesJson("6", "{\"type\": \"integer\", \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("4", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("7", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("4", "{\"type\": \"integer\", \"exclusiveMinimum\": 5}",
+                    false
+                ),
+                new SchemaValidatesJson("7", "{\"type\": \"integer\", \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("4", "{\"type\": \"integer\", \"minimum\": 4, \"exclusiveMaximum\": 6}",
+                    true // mix and match minimum/maximum and exclusiveMinimum/exclusiveMaximum
+                ),
+                new SchemaValidatesJson("6", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"maximum\": 6}",
+                    true
+                ),
+                new SchemaValidatesJson("3", "{\"type\": \"integer\", \"minimum\": 4, \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("7", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"maximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("6", "{\"type\": \"integer\", \"minimum\": 4, \"exclusiveMaximum\": 6}",
+                    false
+                ),
+                new SchemaValidatesJson("4", "{\"type\": \"integer\", \"exclusiveMinimum\": 4, \"maximum\": 6}",
+                    false
+                ),
+                /***********
+                 * arrays with mixed types
+                 ***********/
                 new SchemaValidatesJson(
                     "[1, 2]", "{\"type\": \"array\", \"items\": {\"type\": \"integer\"}}",
                     true // test that int array validates under int array schema 
@@ -151,6 +244,9 @@ namespace JSON_Tools.Tests
                     "{\"type\": \"array\", \"items\": {\"type\": [\"number\", \"string\"]}}",
                     false // test that mixed-scalar-type array DOES NOT validate against matching array of scalar types in schema
                 ),
+                /***********
+                 * enums
+                 ***********/
                 new SchemaValidatesJson(
                     "[0, 1, 2]",
                     "{\"type\": \"array\", \"items\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}",
