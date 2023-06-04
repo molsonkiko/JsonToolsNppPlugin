@@ -250,7 +250,7 @@ __Example:__
 ---
 `enumerate(x: array) -> array`
 
-For each index in the array, returns a subarray containing that index and the element at that index.
+For each index in the array, returns a subarray containing that index and the element at that index. *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
 
 __Example:__
 * `enumerate(["a", "b", "c"])` returns `[[0, "a"], [1, "b"], [2, "c"]]`
@@ -306,7 +306,7 @@ Because objects are not inherently ordered, you may need to sort the key-value p
 ---
 `iterable(x: anything) -> bool`
 
-Returns whether `x` is an iterable (object or array).
+Returns whether `x` is an iterable (object or array). *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
 
 Because this function is *not vectorized*, use this instead of `is_expr` if you want to a single bool returned for an entire iterable.
 
@@ -411,7 +411,7 @@ Then the returned value is `0.6*10 + 0.4*8`, or 9.2.
 ---
 `rand() -> float`
 
-Random number between 0 (inclusive) and 1 (exclusive).
+Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
 
 ----
 `range(start: int, end: int = null, step: int = 1) -> array[int]`

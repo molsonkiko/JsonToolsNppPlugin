@@ -367,6 +367,8 @@ As you can see, the sort is *unstable* when comparing two keys that differ only 
 
 ## Sort form ##
 
+*Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
+
 This form provides a convenient way to sort or shuffle arrays in-place. You can sort a single array or use RemesPath to identify multiple arrays that will all be sorted.
 
 Consider this JSON document:
