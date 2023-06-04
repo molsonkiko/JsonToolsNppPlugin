@@ -9,14 +9,17 @@ Any issues, feel free to email me at mjolsonsfca@gmail.com or raise an [issue](h
 ## Features ##
 1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.
 2. [Compress JSON](/docs/README.md#minimal_whitespace_compression) so that it has little or no unnecessary whitespace.
-3. [Able to parse documents that have many different syntax errors](/docs/README.md#parser-settings), including but not limited to:
+3. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. [Selecting a node](/docs/README.md#get-info-about-tree-nodes) in the tree navigates to the corresponding line in the document.
+4. [Able to parse documents that have many different syntax errors](/docs/README.md#parser-settings), including but not limited to:
     * [The full JSON5 specification](https://json5.org/)
     * [Python-style comments](/CHANGELOG.md#4120---2023-03-28)
     * Missing commas and colons
     * Unterminated strings, arrays, and objects
-4. Open a [drop-down tree view](/docs/README.md#the-basics) of the document. [Selecting a node](/docs/README.md#get-info-about-tree-nodes) in the tree navigates to the corresponding line in the document.
 5. [Get the path to the current line](/docs/README.md#path-to-current-line)
-6. Query and edit JSON with a [find/replace form](/docs/README.md#find-and-replace-form) and the [RemesPath](/docs/RemesPath.md) query language.
+6. Query and edit JSON with:
+    * a [find/replace form](/docs/README.md#find-and-replace-form)
+    * an [array sorting form](/docs/README.md#sort-form)
+    * the [RemesPath](/docs/RemesPath.md) query language.
 7. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
 8. [A form for gettting JSON from APIs or many different local files](/docs/README.md#get-json-from-files-and-apis).
 9. [JSON schema validation](/docs/README.md#validating-json-against-json-schema), including [automatic validation based on filenames](/docs/README.md#automatic-validation-of-json-against-json-schema).
