@@ -91,6 +91,12 @@
     <Compile Include="Forms\JsonToCsvForm.Designer.cs">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\SortForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SortForm.Designer.cs">
+      <DependentUpon>SortForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\TreeViewer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -204,7 +210,7 @@
     <Compile Include="Utils\Npp.cs" />
     <Compile Include="Utils\NanInf.cs" />
     <Compile Include="Utils\Settings.cs" />
-    <Compile Include="Utils\Slice.cs" />
+    <Compile Include="Utils\ArrayExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -230,6 +236,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\JsonToCsvForm.resx">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\SortForm.resx">
+      <DependentUpon>SortForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\TreeViewer.resx">
       <DependentUpon>TreeViewer.cs</DependentUpon>

@@ -348,6 +348,10 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("any(j`[true, true, false]`)", "true"),
                 new Query_DesiredResult("any(j`[true, true]`)", "true"),
                 new Query_DesiredResult("all(j`[false, false]`)", "false"),
+                new Query_DesiredResult("enumerate(j`[\"a\", \"b\", \"c\"]`)", "[[0, \"a\"], [1, \"b\"], [2, \"c\"]]"),
+                new Query_DesiredResult("iterable(j`[1,2,3]`)", "true"),
+                new Query_DesiredResult("iterable(a)", "false"),
+                new Query_DesiredResult("iterable(j`{\"a\": 1}`)", "true"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -404,7 +408,67 @@ namespace JSON_Tools.Tests
                                       $"but instead got {result.ToString()}.");
                 }
             }
-
+            // the rand() function requires a special test because its output is nondeterministic
+            ii += 3;
+            bool test_failed = false;
+            for (int randNum = 0; randNum < 40 && !test_failed; randNum++)
+            {
+                // rand()
+                try
+                {
+                    result = remesparser.Search("rand()", foo);
+                    if (!(result.value is double d && d >= 0d && d < 1d))
+                    {
+                        test_failed = true;
+                        tests_failed++;
+                        Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1, but instead got {result.ToString()}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    test_failed = true;
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1 but instead threw" +
+                                      $" an exception:\n{ex}");
+                }
+                // argfunction on rand()
+                try
+                {
+                    result = remesparser.Search("ifelse(rand() < 0.5, a, b)", foo);
+                    if (!(result.value is string s && (s == "a" || s == "b")))
+                    {
+                        test_failed = true;
+                        tests_failed++;
+                        Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\", but instead got {result.ToString()}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    test_failed = true;
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\" but instead threw" +
+                                      $" an exception:\n{ex}");
+                }
+                // rand() in projection (make sure not all doubles are equal)
+                try
+                {
+                    result = remesparser.Search("j`[1,2,3]`[:]{rand()}[0]", foo);
+                    if (!(result is JArray arr) || arr.children.All(x => x == arr[0]))
+                    {
+                        test_failed = true;
+                        tests_failed++;
+                        Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0], foo) to return array of doubles that aren't all equal" +
+                            $", but instead got {result.ToString()}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    test_failed = true;
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
+                                      $" an exception:\n{ex}");
+                }
+            }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }

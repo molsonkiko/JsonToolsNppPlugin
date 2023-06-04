@@ -42,6 +42,8 @@ namespace Kbg.NppPluginNET
         private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
         public static bool grepperTreeViewJustOpened = false;
+        // sort form stuff
+        public static SortForm sortForm = null;
         // schema auto-validation stuff
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
@@ -67,6 +69,7 @@ namespace Kbg.NppPluginNET
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
         static internal int AboutFormId = -1;
+        static internal int sortFormId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -88,23 +91,24 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
             PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L));
             // Here you insert a separator
-            PluginBase.SetCommand(3, "---", null);
-            PluginBase.SetCommand(4, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
-            PluginBase.SetCommand(5, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 5;
-            PluginBase.SetCommand(6, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(7, "---", null);
-            PluginBase.SetCommand(8, "Parse JSON Li&nes document", () => OpenJsonTree(true));
-            PluginBase.SetCommand(9, "&Array to JSON Lines", DumpJsonLines);
-            PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "&Validate JSON against JSON schema", () => ValidateJson());
-            PluginBase.SetCommand(12, "Choose schemas to automatically validate &filename patterns", MapSchemasToFnamePatterns);
-            PluginBase.SetCommand(13, "Generate sc&hema from JSON", GenerateJsonSchema);
-            PluginBase.SetCommand(14, "Generate &random JSON from schema", GenerateRandomJson);
-            PluginBase.SetCommand(15, "---", null);
-            PluginBase.SetCommand(16, "JSON to &YAML", DumpYaml);
-            PluginBase.SetCommand(17, "Run &tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(18, "A&bout", ShowAboutForm); AboutFormId = 18;
-            PluginBase.SetCommand(19, "See most recent syntax &errors in this file", () => ShowLintForFile(activeFname, false, false));
+            PluginBase.SetCommand(4, "---", null);
+            PluginBase.SetCommand(5, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 4;
+            PluginBase.SetCommand(6, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 5;
+            PluginBase.SetCommand(7, "Sort arra&ys", OpenSortForm); sortFormId = 6; 
+            PluginBase.SetCommand(8, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(9, "---", null);
+            PluginBase.SetCommand(10, "&Validate JSON against JSON schema", () => ValidateJson());
+            PluginBase.SetCommand(11, "Choose schemas to automatically validate &filename patterns", MapSchemasToFnamePatterns);
+            PluginBase.SetCommand(12, "Generate sc&hema from JSON", GenerateJsonSchema);
+            PluginBase.SetCommand(13, "Generate &random JSON from schema", GenerateRandomJson);
+            PluginBase.SetCommand(14, "---", null);
+            PluginBase.SetCommand(15, "Run &tests", async () => await TestRunner.RunAll());
+            PluginBase.SetCommand(16, "A&bout", ShowAboutForm); AboutFormId = 18;
+            PluginBase.SetCommand(17, "See most recent syntax &errors in this file", () => ShowLintForFile(activeFname, false, false));
+            PluginBase.SetCommand(18, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(19, "---", null);
+            PluginBase.SetCommand(20, "Parse JSON Li&nes document", () => OpenJsonTree(true));
+            PluginBase.SetCommand(21, "&Array to JSON Lines", DumpJsonLines);
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -514,6 +518,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         private static void RestyleEverything()
         {
+            if (sortForm != null && !sortForm.IsDisposed)
+                FormStyle.ApplyStyle(sortForm, settings.use_npp_styling);
             if (grepperForm != null && !grepperForm.IsDisposed)
                 FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
             foreach (TreeViewer tv in treeViewers.Values)
@@ -549,10 +555,59 @@ namespace Kbg.NppPluginNET
                 Npp.notepad.OpenFile(fname);
         }
 
+        ///// <summary>
+        ///// Find the position of the close brace of an array or object in the current document.<br></br>
+        ///// For simplicity, only works for syntactically valid JSON that does not 
+        ///// </summary>
+        //public int FindCloseBracePosition(JNode json, string inp)
+        //{
+        //    bool isArray = json is JArray;
+        //    bool isString = false;
+        //    bool escaped = false;
+        //    int unmatchedSquareBraces = 1;
+        //    int unmatchedCurlyBraces = 0;
+        //    int utf8ExtraBytesBeforeJson = 0;
+        //    int posInString = 0;
+        //    for (; posInString + utf8ExtraBytesBeforeJson < json.position; posInString++)
+        //    {
+        //        char c = inp[posInString];
+        //        utf8ExtraBytesBeforeJson += JsonParser.ExtraUTF8Bytes(c);
+        //    }
+        //    int utf8ExtraBytes = utf8ExtraBytesBeforeJson;
+        //    for (int ii = posInString + 1; ii < inp.Length; ii++)
+        //    {
+        //        char c = inp[ii];
+        //        switch (c)
+        //        {
+        //            case '"':
+        //                if (!escaped)
+        //                    isString = !isString;
+        //                break;
+        //            case ('\\'):
+        //                escaped = !escaped;
+        //                break;
+        //            case ']':
+        //                unmatchedSquareBraces--;
+        //                if (isArray && unmatchedSquareBraces == 0 && unmatchedCurlyBraces == 0)
+        //                    return ii + utf8ExtraBytes;
+        //                break;
+        //            case '[': unmatchedSquareBraces++; break;
+        //            case '{': unmatchedCurlyBraces++; break;
+        //            case '}':
+        //                unmatchedCurlyBraces--;
+        //                if (!isArray && unmatchedSquareBraces == 0 && unmatchedCurlyBraces == 0)
+        //                    return ii + utf8ExtraBytes;
+        //                break;
+        //            default: utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(c); break;
+        //        }
+        //    }
+        //    return inp.Length - 1 + utf8ExtraBytes;
+        //}
+
         private static void CopyPathToCurrentPosition()
         {
             int pos = Npp.editor.GetCurrentPos();
-            string result = PathToPosition(pos);
+            string result = PathToPosition(settings.key_style, pos);
             if (result.Length == 0)
             {
                 MessageBox.Show($"Did not find a node at position {pos} of this file",
@@ -564,8 +619,16 @@ namespace Kbg.NppPluginNET
             Npp.TryCopyToClipboard(result);
         }
 
-        private static string PathToPosition(int pos)
+        /// <summary>
+        /// get the path to the JNode at postition pos
+        /// (or the current caret position if pos is unspecified)
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        private static string PathToPosition(KeyStyle style, int pos = -1)
         {
+            if (pos == -1)
+                pos = Npp.editor.GetCurrentPos();
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
             bool fatal;
@@ -584,7 +647,7 @@ namespace Kbg.NppPluginNET
                 if (fatal || json == null)
                     return "";
             }
-            return json.PathToPosition(pos, Main.settings.key_style);
+            return json.PathToPosition(pos, style);
         }
 
         /// <summary>
@@ -679,9 +742,10 @@ namespace Kbg.NppPluginNET
 
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             // Following message will toogle both menu item state and toolbar button
+            if (!jsonParser.fatal)
+                Npp.SetLangJson();
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
-            Npp.SetLangJson();
             treeViewer.JsonTreePopulate(json);
             Npp.notepad.ShowDockingForm(treeViewer);
             treeViewer.QueryBox.Focus();
@@ -1009,6 +1073,16 @@ namespace Kbg.NppPluginNET
             currentFileTooBigToAutoParse = Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6;
         }
         #endregion
+
+        /// <summary>
+        /// open the SortForm with path set to the path to the current position
+        /// </summary>
+        public static void OpenSortForm()
+        {
+            sortForm = new SortForm();
+            sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath);
+            sortForm.Show();
+        }
     }
 
     /// <summary>

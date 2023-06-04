@@ -53,6 +53,7 @@
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.RefreshButton = new System.Windows.Forms.Button();
             this.FindReplaceButton = new System.Windows.Forms.Button();
+            this.OpenSortFormItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -145,9 +146,10 @@
             this.CopyValueMenuItem,
             this.CopyKeyItem,
             this.CopyPathItem,
-            this.ToggleSubtreesItem});
+            this.ToggleSubtreesItem,
+            this.OpenSortFormItem});
             this.NodeRightClickMenu.Name = "NodeRightClickMenu";
-            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 100);
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 152);
             // 
             // CopyValueMenuItem
             // 
@@ -253,6 +255,13 @@
             this.FindReplaceButton.Click += new System.EventHandler(this.FindReplaceButton_Click);
             this.FindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
+            // OpenSortFormItem
+            // 
+            this.OpenSortFormItem.Name = "OpenSortFormItem";
+            this.OpenSortFormItem.Size = new System.Drawing.Size(267, 24);
+            this.OpenSortFormItem.Text = "Sort array...";
+            this.OpenSortFormItem.Visible = false;
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -298,5 +307,6 @@
         internal System.Windows.Forms.TreeView Tree;
         internal System.Windows.Forms.Button SubmitQueryButton;
         internal System.Windows.Forms.Button RefreshButton;
+        private System.Windows.Forms.ToolStripMenuItem OpenSortFormItem;
     }
 }

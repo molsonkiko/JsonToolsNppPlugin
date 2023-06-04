@@ -955,6 +955,13 @@ namespace JSON_Tools.JSON_Tools
         #region APPLY_ARG_FUNCTION
         private JNode ApplyArgFunction(ArgFunctionWithArgs func)
         {
+            if (func.function.max_args == 0)
+            {
+                // paramterless function like rand()
+                if (!func.function.is_deterministic)
+                    return new CurJson(func.function.type, blah => func.function.Call(func.args));
+                return func.function.Call(func.args);
+            }
             JNode x = func.args[0];
             bool other_callables = false;
             List<JNode> other_args = new List<JNode>(func.args.Count - 1);
@@ -1115,35 +1122,9 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    // none of the arguments are functions of the current JSON
-                    for (int ii = 0; ii < other_args.Count; ii++)
-                    {
-                        JNode other_arg = other_args[ii];
-                        all_args[ii + 1] = other_arg;
-                    }
-                    if (x is JObject xobj)
-                    {
-                        var dic = new Dictionary<string, JNode>();
-                        foreach (KeyValuePair<string, JNode> xkv in xobj.children)
-                        {
-                            all_args[0] = xobj[xkv.Key];
-                            dic[xkv.Key] = func.function.Call(all_args);
-                        }
-                        return new JObject(0, dic);
-                    }
-                    else if (x is JArray xarr)
-                    {
-                        var arr = new List<JNode>();
-                        foreach (JNode val in xarr.children)
-                        {
-                            all_args[0] = val;
-                            arr.Add(func.function.Call(all_args));
-                        }
-                        return new JArray(0, arr);
-                    }
-                    // x is not iterable, and no args are functions of the current JSON
-                    all_args[0] = x;
-                    return func.function.Call(all_args);
+                    if (!func.function.is_deterministic)
+                        return new CurJson(func.function.type, blah => CallVectorizedArgFuncWithArgs(x, other_args, all_args, func.function));
+                    return CallVectorizedArgFuncWithArgs(x, other_args, all_args, func.function);
                 }
             }
             else
@@ -1204,9 +1185,53 @@ namespace JSON_Tools.JSON_Tools
                     all_args[ii + 1] = other_arg;
                 }
                 all_args[0] = x;
+                if (!func.function.is_deterministic)
+                    return new CurJson(func.function.type, blah => func.function.Call(all_args));
                 return func.function.Call(all_args);
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="other_args"></param>
+        /// <param name="all_args"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
+        private static JNode CallVectorizedArgFuncWithArgs(JNode x, List<JNode> other_args, List<JNode> all_args, ArgFunction func)
+        {
+            // none of the arguments are functions of the current JSON
+            for (int ii = 0; ii < other_args.Count; ii++)
+            {
+                JNode other_arg = other_args[ii];
+                all_args[ii + 1] = other_arg;
+            }
+            if (x is JObject xobj)
+            {
+                var dic = new Dictionary<string, JNode>();
+                foreach (KeyValuePair<string, JNode> xkv in xobj.children)
+                {
+                    all_args[0] = xobj[xkv.Key];
+                    dic[xkv.Key] = func.Call(all_args);
+                }
+                return new JObject(0, dic);
+            }
+            else if (x is JArray xarr)
+            {
+                var arr = new List<JNode>();
+                foreach (JNode val in xarr.children)
+                {
+                    all_args[0] = val;
+                    arr.Add(func.Call(all_args));
+                }
+                return new JArray(0, arr);
+            }
+            // x is not iterable, and no args are functions of the current JSON
+            all_args[0] = x;
+            return func.Call(all_args);
+        }
+
         #endregion
         #region PARSER_FUNCTIONS
 
@@ -1753,13 +1778,23 @@ namespace JSON_Tools.JSON_Tools
             int arg_num = 0;
             Dtype[] intypes = fun.InputTypes();
             List<JNode> args = new List<JNode>(fun.min_args);
+            if (fun.max_args == 0)
+            {
+                t = toks[pos];
+                if (!(t is char d_ && d_ == ')'))
+                    throw new RemesPathException($"Expected no arguments for function {fun.name} (0 args)");
+                var withArgs = new ArgFunctionWithArgs(fun, args);
+                return new Obj_Pos(ApplyArgFunction(withArgs), pos + 1);
+            }
             JNode cur_arg = null;
             while (pos < toks.Count)
             {
                 t = toks[pos];
                 // the last Dtype in an ArgFunction's input_types is either the type options for the last arg
                 // or the type options for every optional arg (if the function can have infinitely many args)
-                Dtype type_options = arg_num >= intypes.Length ? intypes[intypes.Length - 1] : intypes[arg_num];
+                Dtype type_options = arg_num >= intypes.Length 
+                    ? intypes[intypes.Length - 1]
+                    : intypes[arg_num];
                 try
                 {
                     try
@@ -1834,7 +1869,7 @@ namespace JSON_Tools.JSON_Tools
                 if (close_paren)
                 {
                     var withargs = new ArgFunctionWithArgs(fun, args);
-                    if (fun.max_args < Int32.MaxValue)
+                    if (fun.max_args < int.MaxValue)
                     {
                         // for functions that have a fixed number of optional args, pad the unfilled args with null nodes
                         for (int arg2 = arg_num; arg2 < fun.max_args; arg2++)

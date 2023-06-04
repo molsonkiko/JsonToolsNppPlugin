@@ -308,12 +308,20 @@ namespace JSON_Tools.JSON_Tools
         public Dtype type;
         public int max_args;
         public int min_args;
+        /// <summary>
+        /// the function is applied to all elements in the first argument
+        /// if the first argument is an iterable.
+        /// </summary>
         public bool is_vectorized;
+        /// <summary>
+        /// if false, the function is random
+        /// </summary>
+        public bool is_deterministic;
 
         /// <summary>
         /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
         /// Input_types[ii] is the type that the i^th argument to a function must have,
-        /// unless the function has arbitrarily many arguments (indicated by max_args = Int32.MaxValue),
+        /// unless the function has arbitrarily many arguments (indicated by max_args = int.MaxValue),
         /// in which case the last value of Input_types is the type that all optional arguments must have.
         /// </summary>
         public ArgFunction(Func<List<JNode>, JNode> function,
@@ -322,7 +330,8 @@ namespace JSON_Tools.JSON_Tools
             int min_args,
             int max_args,
             bool is_vectorized,
-            Dtype[] input_types)
+            Dtype[] input_types,
+            bool is_deterministic = true)
         {
             Function = function;
             this.name = name;
@@ -331,6 +340,7 @@ namespace JSON_Tools.JSON_Tools
             this.min_args = min_args;
             this.is_vectorized = is_vectorized;
             this.Input_types = input_types;
+            this.is_deterministic = is_deterministic;
         }
 
         public Dtype[] InputTypes()
@@ -447,6 +457,34 @@ namespace JSON_Tools.JSON_Tools
                 tot += Convert.ToDouble(child.value);
             }
             return new JNode(tot / itbl.Length, Dtype.FLOAT, 0);
+        }
+
+        /// <summary>
+        /// Requires array input.<br></br>
+        /// Like the Python enumerate() function (except not lazy),<br></br>
+        /// returns an array of subarrays where the first item is an index
+        /// and the second item is the item at that index<br></br>
+        /// Example:<br></br>
+        /// enumerate(["a", "b", "c"]) returns [[0, "a"], [1, "b"], [2, "c"]]
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Enumerate(List<JNode> args)
+        {
+            var arr = (JArray)args[0];
+            var result = new List<JNode>(arr.Length);
+            for (int ii = 0; ii < arr.Length; ii++)
+            {
+                var subarr = new JArray(0,
+                    new List<JNode>
+                    {
+                        new JNode((long)ii, Dtype.INT, 0),
+                        arr[ii]
+                    }
+                );
+                result.Add(subarr);
+            }
+            return new JArray(0, result);
         }
 
         /// <summary>
@@ -677,6 +715,17 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return min;
             }
+        }
+
+        /// <summary>
+        /// Returns a random JNode with a double from 0 (inclusive) to 1 (exclusive).
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode RandomFrom0To1(List<JNode> args)
+        {
+            double rand = RandomJsonFromSchema.random.NextDouble();
+            return new JNode(rand, Dtype.FLOAT, 0);
         }
 
         /// <summary>
@@ -1644,27 +1693,30 @@ namespace JSON_Tools.JSON_Tools
         new Dictionary<string, ArgFunction>
         {
             // non-vectorized functions
-            ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, Int32.MaxValue, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN, Dtype.STR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
+            ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN, Dtype.STR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
             ["all"] = new ArgFunction(All, "all", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
             ["any"] = new ArgFunction(Any, "any", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
-            ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, Int32.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
+            ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
             ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
-            ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, Int32.MaxValue, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, /* any # of args */ Dtype.ITERABLE }),
+            ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, int.MaxValue, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, /* any # of args */ Dtype.ITERABLE }),
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
+            ["enumerate"] = new ArgFunction(Enumerate, "enumerate", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN }),
             ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.INT }),
             ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["in"] = new ArgFunction(In, "in", Dtype.BOOL, 2, 2, false, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE }),
             ["index"] = new ArgFunction(Index, "index", Dtype.INT, 2, 3, false, new Dtype[] {Dtype.ITERABLE, Dtype.SCALAR, Dtype.BOOL}),
             ["items"] = new ArgFunction(Items, "items", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.OBJ | Dtype.UNKNOWN }),
+            ["iterable"] = new ArgFunction(IsExpr, "iterable", Dtype.BOOL, 1, 1, false, new Dtype[] {Dtype.ANYTHING}),
             ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
             ["len"] = new ArgFunction(Len, "len", Dtype.INT, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
             ["max"] = new ArgFunction(Max, "max", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
-            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, Int32.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, /* any # of args */ Dtype.STR | Dtype.INT | Dtype.UNKNOWN }),
+            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, Dtype.STR | Dtype.INT | Dtype.UNKNOWN, /* any # of args */ Dtype.STR | Dtype.INT | Dtype.UNKNOWN }),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT}),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.FLOAT}),
+            ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN, Dtype.INT | Dtype.UNKNOWN}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR | Dtype.UNKNOWN}),
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.BOOL }),
@@ -1674,7 +1726,7 @@ namespace JSON_Tools.JSON_Tools
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
-            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, Int32.MaxValue, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, /* any # of args */ Dtype.ARR | Dtype.UNKNOWN }),
+            ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, /* any # of args */ Dtype.ARR | Dtype.UNKNOWN }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
             // vectorized functions
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),

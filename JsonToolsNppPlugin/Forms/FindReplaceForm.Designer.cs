@@ -77,7 +77,7 @@
             this.RecursiveSearchBox.Size = new System.Drawing.Size(141, 20);
             this.RecursiveSearchBox.TabIndex = 6;
             this.RecursiveSearchBox.TabStop = false;
-            this.RecursiveSearchBox.Text = "Recursive search?";
+            this.RecursiveSearchBox.Text = "Recursive &search?";
             this.RecursiveSearchBox.UseVisualStyleBackColor = true;
             this.RecursiveSearchBox.Visible = false;
             this.RecursiveSearchBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
@@ -145,7 +145,7 @@
             this.RegexBox.Size = new System.Drawing.Size(182, 20);
             this.RegexBox.TabIndex = 4;
             this.RegexBox.TabStop = false;
-            this.RegexBox.Text = "Use regular expressions?";
+            this.RegexBox.Text = "Use re&gular expressions?";
             this.RegexBox.UseVisualStyleBackColor = true;
             this.RegexBox.Visible = false;
             this.RegexBox.CheckedChanged += new System.EventHandler(this.RegexBox_CheckedChanged);
@@ -159,7 +159,7 @@
             this.MathBox.Size = new System.Drawing.Size(127, 20);
             this.MathBox.TabIndex = 5;
             this.MathBox.TabStop = false;
-            this.MathBox.Text = "Math expression";
+            this.MathBox.Text = "&Math expression";
             this.MathBox.UseVisualStyleBackColor = true;
             this.MathBox.Visible = false;
             this.MathBox.CheckedChanged += new System.EventHandler(this.MathBox_CheckedChanged);
@@ -239,7 +239,7 @@
             this.MatchExactlyBox.Size = new System.Drawing.Size(117, 20);
             this.MatchExactlyBox.TabIndex = 16;
             this.MatchExactlyBox.TabStop = false;
-            this.MatchExactlyBox.Text = "Match exactly?";
+            this.MatchExactlyBox.Text = "Match &exactly?";
             this.MatchExactlyBox.UseVisualStyleBackColor = true;
             this.MatchExactlyBox.CheckedChanged += new System.EventHandler(this.MatchExactlyBox_CheckedChanged);
             // 
@@ -251,7 +251,7 @@
             this.IgnoreCaseCheckBox.Size = new System.Drawing.Size(107, 20);
             this.IgnoreCaseCheckBox.TabIndex = 15;
             this.IgnoreCaseCheckBox.TabStop = false;
-            this.IgnoreCaseCheckBox.Text = "Ignore case?";
+            this.IgnoreCaseCheckBox.Text = "Ignore &case?";
             this.IgnoreCaseCheckBox.UseVisualStyleBackColor = true;
             // 
             // AdvancedGroupBoxLabel

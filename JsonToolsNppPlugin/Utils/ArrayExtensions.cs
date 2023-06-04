@@ -1,9 +1,10 @@
-﻿using System;
+﻿using JSON_Tools.JSON_Tools;
+using System;
 using System.Collections.Generic;
 
 namespace JSON_Tools.Utils
 {
-    public static class SliceExtensions
+    public static class ArrayExtensions
     {
         /// <summary>
         /// Allows the use of Python-style slices, where start, stop, and stride must be declared as individual paramters.<br></br>
@@ -365,6 +366,23 @@ namespace JSON_Tools.Utils
         public static string Slice(this string source, int?[] slicer)
         {
             return new string((char[])source.ToCharArray().Slice(slicer));
+        }
+
+        /// <summary>
+        /// randomize the order of the elements in arr
+        /// </summary>
+        public static void Shuffle<T>(this IList<T> arr)
+        {
+            for (int ii = 1; ii < arr.Count; ii++)
+            {
+                int swapWith = RandomJsonFromSchema.random.Next(0, ii + 1);
+                if (swapWith < ii)
+                {
+                    T temp = arr[ii];
+                    arr[ii] = arr[swapWith];
+                    arr[swapWith] = temp;
+                }
+            }
         }
     }
 }

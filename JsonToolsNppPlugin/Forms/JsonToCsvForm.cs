@@ -25,17 +25,7 @@ namespace JSON_Tools.Forms
 
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Escape)
-            {
-                e.Handled = true;
-                Close();
-            }
-            else if (e.KeyCode == Keys.Enter)
-            {
-                if (sender is Button btn)
-                    btn.PerformClick();
-                e.Handled = true;
-            }
+            SortForm.GenericKeyUpHandler(this, sender, e, true);
         }
 
         private void GenerateCSVButton_Click(object sender, EventArgs e)

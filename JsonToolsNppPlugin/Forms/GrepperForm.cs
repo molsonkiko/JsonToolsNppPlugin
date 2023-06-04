@@ -283,29 +283,19 @@ namespace JSON_Tools.Forms
 
         private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
         {
-            // enter presses button
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                if (sender is Button btn)
-                {
-                    // Enter has the same effect as clicking a selected button
-                    btn.PerformClick();
-                }
-            }
-            // Escape -> go to editor
-            else if (e.KeyData == Keys.Escape)
-            {
-                Npp.editor.GrabFocus();
-            }
-            // Tab -> go through controls, Shift+Tab -> go through controls backward
-            else if (e.KeyCode == Keys.Tab)
-            {
-                Control next = GetNextControl((Control)sender, !e.Shift);
-                while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
-                next.Focus();
-                e.Handled = true;
-            }
+            SortForm.GenericKeyUpHandler(this, sender, e);
+            //if (e.Alt)
+            //{
+            //    switch (e.KeyCode)
+            //    {
+            //        case Keys.A: SendRequestsButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.B: ViewResultsButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.C: ChooseDirectoriesButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.D: DocsButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.E: ViewErrorsButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.R: RemoveSelectedFilesButton.PerformClick(); e.Handled = true; break;
+            //    }
+            //}
         }
 
         private void TextBox_KeyPress(object sender, KeyPressEventArgs e)

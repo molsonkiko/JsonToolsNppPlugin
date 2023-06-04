@@ -47,31 +47,16 @@ namespace JSON_Tools.Forms
 
         private void FindReplaceForm_KeyUp(object sender, KeyEventArgs e)
         {
-            // enter presses button
-            if (e.KeyCode == Keys.Enter)
-            {
-                if (sender is Button btn)
-                {
-                    // Enter has the same effect as clicking a selected button
-                    btn.PerformClick();
-                }
-                if (sender is TextBox)
-                {
-                    FindButton.PerformClick();
-                }
-            }
-            // Escape -> go to editor
-            else if (e.KeyData == Keys.Escape)
-            {
-                Npp.editor.GrabFocus();
-            }
-            // Tab -> go through controls, Shift+Tab -> go through controls backward
-            else if (e.KeyCode == Keys.Tab)
-            {
-                Control next = GetNextControl((Control)sender, !e.Shift);
-                while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
-                next.Focus();
-            }
+            SortForm.GenericKeyUpHandler(this, sender, e);
+            //if (e.Alt)
+            //{
+            //    switch (e.KeyCode)
+            //    {
+            //        case Keys.F: FindButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.R: ReplaceButton.PerformClick(); e.Handled = true; break;
+            //        case Keys.W: SwapFindReplaceButton.PerformClick(); e.Handled = true; break;
+            //    }
+            //}
         }
 
         private void TextBox_KeyPress(object sender, KeyPressEventArgs e)

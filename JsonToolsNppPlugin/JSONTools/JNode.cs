@@ -208,6 +208,8 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public int position;
 
+        //public ExtraJNodeProperties? extras;
+
         public JNode(IComparable value,
                  Dtype type,
                  int position)
@@ -215,6 +217,7 @@ namespace JSON_Tools.JSON_Tools
             this.position = position;
             this.type = type;
             this.value = value;
+            //extras = null;
         }
 
         /// <summary>
@@ -225,6 +228,7 @@ namespace JSON_Tools.JSON_Tools
             this.position = 0;
             this.type = Dtype.NULL;
             this.value = null;
+            //extras = null;
         }
 
         // in some places like Germany they use ',' as the normal decimal separator.
@@ -326,7 +330,7 @@ namespace JSON_Tools.JSON_Tools
                         return (v < 0) ? "-Infinity" : "Infinity";
                     }
                     if (double.IsNaN(v)) { return "NaN"; }
-                    if (v == Math.Round(v) && !(v > Int64.MaxValue || v < Int64.MinValue))
+                    if (v == Math.Round(v) && !(v > long.MaxValue || v < long.MinValue))
                     {
                         // add ending ".0" to distinguish doubles equal to integers from actual integers
                         return v.ToString(DOT_DECIMAL_SEP) + ".0";
@@ -495,9 +499,95 @@ namespace JSON_Tools.JSON_Tools
         }
 
         #region MISC_FUNCS
+        /// <summary>
+        /// get the parent of this JNode and this JNode's parent
+        /// assuming that this JNode is in the tree rooted at root
+        /// </summary>
+        /// <returns></returns>
+        public (object keyInParent, JNode parent) ParentAndKey(JNode root)
+        {
+            //if (extras is ExtraJNodeProperties ext
+            //    && ext.parent != null
+            //    && ext.parent.TryGetTarget(out JNode parent))
+            //{
+            //    return (ext.keyInParent, parent);
+            //}
+            return ParentHierarchy(root).Last();
+        }
+
+        public List<(object keyInParent, JNode parent)> ParentHierarchy(JNode root)
+        {
+            var parents = new List<JNode>();
+            var keys = new List<object>();
+            //if (extras is ExtraJNodeProperties ext)
+            //    ParentHierarchyHelperWithExtras(keys, parents);
+            //else
+            ParentHierarchyHelper(root, this, keys, parents);
+            return keys.Zip(parents, (k, p) => (k, p)).Reverse().ToList();
+        }
+
+        //public void ParentHierarchyHelperWithExtras(List<object> keys, List<JNode> parents)
+        //{
+        //    if (extras is ExtraJNodeProperties ext
+        //        && ext.parent != null
+        //        && ext.parent.TryGetTarget(out JNode parent))
+        //    {
+        //        keys.Add(ext.keyInParent);
+        //        parents.Add(parent);
+        //        ParentHierarchyHelperWithExtras(keys, parents);
+        //    }
+        //}
+
+        public bool ParentHierarchyHelper(JNode root, JNode current, List<object> keys, List<JNode> parents)
+        {
+            if (object.ReferenceEquals(current, this))
+                return true;
+            if (current is JArray arr)
+            {
+                for (int ii = 0; ii < arr.children.Count; ii++)
+                {
+                    JNode child = arr.children[ii];
+                    parents.Add(arr);
+                    keys.Add(ii);
+                    if (ParentHierarchyHelper(root, child, keys, parents))
+                        return true;
+                    keys.RemoveAt(keys.Count - 1);
+                    parents.RemoveAt(parents.Count - 1);
+                }
+            }
+            else if (current is JObject obj)
+            {
+                foreach (KeyValuePair<string, JNode> kv in obj.children)
+                {
+                    parents.Add(obj);
+                    keys.Add(kv.Key);
+                    if (ParentHierarchyHelper(root, kv.Value, keys, parents))
+                        return true;
+                    keys.RemoveAt(keys.Count - 1);
+                    parents.RemoveAt(parents.Count - 1);
+                }
+            }
+            return false;
+        }
+
         private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
         // "dot compatible" means a string that starts with a letter or underscore
         // and contains only letters, underscores, and digits
+
+        public bool ContainsPosition(int pos)
+        {
+            if (position == pos)
+                return true;
+            if ((type & Dtype.ARR_OR_OBJ) != 0)
+                return false;
+            //if (extras is ExtraJNodeProperties ext)
+            //    return pos > position && pos <= ext.endPosition;
+            string str = ToString();
+            int utf8len = (type == Dtype.STR)
+                ? Encoding.UTF8.GetByteCount(str)
+                : str.Length;
+            return pos > position && pos <= position + utf8len;
+        }
 
         /// <summary>
         /// Get the the path to the JNode that contains position pos in a UTF-8 encoded document.<br></br>
@@ -516,7 +606,7 @@ namespace JSON_Tools.JSON_Tools
         public string PathToPositionHelper(int pos, KeyStyle style, List<object> path)
         {
             string result;
-            if (position == pos)
+            if (ContainsPosition(pos))
                 return FormatPath(path, style);
             if (this is JArray arr)
             {
@@ -533,7 +623,6 @@ namespace JSON_Tools.JSON_Tools
                 if (result.Length > 0)
                     return result;
                 path.RemoveAt(path.Count - 1);
-                return "";
             }
             else if (this is JObject obj)
             {
@@ -545,14 +634,7 @@ namespace JSON_Tools.JSON_Tools
                         return result;
                     path.RemoveAt(path.Count - 1);
                 }
-                return "";
             }
-            string str = ToString();
-            int utf8len = (type == Dtype.STR)
-                ? Encoding.UTF8.GetByteCount(str)
-                : str.Length;
-            if (pos > position && pos <= position + utf8len)
-                return FormatPath(path, style);
             return "";
         }
 
@@ -1343,6 +1425,39 @@ namespace JSON_Tools.JSON_Tools
                 selected.MutateInto(mutator);
             }
             return inp;
+        }
+    }
+
+    /// <summary>
+    /// Extra properties that can improve the performance of certain methods
+    /// and that the parser may choose to add when parsing a document.
+    /// </summary>
+    public struct ExtraJNodeProperties
+    {
+        /// <summary>
+        /// null if this is the root
+        /// </summary>
+        public WeakReference<JNode> parent;
+
+        /// <summary>
+        /// The end position of this JNode.<br></br>
+        /// In most cases this will just be its position
+        /// plus the length of its string representation.
+        /// </summary>
+        public int endPosition;
+
+        /// <summary>
+        /// either an int (index in parent array)
+        /// or string (key in parent object)
+        /// or null (no parent)
+        /// </summary>
+        public object keyInParent;
+
+        public ExtraJNodeProperties(JNode parent, int endPosition, object keyInParent)
+        {
+            this.parent = new WeakReference<JNode>(parent);
+            this.endPosition = endPosition;
+            this.keyInParent = keyInParent;
         }
     }
 }

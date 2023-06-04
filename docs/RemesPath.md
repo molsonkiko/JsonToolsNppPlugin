@@ -247,6 +247,14 @@ If x is an array of 2-element subarrays where the first element in each subarray
 __Example:__
 * `dict([["a", 1], ["b", 2]])` returns `{"a": 1, "b": 2}`.
 
+---
+`enumerate(x: array) -> array`
+
+For each index in the array, returns a subarray containing that index and the element at that index.
+
+__Example:__
+* `enumerate(["a", "b", "c"])` returns `[[0, "a"], [1, "b"], [2, "c"]]`
+
 ----
 `flatten(x: array, depth: int = 1]) -> array`
    
@@ -294,6 +302,13 @@ It's easier to understand with some __examples:__
 Returns an array of 2-item subarrays (the key-value pairs of `x`).
 
 Because objects are not inherently ordered, you may need to sort the key-value pairs by their key or value to get the same result every time.
+
+---
+`iterable(x: anything) -> bool`
+
+Returns whether `x` is an iterable (object or array).
+
+Because this function is *not vectorized*, use this instead of `is_expr` if you want to a single bool returned for an entire iterable.
 
 ----
 `keys(x: object) -> array`
@@ -392,6 +407,11 @@ Uses linear interpolation if the index found is not an integer.
 For example, suppose that the 60th percentile is at index 6.6, and elements 6 and 7 are 8 and 10.
 
 Then the returned value is `0.6*10 + 0.4*8`, or 9.2.
+
+---
+`rand() -> float`
+
+Random number between 0 (inclusive) and 1 (exclusive).
 
 ----
 `range(start: int, end: int = null, step: int = 1) -> array[int]`

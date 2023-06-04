@@ -98,11 +98,11 @@
             // 
             this.SendRequestsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.SendRequestsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SendRequestsButton.Location = new System.Drawing.Point(114, 416);
+            this.SendRequestsButton.Location = new System.Drawing.Point(111, 416);
             this.SendRequestsButton.Name = "SendRequestsButton";
-            this.SendRequestsButton.Size = new System.Drawing.Size(137, 33);
+            this.SendRequestsButton.Size = new System.Drawing.Size(143, 33);
             this.SendRequestsButton.TabIndex = 4;
-            this.SendRequestsButton.Text = "Send requests";
+            this.SendRequestsButton.Text = "Send &API requests";
             this.SendRequestsButton.UseVisualStyleBackColor = true;
             this.SendRequestsButton.Click += new System.EventHandler(this.SendRequestsButton_Click);
             this.SendRequestsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -126,7 +126,7 @@
             this.RecursiveSearchCheckBox.Name = "RecursiveSearchCheckBox";
             this.RecursiveSearchCheckBox.Size = new System.Drawing.Size(180, 20);
             this.RecursiveSearchCheckBox.TabIndex = 6;
-            this.RecursiveSearchCheckBox.Text = "Search in subdirectories?";
+            this.RecursiveSearchCheckBox.Text = "&Search in subdirectories?";
             this.RecursiveSearchCheckBox.UseVisualStyleBackColor = true;
             this.RecursiveSearchCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
@@ -159,7 +159,7 @@
             this.ChooseDirectoriesButton.Name = "ChooseDirectoriesButton";
             this.ChooseDirectoriesButton.Size = new System.Drawing.Size(156, 32);
             this.ChooseDirectoriesButton.TabIndex = 9;
-            this.ChooseDirectoriesButton.Text = "Choose directory...";
+            this.ChooseDirectoriesButton.Text = "&Choose directory...";
             this.ChooseDirectoriesButton.UseVisualStyleBackColor = true;
             this.ChooseDirectoriesButton.Click += new System.EventHandler(this.ChooseDirectoriesButton_Click);
             this.ChooseDirectoriesButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -197,7 +197,7 @@
             this.RemoveSelectedFilesButton.Name = "RemoveSelectedFilesButton";
             this.RemoveSelectedFilesButton.Size = new System.Drawing.Size(181, 33);
             this.RemoveSelectedFilesButton.TabIndex = 13;
-            this.RemoveSelectedFilesButton.Text = "Remove selected files";
+            this.RemoveSelectedFilesButton.Text = "&Remove selected files";
             this.RemoveSelectedFilesButton.UseVisualStyleBackColor = true;
             this.RemoveSelectedFilesButton.Click += new System.EventHandler(this.RemoveSelectedFilesButton_Click);
             this.RemoveSelectedFilesButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -210,7 +210,7 @@
             this.ViewResultsButton.Name = "ViewResultsButton";
             this.ViewResultsButton.Size = new System.Drawing.Size(238, 33);
             this.ViewResultsButton.TabIndex = 16;
-            this.ViewResultsButton.Text = "View results in buffer";
+            this.ViewResultsButton.Text = "View results in &buffer";
             this.ViewResultsButton.UseVisualStyleBackColor = true;
             this.ViewResultsButton.Click += new System.EventHandler(this.ViewResultsButton_Click);
             this.ViewResultsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -250,7 +250,7 @@
             this.ViewErrorsButton.Name = "ViewErrorsButton";
             this.ViewErrorsButton.Size = new System.Drawing.Size(238, 33);
             this.ViewErrorsButton.TabIndex = 15;
-            this.ViewErrorsButton.Text = "View errors";
+            this.ViewErrorsButton.Text = "View &errors";
             this.ViewErrorsButton.UseVisualStyleBackColor = true;
             this.ViewErrorsButton.Click += new System.EventHandler(this.ViewErrorsButton_Click);
             this.ViewErrorsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -263,7 +263,7 @@
             this.DocsButton.Name = "DocsButton";
             this.DocsButton.Size = new System.Drawing.Size(238, 33);
             this.DocsButton.TabIndex = 14;
-            this.DocsButton.Text = "Documentation";
+            this.DocsButton.Text = "&Documentation";
             this.DocsButton.UseVisualStyleBackColor = true;
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
             this.DocsButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
@@ -283,6 +283,8 @@
             this.DirectoriesVisitedBox.Name = "DirectoriesVisitedBox";
             this.DirectoriesVisitedBox.Size = new System.Drawing.Size(251, 24);
             this.DirectoriesVisitedBox.TabIndex = 10;
+            this.DirectoriesVisitedBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.DirectoriesVisitedBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GrepperForm_KeyUp);
             // 
             // GrepperForm
             // 

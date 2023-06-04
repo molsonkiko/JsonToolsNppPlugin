@@ -365,6 +365,37 @@ If this is true, keys are sorted alphabetically like so:
 ```
 As you can see, the sort is *unstable* when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
+## Sort form ##
+
+This form provides a convenient way to sort or shuffle arrays in-place. You can sort a single array or use RemesPath to identify multiple arrays that will all be sorted.
+
+Consider this JSON document:
+```json
+[
+    ["this", -1, 4.5],
+    ["is", 1, 3.5],
+    ["sort", 3, 2.5],
+    ["form", 5, 1.5],
+    ["example", 7, 0.5]
+]
+```
+
+We will start by shuffling it.
+![Sort form; doc after shuffling](/docs/sort%20form%20shuffle.PNG)
+
+Next, let's sort by the first entry in each subarray.
+![Sort form; sort by index in elements](/docs/sort%20form%20sort%20by%20index%20in%20elements.PNG)
+
+Let's do something a little more interesting: *we can sort multiple arrays if a query produces an array or object where all the values are arrays.*
+
+We will use the query `[:3]` to sort the first three subarrays in this document, and leave the last two unchanged. *Note that we need to sort as strings since the values are a mix of numbers and strings.*
+![Sort form; sort first three subarrays as strings](/docs/sort%20form%20sort%20subarrays%20as%20strings.PNG)
+
+Finally, let's sort the whole document from largest to smallest by a query on each subarray, `@[2] * s_len(@[0])`, which will sort them by the third element multiplied by the string length of the first element.
+![Sort form; sort by query on each element](/docs/sort%20form%20sort%20by%20query%20on%20each%20element.PNG)
+
+Of course, there's also the default sort, which can only compare numbers to numbers and strings to strings. Any mixing of types with the default sort results in failure.
+
 ## JSON Lines documents ##
 
 *Added in version v3.2.0*

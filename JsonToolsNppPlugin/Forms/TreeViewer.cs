@@ -59,6 +59,7 @@ namespace JSON_Tools.Forms
         private static MouseEventHandler keyToClipboardHandler_Python = null;
         private static MouseEventHandler keyToClipboardHandler_Javascript = null;
         private static MouseEventHandler ToggleSubtreesHandler = null;
+        private static MouseEventHandler showSortFormHandler = null;
 
         public TreeViewer(JNode json)
         {
@@ -691,6 +692,7 @@ namespace JSON_Tools.Forms
                     case (KeyStyle.JavaScript): pathToClipboard.MouseUp += pathToClipboardHandler_Javascript; break;
                 }
                 NodeRightClickMenu.Items[3].MouseUp -= ToggleSubtreesHandler;
+                JNode nodeJson = pathsToJNodes[node.FullPath];
                 ToggleSubtreesHandler = new MouseEventHandler(
                     (s2, e2) =>
                     {
@@ -703,8 +705,7 @@ namespace JSON_Tools.Forms
                                 // node.ExpandAll() is VERY VERY SLOW if we don't do it this way
                                 Tree.BeginUpdate();
                                 isExpandingAllSubtrees = true;
-                                JNode json = pathsToJNodes[node.FullPath];
-                                JsonTreePopulate_FullRecursive(Tree, node, json, pathsToJNodes);
+                                JsonTreePopulate_FullRecursive(Tree, node, nodeJson, pathsToJNodes);
                                 node.ExpandAll();
                                 isExpandingAllSubtrees = false;
                                 Tree.EndUpdate();
@@ -713,6 +714,23 @@ namespace JSON_Tools.Forms
                     }
                 );
                 NodeRightClickMenu.Items[3].MouseUp += ToggleSubtreesHandler;
+                var sortFormOpenItem = NodeRightClickMenu.Items[4];
+                if (nodeJson is JArray || nodeJson is JObject)
+                {
+                    sortFormOpenItem.Visible = true;
+                    sortFormOpenItem.MouseUp -= showSortFormHandler;
+                    showSortFormHandler = new MouseEventHandler(
+                        (s2, e2) =>
+                        {
+                            Main.sortForm = new SortForm();
+                            string path = PathToTreeNode(node, KeyStyle.RemesPath);
+                            Main.sortForm.PathTextBox.Text = path;
+                            Main.sortForm.Show();
+                        }
+                    );
+                    sortFormOpenItem.MouseUp += showSortFormHandler;
+                }
+                else sortFormOpenItem.Visible = false;
                 NodeRightClickMenu.Show(MousePosition);
             }
             if (node.IsSelected)

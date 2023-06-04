@@ -1,0 +1,225 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using JSON_Tools.JSON_Tools;
+using JSON_Tools.Utils;
+using Kbg.NppPluginNET;
+
+namespace JSON_Tools.Forms
+{
+    public partial class SortForm : Form
+    {
+        private RemesParser remesParser;
+
+        public SortForm()
+        {
+            InitializeComponent();
+            SortMethodBox.SelectedIndex = 0;
+            remesParser = new RemesParser();
+            //OutputFormatBox.SelectedIndex = 0;
+        }
+
+        private void SortButton_Clicked(object sender, EventArgs e)
+        {
+            (bool fatal, JNode json) = Main.TryParseJson();
+            if (fatal || json == null)
+                return;
+            string pathQuery = "@" + PathTextBox.Text;
+            JNode jsonAtPath;
+            try
+            {
+                jsonAtPath = remesParser.Search(pathQuery, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not find json at the specified path\r\nGot the following error:\r\n{ex}",
+                    "Could not find json at that path",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            Func<JNode, JNode> query = null;
+            if (IsUsingQuery())
+            {
+                string queryText = SortMethodBox.SelectedIndex == 2
+                    ? $"@[{QueryKeyIndexTextBox.Text}]"
+                    : QueryKeyIndexTextBox.Text;
+                try
+                {
+                    (List<object> st, List<object> mt) = remesParser.lexer.Tokenize(queryText);
+                    query = ((CurJson)remesParser.Compile(st, mt)).function;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Based on selected sort method, attempted to compile query \"{queryText}\",\r\nbut got the following error:\r\n{ex}",
+                        "Failed to compile query",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            if (IsMultipleArraysCheckBox.Checked)
+            {
+                if (jsonAtPath is JArray arr)
+                {
+                    foreach (JNode child in arr.children)
+                    {
+                        if (!SortSingleJson(child, query))
+                            return;
+                    }
+                }
+                else if (jsonAtPath is JObject obj)
+                {
+                    foreach (JNode child in obj.children.Values)
+                    {
+                        if (!SortSingleJson(child, query))
+                            return;
+                    }
+                }
+                else
+                {
+                    string gotType = JNode.FormatDtype(jsonAtPath.type);
+                    MessageBox.Show($"JSON at the specified path must be object or array, got {gotType}",
+                        "JSON at specified path must be object or array",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            else
+            {
+                if (!SortSingleJson(jsonAtPath, query))
+                    return;
+            }
+            string output = json.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
+            Npp.editor.SetText(output);
+            Npp.RemoveTrailingSOH();
+            Main.lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
+            Npp.SetLangJson();
+        }
+
+        /// <summary>
+        /// Sorts an array in-place using the settings specified in the form's fields.
+        /// Returns true if the sorting was successful.
+        /// </summary>
+        /// <param name="query">query to be applied to each child of the array. Only applicable for some sort methods.</param>
+        private bool SortSingleJson(JNode toSort, Func<JNode, JNode> query)
+        {
+            if (!(toSort is JArray arr))
+            {
+                string gotType = JNode.FormatDtype(toSort.type);
+                MessageBox.Show($"Can only sort arrays, not {gotType}",
+                    $"Can't sort {gotType}s",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            try
+            {
+                switch (SortMethodBox.SelectedIndex)
+                {
+                    case 0: // default
+                        arr.children.Sort();
+                        break;
+                    case 1: // by string value
+                        arr.children.Sort((v1, v2) => string.Compare(v1.ToString(), v2.ToString(), StringComparison.CurrentCultureIgnoreCase));
+                        break;
+                    case 2: // key/index of children
+                    case 3: // query on children
+                        arr.children.Sort((v1, v2) => query(v1).CompareTo(query(v2)));
+                        break;
+                    case 4:
+                        arr.children.Shuffle();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While sorting the array, got the following error:\r\n{ex}",
+                    "Error while sorting array",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            if (ReverseOrderCheckBox.Checked && ReverseOrderCheckBox.Enabled)
+                arr.children.Reverse();
+            return true;
+        }
+
+        private bool IsUsingQuery()
+        {
+            return SortMethodBox.SelectedIndex == 2 || SortMethodBox.SelectedIndex == 3;
+        }
+
+        /// <summary>
+        /// the query/key/index box should only be enabled if index/key of child
+        /// or query on child is the sort method
+        /// </summary>
+        private void SortMethodBox_SelectionChanged(object sender, EventArgs e)
+        {
+            QueryKeyIndexTextBox.Enabled = IsUsingQuery();
+            ReverseOrderCheckBox.Enabled = SortMethodBox.SelectedIndex != 4;
+        }
+
+        /// <summary>
+        /// suppress annoying ding when user hits escape or enter
+        /// </summary>
+        private void SortForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape)
+                e.SuppressKeyPress = true;
+        }
+
+        /// <summary>
+        /// Enter presses button,
+        /// escape focuses editor (or closes if closeOnEscape),
+        /// tab goes through controls,
+        /// shift-tab -> go through controls backward
+        /// </summary>
+        /// <param name="form"></param>
+        public static void GenericKeyUpHandler(Form form, object sender, KeyEventArgs e, bool closeOnEscape = false)
+        {
+            // enter presses button
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                if (sender is Button btn)
+                {
+                    // Enter has the same effect as clicking a selected button
+                    btn.PerformClick();
+                }
+            }
+            // Escape -> go to editor or close
+            else if (e.KeyData == Keys.Escape)
+            {
+                if (closeOnEscape)
+                    form.Close();
+                else
+                    Npp.editor.GrabFocus();
+            }
+            // Tab -> go through controls, Shift+Tab -> go through controls backward
+            else if (e.KeyCode == Keys.Tab)
+            {
+                Control next = form.GetNextControl((Control)sender, !e.Shift);
+                while (next == null || !next.TabStop || !next.Enabled)
+                    next = form.GetNextControl(next, !e.Shift);
+                next.Focus();
+                e.Handled = true;
+            }
+        }
+
+        private void SortForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            GenericKeyUpHandler(this, sender, e);
+            //if (e.Alt)
+            //{
+            //    if (e.KeyCode == Keys.S)
+            //    {
+            //        e.Handled = true;
+            //        SortButton.PerformClick();
+            //    }
+            //}
+        }
+
+        private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\t')
+                e.Handled = true;
+        }
+    }
+}

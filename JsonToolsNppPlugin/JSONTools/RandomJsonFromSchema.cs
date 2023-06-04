@@ -9,7 +9,7 @@ namespace JSON_Tools.JSON_Tools
 {
     public class RandomJsonFromSchema
     {
-        private static Random random = new Random();
+        public static Random random { get; private set; } = new Random();
 
         public static void Reseed()
         {

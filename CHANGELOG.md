@@ -28,14 +28,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- Improve Alt-key accelerators in forms. They don't seem to work right for some reason.
+- Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - Fix bugs in YamlDumper.cs:
 	- fails when key contains quotes and colon
 	- fails when value contains quotes and newline
 	- fails when value contains quotes and colon
 	- fails when key contains singlequotes and doublequotes
-- Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
+
+## [5.2.0] - 2023-MM-DD
+
+### Added
+
+1. [Sort form](/docs/README.md#sort-form) for sorting and shuffling arrays.
+2. New [RemesPath functions](/docs/RemesPath.md#non-vectorized-functions) `rand`, `enumerate`, and `iterable`
+
+### Changed
+
+1. `Alt-P-J-Y` key chord no longer dumps YAML. It instead opens the [Sort form](/docs/README.md#sort-form)
+
+### Fixed
+
+1. Opening a tree viewer no longer sets the document's lexer language to JSON if parsing failed.
 
 ## [5.1.0] - 2023-06-02
 

@@ -89,7 +89,7 @@ namespace JSON_Tools.JSON_Tools
                         var contains_schema = (JNode)keywords["contains"];
                         var minContains = (int)keywords["minContains"];
                         var maxContains = (int)keywords["maxContains"];
-                        var quantifier = maxContains == Int32.MaxValue
+                        var quantifier = maxContains == int.MaxValue
                             ? $"at least {minContains}"
                             : $"between {minContains} and {maxContains}";
                         return msg + $"Array must have {quantifier} items that match \"contains\" schema {contains_schema}";
@@ -343,7 +343,7 @@ namespace JSON_Tools.JSON_Tools
                             : 1;
                         var maxContains = schema.children.TryGetValue("maxContains", out JNode maxContainsNode)
                             ? Convert.ToInt32(maxContainsNode.value)
-                            : Int32.MaxValue;
+                            : int.MaxValue;
                         return (json) =>
                         {
                             if (!(json is JArray arr))

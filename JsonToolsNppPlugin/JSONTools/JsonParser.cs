@@ -185,7 +185,7 @@ namespace JSON_Tools.JSON_Tools
         /// position in JSON string
         /// </summary>
         private int ii;
-        
+
         /// <summary>
         /// the number of extra bytes in the UTF-8 encoding of the text consumed
         /// so far.<br></br>
@@ -198,7 +198,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private int utf8_extra_bytes;
 
-        private ParserState state;
+        public ParserState state { get; private set; }
         
         /// <summary>
         /// errors above this 
@@ -214,6 +214,11 @@ namespace JSON_Tools.JSON_Tools
         private bool throw_if_logged;
 
         private bool throw_if_fatal;
+
+        /// <summary>
+        /// attach ExtraJNodeProperties to each JNode parsed
+        /// </summary>
+        public bool include_extra_properties;
         
         /// <summary>
         /// the number of bytes in the utf-8 representation
@@ -250,11 +255,13 @@ namespace JSON_Tools.JSON_Tools
         }
 
         public JsonParser(LoggerLevel logger_level = LoggerLevel.NAN_INF, bool parse_datetimes = false, bool throw_if_logged = true, bool throw_if_fatal = true)
+            //, bool include_extra_properties = false)
         {
             this.logger_level = logger_level;
             this.parse_datetimes = parse_datetimes;
             this.throw_if_logged = throw_if_logged;
             this.throw_if_fatal = throw_if_fatal;
+            //this.include_extra_properties = include_extra_properties;
             ii = 0;
             lint = new List<JsonLint>();
             state = ParserState.STRICT;
@@ -1051,6 +1058,10 @@ namespace JSON_Tools.JSON_Tools
                     already_seen_comma = false;
                     JNode new_obj;
                     new_obj = ParseSomething(inp, recursion_depth);
+                    //if (include_extra_properties)
+                    //{
+                    //    new_obj.extras = new ExtraJNodeProperties(arr, ii, children.Count);
+                    //}
                     children.Add(new_obj);
                     if (fatal)
                         return arr;
@@ -1177,6 +1188,10 @@ namespace JSON_Tools.JSON_Tools
                         break;
                     }
                     JNode val = ParseSomething(inp, recursion_depth);
+                    //if (include_extra_properties)
+                    //{
+                    //    val.extras = new ExtraJNodeProperties(obj, ii, key);
+                    //}
                     children[key] = val;
                     if (fatal)
                     {
@@ -1336,6 +1351,10 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode();
             }
             JNode json = ParseSomething(inp, 0);
+            //if (include_extra_properties)
+            //{
+            //    json.extras = new ExtraJNodeProperties(null, ii, null);
+            //}
             if (fatal)
             {
                 return json;
@@ -1432,7 +1451,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JsonParser Copy()
         {
-            return new JsonParser(logger_level, parse_datetimes, throw_if_logged, throw_if_fatal);
+            return new JsonParser(logger_level, parse_datetimes, throw_if_logged, throw_if_fatal);//, include_extra_properties);
         }
     }
     #endregion
