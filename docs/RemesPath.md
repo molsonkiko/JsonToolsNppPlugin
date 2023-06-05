@@ -479,11 +479,16 @@ Returns an array of all the unique elements in `x`.
 If `sorted` is true, sorts the array ascending. This will raise an error if not all of x's elements are comparable.
 
 ----
-`value_counts(x: array)`
+`value_counts(x: array, sort_by_count: bool = false) -> array`
 
 Returns an array of two-element subarrays `[k: anything, count: int]` where `count` is the number of elements in `x` equal to `k`.
 
-The order of the sub-arrays is random.
+The order of the sub-arrays is unreliable.
+
+As of [5.3.0](/CHANGELOG.md#530---unreleased-2023-mm-dd), there is an second optional argument (default false). If true, the subarrays are sorted by count descending.
+
+__Example:__
+* `value_counts(["a", "b", "c", "c", "c", "b"], true)` returns `[["c", 3], ["b", 2], ["a", 1]]`
 
 ----
 `zip(x1: array, ...: array) -> array`

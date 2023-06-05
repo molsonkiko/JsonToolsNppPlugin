@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
+## [5.3.0] - (UNRELEASED) 2023-MM-DD
+
+### Added
+
+1. Optional `sort_by_count` argument for [`value_counts` function](/docs/RemesPath.md#non-vectorized-functions), which sorts subarrays by count if true.
+
 ## [5.2.0] - 2023-06-04
 
 ### Added

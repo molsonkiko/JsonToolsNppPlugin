@@ -274,6 +274,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
                 new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
                 new Query_DesiredResult("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
+                new Query_DesiredResult("value_counts(j`[\"a\", \"b\", \"c\", \"c\", \"c\", \"b\"]`, true)", "[[\"c\", 3], [\"b\", 2], [\"a\", 1]]"),
                 new Query_DesiredResult("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
                 new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
                 new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),

@@ -2,6 +2,7 @@
 A library of built-in functions for the RemesPath query language.
 */
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -899,45 +900,55 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// args[0] should be a list of objects.<br></br>
+        /// args[0] should be an array of scalars.<br></br>
+        /// args[1] should be a bool. If true, sort by count descending.<br></br>
         /// Finds an array of sub-arrays, where each sub-array is an element-count pair, where the count is of that element in args[0].<br></br>
         /// EXAMPLES:
-        /// ValueCounts(JArray({1, "a", 2, "a", 1})) ->
-        /// JArray(JArray({"a", 2}), JArray({1, 2}), JArray({2, 1}))
+        /// * ValueCounts([2, 1, "a", "a", 1]) returns [[2, 1], [1, 2], ["a", 2]]
+        /// * ValueCounts(["a", "b", "c", "c", "c", "b"], true) returns [["c", 3], ["b", 2], ["a", 1]]
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
         public static JNode ValueCounts(List<JNode> args)
         {
-            var itbl = (JArray)args[0];
+            var arr = (JArray)args[0];
+            var sort_by_count = args.Count > 1 && (args[1].value is bool sbc)
+                && sbc;
             var uniqs = new Dictionary<object, long>();
-            foreach (JNode elt in itbl.children)
+            foreach (JNode child in arr.children)
             {
-                object val = elt.value;
+                object val = child.value;
                 if (val == null)
                 {
                     throw new RemesPathException("Can't count occurrences of objects with null values");
                 }
                 if (!uniqs.ContainsKey(val))
-                    uniqs[val] = 0;
+                    uniqs[val] = 0L;
                 uniqs[val]++;
             }
-            var uniq_arr = new JArray();
-            foreach (object elt in uniqs.Keys)
+            var uniq_arr = uniqs.Keys
+                .Select(k => (JNode)new JArray(0, new List<JNode>
+                {
+                        ObjectsToJNode(k),
+                        new JNode(uniqs[k], Dtype.INT, 0)
+                }))
+                .ToList();
+            if (sort_by_count)
             {
-                long ct = uniqs[elt];
-                JArray elt_ct = new JArray();
-                elt_ct.children.Add(ObjectsToJNode(elt));
-                elt_ct.children.Add(new JNode(ct, Dtype.INT, 0));
-                uniq_arr.children.Add(elt_ct);
+                uniq_arr.Sort(
+                    (a, b) => (((JArray)a)[1]).CompareTo(((JArray)b)[1])
+                );
+                uniq_arr.Reverse();
             }
-            return uniq_arr;
+            return new JArray(0, uniq_arr);
         }
 
         public static JNode StringJoin(List<JNode> args)
         {
-            string sep = (string)args[0].value;
             var itbl = (JArray)args[1];
+            if (itbl.Length == 0)
+                return new JNode("", Dtype.STR, 0);
+            string sep = (string)args[0].value;
             var sb = new StringBuilder();
             sb.Append((string)itbl[0].value);
             for (int ii = 1; ii < itbl.Length; ii++)
@@ -1724,7 +1735,7 @@ namespace JSON_Tools.JSON_Tools
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
             ["to_records"] = new ArgFunction(ToRecords, "to_records", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ITERABLE, Dtype.STR | Dtype.UNKNOWN }),
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
-            ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR_OR_OBJ, 1, 1, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN}),
+            ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.BOOL}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ | Dtype.UNKNOWN}),
             ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] {Dtype.ARR | Dtype.UNKNOWN, Dtype.ARR | Dtype.UNKNOWN, /* any # of args */ Dtype.ARR | Dtype.UNKNOWN }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR | Dtype.UNKNOWN, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
