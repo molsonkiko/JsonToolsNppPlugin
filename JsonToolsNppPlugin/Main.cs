@@ -224,7 +224,7 @@ namespace Kbg.NppPluginNET
                     }
                     treeViewers.Remove(buffer_closed);
                     return;
-                // the editor color scheme changed, so update the tree view colors
+                // the editor color scheme changed, so update form colors
                 case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
                     RestyleEverything();
                     return;

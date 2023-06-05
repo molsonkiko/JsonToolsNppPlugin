@@ -21,15 +21,18 @@ namespace JSON_Tools.Utils
         /// and also whenever the style is changed.<br></br>
         /// Heavily based on CsvQuery (https://github.com/jokedst/CsvQuery)
         /// </summary>
-        public static void ApplyStyle(Form form, bool use_npp_style, bool darkMode=false)
+        public static void ApplyStyle(Control ctrl, bool use_npp_style, bool darkMode = false)
         {
-            if (form == null || form.IsDisposed) return;
+            if (ctrl == null || ctrl.IsDisposed) return;
             int[] version = Npp.notepad.GetNppVersion();
             if (version[0] < 8)
                 use_npp_style = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
-            foreach (Form childForm in form.OwnedForms)
+            if (ctrl is Form form)
             {
-                ApplyStyle(childForm, use_npp_style, darkMode);
+                foreach (Form childForm in form.OwnedForms)
+                {
+                    ApplyStyle(childForm, use_npp_style, darkMode);
+                }
             }
             Color back_color = Npp.notepad.GetDefaultBackgroundColor();
             if (!use_npp_style || (
@@ -40,17 +43,19 @@ namespace JSON_Tools.Utils
                 // if the background is basically white,
                 // use the system defaults because they
                 // look best on a white or nearly white background
-                form.BackColor = SystemColors.Control;
-                form.ForeColor = SystemColors.ControlText;
-                foreach (Control ctrl in form.Controls)
+                ctrl.BackColor = SystemColors.Control;
+                ctrl.ForeColor = SystemColors.ControlText;
+                foreach (Control child in ctrl.Controls)
                 {
+                    if (child is GroupBox)
+                        ApplyStyle(child, use_npp_style, darkMode);
                     // controls containing text
-                    if (ctrl is TextBox || ctrl is ListBox || ctrl is ComboBox || ctrl is TreeView)
+                    if (child is TextBox || child is ListBox || child is ComboBox || child is TreeView)
                     {
-                        ctrl.BackColor = SystemColors.Window; // white background
-                        ctrl.ForeColor = SystemColors.WindowText;
+                        child.BackColor = SystemColors.Window; // white background
+                        child.ForeColor = SystemColors.WindowText;
                     }
-                    else if (ctrl is LinkLabel llbl)
+                    else if (child is LinkLabel llbl)
                     {
                         llbl.LinkColor = Color.Blue;
                         llbl.ActiveLinkColor = Color.Red;
@@ -59,19 +64,19 @@ namespace JSON_Tools.Utils
                     else
                     {
                         // buttons should be a bit darker but everything else is the same color as the background
-                        ctrl.BackColor = (ctrl is Button) ? SlightlyDarkControl : SystemColors.Control;
-                        ctrl.ForeColor = SystemColors.ControlText;
+                        child.BackColor = (child is Button) ? SlightlyDarkControl : SystemColors.Control;
+                        child.ForeColor = SystemColors.ControlText;
                     }
                 }
                 return;
             }
             Color fore_color = Npp.notepad.GetDefaultForegroundColor();
-            form.BackColor = back_color;
-            foreach (Control ctrl in form.Controls)
+            ctrl.BackColor = back_color;
+            foreach (Control child in ctrl.Controls)
             {
-                ctrl.BackColor = back_color;
-                ctrl.ForeColor = fore_color;
-                if (ctrl is LinkLabel llbl)
+                child.BackColor = back_color;
+                child.ForeColor = fore_color;
+                if (child is LinkLabel llbl)
                 {
                     llbl.LinkColor = fore_color;
                     llbl.ActiveLinkColor = fore_color;
