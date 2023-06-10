@@ -485,7 +485,7 @@ Returns an array of two-element subarrays `[k: anything, count: int]` where `cou
 
 The order of the sub-arrays is unreliable.
 
-As of [5.3.0](/CHANGELOG.md#530---unreleased-2023-mm-dd), there is an second optional argument (default false). If true, the subarrays are sorted by count descending.
+As of [5.3.0](/CHANGELOG.md#530---2023-06-10), there is an second optional argument (default false). If true, the subarrays are sorted by count descending.
 
 __Example:__
 * `value_counts(["a", "b", "c", "c", "c", "b"], true)` returns `[["c", 3], ["b", 2], ["a", 1]]`

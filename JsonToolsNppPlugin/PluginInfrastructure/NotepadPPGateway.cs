@@ -27,7 +27,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		string GetConfigDirectory();
 		int[] GetNppVersion();
 		void SetCurrentBufferInternalName(string newName);
-	}
+		void SetStatusBarSection(string message, StatusBarSection section);
+
+    }
 
 	/// <summary>
 	/// This class holds helpers for sending messages defined in the Msgs_h.cs file. It is at the moment
@@ -201,6 +203,17 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             // change the current file extension to ".dson" (this command only works for unsaved files, but of course we just made an unsaved file)
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_INTERNAL_SETFILENAME, (IntPtr)bufferId, newName);
         }
+
+		/// <summary>
+		/// the status bar is the bar at the bottom with the document type, EOL type, current position, line, etc.<br></br>
+		/// Set the message for one of the sections of that bar.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="section"></param>
+		public void SetStatusBarSection(string message, StatusBarSection section)
+		{
+			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETSTATUSBAR, (int)section, message);
+		}
 	}
 
 	/// <summary>

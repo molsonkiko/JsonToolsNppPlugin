@@ -16,6 +16,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Kbg.NppPluginNET
 {
@@ -34,6 +35,7 @@ namespace Kbg.NppPluginNET
         public static string activeFname = null;
         public static Dictionary<string, JsonLint[]> fnameLints = new Dictionary<string, JsonLint[]>();
         public static Dictionary<string, JNode> fnameJsons = new Dictionary<string, JNode>();
+        public static Dictionary<string, string> fnameDoctypeStatusBarSections = new Dictionary<string, string>();
         // tree view stuff
         public static TreeViewer openTreeViewer = null;
         public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
@@ -44,6 +46,8 @@ namespace Kbg.NppPluginNET
         public static bool grepperTreeViewJustOpened = false;
         // sort form stuff
         public static SortForm sortForm = null;
+        // error form stuff
+        public static ErrorForm errorForm = null;
         // schema auto-validation stuff
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
@@ -70,6 +74,7 @@ namespace Kbg.NppPluginNET
         static internal int grepperFormId = -1;
         static internal int AboutFormId = -1;
         static internal int sortFormId = -1;
+        static internal int errorFormId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -104,7 +109,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(14, "---", null);
             PluginBase.SetCommand(15, "Run &tests", async () => await TestRunner.RunAll());
             PluginBase.SetCommand(16, "A&bout", ShowAboutForm); AboutFormId = 18;
-            PluginBase.SetCommand(17, "See most recent syntax &errors in this file", () => ShowLintForFile(activeFname, false, false));
+            PluginBase.SetCommand(17, "See most recent syntax &errors in this file", () => OpenErrorForm(activeFname, false)); errorFormId = 17;
             PluginBase.SetCommand(18, "JSON to YAML", DumpYaml);
             PluginBase.SetCommand(19, "---", null);
             PluginBase.SetCommand(20, "Parse JSON Li&nes document", () => OpenJsonTree(true));
@@ -195,6 +200,8 @@ namespace Kbg.NppPluginNET
                     activeFname = new_fname;
                     if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
                         ValidateIfFilenameMatches(new_fname);
+                    if (fnameDoctypeStatusBarSections.TryGetValue(new_fname, out string doctypeStatusBarSection))
+                        Npp.notepad.SetStatusBarSection(doctypeStatusBarSection, StatusBarSection.DocType);
                     return;
                 // when closing a file
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
@@ -367,13 +374,14 @@ namespace Kbg.NppPluginNET
                 json = jsonParser.Parse(text);
             int lintCount = jsonParser.lint.Count;
             fnameLints[fname] = jsonParser.lint.ToArray();
+            KillErrorForm();
             if (lintCount > 0 && settings.offer_to_show_lint)
             {
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
                 if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                     == DialogResult.Yes)
                 {
-                    ShowLintForFile(activeFname, true, true);
+                    OpenErrorForm(activeFname, true);
                 }
             }
             if (jsonParser.fatal)
@@ -384,6 +392,34 @@ namespace Kbg.NppPluginNET
                                 "Error while trying to parse JSON",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
+                string ext = Npp.FileExtension(fname);
+                // if there is a fatal error, don't hijack the doctype status bar section
+                // unless it's a normal JSON document type.
+                // For instance, we expect a Python file to be un-parseable,
+                // and it's not helpful to indicate that it's a JSON document with fatal errors.
+                if (fileExtensionsToAutoParse.Contains(ext))
+                    Npp.notepad.SetStatusBarSection($"JSON with fatal errors - {lintCount} errors (Alt-P-J-E to view)",
+                        StatusBarSection.DocType);
+            }
+            else
+            {
+                string doctypeDescription;
+                switch (jsonParser.state)
+                {
+                case ParserState.STRICT: doctypeDescription = "JSON"; break;
+                case ParserState.OK: doctypeDescription = "JSON (w/ control chars in strings)"; break;
+                case ParserState.NAN_INF: doctypeDescription = "JSON (w/ NaN and/or Infinity)"; break;
+                case ParserState.JSONC: doctypeDescription = "JSON with comments"; break;
+                case ParserState.JSON5: doctypeDescription = "JSON5"; break;
+                case ParserState.BAD: doctypeDescription = "Non-compliant JSON"; break;
+                // ParserState.FATAL covered earlier
+                default: throw new ArgumentOutOfRangeException("Unreachable");
+                }
+                string doctypeStatusBarEntry = lintCount == 0
+                    ? doctypeDescription
+                    : $"{doctypeDescription} - {lintCount} errors (Alt-P-J-E to view)";
+                fnameDoctypeStatusBarSections[fname] = doctypeStatusBarEntry;
+                Npp.notepad.SetStatusBarSection(doctypeStatusBarEntry, StatusBarSection.DocType);
             }
             fnameJsons[fname] = json;
             if (treeViewers.TryGetValue(fname, out var tv))
@@ -518,6 +554,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         private static void RestyleEverything()
         {
+            if (errorForm != null && !errorForm.IsDisposed)
+                FormStyle.ApplyStyle(errorForm, settings.use_npp_styling);
             if (sortForm != null && !sortForm.IsDisposed)
                 FormStyle.ApplyStyle(sortForm, settings.use_npp_styling);
             if (grepperForm != null && !grepperForm.IsDisposed)
@@ -531,28 +569,73 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        private static void ShowLintForFile(string fname, bool toggleBackToStartFile, bool wasAutoTriggered)
+        private static void KillErrorForm()
         {
+            if (errorForm != null)
+            {
+                Npp.notepad.HideDockingForm(errorForm);
+                errorForm.Close();
+                errorForm.Dispose();
+                errorForm = null;
+            }
+        }
+
+        /// <summary>
+        /// Open the error form if it didn't already exist.
+        /// If it was open, close it.
+        /// </summary>
+        /// <param name="fname"></param>
+        /// <param name="wasAutoTriggered"></param>
+        private static void OpenErrorForm(string fname, bool wasAutoTriggered)
+        {
+            bool wasVisible = errorForm != null && errorForm.Visible;
             if ((!fnameLints.TryGetValue(activeFname, out JsonLint[] lintArr)
                 || lintArr.Length == 0)
                 && !wasAutoTriggered)
             {
 
-                MessageBox.Show($"No JSON syntax errors for {fname}",
+                MessageBox.Show($"No JSON syntax errors (at or below {settings.logger_level} level) for {fname}",
                     "No JSON syntax errors for this file",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            Npp.notepad.FileNew();
-            var sb = new StringBuilder();
-            sb.AppendLine($"Syntax errors for {fname} on {System.DateTime.Now}");
-            foreach (JsonLint lint in lintArr)
+            KillErrorForm();
+            if (wasVisible)
+                return;
+            errorForm = new ErrorForm(activeFname, lintArr);
+            DisplayErrorForm(errorForm);
+        }
+
+        private static void DisplayErrorForm(ErrorForm form)
+        {
+            using (Bitmap newBmp = new Bitmap(16, 16))
             {
-                sb.AppendLine(lint.ToString());
+                Graphics g = Graphics.FromImage(newBmp);
+                ColorMap[] colorMap = new ColorMap[1];
+                colorMap[0] = new ColorMap();
+                colorMap[0].OldColor = Color.Fuchsia;
+                colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
+                ImageAttributes attr = new ImageAttributes();
+                attr.SetRemapTable(colorMap);
+                g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                tbIcon = Icon.FromHandle(newBmp.GetHicon());
             }
-            Npp.AddLine(sb.ToString());
-            if (toggleBackToStartFile)
-                Npp.notepad.OpenFile(fname);
+
+            NppTbData _nppTbData = new NppTbData();
+            _nppTbData.hClient = form.Handle;
+            _nppTbData.pszName = form.Text;
+            // the dlgDlg should be the index of funcItem where the current function pointer is in
+            // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
+            _nppTbData.dlgID = errorFormId;
+            // dock on bottom
+            _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_BOTTOM | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
+            _nppTbData.hIconTab = (uint)tbIcon.Handle;
+            _nppTbData.pszModuleName = PluginName;
+            IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+            Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
+
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
+            Npp.notepad.ShowDockingForm(form);
         }
 
         ///// <summary>
@@ -1035,6 +1118,16 @@ namespace Kbg.NppPluginNET
             }
             return false;
         }
+
+        /// <summary>
+        /// open the SortForm with path set to the path to the current position
+        /// </summary>
+        public static void OpenSortForm()
+        {
+            sortForm = new SortForm();
+            sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath);
+            sortForm.Show();
+        }
         #endregion
         #region timer_stuff
         /// <summary>
@@ -1073,16 +1166,6 @@ namespace Kbg.NppPluginNET
             currentFileTooBigToAutoParse = Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6;
         }
         #endregion
-
-        /// <summary>
-        /// open the SortForm with path set to the path to the current position
-        /// </summary>
-        public static void OpenSortForm()
-        {
-            sortForm = new SortForm();
-            sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath);
-            sortForm.Show();
-        }
     }
 
     /// <summary>

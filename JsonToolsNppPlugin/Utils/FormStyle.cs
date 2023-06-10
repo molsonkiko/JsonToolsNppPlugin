@@ -34,11 +34,11 @@ namespace JSON_Tools.Utils
                     ApplyStyle(childForm, use_npp_style, darkMode);
                 }
             }
-            Color back_color = Npp.notepad.GetDefaultBackgroundColor();
+            Color backColor = Npp.notepad.GetDefaultBackgroundColor();
             if (!use_npp_style || (
-                back_color.R > 240 &&
-                back_color.G > 240 &&
-                back_color.B > 240))
+                backColor.R > 240 &&
+                backColor.G > 240 &&
+                backColor.B > 240))
             {
                 // if the background is basically white,
                 // use the system defaults because they
@@ -50,7 +50,7 @@ namespace JSON_Tools.Utils
                     if (child is GroupBox)
                         ApplyStyle(child, use_npp_style, darkMode);
                     // controls containing text
-                    if (child is TextBox || child is ListBox || child is ComboBox || child is TreeView)
+                    else if (child is TextBox || child is ListBox || child is ComboBox || child is TreeView)
                     {
                         child.BackColor = SystemColors.Window; // white background
                         child.ForeColor = SystemColors.WindowText;
@@ -61,6 +61,15 @@ namespace JSON_Tools.Utils
                         llbl.ActiveLinkColor = Color.Red;
                         llbl.VisitedLinkColor = Color.Purple;
                     }
+                    else if (child is DataGridView dgv)
+                    {
+                        dgv.EnableHeadersVisualStyles = true;
+                        dgv.BackgroundColor = SystemColors.ControlDark;
+                        dgv.ForeColor = SystemColors.ControlText;
+                        dgv.GridColor = SystemColors.ControlLight;
+                        dgv.RowsDefaultCellStyle.ForeColor = SystemColors.ControlText;
+                        dgv.RowsDefaultCellStyle.BackColor = SystemColors.Window;
+                    }
                     else
                     {
                         // buttons should be a bit darker but everything else is the same color as the background
@@ -70,17 +79,37 @@ namespace JSON_Tools.Utils
                 }
                 return;
             }
-            Color fore_color = Npp.notepad.GetDefaultForegroundColor();
-            ctrl.BackColor = back_color;
+            Color foreColor = Npp.notepad.GetDefaultForegroundColor();
+            ctrl.BackColor = backColor;
+            Color InBetween = Color.FromArgb(
+                foreColor.R / 4 + 3 * backColor.R / 4,
+                foreColor.G / 4 + 3 * backColor.G / 4,
+                foreColor.B / 4 + 3 * backColor.B / 4
+            );
             foreach (Control child in ctrl.Controls)
             {
-                child.BackColor = back_color;
-                child.ForeColor = fore_color;
+                child.BackColor = backColor;
+                child.ForeColor = foreColor;
+                if (child is GroupBox)
+                    ApplyStyle(child, use_npp_style, darkMode);
                 if (child is LinkLabel llbl)
                 {
-                    llbl.LinkColor = fore_color;
-                    llbl.ActiveLinkColor = fore_color;
-                    llbl.VisitedLinkColor = fore_color;
+                    llbl.LinkColor = foreColor;
+                    llbl.ActiveLinkColor = foreColor;
+                    llbl.VisitedLinkColor = foreColor;
+                }
+                else if (child is DataGridView dgv)
+                {
+                    dgv.EnableHeadersVisualStyles = false;
+                    dgv.BackgroundColor = InBetween;
+                    dgv.ForeColor = foreColor;
+                    dgv.GridColor = foreColor;
+                    dgv.ColumnHeadersDefaultCellStyle.ForeColor = foreColor;
+                    dgv.ColumnHeadersDefaultCellStyle.BackColor = backColor;
+                    dgv.RowHeadersDefaultCellStyle.ForeColor = foreColor;
+                    dgv.RowHeadersDefaultCellStyle.BackColor = backColor;
+                    dgv.RowsDefaultCellStyle.ForeColor = foreColor;
+                    dgv.RowsDefaultCellStyle.BackColor = backColor;
                 }
             }
         }
