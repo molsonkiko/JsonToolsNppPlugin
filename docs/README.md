@@ -95,7 +95,9 @@ In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors.
 
 ### Error form and status bar ###
 
-If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error. In addition to this form, the document type status bar section will show how many errors were logged.
+If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error. Clicking on or paging to a row in the error form with the arrow keys will move the caret to the location in the document where that error was found. You can seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
+
+In addition to this form, the document type status bar section will show how many errors were logged.
 
 ![Error form and description in status bar](/docs/error%20form%20and%20status%20bar%20section.PNG)
 
