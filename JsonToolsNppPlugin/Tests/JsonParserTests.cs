@@ -216,7 +216,7 @@ namespace JSON_Tools.Tests
                 if (norm_str_out != norm_input)
                 {
                     tests_failed++;
-                    string fullMsg = String.Format(@"Test {0} ({1}) failed:
+                    string fullMsg = string.Format(@"Test {0} ({1}) failed:
 Expected
 {2}
 Got
@@ -230,7 +230,7 @@ Got
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
                     tests_failed++;
-                    msg = String.Format(@"Test {0} (parsing ToString result returns original) failed:
+                    msg = string.Format(@"Test {0} (parsing ToString result returns original) failed:
 Expected Parse(Parse({1}).toString()) to return
 {1}
 Got
@@ -243,7 +243,7 @@ Got
                 if (pprint_out != pprint_desired)
                 {
                     tests_failed++;
-                    msg = String.Format(@"Test {0} (pretty-print {1}) failed:
+                    msg = string.Format(@"Test {0} (pretty-print {1}) failed:
 Expected
 {2}
 Got
@@ -257,7 +257,7 @@ Got
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
                     tests_failed++;
-                    msg = String.Format(@"Test {0} (parsing PrettyPrint result returns original) failed:
+                    msg = string.Format(@"Test {0} (parsing PrettyPrint result returns original) failed:
 Expected Parse(Parse({1}).PrettyPrint()) to return
 {1}
 Got
@@ -291,7 +291,7 @@ Got
                 if (compact_true != compact_desired)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} (minimal whitespace printing) failed:
+                    Npp.AddLine(string.Format(@"Test {0} (minimal whitespace printing) failed:
 Expected
 {1}
 Got
@@ -323,7 +323,7 @@ Got
                 if (unsorted_true != unsorted_desired)
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} (minimal whitespace printing) failed:
+                    Npp.AddLine(string.Format(@"Test {0} (minimal whitespace printing) failed:
 Expected
 {1}
 Got
@@ -489,8 +489,11 @@ Got
                 new object[] { "[\"z\\\"\"]", "[\"z\\\"\"]", true },
                 new object[] { "{}", "{" + NL + "   }", true },
                 new object[] { "[]", "[ ]", true },
-                new object[] { "[]", "[1, 2]", false }
+                new object[] { "[]", "[1, 2]", false },
+                new object[] { "1" + new string('0', 400), "NaN", true }, // really really big int representations
             };
+            bool oldThrowIfLogged = parser.throw_if_logged;
+            parser.throw_if_logged = false;
             foreach (object[] test in equality_testcases)
             {
                 string astr = (string)test[0];
@@ -506,6 +509,7 @@ Got
                     Npp.AddLine($"Expected {a.ToString()} == {b.ToString()} to be {a_equals_b}, but it was called {result}");
                 }
             }
+            parser.throw_if_logged = oldThrowIfLogged;
             #endregion
             #region TestJRegexToString
             var arrayOfJRegexes = new JArray(0, new JNode[]{ 
@@ -924,7 +928,7 @@ multiline comment
                 if (!json.Equals(desired_output))
                 {
                     tests_failed++;
-                    Npp.AddLine(String.Format(@"Test {0} failed:
+                    Npp.AddLine(string.Format(@"Test {0} failed:
 Expected
 {1}
 Got

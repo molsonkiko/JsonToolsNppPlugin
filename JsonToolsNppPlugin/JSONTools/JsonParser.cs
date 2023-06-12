@@ -211,9 +211,9 @@ namespace JSON_Tools.JSON_Tools
         /// and will parse everything if there were no fatal errors.<br></br>
         /// Present primarily for backwards compatibility.
         /// </summary>
-        private bool throw_if_logged;
+        public bool throw_if_logged;
 
-        private bool throw_if_fatal;
+        public bool throw_if_fatal;
 
         /// <summary>
         /// attach ExtraJNodeProperties to each JNode parsed
