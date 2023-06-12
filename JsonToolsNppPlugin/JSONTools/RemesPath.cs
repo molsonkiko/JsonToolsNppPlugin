@@ -2008,6 +2008,10 @@ namespace JSON_Tools.JSON_Tools
             {
                 return rpe.ToString();
             }
+            if (ex is DsonDumpException dde)
+            {
+                return $"DSON dump error: {dde.Message}";
+            }
             string exstr = ex.ToString();
             Match is_cast = CAST_REGEX.Match(exstr);
             if (is_cast.Success)

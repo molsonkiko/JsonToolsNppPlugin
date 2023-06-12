@@ -97,10 +97,9 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.DataGridView ErrorGrid;
         private System.Windows.Forms.DataGridViewTextBoxColumn Severity;
         private System.Windows.Forms.DataGridViewTextBoxColumn Description;
         private System.Windows.Forms.DataGridViewTextBoxColumn Position;
+        private System.Windows.Forms.DataGridView ErrorGrid;
     }
 }

@@ -91,8 +91,9 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.FLOAT:
                     // floating point numbers are formatted
                     // such that fractional part, exponent, and integer part are all octal
-                    string valstr = ((double)json.value).ToString();
-                    if (valstr.EndsWith("y") || valstr.EndsWith("N"))
+                    double val = (double)json.value;
+                    string valstr = json.ToString();
+                    if (double.IsInfinity(val) || double.IsNaN(val))
                         // Infinity and NaN are not in the DSON specification
                         throw new DsonDumpException($"{valstr} is fake number, can't understand. So silly, wow");
                     StringBuilder partSb = new StringBuilder();

@@ -148,10 +148,16 @@ Syntax error at position 3: Number with two decimal points
                 catch (OverflowException)
                 {
                     // doubles can represent much larger numbers than 64-bit ints, albeit with loss of precision
-                    return new JNode(double.Parse(sb.ToString()), Dtype.FLOAT, 0);
                 }
             }
-            return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
+            try
+            {
+                return new JNode(double.Parse(sb.ToString(), JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0);
+            }
+            catch (Exception ex)
+            {
+                throw new RemesLexerException($"Error while parsing number:\r\n{ex}");
+            }
         }
 
         public JNode ParseQuotedString(string q)

@@ -374,7 +374,6 @@ namespace Kbg.NppPluginNET
                 json = jsonParser.Parse(text);
             int lintCount = jsonParser.lint.Count;
             fnameLints[fname] = jsonParser.lint.ToArray();
-            KillErrorForm();
             if (lintCount > 0 && settings.offer_to_show_lint)
             {
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
@@ -569,17 +568,6 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        private static void KillErrorForm()
-        {
-            if (errorForm != null)
-            {
-                Npp.notepad.HideDockingForm(errorForm);
-                errorForm.Close();
-                errorForm.Dispose();
-                errorForm = null;
-            }
-        }
-
         /// <summary>
         /// Open the error form if it didn't already exist.
         /// If it was open, close it.
@@ -599,11 +587,28 @@ namespace Kbg.NppPluginNET
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            KillErrorForm();
             if (wasVisible)
-                return;
-            errorForm = new ErrorForm(activeFname, lintArr);
-            DisplayErrorForm(errorForm);
+                Npp.notepad.HideDockingForm(errorForm);
+            else if (errorForm == null)
+            {
+                errorForm = new ErrorForm(activeFname, lintArr);
+                DisplayErrorForm(errorForm);
+            }
+            else if (errorForm.SlowReloadExpected(lintArr))
+            {
+                // for some reason destroying the form and reopening it
+                // appears to be cheaper when there are many rows
+                Npp.notepad.HideDockingForm(errorForm);
+                errorForm.Dispose();
+                errorForm.Close();
+                errorForm = new ErrorForm(activeFname, lintArr);
+                DisplayErrorForm(errorForm);
+            }
+            else
+            {
+                errorForm.Reload(activeFname, lintArr);
+                Npp.notepad.ShowDockingForm(errorForm);
+            }
         }
 
         private static void DisplayErrorForm(ErrorForm form)

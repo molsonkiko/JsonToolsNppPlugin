@@ -121,7 +121,7 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{ex.ToString()}",
+                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{RemesParser.PrettifyException(ex)}",
                     "such error very sad",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

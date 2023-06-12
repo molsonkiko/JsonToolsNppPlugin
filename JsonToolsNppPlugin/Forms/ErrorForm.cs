@@ -16,6 +16,7 @@ namespace JSON_Tools.Forms
 {
     public partial class ErrorForm : Form
     {
+        public const int SLOW_RELOAD_THRESHOLD = 300; // completely arbitrary
         public const int LINT_ROW_COUNT = 5000;
         public string fname;
         public JsonLint[] lints;
@@ -23,15 +24,30 @@ namespace JSON_Tools.Forms
         public ErrorForm(string fname, JsonLint[] lints)
         {
             InitializeComponent();
-            Reload(fname, lints);
+            Reload(fname, lints, true);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
-        public void Reload(string fname, JsonLint[] lints)
+        public bool SlowReloadExpected(IList<JsonLint> lints) { return lints.Count >= SLOW_RELOAD_THRESHOLD; }
+
+        public void Reload(string fname, JsonLint[] lints, bool onStartup = false)
         {
+            bool wasBig = SlowReloadExpected(lints);
+            if (wasBig && !onStartup)
+            {
+                if (MessageBox.Show("Reloading this error form could take an extremely long time!\r\n" +
+                                    "You will get better results from closing it and reopening it from the plugin menu.\r\n" +
+                                    "Do you still want to reload?",
+                                    "Very slow error form reload expected",
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning
+                    ) == DialogResult.No)
+                    return;
+                Npp.notepad.HideDockingForm(this);
+                Hide();
+            }
             this.fname = fname;
             this.lints = lints;
-            Text = $"JSON errors in {fname}";
+            Text = "JSON errors in current file";
             ErrorGrid.Rows.Clear();
             int interval = 1;
             // add a row that warns not all rows are shown
@@ -65,6 +81,8 @@ namespace JSON_Tools.Forms
                     cycler++;
                 }
             }
+            if (wasBig)
+                Npp.notepad.ShowDockingForm(this);
         }
 
         private void ErrorGrid_CellEnter(object sender, DataGridViewCellEventArgs e)
@@ -113,6 +131,8 @@ namespace JSON_Tools.Forms
             if ((firstRowToShow > ErrorGrid.FirstDisplayedScrollingRowIndex) == (newIndex > oldIndex)
                 && IsValidRowIndex(firstRowToShow))
                 ErrorGrid.FirstDisplayedScrollingRowIndex = firstRowToShow;
+            else if (firstRowToShow < 0)
+                ErrorGrid.FirstDisplayedScrollingRowIndex = 0;
             HandleCellOrRowClick(newRow); // move to location of error
         }
 
@@ -122,6 +142,15 @@ namespace JSON_Tools.Forms
             {
                 e.Handled = true;
                 Npp.editor.GrabFocus();
+                return;
+            }
+            else if (e.KeyCode == Keys.Enter)
+            {
+                // refresh error form based on current contents of current file
+                e.Handled = true;
+                Main.TryParseJson();
+                if (Main.fnameLints.TryGetValue(Main.activeFname, out var lintArr))
+                    Reload(Main.activeFname, lintArr);
                 return;
             }
             var selRowIndex = ErrorGrid.SelectedCells[0].RowIndex;
@@ -138,19 +167,40 @@ namespace JSON_Tools.Forms
                 if (ErrorGrid.SelectedCells.Count == 0)
                     return;
                 char startChar = (char)e.KeyValue;
-                for (int ii = selRowIndex + 1; ii < ErrorGrid.RowCount; ii++)
+                if (!SearchForErrorStartingWithChar(startChar, selRowIndex + 1, ErrorGrid.RowCount, selRowIndex))
                 {
-                    var row = ErrorGrid.Rows[ii];
-                    if (!(row.Cells[1].Value is string description))
-                        return;
-                    var descStartChar = description[0];
-                    if (descStartChar == startChar || descStartChar == startChar + 'a' - 'A')
-                    {
-                        ChangeSelectedRow(selRowIndex, ii);
-                        return;
-                    }
+                    // wrap around
+                    SearchForErrorStartingWithChar(startChar, 0, selRowIndex, selRowIndex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Iterates through rows between indices start (inclusive) and end (exclusive)
+        /// until it finds an error whose description begins with startChar.<br></br>
+        /// If a row is found, unselect initiallySelected and select the found row.<br></br>
+        /// Returns true if such a row was found.
+        /// </summary>
+        /// <param name="startChar"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        private bool SearchForErrorStartingWithChar(char startChar, int start, int end, int initiallySelected)
+        {
+            for (int ii = start; ii < end; ii++)
+            {
+                var row = ErrorGrid.Rows[ii];
+                if (!(row.Cells[1].Value is string description))
+                    break;
+                var descStartChar = description[0];
+                if (descStartChar == startChar ||
+                    ((descStartChar >= 'A' && descStartChar <= 'Z') && descStartChar == startChar + 'a' - 'A'))
+                {
+                    ChangeSelectedRow(initiallySelected, ii);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

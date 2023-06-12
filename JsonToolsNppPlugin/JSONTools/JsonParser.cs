@@ -959,7 +959,6 @@ namespace JSON_Tools.JSON_Tools
                 {
                     // doubles can represent much larger numbers than 64-bit ints,
                     // albeit with loss of precision
-                    return new JNode(double.Parse(numstr), Dtype.FLOAT, start_utf8_pos);
                 }
             }
             double num;

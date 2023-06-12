@@ -91,18 +91,20 @@ When you parse a document that contains syntax errors, you may be asked if you w
 
 In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors. Prior to that, errors were shown as text in a new buffer.
 
-<details><summary>Error reporting starting in v5.3.0</summary>
-
 ### Error form and status bar ###
 
-If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error. Clicking on or paging to a row in the error form with the arrow keys will move the caret to the location in the document where that error was found. You can seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
+If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error.
+
+Clicking on or paging to a row in the error form with the arrow keys will move the caret to the location in the document where that error was found.
+
+Hitting `Enter` while in the form refreshes the form with the JSON in the current document. You can also seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
 
 In addition to this form, the document type status bar section will show how many errors were logged.
 
 ![Error form and description in status bar](/docs/error%20form%20and%20status%20bar%20section.PNG)
 
 For performance reasons, the error form will never have more than 5000 rows. These rows will be roughly evenly spaced throughout the document.
-</details>
+
 <details><summary>Pre-v5.3.0 error reporting</summary>
 
 If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), errors can also be shown for the current document with a new plugin menu option.
