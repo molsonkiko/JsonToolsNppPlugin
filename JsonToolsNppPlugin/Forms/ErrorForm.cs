@@ -194,7 +194,7 @@ namespace JSON_Tools.Forms
                     break;
                 var descStartChar = description[0];
                 if (descStartChar == startChar ||
-                    ((descStartChar >= 'A' && descStartChar <= 'Z') && descStartChar == startChar + 'a' - 'A'))
+                    ((startChar >= 'A' && startChar <= 'Z') && descStartChar == startChar + 'a' - 'A'))
                 {
                     ChangeSelectedRow(initiallySelected, ii);
                     return true;
