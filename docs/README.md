@@ -85,6 +85,26 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 
 Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
 
+Error reporting can be customized with the `logger_level` setting, which has 5 levels, each a superset of the previous:
+1. __STRICT__: Parse only JSON that complies with the original JSON spec.
+2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
+3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
+4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
+5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
+    * singlequoted strings
+    * commas after the last element of an array or object
+    * unquoted object keys
+    * see https://json5.org/ for more.
+* There are two other states that *cannot be chosen* for `logger_level`, because they *always* lead to errors being logged.
+5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
+    * Python-style '#' comments
+    * missing commas between array members
+    * missing ']' or '}' at the ends of arrays and objects
+    * a bunch of other common syntax errors
+6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
+    * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, and `undefined`.
+    * Something other than a JavaScript comment after `/`
+
 When you parse a document that contains syntax errors, you may be asked if you want to see the syntax errors caught by the linter. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), this prompt can be suppressed with the `offer_to_show_lint` setting.
 
 ![Linter prompt after parsing error-ridden JSON document](/docs/prompt%20to%20view%20lint.PNG)
@@ -111,26 +131,6 @@ If you click "Yes", a new file will open in a separate tab containing details on
 
 ![Linter syntax error report](/docs/linter%20syntax%20error%20report.PNG)
 </details>
-
-Error reporting can be customized with the `logger_level` setting, which has 5 levels, each a superset of the previous:
-1. __STRICT__: Parse only JSON that complies with the original JSON spec.
-2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
-3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
-4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
-5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
-    * singlequoted strings
-    * commas after the last element of an array or object
-    * unquoted object keys
-    * see https://json5.org/ for more.
-* There are two other states that *cannot be chosen* for `logger_level`, because they *always* lead to errors being logged.
-5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
-    * Python-style '#' comments
-    * missing commas between array members
-    * missing ']' or '}' at the ends of arrays and objects
-    * a bunch of other common syntax errors
-6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
-    * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, and `undefined`.
-    * Something other than a JavaScript comment after `/`
 
 <details><summary>pre-version 5.0.0 system for configuring JSON parser</summary>
 
