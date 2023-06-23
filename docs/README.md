@@ -98,11 +98,12 @@ Error reporting can be customized with the `logger_level` setting, which has 5 l
 * There are two other states that *cannot be chosen* for `logger_level`, because they *always* lead to errors being logged.
 5. __BAD__: Everything on the `JSON5` level is allowed, as well as the following:
     * Python-style '#' comments
+    * Python constants `None`, `nan`, and `inf`.
     * missing commas between array members
     * missing ']' or '}' at the ends of arrays and objects
     * a bunch of other common syntax errors
 6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
-    * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, and `undefined`.
+    * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, `nan`, `inf` and `undefined`.
     * Something other than a JavaScript comment after `/`
 
 When you parse a document that contains syntax errors, you may be asked if you want to see the syntax errors caught by the linter. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), this prompt can be suppressed with the `offer_to_show_lint` setting.

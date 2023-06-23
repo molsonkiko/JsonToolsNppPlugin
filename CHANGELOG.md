@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Hitting `Enter` while in the error form causes the form to refresh.
 2. In the error form, searching for the next row starting with a character now wraps around.
+3. Python constants `nan` and `inf` can now be parsed as `NaN` and `Infinity` respectively.
+4. Support for numbers with leading decimal points and hex numbers in RemesPath.
+5. Unquoted strings in RemesPath can now contain leading `$`, Unicode escapes, and all the Unicode characters that are allowed in unquoted JSON5 keys.
 
 ### Changed
 

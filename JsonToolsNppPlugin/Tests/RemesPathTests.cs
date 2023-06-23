@@ -414,8 +414,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("max_by(@.foo[:]{-@}[0], 1)", "[0, -1, -2]"),
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
-                new Query_DesiredResult("@{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6}", // JSON5-compliant unquoted strings
-                    "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\\\b\\\\n\": 6}"),
+                new Query_DesiredResult("@{foo: .125E3, $baz: 0x2eFb, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 0xabcdefABCDEF}", // JSON5-compliant unquoted strings
+                    "{\"foo\": 125, \"$baz\": 12027, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\\\b\\\\n\": 188900977659375}"),
                 // recursive search
                 new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
                 new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),

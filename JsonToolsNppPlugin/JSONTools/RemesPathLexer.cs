@@ -92,7 +92,7 @@ Syntax error at position 3: Number with two decimal points
                 switch (successfulGroup)
                 {
                     case 1: toks.Add(new CurJson()); break;
-                    case 2: toks.Add(new JNode(long.Parse(m.Value, NumberStyles.HexNumber), Dtype.INT, 0)); break; // hex number
+                    case 2: toks.Add(new JNode(long.Parse(m.Value.Substring(2), NumberStyles.HexNumber), Dtype.INT, 0)); break; // hex number
                     case 3: // number
                         if (!(m.Groups[4].Success || m.Groups[5].Success))
                         {
