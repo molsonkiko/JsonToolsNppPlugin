@@ -295,11 +295,10 @@ namespace JSON_Tools.Forms
                 RefreshButton.PerformClick();
             string query = QueryBox.Text;
             JNode query_func;
-            List<object> sel_toks;
-            List<object> mut_toks;
+            List<object> toks;
             try
             {
-                (sel_toks, mut_toks) = lexer.Tokenize(query);
+                toks = lexer.Tokenize(query);
             }
             catch (Exception ex)
             {
@@ -312,7 +311,7 @@ namespace JSON_Tools.Forms
             }
             try
             {
-                query_func = remesParser.Compile(sel_toks, mut_toks);
+                query_func = remesParser.Compile(toks);
             }
             catch (Exception ex)
             {

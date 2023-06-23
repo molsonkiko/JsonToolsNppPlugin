@@ -38,18 +38,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.3.1] - 2023-MM-DD (UNRELEASED)
+## [5.4.0] - 2023-MM-DD (UNRELEASED)
 
 ### Added
 
 1. Hitting `Enter` while in the error form causes the form to refresh.
 2. In the error form, searching for the next row starting with a character now wraps around.
 
+### Changed
+
+1. All arithmetic operations (`+`, `-`, `*`, `/`, `%`, and `/`) can now accept booleans as one or both of their operands.
+2. [`not` is now a unary operator](/docs/RemesPath.md) like `-` (that is, `not not @` is a valid statement, no parens needed). It also now tests "truthiness" like the same operator in Python.
+
 ### Fixed
 
-1. Uncaught errors when parsing integers too large for the floating point spec (e.g., one followed by 400 zeros)
-2. Minor bug when scrolling up with the up arrow on error form.
-3. More appropriately silly error handling when dogeifying JSON.
+1. Bugs with operator precedence in RemesPath.
+2. Uncaught errors when parsing integers too large for the floating point spec (e.g., one followed by 400 zeros)
+3. Minor bug when scrolling up with the up arrow on error form.
+4. More appropriately silly error handling when dogeifying JSON.
 
 ## [5.3.0] - 2023-06-10
 

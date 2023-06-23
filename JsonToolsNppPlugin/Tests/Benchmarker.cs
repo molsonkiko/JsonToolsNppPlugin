@@ -90,8 +90,8 @@ Performance tests for RemesPath ({description})
                     watch.Start();
                     try
                     {
-                        (List<object> sel_toks, List<object> mut_toks) = parser.lexer.Tokenize(query);
-                        query_func = parser.Compile(sel_toks, mut_toks);
+                        List<object> toks = parser.lexer.Tokenize(query);
+                        query_func = parser.Compile(toks);
                     }
                     catch (Exception ex)
                     {

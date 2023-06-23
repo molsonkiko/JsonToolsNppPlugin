@@ -384,5 +384,19 @@ namespace JSON_Tools.Utils
                 }
             }
         }
+
+        /// <summary>
+        /// Removes and returns the last element of a list.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static T Pop<T>(this List<T> list)
+        {
+            int lastIdx = list.Count - 1;
+            T last = list[lastIdx];
+            list.RemoveAt(lastIdx);
+            return last;
+        }
     }
 }

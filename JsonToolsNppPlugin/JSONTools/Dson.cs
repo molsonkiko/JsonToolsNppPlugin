@@ -21,9 +21,9 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     class Dson
     {
-        public static string KeyValuePairDelims = ",.!?";
+        public static readonly string KeyValuePairDelims = ",.!?";
 
-        public static string[] ArrayPairDelims = new string[] { "and", "also" };
+        public static readonly string[] ArrayPairDelims = new string[] { "and", "also" };
 
         private static string FormatInteger(long val)
         {

@@ -359,10 +359,7 @@ namespace JSON_Tools.JSON_Tools
                             HandleError("Expected JavaScript comment after '/'", inp, inp.Length - 1, ParserState.FATAL);
                             return false;
                         }
-                        if (HandleError("JavaScript comments are not part of the original JSON specification", inp, ii, ParserState.JSONC))
-                        {
-                            return false;
-                        }
+                        HandleError("JavaScript comments are not part of the original JSON specification", inp, ii, ParserState.JSONC);
                         c = inp[ii];
                         if (c == '/')
                         {
@@ -400,11 +397,8 @@ namespace JSON_Tools.JSON_Tools
                         break;
                     case '#':
                         // Python-style single-line comment
-                        if (HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
-                                inp, ii, ParserState.BAD))
-                        {
-                            return false;
-                        }
+                        HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
+                                inp, ii, ParserState.BAD);
                         ConsumeLine(inp);
                         break;
                     case '\u2028': // line separator
@@ -427,8 +421,7 @@ namespace JSON_Tools.JSON_Tools
                     case '\u202F': // Narrow No-Break Space
                     case '\u205F': // Medium Mathematical Space
                     case '\u3000': // Ideographic Space
-                        if (HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5))
-                            return false;
+                        HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5);
                         utf8_extra_bytes += ExtraUTF8Bytes(c);
                         ii++;
                         break;
@@ -576,8 +569,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else if (next_char == '\n' || next_char == '\r')
                     {
-                        if (HandleError("Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
-                            break;
+                        HandleError("Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5);
                         ii++;
                         if (next_char == '\r'
                             && ii < inp.Length - 1 && inp[ii + 1] == '\n')
@@ -590,12 +582,10 @@ namespace JSON_Tools.JSON_Tools
                         int next_hex = ParseHexChar(inp, 2);
                         if (HandleCharErrors(next_hex, inp, ii))
                             break;
-                        if (HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5))
-                            break;
+                        HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5);
                         sb.Append((char)next_hex);
                     }
-                    else if (HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5))
-                        break;
+                    else HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
                 }
                 else
                 {
@@ -670,8 +660,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else if (next_char == '\n' || next_char == '\r')
                     {
-                        if (HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5))
-                            break;
+                        HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5);
                         ii++;
                         if (next_char == '\r'
                             && ii < inp.Length - 1 && inp[ii + 1] == '\n')
@@ -683,22 +672,17 @@ namespace JSON_Tools.JSON_Tools
                         int next_hex = ParseHexChar(inp, 2);
                         if (HandleCharErrors(next_hex, inp, ii))
                             break;
-                        if (HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5))
-                            break;
+                        HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5);
                         sb.Append(JNode.CharToString((char)next_hex));
                     }
-                    else if (HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5))
-                        break;
+                    else HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
                 }
                 else if (c < 0x20) // control characters
                 {
                     if (c == '\n')
-                    {
-                        if (HandleError($"Object key contains newline", inp, ii, ParserState.BAD))
-                            break;
-                    }
-                    else if (HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK))
-                        break;
+                        HandleError($"Object key contains newline", inp, ii, ParserState.BAD);
+                    else
+                        HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK);
                     sb.Append(JNode.CharToString(c));
                 }
                 else
@@ -712,7 +696,7 @@ namespace JSON_Tools.JSON_Tools
             return sb.ToString();
         }
 
-        private const string UNQUOTED_START = @"(?:[_\$\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]|\\u[\da-f]{4})";
+        public const string UNQUOTED_START = @"(?:[_\$\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]|\\u[\da-f]{4})";
 
         private static Regex UNICODE_ESCAPES = new Regex(@"(?<=\\u)[\da-f]{4}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -730,6 +714,11 @@ namespace JSON_Tools.JSON_Tools
             var result = match.Value;
             ii += result.Length;
             utf8_extra_bytes += ExtraUTF8BytesBetween(result, 0, result.Length);
+            return ParseUnquotedKeyHelper(inp, result);
+        }
+
+        public string ParseUnquotedKeyHelper(string inp, string result)
+        {
             if (result.Contains("\\u")) // fix unicode escapes
             {
                 StringBuilder sb = new StringBuilder();
@@ -786,8 +775,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Parse a number in a JSON string, including NaN or Infinity<br></br>
-        /// Also parses the Python literal None (which we parse as null)
-        /// because it starts with N too and it's convenient to do it this way.
+        /// Also parses null and the Python literals None (which we parse as null), nan, inf
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns>a JNode with type = Dtype.INT or Dtype.FLOAT, and the position of the end of the number.
@@ -805,15 +793,27 @@ namespace JSON_Tools.JSON_Tools
             bool negative = false;
             if (c < '0' || c > '9')
             {
+                if (c == 'n')
+                {
+                    // try null
+                    if (ii <= inp.Length - 4 && inp[ii + 1] == 'u' && inp[ii + 2] == 'l' && inp[ii + 3] == 'l')
+                    {
+                        ii += 4;
+                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    }
+                    if (ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'n')
+                    {
+                        HandleError("nan is not a valid representation of Not a Number in JSON", inp, ii, ParserState.BAD);
+                        ii += 3;
+                        return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
+                    }
+                    HandleError("Expected literal starting with 'n' to be null or nan", inp, ii + 1, ParserState.FATAL);
+                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                }
                 if (c == '-' || c == '+')
                 {
                     if (c == '+')
-                    {
-                        if (HandleError("Leading + signs in numbers are not allowed except in JSON5", inp, ii, ParserState.JSON5))
-                        {
-                            return new JNode(null, Dtype.NULL, start_utf8_pos);
-                        }
-                    }
+                        HandleError("Leading + signs in numbers are not allowed except in JSON5", inp, ii, ParserState.JSON5);
                     else negative = true;
                     ii++;
                 }
@@ -823,10 +823,7 @@ namespace JSON_Tools.JSON_Tools
                     // try Infinity
                     if (ii <= inp.Length - 8 && inp[ii + 1] == 'n' && inp.Substring(ii + 2, 6) == "finity")
                     {
-                        if (HandleError("Infinity is not part of the original JSON specification", inp, ii, ParserState.NAN_INF))
-                        {
-                            return new JNode(null, Dtype.NULL, start_utf8_pos);
-                        }
+                        HandleError("Infinity is not part of the original JSON specification", inp, ii, ParserState.NAN_INF);
                         ii += 8;
                         double infty = negative ? NanInf.neginf : NanInf.inf;
                         return new JNode(infty, Dtype.FLOAT, start_utf8_pos);
@@ -840,10 +837,7 @@ namespace JSON_Tools.JSON_Tools
                     // try NaN
                     if (ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'N')
                     {
-                        if (HandleError("NaN is not part of the original JSON specification", inp, ii, ParserState.NAN_INF))
-                        {
-                            return new JNode(null, Dtype.NULL, start_utf8_pos);
-                        }
+                        HandleError("NaN is not part of the original JSON specification", inp, ii, ParserState.NAN_INF);
                         ii += 3;
                         return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
                     }
@@ -851,19 +845,27 @@ namespace JSON_Tools.JSON_Tools
                     if (ii <= inp.Length - 4 && inp[ii + 1] == 'o' && inp[ii + 2] == 'n' && inp[ii + 3] == 'e')
                     {
                         ii += 4;
-                        HandleError("'None' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                        HandleError("None is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
                         return new JNode(null, Dtype.NULL, start_utf8_pos);
                     }
                     HandleError("Expected literal starting with 'N' to be NaN or None", inp, ii + 1, ParserState.FATAL);
                     return new JNode(null, Dtype.NULL, start_utf8_pos);
                 }
+                else if (c == 'i')
+                {
+                    if (ii <= inp.Length - 3 && inp[ii + 1] == 'n' && inp[ii + 2] == 'f')
+                    {
+                        HandleError("inf is not the correct representation of Infinity in JSON", inp, ii, ParserState.BAD);
+                        ii += 3;
+                        return new JNode(negative ? NanInf.neginf : NanInf.inf, Dtype.FLOAT, start_utf8_pos);
+                    }
+                    HandleError("Expected literal starting with 'i' to be inf", inp, ii, ParserState.FATAL);
+                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                }
             }
             if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
             {
-                if (HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5))
-                {
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
-                }
+                HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5);
                 ii += 2;
                 start = ii;
                 while (ii < inp.Length)
@@ -928,10 +930,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         break;
                     }
-                    if (HandleError("Fractions of the form 1/3 are not part of any JSON specification", inp, start_utf8_pos, ParserState.BAD))
-                    {
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
-                    }
+                    HandleError("Fractions of the form 1/3 are not part of any JSON specification", inp, start_utf8_pos, ParserState.BAD);
                     double numer = double.Parse(inp.Substring(start, ii - start), JNode.DOT_DECIMAL_SEP);
                     JNode denom_node;
                     ii++;
@@ -1173,10 +1172,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             ii++;
                         }
-                        else if (HandleError($"No ':' between key {child_count} and value {child_count} of object", inp, ii, ParserState.BAD))
-                        {
-                            return obj;
-                        }
+                        else HandleError($"No ':' between key {child_count} and value {child_count} of object", inp, ii, ParserState.BAD);
                     }
                     if (!ConsumeInsignificantChars(inp))
                     {
@@ -1232,8 +1228,10 @@ namespace JSON_Tools.JSON_Tools
             }
             if (cur_c >= '0' && cur_c <= '9'
                 || cur_c == '-' || cur_c == '+'
+                || cur_c == 'n' // null and nan
                 || cur_c == 'I' || cur_c == 'N' // Infinity, NaN and None
-                || cur_c == '.') // leading decimal point JSON5 numbers
+                || cur_c == '.' // leading decimal point JSON5 numbers
+                || cur_c == 'i') // inf
             {
                 return ParseNumber(inp);
             }
@@ -1245,24 +1243,14 @@ namespace JSON_Tools.JSON_Tools
             {
                 return ParseObject(inp, recursion_depth + 1);
             }
-            char next_c = inp[ii + 1];
+            char next_c;
             if (ii > inp.Length - 4)
             {
                 HandleError("No valid literal possible", inp, ii, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, start_utf8_pos);
             }
-            // misc literals. In strict JSON, only null, true, or false
-            if (cur_c == 'n')
-            {
-                // try null
-                if (next_c == 'u' && inp[ii + 2] == 'l' && inp[ii + 3] == 'l')
-                {
-                    ii += 4;
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
-                }
-                HandleError("Expected literal starting with 'n' to be null", inp, ii+1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
-            }
+            // misc literals. In strict JSON, only true or false
+            next_c = inp[ii + 1];
             if (cur_c == 't')
             {
                 // try true
@@ -1291,7 +1279,7 @@ namespace JSON_Tools.JSON_Tools
                 if (next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
                 {
                     ii += 4;
-                    HandleError("'True' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                    HandleError("True is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
                     return new JNode(true, Dtype.BOOL, start_utf8_pos);
                 }
                 HandleError("Expected literal starting with 'T' to be True", inp, ii + 1, ParserState.FATAL);
@@ -1303,7 +1291,7 @@ namespace JSON_Tools.JSON_Tools
                 if (ii <= inp.Length - 5 && next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
                 {
                     ii += 5;
-                    HandleError("'False' is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
+                    HandleError("False is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
                     return new JNode(false, Dtype.BOOL, start_utf8_pos);
                 }
                 HandleError("Expected literal starting with 'F' to be False", inp, ii + 1, ParserState.FATAL);

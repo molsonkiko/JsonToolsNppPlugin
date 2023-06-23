@@ -50,6 +50,7 @@ namespace JSON_Tools.JSON_Tools
         //TIME = 4096,
         /* COMPOSITE TYPES */
         FLOAT_OR_INT = FLOAT | INT,
+        INT_OR_BOOL = INT | BOOL,
         /// <summary>
         /// a float, int, or bool
         /// </summary>
@@ -197,7 +198,7 @@ namespace JSON_Tools.JSON_Tools
     {
         public const int PPRINT_LINE_LENGTH = 79;
 
-        public static string NL = Environment.NewLine;
+        public static readonly string NL = Environment.NewLine;
         
         public IComparable value; // null for arrays and objects
                                    // IComparable is good here because we want easy comparison of JNodes
@@ -229,6 +230,34 @@ namespace JSON_Tools.JSON_Tools
             this.type = Dtype.NULL;
             this.value = null;
             //extras = null;
+        }
+
+        public JNode(long value, int position = 0)
+        {
+            this.position = position;
+            this.type = Dtype.INT;
+            this.value = value;
+        }
+
+        public JNode(string value, int position = 0)
+        {
+            this.position = position;
+            this.type = Dtype.STR;
+            this.value = value;
+        }
+
+        public JNode(double value, int position = 0)
+        {
+            this.position = position;
+            this.type = Dtype.FLOAT;
+            this.value = value;
+        }
+
+        public JNode(bool value, int position = 0)
+        {
+            this.position = position;
+            this.type = Dtype.BOOL;
+            this.value = value;
         }
 
         // in some places like Germany they use ',' as the normal decimal separator.
@@ -756,6 +785,11 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             return string.Join("|", typestrs);
+        }
+
+        public static bool BothTypesIntersect(Dtype atype, Dtype btype, Dtype shouldMatch)
+        {
+            return (atype & shouldMatch) != 0 && (btype & shouldMatch) != 0;
         }
 
         /// <summary>

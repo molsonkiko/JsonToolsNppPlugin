@@ -14,54 +14,49 @@ namespace JSON_Tools.Tests
         {
             JsonParser jsonParser = new JsonParser();
             RemesPathLexer lexer = new RemesPathLexer();
-            var testcases = new (string input, List<object> sel_toks, List<object> mut_toks, string msg)[]
+            var testcases = new (string input, List<object> toks, string msg)[]
             {
-                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, null, "cur_json binop scalar" ),
-                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, null, "all float formats" ),
-                ( "abc_2 `ab\\`c`", new List<object>{"abc_2", "ab`c"}, null, "unquoted and quoted strings" ),
-                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, null, "arg function, constants, delimiters" ),
-                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, null, "json string" ),
-                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, null, "regex" ),
-                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, null, "more binops" ),
-                ( ". []", new List<object>{'.', '[', ']'}, null, "more delimiters" ),
-                ( "3blue", new List<object>{3L, "blue"}, null, "number immediately followed by string" ),
-                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, null, "number binop binop number, no whitespace" ),
-                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, null, "quoted string binop curjson, no whitespace" ),
-                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, null, "two-character binops and argfunction in" ),
-                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, null, "numbers and delimiters then binop number, no whitespace" ),
-                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, null, "!=" ),
-                ( "8 = @ * 79 ==", new List<object>{ 8L }, new List<object>{ new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="] }, "assignment operator" ),
+                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, "cur_json binop scalar" ),
+                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, "all float formats" ),
+                ( "abc_2 `ab\\`c` \\ud83d\\ude00_$\\u1ed3", new List<object>{"abc_2", "ab`c", "😀_$ồ"}, "unquoted and quoted strings" ),
+                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, "arg function, constants, delimiters" ),
+                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, "json string" ),
+                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, "regex" ),
+                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, "more binops" ),
+                ( ". []", new List<object>{'.', '[', ']'}, "more delimiters" ),
+                ( "3blue", new List<object>{3L, "blue"}, "number immediately followed by string" ),
+                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, "number binop binop number, no whitespace" ),
+                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, "quoted string binop curjson, no whitespace" ),
+                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, "two-character binops and argfunction in" ),
+                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, "numbers and delimiters then binop number, no whitespace" ),
+                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, "!=" ),
+                ( "8 = @ * 79 ==", new List<object>{ 8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="] }, "assignment operator" ),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach ((string input, List<object> sel_toks, List<object> mut_toks, string msg) in testcases)
+            foreach ((string input, List<object> toks, string msg) in testcases)
             {
-                string sel_str = RemesPathLexer.TokensToString(sel_toks);
-                string mut_str = RemesPathLexer.TokensToString(mut_toks);
-                List<object> got_sel_toks = null;
-                List<object> got_mut_toks = null;
+                string correct_str = RemesPathLexer.TokensToString(toks);
+                List<object> got_toks = null;
                 ii++;
                 try
                 {
-                    (got_sel_toks, got_mut_toks) = lexer.Tokenize(input);
+                    got_toks = lexer.Tokenize(input);
                 }
                 catch (Exception ex)
                 {
                     tests_failed++;
                     Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
-                                $"Expected sel_toks = {sel_str}\r\nExpected mut_toks = {mut_str}\r\n" +
-                                $"Instead raised exception\r\n{ex}");
+                                $"Expected toks = {correct_str}\r\nInstead raised exception\r\n{ex}");
                     continue;
                 }
-                string got_sel_str = RemesPathLexer.TokensToString(got_sel_toks);
-                string got_mut_str = RemesPathLexer.TokensToString(got_mut_toks);
-                if (sel_str != got_sel_str || mut_str != got_mut_str)
+                string got_str = RemesPathLexer.TokensToString(got_toks);
+                if (correct_str != got_str)
                 {
 
                     tests_failed++;
                     Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
-                                $"Expected sel_toks = {sel_str}\r\nInstead got sel_toks = {got_sel_str}\r\n" +
-                                $"Expected mut_toks = {mut_str}\r\nInstead got mut_toks = {got_mut_str}");
+                                $"Expected toks = {correct_str}\r\nInstead got toks = {got_str}");
                 }
             }
             // test exeptions related to unmatched brackets
@@ -77,46 +72,16 @@ namespace JSON_Tools.Tests
                 catch { }
             }
             // test if two decimal points causes error
-            ii++;
             string query;
-            try
-            {
-                query = "1.5.2";
-                lexer.Tokenize(query);
-                tests_failed++;
-                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to number with two decimal points");
-            }
-            catch { }
-            // test if two assignment expressions causes error
-            ii++;
-            try
-            {
-                query = "@[@ =~ a] = 5 = 7";
-                lexer.Tokenize(query);
-                tests_failed++;
-                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to more than one assignment expression");
-            }
-            catch { }
-            // test if '=' with no RHS causes error
-            ii++;
-            try
-            {
-                query = "@ *3 = ";
-                lexer.Tokenize(query);
-                tests_failed++;
-                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to assignment expression with no RHS");
-            }
-            catch { }
-            // test if '=' with no LHS causes error
-            ii++;
-            try
-            {
-                query = "= @ *3";
-                lexer.Tokenize(query);
-                tests_failed++;
-                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to assignment expression with no LHS");
-            }
-            catch { }
+            //ii++;
+            //try
+            //{
+            //    query = "1.5.2";
+            //    lexer.Tokenize(query);
+            //    tests_failed++;
+            //    Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to number with two decimal points");
+            //}
+            //catch { }
             // test if recursion limit of 512 is enforced
             ii++;
             try
@@ -156,10 +121,71 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"The queried JSON in the RemesParser tests is:{foo.ToString()}");
             var testcases = new Query_DesiredResult[]
             {
-                // binop precedence tests
-                new Query_DesiredResult("2 - 4 * 3.5", "-12.0"),
-                new Query_DesiredResult("2 / 3 - 4 * 5 ** 1", "-19.333333333333332"),
-                new Query_DesiredResult("5 ** (6 - 2)", "625.0"),
+                // subtraction
+                new Query_DesiredResult("j`[ 1,   1,    1, 0.5,  0.5,  0.5, false, false, false]` - " +
+                                        "j`[ 2, 2.0, true,   2,  2.0, true,     2,   2.0,  true]`",
+                                          "[-1,-1.0,    0,-1.5, -1.5, -0.5,    -2,  -2.0,    -1]"),
+                // addition
+                new Query_DesiredResult("j`[ 1,   1,    1, 0.5,  0.5,  0.5, false, false, false,  \"a\"]` + " +
+                                        "j`[ 2, 2.0, true,   2,  2.0, true,     2,   2.0,  true,  \"b\"]`",
+                                          "[ 3, 3.0,    2, 2.5,  2.5,  1.5,     2,   2.0,     1, \"ab\"]"),
+                // multiplication
+                new Query_DesiredResult("j`[ 1,   1,    1, 0.5,  0.5,  0.5, false, false, false, \"a\", \"a\"]` * " +
+                                        "j`[ 2, 2.0, true,   2,  2.0, true,     2,   2.0,  true,     2, false]`",
+                                          "[ 2, 2.0,    1, 1.0,  1.0,  0.5,     0,   0.0,     0,\"aa\",  \"\"]"),
+                // division
+                new Query_DesiredResult("j`[  1,   1,    1, 0.5,  0.5,  0.5, false, false, false]` / " +
+                                        "j`[  2, 2.0, true,   2,  2.0, true,     2,   2.0,  true]`",
+                                          "[0.5, 0.5,  1.0,0.25, 0.25,  0.5,   0.0,   0.0,   0.0]"),
+                // exponentiation
+                new Query_DesiredResult("j`[  1,   1,    1, 0.5,  0.5,  0.5, false, false, false]` ** " +
+                                        "j`[  2, 2.0, true,   2,  3.0, true,     2,   2.0,  true]`",
+                                          "[1.0, 1.0,  1.0,0.25,0.125,  0.5,   0.0,   0.0,   0.0]"),
+                // floor division
+                new Query_DesiredResult("j`[  5,   6,    1, 0.5,  7.5,  6.2, false,  true, false]` // " +
+                                        "j`[  2, 3.0, true,   2,  2.0, true,     2,   1.0,  true]`",
+                                          "[  2,   2,    1,   0,    3,    6,     0,     1,     0]"),
+                // modulo
+                new Query_DesiredResult("j`[  5,   6,    1, 2.5,  0.5,  0.5,  true,  true, false]` % " +
+                                        "j`[  2, 3.0, true,   1,  2.0, true, 0.625,   2.0,  true]`",
+                                          "[  1, 0.0,    0, 0.5,  0.5,  0.5, 0.375,   1.0,     0]"),
+                // XOR
+                new Query_DesiredResult("j`[   4, false,  true, 3]` ^ " +
+                                        "j`[true, false,     1, 1]`",
+                                          "[   5, false,     0, 2]"),
+                // AND
+                new Query_DesiredResult("j`[   4, false,  true, 3]` & " +
+                                        "j`[true, false,     1, 1]`",
+                                          "[   0, false,     1, 1]"),
+                // OR
+                new Query_DesiredResult("j`[   4, false,  true, 3]` | " +
+                                        "j`[true, false,     1, 1]`",
+                                          "[   5, false,     1, 3]"),
+                // comparison binops
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` == j`[1.0, -1, false, 2]`", "[true, false, false, false]"),
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` <= j`[1.0, -1, false, 2]`", "[true, false, false, true]"),
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` >= j`[1.0, -1, false, 2]`", "[true, true,  true,  false]"),
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` <  j`[1.0, -1, false, 2]`", "[false, false, false,  true]"),
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` >  j`[1.0, -1, false, 2]`", "[false, true, true,  false]"),
+                new Query_DesiredResult("j`[1, true, 1.0, 1.0]` !=  j`[1.0, -1, false, 2]`", "[false, true, true,  true]"),
+                new Query_DesiredResult("append(j`[]`{  abc,   bcd} =~ g`^a`, def =~ g)", // pattern matching
+                                                    "[true,  false,           false]"),
+                // binop precedence change tests (2 binops)
+                new Query_DesiredResult("2 - 4 * 2", "-6"), // ascend
+                new Query_DesiredResult("2 * 4 - 2", "6"), // descend
+                new Query_DesiredResult("2 - 2 - 4", "-4"), // same
+                // binop precedence change tests (3 binops)
+                new Query_DesiredResult("1 - 1 * 2 ** 3", "-7.0"), // up up
+                new Query_DesiredResult("1 + 2 / 2 * 4", "5.0"), // up same
+                new Query_DesiredResult("1 + 2 / 2 - 3", "-1.0"), // up down
+                new Query_DesiredResult("1 * 2 - 2 ** 3", "-6.0"), // down up
+                new Query_DesiredResult("3 * 2 - 2 + 3", "7"), // down same
+                new Query_DesiredResult("2 ** 2 * 3 + 3", "15.0"), // down down
+                new Query_DesiredResult("1 / 2 * 3 ** 3", "13.5"), // same up
+                new Query_DesiredResult("1 / 2 * 3 * 3", "4.5"), // same same
+                new Query_DesiredResult("1 / 2 * 3 + 3", "4.5"), // same down
+                new Query_DesiredResult("2 / 4 ** 2 ** 2", "0.0078125"), // up exp exp
+                new Query_DesiredResult("4 ** 2 ** 2 / 4", "64.0"), // exp exp down
                 // binop two jsons, binop json scalar, binop scalar json tests
                 new Query_DesiredResult("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
                 new Query_DesiredResult("@.foo[0] + j`[3.0, 4.0, 5.0]`", "[3.0, 5.0, 7.0]"),
@@ -221,9 +247,29 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("16.6 == 17", "false"),
                 // uminus tests
                 new Query_DesiredResult("-j`[1]`", "[-1]"),
-                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -0.125]"),
+                new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -0.125]"), // check uminus comes after exponentiation
                 new Query_DesiredResult("-@.foo[2]", "[-6.0, -7.0, -8.0]"),
                 new Query_DesiredResult("2/--4", "0.5"),
+                new Query_DesiredResult("---@.foo[2] + 3", "[-3.0, -4.0, -5.0]"), // check uminus precedes +
+                new Query_DesiredResult("(-@.foo[0])[::2]", "[0.0, -2.0]"),
+                // unary not tests
+                new Query_DesiredResult("ifelse(not 1.5, a, b)", "\"b\""),
+                new Query_DesiredResult("not not j`[2, 0.0, true]`", "[true, false, true]"),
+                new Query_DesiredResult("not j`[true, false]` & j`[false, true]`", "[true, true]"),
+                new Query_DesiredResult("- not -j`[true, false]`", "[0, -1]"),
+                new Query_DesiredResult("1 + not j`[true, false]`", "[1, 2]"),
+                new Query_DesiredResult("- not - not j`[\"a\", \"\", [], [1], {}, {\"a\": 1}, null]`",
+                                                       "[-1,    0,   0,  -1,  0,    -1,        0]"),
+                new Query_DesiredResult("(not @.foo[0])[:2]", "[true, false]"),
+                new Query_DesiredResult("not not not not not @.foo[0]", "[true, false, false]"),
+                new Query_DesiredResult("not not not not not @.foo[0][1] + 3", "false"),
+                // unary plus tests
+                new Query_DesiredResult("+ -2", "-2"),
+                new Query_DesiredResult("str(+ range(-2, 3, 2))", "[\"-2\", \"0\", \"2\"]"),
+                new Query_DesiredResult("not + j`[3, 0]`", "[false, true]"),
+                new Query_DesiredResult("+ - + not not not @.foo[1][0] + 3", "true"), // equivalent to not ((-@.foo[1][0]) + 3), equivalent to not (-3 + 3), so true
+                new Query_DesiredResult("not - + @.foo[0][0] ** 1.0", "true"),
+                new Query_DesiredResult("- + (@{a, b} == a)", "[-1, 0]"),
                 // indexing tests
                 new Query_DesiredResult("@.baz", "\"z\""),
                 new Query_DesiredResult("@.foo[0]", "[0, 1, 2]"),
@@ -258,6 +304,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
                 new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
                 new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
+                new Query_DesiredResult("min_by(@.foo[:]{a: @[0], b: @[1], c: @[2]}, a)", "{\"a\": 0, \"b\": 1, \"c\": 2}"),
                 new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"), // regex to_replace
                 new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, `.`, ``)", "[\"120\", \"15\", \"2\"]"), // string to_replace with special char
                 new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, g`.`, ``)", "[\"\", \"\", \"\"]"), // regex to_replace with special char
@@ -267,6 +314,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("str(@.foo[2])", "[\"6.0\", \"7.0\", \"8.0\"]"),
                 new Query_DesiredResult("int(@.foo[1])", "[3, 4, 5]"),
                 new Query_DesiredResult("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
+                new Query_DesiredResult("s_slice(str(@.foo[2]), ::-1)", "[\"0.6\", \"0.7\", \"0.8\"]"),
                 new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
                 new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
                 new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
@@ -363,8 +411,11 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("(@.foo[:]{`max`: max(@), `min`: min(@)})[0]", "{\"max\": 2.0, \"min\": 0.0}"),
                 new Query_DesiredResult("len(@.foo[:]{blah: 1})", "3"),
                 new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
+                new Query_DesiredResult("max_by(@.foo[:]{-@}[0], 1)", "[0, -1, -2]"),
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
+                new Query_DesiredResult("@{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6}", // JSON5-compliant unquoted strings
+                    "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\\\b\\\\n\": 6}"),
                 // recursive search
                 new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
                 new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
@@ -485,11 +536,21 @@ namespace JSON_Tools.Tests
             RemesParser remesParser = new RemesParser();
             List<string[]> testcases = new List<string[]>(new string[][]
             {
-                new string[] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
-                new string[] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
-                new string[] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
-                new string[] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
-                new string[] {"blahrurn(@, a)", "{}"}, // something that's not the name of an ArgFunction used where an ArgFunction was expected
+                new [] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
+                new [] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
+                new [] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
+                new [] {"to_records(@, g)", "{\"a\": [1, 2]}" }, // to_records throws when second arg is not n, r, d, or s 
+                new [] {"blahrurn(@, a)", "{}"}, // something that's not the name of an ArgFunction used where an ArgFunction was expected
+                new []{"= a", "\"b\""}, // assignment with no LHS
+                new []{"a = ", "\"b\""}, // assignment with no RHS
+                new []{"a = = b", "\"b\""}, // two assignment operators
+                new []{"+ a", "1"}, // unary functions with invalid args
+                new []{"+[]", "1" },
+                new []{"+{}", "1" }, 
+                new []{"not g`a`", "1"},
+                new []{"-a", "1"},
+                new []{"-[[]]", "1" },
+                new []{"-@", "[{}]"},
             });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
@@ -498,16 +559,17 @@ namespace JSON_Tools.Tests
                 foreach (string bop in Binop.BINOPS.Keys)
                 {
                     if (!(other == "\"1\"" && bop == "*"))
+                    {
                         testcases.Add(new string[] { $"@ {bop} 1", $"[{other}]" });
+                        testcases.Add(new string[] { $"@ {bop} true", $"[{other}]" });
+                        testcases.Add(new string[] { $"j`[{other}]` {bop} true", "null" });
+                        testcases.Add(new string[] { $"j`[{other}]` {bop} 1", "null" });
+                    }
                     testcases.Add(new string[] { $"1 {bop} @", $"[{other}]" });
                     // now try it with JSON literals defined inside the query
-                    if (!(other == "\"1\"" && bop == "*"))
-                        testcases.Add(new string[] { $"j`[{other}]` {bop} 1", "null" });
                     testcases.Add(new string[] { $"1 {bop} j`[{other}]`", "null" });
                     // now do it for booleans
-                    testcases.Add(new string[] { $"@ {bop} true", $"[{other}]" });
                     testcases.Add(new string[] { $"true {bop} @", $"[{other}]" });
-                    testcases.Add(new string[] { $"j`[{other}]` {bop} true", "null" });
                     testcases.Add(new string[] { $"true {bop} j`[{other}]`", "null" });
                     // now do it for doubles
                     testcases.Add(new string[] { $"@ {bop} 1.0", $"[{other}]" });

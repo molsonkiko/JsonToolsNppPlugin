@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -10,7 +11,7 @@ namespace JSON_Tools.Tests
 {
     public class JsonParserTester
     {
-        public static string NL = System.Environment.NewLine;
+        public static readonly string NL = System.Environment.NewLine;
 
         public static JNode TryParse(string input, JsonParser parser, bool is_json_lines = false)
         {
@@ -155,16 +156,16 @@ namespace JSON_Tools.Tests
                                     NL + "    \"\"" +
                                     NL + "    ]" +
                                     NL + "}";
-            var testcases = new string[][]
+            var testcases = new (string, string, string, string)[]
             {
-                new string[]{ example, norm_example, pprint_example, "general parsing" },
-                new string[] { "[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" },
-                new string[] { "\"abc\"", "\"abc\"", "\"abc\"", "scalar string" },
-                new string[] { "1", "1", "1", "scalar int" },
-                new string[] { "-1.0", "-1.0", "-1.0", "negative scalar float" },
-                new string[] { "3.5", "3.5", "3.5", "scalar float" },
-                new string[] { "-4", "-4", "-4", "negative scalar int" },
-                new string[] { "[{\"FullName\":\"C:\\\\123467756\\\\Z\",\"LastWriteTimeUtc\":\"\\/Date(1600790697130)\\/\"}," +
+                (example, norm_example, pprint_example, "general parsing"),
+                ("[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" ),
+                ("\"abc\"", "\"abc\"", "\"abc\"", "scalar string" ),
+                ("1", "1", "1", "scalar int" ),
+                ("-1.0", "-1.0", "-1.0", "negative scalar float" ),
+                ("3.5", "3.5", "3.5", "scalar float" ),
+                ("-4", "-4", "-4", "negative scalar int" ),
+                ("[{\"FullName\":\"C:\\\\123467756\\\\Z\",\"LastWriteTimeUtc\":\"\\/Date(1600790697130)\\/\"}," +
                             "{\"FullName\":\"C:\\\\123467756\\\\Z\\\\B\",\"LastWriteTimeUtc\":\"\\/Date(1618852147285)\\/\"}]",
                              "[{\"FullName\": \"C:\\\\123467756\\\\Z\", \"LastWriteTimeUtc\": \"/Date(1600790697130)/\"}, " +
                             "{\"FullName\": \"C:\\\\123467756\\\\Z\\\\B\", \"LastWriteTimeUtc\": \"/Date(1618852147285)/\"}]",
@@ -178,11 +179,13 @@ namespace JSON_Tools.Tests
                              NL + "    \"LastWriteTimeUtc\": \"/Date(1618852147285)/\"" +
                              NL + "    }" +
                              NL + "]",
-                             "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" },
-                new string[] { "111111111111111111111111111111", $"1.11111111111111E+29", $"1.11111111111111E+29",
-                    "auto-conversion of int64 overflow to double" },
-                new string[] {
-                    "{\"basst\": 1, \"baßk\": 1, \"blue\": 1, \"bLue\": 1, \"blve\": 1, \"blüe\": 1, \"oyster\": 1, \"spb\": 1, \"Spb\": 1, \"spä\": 1, \"öyster\": 1}",
+                             "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" ),
+                ("111111111111111111111111111111", $"1.11111111111111E+29", $"1.11111111111111E+29",
+                    "auto-conversion of int64 overflow to double" ),
+                ("{ \"a\"\r\n:1, \"b\" : 1, \"c\"       :1}", "{\"a\": 1, \"b\": 1, \"c\": 1}",
+                "{"+ NL + "\"a\": 1,"+ NL + "\"b\": 1,"+ NL + "\"c\": 1" + NL + "}",
+                "weirdly placed colons"),
+                (                    "{\"basst\": 1, \"baßk\": 1, \"blue\": 1, \"bLue\": 1, \"blve\": 1, \"blüe\": 1, \"oyster\": 1, \"spb\": 1, \"Spb\": 1, \"spä\": 1, \"öyster\": 1}",
                     "{\"baßk\": 1, \"basst\": 1, \"bLue\": 1, \"blue\": 1, \"blüe\": 1, \"blve\": 1, \"oyster\": 1, \"öyster\": 1, \"spä\": 1, \"spb\": 1, \"Spb\": 1}",
                     "{"
                     + NL + "\"baßk\": 1,"
@@ -197,14 +200,13 @@ namespace JSON_Tools.Tests
                     + NL + "\"spb\": 1,"
                     + NL + "\"Spb\": 1"
                     + NL + "}",
-                    "culture-sensitive sorting of keys (e.g., 'baßk' should sort before 'basst')"}
+                    "culture-sensitive sorting of keys (e.g., 'baßk' should sort before 'basst')"),
             };
             int tests_failed = 0;
             int ii = 0;
-            foreach (string[] test in testcases)
+            foreach ((string input, string norm_input, string pprint_desired, string msg_) in testcases)
             {
-                //(string input, string norm_input, string pprint_desired, string msg)
-                string input = test[0], norm_input = test[1], pprint_desired = test[2], msg = test[3];
+                string msg = msg_;
                 JNode json = TryParse(input, parser);
                 if (json == null)
                 {
@@ -731,12 +733,19 @@ multiline comment
                 ("Trno", "null",  new string[]{"Expected literal starting with 'T' to be True"}),
                 ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
                 ("Froeu", "null", new string[]{"Expected literal starting with 'F' to be False"}),
-                ("nurnoe", "null",new string[]{"Expected literal starting with 'n' to be null"}),
+                ("nurnoe", "null",new string[]{"Expected literal starting with 'n' to be null or nan"}),
                 ("Hugre", "null", new string[]{"Badly located character"}),
                 ("[undefined, underpants]", "[null, null]",
                 new string[]{
                     "undefined is not part of any JSON specification",
                     "Expected literal starting with 'u' to be undefined"
+                }),
+                ("[nan, inf, -inf]", "[NaN, Infinity, -Infinity]",
+                new string[]
+                {
+                    "nan is not a valid representation of Not a Number in JSON",
+                    "inf is not the correct representation of Infinity in JSON",
+                    "inf is not the correct representation of Infinity in JSON"
                 }),
                 ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
                 ("", "null", new string[]{"No input"}),
@@ -824,9 +833,9 @@ multiline comment
                 ("[True, False, None]", "[true, false, null]",
                 new string[]
                 {
-                    "'True' is not an accepted part of any JSON specification",
-                    "'False' is not an accepted part of any JSON specification",
-                    "'None' is not an accepted part of any JSON specification"
+                    "True is not an accepted part of any JSON specification",
+                    "False is not an accepted part of any JSON specification",
+                    "None is not an accepted part of any JSON specification"
                 }),
             };
 

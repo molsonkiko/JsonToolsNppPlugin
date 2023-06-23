@@ -59,7 +59,7 @@ The formal description of the language in pseudo-Backus-Naur form is in ["RemesP
         * `@ & 1` returns `{"a": 1, "b": 0, "c": 1}`.
         * `@ > @.a` returns `{"a": false, "b": true, "c": true}`.
 
-## Binary operators and arithmetic ##
+## Binary operators, unary operators and arithmetic ##
 
 All binary operators in RemesPath are vectorized over iterables.
 
@@ -80,16 +80,25 @@ Symbol | Operator                                      | Precedence | Return typ
  `/`   | division                                      |  3         | float
  `**`  | exponentiation                                |  5         | float
 
-As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentiation.
-
 All binary operators are [left-associative](https://en.wikipedia.org/wiki/Operator_associativity) (evaluated left-to-right when precedence is tied), except exponentiation (`**`), which is right-associative.
 
 In general, binary operators *should* raise an exception when two objects of unequal type are compared. The only exception is that numbers (including booleans) may be freely compared to other numbers, and ints and floats can freely interoperate.
 
-*Beginning in [v5.1.0](/CHANGELOG.md#510---2023-06-02), the `*` operator in supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` will return `["a", "bb", "ccc"]`.
+Starting in [v5.4.0](/CHANGELOG.md#540---2023-mm-dd-unreleased), all arithmetic operations can accept a boolean as one or both of the arguments. For example, prior to 5.4.0, `true * 3 - (false / 2.5)` was a type error, but since then it is valid. 
+
+*Beginning in [v5.1.0](/CHANGELOG.md#510---2023-06-02), the `*` operator in supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` will return `["a", "bb", "ccc"]`. Starting in [5.4.0](/CHANGELOG.md), multiplication of a string by a boolean or a negative integer is valid.
 
 If you find that a binary operator can operate on a number and a non-number without raising an exception, *this is a bug in my implementation.*
 
+### Unary operators ###
+
+As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentiation. Starting in [5.4.0](/CHANGELOG.md#540---2023-mm-dd-unreleased), the unary `+` operator has the same precedence as the unary minus operator. Unary `+` is a no-op on floats and ints, but it converts `true` and `false` to `1` and `0` respectively.
+
+The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-mm-dd-unreleased) (which replaced [the older function of the same name](#vectorized-functions)) is very similar to the Python operator of the same name:
+* `not true = false`, `not false = true`
+* `not 0.0 = not 0 = true`. `not <any nonzero number> = false`
+* `not <empty string> = true`, `not <non-empty string> = false`
+* `not [] = not {} = true`. `not <non-empty array or object> = false`
 
 ## Regular expressions and JSON literals ##
 
@@ -572,7 +581,7 @@ Returns the log base 2 of x.
 ----
 `not(x: bool) -> bool`
 
-Logical `NOT`.
+Logical `NOT`. __Replaced with a unary operator of the same name in [5.4.0](/CHANGELOG.md#540---2023-mm-dd-unreleased).__
 
 ----
 `round(x: number, sigfigs: int = 0) -> float | int)`

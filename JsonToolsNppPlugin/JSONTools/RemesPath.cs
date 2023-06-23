@@ -3,9 +3,7 @@ A query language for JSON.
 */
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
 
@@ -204,15 +202,24 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public JNode Compile(List<object> selector_toks, List<object> mutator_toks = null)
+        public JNode Compile(List<object> toks)
         {
-            if (mutator_toks != null)
+            int indexOfAssignment = toks.IndexOf('=');
+            if (indexOfAssignment == 0)
+                throw new RemesPathException("Assignment with no LHS");
+            if (indexOfAssignment == toks.Count - 1)
+                throw new RemesPathException("Assignment with no RHS");
+            if (indexOfAssignment > 0)
             {
-                var selector = Compile(selector_toks);
-                var mutator = Compile(mutator_toks);
+                if (toks.Count(x => x is char c && c == '=') > 1)
+                    throw new RemesPathException("Only one '=' assignment operator allowed in a query");
+                List<object> selector_toks = (List<object>)toks.Slice(0, indexOfAssignment);
+                List<object> mutator_toks = (List<object>)toks.Slice(indexOfAssignment + 1, toks.Count);
+                JNode selector = (JNode)ParseExprOrScalarFunc(selector_toks, 0).obj;
+                JNode mutator = (JNode)ParseExprOrScalarFunc(mutator_toks, 0).obj;
                 return new JMutator(selector, mutator);
             }
-            return (JNode)ParseExprOrScalarFunc(selector_toks, 0).obj;
+            return (JNode)ParseExprOrScalarFunc(toks, 0).obj;
         }
 
         /// <summary>
@@ -225,9 +232,8 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode Search(string query, JNode obj)
         {
-
-            (List<object> selector_toks, List<object> mutator_toks) = lexer.Tokenize(query);
-            JNode compiled_query = Compile(selector_toks, mutator_toks);
+            List<object> toks = lexer.Tokenize(query);
+            JNode compiled_query = Compile(toks);
             if (compiled_query is CurJson cjres)
             {
                 return cjres.function(obj);
@@ -239,9 +245,9 @@ namespace JSON_Tools.JSON_Tools
             return compiled_query;
         } 
 
-        public static string EXPR_FUNC_ENDERS = "]:},)";
+        public static readonly string EXPR_FUNC_ENDERS = "]:},)";
         // these tokens have high enough precedence to stop an expr_function or scalar_function
-        public static string INDEXER_STARTERS = ".[{";
+        public static readonly string INDEXER_STARTERS = ".[{";
 
         #region INDEXER_FUNCTIONS
         private Func<JNode, IEnumerable<object>> ApplyMultiIndex(object inds, bool is_varname_list, bool is_recursive = false)
@@ -536,21 +542,6 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        /// <summary>
-        /// return 2 if x is not an object or array<br></br>
-        /// If it is an object or array:<br></br> 
-        /// return 1 if its length is 0.<br></br>
-        /// else return 0.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        private static int ObjectOrArrayEmpty(JNode x)
-        {
-            if (x is JObject obj) { return (obj.Length == 0) ? 1 : 0; }
-            if (x is JArray arr)  { return (arr.Length == 0) ? 1 : 0; }
-            return 2;
-        }
-
         private Func<JNode, JNode> ApplyIndexerList(List<IndexerFunc> indexers)
         {
             JNode idxr_list_func(JNode obj, List<IndexerFunc> idxrs, int ii)
@@ -639,7 +630,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return v1_subdex;
                 }
-                int is_empty = ObjectOrArrayEmpty(v1_subdex);
+                int is_empty = Binop.ObjectOrArrayEmpty(v1_subdex);
                 if (is_dict)
                 {
                     var kv = (KeyValuePair<string, JNode>)current;
@@ -652,7 +643,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         kv = (KeyValuePair<string, JNode>)inds.Current;
                         JNode subdex = idxr_list_func(kv.Value, idxrs, ii + 1);
-                        is_empty = ObjectOrArrayEmpty(subdex);
+                        is_empty = Binop.ObjectOrArrayEmpty(subdex);
                         if (is_empty != 1)
                         {
                             dic[kv.Key] = subdex;
@@ -670,7 +661,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     var v = (JNode)inds.Current;
                     JNode subdex = idxr_list_func(v, idxrs, ii + 1);
-                    is_empty = ObjectOrArrayEmpty(subdex);
+                    is_empty = Binop.ObjectOrArrayEmpty(subdex);
                     if (is_empty != 1)
                     {
                         arr.Add(subdex);
@@ -682,283 +673,13 @@ namespace JSON_Tools.JSON_Tools
         }
 
         #endregion
-        #region BINOP_FUNCTIONS
-        private JNode BinopTwoJsons(Binop b, JNode left, JNode right)
-        {
-            if (ObjectOrArrayEmpty(right) == 2)
-            {
-                if (ObjectOrArrayEmpty(left) == 2)
-                {
-                    return b.Call(left, right);
-                }
-                return BinopJsonScalar(b, left, right);
-            }
-            if (ObjectOrArrayEmpty(left) == 2)
-            {
-                return BinopScalarJson(b, left, right);
-            }
-            if (right is JObject robj)
-            {
-                var dic = new Dictionary<string, JNode>();
-                var lobj = (JObject)left;
-                if (robj.Length != lobj.Length)
-                {
-                    throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
-                }
-                foreach (KeyValuePair<string, JNode> rkv in robj.children)
-                {
-                    bool left_has_key = lobj.children.TryGetValue(rkv.Key, out JNode left_val);
-                    if (!left_has_key)
-                    {
-                        throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
-                    }
-                    dic[rkv.Key] = b.Call(left_val, rkv.Value);
-                }
-                return new JObject(0, dic);
-            }
-            var arr = new List<JNode>();
-            var rarr = (JArray)right;
-            var larr = (JArray)left;
-            if (larr.Length != rarr.Length)
-            {
-                throw new VectorizedArithmeticException("Tried to perform vectorized arithmetic on two arrays of unequal length");
-            }
-            for (int ii = 0; ii < rarr.Length; ii++)
-            {
-                arr.Add(b.Call(larr[ii], rarr[ii]));
-            }
-            return new JArray(0, arr);
-        }
-
-        private JNode BinopJsonScalar(Binop b, JNode left, JNode right)
-        {
-            if (left is JObject lobj)
-            {
-                var dic = new Dictionary<string, JNode>();
-                foreach (KeyValuePair<string, JNode> lkv in lobj.children)
-                {
-                    dic[lkv.Key] = b.Call(lkv.Value, right);
-                }
-                return new JObject(0, dic);
-            }
-            var arr = new List<JNode>();
-            var larr = (JArray)left;
-            for (int ii = 0; ii < larr.Length; ii++)
-            {
-                arr.Add(b.Call(larr[ii], right));
-            }
-            return new JArray(0, arr);
-        }
-
-        private JNode BinopScalarJson(Binop b, JNode left, JNode right)
-        {
-            if (right is JObject robj)
-            {
-                var dic = new Dictionary<string, JNode>();
-                foreach (KeyValuePair<string, JNode> rkv in robj.children)
-                {
-                    dic[rkv.Key] = b.Call(left, rkv.Value);
-                }
-                return new JObject(0, dic);
-            }
-            var arr = new List<JNode>();
-            var rarr = (JArray)right;
-            for (int ii = 0; ii < rarr.Length; ii++)
-            {
-                arr.Add(b.Call(left, rarr[ii]));
-            }
-            return new JArray(0, arr);
-        }
-
-        /// <summary>
-        /// For a given binop and the types of two JNodes, determines the output's type.<br></br>
-        /// Raises a RemesPathException if the types are inappropriate for that Binop.<br></br>
-        /// EXAMPLES<br></br>
-        /// BinopOutType(Binop.BINOPS["+"], Dtype.STR, Dtype.STR) -> Dtype.STR<br></br>
-        /// BinopOutType(Binop.BINOPS["**"], Dtype.STR, Dtype.INT) -> throws RemesPathException<br></br>
-        /// BinopOutType(Binop.BINOPS["*"], Dtype.INT, Dtype.FLOAT) -> Dtype.FLOAT
-        /// </summary>
-        /// <param name="b"></param>
-        /// <param name="ltype"></param>
-        /// <param name="rtype"></param>
-        /// <returns></returns>
-        /// <exception cref="RemesPathException"></exception>
-        private Dtype BinopOutType(Binop b, Dtype ltype, Dtype rtype)
-        {
-            if (ltype == Dtype.UNKNOWN || rtype == Dtype.UNKNOWN) { return Dtype.UNKNOWN; }
-            if (ltype == Dtype.OBJ || rtype == Dtype.OBJ)
-            {
-                if (ltype == Dtype.ARR || rtype == Dtype.ARR)
-                {
-                    throw new RemesPathException("Cannot have a function of an array and an object");
-                }
-                return Dtype.OBJ;
-            }
-            if (ltype == Dtype.ARR || rtype == Dtype.ARR)
-            {
-                if (ltype == Dtype.OBJ || rtype == Dtype.OBJ)
-                {
-                    throw new RemesPathException("Cannot have a function of an array and an object");
-                }
-                return Dtype.ARR;
-            }
-            string name = b.name;
-            if (Binop.BOOLEAN_BINOPS.Contains(name)) { return Dtype.BOOL; }
-            if ((ltype & Dtype.NUM) == 0 && (rtype & Dtype.NUM) == 0)
-            {
-                if (name == "+")
-                {
-                    if (ltype == Dtype.STR || rtype == Dtype.STR)
-                    {
-                        if (rtype != Dtype.STR || ltype != Dtype.STR)
-                        {
-                            throw new RemesPathException("Cannot add non-string to string");
-                        }
-                        return Dtype.STR;
-                    }
-                }
-                throw new RemesPathException($"Invalid argument types {JNode.FormatDtype(ltype)}" +
-                                            $" and {JNode.FormatDtype(rtype)} for binop {name}");
-            }
-            if (Binop.BITWISE_BINOPS.Contains(name)) // ^, & , |
-            {
-                // return ints if acting on two ints, bools when acting on two bools
-                if (ltype == Dtype.INT && rtype == Dtype.INT)
-                {
-                    return Dtype.INT;
-                }
-                if (ltype == Dtype.BOOL && rtype == Dtype.BOOL)
-                    return Dtype.BOOL;
-                throw new RemesPathException($"Incompatible types {JNode.FormatDtype(ltype)}" +
-                                            $" and {JNode.FormatDtype(rtype)} for bitwise binop {name}");
-            }
-            // it's a polymorphic binop - one of -, +, *, %
-            if (rtype == Dtype.BOOL && ltype == Dtype.BOOL)
-            {
-                throw new RemesPathException($"Can't do arithmetic operation {name} on two bools");
-            }
-            if (name == "//") { return Dtype.INT; }
-            if (Binop.FLOAT_RETURNING_BINOPS.Contains(name)) { return Dtype.FLOAT; } 
-            // division and exponentiation always give doubles
-            if (((rtype & Dtype.INT) != 0) && ((ltype & Dtype.INT) != 0))
-            {
-                return rtype & ltype;
-            }
-            return Dtype.FLOAT;
-        }
-
-        /// <summary>
-        /// Handles all possible argument combinations for a Binop being called on two JNodes:<br></br>
-        /// iterable and iterable, iterable and scalar, iterable that's a function of the current JSON and scalar 
-        /// that's not, etc.<br></br>
-        /// Throws a RemesPathException if an invalid combination of types is chosen.
-        /// </summary>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        private JNode ResolveBinop(Binop b, JNode left, JNode right)
-        {
-            bool left_itbl = (left.type & Dtype.ITERABLE) != 0;
-            bool right_itbl = (right.type & Dtype.ITERABLE) != 0;
-            Dtype out_type = BinopOutType(b, left.type, right.type);
-            if (left is CurJson lcur)
-            {
-                if (right is CurJson rcur_)
-                {
-                    if (left_itbl)
-                    {
-                        if (right_itbl)
-                        {
-                            // they're both iterables or unknown type
-                            return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
-                        }
-                        // only left is an iterable and unknown type
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
-                    }
-                    if (right_itbl)
-                    {
-                        // right is iterable or unknown, but left is not iterable
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), rcur_.function(x)));
-                    }
-                    // they're both scalars
-                    return new CurJson(out_type, (JNode x) => b.Call(lcur.function(x), rcur_.function(x)));
-                }
-                // right is not a function of the current JSON, but left is
-                if (left_itbl)
-                {
-                    if (right_itbl)
-                    {
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), right));
-                    }
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), right));
-                }
-                if (right_itbl)
-                {
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, lcur.function(x), right));
-                }
-                return new CurJson(out_type, (JNode x) => b.Call(lcur.function(x), right));
-            }
-            if (right is CurJson rcur)
-            {
-                // left is not a function of the current JSON, but right is
-                if (left_itbl)
-                {
-                    if (right_itbl)
-                    {
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, left, rcur.function(x)));
-                    }
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, left, rcur.function(x)));
-                }
-                if (right_itbl)
-                {
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(b, left, rcur.function(x)));
-                }
-                return new CurJson(out_type, (JNode x) => b.Call(left, rcur.function(x)));
-            }
-            // neither is a function of the current JSON
-            if (left_itbl)
-            {
-                if (right_itbl)
-                {
-                    return BinopTwoJsons(b, left, right);
-                }
-                return BinopJsonScalar(b, left, right);
-            }
-            if (right_itbl)
-            {
-                return BinopScalarJson(b, left, right);
-            }
-            return b.Call(left, right);
-        }
-
-        /// <summary>
-        /// Resolves a binop where left and right may also be binops, by recursively descending to left and right<br></br>
-        /// and resolving the leaf binops.
-        /// </summary>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        private JNode ResolveBinopTree(BinopWithArgs b)
-        {
-            object left = b.left;
-            object right = b.right;
-            if (left is BinopWithArgs bwl)
-            {
-                left = ResolveBinopTree(bwl);
-            }
-            if (right is BinopWithArgs bwr)
-            {
-                right = ResolveBinopTree(bwr);
-            }
-            return ResolveBinop(b.binop, (JNode)left, (JNode)right);
-        }
-
-        #endregion
         #region APPLY_ARG_FUNCTION
         private JNode ApplyArgFunction(ArgFunctionWithArgs func)
         {
-            if (func.function.max_args == 0)
+            if (func.function.maxArgs == 0)
             {
                 // paramterless function like rand()
-                if (!func.function.is_deterministic)
+                if (!func.function.isDeterministic)
                     return new CurJson(func.function.type, blah => func.function.Call(func.args));
                 return func.function.Call(func.args);
             }
@@ -975,11 +696,11 @@ namespace JSON_Tools.JSON_Tools
             // when operating on scalars (e.g. s_len returns an array when acting on an array and a dict
             // when operating on a dict, but s_len always returns an int when acting on a single string)
             // non-vectorized functions always return the same type
-            Dtype out_type = func.function.is_vectorized && ((x.type & Dtype.ITERABLE) != 0) ? x.type : func.function.type;
+            Dtype out_type = func.function.isVectorized && ((x.type & Dtype.ITERABLE) != 0) ? x.type : func.function.type;
             List<JNode> all_args = new List<JNode>(func.args.Count);
             foreach (var a in func.args)
                 all_args.Add(null);
-            if (func.function.is_vectorized)
+            if (func.function.isVectorized)
             {
                 if (x is CurJson xcur)
                 {
@@ -996,7 +717,7 @@ namespace JSON_Tools.JSON_Tools
                             }
                             if (itbl is JObject otbl)
                             {
-                                var dic = new Dictionary<string, JNode>();
+                                var dic = new Dictionary<string, JNode>(otbl.Length);
                                 foreach (KeyValuePair<string, JNode> okv in otbl.children)
                                 {
                                     dic[okv.Key] = func.function.Call(all_args);
@@ -1035,7 +756,7 @@ namespace JSON_Tools.JSON_Tools
                             var itbl = xcur.function(inp);
                             if (itbl is JObject otbl)
                             {
-                                var dic = new Dictionary<string, JNode>();
+                                var dic = new Dictionary<string, JNode>(otbl.Length);
                                 foreach (KeyValuePair<string, JNode> okv in otbl.children)
                                 {
                                     all_args[0] = okv.Value;
@@ -1068,7 +789,7 @@ namespace JSON_Tools.JSON_Tools
                         JObject xobj = (JObject)x;
                         JNode arg_outfunc(JNode inp)
                         {
-                            var dic = new Dictionary<string, JNode>();
+                            var dic = new Dictionary<string, JNode>(xobj.Length);
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
@@ -1122,7 +843,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    if (!func.function.is_deterministic)
+                    if (!func.function.isDeterministic)
                         return new CurJson(func.function.type, blah => CallVectorizedArgFuncWithArgs(x, other_args, all_args, func.function));
                     return CallVectorizedArgFuncWithArgs(x, other_args, all_args, func.function);
                 }
@@ -1185,7 +906,7 @@ namespace JSON_Tools.JSON_Tools
                     all_args[ii + 1] = other_arg;
                 }
                 all_args[0] = x;
-                if (!func.function.is_deterministic)
+                if (!func.function.isDeterministic)
                     return new CurJson(func.function.type, blah => func.function.Call(all_args));
                 return func.function.Call(all_args);
             }
@@ -1209,7 +930,7 @@ namespace JSON_Tools.JSON_Tools
             }
             if (x is JObject xobj)
             {
-                var dic = new Dictionary<string, JNode>();
+                var dic = new Dictionary<string, JNode>(xobj.Length);
                 foreach (KeyValuePair<string, JNode> xkv in xobj.children)
                 {
                     all_args[0] = xobj[xkv.Key];
@@ -1219,7 +940,7 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (x is JArray xarr)
             {
-                var arr = new List<JNode>();
+                var arr = new List<JNode>(xarr.Length);
                 foreach (JNode val in xarr.children)
                 {
                     all_args[0] = val;
@@ -1659,116 +1380,110 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return new Obj_Pos((JNode)curtok, pos + 1);
             }
-            bool uminus = false;
-            object left_tok = null;
-            object left_operand = null;
-            float left_precedence = float.MinValue;
-            BinopWithArgs root = null;
-            BinopWithArgs leaf = null;
-            object[] children = new object[2];
+            object leftTok = null;
+            object leftOperand = null;
+            var unopStack = new List<UnaryOp>();
+            UnaryOp unop;
+            var bwaStack = new List<BinopWithArgs>();
+            var argStack = new List<object>();
             while (pos < toks.Count)
             {
-                left_tok = curtok;
+                leftTok = curtok;
                 curtok = toks[pos];
                 if (curtok is char curd && EXPR_FUNC_ENDERS.Contains(curd))
                 {
-                    if (left_tok == null)
+                    if (leftTok == null)
                     {
                         throw new RemesPathException("No expression found where scalar expected");
                     }
-                    curtok = left_tok;
                     break;
                 }
-                if (curtok is Binop func)
+                if (curtok is Binop bop)
                 {
-                    if (left_tok == null || left_tok is Binop)
+                    if (!(leftTok is JNode))
                     {
-                        if (func.name != "-")
-                        {
-                            throw new RemesPathException($"Binop {func.name} with invalid left operand");
-                        }
-                        uminus = !uminus;
+                        // no left operand for binop, so maybe the current binop is actually a unary operator with same name
+                        if (UnaryOp.UNARY_OPS.TryGetValue(bop.name, out unop))
+                            unop.AddToStack(unopStack);
+                        else
+                            throw new RemesPathException($"Binop {bop.name} with invalid left operand");
                     }
                     else
                     {
-                        float show_precedence = func.precedence;
-                        if (func.name == "**")
+                        List<JNode> leftOperandTransformations = null;
+                        List<Binop> binopTransformations = null;
+                        if (unopStack.Count > 0)
                         {
-                            show_precedence += (float)0.1;
-                            // to account for right associativity or exponentiation
-                            if (uminus)
+                            if (!(leftOperand is JNode leftNode))
+                                throw new RemesPathException($"Binop has non-JNode operand {leftOperand}");
+                            leftOperandTransformations = new List<JNode>{ leftNode };
+                            binopTransformations = new List<Binop> { bop };
+                        }
+                        while (unopStack.Count > 0)
+                        {
+                            unop = unopStack.Pop();
+                            if (bop.PrecedesLeft(unop.precedence))
                             {
-                                // to account for exponentiation binding more tightly than unary minus
-                                curtok = func = new Binop(Binop.NegPow, show_precedence, "negpow");
-                                uminus = false;
-                            }
-                        }
-                        else
-                        {
-                            show_precedence = func.precedence;
-                        }
-                        if (left_precedence >= show_precedence)
-                        {
-                            // the left binop wins, so it takes the last operand as its right.
-                            // this binop becomes the root, and the next binop competes with it.
-                            leaf.right = left_operand;
-                            var newroot = new BinopWithArgs(func, root, null);
-                            leaf = root = newroot;
-                        }
-                        else
-                        {
-                            // the current binop wins, so it takes the left operand as its left.
-                            // the root stays the same, and the next binop competes with the current binop
-                            if (root == null)
-                            {
-                                leaf = root = new BinopWithArgs(func, left_operand, null);
+                                // unop has lower precedence than binop, so will be applied to the result of the binop's evaluation
+                                var oldBop = binopTransformations.Last();
+                                Func<JNode, JNode, JNode> oldBopCall = oldBop.Call;
+                                Func<JNode, JNode> unopCall = unop.Call;
+                                binopTransformations.Add(new Binop(
+                                    (a, b) => unopCall(oldBopCall(a, b)),
+                                    oldBop.precedence, oldBop.name, oldBop.is_right_associative));
                             }
                             else
                             {
-                                var newleaf = new BinopWithArgs(func, left_operand, null);
-                                leaf.right = newleaf;
-                                leaf = newleaf;
+                                // unop called on left operand because it precedes current binop
+                                // binop will now act on unop'd left operand; pop unop from stack
+                                var oldLeftOperand = leftOperandTransformations.Last();
+                                leftOperandTransformations.Add(unop.Call(oldLeftOperand));
                             }
                         }
-                        left_precedence = func.precedence;
+                        if (leftOperandTransformations != null)
+                            argStack[argStack.Count - 1] = leftOperandTransformations.Last();
+                        if (binopTransformations != null)
+                            bop = binopTransformations.Last();
+                        bwaStack.Add(new BinopWithArgs(bop, null, null));
+                        leftOperand = BinopWithArgs.ResolveStack(bwaStack, argStack);
                     }
+                    pos++;
+                }
+                else if (curtok is UnaryOp unop_)
+                {
+                    unop_.AddToStack(unopStack);
                     pos++;
                 }
                 else
                 {
-                    if (left_tok != null && !(left_tok is Binop))
-                    {
-                        throw new RemesPathException("Can't have two iterables or scalars unseparated by a binop");
-                    }
                     Obj_Pos opo = ParseExprOrScalar(toks, pos);
-                    left_operand = opo.obj;
                     pos = opo.pos;
-                    if (uminus)
+                    if (!(opo.obj is JNode onode))
+                        throw new RemesPathException($"Expected JNode, got {opo.obj.GetType()}");
+                    nt = PeekNextToken(toks, pos - 1);
+                    if (nt == null || (nt is char nd_ && EXPR_FUNC_ENDERS.Contains(nd_)))
                     {
-                        nt = PeekNextToken(toks, pos - 1);
-                        if (!(nt != null && nt is Binop bnt && bnt.name == "**"))
+                        // no more binops for unary operators to fight with, so just apply all of them
+                        while (unopStack.Count > 0)
                         {
-                            // applying unary minus to this expr/scalar has higher precedence than everything except
-                            // exponentiation.
-                            List<JNode> args = new List<JNode> { (JNode)left_operand };
-                            var uminus_func = new ArgFunctionWithArgs(ArgFunction.FUNCTIONS["__UMINUS__"], args);
-                            left_operand = ApplyArgFunction(uminus_func);
-                            uminus = false;
+                            JNode oldOnode = onode;
+                            unop = unopStack.Pop();
+                            JNode newOnode = unop.Call(oldOnode);
+                            onode = newOnode;
                         }
                     }
-                    curtok = left_operand;
+                    argStack.Add(onode);
+                    // no binop coming up, so clean up the stack
+                    if (pos >= toks.Count || !(toks[pos] is Binop && bwaStack.Count > 0))
+                        leftOperand = BinopWithArgs.ResolveStack(bwaStack, argStack);
+                    curtok = onode;
                 }
             }
-            if (root != null)
-            {
-                leaf.right = curtok;
-                left_operand = ResolveBinopTree(root);
-            }
-            if (left_operand == null)
+            if (leftOperand == null)
             {
                 throw new RemesPathException("Null return from ParseExprOrScalar");
             }
-            return new Obj_Pos((JNode)left_operand, pos);
+            return new Obj_Pos(leftOperand, pos);
         }
 
         private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun)
@@ -1777,8 +1492,8 @@ namespace JSON_Tools.JSON_Tools
             pos++;
             int arg_num = 0;
             Dtype[] intypes = fun.InputTypes();
-            List<JNode> args = new List<JNode>(fun.min_args);
-            if (fun.max_args == 0)
+            List<JNode> args = new List<JNode>(fun.minArgs);
+            if (fun.maxArgs == 0)
             {
                 t = toks[pos];
                 if (!(t is char d_ && d_ == ')'))
@@ -1828,7 +1543,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if (cur_arg == null || (cur_arg.type & type_options) == 0)
                     {
-                        Dtype arg_type = (cur_arg) == null ? Dtype.NULL : cur_arg.type;
+                        Dtype arg_type = cur_arg == null ? Dtype.NULL : cur_arg.type;
                         throw new RemesPathArgumentException($"got type {JNode.FormatDtype(arg_type)}", arg_num, fun);
                     }
                 }
@@ -1849,19 +1564,19 @@ namespace JSON_Tools.JSON_Tools
                 {
                     throw new RemesPathException($"Arguments of arg functions must be followed by ',' or ')', not {t}");
                 }
-                if (arg_num + 1 < fun.min_args && !comma)
+                if (arg_num + 1 < fun.minArgs && !comma)
                 {
-                    if (fun.min_args == fun.max_args)
-                        throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
+                    if (fun.minArgs == fun.maxArgs)
+                        throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
                     throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} " +
-                                                 $"({fun.min_args} - {fun.max_args} args)");
+                                                 $"({fun.minArgs} - {fun.maxArgs} args)");
                 }
-                if (arg_num + 1 == fun.max_args && !close_paren)
+                if (arg_num + 1 == fun.maxArgs && !close_paren)
                 {
-                    if (fun.min_args == fun.max_args)
-                        throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
+                    if (fun.minArgs == fun.maxArgs)
+                        throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
                     throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} " +
-                                                 $"({fun.min_args} - {fun.max_args} args)");
+                                                 $"({fun.minArgs} - {fun.maxArgs} args)");
                 }
                 args.Add(cur_arg);
                 arg_num++;
@@ -1869,10 +1584,10 @@ namespace JSON_Tools.JSON_Tools
                 if (close_paren)
                 {
                     var withargs = new ArgFunctionWithArgs(fun, args);
-                    if (fun.max_args < int.MaxValue)
+                    if (fun.maxArgs < int.MaxValue)
                     {
                         // for functions that have a fixed number of optional args, pad the unfilled args with null nodes
-                        for (int arg2 = arg_num; arg2 < fun.max_args; arg2++)
+                        for (int arg2 = arg_num; arg2 < fun.maxArgs; arg2++)
                         {
                             args.Add(new JNode());
                         }
@@ -1880,10 +1595,10 @@ namespace JSON_Tools.JSON_Tools
                     return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }
             }
-            if (fun.min_args == fun.max_args)
-                throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.max_args} args)");
+            if (fun.minArgs == fun.maxArgs)
+                throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
             throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} "
-                                         + $"({fun.min_args} - {fun.max_args} args)");
+                                         + $"({fun.minArgs} - {fun.maxArgs} args)");
         }
 
         private Obj_Pos ParseProjection(List<object> toks, int pos)
