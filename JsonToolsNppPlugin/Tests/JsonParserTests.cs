@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -970,6 +971,27 @@ Got
                 catch { }
             }
 
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
+
+        public static void TestCultureIssues()
+        {
+            int ii = 0;
+            int tests_failed = 0;
+            // change current culture to German because they use a comma decimal sep (see https://github.com/molsonkiko/JsonToolsNppPlugin/issues/17)
+            ii++;
+            CultureInfo currentCulture = CultureInfo.CurrentCulture;
+            CultureInfo.CurrentCulture = new CultureInfo("de-de", true);
+            JNode jsonFloat2 = new JsonParser().Parse("2.0");
+            string jsonFloat2str = jsonFloat2.ToString();
+            if (jsonFloat2str != "2.0")
+            {
+                tests_failed++;
+                Npp.AddLine("Expected parsing of 2.0 to return 2.0 even when the current culture is German, " +
+                    $"but instead got {jsonFloat2str} when the culture is German");
+            }
+            CultureInfo.CurrentCulture = currentCulture;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }

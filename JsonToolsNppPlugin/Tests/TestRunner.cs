@@ -48,6 +48,12 @@ Testing JSON Lines parser
             JsonParserTester.TestJsonLines();
 
             Npp.AddLine(@"=========================
+Testing that parsing of numbers does not depend on current culture
+=========================
+");
+            JsonParserTester.TestCultureIssues();
+
+            Npp.AddLine(@"=========================
 Testing YAML dumper
 =========================
 ");
