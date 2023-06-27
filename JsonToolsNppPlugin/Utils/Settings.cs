@@ -63,9 +63,13 @@ namespace JSON_Tools.Utils
         #endregion
 
         #region JSON_FORMATTING_SETTINGS
-        [Description("The indentation between levels of JSON when pretty-printing"),
+        [Description("The number of spaces between levels of JSON when pretty-printing"),
             Category("JSON formatting"), DefaultValue(4)]
         public int indent_pretty_print { get; set; }
+
+        [Description("Use one horizontal tab ('\\t') instead of spaces between levels of JSON when pretty-printing"),
+            Category("JSON formatting"), DefaultValue(false)]
+        public bool tab_indent_pretty_print { get; set; }
 
         [Description("If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays"),
             Category("JSON formatting"), DefaultValue(true)]

@@ -523,58 +523,33 @@ namespace JSON_Tools.Tests
             }
             string onetofive_str = "[1,2,3,4,5]";
             JNode onetofive = jsonParser.Parse(onetofive_str);
-            var slice_testcases = new Query_DesiredResult[]
-            {
-                new Query_DesiredResult("@[2]", "3"),
-                new Query_DesiredResult("@[:]", "[1,2,3,4,5]"),
-                new Query_DesiredResult("@[:1]", "[1]"),
-                new Query_DesiredResult("@[::-1]", "[5, 4, 3, 2, 1]"),
-                new Query_DesiredResult("@[1:3]", "[2, 3]"),
-                new Query_DesiredResult("@[1::3]", "[2, 5]"),
-                new Query_DesiredResult("@[1:4:2]", "[2, 4]"),
-                new Query_DesiredResult("@[2::-1]", "[3, 2, 1]"),
-                new Query_DesiredResult("@[4:1:-2]", "[5, 3]"),
-                new Query_DesiredResult("@[1::3]", "[2, 5]"),
-                new Query_DesiredResult("@[4:2:-1]", "[5, 4]"),
-                new Query_DesiredResult("@[:-3]", "[1,2]"),
-                new Query_DesiredResult("@[-4:-1]", "[2,3,4]"),
-                new Query_DesiredResult("@[-4::2]", "[2, 4]"),
-                new Query_DesiredResult("@[-3]", "3"),
-                new Query_DesiredResult("@[-3::1]", "[3,4,5]"),
-                new Query_DesiredResult("@[-3:]", "[3,4,5]"),
-                new Query_DesiredResult("@[-3::-1]", "[3,2,1]"),
-                new Query_DesiredResult("@[-1:1:-2]", "[5, 3]"),
-                new Query_DesiredResult("@[1:-1]", "[2,3,4]"),
-                new Query_DesiredResult("@[3::-2]", "[4, 2]"),
-                new Query_DesiredResult("@[3::-3]", "[4, 1]"),
-                new Query_DesiredResult("@[3::-4]", "[4]"),
-                new Query_DesiredResult("@[-4:4]", "[2,3,4]"),
-                new Query_DesiredResult("@[-4:4:2]", "[2, 4]"),
-                new Query_DesiredResult("@[2:-2:2]", "[3]"),
-                new Query_DesiredResult("@[3::5]", "[4]"),
-                new Query_DesiredResult("@[5:]", "[ ]"),
-                new Query_DesiredResult("@[3:8]", "[4, 5]"),
-                new Query_DesiredResult("@[-2:15]", "[4,5]")
-            };
-            foreach (Query_DesiredResult qd in slice_testcases)
+            (string query, JArray desired_result)[] slice_testcases = SliceTester.str_testcases
+                .Select(testcase => ( // convert int[] into JArray of JNode with long value and Dtype.INT
+                    $"@[{testcase.slicer}]",
+                    new JArray(0,
+                        testcase.desired
+                        .Select(i => new JNode((long)i))
+                        .ToList())
+                ))
+                .ToArray();
+            foreach ((string query, JArray desired_result) in slice_testcases)
             {
                 ii++;
-                JNode jdesired_result = jsonParser.Parse(qd.desired_result);
                 try
                 {
-                    result = remesparser.Search(qd.query, onetofive);
+                    result = remesparser.Search(query, onetofive);
                 }
                 catch (Exception ex)
                 {
                     tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, {onetofive_str}) to return {jdesired_result.ToString()}, but instead threw" +
+                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!(result.type == jdesired_result.type && result.Equals(jdesired_result)))
+                if (!(result.type == desired_result.type && result.Equals(desired_result)))
                 {
                     tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, {onetofive_str}) to return {jdesired_result.ToString()}, " +
+                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }

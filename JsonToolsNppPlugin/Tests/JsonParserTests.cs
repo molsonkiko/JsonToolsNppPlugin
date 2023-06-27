@@ -383,6 +383,21 @@ Got
     {2}",
                         ii + 1, correct_pprint_objstr, actual_pprint_objstr));
                 }
+                ii++;
+                // the formatting with '\t' indent is actually significantly different
+                // because having only 1 char of indent makes it so all the sub-children fit on a single line 
+                string correct_pprint_objstr_tab_indent = "{\r\n\t\"a\": [1, 2, 3],\r\n\t\"b\": {},\r\n\t\"Я草\": [],\r\n\t\"😀\": [\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]\r\n\t]\r\n}";
+                string actual_pprint_objstr_tab_indent = obj.PrettyPrint(1, false, PrettyPrintStyle.PPrint, int.MaxValue, '\t');
+                if (actual_pprint_objstr_tab_indent != correct_pprint_objstr_tab_indent)
+                {
+                    tests_failed++;
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected PPrint-style PrettyPrintAndChangePositions(obj) with tab indentation to return
+    {1}
+    instead got
+    {2}",
+                        ii + 1, correct_pprint_objstr_tab_indent, actual_pprint_objstr_tab_indent));
+                }
                 var keylines = new (string key,
                     int original_pos, int whitesmith_pos, int google_pos,
                     int tostring_miniwhite_pos, int tostring_pos, int pprint_pos)[]

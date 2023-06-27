@@ -399,7 +399,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="indent">the number of spaces per level of nesting.</param>
         /// <param name="depth">the current depth of nesting.</param>
         /// <returns>a pretty-printed JSON string</returns>
-        public virtual string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public virtual string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             return ToString();
         }
@@ -416,7 +416,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="depth"></param>
         /// <param name="extra_utf8_bytes"></param>
         /// <returns></returns>
-        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
         {
             return ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_length);
         }
@@ -445,12 +445,12 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="indent"></param>
         /// <returns></returns>
-        public virtual string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public virtual string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             return ToString();
         }
 
-        public virtual int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length)
+        public virtual int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
         {
             return ToStringHelper(sort_keys, ":", ",", sb, change_positions, extra_utf8_bytes, int.MaxValue);
         }
@@ -896,21 +896,21 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(8 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, position, max_length);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, position, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
         {
             if (sb.Length >= max_length)
                 return -1;
-            string dent = new string(' ', indent * depth);
+            string dent = new string(indent_char, indent * depth);
             int ctr = 0;
             IEnumerable<string> keys;
             if (sort_keys)
@@ -935,7 +935,7 @@ namespace JSON_Tools.JSON_Tools
                         sb.Append(NL);
                     else
                         sb.Append(' ');
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -948,13 +948,13 @@ namespace JSON_Tools.JSON_Tools
                 if (change_positions) position = sb.Length + extra_utf8_bytes;
                 sb.Append('{');
                 sb.Append(NL);
-                string extra_dent = new string(' ', (depth + 1) * indent);
+                string extra_dent = new string(indent_char, (depth + 1) * indent);
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
                     extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
                     sb.Append($"{extra_dent}\"{k}\": ");
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -968,14 +968,14 @@ namespace JSON_Tools.JSON_Tools
                 int child_dent_len = (depth + 1) * indent;
                 sb.Append('{');
                 sb.Append(NL);
-                extra_dent = new string(' ', child_dent_len);
+                extra_dent = new string(indent_char, child_dent_len);
                 foreach (string k in keys)
                 {
                     int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
                     JNode v = children[k];
                     extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
                     sb.Append($"{extra_dent}\"{k}\": ");
-                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length);
+                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -1000,26 +1000,26 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(8 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
         }
 
-        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length)
+        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
         {
             if (Length > PPRINT_LINE_LENGTH / 8) // an non-minimal-whitespace-compressed object has at least 8 chars per element ("\"a\": 1, ")
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
             int og_sb_len = sb.Length;
             int child_utf8_extra = ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_line_end);
             if (child_utf8_extra == -1)
             {
                 // child is too long, so we do PPrint-style printing of it
                 sb.Length = og_sb_len;
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
             }
             // child is small enough when compact, so use compact repr
             return child_utf8_extra;
@@ -1107,10 +1107,10 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(6 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, 0, max_length);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, 0, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1146,21 +1146,21 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue)
+        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(6 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
         {
             if (sb.Length >= max_length)
                 return -1;
-            string dent = new string(' ', indent * depth);
+            string dent = new string(indent_char, indent * depth);
             switch (style)
             {
             case PrettyPrintStyle.Whitesmith:
@@ -1173,7 +1173,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!(v is JObject || v is JArray))
                         sb.Append(dent);
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -1186,12 +1186,12 @@ namespace JSON_Tools.JSON_Tools
                 if (change_positions) position = sb.Length + extra_utf8_bytes;
                 sb.Append('[');
                 sb.Append(NL);
-                string extra_dent = new string(' ', (depth + 1) * indent);
+                string extra_dent = new string(indent_char, (depth + 1) * indent);
                 ctr = 0;
                 foreach (JNode v in children)
                 {
                     sb.Append(extra_dent);
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -1205,13 +1205,13 @@ namespace JSON_Tools.JSON_Tools
                 int child_dent_len = (depth + 1) * indent;
                 sb.Append('[');
                 sb.Append(NL);
-                extra_dent = new string(' ', child_dent_len);
+                extra_dent = new string(indent_char, child_dent_len);
                 ctr = 0;
                 foreach (JNode v in children)
                 {
                     int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
                     sb.Append(extra_dent);
-                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length);
+                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -1225,17 +1225,17 @@ namespace JSON_Tools.JSON_Tools
             return extra_utf8_bytes;
         }
 
-        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length)
+        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
         {
             if (Length > PPRINT_LINE_LENGTH / 3) // an non-minimal-whitespace-compressed array has at least 3 chars per element ("1, ")
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
             int og_sb_len = sb.Length;
             int child_utf8_extra = ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_line_end);
             if (child_utf8_extra == -1)
             {
                 // child is too long, so we do PPrint-style printing of it
                 sb.Length = og_sb_len;
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length);
+                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
             }
             // child is small enough when compact, so use compact repr
             return child_utf8_extra;

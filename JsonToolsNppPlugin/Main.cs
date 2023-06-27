@@ -426,13 +426,22 @@ namespace Kbg.NppPluginNET
             return (jsonParser.fatal, json);
         }
 
+        public static string PrettyPrintFromSettings(JNode json)
+        {
+            char indent_char = settings.tab_indent_pretty_print ? '\t' : ' ';
+            int indent = settings.tab_indent_pretty_print
+                ? 1
+                : settings.indent_pretty_print;
+            return json.PrettyPrintAndChangePositions(indent, settings.sort_keys, settings.pretty_print_style, int.MaxValue, indent_char);
+        }
+
         /// <summary>
         /// create a new file and pretty-print this JSON in it, then set the lexer language to JSON.
         /// </summary>
         /// <param name="json"></param>
         public static void PrettyPrintJsonInNewFile(JNode json)
         {
-            string printed = json.PrettyPrintAndChangePositions(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style);
+            string printed = PrettyPrintFromSettings(json);
             Npp.notepad.FileNew();
             Npp.editor.SetText(printed);
             Npp.RemoveTrailingSOH();
@@ -448,7 +457,8 @@ namespace Kbg.NppPluginNET
         {
             (bool fatal, JNode json) = TryParseJson();
             if (fatal || json == null) return;
-            Npp.editor.SetText(json.PrettyPrintAndChangePositions(settings.indent_pretty_print, settings.sort_keys, settings.pretty_print_style));
+            string printed = PrettyPrintFromSettings(json);
+            Npp.editor.SetText(printed);
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             Npp.SetLangJson();

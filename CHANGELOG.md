@@ -42,11 +42,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. Hitting `Enter` while in the error form causes the form to refresh.
-2. In the error form, searching for the next row starting with a character now wraps around.
-3. Python constants `nan` and `inf` can now be parsed as `NaN` and `Infinity` respectively.
-4. Support for numbers with leading decimal points and hex numbers in RemesPath.
-5. Unquoted strings in RemesPath can now contain leading `$`, Unicode escapes, and all the Unicode characters that are allowed in unquoted JSON5 keys.
+1. Added support for tab indentation. Fix [issue #38](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/38).
+2. Hitting `Enter` while in the error form causes the form to refresh.
+3. In the error form, searching for the next row starting with a character now wraps around.
+4. Python constants `nan` and `inf` can now be parsed as `NaN` and `Infinity` respectively.
+5. Support for numbers with leading decimal points and hex numbers in RemesPath.
+6. Unquoted strings in RemesPath can now contain leading `$`, Unicode escapes, and all the Unicode characters that are allowed in unquoted JSON5 keys.
 
 ### Changed
 

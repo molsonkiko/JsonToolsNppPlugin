@@ -313,6 +313,9 @@ With indentation __2__, you get this instead:
   ]
 }
 ```
+### tab_indent_pretty_print ###
+Use tabs instead of spaces for indentation. When this setting is `true`, the `indent_pretty_print` setting is ignored and one tab is always used per level of depth. __Introduced in [v5.4.0](/CHANGELOG.md#540---2023-mm-dd-unreleased).__
+
 ### minimal_whitespace_compression ###
 The Python convention for formatting JSON results in compressed JSON with a little bit of whitespace, like so:
 ```json
