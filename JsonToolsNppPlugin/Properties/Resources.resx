@@ -118,26 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="star_black_ico" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>star_black.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="json_compress_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json compress icon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="star_bmp" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        Qk1yAgAAAAAAAHIBAAAoAAAAEAAAABAAAAABAAgAAAAAAAAAAAARCwAAEQsAAE8AAABPAAAAAAAA////
-        ////AP//z9Xr/wAoyf8AJ8P/ACW8/wAktv8AI6//ACKs/wAiqf8AIaX/ACCf/wAelf8BKcj/AirI/wUs
-        yv8GLcr/BivC/wUotv8FKLT/Biu9/wgruf8JLLj/CSy3/w8zxv8OMLj/DzG2/xU1uP8ZOrr/GzzB/xs8
-        vv8eQM3/HkDI/x09wf8gQ9D/HT69/x89tv8kRcv/J0jR/yA9rv8fOqj/J0bE/yhIxv82U8n/OFbN/zxb
-        1v9AXtf/QF3S/0Fdz/9EYNL/UGvW/1Ju2v9Xctv/WHPc/1Zw1/9ed93/XXbc/1122f9feN3/Y3ve/2J6
-        2/9kfN3/X3bR/192z/9whuH/X3K8/4CT4f+Qoef/f47K/4+f3/+fruv/j5zQ/6+43v+/yfH/v8ju/9/k
-        +P/f4/L//////wICAgICIh8dHBoXAgICAgICAgIrKhkPBAQOEhgTAgICAgIsIQQECgUEBAULFRQCAgIt
-        JgQERykNCCVJDAQVEwICMQQEBEwBRUgBAwsEBBgCMCAEBARKAQEBAUkJBAQSFjcQBAQERgEBAQFIDQcE
-        Dhs6BAQEPwEBAQEBAUINBwQcPQQEOwEBAQEBAQEBQAYEHT4RBC9BREwBAU1DQS8EDyQ0JwQEBAQjAQEo
-        BAQEBBkeAjgEBAQEBEpLBgQEBAQqAgI2LgQEBAQvLwQEBAQhKwICAjwuBAQEBAQEBAQmLAICAgICNjgn
-        EQQEECAxLQICAgICAgICNTk9OjMyAgICAgI=
-</value>
+  <data name="json_path_to_position_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json path to position icon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="star_white_ico" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>star_white.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="json_pretty_print_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json pretty print icon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="json_tree_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json tree icon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

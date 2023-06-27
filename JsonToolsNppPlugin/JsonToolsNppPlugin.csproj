@@ -254,13 +254,16 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <SubType>Designer</SubType>
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources1.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <!-- icons and such -->
     <Content Include="Properties\star_bmp.bmp" />
+    <None Include="Resources\json pretty print icon.ico" />
+    <None Include="Resources\json path to position icon.ico" />
+    <None Include="Resources\json compress icon.ico" />
     <None Include="Resources\array type icon.PNG" />
     <None Include="Resources\bool type icon.PNG" />
     <None Include="Resources\date type icon.PNG" />

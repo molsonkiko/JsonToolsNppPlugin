@@ -16,6 +16,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
+using JSON_Tools.PluginInfrastructure;
 
 namespace Kbg.NppPluginNET
 {
@@ -65,7 +66,7 @@ namespace Kbg.NppPluginNET
         private static bool currentFileTooBigToAutoParse = true;
         private static bool bufferFinishedOpening = false;
         // toolbar icons
-        static Bitmap tbBmp_tbTab = Resources.star_bmp;
+        static Icon treeIcon = null;
         static Icon tbIcon = null;
 
         // fields related to forms
@@ -621,7 +622,7 @@ namespace Kbg.NppPluginNET
                 colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
                 ImageAttributes attr = new ImageAttributes();
                 attr.SetRemapTable(colorMap);
-                g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                //g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
                 tbIcon = Icon.FromHandle(newBmp.GetHicon());
             }
 
@@ -810,7 +811,7 @@ namespace Kbg.NppPluginNET
                 colorMap[0].NewColor = Color.FromKnownColor(KnownColor.ButtonFace);
                 ImageAttributes attr = new ImageAttributes();
                 attr.SetRemapTable(colorMap);
-                g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                //g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
                 tbIcon = Icon.FromHandle(newBmp.GetHicon());
             }
 

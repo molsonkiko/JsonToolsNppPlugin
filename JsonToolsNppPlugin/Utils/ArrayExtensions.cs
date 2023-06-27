@@ -1,6 +1,8 @@
 ﻿using JSON_Tools.JSON_Tools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace JSON_Tools.Utils
 {
@@ -20,86 +22,102 @@ namespace JSON_Tools.Utils
         /// <returns></returns>
         public static IEnumerable<T> LazySlice<T>(this IList<T> source, int? start, int? stop = null, int? stride = null)
         {
-            int len = (source is T[]) ? ((T[])source).Length : ((List<T>)source).Count;
-            int ind;
-            if ((int)stride == 0)
-            {
-                throw new ArgumentException("The stride parameter of a slice must be a non-zero integer");
-            }
+            int len = source.Count;
             if (len <= 0)
             {
                 yield break;
             }
-            int istart, istop, istride;
-            if (start != null && stop == null && stride == null)
+            int istop, istart, istride;
+            if (stride is int istride_)
             {
-                int temp = (int)start;
-                stop = temp;
-                start = 0;
+                istride = istride_;
+                if (istride_ < 0)
+                {
+                    if (start is int istart_)
+                    {
+                        if (istart_ < -len)
+                            yield break;
+                        istart = ClampWithinLen(len, istart_, true);
+                    }
+                    else
+                        istart = len - 1;
+
+                    if (stop is int istop_)
+                        istop = ClampWithinLen(len, istop_, false);
+                    else
+                        istop = -1;
+                }
+                else if (istride_ == 0)
+                {
+                    throw new ArgumentException("The stride parameter of a slice must be a non-zero integer, or must be left empty");
+                }
+                else // positive stride
+                {
+                    if (start is int istart_)
+                    {
+                        if (istart_ >= len)
+                            yield break;
+                        istart = ClampWithinLen(len, istart_, true);
+                    }
+                    else
+                        istart = 0;
+
+                    if (stop is int istop_)
+                        istop = ClampWithinLen(len, istop_, false);
+                    else
+                        istop = len;
+                }
             }
-            else if (stride == null || (int)stride > 0)
+            else // stride unspecified, assumed to be 1
             {
-                if (start == null) { start = 0; }
-                if (stop == null) { stop = len; }
+                istride = 1;
+
+                if (start is int istart_)
+                    istart = ClampWithinLen(len, istart_, true);
+                else
+                    istart = 0;
+
+                if (stop is int istop_)
+                    istop = ClampWithinLen(len, istop_, false);
+                else
+                    istop = len;
+            }
+            
+            if (istride < 0)
+            {
+                for (int ii = istart; ii > istop; ii += istride)
+                {
+                    yield return source[ii];
+                }
             }
             else
             {
-                if (start == null)
+                for (int ii = istart; ii < istop; ii += istride)
                 {
-                    start = len - 1;
-                }
-                if (stop == null)
-                {
-                    istride = (int)stride;
-                    istart = (int)start;
-                    // we want "start::-x" or "::-x" to go from start 
-                    // to first element by x
-                    istop = -1;
-                    if (istart < 0)
-                    {
-                        istart += len;
-                    }
-                    len = (istop - istart) / istride + 1;
-                    if (len % istride == 0)
-                    {
-                        // this is tricky! If len is divisible by stride,
-                        // we would overshoot into index -1 and get
-                        // an index error.
-                        len -= 1;
-                    }
-                    for (int ii = 0; ii < len; ii++)
-                    {
-                        ind = istart + ii * istride;
-                        yield return source[ind];
-                    }
+                    yield return source[ii];
                 }
             }
-            istop = ((int)stop < 0) ? len + (int)stop : ((int)stop > len ? len : (int)stop);
-            istart = ((int)start < 0) ? len + (int)start : (int)start;
-            istride = (stride == null) ? 1 : (int)stride;
-            if (istart >= len && istop >= len)
+        }
+
+        /// <summary>
+        /// If num is negative, use Python-style negative indices (e.g., -1 is the last element, -len is the first elememnt)
+        /// Otherwise, restrict num to between 0 and len (inclusive unless is_start_idx)
+        /// </summary>
+        /// <param name="len"></param>
+        /// <param name="num"></param>
+        /// <returns></returns>
+        public static int ClampWithinLen(int len, int num, bool is_start_idx)
+        {
+            if (num >= len)
+                return is_start_idx ? len - 1: len;
+            if (num < 0)
             {
-                yield break;
+                num += len;
+                if (num < 0)
+                    return is_start_idx ? 0 : -1;
+                return num;
             }
-            if ((istop - istart) % Math.Abs(istride) == 0)
-            {
-                len = (istop - istart) / istride;
-            }
-            else
-            {
-                // if the final stride would carry you out of the array, the output array is going to be
-                // one larger than (stop - start)/stride, because the first element is always in the output array.
-                len = (istop - istart) / istride + 1;
-            }
-            if (len <= 0)
-            {
-                yield break;
-            }
-            for (int ii = 0; ii < len; ii++)
-            {
-                ind = istart + ii * istride;
-                yield return source[ind];
-            }
+            return num;
         }
 
         ///<summary>
@@ -175,119 +193,11 @@ namespace JSON_Tools.Utils
         /// <exception cref="NotImplementedException"></exception>
         public static IList<T> Slice<T>(this IList<T> source, int? start, int? stop = null, int? stride = null)
         {
-            bool isarr = source is T[];
-            bool islist = source is List<T>;
-            int len = isarr ? ((T[])source).Length : (islist ? ((List<T>)source).Count : throw new NotImplementedException("Slice is only implemented for arrays and Lists. For slicing of other indexable iterables, use LazySlice."));
-            IList<T> res;
-            int source_len = len;
-            int ind;
-            if (stride != null && (int)stride == 0)
-            {
-                throw new ArgumentException("The stride parameter of a slice must be a non-zero integer");
-            }
-            if (len <= 0)
-            {
-                if (isarr) return new T[0]; else return new List<T>();
-            }
-            int istart, istop, istride;
-            if (start != null && stop == null && stride == null)
-            {
-                int temp = (int)start;
-                stop = temp;
-                start = 0;
-            }
-            else if (stride == null || (int)stride > 0)
-            {
-                if (start == null) { start = 0; }
-                if (stop == null) { stop = len; }
-            }
-            else
-            {
-                if (start == null)
-                {
-                    start = len - 1;
-                }
-                if (stop == null)
-                {
-                    istride = (int)stride;
-                    istart = (int)start;
-                    // we want "start::-x" or "::-x" to go from start 
-                    // to first element by x
-                    istop = -1;
-                    if (istart < 0)
-                    {
-                        istart += len;
-                    }
-                    else if (istart >= len)
-                    {
-                        istart = len - 1;
-                    }
-                    len = (istop - istart) / istride + 1;
-                    if (len % istride == 0)
-                    {
-                        // this is tricky! If len is divisible by stride,
-                        // we would overshoot into index -1 and get
-                        // an index error.
-                        len -= 1;
-                    }
-                    if (isarr)
-                    {
-                        res = new T[len];
-                        for (int ii = 0; ii < len; ii++)
-                        {
-                            ind = istart + ii * istride;
-                            res[ii] = source[ind];
-                        }
-                        return res;
-                    }
-                    res = new List<T>();
-                    for (int ii = 0; ii < len; ii++)
-                    {
-                        ind = istart + ii * istride;
-                        res.Add(source[ind]);
-                    }
-                    return res;
-                }
-            }
-            // make sure the start isn't higher than
-            istop = ((int)stop < 0) ? len + (int)stop : ((int)stop > len ? len : (int)stop);
-            istart = ((int)start < 0) ? len + (int)start : (int)start;
-            istride = (stride == null) ? 1 : (int)stride;
-            if (istart >= len && istop >= len)
-            {
-                if (isarr) return new T[0]; else return new List<T>();
-            }
-            if ((istop - istart) % Math.Abs(istride) == 0)
-            {
-                len = (istop - istart) / istride;
-            }
-            else
-            {
-                // if the final stride would carry you out of the array, the output array is going to be
-                // one larger than (stop - start)/stride, because the first element is always in the output array.
-                len = (istop - istart) / istride + 1;
-            }
-            if (len <= 0)
-            {
-                if (isarr) return new T[0]; else return new List<T>();
-            }
-            if (isarr)
-            {
-                res = new T[len];
-                for (int ii = 0; ii < len; ii++)
-                {
-                    ind = istart + ii * istride;
-                    res[ii] = source[ind];
-                }
-                return res;
-            }
-            res = new List<T>();
-            for (int ii = 0; ii < len; ii++)
-            {
-                ind = istart + ii * istride;
-                res.Add(source[ind]);
-            }
-            return res;
+            if (source is T[])
+                return source.LazySlice(start, stop, stride).ToArray();
+            if (source is List<T>)
+                return source.LazySlice(start, stop, stride).ToList();
+            throw new NotImplementedException("Slice extension is only implemented for strings, Lists, and arrays");
         }
 
         /// <summary>
@@ -355,17 +265,17 @@ namespace JSON_Tools.Utils
 
         public static string Slice(this string source, string slicer)
         {
-            return new string((char[])source.ToCharArray().Slice(slicer));
+            return new string(source.ToCharArray().LazySlice(slicer).ToArray());
         }
 
         public static string Slice(this string source, int start, int stop, int stride)
         {
-            return new string((char[])source.ToCharArray().Slice(start, stop, stride));
+            return new string(source.ToCharArray().LazySlice(start, stop, stride).ToArray());
         }
 
         public static string Slice(this string source, int?[] slicer)
         {
-            return new string((char[])source.ToCharArray().Slice(slicer));
+            return new string(source.ToCharArray().LazySlice(slicer).ToArray());
         }
 
         /// <summary>
@@ -397,6 +307,28 @@ namespace JSON_Tools.Utils
             T last = list[lastIdx];
             list.RemoveAt(lastIdx);
             return last;
+        }
+
+        /// <summary>
+        /// e.g., int[]{1,2,3,4,5} ->
+        /// "[1, 2, 3, 4, 5]"
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static string ArrayToString<T>(this IList<T> list)
+        {
+            var sb = new StringBuilder();
+            sb.Append('[');
+            for (int ii = 0; ii < list.Count; ii++)
+            {
+                T x = list[ii];
+                sb.Append(x.ToString());
+                if (ii < list.Count - 1)
+                    sb.Append(", ");
+            }
+            sb.Append(']');
+            return sb.ToString();
         }
     }
 }

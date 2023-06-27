@@ -56,9 +56,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Bugs with operator precedence in RemesPath.
-2. Uncaught errors when parsing integers too large for the floating point spec (e.g., one followed by 400 zeros)
-3. Minor bug when scrolling up with the up arrow on error form.
-4. More appropriately silly error handling when dogeifying JSON.
+2. Bugs with array and string slicing in RemesPath.
+3. Uncaught errors when parsing integers too large for the floating point spec (e.g., one followed by 400 zeros)
+4. Minor bug when scrolling up with the up arrow on error form.
+5. More appropriately silly error handling when dogeifying JSON.
 
 ## [5.3.0] - 2023-06-10
 

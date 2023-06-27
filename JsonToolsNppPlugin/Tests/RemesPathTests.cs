@@ -521,6 +521,63 @@ namespace JSON_Tools.Tests
                                       $" an exception:\n{ex}");
                 }
             }
+            string onetofive_str = "[1,2,3,4,5]";
+            JNode onetofive = jsonParser.Parse(onetofive_str);
+            var slice_testcases = new Query_DesiredResult[]
+            {
+                new Query_DesiredResult("@[2]", "3"),
+                new Query_DesiredResult("@[:]", "[1,2,3,4,5]"),
+                new Query_DesiredResult("@[:1]", "[1]"),
+                new Query_DesiredResult("@[::-1]", "[5, 4, 3, 2, 1]"),
+                new Query_DesiredResult("@[1:3]", "[2, 3]"),
+                new Query_DesiredResult("@[1::3]", "[2, 5]"),
+                new Query_DesiredResult("@[1:4:2]", "[2, 4]"),
+                new Query_DesiredResult("@[2::-1]", "[3, 2, 1]"),
+                new Query_DesiredResult("@[4:1:-2]", "[5, 3]"),
+                new Query_DesiredResult("@[1::3]", "[2, 5]"),
+                new Query_DesiredResult("@[4:2:-1]", "[5, 4]"),
+                new Query_DesiredResult("@[:-3]", "[1,2]"),
+                new Query_DesiredResult("@[-4:-1]", "[2,3,4]"),
+                new Query_DesiredResult("@[-4::2]", "[2, 4]"),
+                new Query_DesiredResult("@[-3]", "3"),
+                new Query_DesiredResult("@[-3::1]", "[3,4,5]"),
+                new Query_DesiredResult("@[-3:]", "[3,4,5]"),
+                new Query_DesiredResult("@[-3::-1]", "[3,2,1]"),
+                new Query_DesiredResult("@[-1:1:-2]", "[5, 3]"),
+                new Query_DesiredResult("@[1:-1]", "[2,3,4]"),
+                new Query_DesiredResult("@[3::-2]", "[4, 2]"),
+                new Query_DesiredResult("@[3::-3]", "[4, 1]"),
+                new Query_DesiredResult("@[3::-4]", "[4]"),
+                new Query_DesiredResult("@[-4:4]", "[2,3,4]"),
+                new Query_DesiredResult("@[-4:4:2]", "[2, 4]"),
+                new Query_DesiredResult("@[2:-2:2]", "[3]"),
+                new Query_DesiredResult("@[3::5]", "[4]"),
+                new Query_DesiredResult("@[5:]", "[ ]"),
+                new Query_DesiredResult("@[3:8]", "[4, 5]"),
+                new Query_DesiredResult("@[-2:15]", "[4,5]")
+            };
+            foreach (Query_DesiredResult qd in slice_testcases)
+            {
+                ii++;
+                JNode jdesired_result = jsonParser.Parse(qd.desired_result);
+                try
+                {
+                    result = remesparser.Search(qd.query, onetofive);
+                }
+                catch (Exception ex)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, {onetofive_str}) to return {jdesired_result.ToString()}, but instead threw" +
+                                      $" an exception:\n{ex}");
+                    continue;
+                }
+                if (!(result.type == jdesired_result.type && result.Equals(jdesired_result)))
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, {onetofive_str}) to return {jdesired_result.ToString()}, " +
+                                      $"but instead got {result.ToString()}.");
+                }
+            }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
         }
