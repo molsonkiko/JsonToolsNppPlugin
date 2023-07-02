@@ -228,6 +228,7 @@ namespace Kbg.NppPluginNET
                     {
                         Npp.notepad.HideDockingForm(closed_tv);
                         closed_tv.Close();
+                        closed_tv.Dispose();
                     }
                     treeViewers.Remove(buffer_closed);
                     return;

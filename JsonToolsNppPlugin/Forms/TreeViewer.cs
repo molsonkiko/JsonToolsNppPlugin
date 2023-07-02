@@ -171,6 +171,7 @@ namespace JSON_Tools.Forms
                 */
             }
             tree.Nodes.Clear();
+            pathsToJNodes.Clear();
             TreeNode root = new TreeNode();
             if (Main.settings.tree_node_images)
                 SetImageOfTreeNode(root, json);

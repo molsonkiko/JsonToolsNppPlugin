@@ -11,6 +11,8 @@ namespace JSON_Tools.Tests
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
+            Npp.AddLine($"Test results for JsonTools v{Npp.AssemblyVersionString()}");
+
             Npp.AddLine(@"=========================
 Testing JNode Copy method
 =========================

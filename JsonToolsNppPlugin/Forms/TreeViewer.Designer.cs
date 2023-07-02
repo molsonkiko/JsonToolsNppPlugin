@@ -1,4 +1,6 @@
-﻿namespace JSON_Tools.Forms
+﻿using JSON_Tools.JSON_Tools;
+
+namespace JSON_Tools.Forms
 {
     partial class TreeViewer
     {
@@ -13,9 +15,17 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
+            if (pathsToJNodes != null)
+                pathsToJNodes.Clear();
             json = null;
+            query_result = null;
+            pathsToJNodes = null;
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
+            {
                 findReplaceForm.Close();
+                findReplaceForm.Dispose();
+                findReplaceForm = null;
+            }
             if (disposing && (components != null))
             {
                 components.Dispose();
