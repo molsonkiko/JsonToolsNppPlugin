@@ -80,6 +80,12 @@ Testing slice extension
             SliceTester.Test();
 
             Npp.AddLine(@"=========================
+Testing Least Recently Used (LRU) cache implementation
+=========================
+");
+            LruCacheTests.Test();
+
+            Npp.AddLine(@"=========================
 Testing RemesPath lexer
 =========================
 ");
@@ -102,6 +108,12 @@ Testing RemesPath assignment operations
 =========================
 ");
             RemesPathAssignmentTester.Test();
+
+            Npp.AddLine(@"=========================
+Testing that RemesPath produces sane outputs on randomly generated queries
+=========================
+");
+            RemesPathFuzzTester.Test(10000, 20);
 
             Npp.AddLine(@"=========================
 Testing JsonSchema generator

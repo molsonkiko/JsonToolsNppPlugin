@@ -186,6 +186,10 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("1 / 2 * 3 + 3", "4.5"), // same down
                 new Query_DesiredResult("2 / 4 ** 2 ** 2", "0.0078125"), // up exp exp
                 new Query_DesiredResult("4 ** 2 ** 2 / 4", "64.0"), // exp exp down
+                // binops with uminus
+                new Query_DesiredResult("5 * -1/4", "-1.25"),
+                new Query_DesiredResult("-5 * 1/4", "-1.25"),
+                new Query_DesiredResult("@.foo[1] / -@.foo[0] ** s_len(foo)", "[-Infinity, -4.0, -0.625]"),
                 // binop two jsons, binop json scalar, binop scalar json tests
                 new Query_DesiredResult("@.foo[0] + @.foo[1]", "[3.0, 5.0, 7.0]"),
                 new Query_DesiredResult("@.foo[0] + j`[3.0, 4.0, 5.0]`", "[3.0, 5.0, 7.0]"),
@@ -811,6 +815,194 @@ namespace JSON_Tools.Tests
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+        }
+    }
+
+    public class RemesPathFuzzTester
+    {
+        public static readonly string target = "{\"a\": [-4, -3., -2., -1, 0, 1, 2., 3., 4], " +
+                                                "\"bc\": NaN," +
+                                                "\"c`d\": \"df\", " +
+                                                "\"q\": [\"\", \"a\", \"jk\", \"ian\", \"\", \"32\", \"u\", \"aa\", \"moun\"]," +
+                                                "\"f\": 1," +
+                                                "\"g\": 1," +
+                                                "\"h\": 1," +
+                                                "\"i\": 1," +
+                                                "\"j\": 1}";
+        public static readonly (string tok, Dtype type)[] operands = new (string tok, Dtype type)[]
+        {
+            ("@.`c\\`d`", Dtype.STR),
+            ("foo", Dtype.STR),
+            ("@.q", Dtype.STR | Dtype.ARR),
+            ("keys(@)", Dtype.STR | Dtype.ARR),
+            ("@.bc", Dtype.NUM),
+            ("@.a", Dtype.NUM | Dtype.ARR),
+            ("range(9)", Dtype.NUM | Dtype.ARR),
+            ("-2.0", Dtype.NUM),
+            ("-0.0732", Dtype.NUM),
+            ("0", Dtype.NUM),
+            ("4", Dtype.NUM),
+            ("0x5", Dtype.NUM),
+            ("true", Dtype.NUM),
+            ("false", Dtype.NUM),
+            ("783.0", Dtype.NUM),
+            ("-0x9872b1", Dtype.NUM),
+            ("-0x12", Dtype.NUM),
+            ("j`[-3,-2,-1,0,1,2,3,4,5]`", Dtype.NUM | Dtype.ARR),
+            //("s", Dtype.NUM), // if this is uncommented, it should cause fuzz tests to fail; use this to verify you haven't broken the tests
+        };
+        public static readonly string[] unops = new string[] { "not", "-", "" };
+        public static readonly string[] num_funcs = new string[] { "int", "float" };
+        public static readonly string[] arr_funcs = new string[] { "len", "iterable", "is_num" };
+        public static readonly string[] str_funcs = new string[] { "s_len", "s_count" };
+        public static readonly string[] binops = new string[] { "-", "+", "*", "/", "//", "**", ">", "<", "==", "!=", ">=", "<=", "%" };
+        public static Random random = RandomJsonFromSchema.random;
+
+        public static bool CoinFlip()
+        {
+            return random.NextDouble() < 0.5;
+        }
+
+        public static T RandomChoice<T>(T[] things)
+        {
+            return things[random.Next(things.Length)];
+        }
+
+        public static string ChooseFunc(string[] funcs1, string[] funcs2 = null)
+        {
+            if (funcs2 == null)
+                return RandomChoice(funcs1);
+            if (CoinFlip())
+                return RandomChoice(funcs1);
+            return RandomChoice(funcs2);
+        }
+
+        public static string GenerateOperand()
+        {
+            (string tok, Dtype type) = RandomChoice(operands);
+            string unop = RandomChoice(unops);
+            bool apply_argfunc = CoinFlip();
+            bool is_str = (type & Dtype.STR) != 0;
+            bool is_arr = (type & Dtype.ARR) != 0;
+            bool apply_unop = unop != "" && (!is_str || unop == "not");
+            bool unop_on_tok = CoinFlip();
+            if (apply_unop && unop_on_tok)
+            {
+                if (is_str)
+                    tok = $"({unop} {tok})";
+                else
+                    tok = $"{unop} {tok}";
+                is_str = false; // if tok was string, the unop was not, and the output was bool
+            }
+            string operand;
+            if (is_str)
+            {
+                string func = (is_arr && apply_argfunc)
+                    ? ChooseFunc(str_funcs, arr_funcs)
+                    : ChooseFunc(str_funcs);
+                operand = (func == "s_count")
+                    ? $"s_count({tok}, a)"
+                    : $"{func}({tok})";
+                if (apply_unop && !unop_on_tok)
+                    operand = $"{unop} {operand}";
+            }
+            else if (apply_argfunc)
+            {
+                string func = (is_arr)
+                    ? ChooseFunc(arr_funcs, num_funcs)
+                    : ChooseFunc(num_funcs);
+                operand = $"{func}({tok})";
+                if (apply_unop && !unop_on_tok)
+                    operand = $"{unop} {operand}";
+            }
+            else
+                operand = tok;
+            return CoinFlip()
+                ? $"ifelse({operand} > 0, 1, -1)"
+                : operand;
+        }
+
+        /// <summary>
+        /// Perform many randomly generated tests with the expectations that:<br></br>
+        /// 1. There will be no error (each test input is syntactically valid and should not cause runtime errors)<br></br>
+        /// 2. The output will be either a number or an array of numbers
+        /// </summary>
+        /// <param name="n_tests"></param>
+        /// <param name="max_failures"></param>
+        public static void Test(int n_tests, int max_failures)
+        {
+            JNode targetNode;
+            try
+            {
+                targetNode = new JsonParser(LoggerLevel.JSON5, false, false, false).Parse(target);
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"Expected successful parsing of\r\n{target}\r\ninstead got error\r\n{ex}");
+                return;
+            }
+            Npp.AddLine($"Fuzz tests query\r\n{target}");
+            RemesParser parser = new RemesParser();
+            int failures = 0;
+            int ii = 0;
+            for (; ii < n_tests && failures < max_failures; ii++)
+            {
+                string v1 = GenerateOperand();
+                string binop1 = RandomChoice(binops);
+                string v2 = GenerateOperand();
+                string binop2 = RandomChoice(binops);
+                string v3 = GenerateOperand();
+                string binop3 = RandomChoice(binops);
+                string v4 = GenerateOperand();
+
+                string query;
+                if (CoinFlip())
+                {
+                    query = CoinFlip()
+                        ? $"({v1} {binop1} {v2}) {binop2} ({v3} {binop3} {v4})"
+                        : CoinFlip()
+                            ? $"{v1} {binop1} {v2} {binop2} ({v3} {binop3} {v4})"
+                            : $"({v1} {binop1} {v2}) {binop2} {v3} {binop3} {v4}";
+                }
+                else
+                    query = $"{v1} {binop1} {v2} {binop2} {v3} {binop3} {v4}";
+                JNode result;
+                try
+                {
+                    result = parser.Search(query, targetNode);
+                }
+                catch (Exception ex)
+                {
+                    if (!(ex is OverflowException || ex is DivideByZeroException))
+                    {
+                        failures++;
+                        Npp.AddLine($"Expected parsing of query\r\n{query}\r\nto not raise an exception, but got exception\r\n{ex}");
+                    }
+                    continue;
+                }
+                if (result is JArray arr)
+                {
+                    foreach (JNode child in arr.children)
+                    {
+                        if (!(child.value is bool || child.value is long || child.value is double))
+                        {
+                            failures++;
+                            Npp.AddLine($"If result is an array, expected all members of result to be integers, floats, or bools, instead got {child}");
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!(result.value is bool || result.value is long || result.value is double))
+                    {
+                        failures++;
+                        Npp.AddLine($"If result is a scalar, expected result to be integer, float, or bool, instead got {result}");
+                    }
+                }
+            }
+            Npp.AddLine($"Ran {ii} fuzz tests");
+            Npp.AddLine($"Failed {failures} fuzz tests");
         }
     }
 }

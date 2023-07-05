@@ -12,6 +12,7 @@ namespace JSON_Tools.Utils
         public Dictionary<K, V> cache;
         public LinkedList<K> use_order;
         public bool isFull { get { return cache.Count == capacity; } }
+        public int Count { get { return cache.Count; } }
 
         public LruCache(int capacity = 64)
         {
@@ -28,24 +29,31 @@ namespace JSON_Tools.Utils
         /// <param name="query"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public V Get(K key)
+        public bool TryGetValue(K key, out V existing_value)
         {
-            if (cache.TryGetValue(key, out V existing_value))
-            {
-                return existing_value;
-            }
-            return default(V);
+            if (cache.TryGetValue(key, out existing_value))
+                return true;
+            existing_value = default(V);
+            return false;
+        }
+
+        public bool ContainsKey(K key)
+        {
+            return cache.ContainsKey(key);
         }
 
         /// <summary>
-        /// If the key is already in the cache, do nothing.
+        /// Return value and add key-value pair if key was not already in cache.<br></br>
+        /// Otherwise, do nothing and return the value already associated with key.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public void Add(K key, V value)
+        public V SetDefault(K key, V value)
         {
-            if (cache.ContainsKey(key)) { return; }
+            if (cache.TryGetValue(key, out V existing))
+                return existing;
             this[key] = value;
+            return value;
         }
 
         public V this[K key]
@@ -72,6 +80,8 @@ namespace JSON_Tools.Utils
 
         public K OldestKey()
         {
+            if (use_order.Count == 0)
+                return default(K);
             return use_order.First();
         }
     }

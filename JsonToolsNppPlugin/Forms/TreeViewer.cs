@@ -296,23 +296,9 @@ namespace JSON_Tools.Forms
                 RefreshButton.PerformClick();
             string query = QueryBox.Text;
             JNode query_func;
-            List<object> toks;
             try
             {
-                toks = lexer.Tokenize(query);
-            }
-            catch (Exception ex)
-            {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not compile query {query} because of syntax error:\n{expretty}",
-                                "Syntax error in RemesPath query",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                return;
-            }
-            try
-            {
-                query_func = remesParser.Compile(toks);
+                query_func = remesParser.Compile(query);
             }
             catch (Exception ex)
             {

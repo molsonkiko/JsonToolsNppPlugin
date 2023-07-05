@@ -177,20 +177,20 @@ namespace JSON_Tools.JSON_Tools
     public class RemesParser
     {
         public RemesPathLexer lexer;
-        // /// <summary>
-        // /// A LRU cache mapping queries to compiled results that the parser can check against
-        // /// to save time on parsing.<br></br>
-        // /// Not used, because parsing is really fast and so caching is unnecessary 
-        // /// </summary>
-        //public LruCache<string, JNode> cache;
 
-        ///// <summary>
-        ///// The cache_capacity indicates how many queries to store in the old query cache.
-        ///// </summary>
-        ///// <param name="cache_capacity"></param>
-        public RemesParser()//(int cache_capacity = 64)
+        /// <summary>
+        /// A LRU cache mapping queries to compiled results that the parser can check against
+        /// to save time on parsing.
+        /// </summary>
+        public LruCache<string, JNode> cache;
+
+        /// <summary>
+        /// The cache_capacity indicates how many queries to store in the old query cache.
+        /// </summary>
+        /// <param name="cache_capacity"></param>
+        public RemesParser(int cache_capacity = 64)
         {
-            //cache = new LruCache<string, JNode>();
+            cache = new LruCache<string, JNode>(cache_capacity);
             lexer = new RemesPathLexer();
         }
 
@@ -202,8 +202,11 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public JNode Compile(List<object> toks)
+        public JNode Compile(string query)
         {
+            if (cache.TryGetValue(query, out JNode old_result))
+                return old_result;
+            List<object> toks = lexer.Tokenize(query);
             int indexOfAssignment = toks.IndexOf('=');
             if (indexOfAssignment == 0)
                 throw new RemesPathException("Assignment with no LHS");
@@ -219,7 +222,9 @@ namespace JSON_Tools.JSON_Tools
                 JNode mutator = (JNode)ParseExprOrScalarFunc(mutator_toks, 0).obj;
                 return new JMutator(selector, mutator);
             }
-            return (JNode)ParseExprOrScalarFunc(toks, 0).obj;
+            var result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
+            cache.SetDefault(query, result);
+            return result;
         }
 
         /// <summary>
@@ -232,8 +237,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode Search(string query, JNode obj)
         {
-            List<object> toks = lexer.Tokenize(query);
-            JNode compiled_query = Compile(toks);
+            JNode compiled_query = Compile(query);
             if (compiled_query is CurJson cjres)
             {
                 return cjres.function(obj);
@@ -1414,8 +1418,8 @@ namespace JSON_Tools.JSON_Tools
                         List<Binop> binopTransformations = null;
                         if (unopStack.Count > 0)
                         {
-                            if (!(leftOperand is JNode leftNode))
-                                throw new RemesPathException($"Binop has non-JNode operand {leftOperand}");
+                            if (!(leftTok is JNode leftNode))
+                                throw new RemesPathException($"Binop has non-JNode operand {leftTok}");
                             leftOperandTransformations = new List<JNode>{ leftNode };
                             binopTransformations = new List<Binop> { bop };
                         }

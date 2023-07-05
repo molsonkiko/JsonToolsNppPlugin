@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.4.0] - 2023-MM-DD (UNRELEASED)
+## [5.4.0] - 2023-07-04
 
 ### Added
 
@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 4. Python constants `nan` and `inf` can now be parsed as `NaN` and `Infinity` respectively.
 5. Support for numbers with leading decimal points and hex numbers in RemesPath.
 6. Unquoted strings in RemesPath can now contain leading `$`, Unicode escapes, and all the Unicode characters that are allowed in unquoted JSON5 keys.
+7. Add caching of RemesPath queries for slightly better performance on repeated execution of the same query.
+8. Massively impreoved test coverage.
 
 ### Changed
 

@@ -90,8 +90,7 @@ Performance tests for RemesPath ({description})
                     watch.Start();
                     try
                     {
-                        List<object> toks = parser.lexer.Tokenize(query);
-                        query_func = parser.Compile(toks);
+                        query_func = parser.Compile(query);
                     }
                     catch (Exception ex)
                     {
@@ -108,7 +107,11 @@ Performance tests for RemesPath ({description})
                 Npp.AddLine($"Compiling query \"{query}\" into took {comp_mean} +/- {comp_sd} microseconds over {num_query_trials} trials");
                 // time query execution
                 long[] query_times = new long[num_query_trials];
+                int test_equality_interval = num_query_trials / 6;
+                if (test_equality_interval < 1)
+                    test_equality_interval = 1;
                 JNode result = new JNode();
+                JNode old_result = null;
                 for (int ii = 0; ii < num_query_trials; ii++)
                 {
                     watch.Reset();
@@ -118,10 +121,14 @@ Performance tests for RemesPath ({description})
                         if (query_func is CurJson selector)
                         {
                             result = selector.function(json);
+                            if (old_result is null)
+                                old_result = result;
                         }
                         else if (query_func is JMutator mutator)
                         {
                             result = mutator.Mutate(json);
+                            if (old_result is null)
+                                old_result = result;
                         }
                     }
                     catch (Exception ex)
@@ -131,6 +138,14 @@ Performance tests for RemesPath ({description})
                     watch.Stop();
                     long t = watch.Elapsed.Ticks;
                     query_times[ii] = t;
+                    if (ii % test_equality_interval == 0)
+                    {
+                        if (!result.Equals(old_result))
+                        {
+                            Npp.AddLine($"Expected running query {query} on the same JSON to always return the same thing, but it didn't");
+                            break;
+                        }
+                    }
                 }
                 // display querying results
                 (mean, sd) = GetMeanAndSd(query_times);

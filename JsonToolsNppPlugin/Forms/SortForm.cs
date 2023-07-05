@@ -45,8 +45,7 @@ namespace JSON_Tools.Forms
                     : QueryKeyIndexTextBox.Text;
                 try
                 {
-                    List<object> toks = remesParser.lexer.Tokenize(queryText);
-                    query = ((CurJson)remesParser.Compile(toks)).function;
+                    query = ((CurJson)remesParser.Compile(queryText)).function;
                 }
                 catch (Exception ex)
                 {
