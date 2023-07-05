@@ -53,8 +53,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-1. All arithmetic operations (`+`, `-`, `*`, `/`, `%`, and `/`) can now accept booleans as one or both of their operands.
-2. [`not` is now a unary operator](/docs/RemesPath.md) like `-` (that is, `not not @` is a valid statement, no parens needed). It also now tests "truthiness" like the same operator in Python.
+1. All arithmetic operations (`+`, `-`, `*`, `/`, `%`, and `//`) [can now accept booleans as one or both of their operands](/docs/RemesPath.md#binary-operators-unary-operators-and-arithmetic).
+2. [`not` is now a unary operator](/docs/RemesPath.md#unary-operators) like `-` (that is, `not not @` is a valid statement, no parens needed). It also now tests "truthiness" like the same operator in Python.
 
 ### Fixed
 
