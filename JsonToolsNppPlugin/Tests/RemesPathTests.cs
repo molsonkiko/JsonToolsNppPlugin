@@ -851,7 +851,7 @@ namespace JSON_Tools.Tests
             ("j`[-3,-2,-1,0,1,2,3,4,5]`", Dtype.NUM | Dtype.ARR),
             //("s", Dtype.NUM), // if this is uncommented, it should cause fuzz tests to fail; use this to verify you haven't broken the tests
         };
-        public static readonly string[] unops = new string[] { "not", "-", "" };
+        public static readonly string[] unops = new string[] { "not", "-", "+", "" };
         public static readonly string[] num_funcs = new string[] { "int", "float" };
         public static readonly string[] arr_funcs = new string[] { "len", "iterable", "is_num" };
         public static readonly string[] str_funcs = new string[] { "s_len", "s_count" };

@@ -269,6 +269,7 @@ For best performance, you can disable the tree view completely. If the JSON is a
 The `View all subtrees` checkbox on the JSON viewer form allows you to quickly toggle between viewing the full tree and only the direct children. Some notes on the checkbox:
 - If the full tree will not be shown when the tree is loaded, this box is unchecked; otherwise it is checked.
 - Checking the box when previously unchecked will load the full tree, but the user must click OK at a message box if the document is 2.5 MB or larger or else the box will remain unchecked. This box warns that loading the full tree for a big document could make Notepad++ responsive for a long time.
+
 ![Message box warning of unresponsiveness when loading a big document](/docs/full%20tree%20load%20warning%20msg.PNG)
 - This message box for canceling loading of the full tree will now also show up when you try to open the full tree for a document 2.5 MB or larger.
 - Unchecking the box when the full tree is loaded will cause only the direct children of root to display.
@@ -406,17 +407,21 @@ Consider this JSON document:
 ```
 
 We will start by shuffling it.
+
 ![Sort form; doc after shuffling](/docs/sort%20form%20shuffle.PNG)
 
 Next, let's sort by the first entry in each subarray.
+
 ![Sort form; sort by index in elements](/docs/sort%20form%20sort%20by%20index%20in%20elements.PNG)
 
 Let's do something a little more interesting: *we can sort multiple arrays if a query produces an array or object where all the values are arrays.*
 
 We will use the query `[:3]` to sort the first three subarrays in this document, and leave the last two unchanged. *Note that we need to sort as strings since the values are a mix of numbers and strings.*
+
 ![Sort form; sort first three subarrays as strings](/docs/sort%20form%20sort%20subarrays%20as%20strings.PNG)
 
 Finally, let's sort the whole document from largest to smallest by a query on each subarray, `@[2] * s_len(@[0])`, which will sort them by the third element multiplied by the string length of the first element.
+
 ![Sort form; sort by query on each element](/docs/sort%20form%20sort%20by%20query%20on%20each%20element.PNG)
 
 Of course, there's also the default sort, which can only compare numbers to numbers and strings to strings. Any mixing of types with the default sort results in failure.
@@ -466,6 +471,8 @@ The plugin contains a variety of built-in unit tests and performance benchmarks 
 This repository also contains ["most recent errors.txt"](/most%20recent%20errors.txt), which shows the expected output (modulo some variation in the benchmarking times) of these tests. By comparing the output of running the tests on your computer to the expected output, you can determine whether the plugin's code is working as expected.
 
 Prior to version [4.2.0](/CHANGELOG.md#420---2022-10-29), running these tests should cause the plugin to crash after printing the line `Testing JSON grepper's file reading ability` because some tests referenced an absolute file path.
+
+An easy way to figure out which tests are failing is to use Notepad++'s find/replace form to search for __`Failed\s+[^0]`__ (*with regular expressions on*).
 
 # Get JSON from files and APIs #
 
