@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -168,6 +169,24 @@ namespace JSON_Tools.JSON_Tools
         public InvalidMutationException(string description) : base(description) { }
 
         public override string ToString() { return description; }
+    }
+
+    public class RemesPathIndexOutOfRangeException : RemesPathException
+    {
+        public int index;
+        public JNode node;
+
+        public RemesPathIndexOutOfRangeException(int index, JNode node) : base("")
+        {
+            this.index = index;
+            this.node = node;
+        }
+
+        public override string ToString()
+        {
+            string typeName = JNode.DtypeStrings[node.type];
+            return $"Index {index} out of range for {typeName} {node.ToString()}";
+        }
     }
     #endregion
     /// <summary>
@@ -385,9 +404,8 @@ namespace JSON_Tools.JSON_Tools
                         else
                         {
                             int ii = Convert.ToInt32(ind);
-                            if (ii >= xarr.Length) { continue; }
-                            // allow negative indices for consistency with how slicers work
-                            yield return xarr[ii >= 0 ? ii : ii + xarr.Length];
+                            if (xarr.children.WrappedIndex(ii, out JNode atII))
+                                yield return atII;
                         }
                     }
                 }
@@ -1726,6 +1744,10 @@ namespace JSON_Tools.JSON_Tools
             if (ex is RemesPathException rpe)
             {
                 return rpe.ToString();
+            }
+            if (ex is RemesPathIndexOutOfRangeException rpioore)
+            {
+                return rpioore.ToString();
             }
             if (ex is DsonDumpException dde)
             {

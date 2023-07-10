@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#530---2023-06-10) to this project will be documented in this file.
+All [notable changes](#540---2023-07-04) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -37,6 +37,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- fails when key contains singlequotes and doublequotes
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
+
+## [5.5.0] - (UNRELEASED) YYYY-MM-DD
+
+### Fixed
+
+1. Bug where `s_slice`, `max_by`, `min_by`, `group_by`, and `sort_by` all did not allow Python-style negative indices.
+2. Bug where out-of-bounds negative indices when indexing in an array would throw an error rather than returning an empty array (which is the correct behavior, since RemesPath is not supposed to throw errors for indexing out of bounds).
 
 ## [5.4.0] - 2023-07-04
 

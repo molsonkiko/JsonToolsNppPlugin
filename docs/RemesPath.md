@@ -45,6 +45,12 @@ The formal description of the language in pseudo-Backus-Naur form is in ["RemesP
     2. Consider again the array of objects `[{"a": 1, "b": ["_"]}, {"a": 2, "b": ["?"]}]`.
         * Query `@[1].b` returns `["?"]`.
         * Query `@[0].b[0]` returns `"_"`.
+7. An out-of-bounds index on an array will return an empty array; indexing an object with a key it does not have returns an empty object.
+    1. Consider the array `[1, 2, 3]`
+        * Queries `@[4]` and `@[-8]` will both return `[]`
+        * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), `@[-n]` on an array with fewer than `n` elements would cause an error to be thrown instead.
+    2. Consider the object `{"a": 1, "b": 2}`
+        * Queries `@.z` and `@[x, j]` will both return `{}`
 
 ## Vectorized operations ##
 
@@ -282,6 +288,7 @@ It's easier to understand with some __examples:__
    * If `k` is *not* an int, throw an error.
    * Return an object where key `str(v)` has an array of sub-arrays `subarr` such that `subarr[k] == v` is `true`.
    * Note that `subarr[k]` might not be a string in these sub-arrays. However, keys in JSON objects must be strings, so the key is the string representation of `subarr[k]` rather than `subarr[k]` itself.
+   * Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `k` argument.
 * If `x` is an array of *objects*:
    * If `k` is *not* a string, throw an error.
    * Return an object where key `str(v)` has an array of sub-objects `subobj` such that `subobj[k] == v` is `true`.
@@ -338,8 +345,9 @@ Returns a floating-point number equal to the maximum value in an array.
 `max_by(x: array, k: int | str) -> array | object`
 
 * If `x` is an array of *arrays*:
-   * If `k` is not an int, throw an error.
+   * If `k` is not an int or if `k >= len(x) or k < -len(x)`, throw an error.
    * Return the subarray `maxarr` such that `maxarr[k] >= subarr[k]` for all sub-arrays `subarr` in `x`.
+   * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed at all.
 * If `x` is an array of *objects*:
     * If `k` is not a string, throw an error.
    * Return the subobject `maxobj` such that `maxobj[k] >= subobj[k]` for all sub-objects `subobj` in `x`.
@@ -454,6 +462,8 @@ Returns a new array of subarrays/subobjects `subitbl` such that `subitbl[k]` is 
 Analogous to SQL `ORDER BY`.
 
 By default, these sub-iterables are sorted ascending. If `descending` is `true`, they will instead be sorted descending.
+
+Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `k` argument.
 
 ----
 `sorted(x: array, descending: bool = false)`
@@ -624,6 +634,8 @@ Basically `x * reps` in Python, except that the binary operator `*` doesn't have
 `sli` can be an integer or slice with the same Python slice syntax used to index arrays (see above).
 
 Returns the appropriate slice/index of `x`.
+
+Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `sli` argument.
 
 ----
 `s_split(x: string, sep: regex | string) -> array[string]`

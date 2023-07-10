@@ -330,5 +330,54 @@ namespace JSON_Tools.Utils
             sb.Append(']');
             return sb.ToString();
         }
+
+        /// <summary>
+        /// If idx is between [0, source length) exclusive, atIdx = source[idx] and return true.<br></br>
+        /// If idx is between [-(source length), -1] inclusive, atIdx = source[idx + source length] and return true.<br></br>
+        /// else atIdx =  default(T) and return false
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="idx"></param>
+        /// <param name="inBounds"></param>
+        /// <returns></returns>
+        public static bool WrappedIndex<T>(this IList<T> source, int idx, out T atIdx)
+        {
+            int count = source.Count;
+            if (idx >= count || idx < -count)
+            {
+                atIdx = default(T);
+                return false;
+            }
+            idx = idx >= 0 ? idx : idx + count;
+            atIdx = source[idx];
+            return true;
+        }
+
+        /// <summary>
+        /// see WrappedIndex docs for lists and arrays.<br></br>
+        /// Returns null if idx is out of bounds.<br></br>
+        /// EXAMPLES<br></br>
+        /// 1. WrappedIndex("abc", 1) -> "b"<br></br>
+        /// 2. WrappedIndex("abc", -3) -> "a"<br></br>
+        /// 3. WrappedIndex("abc", 4) -> null<br></br>
+        /// 4. WrappedIndex("abc", -5) -> null<br></br>
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="idx"></param>
+        /// <param name="atIdx"></param>
+        /// <returns></returns>
+        public static bool WrappedIndex(this string source, int idx, out string atIdx)
+        {
+            int count = source.Length;
+            if (idx >= count || idx < -count)
+            {
+                atIdx = null;
+                return false;
+            }
+            idx = idx >= 0 ? idx : idx + count;
+            atIdx = source.Substring(idx, 1);
+            return true;
+        }
     }
 }

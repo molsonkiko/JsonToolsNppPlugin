@@ -11,7 +11,7 @@ namespace JSON_Tools.Tests
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
-            Npp.AddLine($"Test results for JsonTools v{Npp.AssemblyVersionString()}");
+            Npp.AddLine($"Test results for JsonTools v{Npp.AssemblyVersionString()}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed (?=[^0])\\d\" to find all failed tests");
 
             Npp.AddLine(@"=========================
 Testing JNode Copy method

@@ -294,6 +294,11 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@.foo[*]", "[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
                 new Query_DesiredResult("@.foo[:2][2*@[0] >= @[1]]", "[[3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("@.foo[-1]", "[6.0, 7.0, 8.0]"),
+                // out-of-bounds index tests
+                new Query_DesiredResult("@.foo[-4]", "[]"),
+                new Query_DesiredResult("@.foo[1, -7, 5]", "[[3.0, 4.0, 5.0]]"),
+                new Query_DesiredResult("@.foo[:][-9]", "[]"),
+                new Query_DesiredResult("@.foo[:][5]", "[]"),
                 new Query_DesiredResult("@.g`[a-z]oo`", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]}"),
                 // ufunction tests
                 new Query_DesiredResult("len(@)", ((JObject)foo).Length.ToString()),
@@ -308,6 +313,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("flatten(@.foo)[:4]", "[0, 1, 2, 3.0]"),
                 new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
                 new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
+                new Query_DesiredResult("min_by(@.foo, -3)", "[0, 1, 2]"),
+                new Query_DesiredResult("min_by(@.foo, -1)", "[0, 1, 2]"),
                 new Query_DesiredResult("min_by(@.foo[:]{a: @[0], b: @[1], c: @[2]}, a)", "{\"a\": 0, \"b\": 1, \"c\": 2}"),
                 new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"), // regex to_replace
                 new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, `.`, ``)", "[\"120\", \"15\", \"2\"]"), // string to_replace with special char
@@ -319,6 +326,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("int(@.foo[1])", "[3, 4, 5]"),
                 new Query_DesiredResult("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
                 new Query_DesiredResult("s_slice(str(@.foo[2]), ::-1)", "[\"0.6\", \"0.7\", \"0.8\"]"),
+                new Query_DesiredResult("s_slice(str(@.foo[2]), -3)", "[\"6\", \"7\", \"8\"]"),
+                new Query_DesiredResult("s_slice(j`[\"abc\", \"bced\", \"g\"]`, -1)", "[\"c\", \"d\", \"g\"]"),
+                new Query_DesiredResult("s_slice(j`[\"ca\", \"bcddddd\", \"efg\"]`, -2)", "[\"c\", \"d\", \"f\"]"),
                 new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
                 new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
                 new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
@@ -328,6 +338,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("sort_by(value_counts(@.foo[0]), 1)", "[[0, 1], [1, 1], [2, 1]]"), // function involves a Dictionary so order is inherently random
                 new Query_DesiredResult("value_counts(j`[\"a\", \"b\", \"c\", \"c\", \"c\", \"b\"]`, true)", "[[\"c\", 3], [\"b\", 2], [\"a\", 1]]"),
                 new Query_DesiredResult("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
+                new Query_DesiredResult("sort_by(j`[[1, 2], [3, 1], [4, -1]]`, -1)", "[[4, -1], [3, 1], [1, 2]]"),
                 new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
                 new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
                 new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
@@ -416,6 +427,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("len(@.foo[:]{blah: 1})", "3"),
                 new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
                 new Query_DesiredResult("max_by(@.foo[:]{-@}[0], 1)", "[0, -1, -2]"),
+                new Query_DesiredResult("max_by(@.foo[:]{-@}[0], -2)", "[0, -1, -2]"),
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
                 new Query_DesiredResult("@{foo: .125E3, $baz: 0x2eFb, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 0xabcdefABCDEF}", // JSON5-compliant unquoted strings
@@ -587,6 +599,12 @@ namespace JSON_Tools.Tests
                 new []{"-a", "1"},
                 new []{"-[[]]", "1" },
                 new []{"-@", "[{}]"},
+                new []{"max_by(@, -4)", "[[1, 2], [2, 3]]"},
+                new []{"sort_by(@, -4)", "[[1, 2], [2, 3]]"},
+                new []{"min_by(@, -4)", "[[1, 2], [2, 3]]"},
+                new []{"group_by(@, -4)", "[[1, 2], [2, 3]]"},
+                new []{"s_slice(@, -4)", "[\"abc\", \"cde\"]"},
+                new []{"s_slice(@, 7)", "[\"abc\", \"cde\"]"},
             });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };

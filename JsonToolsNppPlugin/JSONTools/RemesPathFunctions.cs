@@ -1075,6 +1075,22 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, sorted);
         }
 
+        /// <summary>
+        /// x must be a JArray.<br></br>
+        /// Get the element at x[idx] (allowing idx to be negative as normal for Python indices).<br></br>
+        /// If idx is out of range (idx >= x.Length or idx < -x.Length), throw a RemesPathIndexOutOfRangeException.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="idx"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathIndexOutOfRangeException"></exception>
+        public static JNode AtIndex(JNode x, int idx)
+        {
+            if (!((JArray)x).children.WrappedIndex(idx, out JNode atKint))
+                throw new RemesPathIndexOutOfRangeException(idx, x);
+            return atKint;
+        }
+
         public static JNode SortBy(List<JNode> args)
         {
             var arr = ((JArray)args[0]).children;
@@ -1088,7 +1104,7 @@ namespace JSON_Tools.JSON_Tools
             else
             {
                 int kint = Convert.ToInt32(key);
-                sorted = arr.OrderBy(x => ((JArray)x).children[kint]).ToList();
+                sorted = arr.OrderBy(x => AtIndex(x, kint)).ToList();
             }
             if (reverse != null && (bool)reverse)
             {
@@ -1123,11 +1139,11 @@ namespace JSON_Tools.JSON_Tools
             {
                 int kint = Convert.ToInt32(key);
                 var max = (JArray)itbl[0];
-                var maxval = Convert.ToDouble(max[kint].value);
+                var maxval = Convert.ToDouble(AtIndex(max, kint).value);
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
                     var x = (JArray)itbl[ii];
-                    var xval = Convert.ToDouble(x[kint].value);
+                    var xval = Convert.ToDouble(AtIndex(x, kint).value);
                     if (xval > maxval)
                     {
                         max = x;
@@ -1164,11 +1180,11 @@ namespace JSON_Tools.JSON_Tools
             {
                 int kint = Convert.ToInt32(key);
                 var min = (JArray)itbl[0];
-                var minval = Convert.ToDouble(min[kint].value);
+                var minval = Convert.ToDouble(AtIndex(min, kint).value);
                 for (int ii = 1; ii < itbl.children.Count; ii++)
                 {
                     var x = (JArray)itbl[ii];
-                    var xval = Convert.ToDouble(x[kint].value);
+                    var xval = Convert.ToDouble(AtIndex(x, kint).value);
                     if (xval < minval)
                     {
                         min = x;
@@ -1448,7 +1464,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (JNode node in itbl.children)
                 {
                     JArray subobj = (JArray)node;
-                    JNode val = subobj[ikey];
+                    JNode val = AtIndex(subobj, ikey);
                     vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
                     if (gb.ContainsKey(vstr))
                     {
@@ -1480,29 +1496,6 @@ namespace JSON_Tools.JSON_Tools
             }
             return new JObject(0, gb);
         }
-
-        ///// <summary>
-        ///// Like GroupBy, the first argument is a JArray containing only JObjects or only JArrays, and the second arg is a string or int.<br></br>
-        ///// The third argument is a function of the current JSON, e.g., sum(@[:].foo).
-        ///// Returns a JObject mapping each distinct stringified value at the key^th index/key of each subobject in the original iterable
-        ///// to the specified aggregation function of all of those iterables.<br></br>
-        ///// EXAMPLE<br></br>
-        ///// AggBy([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar", sum(@[:].foo)) returns <br></br>
-        ///// {"a": 4.0, "b": 2.0}
-        ///// </summary>
-        ///// <param name="args"></param>
-        ///// <returns></returns>
-        //public static JNode AggBy(List<JNode> args)
-        //{
-        //    JObject gb = (JObject)GroupBy(args.Slice(":2").ToArray());
-        //    CurJson fun = (CurJson)args[2];
-        //    var aggs = new Dictionary<string, JNode>();
-        //    foreach ((string key, JNode subitbl) in gb.children)
-        //    {
-        //        aggs[key] = fun.function(subitbl);
-        //    }
-        //    return new JObject(0, aggs);
-        //}
 
         /// <summary>
         /// Takes 2-8 JArrays as arguments. They must be of equal length.
@@ -1875,8 +1868,9 @@ namespace JSON_Tools.JSON_Tools
             }
             int index = Convert.ToInt32(slicer_or_int.value);
             // allow negative indices for consistency with slicing syntax
-            index = index < s.Length ? index : s.Length + index;
-            return new JNode(s.Substring(index, 1));            
+            if (!s.WrappedIndex(index, out string result))
+                throw new RemesPathIndexOutOfRangeException(index, args[0]);
+            return new JNode(result);
         }
 
         /// <summary>
