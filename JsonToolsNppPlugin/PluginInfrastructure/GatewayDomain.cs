@@ -62,14 +62,17 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     /// </summary>
     public class Position : IEquatable<Position>
     {
-        private readonly int pos;
+        private readonly Int64 pos;
 
-        public Position(int pos)
+        public Position(IntPtr ptr) : this(ptr.ToInt64())
+        { }
+
+        public Position(Int64 pos)
         {
             this.pos = pos;
         }
 
-        public int Value
+        public Int64 Value
         {
             get { return pos; }
         }
@@ -146,7 +149,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 
         public override int GetHashCode()
         {
-            return pos;
+            return pos.GetHashCode();
         }
     }
 
