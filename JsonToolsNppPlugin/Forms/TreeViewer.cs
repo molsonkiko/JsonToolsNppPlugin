@@ -327,7 +327,7 @@ namespace JSON_Tools.Forms
                     return;
                 }
                 json = query_func;
-                Main.fnameJsons[fname] = query_func;
+                Main.jsonFileInfos[fname].json = query_func;
                 query_result = query_func;
                 string new_json_str = query_func.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
                 Npp.editor.SetText(new_json_str);
@@ -789,7 +789,6 @@ namespace JSON_Tools.Forms
             fname = cur_fname;
             json = new_json;
             query_result = json;
-            Main.fnameJsons[fname] = json;
             JsonTreePopulate(json);
         }
 

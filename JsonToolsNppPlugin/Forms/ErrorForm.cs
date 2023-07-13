@@ -149,8 +149,9 @@ namespace JSON_Tools.Forms
                 // refresh error form based on current contents of current file
                 e.Handled = true;
                 Main.TryParseJson();
-                if (Main.fnameLints.TryGetValue(Main.activeFname, out var lintArr))
-                    Reload(Main.activeFname, lintArr);
+                if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
+                    && info.lints != null)
+                    Reload(Main.activeFname, info.lints);
                 return;
             }
             var selRowIndex = ErrorGrid.SelectedCells[0].RowIndex;

@@ -33,13 +33,10 @@ namespace Kbg.NppPluginNET
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string activeFname = null;
-        public static Dictionary<string, JsonLint[]> fnameLints = new Dictionary<string, JsonLint[]>();
-        public static Dictionary<string, JNode> fnameJsons = new Dictionary<string, JNode>();
-        public static Dictionary<string, string> fnameDoctypeStatusBarSections = new Dictionary<string, string>();
+        public static Dictionary<string, JsonFileInfo> jsonFileInfos = new Dictionary<string, JsonFileInfo>();
         // tree view stuff
         public static TreeViewer openTreeViewer = null;
-        public static Dictionary<string, TreeViewer> treeViewers = new Dictionary<string, TreeViewer>();
-        private static Dictionary<IntPtr, string> treeviewerBuffersRenamed = new Dictionary<IntPtr, string>();
+        private static Dictionary<IntPtr, string> jsonFilesRenamed = new Dictionary<IntPtr, string>();
         // grepper form stuff
         private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
@@ -148,27 +145,33 @@ namespace Kbg.NppPluginNET
                     // we need to track which of the currently visible buffers are actually being edited.
                     Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
                     string new_fname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
-                    if (activeFname != null)
+                    JsonFileInfo info = null;
+                    JsonFileInfo new_info = null;
+                    bool lastFileHasInfo = activeFname != null && TryGetInfoForFile(activeFname, out info);
+                    bool newFileHasInfo = TryGetInfoForFile(new_fname, out new_info);
+                    if (lastFileHasInfo)
                     {
                         // check to see if there was a treeview for the file
                         // we just navigated away from
                         if (openTreeViewer != null && openTreeViewer.IsDisposed)
                         {
-                            treeViewers.Remove(openTreeViewer.fname);
+                            info.tv = null;
                             openTreeViewer = null;
                         }
                         // now see if there's a treeview for the file just opened
-                        if (treeViewers.TryGetValue(new_fname, out TreeViewer new_tv))
+
+                        if (newFileHasInfo
+                            && new_info.tv != null)
                         {
-                            if (new_tv.IsDisposed)
-                                treeViewers.Remove(new_fname);
+                            if (new_info.tv.IsDisposed)
+                                new_info.tv = null;
                             else
                             {
                                 // minimize the treeviewer that was visible and make the new one visible
                                 if (openTreeViewer != null)
                                     Npp.notepad.HideDockingForm(openTreeViewer);
-                                Npp.notepad.ShowDockingForm(new_tv);
-                                openTreeViewer = new_tv;
+                                Npp.notepad.ShowDockingForm(new_info.tv);
+                                openTreeViewer = new_info.tv;
                             }
                         }
                         // else { }
@@ -200,13 +203,18 @@ namespace Kbg.NppPluginNET
                     activeFname = new_fname;
                     if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
                         ValidateIfFilenameMatches(new_fname);
-                    if (fnameDoctypeStatusBarSections.TryGetValue(new_fname, out string doctypeStatusBarSection))
-                        Npp.notepad.SetStatusBarSection(doctypeStatusBarSection, StatusBarSection.DocType);
+                    if (newFileHasInfo && new_info.statusBarSection != null)
+                        Npp.notepad.SetStatusBarSection(new_info.statusBarSection, StatusBarSection.DocType);
                     return;
                 // when closing a file
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
                     IntPtr buffer_closed_id = notification.Header.IdFrom;
                     string buffer_closed = Npp.notepad.GetFilePath(buffer_closed_id);
+                    if (TryGetInfoForFile(buffer_closed, out JsonFileInfo closed_info))
+                    {
+                        closed_info.Dispose();
+                        jsonFileInfos.Remove(buffer_closed);
+                    }
                     // if you close the file belonging the GrepperForm, delete its tree viewer
                     if (grepperForm != null && grepperForm.tv != null
                         && !grepperForm.tv.IsDisposed
@@ -215,22 +223,8 @@ namespace Kbg.NppPluginNET
                         Npp.notepad.HideDockingForm(grepperForm.tv);
                         grepperForm.tv.Close();
                         grepperForm.tv = null;
-                        // also unhide the normal tree viewer if it exists
-                        if (treeViewers.TryGetValue(buffer_closed, out TreeViewer treeViewer1) && !treeViewer1.IsDisposed)
-                            Npp.notepad.ShowDockingForm(treeViewer1);
                         return;
                     }
-                    // clean up data associated with the buffer that was just closed
-                    fnameJsons.Remove(buffer_closed);
-                    if (!treeViewers.TryGetValue(buffer_closed, out TreeViewer closed_tv))
-                        return;
-                    if (!closed_tv.IsDisposed)
-                    {
-                        Npp.notepad.HideDockingForm(closed_tv);
-                        closed_tv.Close();
-                        closed_tv.Dispose();
-                    }
-                    treeViewers.Remove(buffer_closed);
                     return;
                 // the editor color scheme changed, so update form colors
                 case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
@@ -245,11 +239,11 @@ namespace Kbg.NppPluginNET
                 case (uint)NppMsg.NPPN_FILEBEFORERENAME:
                     IntPtr buffer_renamed_id = notification.Header.IdFrom;
                     string buffer_old_name = Npp.notepad.GetFilePath(buffer_renamed_id);
-                    if (treeViewers.ContainsKey(buffer_old_name))
+                    if (TryGetInfoForFile(buffer_old_name, out var _))
                     {
-                        treeviewerBuffersRenamed[buffer_renamed_id] = buffer_old_name;
+                        jsonFilesRenamed[buffer_renamed_id] = buffer_old_name;
                     }
-                    else if (grepperForm != null && grepperForm.tv != null 
+                    if (grepperForm != null && grepperForm.tv != null 
                             && !grepperForm.tv.IsDisposed
                             && grepperForm.tv.fname == buffer_old_name)
                     {
@@ -270,15 +264,15 @@ namespace Kbg.NppPluginNET
                     {
                         ParseSchemasToFnamePatternsFile();
                     }
-                    if (treeviewerBuffersRenamed.TryGetValue(buffer_renamed_id, out buffer_old_name))
+                    if (jsonFilesRenamed.TryGetValue(buffer_renamed_id, out buffer_old_name)
+                        && TryGetInfoForFile(buffer_old_name, out JsonFileInfo old_info))
                     {
-                        treeviewerBuffersRenamed.Remove(buffer_renamed_id);
-                        TreeViewer renamed = treeViewers[buffer_old_name];
-                        renamed.Rename(buffer_new_name);
-                        treeViewers.Remove(buffer_old_name);
-                        treeViewers[buffer_new_name] = renamed;
+                        jsonFilesRenamed.Remove(buffer_renamed_id);
+                        old_info.tv?.Rename(buffer_new_name);
+                        jsonFileInfos.Remove(buffer_old_name);
+                        jsonFileInfos[buffer_new_name] = old_info;
                     }
-                    else if (shouldRenameGrepperForm)
+                    if (shouldRenameGrepperForm)
                     {
                         grepperForm.tv.fname = buffer_new_name;
                         shouldRenameGrepperForm = false;
@@ -287,7 +281,7 @@ namespace Kbg.NppPluginNET
                 // if a treeviewer was slated for renaming, just cancel that
                 case (uint)NppMsg.NPPN_FILERENAMECANCEL:
                     buffer_renamed_id = notification.Header.IdFrom;
-                    treeviewerBuffersRenamed.Remove(buffer_renamed_id);
+                    jsonFilesRenamed.Remove(buffer_renamed_id);
                     shouldRenameGrepperForm = false;
                     return;
                 // if the user did nothing for a while (default 1 second) after editing,
@@ -314,13 +308,13 @@ namespace Kbg.NppPluginNET
                 grepperForm.Close();
                 grepperForm.Dispose();
             }
-            foreach (string key in treeViewers.Keys)
+            foreach (string key in jsonFileInfos.Keys)
             {
-                TreeViewer tv = treeViewers[key];
-                if (tv == null || !tv.IsDisposed)
+                JsonFileInfo info = jsonFileInfos[key];
+                if (info == null || !info.IsDisposed)
                     continue;
-                tv.Dispose();
-                treeViewers[key] = null;
+                info.Dispose();
+                jsonFileInfos[key] = null;
             }
             WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
             parseTimer.Dispose();
@@ -373,8 +367,8 @@ namespace Kbg.NppPluginNET
                 json = jsonParser.ParseJsonLines(text);
             else
                 json = jsonParser.Parse(text);
+            JsonFileInfo info = AddJsonForFile(fname, json);
             int lintCount = jsonParser.lint.Count;
-            fnameLints[fname] = jsonParser.lint.ToArray();
             if (lintCount > 0 && settings.offer_to_show_lint)
             {
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
@@ -384,6 +378,7 @@ namespace Kbg.NppPluginNET
                     OpenErrorForm(activeFname, true);
                 }
             }
+            info.lints = jsonParser.lint.ToArray();
             if (jsonParser.fatal)
             {
                 // unacceptable error, show message box
@@ -418,13 +413,48 @@ namespace Kbg.NppPluginNET
                 string doctypeStatusBarEntry = lintCount == 0
                     ? doctypeDescription
                     : $"{doctypeDescription} - {lintCount} errors (Alt-P-J-E to view)";
-                fnameDoctypeStatusBarSections[fname] = doctypeStatusBarEntry;
+                info.statusBarSection = doctypeStatusBarEntry;
                 Npp.notepad.SetStatusBarSection(doctypeStatusBarEntry, StatusBarSection.DocType);
             }
-            fnameJsons[fname] = json;
-            if (treeViewers.TryGetValue(fname, out var tv))
-                tv.json = json;
+            if (info.tv != null)
+                info.tv.json = json;
             return (jsonParser.fatal, json);
+        }
+
+        public static JsonFileInfo AddJsonForFile(string fname, JNode json)
+        {
+            if (TryGetInfoForFile(fname, out JsonFileInfo info))
+                info.json = json;
+            else
+                info = new JsonFileInfo(json);
+            jsonFileInfos[fname] = info;
+            return info;
+        }
+
+        /// <summary>
+        /// If no JsonFileInfo was associated with fname, return false and info = null<br></br>
+        /// returns the JsonFileInfo associated with fname<br></br>
+        /// If the info was null or disposed, clear that entry from jsonFileInfos, info = null, and return false
+        /// </summary>
+        /// <param name="fname"></param>
+        /// <param name="info"></param>
+        /// <returns></returns>
+        public static bool TryGetInfoForFile(string fname, out JsonFileInfo info)
+        {
+            if (!jsonFileInfos.TryGetValue(fname, out info))
+                return false;
+            if (info == null)
+            {
+                jsonFileInfos.Remove(fname);
+                return false;
+            }
+            if (info.IsDisposed)
+            {
+                info = null;
+                jsonFileInfos.Remove(fname);
+                return false;
+            }
+            return true;
         }
 
         public static string PrettyPrintFromSettings(JNode json)
@@ -570,12 +600,13 @@ namespace Kbg.NppPluginNET
                 FormStyle.ApplyStyle(sortForm, settings.use_npp_styling);
             if (grepperForm != null && !grepperForm.IsDisposed)
                 FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
-            foreach (TreeViewer tv in treeViewers.Values)
+            foreach (string fname in jsonFileInfos.Keys)
             {
-                if (tv != null && !tv.IsDisposed)
-                {
-                    FormStyle.ApplyStyle(tv, settings.use_npp_styling);
-                }
+                JsonFileInfo info = jsonFileInfos[fname];
+                if (info == null || info.IsDisposed)
+                    jsonFileInfos.Remove(fname);
+                else if (info.tv != null && !info.tv.IsDisposed)
+                    FormStyle.ApplyStyle(info.tv, settings.use_npp_styling);
             }
         }
 
@@ -588,8 +619,9 @@ namespace Kbg.NppPluginNET
         private static void OpenErrorForm(string fname, bool wasAutoTriggered)
         {
             bool wasVisible = errorForm != null && errorForm.Visible;
-            if ((!fnameLints.TryGetValue(activeFname, out JsonLint[] lintArr)
-                || lintArr.Length == 0)
+            if ((!TryGetInfoForFile(fname, out JsonFileInfo info)
+                || info.lints == null
+                || info.lints.Length == 0)
                 && !wasAutoTriggered)
             {
 
@@ -602,22 +634,22 @@ namespace Kbg.NppPluginNET
                 Npp.notepad.HideDockingForm(errorForm);
             else if (errorForm == null)
             {
-                errorForm = new ErrorForm(activeFname, lintArr);
+                errorForm = new ErrorForm(activeFname, info.lints);
                 DisplayErrorForm(errorForm);
             }
-            else if (errorForm.SlowReloadExpected(lintArr))
+            else if (errorForm.SlowReloadExpected(info.lints))
             {
                 // for some reason destroying the form and reopening it
                 // appears to be cheaper when there are many rows
                 Npp.notepad.HideDockingForm(errorForm);
                 errorForm.Dispose();
                 errorForm.Close();
-                errorForm = new ErrorForm(activeFname, lintArr);
+                errorForm = new ErrorForm(activeFname, info.lints);
                 DisplayErrorForm(errorForm);
             }
             else
             {
-                errorForm.Reload(activeFname, lintArr);
+                errorForm.Reload(activeFname, info.lints);
                 Npp.notepad.ShowDockingForm(errorForm);
             }
         }
@@ -731,14 +763,18 @@ namespace Kbg.NppPluginNET
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
             bool fatal;
-            if (!fnameJsons.TryGetValue(fname, out json))
+            if (TryGetInfoForFile(fname, out JsonFileInfo info))
+                json = info.json;
+            else
             {
-                if (grepperForm != null 
+                if (grepperForm != null
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
                     && grepperForm.tv.fname == fname)
                 {
                     json = grepperForm.grepper.fname_jsons;
                 }
+                else
+                    json = null;
             }
             if (json == null)
             {
@@ -763,14 +799,18 @@ namespace Kbg.NppPluginNET
                 else
                     Npp.notepad.HideDockingForm(openTreeViewer);
             }
-            treeViewers.TryGetValue(activeFname, out TreeViewer treeViewer);
-            if (treeViewer != null && !treeViewer.IsDisposed)
+            if (!TryGetInfoForFile(activeFname, out JsonFileInfo info))
+            {
+                info = new JsonFileInfo();
+                jsonFileInfos[activeFname] = info;
+            }
+            if (info.tv != null && !info.tv.IsDisposed)
             {
                 // if the tree view is open, hide the tree view and then dispose of it
                 // if the grepper form is open, this should just toggle it.
                 // it's counterintuitive to the user that the plugin command would toggle
                 // a tree view other than the one they're currently looking at
-                bool was_visible = treeViewer.Visible;
+                bool was_visible = info.tv.Visible;
                 if (!was_visible
                     && grepperForm != null
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
@@ -781,14 +821,15 @@ namespace Kbg.NppPluginNET
                     else Npp.notepad.ShowDockingForm(grepperForm.tv);
                     return;
                 }
-                Npp.notepad.HideDockingForm(treeViewer);
-                treeViewer.Close();
+                Npp.notepad.HideDockingForm(info.tv);
+                info.tv.Close();
                 if (was_visible)
                     return;
-                if (openTreeViewer != null && treeViewer == openTreeViewer)
+                if (openTreeViewer != null && info.tv == openTreeViewer)
                 {
+                    openTreeViewer.Dispose();
                     openTreeViewer = null;
-                    treeViewers.Remove(activeFname);
+                    info.tv = null;
                     return;
                 }
             }
@@ -796,7 +837,7 @@ namespace Kbg.NppPluginNET
             if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
-            treeViewers[activeFname] = openTreeViewer;
+            info.tv = openTreeViewer;
             DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}");
         }
 
@@ -1239,6 +1280,43 @@ namespace Kbg.NppPluginNET
         public Func<JNode, JsonSchemaValidator.ValidationProblem?> this[string fname]
         {
             get { return cache[fname]; }
+        }
+    }
+
+    public class JsonFileInfo : IDisposable
+    {
+        public JNode json;
+        public JsonLint[] lints;
+        public string statusBarSection;
+        public TreeViewer tv;
+        public bool IsDisposed { get; private set; }
+
+        public JsonFileInfo(JNode json = null, JsonLint[] lints = null, string statusBarSection = null, TreeViewer tv = null)
+        {
+            this.json = json;
+            this.lints = lints;
+            this.statusBarSection = statusBarSection;
+            this.tv = tv;
+            IsDisposed = false;
+        }
+
+        public void Dispose()
+        {
+            if (tv != null)
+            {
+                Npp.notepad.HideDockingForm(tv);
+                tv.Close();
+                tv.Dispose();
+                tv = null;
+            }
+            if (json is JArray arr)
+                arr.children.Clear();
+            else if (json is JObject obj)
+                obj.children.Clear();
+            lints = null;
+            json = null;
+            statusBarSection = null;
+            IsDisposed = true;
         }
     }
 }   
