@@ -118,10 +118,10 @@ namespace JSON_Tools.Forms
                 // can only filter on values when in math mode, so don't consider KeysValsBothBox
                 if (RecursiveSearchBox.Checked)
                 {
-                    findQuery = $"((({root})..*)[is_num(@)])[@ {FindTextBox.Text}]";
+                    findQuery = $"({root})..*[is_num(@)][@ {FindTextBox.Text}]";
                     return;
                 }
-                findQuery = $"(({root}.*)[is_num(@)])[@ {FindTextBox.Text}]";
+                findQuery = $"({root}).*[is_num(@)][@ {FindTextBox.Text}]";
                 return;
             }
             string keys_find_text;
@@ -147,7 +147,7 @@ namespace JSON_Tools.Forms
                 else
                 {
                     // simplest case; do normal hash map key search, or check if string equals find text exactly
-                    keys_find_text = FindTextBox.Text;
+                    keys_find_text = "`" + FindTextBox.Text.Replace("`", "\\`") + "`";
                     values_find_text = $"[str(@) == {keys_find_text}]";
                 }
             }
@@ -176,12 +176,12 @@ namespace JSON_Tools.Forms
                         findQuery = $"({root})..{keys_find_text}";
                         break;
                     case 1: // values
-                        findQuery = $"(({root})..*){values_find_text}";
+                        findQuery = $"({root})..*{values_find_text}";
                         break;
                     default: // both keys and values
                         findQuery = "concat(\r\n" +
                                     $"    ({root})..{keys_find_text},\r\n" +
-                                    $"    (({root})..*){values_find_text}\r\n" +
+                                    $"    ({root})..*{values_find_text}\r\n" +
                                     $")";
                         break;
                 }
@@ -190,15 +190,15 @@ namespace JSON_Tools.Forms
             switch (KeysValsBothBox.SelectedIndex)
             {
                 case 0: // keys
-                    findQuery = $"{root}.{keys_find_text}";
+                    findQuery = $"({root}).{keys_find_text}";
                     break;
                 case 1: // values
-                    findQuery = $"({root}){values_find_text}";
+                    findQuery = $"{root}{values_find_text}";
                     break;
                 default: // both keys and values
                     findQuery = "concat(\r\n" +
-                                $"    {root}.{keys_find_text},\r\n" +
-                                $"    ({root}){values_find_text}\r\n" +
+                                $"    ({root}).{keys_find_text},\r\n" +
+                                $"    {root}{values_find_text}\r\n" +
                                 $")";
                     break;
             }
@@ -218,13 +218,13 @@ namespace JSON_Tools.Forms
             int keysvals_index = KeysValsBothBox.SelectedIndex;
             KeysValsBothBox.SelectedIndex = 1;
             AssignFindReplaceQueries();
-            string root = (RecursiveSearchBox.Checked) ? $"(@{RootTextBox.Text})..*" : $"@{RootTextBox}";
+            string root = (RecursiveSearchBox.Checked) ? $"(@{RootTextBox.Text})..*" : $"@{RootTextBox.Text}";
             // for math find/replace we want to filter before performing the operation
             // for regex find/replace the s_sub function naturally filters (because it's only replacing the target substring)
             // thus, we only want to use the findQuery to filter when doing math find/replace
             treeViewer.QueryBox.Text = (MathBox.Checked)
                 ? findQuery + " = " + replaceQuery
-                : $"({root})[is_str(@)] = {replaceQuery}";
+                : $"{root}[is_str(@)] = {replaceQuery}";
             //treeViewer.QueryBox.Text = findQuery + " = " + replaceQuery;
             treeViewer.SubmitQueryButton.PerformClick();
             KeysValsBothBox.SelectedIndex = keysvals_index;

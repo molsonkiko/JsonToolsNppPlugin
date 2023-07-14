@@ -319,7 +319,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        public static string StrToString(IEnumerable<char> s, bool quoted)
+        public static string StrToString(string s, bool quoted)
         {
             var sb = new StringBuilder();
             if (quoted)
@@ -379,8 +379,8 @@ namespace JSON_Tools.JSON_Tools
         internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
         {
             if (change_positions) position = sb.Length + extra_utf8_bytes;
-            var str = ToString();
-            sb.Append(str);
+                var str = ToString();
+                sb.Append(str);
             if (type == Dtype.STR)
                 return extra_utf8_bytes + JsonParser.ExtraUTF8BytesBetween(str, 1, str.Length - 1);
             return extra_utf8_bytes; // only ASCII characters in non-strings

@@ -300,6 +300,18 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@.foo[:][-9]", "[]"),
                 new Query_DesiredResult("@.foo[:][5]", "[]"),
                 new Query_DesiredResult("@.g`[a-z]oo`", "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]}"),
+                // boolean indexing tests
+                new Query_DesiredResult("@.foo[:][:][@ % 3 == 1]", "[[1], [4.0], [7.0]]"),
+                new Query_DesiredResult("j`[{\"a\": 1, \"b\": [\"a\", \"b\"]}, {\"a\": 2, \"b\": [\"c\", \"d\", \"e\"]}, {\"a\": 3, \"b\": null}]`" +
+                                        "[:][@.a < 3]" +
+                                        ".b[:2][@ =~ g`[a-e]`]",
+                    "[[\"a\", \"b\"], [\"c\", \"d\"]]"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[@ < 2]", "{\"a\": 1}"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[@ < 0]", "{}"),
+                new Query_DesiredResult("j`[1,2,3]`[@ < 0]", "[]"),
+                new Query_DesiredResult("j`[1,2,3]`[false]", "[]"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[false]", "{}"),
+                new Query_DesiredResult("@.foo[:]{a: @[0], b: @[1], c: @[2], d: @[2] / @[0]}[@.a * @.c < @.b][@ > 1]", "[{\"c\": 2, \"d\": Infinity}]"),
                 // ufunction tests
                 new Query_DesiredResult("len(@)", ((JObject)foo).Length.ToString()),
                 new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),

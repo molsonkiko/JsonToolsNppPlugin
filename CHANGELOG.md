@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [5.5.0] - (UNRELEASED) YYYY-MM-DD
 
+### Changed
+
+1. Improved RemesPath [boolean indices](/docs/RemesPath.md#boolean-indexing) so that they can be more easily chained together.
+
 ### Fixed
 
 1. Bug where `s_slice`, `max_by`, `min_by`, `group_by`, and `sort_by` all did not allow Python-style negative indices.

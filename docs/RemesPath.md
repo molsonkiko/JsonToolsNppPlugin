@@ -126,10 +126,14 @@ __Examples:__
 You can select all elements in an iterable that satisfy a condition by applying a boolean index.
 
 A boolean index can be one of the following:
-* A single boolean. If it's `false`, an empty array is returned (*it's always an array, even for one-element boolean indices on objects*). If it's true, the whole iterable is returned.
+* A single boolean. If it's `false`, an empty array is returned (*prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), it's always an array, even for one-element boolean indices on objects*). If it's true, the whole iterable is returned.
     * Consider the array `[1, 2, 3]`
     * e.g., `@[in(2, @)]` will return `[1, 2, 3]` because `in(2, @)` is `true`.
     * `@[in(4, @)]` will return `[]` because `in(4, @)` is `false`.
+    * Starting in [5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), boolean indices with a single boolean can be applied to non-iterables (e.g. `@[@ > 2]` returns `[]` for `1` and `3` for `3`)
+        - With the input `[1, 2, 3]`, `@[:][@ < 3]` returns `[1, 2]` in v5.5.0+, but prior to that it would just raise an error.
+    * Starting in [5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), a one-boolean boolean index on an object returns the original object, allowing the user to query the result of the boolean index.
+        - With the input `[{"a": 1, "b": "a"}, {"a": 2, "b": "b"}]`, `@[@.a < 2].b` returns `["a"]` in v5.5.0+, but prior to that is would just raise an error.
 * *If the iterable is an __array__, an array of booleans of the same length as the iterable*. An array with all the values for which the boolean index was `true` will be returned.
     * Consider the array `[1, 2, 3]`
     * `@[@ > @[0]]` will return `[2, 3]`.

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -87,7 +86,7 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
-    public struct IndexerFunc
+    public class IndexerFunc
     {
         /// <summary>
         /// An enumerator that yields JNodes from a JArray or JObject
@@ -119,6 +118,101 @@ namespace JSON_Tools.JSON_Tools
             this.is_projection = is_projection;
             this.is_dict = is_dict;
             this.is_recursive = is_recursive;
+        }
+
+        /// <summary>
+        /// Unlike other indexers, boolean indices may simply return the original object
+        /// (for example @[@.a &gt; 3] returns <i>an entire object</i> if the value with key "a" is greater than 3)<br></br>
+        /// OR return individual elements of the original object (for example @[@ &gt; 3] returns <i>the elements of an object/array</i> that are greater than 3).<br></br>
+        /// This is important because we want boolean indices to be easy to chain.<br></br>
+        /// Because of this, ApplyBooleanIndex must be an instance method of the IndexerFunc class,
+        /// so that it can set the has_one_option and is_dict attributes of this class.
+        /// </summary>
+        /// <param name="inds"></param>
+        /// <returns></returns>
+        /// <exception cref="VectorizedArithmeticException">if the boolean index has the wrong length or contains non-booleans</exception>
+        public Func<JNode, IEnumerable<object>> ApplyBooleanIndex(JNode inds)
+        {
+            IEnumerable<object> bool_idxr_func(JNode x)
+            {
+                has_one_option = false;
+                JNode newinds = (inds is CurJson cj)
+                    ? cj.function(x)
+                    : inds;
+                is_dict = x is JObject;
+                if (newinds.value is bool newibool)
+                {
+                    // to allow for boolean indices that filter on the entire object/array, like @.bar == @.foo or sum(@) == 0
+                    if (newibool)
+                    {
+                        // boolean indices yield each individual element of an array
+                        // but treat objects and scalars as atomic
+                        // because this allows chaining of boolean indices in an intuitive way
+                        // e.g., @[:][@.a < 2][@.b > 3].c[:][@ < 3]
+                        if (x is JArray xarr)
+                        {
+                            for (int ii = 0; ii < xarr.Length; ii++)
+                            {
+                                yield return xarr[ii];
+                            }
+                        }
+                        else
+                        {
+                            has_one_option = true;
+                            yield return x;
+                        }
+                    }
+                    // if the condition is false, yield nothing
+                    yield break;
+                }
+                else if (newinds is JObject iobj)
+                {
+                    JObject xobj = (JObject)x;
+                    if (iobj.Length != xobj.Length)
+                    {
+                        throw new VectorizedArithmeticException($"bool index length {iobj.Length} does not match object/array length {xobj.Length}.");
+                    }
+                    foreach (KeyValuePair<string, JNode> kv in xobj.children)
+                    {
+                        bool i_has_key = iobj.children.TryGetValue(kv.Key, out JNode ival);
+                        if (i_has_key)
+                        {
+                            if (!(ival.value is bool ibool))
+                            {
+                                throw new VectorizedArithmeticException("bool index contains non-booleans");
+                            }
+                            if (ibool)
+                            {
+                                yield return kv;
+                            }
+                        }
+                    }
+                    yield break;
+                }
+                else if (newinds is JArray iarr)
+                {
+                    JArray xarr = (JArray)x;
+                    if (iarr.Length != xarr.Length)
+                    {
+                        throw new VectorizedArithmeticException($"bool index length {iarr.Length} does not match object/array length {xarr.Length}.");
+                    }
+                    for (int ii = 0; ii < xarr.Length; ii++)
+                    {
+                        JNode ival = iarr[ii];
+                        JNode xval = xarr[ii];
+                        if (!(ival.value is bool ibool))
+                        {
+                            throw new VectorizedArithmeticException("bool index contains non-booleans");
+                        }
+                        if (ibool)
+                        {
+                            yield return xval;
+                        }
+                    }
+                    yield break;
+                }
+            }
+            return bool_idxr_func;
         }
     }
 
@@ -422,86 +516,6 @@ namespace JSON_Tools.JSON_Tools
                     yield return kv;
                 }
             }
-        }
-
-        private Func<JNode, IEnumerable<object>> ApplyBooleanIndex(JNode inds)
-        {
-            IEnumerable<object> bool_idxr_func(JNode x)
-            {
-                JNode newinds = (inds is CurJson cj)
-                    ? cj.function(x)
-                    : inds;
-                if (newinds.value is bool newibool)
-                {
-                    // to allow for boolean indices that filter on the entire object/array, like @.bar == @.foo or sum(@) == 0
-                    if (newibool)
-                    {
-                        if (x is JObject xobj)
-                        {
-                            foreach (KeyValuePair<string, JNode> kv in xobj.children)
-                            {
-                                yield return kv;
-                            }
-                        }
-                        else if (x is JArray xarr)
-                        {
-                            for (int ii = 0; ii < xarr.Length; ii++)
-                            {
-                                yield return xarr[ii];
-                            }
-                        }
-                    }
-                    // if the condition is false, yield nothing
-                    yield break;
-                }
-                else if (newinds is JObject iobj)
-                {
-                    JObject xobj= (JObject)x;
-                    if (iobj.Length != xobj.Length)
-                    {
-                        throw new VectorizedArithmeticException($"bool index length {iobj.Length} does not match object/array length {xobj.Length}.");
-                    }
-                    foreach (KeyValuePair<string, JNode> kv in xobj.children)
-                    {
-                        bool i_has_key = iobj.children.TryGetValue(kv.Key, out JNode ival);
-                        if (i_has_key)
-                        {
-                            if (!(ival.value is bool ibool))
-                            {
-                                throw new VectorizedArithmeticException("bool index contains non-booleans");
-                            }
-                            if (ibool)
-                            {
-                                yield return kv;
-                            }
-                        }
-                    }
-                    yield break;
-                }
-                else if (newinds is JArray iarr)
-                {
-                    JArray xarr = (JArray)x;
-                    if (iarr.Length != xarr.Length)
-                    {
-                        throw new VectorizedArithmeticException($"bool index length {iarr.Length} does not match object/array length {xarr.Length}.");
-                    }
-                    for (int ii = 0; ii < xarr.Length; ii++)
-                    {
-                        JNode ival = iarr[ii];
-                        JNode xval = xarr[ii];
-                        if (!(ival.value is bool ibool))
-                        {
-                            throw new VectorizedArithmeticException("bool index contains non-booleans");
-                        }
-                        if (ibool)
-                        {
-                            yield return xval;
-                        }
-                    }
-                    yield break;
-                }
-            }
-            return bool_idxr_func;
         }
 
         private IEnumerable<object> ApplyStarIndexer(JNode x)
@@ -1343,8 +1357,9 @@ namespace JSON_Tools.JSON_Tools
                     else if (cur_idxr is BooleanIndex boodex)
                     {
                         JNode boodex_fun = (JNode)boodex.value;
-                        Func<JNode, IEnumerable<object>> idx_func = ApplyBooleanIndex(boodex_fun);
-                        idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
+                        var idxr = new IndexerFunc(null, has_one_option, is_projection, is_dict, is_recursive);
+                        idxr.idxr = idxr.ApplyBooleanIndex(boodex_fun);
+                        idxrs.Add(idxr);
                     }
                     else if (cur_idxr is Projection proj)
                     {
