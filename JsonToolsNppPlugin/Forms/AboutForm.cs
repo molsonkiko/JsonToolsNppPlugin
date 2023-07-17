@@ -20,6 +20,9 @@ namespace JSON_Tools.Forms
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             ThanksWowLinkLabel.LinkColor = ThanksWowLinkLabel.ForeColor; // hidden!
             Title.Text = Title.Text.Replace("X.Y.Z.A", Npp.AssemblyVersionString());
+#if DEBUG
+            Title.Text += " Debug";
+#endif // DEBUG
             string nppVersionString = string.Join(".", nppVersion.Select((x) => x.ToString()));
             DebugInfoLabel.Text = DebugInfoLabel.Text.Replace("X.Y.Z", nppVersionString);
         }
