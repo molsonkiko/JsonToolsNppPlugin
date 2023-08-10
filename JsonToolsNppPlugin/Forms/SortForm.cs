@@ -21,7 +21,7 @@ namespace JSON_Tools.Forms
 
         private void SortButton_Clicked(object sender, EventArgs e)
         {
-            (bool fatal, JNode json) = Main.TryParseJson();
+            (bool fatal, JNode json, bool usesSelections) = Main.TryParseJson();
             if (fatal || json == null)
                 return;
             string pathQuery = "@" + PathTextBox.Text;
@@ -87,11 +87,7 @@ namespace JSON_Tools.Forms
                 if (!SortSingleJson(jsonAtPath, query))
                     return;
             }
-            string output = json.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
-            Npp.editor.SetText(output);
-            Npp.RemoveTrailingSOH();
-            Main.lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
-            Npp.SetLangJson();
+            Main.ReformatFileWithJson(json, Main.PrettyPrintFromSettings, usesSelections);
         }
 
         /// <summary>

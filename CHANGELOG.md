@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     ]
 }
 ```
+3. Add option for users to choose newline in JSON Lines and JSON-to-CSV.
  
 ### To Be Changed
 

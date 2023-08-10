@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
@@ -73,6 +74,13 @@ namespace JSON_Tools.Forms
             lexer = new RemesPathLexer();
             findReplaceForm = null;
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
+        }
+
+        private bool UsesSelections()
+        {
+            if (!Main.TryGetInfoForFile(fname, out JsonFileInfo info))
+                return false;
+            return info.usesSelections;
         }
 
         /// <summary>
@@ -219,7 +227,8 @@ namespace JSON_Tools.Forms
         private static void JsonTreePopulateHelper_DirectChildren(TreeView tree,
                                                                   TreeNode root,
                                                                   JNode json,
-                                                                  Dictionary<string, JNode> pathsToJNodes)
+                                                                  Dictionary<string, JNode> pathsToJNodes,
+                                                                  bool usesSelections)
         {
             tree.BeginUpdate();
             try
@@ -247,7 +256,7 @@ namespace JSON_Tools.Forms
                 {
                     Dictionary<string, JNode> jobj = obj.children;
                     int count = 0;
-                    foreach (string key in jobj.Keys)
+                    foreach (string key in SortRootKeysIfUsesSelections(root, jobj, usesSelections))
                     {
                         // iterate through keys with a stepsize of interval (step over some)
                         if (count++ % interval != 0)
@@ -276,6 +285,24 @@ namespace JSON_Tools.Forms
             tree.EndUpdate();
         }
 
+        /// <summary>
+        /// if root is the root of the entire treeview and usesSelections,
+        /// correctly orders the keys of dict according to the start position of each selection
+        /// (e.g., ["3,5","11,15","22,30"])<br></br>
+        /// otherwise, returns the keys of dict in their natural order
+        /// </summary>
+        private static IEnumerable<string> SortRootKeysIfUsesSelections(TreeNode node, Dictionary<string, JNode> dict, bool usesSelections)
+        {
+            if (usesSelections && node.Parent == null)
+            {
+                string[] keys = dict.Keys.ToArray();
+                Array.Sort(keys, SelectionManager.StartEndCompareByStart);
+                return keys;
+            }
+            else
+                return dict.Keys;
+        }
+
         private static string TextForTreeNode(string key, JNode node)
         {
             if (node is JArray arr)
@@ -294,6 +321,7 @@ namespace JSON_Tools.Forms
             if (json == null) return;
             if (shouldRefresh)
                 RefreshButton.PerformClick();
+            bool usesSelections = UsesSelections();
             string query = QueryBox.Text;
             JNode query_func;
             try
@@ -309,46 +337,101 @@ namespace JSON_Tools.Forms
                                 MessageBoxIcon.Error);
                 return;
             }
+            int runtimeErrorMessagesShown = 0;
+            bool suppressRuntimeErrorMsg = false;
+            void RuntimeErrorMessage(Exception ex)
+            {
+                if (!suppressRuntimeErrorMsg
+                    && ++runtimeErrorMessagesShown % 5 == 0
+                    && MessageBox.Show("Select Yes to stop seeing error message boxes for this query",
+                        "Stop seeing errors?",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question
+                       ) == DialogResult.Yes)
+                    suppressRuntimeErrorMsg = true;
+                if (suppressRuntimeErrorMsg)
+                    return;
+                string expretty = RemesParser.PrettifyException(ex);
+                MessageBox.Show($"While executing query {query}, encountered runtime error:\n{expretty}",
+                                "Runtime error while executing query",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            };
             // if the query is an assignment expression, we need to overwrite the file with the
             // modified JSON after the query has been executed
             if (query_func is JMutator mut)
             {
-                try
+                if (usesSelections)
                 {
-                    query_func = mut.Mutate(json);
+                    // in order to track which query results are in which selections,
+                    // each query needs to be performed separately on each selection
+                    var obj = (JObject)json;
+                    var query_obj = new JObject();
+                    foreach (KeyValuePair<string, JNode> kv in obj.children)
+                    {
+                        try
+                        {
+                            var subquery_func = mut.Mutate(kv.Value);
+                            query_obj[kv.Key] = subquery_func;
+                        }
+                        catch (Exception ex)
+                        {
+                            RuntimeErrorMessage(ex);
+                            query_obj[kv.Key] = kv.Value;
+                        }
+                    }
+                    query_func = query_obj;
                 }
-                catch (Exception ex)
+                else
                 {
-                    string expretty = RemesParser.PrettifyException(ex);
-                    MessageBox.Show($"While executing query {query}, encountered runtime error:\n{expretty}",
-                                    "Runtime error while executing query",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
-                    return;
+                    try
+                    {
+                        query_func = mut.Mutate(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        RuntimeErrorMessage(ex);
+                        return;
+                    }
                 }
                 json = query_func;
                 Main.jsonFileInfos[fname].json = query_func;
                 query_result = query_func;
-                string new_json_str = query_func.PrettyPrintAndChangePositions(Main.settings.indent_pretty_print, Main.settings.sort_keys, Main.settings.pretty_print_style);
-                Npp.editor.SetText(new_json_str);
-                Main.lastEditedTime = DateTime.UtcNow;
+                Main.ReformatFileWithJson(json, Main.PrettyPrintFromSettings, UsesSelections());
             }
             // not an assignment expression, so executing the query changes the contents of the tree
             // but leaves the text of the document unchanged
             else if (query_func is CurJson qf)
             {
-                try
+                if (usesSelections)
                 {
-                    query_result = qf.function(json);
+                    var obj = (JObject)json;
+                    var query_obj = new JObject();
+                    foreach (KeyValuePair<string, JNode> kv in obj.children)
+                    {
+                        try
+                        {
+                            JNode subquery_result = qf.function(kv.Value);
+                            query_obj[kv.Key] = subquery_result;
+                        }
+                        catch (Exception ex)
+                        {
+                            RuntimeErrorMessage(ex);
+                            query_obj[kv.Key] = new JNode();
+                        }
+                    }
+                    query_result = query_obj;
                 }
-                catch (Exception ex)
+                else
                 {
-                    string expretty = RemesParser.PrettifyException(ex);
-                    MessageBox.Show($"While executing query {query}, encountered error:\n{expretty}",
-                                    "Runtime error while executing query",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
-                    return;
+                    try
+                    {
+                        query_result = qf.function(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        RuntimeErrorMessage(ex);
+                        return;
+                    }
                 }
             }
             else
@@ -401,8 +484,26 @@ namespace JSON_Tools.Forms
             }
             catch { return; }
             if (node == null) return;
-            string path = node.FullPath;
-            Npp.editor.GotoPos(pathsToJNodes[path].position);
+            int pos = pathsToJNodes[node.FullPath].position;
+            if (UsesSelections())
+            {
+                // the document is divided into sub-jsons (one for each selection)
+                // each sub-json treats the position of its selection start as 0
+                // we need to correct for this
+                TreeNode parent = node;
+                while (parent.Parent != null)
+                {
+                    Match mtch = Regex.Match(parent.Text, @"^(\d+),\d+ : ");
+                    if (mtch.Success)
+                    {
+                        int start = int.Parse(mtch.Groups[1].Value);
+                        pos += start;
+                        break;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+            Npp.editor.GotoPos(pos);
             // might also want to make it so that the selected line is scrolled to the top
             CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
         }
@@ -437,7 +538,7 @@ namespace JSON_Tools.Forms
             {
                 nodes.RemoveAt(0);
                 JNode jnode = pathsToJNodes[node.FullPath];
-                JsonTreePopulateHelper_DirectChildren(tree, node, jnode, pathsToJNodes);
+                JsonTreePopulateHelper_DirectChildren(tree, node, jnode, pathsToJNodes, UsesSelections());
             }
         }
 
@@ -455,7 +556,8 @@ namespace JSON_Tools.Forms
         private static void JsonTreePopulate_FullRecursive(TreeView tree,
                                                            TreeNode root,
                                                            JNode json,
-                                                           Dictionary<string, JNode> pathsToJNodes)
+                                                           Dictionary<string, JNode> pathsToJNodes,
+                                                           bool usesSelections)
         {
             int interval = IntervalBetweenJNodesWithTreeNodes(json);
             if (HasSentinelChild(root))
@@ -481,7 +583,7 @@ namespace JSON_Tools.Forms
                     {
                         Dictionary<string, JNode> jobj = obj_.children;
                         int count = 0;
-                        foreach (string key in jobj.Keys)
+                        foreach (string key in SortRootKeysIfUsesSelections(root, jobj, usesSelections))
                         {
                             // iterate through keys with a stepsize of interval (step over some)
                             if (count++ % interval != 0)
@@ -514,7 +616,7 @@ namespace JSON_Tools.Forms
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes);
+                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes, false);
                     }
                 }
             }
@@ -529,7 +631,7 @@ namespace JSON_Tools.Forms
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes);
+                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes, false);
                     }
                 }
             }
@@ -691,7 +793,7 @@ namespace JSON_Tools.Forms
                                 // node.ExpandAll() is VERY VERY SLOW if we don't do it this way
                                 Tree.BeginUpdate();
                                 isExpandingAllSubtrees = true;
-                                JsonTreePopulate_FullRecursive(Tree, node, nodeJson, pathsToJNodes);
+                                JsonTreePopulate_FullRecursive(Tree, node, nodeJson, pathsToJNodes, UsesSelections());
                                 node.ExpandAll();
                                 isExpandingAllSubtrees = false;
                                 Tree.EndUpdate();
@@ -783,7 +885,7 @@ namespace JSON_Tools.Forms
         {
             shouldRefresh = false;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode new_json) = Main.TryParseJson();
+            (bool _, JNode new_json, bool _) = Main.TryParseJson();
             if (new_json == null)
                 return;
             fname = cur_fname;

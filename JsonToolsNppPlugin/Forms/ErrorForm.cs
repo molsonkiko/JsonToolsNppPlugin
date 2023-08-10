@@ -19,9 +19,9 @@ namespace JSON_Tools.Forms
         public const int SLOW_RELOAD_THRESHOLD = 300; // completely arbitrary
         public const int LINT_ROW_COUNT = 5000;
         public string fname;
-        public JsonLint[] lints;
+        public List<JsonLint> lints;
 
-        public ErrorForm(string fname, JsonLint[] lints)
+        public ErrorForm(string fname, List<JsonLint> lints)
         {
             InitializeComponent();
             Reload(fname, lints, true);
@@ -30,7 +30,7 @@ namespace JSON_Tools.Forms
 
         public bool SlowReloadExpected(IList<JsonLint> lints) { return lints.Count >= SLOW_RELOAD_THRESHOLD; }
 
-        public void Reload(string fname, JsonLint[] lints, bool onStartup = false)
+        public void Reload(string fname, List<JsonLint> lints, bool onStartup = false)
         {
             bool wasBig = SlowReloadExpected(lints);
             if (wasBig && !onStartup)
@@ -51,17 +51,17 @@ namespace JSON_Tools.Forms
             ErrorGrid.Rows.Clear();
             int interval = 1;
             // add a row that warns not all rows are shown
-            if (LINT_ROW_COUNT < lints.Length)
+            if (LINT_ROW_COUNT < lints.Count)
             {
-                interval = lints.Length / LINT_ROW_COUNT;
+                interval = lints.Count / LINT_ROW_COUNT;
                 var warningNotAllRowsShown = new DataGridViewRow();
                 warningNotAllRowsShown.CreateCells(ErrorGrid);
-                warningNotAllRowsShown.Cells[1].Value = $"Showing approximately {LINT_ROW_COUNT} of {lints.Length} rows";
+                warningNotAllRowsShown.Cells[1].Value = $"Showing approximately {LINT_ROW_COUNT} of {lints.Count} rows";
                 ErrorGrid.Rows.Add(warningNotAllRowsShown);
             }
             int ii = 0;
             int cycler = 0;
-            while (ii < lints.Length)
+            while (ii < lints.Count)
             {
                 var lint = lints[ii];
                 var row = new DataGridViewRow();

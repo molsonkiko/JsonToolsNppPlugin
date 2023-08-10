@@ -9,20 +9,20 @@ using System.IO;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using Kbg.Demo.Namespace.Properties;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using JSON_Tools.PluginInfrastructure;
+using System.Runtime.Serialization;
 
 namespace Kbg.NppPluginNET
 {
     class Main
     {
         #region " Fields "
+        internal const int UNDO_BUFFER_SIZE = 64;
         internal const string PluginName = "JsonTools";
         // general stuff things
         public static Settings settings = new Settings();
@@ -41,6 +41,12 @@ namespace Kbg.NppPluginNET
         private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
         public static bool grepperTreeViewJustOpened = false;
+        public static bool pluginIsEditing = false;
+        // stuff related to selection management
+        // sometimes it is best to forget selections if the user performs an action
+        // that makes the selections no longer map to the JSON elements that had been selected
+        // warn the user the first time this happens
+        static bool hasWarnedSelectionsForgotten = false;
         // sort form stuff
         public static SortForm sortForm = null;
         // error form stuff
@@ -239,7 +245,7 @@ namespace Kbg.NppPluginNET
                 case (uint)NppMsg.NPPN_FILEBEFORERENAME:
                     IntPtr buffer_renamed_id = notification.Header.IdFrom;
                     string buffer_old_name = Npp.notepad.GetFilePath(buffer_renamed_id);
-                    if (TryGetInfoForFile(buffer_old_name, out var _))
+                    if (TryGetInfoForFile(buffer_old_name, out _))
                     {
                         jsonFilesRenamed[buffer_renamed_id] = buffer_old_name;
                     }
@@ -289,6 +295,7 @@ namespace Kbg.NppPluginNET
                 case (uint)SciMsg.SCN_MODIFIED:
                     // only turn on the flag if the user performed the modification
                     lastEditedTime = System.DateTime.UtcNow;
+                    ChangeJsonSelectionsBasedOnEdit(notification);
                     if (openTreeViewer != null)
                         openTreeViewer.shouldRefresh = true;
                     break;
@@ -353,22 +360,76 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="is_json_lines"></param>
         /// <returns></returns>
-        public static (bool fatal, JNode node) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
+        public static (bool fatal, JNode node, bool usesSelections) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
         {
-            int len = Npp.editor.GetLength();
-            if (was_autotriggered && len > Main.settings.max_file_size_MB_slow_actions * 1e6)
-                return (false, null);
             string fname = Npp.notepad.GetCurrentFilePath();
-            string text = Npp.editor.GetText(len + 1);
+            List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
+            (int start, int end) firstSel = selRanges[0];
+            int firstSelLen = firstSel.end - firstSel.start;
+            bool noTextSelected = selRanges.Count < 2 && firstSelLen == 0;
+            bool stopUsingSelections = false;
+            int len = Npp.editor.GetLength();
+            double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
+            JsonFileInfo info;
+            if (noTextSelected)
+            {
+                if (TryGetInfoForFile(fname, out info) && info.usesSelections)
+                {
+                    // if the user doesn't have any text selected, and they already had one or more selections saved,
+                    // preserve the existing selections
+                    selRanges = SelectionManager.SetSelectionsFromStartEnds(((JObject)info.json).children.Keys);
+                    if (selRanges.Count == 0)
+                        noTextSelected = false;
+                }
+            }
+            else if (selRanges.Count == 1 && firstSelLen == len)
+            {
+                // user can revert to no-selection mode by selecting entire doc
+                noTextSelected = true;
+                stopUsingSelections = true;
+            }
             JNode json = new JNode();
-            // always parse ".jsonl" documents as Json Lines 
-            is_json_lines |= Npp.FileExtension() == "jsonl";
-            if (is_json_lines)
-                json = jsonParser.ParseJsonLines(text);
+            List<JsonLint> lints;
+            if (noTextSelected)
+            {
+                if (was_autotriggered && len > sizeThreshold)
+                    return (false, null, false);
+                string text = Npp.editor.GetText(len + 1);
+                // always parse ".jsonl" documents as Json Lines 
+                is_json_lines |= Npp.FileExtension() == "jsonl";
+                if (is_json_lines)
+                    json = jsonParser.ParseJsonLines(text);
+                else
+                    json = jsonParser.Parse(text);
+                lints = jsonParser.lint.ToList();
+            }
             else
-                json = jsonParser.Parse(text);
-            JsonFileInfo info = AddJsonForFile(fname, json);
-            int lintCount = jsonParser.lint.Count;
+            {
+                json = new JObject();
+                if (selRanges.Count > settings.max_num_json_selections)
+                    selRanges = selRanges.Take(settings.max_num_json_selections).ToList();
+                JObject obj = (JObject)json;
+                lints = new List<JsonLint>();
+                int combinedLength = 0;
+                foreach ((int start, int end) in selRanges)
+                    combinedLength += end - start;
+                if (was_autotriggered && combinedLength > sizeThreshold)
+                    return (false, null, false);
+                foreach ((int start, int end) in selRanges)
+                {
+                    string selRange = Npp.GetSlice(start, end);
+                    JNode subJson = jsonParser.Parse(selRange);
+                    string key = $"{start},{end}";
+                    obj[key] = subJson;
+                    lints.AddRange(jsonParser.lint);
+                }
+            }
+            int lintCount = lints.Count;
+            info = AddJsonForFile(fname, json);
+            if (stopUsingSelections)
+                info.usesSelections = false;
+            else
+                info.usesSelections |= !noTextSelected;
             if (lintCount > 0 && settings.offer_to_show_lint)
             {
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
@@ -378,7 +439,7 @@ namespace Kbg.NppPluginNET
                     OpenErrorForm(activeFname, true);
                 }
             }
-            info.lints = jsonParser.lint.ToArray();
+            info.lints = lints;
             if (jsonParser.fatal)
             {
                 // unacceptable error, show message box
@@ -418,7 +479,7 @@ namespace Kbg.NppPluginNET
             }
             if (info.tv != null)
                 info.tv.json = json;
-            return (jsonParser.fatal, json);
+            return (jsonParser.fatal, json, info.usesSelections);
         }
 
         public static JsonFileInfo AddJsonForFile(string fname, JNode json)
@@ -472,13 +533,8 @@ namespace Kbg.NppPluginNET
         /// <param name="json"></param>
         public static void PrettyPrintJsonInNewFile(JNode json)
         {
-            string printed = PrettyPrintFromSettings(json);
             Npp.notepad.FileNew();
-            Npp.editor.SetText(printed);
-            Npp.RemoveTrailingSOH();
-            IsCurrentFileBig();
-            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
-            Npp.SetLangJson();
+            ReformatFileWithJson(json, PrettyPrintFromSettings, false);
         }
 
         /// <summary>
@@ -486,13 +542,9 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void PrettyPrintJson()
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null) return;
-            string printed = PrettyPrintFromSettings(json);
-            Npp.editor.SetText(printed);
-            Npp.RemoveTrailingSOH();
-            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
-            Npp.SetLangJson();
+            ReformatFileWithJson(json, PrettyPrintFromSettings, usesSelections);
         }
 
         /// <summary>
@@ -500,15 +552,146 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void CompressJson()
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null) return;
+            Func<JNode, string> formatter;
             if (settings.minimal_whitespace_compression)
-                Npp.editor.SetText(json.ToStringAndChangePositions(settings.sort_keys, ":", ","));
+                formatter = x => x.ToStringAndChangePositions(settings.sort_keys, ":", ",");
             else
-                Npp.editor.SetText(json.ToStringAndChangePositions(settings.sort_keys));
+                formatter = x => x.ToStringAndChangePositions(settings.sort_keys);
+            ReformatFileWithJson(json, formatter, usesSelections);
+        }
+
+        /// <summary>
+        /// If the file is using one or more selections, use the formatter to reformat each selection separately
+        /// Otherwise, replace the text of the file with formatter(json)
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="formatter"></param>
+        public static void ReformatFileWithJson(JNode json, Func<JNode, string> formatter, bool usesSelections)
+        {
+            if (usesSelections)
+            {
+                var obj = (JObject)json;
+                int delta = 0;
+                var keyChanges = new Dictionary<string, (string newKey, JNode child)>();
+                pluginIsEditing = true;
+                Npp.editor.BeginUndoAction();
+                var keyvalues = obj.children.ToArray();
+                Array.Sort(keyvalues, (kv1, kv2) => SelectionManager.StartEndCompareByStart(kv1.Key, kv2.Key));
+                foreach (KeyValuePair<string, JNode> kv in keyvalues)
+                {
+                    int[] startEnd = SelectionManager.ParseStartEnd(kv.Key);
+                    int start = startEnd[0], end = startEnd[1];
+                    int oldLen = end - start;
+                    string printed = formatter(kv.Value);
+                    int newStart = start + delta;
+                    int newCount = Encoding.UTF8.GetByteCount(printed);
+                    Npp.editor.DeleteRange(newStart, oldLen);
+                    Npp.editor.InsertText(newStart, printed);
+                    int newEnd = newStart + newCount;
+                    delta = newEnd - end;
+                    keyChanges[kv.Key] = ($"{newStart},{newEnd}", kv.Value);
+                }
+                pluginIsEditing = false;
+                RenameAll(keyChanges, obj);
+                SelectionManager.SetSelectionsFromStartEnds(obj.children.Keys);
+                Npp.editor.EndUndoAction();
+                json = obj;
+            }
+            else
+            {
+                string newText = formatter(json);
+                Npp.editor.SetText(newText);
+                Npp.SetLangJson();
+            }
+            AddJsonForFile(activeFname, json);
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
-            Npp.SetLangJson();
+            IsCurrentFileBig();
+        }
+
+        static JNode RenameAll(Dictionary<string, (string, JNode)> keyChanges, JObject obj)
+        {
+            foreach (string oldKey in keyChanges.Keys)
+            {
+                obj.children.Remove(oldKey);
+            }
+            foreach (string oldKey in keyChanges.Keys)
+            {
+                (string newKey, JNode child) = keyChanges[oldKey];
+                if (newKey != null)
+                    obj[newKey] = child;
+            }
+            return obj;
+        }
+
+        static void ChangeJsonSelectionsBasedOnEdit(ScNotification notif)
+        {
+            int modType = notif.ModificationType;
+#if DEBUG
+            var modTypeFlagsSet = SelectionManager.GetModificationTypeFlagsSet(modType);
+#endif // DEBUG
+            if (pluginIsEditing
+                || notif.Length == IntPtr.Zero
+                || ((modType & 3) == 0) // is not a text change modification
+                || !TryGetInfoForFile(activeFname, out JsonFileInfo info)
+                || !info.usesSelections
+                || !(info.json is JObject obj))
+                return;
+            // just normal deletion/insertion of text (number of chars = notif.Length)
+            // for each saved selection, if its start is after notif.Position, increment start by notif.Length
+            // do the save for the end of each selection
+            int length = notif.Length.ToInt32();
+            int start = (int)notif.Position.Value;
+            int end = start + length;
+            if ((modType & 2) != 0) // text is being deleted, treat length as negative
+                length = -length;
+            if (length < 0)
+            {
+                if (Npp.editor.GetLength() == 0)
+                {
+                    // entire document is being erased, which invalidates all remembered selections
+                    // we'll just clear them all and revert to whole-document mode
+                    if (!hasWarnedSelectionsForgotten)
+                    {
+                        hasWarnedSelectionsForgotten = true;
+                        // use a separate thread to show the messagebox, to avoid weird side effects from
+                        // interrupting the main thread with a messagebox in the middle of overwriting the file
+                        new System.Threading.Thread(() => MessageBox.Show("JsonTools has forgotten all remembered selections.\r\n" +
+                                        "This happens whenever the entire document is erased or overwritten by something other than JsonTools.\r\n" +
+                                        "You will only receive this reminder the first time this happens.",
+                                        "JsonTools forgot all remembered selections.",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        ).Start();
+                    }
+                    obj.children.Clear();
+                    info.usesSelections = false;
+                    return;
+                }
+            }
+            var keyChanges = new Dictionary<string, (string, JNode)>();
+            foreach (KeyValuePair<string, JNode> kv in obj.children)
+            {
+                int[] startEnd = SelectionManager.ParseStartEnd(kv.Key);
+                int selStart = startEnd[0], selEnd = startEnd[1];
+                if (length < 0 && end >= selEnd && start <= selStart)
+                {
+                    // the entire selection has been deleted, so just remove it
+                    keyChanges[kv.Key] = (null, null);
+                    continue;
+                }
+                else if (start < selEnd)
+                {
+                    if (start < selStart)
+                    {
+                        selStart += length;
+                    }
+                    selEnd = end > selEnd ? start : selEnd + length;
+                    keyChanges[kv.Key] = ($"{selStart},{selEnd}", kv.Value);
+                }
+            }
+            info.json = RenameAll(keyChanges, obj);
         }
 
         static void DumpYaml()
@@ -520,7 +703,7 @@ namespace Kbg.NppPluginNET
                             MessageBoxIcon.Warning)
                 == DialogResult.Cancel)
                 return;
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, _) = TryParseJson();
             if (fatal || json == null) return;
             Npp.notepad.FileNew();
             string yaml = "";
@@ -548,9 +731,9 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void DumpJsonLines()
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null) return;
-            if (!(json is JArray arr))
+            if (!(json is JArray))
             {
                 MessageBox.Show("Only JSON arrays can be converted to JSON Lines format.",
                                 "Only arrays can be converted to JSON Lines",
@@ -558,15 +741,12 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.notepad.FileNew();
-            string result;
+            Func<JNode, string> formatter;
             if (settings.minimal_whitespace_compression)
-                result = arr.ToJsonLines(settings.sort_keys, ":", ",");
+                formatter = x => ((JArray)x).ToJsonLines(settings.sort_keys, ":", ",");
             else
-                result = arr.ToJsonLines(settings.sort_keys);
-            Npp.editor.SetText(result);
-            Npp.RemoveTrailingSOH();
-            IsCurrentFileBig();
-            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
+                formatter = x => ((JArray)x).ToJsonLines(settings.sort_keys);
+            ReformatFileWithJson(json, formatter, usesSelections);
         }
 
         //form opening stuff
@@ -621,7 +801,7 @@ namespace Kbg.NppPluginNET
             bool wasVisible = errorForm != null && errorForm.Visible;
             if ((!TryGetInfoForFile(fname, out JsonFileInfo info)
                 || info.lints == null
-                || info.lints.Length == 0)
+                || info.lints.Count == 0)
                 && !wasAutoTriggered)
             {
 
@@ -686,55 +866,6 @@ namespace Kbg.NppPluginNET
             Npp.notepad.ShowDockingForm(form);
         }
 
-        ///// <summary>
-        ///// Find the position of the close brace of an array or object in the current document.<br></br>
-        ///// For simplicity, only works for syntactically valid JSON that does not 
-        ///// </summary>
-        //public int FindCloseBracePosition(JNode json, string inp)
-        //{
-        //    bool isArray = json is JArray;
-        //    bool isString = false;
-        //    bool escaped = false;
-        //    int unmatchedSquareBraces = 1;
-        //    int unmatchedCurlyBraces = 0;
-        //    int utf8ExtraBytesBeforeJson = 0;
-        //    int posInString = 0;
-        //    for (; posInString + utf8ExtraBytesBeforeJson < json.position; posInString++)
-        //    {
-        //        char c = inp[posInString];
-        //        utf8ExtraBytesBeforeJson += JsonParser.ExtraUTF8Bytes(c);
-        //    }
-        //    int utf8ExtraBytes = utf8ExtraBytesBeforeJson;
-        //    for (int ii = posInString + 1; ii < inp.Length; ii++)
-        //    {
-        //        char c = inp[ii];
-        //        switch (c)
-        //        {
-        //            case '"':
-        //                if (!escaped)
-        //                    isString = !isString;
-        //                break;
-        //            case ('\\'):
-        //                escaped = !escaped;
-        //                break;
-        //            case ']':
-        //                unmatchedSquareBraces--;
-        //                if (isArray && unmatchedSquareBraces == 0 && unmatchedCurlyBraces == 0)
-        //                    return ii + utf8ExtraBytes;
-        //                break;
-        //            case '[': unmatchedSquareBraces++; break;
-        //            case '{': unmatchedCurlyBraces++; break;
-        //            case '}':
-        //                unmatchedCurlyBraces--;
-        //                if (!isArray && unmatchedSquareBraces == 0 && unmatchedCurlyBraces == 0)
-        //                    return ii + utf8ExtraBytes;
-        //                break;
-        //            default: utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(c); break;
-        //        }
-        //    }
-        //    return inp.Length - 1 + utf8ExtraBytes;
-        //}
-
         private static void CopyPathToCurrentPosition()
         {
             int pos = Npp.editor.GetCurrentPos();
@@ -763,8 +894,12 @@ namespace Kbg.NppPluginNET
             string fname = Npp.notepad.GetCurrentFilePath();
             JNode json;
             bool fatal;
+            bool usesSelections = false;
             if (TryGetInfoForFile(fname, out JsonFileInfo info))
+            {
                 json = info.json;
+                usesSelections = info.usesSelections;
+            }
             else
             {
                 if (grepperForm != null
@@ -778,11 +913,29 @@ namespace Kbg.NppPluginNET
             }
             if (json == null)
             {
-                (fatal, json) = TryParseJson();
+                (fatal, json, usesSelections) = TryParseJson();
                 if (fatal || json == null)
                     return "";
             }
-            return json.PathToPosition(pos, style);
+            if (usesSelections)
+            {
+                var obj = (JObject)json;
+                foreach (KeyValuePair<string, JNode> kv in obj.children)
+                {
+                    int[] startEnd = SelectionManager.ParseStartEnd(kv.Key);
+                    int start = startEnd[0], end = startEnd[1];
+                    if (pos >= start && pos <= end)
+                    {
+                        // each sub-json treats the start of its selection as position 0
+                        // this means we need to translate the position in the document into a position within that sub-json
+                        string formattedKey = JNode.FormatKey(kv.Key, style);    
+                        return formattedKey + kv.Value.PathToPosition(pos - start, style);
+                    }
+                }
+                return "";
+            }
+            else
+                return json.PathToPosition(pos, style);
         }
 
         /// <summary>
@@ -833,12 +986,12 @@ namespace Kbg.NppPluginNET
                     return;
                 }
             }
-            (bool _, JNode json) = TryParseJson(is_json_lines);
+            (_, JNode json, bool usesSelections) = TryParseJson(is_json_lines);
             if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
             info.tv = openTreeViewer;
-            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}");
+            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}", usesSelections);
         }
 
         static void OpenGrepperForm()
@@ -852,7 +1005,7 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title)
+        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title, bool usesSelections)
         {
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
@@ -882,7 +1035,7 @@ namespace Kbg.NppPluginNET
 
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             // Following message will toogle both menu item state and toolbar button
-            if (!jsonParser.fatal)
+            if (!jsonParser.fatal && !usesSelections)
                 Npp.SetLangJson();
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
@@ -931,7 +1084,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void ValidateJson(string schema_path = null, bool message_on_success = true)
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, _) = TryParseJson();
             if (fatal || json == null) return;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             if (schema_path == null)
@@ -977,7 +1130,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateJsonSchema()
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, _) = TryParseJson();
             if (fatal || json == null) return;
             JNode schema;
             try
@@ -1005,7 +1158,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateRandomJson()
         {
-            (bool fatal, JNode json) = TryParseJson();
+            (bool fatal, JNode json, _) = TryParseJson();
             if (fatal || json == null) return;
             JNode randomJson = new JNode();
             try
@@ -1286,18 +1439,30 @@ namespace Kbg.NppPluginNET
     public class JsonFileInfo : IDisposable
     {
         public JNode json;
-        public JsonLint[] lints;
+        public List<JsonLint> lints;
         public string statusBarSection;
         public TreeViewer tv;
+        /// <summary>
+        /// if true, rather than the json attribute representing the entire file,
+        /// it is a map from positions to the JSON starting at those positions.
+        /// </summary>
+        public bool usesSelections;
+        ///// <summary>
+        ///// if not usesSelections, this is null
+        ///// if usesSelections, indicates if the user has performed an edit that included text inside of a JSON selection
+        ///// </summary>
+        //public Dictionary<string, bool> selectionsDirty;
         public bool IsDisposed { get; private set; }
 
-        public JsonFileInfo(JNode json = null, JsonLint[] lints = null, string statusBarSection = null, TreeViewer tv = null)
+        public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false)
         {
             this.json = json;
             this.lints = lints;
             this.statusBarSection = statusBarSection;
             this.tv = tv;
+            this.usesSelections = hasJsonSelections;
             IsDisposed = false;
+            //selectionsDirty = new Dictionary<string, bool>();
         }
 
         public void Dispose()
@@ -1317,6 +1482,8 @@ namespace Kbg.NppPluginNET
             json = null;
             statusBarSection = null;
             IsDisposed = true;
+            usesSelections = false;
+            //selectionsDirty.Clear();
         }
     }
 }   

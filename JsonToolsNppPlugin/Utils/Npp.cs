@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Kbg.NppPluginNET;
@@ -139,6 +142,20 @@ namespace JSON_Tools.Utils
             {
                 editor.DeleteRange(lastPos, 1);
             }
+        }
+
+        /// <summary>
+        /// get all text starting at position start in the current document
+        /// and ending at position end in the current document
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public static string GetSlice(int start, int end)
+        {
+            int len = end - start;
+            IntPtr rangePtr = editor.GetRangePointer(start, len);
+            return Marshal.PtrToStringAnsi(rangePtr, len);
         }
     }
 }
