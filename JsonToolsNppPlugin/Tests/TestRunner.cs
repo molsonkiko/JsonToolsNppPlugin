@@ -86,12 +86,6 @@ Testing Least Recently Used (LRU) cache implementation
             LruCacheTests.Test();
 
             Npp.AddLine(@"=========================
-Testing RemesPath lexer
-=========================
-");
-            RemesPathLexerTester.Test();
-
-            Npp.AddLine(@"=========================
 Testing RemesPath parser and compiler
 =========================
 ");
@@ -164,6 +158,12 @@ Testing JNode PathToPosition method
             FormatPathTester.Test();
 
             Npp.AddLine(@"=========================
+Performing UI tests by faking user actions
+=========================
+");
+            UserInterfaceTester.Test();
+
+            Npp.AddLine(@"=========================
 Performance tests for JsonParser
 =========================
 ");
@@ -188,11 +188,6 @@ Performance tests for JsonSchemaValidator and random JSON creation
 ");
             Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);
 
-//            Npp.AddLine($@"=========================
-//Performance tests for sorting arrays of strings with different algorithms
-//=========================
-//");
-//            Benchmarker.BenchmarkIgnoreCaseStringComparisons(256, 20);
             //because Visual Studio runs a whole bunch of other things in the background
             //     when I build my project, the benchmarking suite
             //     makes my code seem way slower than it actually is when it's running unhindered.

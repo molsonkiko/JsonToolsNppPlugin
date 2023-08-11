@@ -132,6 +132,23 @@ Syntax error at position 3: Number with two decimal points
                                 if (!escaped)
                                     break;
                                 sb.Append('`');
+                                escaped = false;
+                            }
+                            else if (escaped)
+                            {
+                                // \r, \n, \t are the only escapes we'll give special treatment
+                                if (c == 'r')
+                                    sb.Append('\r');
+                                else if (c == 'n')
+                                    sb.Append('\n');
+                                else if (c == 't')
+                                    sb.Append('\t');
+                                else
+                                {
+                                    sb.Append('\\');
+                                    sb.Append(c);
+                                }
+                                escaped = false;
                             }
                             else sb.Append(c);
                         }

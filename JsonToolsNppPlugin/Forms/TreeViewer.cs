@@ -15,6 +15,11 @@ namespace JSON_Tools.Forms
     public partial class TreeViewer : Form
     {
         /// <summary>
+        /// long treenode text causes HUGE performance problems, so set an arbitrary limit
+        /// </summary>
+        public const int MAX_TREENODE_JSON_LENGTH = 1024;
+
+        /// <summary>
         /// the name of the file holding the JSON that this is associated with
         /// </summary>
         public string fname;
@@ -76,7 +81,7 @@ namespace JSON_Tools.Forms
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
-        private bool UsesSelections()
+        public bool UsesSelections()
         {
             if (!Main.TryGetInfoForFile(fname, out JsonFileInfo info))
                 return false;
@@ -198,7 +203,7 @@ namespace JSON_Tools.Forms
             else
             {
                 // just show the value for the scalar
-                root.Text = json.ToString();
+                root.Text = JsonStringCappedLength(json);
             }
             tree.Nodes.Add(root);
             pathsToJNodes[root.FullPath] = json;
@@ -286,7 +291,7 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// if root is the root of the entire treeview and usesSelections,
+        /// if root is the root of the entire treeview and usesSelections and the root JSON is an object,
         /// correctly orders the keys of dict according to the start position of each selection
         /// (e.g., ["3,5","11,15","22,30"])<br></br>
         /// otherwise, returns the keys of dict in their natural order
@@ -303,6 +308,15 @@ namespace JSON_Tools.Forms
                 return dict.Keys;
         }
 
+        /// <summary>node.ToString() capped at MAX_TREENODE_JSON_LENGTH </summary>
+        private static string JsonStringCappedLength(JNode node)
+        {
+            string jsonstr = node.ToString();
+            if (jsonstr.Length > MAX_TREENODE_JSON_LENGTH)
+                return jsonstr.Substring(0, MAX_TREENODE_JSON_LENGTH) + "...";
+            return jsonstr;
+        }
+
         private static string TextForTreeNode(string key, JNode node)
         {
             if (node is JArray arr)
@@ -313,7 +327,7 @@ namespace JSON_Tools.Forms
                 return obj.children.Count == 0
                     ? $"{key} : {{}}"
                     : $"{key} : {{{obj.children.Count}}}";
-            return $"{key} : {node.ToString()}";
+            return $"{key} : {JsonStringCappedLength(node)}";
         }
 
         private void SubmitQueryButton_Click(object sender, EventArgs e)

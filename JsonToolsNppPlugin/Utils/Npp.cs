@@ -155,7 +155,52 @@ namespace JSON_Tools.Utils
         {
             int len = end - start;
             IntPtr rangePtr = editor.GetRangePointer(start, len);
-            return Marshal.PtrToStringAnsi(rangePtr, len);
+            string ansi = Marshal.PtrToStringAnsi(rangePtr, len);
+            // TODO: figure out a way to do this that involves less memcopy for non-ASCII
+            if (ansi.Any(c => c >= 128))
+                return Encoding.UTF8.GetString(Encoding.Default.GetBytes(ansi));
+            return ansi;
+        }
+
+        public static readonly Dictionary<int, string> ModificationTypeFlagNames = new Dictionary<int, string>
+        {
+            [0x01] = "SC_MOD_INSERTTEXT",
+            [0x02] = "SC_MOD_DELETETEXT",
+            [0x04] = "SC_MOD_CHANGESTYLE",
+            [0x08] = "SC_MOD_CHANGEFOLD",
+            [0x10] = "SC_PERFORMED_USER",
+            [0x20] = "SC_PERFORMED_UNDO",
+            [0x40] = "SC_PERFORMED_REDO",
+            [0x80] = "SC_MULTISTEPUNDOREDO",
+            [0x100] = "SC_LASTSTEPINUNDOREDO",
+            [0x200] = "SC_MOD_CHANGEMARKER",
+            [0x400] = "SC_MOD_BEFOREINSERT",
+            [0x800] = "SC_MOD_BEFOREDELETE",
+            [0x4000] = "SC_MOD_CHANGEINDICATOR",
+            [0x8000] = "SC_MOD_CHANGELINESTATE",
+            [0x200000] = "SC_MOD_CHANGETABSTOPS",
+            [0x80000] = "SC_MOD_LEXERSTATE",
+            [0x10000] = "SC_MOD_CHANGEMARGIN",
+            [0x20000] = "SC_MOD_CHANGEANNOTATION",
+            [0x100000] = "SC_MOD_INSERTCHECK",
+            [0x1000] = "SC_MULTILINEUNDOREDO",
+            [0x2000] = "SC_STARTACTION",
+            [0x40000] = "SC_MOD_CONTAINER",
+        };
+
+        public static string GetModificationTypeFlagsSet(int modType)
+        {
+            var sb = new StringBuilder();
+            foreach (int modOption in ModificationTypeFlagNames.Keys)
+            {
+                if ((modType & modOption) != 0)
+                {
+                    sb.Append(ModificationTypeFlagNames[modOption]);
+                    sb.Append(", ");
+                }
+            }
+            sb.Remove(sb.Length - 2, 2);
+            return sb.ToString();
         }
     }
 }

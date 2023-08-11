@@ -7,3 +7,4 @@ TODO
 4. maybe add multi-selection unit tests?
 5. Add form for managing selections
 6. find/replace form sometimes raises uncaught exceptions with selections. WHY?
+7. ADD DOCS FOR NEW REMESTPATH STUFF

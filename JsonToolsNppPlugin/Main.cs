@@ -378,8 +378,13 @@ namespace Kbg.NppPluginNET
                     // if the user doesn't have any text selected, and they already had one or more selections saved,
                     // preserve the existing selections
                     selRanges = SelectionManager.SetSelectionsFromStartEnds(((JObject)info.json).children.Keys);
-                    if (selRanges.Count == 0)
+                    if (selRanges.Count > 0)
                         noTextSelected = false;
+                    else
+                    {
+                        noTextSelected = true;
+                        stopUsingSelections = true;
+                    }
                 }
             }
             else if (selRanges.Count == 1 && firstSelLen == len)
@@ -538,9 +543,9 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// overwrite the current file with its JSON in pretty-printed format
+        /// overwrite the current file or saved selections with its JSON in pretty-printed format
         /// </summary>
-        static void PrettyPrintJson()
+        public static void PrettyPrintJson()
         {
             (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null) return;
@@ -548,9 +553,9 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// overwrite the current file with its JSON in compressed format
+        /// overwrite the current file or saved selections with its JSON in compressed format
         /// </summary>
-        static void CompressJson()
+        public static void CompressJson()
         {
             (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null) return;
@@ -629,9 +634,6 @@ namespace Kbg.NppPluginNET
         static void ChangeJsonSelectionsBasedOnEdit(ScNotification notif)
         {
             int modType = notif.ModificationType;
-#if DEBUG
-            var modTypeFlagsSet = SelectionManager.GetModificationTypeFlagsSet(modType);
-#endif // DEBUG
             if (pluginIsEditing
                 || notif.Length == IntPtr.Zero
                 || ((modType & 3) == 0) // is not a text change modification
@@ -639,6 +641,9 @@ namespace Kbg.NppPluginNET
                 || !info.usesSelections
                 || !(info.json is JObject obj))
                 return;
+#if DEBUG
+            var modTypeFlagsSet = Npp.GetModificationTypeFlagsSet(modType);
+#endif // DEBUG
             // just normal deletion/insertion of text (number of chars = notif.Length)
             // for each saved selection, if its start is after notif.Position, increment start by notif.Length
             // do the save for the end of each selection
@@ -679,7 +684,6 @@ namespace Kbg.NppPluginNET
                 {
                     // the entire selection has been deleted, so just remove it
                     keyChanges[kv.Key] = (null, null);
-                    continue;
                 }
                 else if (start < selEnd)
                 {
@@ -943,7 +947,7 @@ namespace Kbg.NppPluginNET
         /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.<br></br>
         /// If the tree view is already open, close it instead.
         /// </summary>
-        static void OpenJsonTree(bool is_json_lines = false)
+        public static void OpenJsonTree(bool is_json_lines = false)
         {
             if (openTreeViewer != null)
             {
@@ -1438,7 +1442,17 @@ namespace Kbg.NppPluginNET
 
     public class JsonFileInfo : IDisposable
     {
-        public JNode json;
+        private JNode _json;
+        public JNode json
+        {
+            get { return _json; }
+            set
+            {
+                _json = value;
+                if (tv != null)
+                    tv.json = value;
+            }
+        }
         public List<JsonLint> lints;
         public string statusBarSection;
         public TreeViewer tv;
@@ -1456,7 +1470,7 @@ namespace Kbg.NppPluginNET
 
         public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false)
         {
-            this.json = json;
+            _json = json;
             this.lints = lints;
             this.statusBarSection = statusBarSection;
             this.tv = tv;
@@ -1479,7 +1493,7 @@ namespace Kbg.NppPluginNET
             else if (json is JObject obj)
                 obj.children.Clear();
             lints = null;
-            json = null;
+            _json = null;
             statusBarSection = null;
             IsDisposed = true;
             usesSelections = false;
