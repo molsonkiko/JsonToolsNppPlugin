@@ -71,9 +71,22 @@ namespace JSON_Tools.Utils
             return StartFromStartEnd(s1).CompareTo(StartFromStartEnd(s2));
         }
 
-        public static string StartEndListToJsonString(List<(int start, int end)> selections)
+        /// <summary>
+        /// Given selections (selstart1,selend1), (selstart2,selend2), ..., (selstartN,selendN)<br></br>
+        /// returns JSON array string [[selstart1,selend1], [selstart2,selend2], ..., [selstartN,selendN]]
+        /// </summary>
+        public static string StartEndListToJsonString(IEnumerable<(int start, int end)> selections)
         {
-            return "[" + string.Join(", ", selections.Select(x => $"\"{x.start},{x.end}\"")) + "]";
+            return "[" + string.Join(", ", selections.OrderBy(x => x.start).Select(x => $"[{x.start},{x.end}]")) + "]";
+        }
+
+        /// <summary>
+        /// Given selection strings "selstart1,selend1", "selstart2,selend2", ..., "selstartN,selendN"<br></br>
+        /// returns JSON array string [[selstart1,selend1], [selstart2,selend2], ..., [selstartN,selendN]]
+        /// </summary>
+        public static string StartEndListToJsonString(IEnumerable<string> selections)
+        {
+            return "[" + string.Join(", ", selections.OrderBy(x => StartFromStartEnd(x)).Select(x => $"[{x}]")) + "]";
         }
     }
 }

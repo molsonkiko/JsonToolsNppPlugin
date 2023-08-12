@@ -119,7 +119,11 @@ namespace JSON_Tools.Utils
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             while (version.EndsWith(".0"))
                 version = version.Substring(0, version.Length - 2);
+#if DEBUG
+            return $"{version} Debug";
+#else
             return version;
+#endif // DEBUG
         }
 
         public static void CreateConfigSubDirectoryIfNotExists()

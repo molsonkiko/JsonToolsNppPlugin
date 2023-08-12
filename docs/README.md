@@ -112,6 +112,36 @@ When you parse a document that contains syntax errors, you may be asked if you w
 
 In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors. Prior to that, errors were shown as text in a new buffer.
 
+### Working with selections ###
+
+[Starting in version v5.5](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), you can work with one or more selections rather than treating the entire file as JSON.
+
+Let's see how this works with an [example log file](/testfiles/small/example_json_logfile.log):
+```
+Error 1:    [1,2,3]
+Warning 2:  {"a":3}
+Info 3:     [[6,{"b":false}],-7]
+```
+We can make a rectangular selection:
+
+![Make rectangular selection of JSON parts of log file lines](/docs/multi%20selections%20logfile%20make%20rectangular%20selection.PNG)
+
+Now we can pretty-print the JSON in these selections. This has no effect on the document outside the selections.
+
+![Pretty-print multiple JSON selections](/docs/multi%20selections%20pretty%20print.PNG)
+
+__Note that your JSON selections are remembered until you make a new multiple-character selection or erase/overwrite the file's text.__ You can move the cursor around, insert and delete characters, and the plugin will move or change the JSON selections accordingly.
+
+For a demo, let's try inserting some more text. We can open the treeview afterwards to see that our changes have been incorporated.
+
+![JSON selections automatically adjust to inserted and deleted text](/docs/multi%20selections%20insert%20delete%20text.PNG)
+
+Also observe the way the treeview is structured. When a document has one or more selections, the JSON is internally represented as a map from `selectionStart,selectionEnd` strings to the JSON in each of those selections.
+
+We can perform RemesPath queries on the selections. __RemesPath queries (including find/replace form operations) are performed on each selection separately.__ This means that unfortunately you cannot write a RemesPath query that only operates on *some* of the selections.
+
+![RemesPath query on file with selections](/docs/multi%20selections%20Remespath%20query.PNG)
+
 ### Error form and status bar ###
 
 If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error.

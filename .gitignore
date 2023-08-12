@@ -117,3 +117,4 @@ UpgradeLog*.XML
 Visual Studio Project Template C#/$projectname$.sln
 JsonToolsNppPlugin/.vs
 .gitignore
+!testfiles/**/*example*.log

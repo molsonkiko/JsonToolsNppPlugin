@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [5.5.0] - (UNRELEASED) YYYY-MM-DD
 
+### Added
+
+1. __Add support for [operating on selections](/docs/README.md#working-with-selections)__
+2. Add [`parse`](/docs/RemesPath.md#vectorized-functions), [`type` and `stringify`](/docs/RemesPath.md#non-vectorized-functions) RemesPath functions.
+
 ### Changed
 
 1. Improved RemesPath [boolean indices](/docs/RemesPath.md#boolean-indexing) so that they can be more easily chained together.

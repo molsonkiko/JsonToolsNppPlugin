@@ -162,6 +162,7 @@ namespace Kbg.NppPluginNET
                         if (openTreeViewer != null && openTreeViewer.IsDisposed)
                         {
                             info.tv = null;
+                            jsonFileInfos[activeFname] = info;
                             openTreeViewer = null;
                         }
                         // now see if there's a treeview for the file just opened
@@ -170,7 +171,10 @@ namespace Kbg.NppPluginNET
                             && new_info.tv != null)
                         {
                             if (new_info.tv.IsDisposed)
+                            {
                                 new_info.tv = null;
+                                jsonFileInfos[new_fname] = new_info;
+                            }
                             else
                             {
                                 // minimize the treeviewer that was visible and make the new one visible
@@ -309,19 +313,19 @@ namespace Kbg.NppPluginNET
 
         static internal void PluginCleanUp()
         {
-            //treeViewers.Clear();
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
                 grepperForm.Close();
                 grepperForm.Dispose();
             }
-            foreach (string key in jsonFileInfos.Keys)
+            string[] keys = jsonFileInfos.Keys.ToArray();
+            foreach (string key in keys)
             {
                 JsonFileInfo info = jsonFileInfos[key];
                 if (info == null || !info.IsDisposed)
                     continue;
                 info.Dispose();
-                jsonFileInfos[key] = null;
+                jsonFileInfos.Remove(key);
             }
             WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
             parseTimer.Dispose();
@@ -366,7 +370,9 @@ namespace Kbg.NppPluginNET
             List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
             (int start, int end) firstSel = selRanges[0];
             int firstSelLen = firstSel.end - firstSel.start;
-            bool noTextSelected = selRanges.Count < 2 && firstSelLen == 0;
+            bool noTextSelected = (selRanges.Count < 2 && firstSelLen == 0) // one selection of length 0 (i.e., just a cursor)
+                // the grepperform's buffer is special, and allowing multiple selections in that file would mess things up
+                || (grepperForm != null && grepperForm.tv != null && activeFname == grepperForm.tv.fname);
             bool stopUsingSelections = false;
             int len = Npp.editor.GetLength();
             double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
@@ -484,6 +490,7 @@ namespace Kbg.NppPluginNET
             }
             if (info.tv != null)
                 info.tv.json = json;
+            jsonFileInfos[activeFname] = info;
             return (jsonParser.fatal, json, info.usesSelections);
         }
 
@@ -672,6 +679,7 @@ namespace Kbg.NppPluginNET
                     }
                     obj.children.Clear();
                     info.usesSelections = false;
+                    jsonFileInfos[activeFname] = info;
                     return;
                 }
             }
@@ -691,11 +699,15 @@ namespace Kbg.NppPluginNET
                     {
                         selStart += length;
                     }
-                    selEnd = end > selEnd ? start : selEnd + length;
+                    selEnd = end > selEnd && length < 0
+                        ? start // we deleted a range from after the end of the JSON to some point inside it,
+                                // so the selection is truncated to the start of the deletion
+                        : selEnd + length; // the inserted/deleted text is wholly within the selection
                     keyChanges[kv.Key] = ($"{selStart},{selEnd}", kv.Value);
                 }
             }
             info.json = RenameAll(keyChanges, obj);
+            jsonFileInfos[activeFname] = info;
         }
 
         static void DumpYaml()
@@ -959,7 +971,6 @@ namespace Kbg.NppPluginNET
             if (!TryGetInfoForFile(activeFname, out JsonFileInfo info))
             {
                 info = new JsonFileInfo();
-                jsonFileInfos[activeFname] = info;
             }
             if (info.tv != null && !info.tv.IsDisposed)
             {
@@ -987,14 +998,16 @@ namespace Kbg.NppPluginNET
                     openTreeViewer.Dispose();
                     openTreeViewer = null;
                     info.tv = null;
+                    jsonFileInfos[activeFname] = info;
                     return;
                 }
             }
             (_, JNode json, bool usesSelections) = TryParseJson(is_json_lines);
-            if (json == null || json == new JNode()) // open a tree view for partially parsed JSON
+            if (json == null || json == new JNode() || !TryGetInfoForFile(activeFname, out info)) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
             info.tv = openTreeViewer;
+            jsonFileInfos[activeFname] = info;
             DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}", usesSelections);
         }
 

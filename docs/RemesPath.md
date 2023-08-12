@@ -484,6 +484,15 @@ Returns the sum of the elements in x.
 x must contain only numbers. Booleans are fine.
 
 ---
+`stringify(x: anything) -> str`
+
+Returns the string representation (compressed, minimal whitespace, sort keys) of x.
+
+This differs from `str` in that *this is not vectorized.*
+
+*Added in [v5.5](/CHANGELOG.md#550---unreleased-yyyy-mm-dd)*
+
+---
 `to_records(x: iterable, [strategy: str]) -> array[object]`
 
 Converts some iterable to an array of objects, using one of the [strategies](/docs/json-to-csv.md#strategies) used to make a CSV in the JSON-to-CSV form. The resulting JSON is just the JSON equivalent of the CSV that would be generated with `x` as input and the same strategy (each object has the same column types and same column names as the corresponding row of the CSV).
@@ -493,6 +502,11 @@ The strategy argument must be one of the following strings:
 - 'r': [full recursive](/docs/json-to-csv.md#full-recursive)
 - 'n': [no recursion](/docs/json-to-csv.md#no-recursion)
 - 's': [stringify iterables](/docs/json-to-csv.md#stringify-iterables)
+
+---
+`type(x: anything) -> str`
+
+Returns the [JSON Schema type name](https://json-schema.org/understanding-json-schema/reference/type.html#type-specific-keywords) for x.
 
 ----
 `unique(x: array, sorted: bool = false)`
@@ -596,6 +610,36 @@ Returns the log base 2 of x.
 `not(x: bool) -> bool`
 
 Logical `NOT`. __Replaced with a unary operator of the same name in [5.4.0](/CHANGELOG.md#540---2023-07-04).__
+
+---
+`parse(x: str) -> anything`
+
+Attempts to parse `x` as JSON according to the most permissive [parser setttings](/docs/README.md#parser-settings).
+
+* If `x` is not a string or there is a fatal error while parsing, returns
+    ```
+    {"error": "the exception raised as a string"}
+    ```
+* If `x` is parsed successfully, returns
+    ```
+    {"result": x parsed as JSON}
+    ```
+
+EXAMPLE:
+Consider the input
+```json
+[
+    "[1,2,3]",
+    "u"
+]
+```
+The query `parse(@)` will return
+```json
+[
+    {"result": [1, 2, 3]},
+    {"error": "No valid literal possible at position 0 (char 'u')"}
+]
+```
 
 ----
 `round(x: number, sigfigs: int = 0) -> float | int)`
