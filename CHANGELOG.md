@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. __Add support for [operating on selections](/docs/README.md#working-with-selections)__
+1. __Add support for [operating on selections](/docs/README.md#working-with-selections)__ (fix [issue 43](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/43)).
 2. Add method for [selecting every valid JSON element in the file](/docs/README.md#selecting-all-valid-json)
 3. Add `D&ump text of current document as JSON string` and `Dump JSON string(s) as ra&w text` convenience methods.
 4. Add [`parse`](/docs/RemesPath.md#vectorized-functions), [`type` and `stringify`](/docs/RemesPath.md#non-vectorized-functions) RemesPath functions.
