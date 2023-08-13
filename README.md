@@ -4,7 +4,7 @@
 
 Miscellaneous tools for working with JSON in Notepad++.
 
-Any issues, feel free to raise an [issue](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) on GitHub. Please be sure to include diagnostic information about your system and plugin version.
+If you have any issues, see if [updating to the latest release](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) helps, and then feel free to raise an [issue](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) on GitHub. Please be sure to include diagnostic information about your system and plugin version.
 
 ## Features ##
 1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.
@@ -26,6 +26,8 @@ Any issues, feel free to raise an [issue](https://github.com/molsonkiko/JsonTool
 10. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
 11. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
 12. [Automatic error checking after editing](/docs/README.md#automatically-check-for-errors-after-editing)
+13. [Select all JSON in a non-JSON file](/docs/README.md#selecting-all-valid-json)
+14. [Quickly convert between JSON strings and raw text](/CHANGELOG.md#550---2023-08-13)
 
 [Read the docs.](/docs/README.md)
 

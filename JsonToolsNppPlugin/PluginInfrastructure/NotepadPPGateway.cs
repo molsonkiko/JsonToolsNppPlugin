@@ -199,9 +199,13 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		/// <param name="newName"></param>
 		public void SetCurrentBufferInternalName(string newName)
 		{
-            long bufferId = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0).ToInt64();
-            // change the current file extension to ".dson" (this command only works for unsaved files, but of course we just made an unsaved file)
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_INTERNAL_SETFILENAME, (IntPtr)bufferId, newName);
+			IntPtr bufferId = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
+			// we need to manually do the operations that would normally happen automatically in response to a NPPN_FILEBEFORERENAME and subsequent NPPN_FILERENAMED
+			// because those notifications are not sent out when a buffer's internal name is changed
+			Main.FileBeforeRename(bufferId);
+			// change the current file extension to ".dson" (this command only works for unsaved files, but of course we just made an unsaved file)
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_INTERNAL_SETFILENAME, bufferId, newName);
+			Main.FileRenamed(bufferId);
         }
 
 		/// <summary>

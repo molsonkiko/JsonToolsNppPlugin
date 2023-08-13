@@ -23,7 +23,7 @@ namespace JSON_Tools.Tests
             }
         }
 
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             string[] basic_jsons = new string[]{ "[]", "{}", "1", "0.5", "null", "false", "\"a\"" };
@@ -870,6 +870,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

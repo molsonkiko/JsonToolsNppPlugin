@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Kbg.NppPluginNET;
@@ -24,6 +27,14 @@ namespace JSON_Tools.Utils
         /// connector to Notepad++
         /// </summary>
         public static INotepadPPGateway notepad = new NotepadPPGateway();
+
+        public static readonly int[] nppVersion = notepad.GetNppVersion();
+
+        public static readonly string nppVersionStr = NppVersionString(true);
+
+        public static readonly bool nppVersionAtLeast8 = nppVersion[0] >= 8;
+
+        public static readonly bool nppVersionAtLeast8p5p5 = nppVersionStr.CompareTo("8.5.5") >= 0;
 
         /// <summary>
         /// append text to current doc, then append newline and move cursor
@@ -116,7 +127,11 @@ namespace JSON_Tools.Utils
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             while (version.EndsWith(".0"))
                 version = version.Substring(0, version.Length - 2);
+#if DEBUG
+            return $"{version} Debug";
+#else
             return version;
+#endif // DEBUG
         }
 
         public static void CreateConfigSubDirectoryIfNotExists()
@@ -139,6 +154,72 @@ namespace JSON_Tools.Utils
             {
                 editor.DeleteRange(lastPos, 1);
             }
+        }
+
+        /// <summary>
+        /// get all text starting at position start in the current document
+        /// and ending at position end in the current document
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public static string GetSlice(int start, int end)
+        {
+            int len = end - start;
+            IntPtr rangePtr = editor.GetRangePointer(start, len);
+            string ansi = Marshal.PtrToStringAnsi(rangePtr, len);
+            // TODO: figure out a way to do this that involves less memcopy for non-ASCII
+            if (ansi.Any(c => c >= 128))
+                return Encoding.UTF8.GetString(Encoding.Default.GetBytes(ansi));
+            return ansi;
+        }
+
+        public static readonly Dictionary<int, string> ModificationTypeFlagNames = new Dictionary<int, string>
+        {
+            [0x01] = "SC_MOD_INSERTTEXT",
+            [0x02] = "SC_MOD_DELETETEXT",
+            [0x04] = "SC_MOD_CHANGESTYLE",
+            [0x08] = "SC_MOD_CHANGEFOLD",
+            [0x10] = "SC_PERFORMED_USER",
+            [0x20] = "SC_PERFORMED_UNDO",
+            [0x40] = "SC_PERFORMED_REDO",
+            [0x80] = "SC_MULTISTEPUNDOREDO",
+            [0x100] = "SC_LASTSTEPINUNDOREDO",
+            [0x200] = "SC_MOD_CHANGEMARKER",
+            [0x400] = "SC_MOD_BEFOREINSERT",
+            [0x800] = "SC_MOD_BEFOREDELETE",
+            [0x4000] = "SC_MOD_CHANGEINDICATOR",
+            [0x8000] = "SC_MOD_CHANGELINESTATE",
+            [0x200000] = "SC_MOD_CHANGETABSTOPS",
+            [0x80000] = "SC_MOD_LEXERSTATE",
+            [0x10000] = "SC_MOD_CHANGEMARGIN",
+            [0x20000] = "SC_MOD_CHANGEANNOTATION",
+            [0x100000] = "SC_MOD_INSERTCHECK",
+            [0x1000] = "SC_MULTILINEUNDOREDO",
+            [0x2000] = "SC_STARTACTION",
+            [0x40000] = "SC_MOD_CONTAINER",
+        };
+
+        public static string GetModificationTypeFlagsSet(int modType)
+        {
+            var sb = new StringBuilder();
+            foreach (int modOption in ModificationTypeFlagNames.Keys)
+            {
+                if ((modType & modOption) != 0)
+                {
+                    sb.Append(ModificationTypeFlagNames[modOption]);
+                    sb.Append(", ");
+                }
+            }
+            sb.Remove(sb.Length - 2, 2);
+            return sb.ToString();
+        }
+
+        private static string NppVersionString(bool include32bitVs64bit)
+        {
+            int[] nppVer = notepad.GetNppVersion();
+            string nppVerStr = $"{nppVer[0]}.{nppVer[1]}.{nppVer[2]}";
+            return include32bitVs64bit ? $"{nppVerStr} {IntPtr.Size * 8}bit" : nppVerStr;
         }
     }
 }

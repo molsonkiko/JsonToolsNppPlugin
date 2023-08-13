@@ -115,5 +115,6 @@ UpgradeLog*.XML
 *.pyc
 
 Visual Studio Project Template C#/$projectname$.sln
-JsonToolsNppPlugin/.vs/JsonToolsNppPlugin/FileContentIndex/read.lock
+JsonToolsNppPlugin/.vs
 .gitignore
+!testfiles/**/*example*.log

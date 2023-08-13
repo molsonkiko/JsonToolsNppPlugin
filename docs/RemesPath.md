@@ -48,7 +48,7 @@ The formal description of the language in pseudo-Backus-Naur form is in ["RemesP
 7. An out-of-bounds index on an array will return an empty array; indexing an object with a key it does not have returns an empty object.
     1. Consider the array `[1, 2, 3]`
         * Queries `@[4]` and `@[-8]` will both return `[]`
-        * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), `@[-n]` on an array with fewer than `n` elements would cause an error to be thrown instead.
+        * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), `@[-n]` on an array with fewer than `n` elements would cause an error to be thrown instead.
     2. Consider the object `{"a": 1, "b": 2}`
         * Queries `@.z` and `@[x, j]` will both return `{}`
 
@@ -126,13 +126,13 @@ __Examples:__
 You can select all elements in an iterable that satisfy a condition by applying a boolean index.
 
 A boolean index can be one of the following:
-* A single boolean. If it's `false`, an empty array is returned (*prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), it's always an array, even for one-element boolean indices on objects*). If it's true, the whole iterable is returned.
+* A single boolean. If it's `false`, an empty array is returned (*prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), it's always an array, even for one-element boolean indices on objects*). If it's true, the whole iterable is returned.
     * Consider the array `[1, 2, 3]`
     * e.g., `@[in(2, @)]` will return `[1, 2, 3]` because `in(2, @)` is `true`.
     * `@[in(4, @)]` will return `[]` because `in(4, @)` is `false`.
-    * Starting in [5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), boolean indices with a single boolean can be applied to non-iterables (e.g. `@[@ > 2]` returns `[]` for `1` and `3` for `3`)
+    * Starting in [5.5.0](/CHANGELOG.md#550---2023-08-13), boolean indices with a single boolean can be applied to non-iterables (e.g. `@[@ > 2]` returns `[]` for `1` and `3` for `3`)
         - With the input `[1, 2, 3]`, `@[:][@ < 3]` returns `[1, 2]` in v5.5.0+, but prior to that it would just raise an error.
-    * Starting in [5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), a one-boolean boolean index on an object returns the original object, allowing the user to query the result of the boolean index.
+    * Starting in [5.5.0](/CHANGELOG.md#550---2023-08-13), a one-boolean boolean index on an object returns the original object, allowing the user to query the result of the boolean index.
         - With the input `[{"a": 1, "b": "a"}, {"a": 2, "b": "b"}]`, `@[@.a < 2].b` returns `["a"]` in v5.5.0+, but prior to that is would just raise an error.
 * *If the iterable is an __array__, an array of booleans of the same length as the iterable*. An array with all the values for which the boolean index was `true` will be returned.
     * Consider the array `[1, 2, 3]`
@@ -292,7 +292,7 @@ It's easier to understand with some __examples:__
    * If `k` is *not* an int, throw an error.
    * Return an object where key `str(v)` has an array of sub-arrays `subarr` such that `subarr[k] == v` is `true`.
    * Note that `subarr[k]` might not be a string in these sub-arrays. However, keys in JSON objects must be strings, so the key is the string representation of `subarr[k]` rather than `subarr[k]` itself.
-   * Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `k` argument.
+   * Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed for the `k` argument.
 * If `x` is an array of *objects*:
    * If `k` is *not* a string, throw an error.
    * Return an object where key `str(v)` has an array of sub-objects `subobj` such that `subobj[k] == v` is `true`.
@@ -351,7 +351,7 @@ Returns a floating-point number equal to the maximum value in an array.
 * If `x` is an array of *arrays*:
    * If `k` is not an int or if `k >= len(x) or k < -len(x)`, throw an error.
    * Return the subarray `maxarr` such that `maxarr[k] >= subarr[k]` for all sub-arrays `subarr` in `x`.
-   * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed at all.
+   * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed at all.
 * If `x` is an array of *objects*:
     * If `k` is not a string, throw an error.
    * Return the subobject `maxobj` such that `maxobj[k] >= subobj[k]` for all sub-objects `subobj` in `x`.
@@ -467,7 +467,7 @@ Analogous to SQL `ORDER BY`.
 
 By default, these sub-iterables are sorted ascending. If `descending` is `true`, they will instead be sorted descending.
 
-Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `k` argument.
+Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed for the `k` argument.
 
 ----
 `sorted(x: array, descending: bool = false)`
@@ -484,6 +484,15 @@ Returns the sum of the elements in x.
 x must contain only numbers. Booleans are fine.
 
 ---
+`stringify(x: anything) -> str`
+
+Returns the string representation (compressed, minimal whitespace, sort keys) of x.
+
+This differs from `str` in that *this is not vectorized.*
+
+*Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
+
+---
 `to_records(x: iterable, [strategy: str]) -> array[object]`
 
 Converts some iterable to an array of objects, using one of the [strategies](/docs/json-to-csv.md#strategies) used to make a CSV in the JSON-to-CSV form. The resulting JSON is just the JSON equivalent of the CSV that would be generated with `x` as input and the same strategy (each object has the same column types and same column names as the corresponding row of the CSV).
@@ -493,6 +502,11 @@ The strategy argument must be one of the following strings:
 - 'r': [full recursive](/docs/json-to-csv.md#full-recursive)
 - 'n': [no recursion](/docs/json-to-csv.md#no-recursion)
 - 's': [stringify iterables](/docs/json-to-csv.md#stringify-iterables)
+
+---
+`type(x: anything) -> str`
+
+Returns the [JSON Schema type name](https://json-schema.org/understanding-json-schema/reference/type.html#type-specific-keywords) for x. *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
 ----
 `unique(x: array, sorted: bool = false)`
@@ -597,6 +611,36 @@ Returns the log base 2 of x.
 
 Logical `NOT`. __Replaced with a unary operator of the same name in [5.4.0](/CHANGELOG.md#540---2023-07-04).__
 
+---
+`parse(x: str) -> anything`
+
+Attempts to parse `x` as JSON according to the most permissive [parser setttings](/docs/README.md#parser-settings). *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
+
+* If `x` is not a string or there is a fatal error while parsing, returns
+    ```
+    {"error": "the exception raised as a string"}
+    ```
+* If `x` is parsed successfully, returns
+    ```
+    {"result": x parsed as JSON}
+    ```
+
+EXAMPLE:
+Consider the input
+```json
+[
+    "[1,2,3]",
+    "u"
+]
+```
+The query `parse(@)` will return
+```json
+[
+    {"result": [1, 2, 3]},
+    {"error": "No valid literal possible at position 0 (char 'u')"}
+]
+```
+
 ----
 `round(x: number, sigfigs: int = 0) -> float | int)`
 
@@ -639,7 +683,7 @@ Basically `x * reps` in Python, except that the binary operator `*` doesn't have
 
 Returns the appropriate slice/index of `x`.
 
-Prior to [v5.5.0](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), Python-style negative indices were not allowed for the `sli` argument.
+Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed for the `sli` argument.
 
 ----
 `s_split(x: string, sep: regex | string) -> array[string]`

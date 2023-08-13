@@ -84,5 +84,28 @@ namespace JSON_Tools.Utils
                 return default(K);
             return use_order.First();
         }
+
+        public K NewestKey()
+        {
+            if (use_order.Count == 0)
+                return default(K);
+            return use_order.Last();
+        }
+
+        /// <summary>
+        /// return the value associated with the most recently added key in LruCache,
+        /// then remove that key from the cache
+        /// </summary>
+        /// <returns></returns>
+        public V PopNewest()
+        {
+            if (use_order.Count == 0)
+                return default(V);
+            K lastKey = use_order.Last();
+            V lastVal = cache[lastKey];
+            cache.Remove(lastKey);
+            use_order.RemoveLast();
+            return lastVal;
+        }
     }
 }

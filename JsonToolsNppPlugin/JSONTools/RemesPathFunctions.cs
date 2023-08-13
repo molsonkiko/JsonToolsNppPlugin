@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -858,6 +859,25 @@ namespace JSON_Tools.JSON_Tools
             }
             bool itbl_has_key = ((JObject)itbl).children.ContainsKey(k);
             return new JNode(itbl_has_key);
+        }
+
+        /// <summary>
+        /// stringify(elt: anything) -> str<br></br>
+        /// returns the compact (minimal whitespace, keys sorted) string representation of args[0]
+        /// </summary>
+        public static JNode Stringify(List<JNode> args)
+        {
+            JNode elt = args[0];
+            return new JNode(elt.ToString(true, ":", ","));
+        }
+
+        /// <summary>
+        /// type(elt: anything) -> str<br></br>
+        /// get the JSON schema type name associated with a JSON variable (e.g. ints -> "integer", bools -> "boolean")
+        /// </summary>
+        public static JNode TypeOf(List<JNode> args)
+        {
+            return new JNode(JsonSchemaMaker.TypeName(args[0].type));
         }
 
         /// <summary>
@@ -2030,6 +2050,32 @@ namespace JSON_Tools.JSON_Tools
             throw new ArgumentException("Cannot round non-float, non-integer numbers");            
         }
 
+        /// <summary>
+        /// parse(stringified: str) -> object<br></br>
+        /// Parses args[0] as JSON. Uses the most permissive parser settings, but throws on fatal errors.<br></br>
+        /// if parsing succeeded:<br></br>
+        /// returns {"result": parsed JSON}<br></br>
+        /// if there was a caught exception:<br></br>
+        /// returns {"error": stringified exception}
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode Parse(List<JNode> args)
+        {
+            string stringified = (string)args[0].value;
+            JObject output = new JObject();
+            try
+            {
+                JNode result = new JsonParser(LoggerLevel.JSON5, false, false, true).Parse(stringified);
+                output["result"] = result;
+            }
+            catch (Exception ex)
+            {
+                output["error"] = new JNode(RemesParser.PrettifyException(ex));
+            }
+            return output;
+        }
+
         #endregion
 
         public static JNode ObjectsToJNode(object obj)
@@ -2140,22 +2186,24 @@ namespace JSON_Tools.JSON_Tools
             ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
-            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT}),
+            ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR}),
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.BOOL }),
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
+            ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["to_records"] = new ArgFunction(ToRecords, "to_records", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ITERABLE, Dtype.STR }),
+            ["type"] = new ArgFunction(TypeOf, "type", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ}),
             ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] {Dtype.ARR, Dtype.ARR, /* any # of args */ Dtype.ARR }),
             //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
-            // vectorized functions
+            // VECTORIZED FUNCTIONS
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
             ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE | Dtype.SCALAR, Dtype.ITERABLE | Dtype.SCALAR}),
@@ -2167,6 +2215,7 @@ namespace JSON_Tools.JSON_Tools
             ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["log"] = new ArgFunction(Log, "log", Dtype.FLOAT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.FLOAT_OR_INT}),
             ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),

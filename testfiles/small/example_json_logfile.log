@@ -1,0 +1,6 @@
+Errör 1 [foo]: [1,2,NaN]
+Warning 2: {"ä":3}
+Info 3 {bar}: [[6,{"b":false}],-7]
+Error 4: "baz" "quz"
+Error 5:   "string with no close quote
+Error 6:  not {"even" [json

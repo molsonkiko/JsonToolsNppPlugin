@@ -176,16 +176,7 @@ namespace JSON_Tools.Forms
                 MessageBox.Show("No exceptions! \U0001f600"); // smily face
                 return;
             }
-            Npp.notepad.FileNew();
-            string exc_str = grepper.exceptions.PrettyPrintAndChangePositions(
-                Main.settings.indent_pretty_print,
-                Main.settings.sort_keys,
-                Main.settings.pretty_print_style
-            );
-            Npp.AddLine(exc_str);
-            Main.IsCurrentFileBig();
-            Main.lastEditedTime = DateTime.MaxValue;
-            Npp.SetLangJson();
+            Main.PrettyPrintJsonInNewFile(grepper.exceptions);
         }
 
         private void RemoveSelectedFilesButton_Click(object sender, EventArgs e)
@@ -232,7 +223,7 @@ namespace JSON_Tools.Forms
             }
             tv = new TreeViewer(grepper.fname_jsons);
             AddOwnedForm(tv);
-            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree");
+            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false);
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                 Npp.notepad.HideDockingForm(Main.openTreeViewer);
         }

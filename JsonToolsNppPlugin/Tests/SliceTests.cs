@@ -79,7 +79,7 @@ namespace JSON_Tools.Tests
             ("3:-7:-3", new int[] { 4, 1 }),
         };
 
-        public static void Test()
+        public static bool Test()
         {
             string input_str = onetofive.ArrayToString();
             var testcases = new (int?[] slicer, int[] output)[]
@@ -169,6 +169,7 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

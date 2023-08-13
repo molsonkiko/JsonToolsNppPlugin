@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
         public static JsonParser jparser = new JsonParser();
         public static RemesParser rparser = new RemesParser();
 
-        public static void TestFnames()
+        public static bool TestFnames()
         {
             DirectoryInfo smalldir;
             try
@@ -22,7 +22,7 @@ namespace JSON_Tools.Tests
             catch
             {
                 Npp.AddLine("Could not find the testfiles directory in this plugin's folder\nThis directory contains the files required for this test.");
-                return;
+                return true;
             }
             JObject all_jsons = new JObject();
             foreach (FileInfo f in smalldir.GetFiles())
@@ -105,6 +105,7 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
         public static async Task<int[]> TestApiRequesterHelper(string[] urls, int ii, int tests_failed, JsonGrepper grepper)
@@ -141,7 +142,7 @@ namespace JSON_Tools.Tests
             return new int[] { ii, tests_failed };
         }
 
-        public static async Task TestApiRequester()
+        public static async Task<bool> TestApiRequester()
         {
             JsonGrepper grepper = new JsonGrepper(new JsonParser());
             int ii = 0;
@@ -163,6 +164,7 @@ namespace JSON_Tools.Tests
             tests_failed = test_result[1];
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

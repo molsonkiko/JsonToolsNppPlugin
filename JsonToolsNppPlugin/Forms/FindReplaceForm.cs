@@ -27,6 +27,17 @@ namespace JSON_Tools.Forms
             if (treeViewer.Tree.SelectedNode == null || treeViewer.Tree.SelectedNode.FullPath == "JSON")
                 RootTextBox.Text = "";
             else RootTextBox.Text = treeViewer.PathToTreeNode(treeViewer.Tree.SelectedNode, KeyStyle.RemesPath);
+            if (treeViewer.UsesSelections())
+            {
+                // when the tree uses selections, queries are performed on each selection separately
+                // rather than on the selection tree, so get rid of the selection key
+                var mtchSelEnd = new Regex("\\d+[\"'`]\\]?").Match(RootTextBox.Text);
+                if (mtchSelEnd.Success)
+                {
+                    int selEnd = mtchSelEnd.Index + mtchSelEnd.Length;
+                    RootTextBox.Text = RootTextBox.Text.Substring(selEnd);
+                }
+            }
             KeysValsBothBox.SelectedIndex = 2;
             AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
             Height = COLLAPSED_HEIGHT;

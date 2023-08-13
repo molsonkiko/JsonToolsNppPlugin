@@ -2,101 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.Tests
 {
-    class RemesPathLexerTester
-    {
-        public static void Test()
-        {
-            JsonParser jsonParser = new JsonParser();
-            RemesPathLexer lexer = new RemesPathLexer();
-            var testcases = new (string input, List<object> toks, string msg)[]
-            {
-                ( "@ + 2", new List<object>{new CurJson(), Binop.BINOPS["+"], 2L}, "cur_json binop scalar" ),
-                ( "2.5 7e5 3.2e4 ", new List<object>{2.5, 7e5, 3.2e4}, "all float formats" ),
-                ( "abc_2 `ab\\`c` \\ud83d\\ude00_$\\u1ed3", new List<object>{"abc_2", "ab`c", "😀_$ồ"}, "unquoted and quoted strings" ),
-                ( "len(null, Infinity)", new List<object>{"len", '(', null, ',', NanInf.inf, ')'}, "arg function, constants, delimiters" ),
-                ( "j`[1,\"a\\`\"]`", new List<object>{jsonParser.Parse("[1,\"a`\"]")}, "json string" ),
-                ( "g`a?[b\\`]`", new List<object>{new Regex(@"a?[b`]") }, "regex" ),
-                ( " - /", new List<object>{Binop.BINOPS["-"], Binop.BINOPS["/"]}, "more binops" ),
-                ( ". []", new List<object>{'.', '[', ']'}, "more delimiters" ),
-                ( "3blue", new List<object>{3L, "blue"}, "number immediately followed by string" ),
-                ( "2.5+-2", new List<object>{2.5, Binop.BINOPS["+"], Binop.BINOPS["-"], 2L}, "number binop binop number, no whitespace" ),
-                ( "`a`+@", new List<object>{"a", Binop.BINOPS["+"], new CurJson()}, "quoted string binop curjson, no whitespace" ),
-                ( "== in =~", new List<object>{Binop.BINOPS["=="], "in", Binop.BINOPS["=~"]}, "two-character binops and argfunction in" ),
-                ( "@[1,2]/3", new List<object>{new CurJson(), '[', 1L, ',', 2L, ']', Binop.BINOPS["/"], 3L}, "numbers and delimiters then binop number, no whitespace" ),
-                ( "2 <=3!=", new List<object>{2L, Binop.BINOPS["<="], 3L, Binop.BINOPS["!="] }, "!=" ),
-                ( "8 = @ * 79 ==", new List<object>{ 8L, '=', new CurJson(), Binop.BINOPS["*"], 79L, Binop.BINOPS["=="] }, "assignment operator" ),
-            };
-            int tests_failed = 0;
-            int ii = 0;
-            foreach ((string input, List<object> toks, string msg) in testcases)
-            {
-                string correct_str = RemesPathLexer.TokensToString(toks);
-                List<object> got_toks = null;
-                ii++;
-                try
-                {
-                    got_toks = lexer.Tokenize(input);
-                }
-                catch (Exception ex)
-                {
-                    tests_failed++;
-                    Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
-                                $"Expected toks = {correct_str}\r\nInstead raised exception\r\n{ex}");
-                    continue;
-                }
-                string got_str = RemesPathLexer.TokensToString(got_toks);
-                if (correct_str != got_str)
-                {
-
-                    tests_failed++;
-                    Npp.AddLine($"Test {ii} (input \"{input}\", {msg}) failed:\r\n" +
-                                $"Expected toks = {correct_str}\r\nInstead got toks = {got_str}");
-                }
-            }
-            // test exeptions related to unmatched brackets
-            foreach (string paren in new string[] { "(", ")", "[", "]", "{", "}" })
-            {
-                ii++;
-                try
-                {
-                    lexer.Tokenize(paren);
-                    Npp.AddLine($"Test {ii} (query \"{paren}\") failed, expected exception due to unmatched '{paren}'");
-                    tests_failed++;
-                }
-                catch { }
-            }
-            // test if two decimal points causes error
-            string query;
-            //ii++;
-            //try
-            //{
-            //    query = "1.5.2";
-            //    lexer.Tokenize(query);
-            //    tests_failed++;
-            //    Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to number with two decimal points");
-            //}
-            //catch { }
-            // test if recursion limit of 512 is enforced
-            ii++;
-            try
-            {
-                query = $"{new string('(', 1000)}1{new string(')', 1000)}";
-                lexer.Tokenize(query);
-                tests_failed++;
-                Npp.AddLine($"Test {ii} (query \"{query}\") failed, expected exception due to exceeding recursion limit with too many unclosed parentheses");
-            }
-            catch { }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-        }
-    }
-
     public class RemesParserTester
     {
         public struct Query_DesiredResult
@@ -111,7 +21,7 @@ namespace JSON_Tools.Tests
             }
         }
 
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode foo = jsonParser.Parse("{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
@@ -428,6 +338,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("iterable(j`[1,2,3]`)", "true"),
                 new Query_DesiredResult("iterable(a)", "false"),
                 new Query_DesiredResult("iterable(j`{\"a\": 1}`)", "true"),
+                new Query_DesiredResult("parse(j`[\"[1,2,NaN,null,\\\"\\\"]\", \"{\\\"foo\\\": false}\", \"u\"]`)", "[{\"result\": [1,2,NaN,null,\"\"]}, {\"result\": {\"foo\": false}}, {\"error\": \"No valid literal possible at position 0 (char 'u')\"}]"),
+                new Query_DesiredResult("stringify(j`[1,2,\"foo\"]`)", "\"[1,2,\\\"foo\\\"]\""),
+                new Query_DesiredResult("j`[true,null,1,NaN,{},[], \"\"]`[:]{type(@)}[0]", "[\"boolean\", \"null\", \"integer\", \"number\", \"object\", \"array\", \"string\"]"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -462,6 +375,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("(range(len(@.foo)) ** 3)[2]", "8.0"), // indexing on a paren-wrapped result of a binop (non-vectorized arg function, scalar)
                 new Query_DesiredResult("(s_len(str(@.foo[0])) ^ 3)[2]", "2"), // indexing on a paren-wrapped result of a binop (vectorized arg function, scalar)
                 new Query_DesiredResult("j`{\"items\": [\"a\", 1]}`.items", "[\"a\", 1]"), // using an ArgFunction name as a string rather than an ArgFunction
+                // making sure various escapes work in backtickstrings
+                new Query_DesiredResult("`\\t\\r\\n`", "\"\t\\r\\n\""),
             };
             int ii = 0;
             int tests_failed = 0;
@@ -469,7 +384,16 @@ namespace JSON_Tools.Tests
             foreach (Query_DesiredResult qd in testcases)
             {
                 ii++;
-                JNode jdesired_result = jsonParser.Parse(qd.desired_result);
+                JNode jdesired_result;
+                try
+                {
+                    jdesired_result = jsonParser.Parse(qd.desired_result);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Got an error while parsing {qd.desired_result}:\n{ex}");
+                    continue;
+                }
                 try
                 {
                     result = remesparser.Search(qd.query, foo);
@@ -583,12 +507,13 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class RemesPathThrowsWhenAppropriateTester
     {
-        public static void Test()
+        public static bool Test()
         {
             int ii = 0;
             int tests_failed = 0;
@@ -671,12 +596,13 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class RemesPathAssignmentTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
@@ -758,12 +684,13 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class BinopTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
@@ -799,12 +726,13 @@ namespace JSON_Tools.Tests
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class ArgFunctionTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true");
@@ -845,6 +773,7 @@ namespace JSON_Tools.Tests
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
@@ -959,7 +888,7 @@ namespace JSON_Tools.Tests
         /// </summary>
         /// <param name="n_tests"></param>
         /// <param name="max_failures"></param>
-        public static void Test(int n_tests, int max_failures)
+        public static bool Test(int n_tests, int max_failures)
         {
             JNode targetNode;
             try
@@ -969,7 +898,7 @@ namespace JSON_Tools.Tests
             catch (Exception ex)
             {
                 Npp.AddLine($"Expected successful parsing of\r\n{target}\r\ninstead got error\r\n{ex}");
-                return;
+                return true;
             }
             Npp.AddLine($"Fuzz tests query\r\n{target}");
             RemesParser parser = new RemesParser();
@@ -1033,6 +962,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Ran {ii} fuzz tests");
             Npp.AddLine($"Failed {failures} fuzz tests");
+            return failures > 0;
         }
     }
 }
