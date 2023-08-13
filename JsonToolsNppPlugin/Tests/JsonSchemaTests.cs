@@ -8,7 +8,7 @@ namespace JSON_Tools.Tests
 {
     public class JsonSchemaMakerTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             string[][] testcases = new string[][]
@@ -233,6 +233,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

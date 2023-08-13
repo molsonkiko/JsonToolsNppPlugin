@@ -8,7 +8,7 @@ namespace JSON_Tools.Tests
 {
     internal class RandomJsonTests
     {
-        public static void TestRandomJson()
+        public static bool TestRandomJson()
         {
             int ii = 0;
             int tests_failed = 0;
@@ -210,6 +210,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

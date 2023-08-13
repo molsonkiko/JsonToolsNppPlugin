@@ -194,13 +194,13 @@
         #endregion
         private System.Windows.Forms.Label SortFormTitle;
         private System.Windows.Forms.Label PathTextBoxLabel;
-        private System.Windows.Forms.Button SortButton;
-        private System.Windows.Forms.CheckBox ReverseOrderCheckBox;
         private System.Windows.Forms.Label SortMethodBoxLabel;
         private System.Windows.Forms.Label QueryKeyIndexTextBoxLabel;
         internal System.Windows.Forms.TextBox PathTextBox;
         internal System.Windows.Forms.ComboBox SortMethodBox;
         internal System.Windows.Forms.TextBox QueryKeyIndexTextBox;
-        private System.Windows.Forms.CheckBox IsMultipleArraysCheckBox;
+        internal System.Windows.Forms.Button SortButton;
+        internal System.Windows.Forms.CheckBox ReverseOrderCheckBox;
+        internal System.Windows.Forms.CheckBox IsMultipleArraysCheckBox;
     }
 }

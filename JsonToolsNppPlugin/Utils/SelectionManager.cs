@@ -19,6 +19,18 @@ namespace JSON_Tools.Utils
             return selList;
         }
 
+        public static bool NoTextSelected(IList<(int start, int end)> selections)
+        {
+            (int start, int end) = selections[0];
+            return selections.Count < 2 && start == end;
+        }
+
+        public static bool NoTextSelected(IList<string> selections)
+        {
+            int[] startEnd = ParseStartEnd(selections[0]);
+            return selections.Count < 2 && startEnd[0] == startEnd[1];
+        }
+
         /// <summary>
         /// takes a list of one or more comma-separated integers
         /// and transforms it into an array of numbers.
@@ -69,6 +81,11 @@ namespace JSON_Tools.Utils
         public static int StartEndCompareByStart(string s1, string s2)
         {
             return StartFromStartEnd(s1).CompareTo(StartFromStartEnd(s2));
+        }
+
+        public static int StartEndCompareByStart((int start, int end) se1, (int start, int end) se2)
+        {
+            return se1.start.CompareTo(se2.start);
         }
 
         /// <summary>

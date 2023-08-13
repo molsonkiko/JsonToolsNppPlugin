@@ -21,7 +21,7 @@ namespace JSON_Tools.Tests
             }
         }
 
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode foo = jsonParser.Parse("{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
@@ -507,12 +507,13 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class RemesPathThrowsWhenAppropriateTester
     {
-        public static void Test()
+        public static bool Test()
         {
             int ii = 0;
             int tests_failed = 0;
@@ -595,12 +596,13 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class RemesPathAssignmentTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
@@ -682,12 +684,13 @@ namespace JSON_Tools.Tests
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class BinopTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
@@ -723,12 +726,13 @@ namespace JSON_Tools.Tests
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
     class ArgFunctionTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
             JNode jtrue = jsonParser.Parse("true");
@@ -769,6 +773,7 @@ namespace JSON_Tools.Tests
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 
@@ -883,7 +888,7 @@ namespace JSON_Tools.Tests
         /// </summary>
         /// <param name="n_tests"></param>
         /// <param name="max_failures"></param>
-        public static void Test(int n_tests, int max_failures)
+        public static bool Test(int n_tests, int max_failures)
         {
             JNode targetNode;
             try
@@ -893,7 +898,7 @@ namespace JSON_Tools.Tests
             catch (Exception ex)
             {
                 Npp.AddLine($"Expected successful parsing of\r\n{target}\r\ninstead got error\r\n{ex}");
-                return;
+                return true;
             }
             Npp.AddLine($"Fuzz tests query\r\n{target}");
             RemesParser parser = new RemesParser();
@@ -957,6 +962,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Ran {ii} fuzz tests");
             Npp.AddLine($"Failed {failures} fuzz tests");
+            return failures > 0;
         }
     }
 }

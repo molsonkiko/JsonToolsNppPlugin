@@ -39,21 +39,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.5.0] - (UNRELEASED) YYYY-MM-DD
+## [5.5.0] - 2023-08-13
 
 ### Added
 
 1. __Add support for [operating on selections](/docs/README.md#working-with-selections)__
-2. Add [`parse`](/docs/RemesPath.md#vectorized-functions), [`type` and `stringify`](/docs/RemesPath.md#non-vectorized-functions) RemesPath functions.
+2. Add method for [selecting every valid JSON element in the file](/docs/README.md#selecting-all-valid-json)
+3. Add `D&ump text of current document as JSON string` and `Dump JSON string(s) as ra&w text` convenience methods.
+4. Add [`parse`](/docs/RemesPath.md#vectorized-functions), [`type` and `stringify`](/docs/RemesPath.md#non-vectorized-functions) RemesPath functions.
+5. Added UI tests.
 
 ### Changed
 
 1. Improved RemesPath [boolean indices](/docs/RemesPath.md#boolean-indexing) so that they can be more easily chained together.
+2. Removed unneeded RemesPath lexer tests.
 
 ### Fixed
 
 1. Bug where `s_slice`, `max_by`, `min_by`, `group_by`, and `sort_by` all did not allow Python-style negative indices.
 2. Bug where out-of-bounds negative indices when indexing in an array would throw an error rather than returning an empty array (which is the correct behavior, since RemesPath is not supposed to throw errors for indexing out of bounds).
+3. Eliminated huge latency when viewing very long JSON strings in the treeview.
+4. Eliminated potential access violation during plugin cleanup.
+5. Bug in which the plugin would be mistaken about the position of JSON elements after PPrint-style printing of some JSON containing non-ASCII characters in strings.
+6. Bug in which multiple Sort forms could be open.
+7. Bug in which running tests in Notepad++ versions older than v8 could cause Notepad++ to crash.
 
 ## [5.4.0] - 2023-07-04
 

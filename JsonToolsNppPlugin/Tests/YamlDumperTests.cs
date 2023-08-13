@@ -33,7 +33,7 @@ Got
             return tests_failed;
         }
 
-        public static void Test()
+        public static bool Test()
         {
             string[][] tests = {
 				// space at end of key
@@ -72,7 +72,7 @@ Got
                 new string[] { "{\"a\": \"RT @blah: MondayMo\\nring\"}", "a: \"RT @blah: MondayMo\\nring\"\n", "value contains newline and colon" },
                 new string[] { "{\"\\\"a: 'b'\": \"a\"}", "\'\"a: \'\'b\'\'\': a\n", "key contains quotes and colon" }
             };
-            MyUnitTest(tests);
+            return MyUnitTest(tests) > 0; 
         }
     }
 }

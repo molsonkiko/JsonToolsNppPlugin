@@ -29,7 +29,7 @@ namespace JSON_Tools.Tests
             }
         }
 
-        public static void TestJNodeCopy()
+        public static bool TestJNodeCopy()
         {
             int ii = 0;
             int tests_failed = 0;
@@ -101,9 +101,10 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void Test()
+        public static bool Test()
         {
             JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true);
             // includes:
@@ -336,7 +337,7 @@ Got
             }
             #endregion
             #region JNode Position Tests
-            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]]}";
+            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]],/*comment*/\"d\":[{\"o\":\"öyster\"},\"cät\",\"dog\"],\"e\":false,\"f\":null}";
             // pprint-style leads to this:
             /*
 {
@@ -360,9 +361,12 @@ Got
             110,
             111,
             112,
-                [113, 114]
+            [113, 114]
         ]
-    ]
+    ],
+    "d": [{"o": "öyster"}, "cät", "dog"],
+    "e": false,
+    "f": null
 }
             */
             // also includes some weird space like '\xa0' only allowed in JSON5
@@ -370,7 +374,7 @@ Got
             if (onode != null && onode is JObject obj)
             {
                 Npp.AddLine($"obj =\r\n{objstr}\r\n");
-                string correct_pprint_objstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ]\r\n}";
+                string correct_pprint_objstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ],\r\n    \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n    \"e\": false,\r\n    \"f\": null\r\n}";
                 ii++;
                 string actual_pprint_objstr = obj.PrettyPrint(4, false, PrettyPrintStyle.PPrint);
                 if (actual_pprint_objstr != correct_pprint_objstr)
@@ -386,7 +390,7 @@ Got
                 ii++;
                 // the formatting with '\t' indent is actually significantly different
                 // because having only 1 char of indent makes it so all the sub-children fit on a single line 
-                string correct_pprint_objstr_tab_indent = "{\r\n\t\"a\": [1, 2, 3],\r\n\t\"b\": {},\r\n\t\"Я草\": [],\r\n\t\"😀\": [\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]\r\n\t]\r\n}";
+                string correct_pprint_objstr_tab_indent = "{\r\n\t\"a\": [1, 2, 3],\r\n\t\"b\": {},\r\n\t\"Я草\": [],\r\n\t\"😀\": [\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]\r\n\t],\r\n\t\"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n\t\"e\": false,\r\n\t\"f\": null\r\n}";
                 string actual_pprint_objstr_tab_indent = obj.PrettyPrint(1, false, PrettyPrintStyle.PPrint, int.MaxValue, '\t');
                 if (actual_pprint_objstr_tab_indent != correct_pprint_objstr_tab_indent)
                 {
@@ -405,7 +409,10 @@ Got
                     ("a", 9, 13, 12, 5, 6, 12),
                     ("b", 27, 57, 67, 17, 22, 33),
                     ("Я草", 43, 82, 91, 28, 35, 51),
-                    ("😀", 55, 106, 114, 38, 47, 68)
+                    ("😀", 55, 106, 114, 38, 47, 68),
+                    ("d", 289, 818, 993, 220, 272, 525),
+                    ("e", 324, 905, 1096, 255, 312, 570),
+                    ("f", 334, 918, 1113, 265, 324, 587),
                 };
                 foreach ((string key, int original_position, _, _, _, _, _) in keylines)
                 {
@@ -419,8 +426,8 @@ Got
                 }
                 foreach (PrettyPrintStyle style in new[] {PrettyPrintStyle.Whitesmith, PrettyPrintStyle.Google, PrettyPrintStyle.PPrint })
                 {
-                    string pp = obj.PrettyPrint(4, true, style);
-                    string pp_ch_line = obj.PrettyPrintAndChangePositions(4, true, style);
+                    string pp = obj.PrettyPrint(4, false, style);
+                    string pp_ch_line = obj.PrettyPrintAndChangePositions(4, false, style);
                     if (pp != pp_ch_line)
                     {
                         tests_failed++;
@@ -436,7 +443,7 @@ Got
 
                 foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos) in keylines)
                 {
-                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Whitesmith);
+                    obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.Whitesmith);
                     int got_pos = obj[key].position;
                     if (got_pos != whitesmith_pos)
                     {
@@ -444,7 +451,7 @@ Got
                         Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
                     }
                     ii++;
-                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.Google);
+                    obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.Google);
                     got_pos = obj[key].position;
                     if (got_pos != google_pos)
                     {
@@ -452,7 +459,7 @@ Got
                         Npp.AddLine($"After Google-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {google_pos}, got {got_pos}.");
                     }
                     ii++;
-                    obj.ToStringAndChangePositions(true);
+                    obj.ToStringAndChangePositions(false);
                     got_pos = obj[key].position;
                     if (got_pos != tostring_pos)
                     {
@@ -460,7 +467,7 @@ Got
                         Npp.AddLine($"After ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
                     }
                     ii++;
-                    obj.ToStringAndChangePositions(true, ":", ",");
+                    obj.ToStringAndChangePositions(false, ":", ",");
                     got_pos = obj[key].position;
                     if (got_pos != tostring_miniwhite_pos)
                     {
@@ -468,7 +475,7 @@ Got
                         Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
                     }
                     ii++;
-                    obj.PrettyPrintAndChangePositions(4, true, PrettyPrintStyle.PPrint);
+                    obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.PPrint);
                     got_pos = obj[key].position;
                     if (got_pos != pprint_pos)
                     {
@@ -477,8 +484,8 @@ Got
                     }
                     ii++;
                 }
-                string tostr = obj.ToString();
-                string tostr_ch_line = obj.ToStringAndChangePositions();
+                string tostr = obj.ToString(false);
+                string tostr_ch_line = obj.ToStringAndChangePositions(false);
                 ii++;
                 if (tostr != tostr_ch_line)
                 {
@@ -556,9 +563,10 @@ Got
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void TestThrowsWhenAppropriate()
+        public static bool TestThrowsWhenAppropriate()
         {
             int ii = 0, tests_failed = 0;
             JsonParser parser = new JsonParser();
@@ -585,9 +593,10 @@ Got
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void TestSpecialParserSettings()
+        public static bool TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
@@ -690,9 +699,10 @@ multiline comment
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void TestLinter()
+        public static bool TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.STRICT, true, false, false);
@@ -911,9 +921,10 @@ multiline comment
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void TestJsonLines()
+        public static bool TestJsonLines()
         {
             JsonParser parser = new JsonParser();
             var testcases = new string[][]
@@ -988,9 +999,10 @@ Got
 
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
-        public static void TestCultureIssues()
+        public static bool TestCultureIssues()
         {
             int ii = 0;
             int tests_failed = 0;
@@ -1009,6 +1021,7 @@ Got
             CultureInfo.CurrentCulture = currentCulture;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

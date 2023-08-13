@@ -28,6 +28,14 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static INotepadPPGateway notepad = new NotepadPPGateway();
 
+        public static readonly int[] nppVersion = notepad.GetNppVersion();
+
+        public static readonly string nppVersionStr = NppVersionString(true);
+
+        public static readonly bool nppVersionAtLeast8 = nppVersion[0] >= 8;
+
+        public static readonly bool nppVersionAtLeast8p5p5 = nppVersionStr.CompareTo("8.5.5") >= 0;
+
         /// <summary>
         /// append text to current doc, then append newline and move cursor
         /// </summary>
@@ -205,6 +213,13 @@ namespace JSON_Tools.Utils
             }
             sb.Remove(sb.Length - 2, 2);
             return sb.ToString();
+        }
+
+        private static string NppVersionString(bool include32bitVs64bit)
+        {
+            int[] nppVer = notepad.GetNppVersion();
+            string nppVerStr = $"{nppVer[0]}.{nppVer[1]}.{nppVer[2]}";
+            return include32bitVs64bit ? $"{nppVerStr} {IntPtr.Size * 8}bit" : nppVerStr;
         }
     }
 }

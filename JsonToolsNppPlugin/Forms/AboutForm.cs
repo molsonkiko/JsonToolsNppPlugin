@@ -12,16 +12,13 @@ namespace JSON_Tools.Forms
 {
     public partial class AboutForm : Form
     {
-        private static int[] nppVersion = Npp.notepad.GetNppVersion();
-
         public AboutForm()
         {
             InitializeComponent();
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             ThanksWowLinkLabel.LinkColor = ThanksWowLinkLabel.ForeColor; // hidden!
             Title.Text = Title.Text.Replace("X.Y.Z.A", Npp.AssemblyVersionString());
-            string nppVersionString = string.Join(".", nppVersion.Select((x) => x.ToString()));
-            DebugInfoLabel.Text = DebugInfoLabel.Text.Replace("X.Y.Z", nppVersionString);
+            DebugInfoLabel.Text = DebugInfoLabel.Text.Replace("X.Y.Z", Npp.nppVersionStr);
         }
 
         /// <summary>
@@ -86,7 +83,7 @@ namespace JSON_Tools.Forms
         {
             (bool fatal, JNode json, _) = Main.TryParseJson();
             if (fatal || json == null) return;
-            if (nppVersion[0] >= 8)
+            if (Npp.nppVersionAtLeast8)
             {
                 // add the UDL file to the userDefinedLangs folder so that it can colorize the new file
                 DirectoryInfo userDefinedLangPath = new DirectoryInfo(Path.Combine(

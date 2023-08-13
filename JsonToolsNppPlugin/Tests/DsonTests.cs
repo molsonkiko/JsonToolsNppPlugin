@@ -11,7 +11,7 @@ namespace JSON_Tools.Tests
 {
     public class DsonTester
     {
-        public static void TestDump()
+        public static bool TestDump()
         {
             (string inp, string correctOut)[] testcases = new (string inp, string correctOut)[]
             {
@@ -55,6 +55,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
     }
 }

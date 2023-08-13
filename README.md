@@ -26,6 +26,8 @@ If you have any issues, see if [updating to the latest release](https://github.c
 10. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
 11. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
 12. [Automatic error checking after editing](/docs/README.md#automatically-check-for-errors-after-editing)
+13. [Select all JSON in a non-JSON file](/docs/README.md#selecting-all-valid-json)
+14. [Quickly convert between JSON strings and raw text](/CHANGELOG.md#550---2023-08-13)
 
 [Read the docs.](/docs/README.md)
 

@@ -184,7 +184,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// position in JSON string
         /// </summary>
-        private int ii;
+        public int ii;
 
         /// <summary>
         /// the number of extra bytes in the UTF-8 encoding of the text consumed

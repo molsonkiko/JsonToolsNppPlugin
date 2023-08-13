@@ -24,8 +24,7 @@ namespace JSON_Tools.Utils
         public static void ApplyStyle(Control ctrl, bool use_npp_style, bool darkMode = false)
         {
             if (ctrl == null || ctrl.IsDisposed) return;
-            int[] version = Npp.notepad.GetNppVersion();
-            if (version[0] < 8)
+            if (!Npp.nppVersionAtLeast8)
                 use_npp_style = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
             if (ctrl is Form form)
             {

@@ -7,9 +7,10 @@ namespace JSON_Tools.Tests
     {
         public static readonly char[] keys = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()".ToCharArray();
         
-        public static void Test()
+        public static bool Test()
         {
             int[] sizes = new int[] { 5, 10, 17, 45, 64 }; // include prime, non-prime odd, and some evens
+            bool failed = false;
             foreach (int size in sizes)
             {
                 int failures = 0;
@@ -48,7 +49,9 @@ namespace JSON_Tools.Tests
                     }
                 }
                 Npp.AddLine($"Ran {test_count} tests for LruCache with size {size} and failed {failures}");
+                failed |= failures > 0;
             }
+            return failed;
         }
     }
 }

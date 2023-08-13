@@ -1,6 +1,7 @@
 ﻿/*
 A test runner for all of this package.
 */
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using JSON_Tools.Utils;
 
@@ -11,187 +12,232 @@ namespace JSON_Tools.Tests
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
-            Npp.AddLine($"Test results for JsonTools v{Npp.AssemblyVersionString()}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests");
+            string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
+            Npp.AddLine(header);
+
+            var failures = new List<string>();
 
             Npp.AddLine(@"=========================
 Testing JNode Copy method
 =========================
 ");
-            JsonParserTester.TestJNodeCopy();
+            if (JsonParserTester.TestJNodeCopy())
+                failures.Add("JNode copy");
 
             Npp.AddLine(@"=========================
 Testing JSON parser
 =========================
 ");
-            JsonParserTester.Test();
+            if (JsonParserTester.Test())
+                failures.Add("JSON parser");
 
             Npp.AddLine(@"=========================
 Testing if JSON parser throws errors on bad inputs
 =========================
 ");
-            JsonParserTester.TestThrowsWhenAppropriate();
+            if (JsonParserTester.TestThrowsWhenAppropriate())
+                failures.Add("JSON parser throws errors on bad inputs");
 
             Npp.AddLine(@"=========================
 Testing JSON parser advanced options (javascript comments, dates, datetimes, singlequoted strings)
 =========================
 ");
-            JsonParserTester.TestSpecialParserSettings();
+            if (JsonParserTester.TestSpecialParserSettings())
+                failures.Add("JSON parser advanced options");
 
             Npp.AddLine(@"=========================
 Testing JSON parser's linter functionality
 =========================
 ");
-            JsonParserTester.TestLinter();
+            if (JsonParserTester.TestLinter())
+                failures.Add("JSON parser's linter");
 
             Npp.AddLine(@"=========================
 Testing JSON Lines parser
 =========================
 ");
-            JsonParserTester.TestJsonLines();
+            if (JsonParserTester.TestJsonLines())
+                failures.Add("JSON lines");
 
             Npp.AddLine(@"=========================
 Testing that parsing of numbers does not depend on current culture
 =========================
 ");
-            JsonParserTester.TestCultureIssues();
+            if (JsonParserTester.TestCultureIssues())
+                failures.Add("parsing of numbers does not depend on current culture");
 
             Npp.AddLine(@"=========================
 Testing YAML dumper
 =========================
 ");
-            YamlDumperTester.Test();
+            if (YamlDumperTester.Test())
+                failures.Add("YAML dumper");
 
             Npp.AddLine(@"=========================
 Testing Binops
 =========================
 ");
-            BinopTester.Test();
+            if (BinopTester.Test())
+                failures.Add("Binops");
 
             Npp.AddLine(@"=========================
 Testing ArgFunctions
 =========================
 ");
-            ArgFunctionTester.Test();
+            if (ArgFunctionTester.Test())
+                failures.Add("argfunctions");
 
             Npp.AddLine(@"=========================
 Testing slice extension
 =========================
 ");
-            SliceTester.Test();
+            if (SliceTester.Test())
+                failures.Add("slice extension");
 
             Npp.AddLine(@"=========================
 Testing Least Recently Used (LRU) cache implementation
 =========================
 ");
-            LruCacheTests.Test();
+            if (LruCacheTests.Test())
+                failures.Add("(LRU) cache implementation");
 
             Npp.AddLine(@"=========================
 Testing RemesPath parser and compiler
 =========================
 ");
-            RemesParserTester.Test();
+            if (RemesParserTester.Test())
+                failures.Add("RemesPath parser");
 
             Npp.AddLine(@"=========================
 Testing that RemesPath throws errors on bad inputs
 =========================
 ");
-            RemesPathThrowsWhenAppropriateTester.Test();
+            if (RemesPathThrowsWhenAppropriateTester.Test())
+                failures.Add("RemesPath throws errors on bad inputs");
 
             Npp.AddLine(@"=========================
 Testing RemesPath assignment operations
 =========================
 ");
-            RemesPathAssignmentTester.Test();
+            if (RemesPathAssignmentTester.Test())
+                failures.Add("RemesPath assignment operations");
 
             Npp.AddLine(@"=========================
 Testing that RemesPath produces sane outputs on randomly generated queries
 =========================
 ");
-            RemesPathFuzzTester.Test(10000, 20);
+            if (RemesPathFuzzTester.Test(10000, 20))
+                failures.Add("randomly generated queries");
 
             Npp.AddLine(@"=========================
 Testing JsonSchema generator
 =========================
 ");
-            JsonSchemaMakerTester.Test();
+            if (JsonSchemaMakerTester.Test())
+                failures.Add("JsonSchema generator");
 
             Npp.AddLine(@"=========================
 Testing JsonSchema validator
 =========================
 ");
-            JsonSchemaValidatorTester.Test();
+            if (JsonSchemaValidatorTester.Test())
+                failures.Add("JsonSchema validator");
 
             Npp.AddLine(@"=========================
 Testing JSON tabularizer
 =========================
 ");
-            JsonTabularizerTester.Test();
+            if (JsonTabularizerTester.Test())
+                failures.Add("JSON tabularizer");
 
-            Npp.AddLine(@"=========================
+            if (Npp.nppVersionAtLeast8)
+            {
+                // Notepad++ versions less than 8 (or something around 8)
+                // don't have separate plugin folders for each plugin, so the tests that involve reading files
+                // will cause the plugin to crash
+                Npp.AddLine(@"=========================
 Testing JSON grepper's file reading ability
 =========================
 ");
-            JsonGrepperTester.TestFnames();
+                if (JsonGrepperTester.TestFnames())
+                    failures.Add("JSON grepper's file reading");
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Testing JSON grepper's API request tool
 =========================
 ");
-            await JsonGrepperTester.TestApiRequester();
+                if (await JsonGrepperTester.TestApiRequester())
+                    failures.Add("JSON grepper's API request tool");
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Testing generation of random JSON from schema
 =========================
 ");
-            RandomJsonTests.TestRandomJson();
+                if (RandomJsonTests.TestRandomJson())
+                    failures.Add("random JSON from schema");
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Testing conversion of JSON to DSON (see https://dogeon.xyz/)
 =========================
 ");
-            DsonTester.TestDump();
+                if (DsonTester.TestDump())
+                    failures.Add("DSON");
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Testing JNode PathToPosition method
 =========================
 ");
-            FormatPathTester.Test();
+                if (FormatPathTester.Test())
+                    failures.Add("PathToPosition");
 
-            Npp.AddLine(@"=========================
+                if (Npp.nppVersionAtLeast8p5p5)
+                {
+                    // the UI tests consistently cause NPP to hang on anything older than 8.5.5
+                    // and I really don't feel like trying to learn why
+                    Npp.AddLine(@"=========================
 Performing UI tests by faking user actions
 =========================
 ");
-            UserInterfaceTester.Test();
+                    if (UserInterfaceTester.Test())
+                        failures.Add("UI tests");
+                }
+                else
+                    Npp.AddLine($"Skipping UI tests because they are very slow for Notepad++ versions older than v8.5.5");
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Performance tests for JsonParser
 =========================
 ");
-            // use an absolute path to the location of this file in your repo
-            string big_random_fname = @"plugins\JsonTools\testfiles\big_random.json";
-            Benchmarker.BenchmarkParserAndRemesPath(new string[][] {
-                new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic" },
-                new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
-                new string[] { "@..*", "basic recursive search" },
-            },
-            big_random_fname, 32, 64);
+                // use an absolute path to the location of this file in your repo
+                string big_random_fname = @"plugins\JsonTools\testfiles\big_random.json";
+                Benchmarker.BenchmarkParserAndRemesPath(new string[][] {
+                    new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic" },
+                    new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
+                    new string[] { "@..*", "basic recursive search" },
+                },
+                big_random_fname, 32, 64);
 
-            Npp.AddLine(@"=========================
+                Npp.AddLine(@"=========================
 Performance tests for JSON compression and pretty-printing
 =========================
 ");
-            Benchmarker.BenchmarkJNodeToString(64, big_random_fname);
+                Benchmarker.BenchmarkJNodeToString(64, big_random_fname);
 
-            Npp.AddLine($@"=========================
+                Npp.AddLine($@"=========================
 Performance tests for JsonSchemaValidator and random JSON creation
 =========================
 ");
-            Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);
+                Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64);
 
-            //because Visual Studio runs a whole bunch of other things in the background
-            //     when I build my project, the benchmarking suite
-            //     makes my code seem way slower than it actually is when it's running unhindered.
-            //     * *To see how fast the code actually is, you need to run the executable outside of Visual Studio.**
+                //because Visual Studio runs a whole bunch of other things in the background
+                //     when I build my project, the benchmarking suite
+                //     makes my code seem way slower than it actually is when it's running unhindered.
+                //     * *To see how fast the code actually is, you need to run the executable outside of Visual Studio.**
+            }
+            else
+                Npp.AddLine("Skipping UI tests and all tests that would involve reading a file, because they would cause Notepad++ versions older than v8 to crash");
+
+            Npp.editor.InsertText(header.Length + 2, "Tests failed: " + string.Join(", ", failures) + "\r\n");
         }
     }
 }

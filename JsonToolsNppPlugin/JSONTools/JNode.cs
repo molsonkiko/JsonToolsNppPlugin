@@ -378,9 +378,10 @@ namespace JSON_Tools.JSON_Tools
 
         internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
         {
-            if (change_positions) position = sb.Length + extra_utf8_bytes;
-                var str = ToString();
-                sb.Append(str);
+            if (change_positions)
+                position = sb.Length + extra_utf8_bytes;
+            var str = ToString();
+            sb.Append(str);
             if (type == Dtype.STR)
                 return extra_utf8_bytes + JsonParser.ExtraUTF8BytesBetween(str, 1, str.Length - 1);
             return extra_utf8_bytes; // only ASCII characters in non-strings
@@ -975,7 +976,7 @@ namespace JSON_Tools.JSON_Tools
                     JNode v = children[k];
                     extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
                     sb.Append($"{extra_dent}\"{k}\": ");
-                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
+                    extra_utf8_bytes = v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)
@@ -1211,7 +1212,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
                     sb.Append(extra_dent);
-                    v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
+                    extra_utf8_bytes = v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
                     if (++ctr < children.Count)

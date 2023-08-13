@@ -407,10 +407,10 @@ namespace JSON_Tools.Forms
                         return;
                     }
                 }
+                Main.ReformatFileWithJson(query_func, Main.PrettyPrintFromSettings, UsesSelections());
                 json = query_func;
                 Main.jsonFileInfos[fname].json = query_func;
                 query_result = query_func;
-                Main.ReformatFileWithJson(json, Main.PrettyPrintFromSettings, UsesSelections());
             }
             // not an assignment expression, so executing the query changes the contents of the tree
             // but leaves the text of the document unchanged

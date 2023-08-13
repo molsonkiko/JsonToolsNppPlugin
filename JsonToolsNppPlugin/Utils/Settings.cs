@@ -42,9 +42,10 @@ namespace JSON_Tools.Utils
             Category("Performance"), DefaultValue(4d)]
         public double max_file_size_MB_slow_actions { get; set; }
 
-        [Description("Maximum number of separate JSON selections to handle"),
+        [Description("Maximum number of separate JSON selections to track changes for.\r\n" +
+                     "Files with more JSON selections can be handled, but changes outside of JSON tools will cause all selections to be forgotten"),
             Category("Performance"), DefaultValue(1000)]
-        public int max_num_json_selections { get; set; }
+        public int max_tracked_json_selections { get; set; }
 
         [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
             Category("Performance"), DefaultValue(false)]
@@ -113,6 +114,13 @@ namespace JSON_Tools.Utils
         [Description("The style of key to use when getting the path or key/index of a node or line"),
             Category("Miscellaneous"), DefaultValue(KeyStyle.RemesPath)]
         public KeyStyle key_style { get; set; }
+
+        [Description("When selecting every JSON in the file, start trying to parse only at these characters.\r\n" +
+                     "Only JSON valid according to the NAN_INF logger_level is tolerated.\r\n" +
+                     "Example: if \"[{ are chosen (default), we consider only potential strings, arrays, and objects.\r\n" +
+                     "If \"[{tf are chosen, we consider potential strings, arrays, objects, and booleans."),
+            Category("Miscellaneous"), DefaultValue("\"[{")]
+        public string try_parse_start_chars { get; set; }
         #endregion
 
         #region GREP_API_SETTINGS

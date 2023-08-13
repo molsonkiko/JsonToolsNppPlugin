@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
 {
     public class FormatPathTester
     {
-        public static void Test()
+        public static bool Test()
         {
             JsonParser parser = new JsonParser();
             JNode json = parser.Parse("{\"a\":1,\"b \":\"f\",\"cu\":[false,true,[{\"\":{\"bufrear\":null}}]],\"d'\":-1.5,\"e\\\"\":[NaN,Infinity,-Infinity]}");
@@ -67,6 +67,7 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
         }
 
         //public void TestPathToTreeNode()

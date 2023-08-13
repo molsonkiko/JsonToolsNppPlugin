@@ -88,8 +88,8 @@ Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always
 Error reporting can be customized with the `logger_level` setting, which has 5 levels, each a superset of the previous:
 1. __STRICT__: Parse only JSON that complies with the original JSON spec.
 2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
-3. __NAN_INF__: JSON that complies with the original spec, but `NaN`, `Infinity`, and `-Infinity` are allowed.
-4. __JSONC__: Everythin in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
+3. __NAN_INF__: Everything at the `OK` level, plus the `NaN`, `Infinity`, and `-Infinity` literals.
+4. __JSONC__: Everything in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.
 5. __JSON5__: Everything in the `JSONC` level is allowed, as well as the following:
     * singlequoted strings
     * commas after the last element of an array or object
@@ -114,9 +114,9 @@ In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors.
 
 ### Working with selections ###
 
-[Starting in version v5.5](/CHANGELOG.md#550---unreleased-yyyy-mm-dd), you can work with one or more selections rather than treating the entire file as JSON.
+[Starting in version v5.5](/CHANGELOG.md#550---2023-08-13), you can work with one or more selections rather than treating the entire file as JSON.
 
-Let's see how this works with an [example log file](/testfiles/small/example_json_logfile.log):
+Let's see how this works with an example log file.
 ```
 Error 1:    [1,2,3]
 Warning 2:  {"a":3}
@@ -130,7 +130,11 @@ Now we can pretty-print the JSON in these selections. This has no effect on the 
 
 ![Pretty-print multiple JSON selections](/docs/multi%20selections%20pretty%20print.PNG)
 
-__Note that your JSON selections are remembered until you make a new multiple-character selection or erase/overwrite the file's text.__ You can move the cursor around, insert and delete characters, and the plugin will move or change the JSON selections accordingly.
+__Note that your JSON selections are only remembered until you do one of the following:__
+* overwrite or delete all the text in the file
+* perform a JsonTools action while you have any multi-character selection other than the remembered selections.
+
+You can move the cursor around, insert and delete characters, and the plugin will move or change the JSON selections accordingly.
 
 For a demo, let's try inserting some more text. We can open the treeview afterwards to see that our changes have been incorporated.
 
@@ -141,6 +145,16 @@ Also observe the way the treeview is structured. When a document has one or more
 We can perform RemesPath queries on the selections. __RemesPath queries (including find/replace form operations) are performed on each selection separately.__ This means that unfortunately you cannot write a RemesPath query that only operates on *some* of the selections.
 
 ![RemesPath query on file with selections](/docs/multi%20selections%20Remespath%20query.PNG)
+
+### Selecting all valid JSON ###
+
+Sometimes it's nearly impossible to select every JSON element in the file. Fortunately, [v5.5 introduced](/CHANGELOG.md#550---2023-08-13) a new method for parsing every valid JSON in the file, `Select every valid JSON` (Alt-P-J-I using accelerator keys).
+
+__This method only parses valid JSON according the [`NAN_INF` logger_level](#parser-settings).__ That means no newlines in strings, non singlequoted strings, no comments, etc.
+
+![Select all valid json](/docs/select%20all%20valid%20json.PNG)
+
+As the above example shows, this method *can* handle unmatched quotes/braces, but you shouldn't count on it. If this method is finding less JSON that you expect, unmatched quotes/braces are likely the culprit.
 
 ### Error form and status bar ###
 
