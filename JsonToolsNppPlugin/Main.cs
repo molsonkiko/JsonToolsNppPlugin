@@ -192,7 +192,7 @@ namespace Kbg.NppPluginNET
                         // don't hide the active TreeViewer just because the user opened a new tab,
                         // they might want to still have it open
                     }
-                    if (newFileHasInfo && newInfo.usesSelections && newInfo.json != null && newInfo.json is JObject newObj)
+                    if (newFileHasInfo && newInfo.usesSelections && newInfo.json != null && newInfo.json is JObject newObj && newObj.Length > 0)
                     {
                         // Notepad++ doesn't remember all selections if there are multiple; it only remembers one.
                         // This poses problems for our selection remembering
