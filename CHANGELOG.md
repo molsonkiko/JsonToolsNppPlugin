@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Eliminated some annoying but harmless plugin crashes.
+2. Fix long-standing issue where closing buffer `A` with no associated treeview would not re-open the treeview of the file `B` automatically opened by Notepad++ when `A` was closed.
+3. Dramatically reduce the frequency of Notepad++ freezing and crashing while running UI tests.
 
 ## [5.5.0] - 2023-08-13
 

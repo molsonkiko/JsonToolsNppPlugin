@@ -46,7 +46,7 @@ namespace Kbg.NppPluginNET
         // sometimes it is best to forget selections if the user performs an action
         // that makes the selections no longer map to the JSON elements that had been selected
         // warn the user the first time this happens
-        static bool hasWarnedSelectionsForgotten = false;
+        public static bool hasWarnedSelectionsForgotten = false;
         // sort form stuff
         public static SortForm sortForm = null;
         // error form stuff
@@ -144,55 +144,35 @@ namespace Kbg.NppPluginNET
             //// changing tabs
             switch (code)
             {
-                case (uint)NppMsg.NPPN_FILEBEFOREOPEN:
-                    bufferFinishedOpening = false;
-                    break;
-                case (uint)NppMsg.NPPN_BUFFERACTIVATED:
-                    bufferFinishedOpening = true;
-                    IsCurrentFileBig();
-                    // When a new buffer is activated, we need to reset the connector to the Scintilla editing component.
-                    // This is usually unnecessary, but if there are multiple instances or multiple views,
-                    // we need to track which of the currently visible buffers are actually being edited.
-                    Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
-                    string newFname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
-                    JsonFileInfo info = null;
-                    JsonFileInfo newInfo = null;
-                    bool lastFileHasInfo = activeFname != null && TryGetInfoForFile(activeFname, out info);
-                    bool newFileHasInfo = TryGetInfoForFile(newFname, out newInfo);
-                    if (lastFileHasInfo)
+            case (uint)NppMsg.NPPN_FILEBEFOREOPEN:
+                bufferFinishedOpening = false;
+                break;
+            case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                bufferFinishedOpening = true;
+                IsCurrentFileBig();
+                // When a new buffer is activated, we need to reset the connector to the Scintilla editing component.
+                // This is usually unnecessary, but if there are multiple instances or multiple views,
+                // we need to track which of the currently visible buffers are actually being edited.
+                Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
+                string newFname = Npp.notepad.GetFilePath(notification.Header.IdFrom);
+                JsonFileInfo info = null;
+                JsonFileInfo newInfo = null;
+                bool lastFileHasInfo = activeFname != null && TryGetInfoForFile(activeFname, out info);
+                bool newFileHasInfo = TryGetInfoForFile(newFname, out newInfo);
+                if (lastFileHasInfo)
+                {
+                    // check to see if there was a treeview for the file
+                    // we just navigated away from
+                    if (openTreeViewer != null && openTreeViewer.IsDisposed)
                     {
-                        // check to see if there was a treeview for the file
-                        // we just navigated away from
-                        if (openTreeViewer != null && openTreeViewer.IsDisposed)
-                        {
-                            info.tv = null;
-                            jsonFileInfos[activeFname] = info;
-                            openTreeViewer = null;
-                        }
-                        // now see if there's a treeview for the file just opened
-
-                        if (newFileHasInfo
-                            && newInfo.tv != null)
-                        {
-                            if (newInfo.tv.IsDisposed)
-                            {
-                                newInfo.tv = null;
-                                jsonFileInfos[newFname] = newInfo;
-                            }
-                            else
-                            {
-                                // minimize the treeviewer that was visible and make the new one visible
-                                if (openTreeViewer != null)
-                                    Npp.notepad.HideDockingForm(openTreeViewer);
-                                Npp.notepad.ShowDockingForm(newInfo.tv);
-                                openTreeViewer = newInfo.tv;
-                            }
-                        }
-                        // else { }
-                        // don't hide the active TreeViewer just because the user opened a new tab,
-                        // they might want to still have it open
+                        info.tv = null;
+                        jsonFileInfos[activeFname] = info;
+                        openTreeViewer = null;
                     }
-                    if (newFileHasInfo && newInfo.usesSelections && newInfo.json != null && newInfo.json is JObject newObj && newObj.Length > 0)
+                }
+                if (newFileHasInfo)
+                {
+                    if (newInfo.usesSelections && newInfo.json != null && newInfo.json is JObject newObj && newObj.Length > 0)
                     {
                         // Notepad++ doesn't remember all selections if there are multiple; it only remembers one.
                         // This poses problems for our selection remembering
@@ -203,94 +183,113 @@ namespace Kbg.NppPluginNET
                         int firstSelStart = newObj.children.Keys.Min(SelectionManager.StartFromStartEnd);
                         SelectionManager.SetSelectionsFromStartEnds(new string[] { $"{firstSelStart},{firstSelStart}" });
                     }
-                    // if grepper form and tree viewer are both open,
-                    // ensure that only one is visible at a time
-                    // don't do anything when the tree view first opens though
-                    if (grepperForm != null
-                        && grepperForm.tv != null
-                        && !grepperForm.tv.IsDisposed
-                        && !grepperTreeViewJustOpened)
+                    if (newInfo.tv != null)
                     {
-                        if (Npp.notepad.GetCurrentFilePath() == grepperForm.tv.fname)
+                        if (newInfo.tv.IsDisposed)
                         {
-                            if (openTreeViewer != null && !openTreeViewer.IsDisposed)
-                                Npp.notepad.HideDockingForm(openTreeViewer);
-                            Npp.notepad.ShowDockingForm(grepperForm.tv);
+                            newInfo.tv = null;
+                            jsonFileInfos[newFname] = newInfo;
                         }
                         else
                         {
-                            Npp.notepad.HideDockingForm(grepperForm.tv);
-                            if (openTreeViewer != null && !openTreeViewer.IsDisposed)
-                                Npp.notepad.ShowDockingForm(openTreeViewer);
+                            // minimize the treeviewer that was visible (if any) and make the new one visible
+                            if (openTreeViewer != null)
+                                Npp.notepad.HideDockingForm(openTreeViewer);
+                            Npp.notepad.ShowDockingForm(newInfo.tv);
+                            openTreeViewer = newInfo.tv;
                         }
                     }
-                    grepperTreeViewJustOpened = false;
-                    activeFname = newFname;
-                    if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
-                        ValidateIfFilenameMatches(newFname);
-                    if (newFileHasInfo && newInfo.statusBarSection != null)
-                        Npp.notepad.SetStatusBarSection(newInfo.statusBarSection, StatusBarSection.DocType);
-                    return;
-                // when closing a file
-                case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
-                    IntPtr bufferClosedId = notification.Header.IdFrom;
-                    string bufferClosed = Npp.notepad.GetFilePath(bufferClosedId);
-                    if (TryGetInfoForFile(bufferClosed, out JsonFileInfo closedInfo))
+                }
+                // if grepper form and tree viewer are both open,
+                // ensure that only one is visible at a time
+                // don't do anything when the tree view first opens though
+                if (grepperForm != null
+                    && grepperForm.tv != null
+                    && !grepperForm.tv.IsDisposed
+                    && !grepperTreeViewJustOpened)
+                {
+                    if (Npp.notepad.GetCurrentFilePath() == grepperForm.tv.fname)
                     {
-                        closedInfo.Dispose();
-                        jsonFileInfos.Remove(bufferClosed);
+                        if (openTreeViewer != null && !openTreeViewer.IsDisposed)
+                            Npp.notepad.HideDockingForm(openTreeViewer);
+                        Npp.notepad.ShowDockingForm(grepperForm.tv);
                     }
-                    // if you close the file belonging the GrepperForm, delete its tree viewer
-                    if (grepperForm != null && grepperForm.tv != null
-                        && !grepperForm.tv.IsDisposed
-                        && bufferClosed == grepperForm.tv.fname)
+                    else
                     {
                         Npp.notepad.HideDockingForm(grepperForm.tv);
-                        grepperForm.tv.Close();
-                        grepperForm.tv = null;
-                        return;
+                        if (openTreeViewer != null && !openTreeViewer.IsDisposed)
+                            Npp.notepad.ShowDockingForm(openTreeViewer);
                     }
+                }
+                grepperTreeViewJustOpened = false;
+                activeFname = newFname;
+                if (!settings.auto_validate) // if auto_validate is turned on, it'll be validated anyway
+                    ValidateIfFilenameMatches(newFname);
+                if (newFileHasInfo && newInfo.statusBarSection != null)
+                    Npp.notepad.SetStatusBarSection(newInfo.statusBarSection, StatusBarSection.DocType);
+                return;
+            // when closing a file
+            case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
+                IntPtr bufferClosedId = notification.Header.IdFrom;
+                string bufferClosed = Npp.notepad.GetFilePath(bufferClosedId);
+                if (TryGetInfoForFile(bufferClosed, out JsonFileInfo closedInfo))
+                {
+                    if (openTreeViewer != null && openTreeViewer == closedInfo.tv)
+                        openTreeViewer = null;
+                    closedInfo.Dispose();
+                    jsonFileInfos.Remove(bufferClosed);
+                }
+                // if you close the file belonging the GrepperForm, delete its tree viewer
+                if (grepperForm != null && grepperForm.tv != null
+                    && !grepperForm.tv.IsDisposed
+                    && bufferClosed == grepperForm.tv.fname)
+                {
+                    Npp.notepad.HideDockingForm(grepperForm.tv);
+                    grepperForm.tv.Close();
+                    grepperForm.tv = null;
                     return;
-                // the editor color scheme changed, so update form colors
-                case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
-                    RestyleEverything();
-                    return;
-                // Before a file is renamed or saved, add a note of the
-                // buffer id of the associated treeviewer and what its old name was.
-                // That way, the treeviewer can be renamed later.
-                // If you do nothing, the renamed treeviewers will be unreachable and
-                // the plugin will crash when Notepad++ closes.
-                case (uint)NppMsg.NPPN_FILEBEFORESAVE:
-                case (uint)NppMsg.NPPN_FILEBEFORERENAME:
-                    FileBeforeRename(notification.Header.IdFrom);
-                    return;
-                // After the file is renamed or saved:
-                // 1. change the fname attribute of any treeViewers that were renamed.
-                // 2. Remap the new fname to that treeviewer and remove the old fname from treeViewers.
-                // 3. when the schemas to fname patterns file is saved, parse it and validate to make sure it's ok
-                // 4. if the file matches a pattern in schemasToFnamePatterns, validate with the appropriate schema
-                case (uint)NppMsg.NPPN_FILESAVED:
-                case (uint)NppMsg.NPPN_FILERENAMED:
-                    FileRenamed(notification.Header.IdFrom);
-                    return;
-                // if a treeviewer was slated for renaming, just cancel that
-                case (uint)NppMsg.NPPN_FILERENAMECANCEL:
-                    FileRenameCancel(notification.Header.IdFrom);
-                    return;
-                // if the user did nothing for a while (default 1 second) after editing,
-                // re-parse the file and also perform validation if that's enabled.
-                case (uint)SciMsg.SCN_MODIFIED:
-                    // only turn on the flag if the user performed the modification
-                    lastEditedTime = System.DateTime.UtcNow;
-                    ChangeJsonSelectionsBasedOnEdit(notification);
-                    if (openTreeViewer != null)
-                        openTreeViewer.shouldRefresh = true;
-                    break;
-                    //if (code > int.MaxValue) // windows messages
-                    //{
-                    //    int wm = -(int)code;
-                    //    }
-                    //}
+                }
+                return;
+            // the editor color scheme changed, so update form colors
+            case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
+                RestyleEverything();
+                return;
+            // Before a file is renamed or saved, add a note of the
+            // buffer id of the associated treeviewer and what its old name was.
+            // That way, the treeviewer can be renamed later.
+            // If you do nothing, the renamed treeviewers will be unreachable and
+            // the plugin will crash when Notepad++ closes.
+            case (uint)NppMsg.NPPN_FILEBEFORESAVE:
+            case (uint)NppMsg.NPPN_FILEBEFORERENAME:
+                FileBeforeRename(notification.Header.IdFrom);
+                return;
+            // After the file is renamed or saved:
+            // 1. change the fname attribute of any treeViewers that were renamed.
+            // 2. Remap the new fname to that treeviewer and remove the old fname from treeViewers.
+            // 3. when the schemas to fname patterns file is saved, parse it and validate to make sure it's ok
+            // 4. if the file matches a pattern in schemasToFnamePatterns, validate with the appropriate schema
+            case (uint)NppMsg.NPPN_FILESAVED:
+            case (uint)NppMsg.NPPN_FILERENAMED:
+                FileRenamed(notification.Header.IdFrom);
+                return;
+            // if a treeviewer was slated for renaming, just cancel that
+            case (uint)NppMsg.NPPN_FILERENAMECANCEL:
+                FileRenameCancel(notification.Header.IdFrom);
+                return;
+            // if the user did nothing for a while (default 1 second) after editing,
+            // re-parse the file and also perform validation if that's enabled.
+            case (uint)SciMsg.SCN_MODIFIED:
+                // only turn on the flag if the user performed the modification
+                lastEditedTime = System.DateTime.UtcNow;
+                ChangeJsonSelectionsBasedOnEdit(notification);
+                if (openTreeViewer != null)
+                    openTreeViewer.shouldRefresh = true;
+                break;
+                //if (code > int.MaxValue) // windows messages
+                //{
+                //    int wm = -(int)code;
+                //    }
+                //}
             }
         }
 
@@ -1540,7 +1539,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void OpenSortForm()
         {
-            if (sortForm == null)
+            if (sortForm == null || sortForm.IsDisposed)
                 sortForm = new SortForm();
             sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath);
             sortForm.Show();

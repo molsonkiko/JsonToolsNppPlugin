@@ -348,12 +348,17 @@ namespace JSON_Tools.Tests
             int previousIndentPrettyPrint = Main.settings.indent_pretty_print;
             bool previousMinimalWhiteSpaceCompression = Main.settings.minimal_whitespace_compression;
             int previousMaxTrackedJsonSelections = Main.settings.max_tracked_json_selections;
+            bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
             // require these settings for the UI tests alone
             Main.settings.pretty_print_style = PrettyPrintStyle.PPrint;
             Main.settings.tab_indent_pretty_print = false;
             Main.settings.indent_pretty_print = 4;
             Main.settings.minimal_whitespace_compression = true;
             Main.settings.max_tracked_json_selections = 1000;
+            // if this is false, a message-box will pop up at some point.
+            // this message box doesn't block the main thread, but it introduces some asynchronous behavior
+            // that was probably responsible for crashing the UI tests
+            Main.hasWarnedSelectionsForgotten = true;
             // add command to overwrite with a lot of arrays and select every valid json
             try
             {
@@ -394,11 +399,6 @@ namespace JSON_Tools.Tests
                     lastFailureIndex = messages.Count;
                 }
             }
-            Main.settings.pretty_print_style = previousPrettyPrintStyle;
-            Main.settings.indent_pretty_print = previousIndentPrettyPrint;
-            Main.settings.tab_indent_pretty_print = previousTabIndentPrettyPrint;
-            Main.settings.minimal_whitespace_compression = previousMinimalWhiteSpaceCompression;
-            Main.settings.max_tracked_json_selections = previousMaxTrackedJsonSelections;
             // go back to the test file and show the results
             Npp.notepad.OpenFile(previouslyOpenFname);
             if (failures > 0)
@@ -408,6 +408,12 @@ namespace JSON_Tools.Tests
             }
             Npp.AddLine($"Failed {failures} tests");
             Npp.AddLine($"Passed {testcases.Count - failures} tests");
+            Main.settings.pretty_print_style = previousPrettyPrintStyle;
+            Main.settings.indent_pretty_print = previousIndentPrettyPrint;
+            Main.settings.tab_indent_pretty_print = previousTabIndentPrettyPrint;
+            Main.settings.minimal_whitespace_compression = previousMinimalWhiteSpaceCompression;
+            Main.settings.max_tracked_json_selections = previousMaxTrackedJsonSelections;
+            Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
             return failures > 0;
         }
     }
