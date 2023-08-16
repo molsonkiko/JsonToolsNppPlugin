@@ -479,7 +479,7 @@ namespace Kbg.NppPluginNET
             if (jsonParser.fatal)
             {
                 // unacceptable error, show message box
-                string errorMessage = jsonParser.fatal_error?.ToString();
+                string errorMessage = jsonParser.fatalError?.ToString();
                 MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
                                 "Error while trying to parse JSON",
                                 MessageBoxButtons.OK,
@@ -1117,7 +1117,7 @@ namespace Kbg.NppPluginNET
                         catch { }
                         ii = jsonChecker.ii;
                         utf8Pos += jsonChecker.utf8_pos - startII;
-                        if (!jsonChecker.exited_early)
+                        if (!jsonChecker.exitedEarly)
                         {
                             int endUtf8Pos = utf8Pos > utf8Len ? utf8Len : utf8Pos;
                             startEnds.Add($"{startUtf8Pos},{endUtf8Pos}");

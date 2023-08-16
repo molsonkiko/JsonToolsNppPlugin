@@ -173,7 +173,7 @@ namespace JSON_Tools.JSON_Tools
         ///  will be automatically parsed as the appropriate type.
         ///  Not currently supported. May never be.
         /// </summary>
-        public bool parse_datetimes;
+        public bool parseDatetimes;
 
         /// <summary>
         /// If line is not null, most forms of invalid syntax will not cause the parser to stop,<br></br>
@@ -196,14 +196,14 @@ namespace JSON_Tools.JSON_Tools
         /// except 'ồ' and 'ế', which are both 3-byte characters<br></br>
         /// and 'à' which is a 2-byte character
         /// </summary>
-        private int utf8_extra_bytes;
+        private int utf8ExtraBytes;
 
         public ParserState state { get; private set; }
         
         /// <summary>
         /// errors above this 
         /// </summary>
-        public LoggerLevel logger_level;
+        public LoggerLevel loggerLevel;
 
         /// <summary>
         /// Any error above the logger level causes an error to be thrown.<br></br>
@@ -211,61 +211,61 @@ namespace JSON_Tools.JSON_Tools
         /// and will parse everything if there were no fatal errors.<br></br>
         /// Present primarily for backwards compatibility.
         /// </summary>
-        public bool throw_if_logged;
+        public bool throwIfLogged;
 
-        public bool throw_if_fatal;
+        public bool throwIfFatal;
 
         /// <summary>
         /// attach ExtraJNodeProperties to each JNode parsed
         /// </summary>
-        public bool include_extra_properties;
+        public bool includeExtraProperties;
         
         /// <summary>
         /// the number of bytes in the utf-8 representation
         /// before the current position in the current document
         /// </summary>
-        public int utf8_pos { get { return ii + utf8_extra_bytes; } }
+        public int utf8_pos { get { return ii + utf8ExtraBytes; } }
 
         public bool fatal
         {
             get { return state == ParserState.FATAL; }
         }
 
-        public bool has_logged
+        public bool hasLogged
         {
-            get { return (int)state > (int)logger_level; }
+            get { return (int)state > (int)loggerLevel; }
         }
 
-        public bool exited_early
+        public bool exitedEarly
         {
-            get { return fatal || (throw_if_logged && has_logged); }
+            get { return fatal || (throwIfLogged && hasLogged); }
         }
 
         /// <summary>
         /// if parsing failed, this will be the final error logged. If parsing succeeded, this is null.
         /// </summary>
-        public JsonLint? fatal_error
+        public JsonLint? fatalError
         {
             get
             {
-                if (exited_early)
+                if (exitedEarly)
                     return lint[lint.Count - 1];
                 return null;
             }
         }
 
-        public JsonParser(LoggerLevel logger_level = LoggerLevel.NAN_INF, bool parse_datetimes = false, bool throw_if_logged = true, bool throw_if_fatal = true)
-            //, bool include_extra_properties = false)
+        public JsonParser(LoggerLevel loggerLevel = LoggerLevel.NAN_INF, bool parseDatetimes = false, bool throwIfLogged = true, bool throwIfFatal = true)
+            //, bool includeExtraProperties = false)
         {
-            this.logger_level = logger_level;
-            this.parse_datetimes = parse_datetimes;
-            this.throw_if_logged = throw_if_logged;
-            this.throw_if_fatal = throw_if_fatal;
-            //this.include_extra_properties = include_extra_properties;
+            this.loggerLevel = loggerLevel;
+            this.parseDatetimes = parseDatetimes;
+            this.throwIfLogged = throwIfLogged;
+            this.throwIfFatal = throwIfFatal;
+            //this.includeExtraProperties = includeExtraProperties;
             ii = 0;
             lint = new List<JsonLint>();
             state = ParserState.STRICT;
-            utf8_extra_bytes = 0;
+            utf8ExtraBytes = 0;
         }
 
         #endregion
@@ -296,8 +296,8 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Set the parser's state to severity, unless the state was already higher.<br></br>
-        /// If the severity is above the parser's logger_level:<br></br>
-        ///     * if throw_if_logged or (FATAL and throw_if_fatal), throw a JsonParserException<br></br>
+        /// If the severity is above the parser's loggerLevel:<br></br>
+        ///     * if throwIfLogged or (FATAL and throwIfFatal), throw a JsonParserException<br></br>
         ///     * otherwise, add new JsonLint with the appropriate message, position, curChar, and severity.<br></br>
         /// Return whether current state is FATAL.
         /// </summary>
@@ -311,13 +311,13 @@ namespace JSON_Tools.JSON_Tools
             if (state < severity)
                 state = severity;
             bool fatal = this.fatal;
-            if ((int)severity > (int)logger_level)
+            if ((int)severity > (int)loggerLevel)
             {
                 char c = (pos >= inp.Length)
                     ? '\x00'
                     : inp[pos];
                 lint.Add(new JsonLint(message, utf8_pos, c, severity));
-                if (throw_if_logged || (fatal && throw_if_fatal))
+                if (throwIfLogged || (fatal && throwIfFatal))
                 {
                     throw new JsonParserException(message, c, utf8_pos);
                 }
@@ -368,7 +368,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         else if (c == '*')
                         {
-                            bool comment_ended = false;
+                            bool commentEnded = false;
                             while (ii < inp.Length - 1)
                             {
                                 c = inp[ii++];
@@ -376,13 +376,13 @@ namespace JSON_Tools.JSON_Tools
                                 {
                                     if (inp[ii] == '/')
                                     {
-                                        comment_ended = true;
+                                        commentEnded = true;
                                         ii++;
                                         break;
                                     }
                                 }
                             }
-                            if (!comment_ended)
+                            if (!commentEnded)
                             {
                                 HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.BAD);
                                 ii++;
@@ -422,7 +422,7 @@ namespace JSON_Tools.JSON_Tools
                     case '\u205F': // Medium Mathematical Space
                     case '\u3000': // Ideographic Space
                         HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5);
-                        utf8_extra_bytes += ExtraUTF8Bytes(c);
+                        utf8ExtraBytes += ExtraUTF8Bytes(c);
                         ii++;
                         break;
                     default: return true;
@@ -472,7 +472,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="c"></param>
         /// <param name="inp"></param>
         /// <param name="ii"></param>
-        /// <param name="start_utf8_pos"></param>
+        /// <param name="startUtf8_pos"></param>
         /// <returns></returns>
         private bool HandleCharErrors(int c, string inp, int ii)
         {
@@ -520,9 +520,9 @@ namespace JSON_Tools.JSON_Tools
         /// </exception>
         public JNode ParseString(string inp)
         {
-            int start_utf8_pos = ii + utf8_extra_bytes;
-            char quote_char = inp[ii++];
-            if (quote_char == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
+            int startUtf8Pos = ii + utf8ExtraBytes;
+            char quoteChar = inp[ii++];
+            if (quoteChar == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
             {
                 return new JNode("", Dtype.STR, utf8_pos);
             }
@@ -531,11 +531,11 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (ii >= inp.Length)
                 {
-                    HandleError($"Unterminated string literal starting at position {start_utf8_pos}", inp, ii - 1, ParserState.BAD);
+                    HandleError($"Unterminated string literal starting at position {startUtf8Pos}", inp, ii - 1, ParserState.BAD);
                     break;
                 }
                 char c = inp[ii];
-                if (c == quote_char)
+                if (c == quoteChar)
                 {
                     break;
                 }
@@ -543,75 +543,75 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (ii >= inp.Length - 2)
                     {
-                        HandleError($"Unterminated string literal starting at position {start_utf8_pos}", inp, inp.Length - 1, ParserState.BAD);
+                        HandleError($"Unterminated string literal starting at position {startUtf8Pos}", inp, inp.Length - 1, ParserState.BAD);
                         ii++;
                         continue;
                     }
-                    char next_char = inp[ii + 1];
-                    if (next_char == quote_char)
+                    char nextChar = inp[ii + 1];
+                    if (nextChar == quoteChar)
                     {
-                        sb.Append(quote_char);
+                        sb.Append(quoteChar);
                         ii += 1;
                     }
-                    else if (ESCAPE_MAP.TryGetValue(next_char, out char escaped_char))
+                    else if (ESCAPE_MAP.TryGetValue(nextChar, out char escapedChar))
                     {
-                        sb.Append(escaped_char);
+                        sb.Append(escapedChar);
                         ii += 1;
                     }
-                    else if (next_char == 'u')
+                    else if (nextChar == 'u')
                     {
                         // 2-byte unicode of the form \uxxxx
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 4);
-                        if (HandleCharErrors(next_hex, inp, ii))
+                        int nextHex = ParseHexChar(inp, 4);
+                        if (HandleCharErrors(nextHex, inp, ii))
                             break;
-                        sb.Append((char)next_hex);
+                        sb.Append((char)nextHex);
                     }
-                    else if (next_char == '\n' || next_char == '\r')
+                    else if (nextChar == '\n' || nextChar == '\r')
                     {
                         HandleError("Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5);
                         ii++;
-                        if (next_char == '\r'
+                        if (nextChar == '\r'
                             && ii < inp.Length - 1 && inp[ii + 1] == '\n')
                             ii++;
                     }
-                    else if (next_char == 'x')
+                    else if (nextChar == 'x')
                     {
                         // 1-byte unicode (allowed only in JSON5)
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 2);
-                        if (HandleCharErrors(next_hex, inp, ii))
+                        int nextHex = ParseHexChar(inp, 2);
+                        if (HandleCharErrors(nextHex, inp, ii))
                             break;
                         HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5);
-                        sb.Append((char)next_hex);
+                        sb.Append((char)nextHex);
                     }
-                    else HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
+                    else HandleError($"Escaped char '{nextChar}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
                 }
                 else
                 {
                     if (HandleCharErrors(c, inp, ii))
                         break;
-                    utf8_extra_bytes += ExtraUTF8Bytes(c);
+                    utf8ExtraBytes += ExtraUTF8Bytes(c);
                     sb.Append(c);
                 }
                 ii++;
             }
             ii++;
-            if (parse_datetimes)
+            if (parseDatetimes)
             {
-                return TryParseDateOrDateTime(sb.ToString(), start_utf8_pos);
+                return TryParseDateOrDateTime(sb.ToString(), startUtf8Pos);
             }
-            return new JNode(sb.ToString(), Dtype.STR, start_utf8_pos);
+            return new JNode(sb.ToString(), Dtype.STR, startUtf8Pos);
         }
 
         public string ParseKey(string inp)
         {
-            char quote_char = inp[ii];
-            if (quote_char == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
+            char quoteChar = inp[ii];
+            if (quoteChar == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
             {
                 return null;
             }
-            if (quote_char != '\'' && quote_char != '"')
+            if (quoteChar != '\'' && quoteChar != '"')
             {
                 return ParseUnquotedKey(inp);
             }
@@ -625,7 +625,7 @@ namespace JSON_Tools.JSON_Tools
                     return null;
                 }
                 char c = inp[ii];
-                if (c == quote_char)
+                if (c == quoteChar)
                 {
                     break;
                 }
@@ -636,46 +636,46 @@ namespace JSON_Tools.JSON_Tools
                         HandleError($"Unterminated object key", inp, inp.Length - 1, ParserState.FATAL);
                         return null;
                     }
-                    char next_char = inp[ii + 1];
-                    if (next_char == quote_char)
+                    char nextChar = inp[ii + 1];
+                    if (nextChar == quoteChar)
                     {
-                        sb.Append(JNode.CharToString(quote_char));
+                        sb.Append(JNode.CharToString(quoteChar));
                         ii++;
                     }
-                    else if (ESCAPE_MAP.TryGetValue(next_char, out _))
+                    else if (ESCAPE_MAP.TryGetValue(nextChar, out _))
                     {
                         sb.Append('\\');
-                        sb.Append(next_char);
+                        sb.Append(nextChar);
                         ii += 1;
                     }
-                    else if (next_char == 'u')
+                    else if (nextChar == 'u')
                     {
                         // 2-byte unicode of the form \uxxxx
                         // \x and \U escapes are not part of the JSON standard
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 4);
-                        if (HandleCharErrors(next_hex, inp, ii))
+                        int nextHex = ParseHexChar(inp, 4);
+                        if (HandleCharErrors(nextHex, inp, ii))
                             break;
-                        sb.Append(JNode.CharToString((char)next_hex));
+                        sb.Append(JNode.CharToString((char)nextHex));
                     }
-                    else if (next_char == '\n' || next_char == '\r')
+                    else if (nextChar == '\n' || nextChar == '\r')
                     {
                         HandleError($"Escaped newline characters are only allowed in JSON5", inp, ii + 1, ParserState.JSON5);
                         ii++;
-                        if (next_char == '\r'
+                        if (nextChar == '\r'
                             && ii < inp.Length - 1 && inp[ii + 1] == '\n')
                             ii++; // skip \r\n as one
                     }
-                    else if (next_char == 'x')
+                    else if (nextChar == 'x')
                     {
                         ii += 2;
-                        int next_hex = ParseHexChar(inp, 2);
-                        if (HandleCharErrors(next_hex, inp, ii))
+                        int nextHex = ParseHexChar(inp, 2);
+                        if (HandleCharErrors(nextHex, inp, ii))
                             break;
                         HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5);
-                        sb.Append(JNode.CharToString((char)next_hex));
+                        sb.Append(JNode.CharToString((char)nextHex));
                     }
-                    else HandleError($"Escaped char '{next_char}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
+                    else HandleError($"Escaped char '{nextChar}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
                 }
                 else if (c < 0x20) // control characters
                 {
@@ -687,7 +687,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    utf8_extra_bytes += ExtraUTF8Bytes(c);
+                    utf8ExtraBytes += ExtraUTF8Bytes(c);
                     sb.Append(c);
                 }
                 ii++;
@@ -713,7 +713,7 @@ namespace JSON_Tools.JSON_Tools
             HandleError("Unquoted keys are only supported in JSON5", inp, ii, ParserState.JSON5);
             var result = match.Value;
             ii += result.Length;
-            utf8_extra_bytes += ExtraUTF8BytesBetween(result, 0, result.Length);
+            utf8ExtraBytes += ExtraUTF8BytesBetween(result, 0, result.Length);
             return ParseUnquotedKeyHelper(inp, result);
         }
 
@@ -748,10 +748,10 @@ namespace JSON_Tools.JSON_Tools
                                                            (?:[T ](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d # hours, minutes, seconds
                                                            (?:\.\d{1,3})?Z?)?$ # milliseconds",
                                                          RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-        private JNode TryParseDateOrDateTime(string maybe_datetime, int start_utf8_pos)
+        private JNode TryParseDateOrDateTime(string maybeDatetime, int startUtf8Pos)
         {
-            Match mtch = DATE_TIME_REGEX.Match(maybe_datetime);
-            int len = maybe_datetime.Length;
+            Match mtch = DATE_TIME_REGEX.Match(maybeDatetime);
+            int len = maybeDatetime.Length;
             if (mtch.Success)
             {
                 try
@@ -759,18 +759,18 @@ namespace JSON_Tools.JSON_Tools
                     if (len == 10)
                     {
                         // yyyy-mm-dd dates have length 10
-                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATE, start_utf8_pos);
+                        return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATE, startUtf8Pos);
                     }
                     if (len >= 19 && len <= 23)
                     {
                         // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sss has length 23
-                        return new JNode(DateTime.Parse(maybe_datetime), Dtype.DATETIME, start_utf8_pos);
+                        return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATETIME, startUtf8Pos);
                     }
                 }
                 catch { } // it was an invalid date, i guess
             }
             // it didn't match, so it's just a normal string
-            return new JNode(maybe_datetime, Dtype.STR, start_utf8_pos);
+            return new JNode(maybeDatetime, Dtype.STR, startUtf8Pos);
         }
 
         /// <summary>
@@ -788,7 +788,7 @@ namespace JSON_Tools.JSON_Tools
             // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
             int parsed = 1;
             int start = ii;
-            int start_utf8_pos = start + utf8_extra_bytes;
+            int startUtf8Pos = start + utf8ExtraBytes;
             char c = inp[ii];
             bool negative = false;
             if (c < '0' || c > '9')
@@ -799,16 +799,16 @@ namespace JSON_Tools.JSON_Tools
                     if (ii <= inp.Length - 4 && inp[ii + 1] == 'u' && inp[ii + 2] == 'l' && inp[ii + 3] == 'l')
                     {
                         ii += 4;
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
                     }
                     if (ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'n')
                     {
                         HandleError("nan is not a valid representation of Not a Number in JSON", inp, ii, ParserState.BAD);
                         ii += 3;
-                        return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
+                        return new JNode(NanInf.nan, Dtype.FLOAT, startUtf8Pos);
                     }
                     HandleError("Expected literal starting with 'n' to be null or nan", inp, ii + 1, ParserState.FATAL);
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
                 if (c == '-' || c == '+')
                 {
@@ -826,11 +826,11 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Infinity is not part of the original JSON specification", inp, ii, ParserState.NAN_INF);
                         ii += 8;
                         double infty = negative ? NanInf.neginf : NanInf.inf;
-                        return new JNode(infty, Dtype.FLOAT, start_utf8_pos);
+                        return new JNode(infty, Dtype.FLOAT, startUtf8Pos);
                     }
                     HandleError("Expected literal starting with 'I' to be Infinity",
                                                   inp, ii + 1, ParserState.FATAL);
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
                 else if (c == 'N')
                 {
@@ -839,17 +839,17 @@ namespace JSON_Tools.JSON_Tools
                     {
                         HandleError("NaN is not part of the original JSON specification", inp, ii, ParserState.NAN_INF);
                         ii += 3;
-                        return new JNode(NanInf.nan, Dtype.FLOAT, start_utf8_pos);
+                        return new JNode(NanInf.nan, Dtype.FLOAT, startUtf8Pos);
                     }
                     // try None
                     if (ii <= inp.Length - 4 && inp[ii + 1] == 'o' && inp[ii + 2] == 'n' && inp[ii + 3] == 'e')
                     {
                         ii += 4;
                         HandleError("None is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
                     }
                     HandleError("Expected literal starting with 'N' to be NaN or None", inp, ii + 1, ParserState.FATAL);
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
                 else if (c == 'i')
                 {
@@ -857,10 +857,10 @@ namespace JSON_Tools.JSON_Tools
                     {
                         HandleError("inf is not the correct representation of Infinity in JSON", inp, ii, ParserState.BAD);
                         ii += 3;
-                        return new JNode(negative ? NanInf.neginf : NanInf.inf, Dtype.FLOAT, start_utf8_pos);
+                        return new JNode(negative ? NanInf.neginf : NanInf.inf, Dtype.FLOAT, startUtf8Pos);
                     }
                     HandleError("Expected literal starting with 'i' to be inf", inp, ii, ParserState.FATAL);
-                    return new JNode(null, Dtype.NULL, start_utf8_pos);
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
             }
             if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
@@ -876,7 +876,7 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                 }
                 var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
-                return new JNode(negative ? -hexnum : hexnum, Dtype.INT, start_utf8_pos);
+                return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
             }
             while (ii < inp.Length)
             {
@@ -892,9 +892,9 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Number with a decimal point in the wrong place", inp, ii, ParserState.FATAL);
                         break;
                     }
-                    if (ii == start && HandleError("Numbers with a leading decimal point are only part of JSON5", inp, start_utf8_pos, ParserState.JSON5))
+                    if (ii == start && HandleError("Numbers with a leading decimal point are only part of JSON5", inp, startUtf8Pos, ParserState.JSON5))
                     {
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
                     }
                     parsed = 3;
                     ii++;
@@ -918,29 +918,29 @@ namespace JSON_Tools.JSON_Tools
                     else
                     {
                         HandleError("Scientific notation 'e' with no number following", inp, inp.Length - 1, ParserState.FATAL);
-                        return new JNode(null, Dtype.NULL, start_utf8_pos);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
                     }
                 }
                 else if (c == '/' && ii < inp.Length - 1)
                 {
-                    char next_c = inp[ii + 1];
+                    char nextC = inp[ii + 1];
                     // make sure prospective denominator is also a number (we won't allow NaN or Infinity as denominator)
-                    if (!((next_c >= '0' && next_c <= '9')
-                        || next_c == '-' || next_c == '.' || next_c == '+'))
+                    if (!((nextC >= '0' && nextC <= '9')
+                        || nextC == '-' || nextC == '.' || nextC == '+'))
                     {
                         break;
                     }
-                    HandleError("Fractions of the form 1/3 are not part of any JSON specification", inp, start_utf8_pos, ParserState.BAD);
+                    HandleError("Fractions of the form 1/3 are not part of any JSON specification", inp, startUtf8Pos, ParserState.BAD);
                     double numer = double.Parse(inp.Substring(start, ii - start), JNode.DOT_DECIMAL_SEP);
-                    JNode denom_node;
+                    JNode denomNode;
                     ii++;
-                    denom_node = ParseNumber(inp);
+                    denomNode = ParseNumber(inp);
                     if (fatal)
                     {
-                        return new JNode(numer, Dtype.FLOAT, start_utf8_pos);
+                        return new JNode(numer, Dtype.FLOAT, startUtf8Pos);
                     }
-                    double denom = Convert.ToDouble(denom_node.value);
-                    return new JNode(numer / denom, Dtype.FLOAT, start_utf8_pos);
+                    double denom = Convert.ToDouble(denomNode.value);
+                    return new JNode(numer / denom, Dtype.FLOAT, startUtf8Pos);
                 }
                 else
                 {
@@ -952,7 +952,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 try
                 {
-                    return new JNode(long.Parse(numstr), Dtype.INT, start_utf8_pos);
+                    return new JNode(long.Parse(numstr), Dtype.INT, startUtf8Pos);
                 }
                 catch (OverflowException)
                 {
@@ -967,10 +967,10 @@ namespace JSON_Tools.JSON_Tools
             }
             catch
             {
-                HandleError($"Number {numstr} had bad format", inp, start_utf8_pos, ParserState.BAD);
+                HandleError($"Number {numstr} had bad format", inp, startUtf8Pos, ParserState.BAD);
                 num = NanInf.nan;
             }
-            return new JNode(num, Dtype.FLOAT, start_utf8_pos);
+            return new JNode(num, Dtype.FLOAT, startUtf8Pos);
         }
 
         /// <summary>
@@ -985,14 +985,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
-        public JArray ParseArray(string inp, int recursion_depth)
+        public JArray ParseArray(string inp, int recursionDepth)
         {
             var children = new List<JNode>();
-            JArray arr = new JArray(ii + utf8_extra_bytes, children);
-            bool already_seen_comma = false;
+            JArray arr = new JArray(ii + utf8ExtraBytes, children);
+            bool alreadySeenComma = false;
             ii++;
-            char cur_c;
-            if (recursion_depth == MAX_RECURSION_DEPTH)
+            char curC;
+            if (recursionDepth == MAX_RECURSION_DEPTH)
             {
                 // Need to do this to avoid stack overflow when presented with unreasonably deep nesting.
                 // Stack overflow causes an unrecoverable panic, and we would rather fail gracefully.
@@ -1009,15 +1009,15 @@ namespace JSON_Tools.JSON_Tools
                 {
                     break;
                 }
-                cur_c = inp[ii];
-                if (cur_c == ',')
+                curC = inp[ii];
+                if (curC == ',')
                 {
-                    if (already_seen_comma
+                    if (alreadySeenComma
                         && HandleError($"Two consecutive commas after element {children.Count - 1} of array", inp, ii, ParserState.BAD))
                     {
                         return arr;
                     }
-                    already_seen_comma = true;
+                    alreadySeenComma = true;
                     if (children.Count == 0
                         && HandleError("Comma before first value in array", inp, ii, ParserState.BAD))
                     {
@@ -1026,19 +1026,19 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                     continue;
                 }
-                else if (cur_c == ']')
+                else if (curC == ']')
                 {
-                    if (already_seen_comma)
+                    if (alreadySeenComma)
                     {
                         HandleError("Comma after last element of array", inp, ii, ParserState.JSON5);
                     }
                     ii++;
                     return arr;
                 }
-                else if (cur_c == '}')
+                else if (curC == '}')
                 {
                     HandleError("Tried to terminate an array with '}'", inp, ii, ParserState.BAD);
-                    if (already_seen_comma)
+                    if (alreadySeenComma)
                     {
                         HandleError("Comma after last element of array", inp, ii, ParserState.JSON5);
                     }
@@ -1047,20 +1047,20 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    if (children.Count > 0 && !already_seen_comma
+                    if (children.Count > 0 && !alreadySeenComma
                         && HandleError("No comma between array members", inp, ii, ParserState.BAD))
                     {
                         return arr;
                     }
                     // a new array member of some sort
-                    already_seen_comma = false;
-                    JNode new_obj;
-                    new_obj = ParseSomething(inp, recursion_depth);
-                    //if (include_extra_properties)
+                    alreadySeenComma = false;
+                    JNode newObj;
+                    newObj = ParseSomething(inp, recursionDepth);
+                    //if (includeExtraProperties)
                     //{
-                    //    new_obj.extras = new ExtraJNodeProperties(arr, ii, children.Count);
+                    //    newObj.extras = new ExtraJNodeProperties(arr, ii, children.Count);
                     //}
-                    children.Add(new_obj);
+                    children.Add(newObj);
                     if (fatal)
                         return arr;
                 }
@@ -1084,14 +1084,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns>a JArray, and the position of the end of the array.</returns>
-        public JObject ParseObject(string inp, int recursion_depth)
+        public JObject ParseObject(string inp, int recursionDepth)
         {
             var children = new Dictionary<string, JNode>();
-            JObject obj = new JObject(ii + utf8_extra_bytes, children);
-            bool already_seen_comma = false;
+            JObject obj = new JObject(ii + utf8ExtraBytes, children);
+            bool alreadySeenComma = false;
             ii++;
-            char cur_c;
-            if (recursion_depth == MAX_RECURSION_DEPTH)
+            char curC;
+            if (recursionDepth == MAX_RECURSION_DEPTH)
             {
                 HandleError($"Maximum recursion depth ({MAX_RECURSION_DEPTH}) reached", inp, ii, ParserState.FATAL);
                 return obj;
@@ -1106,15 +1106,15 @@ namespace JSON_Tools.JSON_Tools
                 {
                     break;
                 }
-                cur_c = inp[ii];
-                if (cur_c == ',')
+                curC = inp[ii];
+                if (curC == ',')
                 {
-                    if (already_seen_comma
+                    if (alreadySeenComma
                         && HandleError($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii, ParserState.BAD))
                     {
                         return obj;
                     }
-                    already_seen_comma = true;
+                    alreadySeenComma = true;
                     if (children.Count == 0
                         && HandleError("Comma before first value in object", inp, ii, ParserState.BAD))
                     {
@@ -1123,26 +1123,26 @@ namespace JSON_Tools.JSON_Tools
                     ii++;
                     continue;
                 }
-                else if (cur_c == '}')
+                else if (curC == '}')
                 {
-                    if (already_seen_comma)
+                    if (alreadySeenComma)
                         HandleError("Comma after last key-value pair of object", inp, ii, ParserState.JSON5);
                     ii++;
                     return obj;
                 }
-                else if (cur_c == ']')
+                else if (curC == ']')
                 {
                     HandleError("Tried to terminate object with ']'", inp, ii, ParserState.BAD);
-                    if (already_seen_comma)
+                    if (alreadySeenComma)
                         HandleError("Comma after last key-value pair of object", inp, ii, ParserState.JSON5);
                     ii++;
                     return obj;
                 }
                 else // expecting a key
                 {
-                    int child_count = children.Count;
-                    if (child_count > 0 && !already_seen_comma
-                        && HandleError($"No comma after key-value pair {child_count - 1} in object", inp, ii, ParserState.BAD))
+                    int childCount = children.Count;
+                    if (childCount > 0 && !alreadySeenComma
+                        && HandleError($"No comma after key-value pair {childCount - 1} in object", inp, ii, ParserState.BAD))
                     {
                         return obj;
                     }
@@ -1172,7 +1172,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             ii++;
                         }
-                        else HandleError($"No ':' between key {child_count} and value {child_count} of object", inp, ii, ParserState.BAD);
+                        else HandleError($"No ':' between key {childCount} and value {childCount} of object", inp, ii, ParserState.BAD);
                     }
                     if (!ConsumeInsignificantChars(inp))
                     {
@@ -1182,8 +1182,8 @@ namespace JSON_Tools.JSON_Tools
                     {
                         break;
                     }
-                    JNode val = ParseSomething(inp, recursion_depth);
-                    //if (include_extra_properties)
+                    JNode val = ParseSomething(inp, recursionDepth);
+                    //if (includeExtraProperties)
                     //{
                     //    val.extras = new ExtraJNodeProperties(obj, ii, key);
                     //}
@@ -1192,11 +1192,11 @@ namespace JSON_Tools.JSON_Tools
                     {
                         return obj;
                     }
-                    if (children.Count == child_count)
+                    if (children.Count == childCount)
                     {
                         HandleError($"Object has multiple of key \"{key}\"", inp, ii, ParserState.BAD);
                     }
-                    already_seen_comma = false;
+                    alreadySeenComma = false;
                 }
             }
             ii++;
@@ -1213,106 +1213,106 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="inp">the JSON string</param>
         /// <returns>a JNode.</returns>
-        public JNode ParseSomething(string inp, int recursion_depth)
+        public JNode ParseSomething(string inp, int recursionDepth)
         {
-            int start_utf8_pos = ii + utf8_extra_bytes;
+            int startUtf8Pos = ii + utf8ExtraBytes;
             if (ii >= inp.Length)
             {
                 HandleError("Unexpected end of file", inp, inp.Length - 1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            char cur_c = inp[ii];
-            if (cur_c == '"' || cur_c == '\'')
+            char curC = inp[ii];
+            if (curC == '"' || curC == '\'')
             {
                 return ParseString(inp);
             }
-            if (cur_c >= '0' && cur_c <= '9'
-                || cur_c == '-' || cur_c == '+'
-                || cur_c == 'n' // null and nan
-                || cur_c == 'I' || cur_c == 'N' // Infinity, NaN and None
-                || cur_c == '.' // leading decimal point JSON5 numbers
-                || cur_c == 'i') // inf
+            if (curC >= '0' && curC <= '9'
+                || curC == '-' || curC == '+'
+                || curC == 'n' // null and nan
+                || curC == 'I' || curC == 'N' // Infinity, NaN and None
+                || curC == '.' // leading decimal point JSON5 numbers
+                || curC == 'i') // inf
             {
                 return ParseNumber(inp);
             }
-            if (cur_c == '[')
+            if (curC == '[')
             {
-                return ParseArray(inp, recursion_depth + 1);
+                return ParseArray(inp, recursionDepth + 1);
             }
-            if (cur_c == '{')
+            if (curC == '{')
             {
-                return ParseObject(inp, recursion_depth + 1);
+                return ParseObject(inp, recursionDepth + 1);
             }
-            char next_c;
+            char nextC;
             if (ii > inp.Length - 4)
             {
                 HandleError("No valid literal possible", inp, ii, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
             // misc literals. In strict JSON, only true or false
-            next_c = inp[ii + 1];
-            if (cur_c == 't')
+            nextC = inp[ii + 1];
+            if (curC == 't')
             {
                 // try true
-                if (next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
+                if (nextC == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
                 {
                     ii += 4;
-                    return new JNode(true, Dtype.BOOL, start_utf8_pos);
+                    return new JNode(true, Dtype.BOOL, startUtf8Pos);
                 }
                 HandleError("Expected literal starting with 't' to be true", inp, ii+1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            if (cur_c == 'f')
+            if (curC == 'f')
             {
                 // try false
-                if (ii <= inp.Length - 5 && next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
+                if (ii <= inp.Length - 5 && nextC == 'a' && inp.Substring(ii + 2, 3) == "lse")
                 {
                     ii += 5;
-                    return new JNode(false, Dtype.BOOL, start_utf8_pos);
+                    return new JNode(false, Dtype.BOOL, startUtf8Pos);
                 }
                 HandleError("Expected literal starting with 'f' to be false", inp, ii+1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            if (cur_c == 'T')
+            if (curC == 'T')
             {
                 // try True from Python
-                if (next_c == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
+                if (nextC == 'r' && inp[ii + 2] == 'u' && inp[ii + 3] == 'e')
                 {
                     ii += 4;
                     HandleError("True is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
-                    return new JNode(true, Dtype.BOOL, start_utf8_pos);
+                    return new JNode(true, Dtype.BOOL, startUtf8Pos);
                 }
                 HandleError("Expected literal starting with 'T' to be True", inp, ii + 1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            if (cur_c == 'F')
+            if (curC == 'F')
             {
                 // try False from Python
-                if (ii <= inp.Length - 5 && next_c == 'a' && inp.Substring(ii + 2, 3) == "lse")
+                if (ii <= inp.Length - 5 && nextC == 'a' && inp.Substring(ii + 2, 3) == "lse")
                 {
                     ii += 5;
                     HandleError("False is not an accepted part of any JSON specification", inp, ii, ParserState.BAD);
-                    return new JNode(false, Dtype.BOOL, start_utf8_pos);
+                    return new JNode(false, Dtype.BOOL, startUtf8Pos);
                 }
                 HandleError("Expected literal starting with 'F' to be False", inp, ii + 1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            if (cur_c == 'u')
+            if (curC == 'u')
             {
                 // try undefined, because apparently some people want that?
                 // https://github.com/kapilratnani/JSON-Viewer/pull/146
                 // it will be parsed as null
-                if (ii <= inp.Length - 9 && next_c == 'n' && inp.Substring(ii + 2, 7) == "defined")
+                if (ii <= inp.Length - 9 && nextC == 'n' && inp.Substring(ii + 2, 7) == "defined")
                 {
                     ii += 9;
-                    HandleError("undefined is not part of any JSON specification", inp, start_utf8_pos - utf8_extra_bytes, ParserState.BAD);
+                    HandleError("undefined is not part of any JSON specification", inp, startUtf8Pos - utf8ExtraBytes, ParserState.BAD);
                 }
                 else HandleError("Expected literal starting with 'u' to be undefined",
                                               inp, ii + 1, ParserState.FATAL);
-                return new JNode(null, Dtype.NULL, start_utf8_pos);
+                return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
             HandleError("Badly located character", inp, ii, ParserState.FATAL);
-            return new JNode(null, Dtype.NULL, start_utf8_pos);
+            return new JNode(null, Dtype.NULL, startUtf8Pos);
         }
 
         /// <summary>
@@ -1338,7 +1338,7 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode();
             }
             JNode json = ParseSomething(inp, 0);
-            //if (include_extra_properties)
+            //if (includeExtraProperties)
             //{
             //    json.extras = new ExtraJNodeProperties(null, ii, null);
             //}
@@ -1382,11 +1382,11 @@ namespace JSON_Tools.JSON_Tools
                 HandleError("Json string is only whitespace and maybe comments", inp, inp.Length - 1, ParserState.FATAL);
                 return new JNode();
             }
-            int last_ii = 0;
+            int lastII = 0;
             JNode json;
             List<JNode> children = new List<JNode>();
             JArray arr = new JArray(0, children);
-            int line_num = 0;
+            int lineNum = 0;
             while (ii < inp.Length)
             {
                 json = ParseSomething(inp, 0);
@@ -1396,14 +1396,14 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return arr;
                 }
-                for (; last_ii < ii; last_ii++)
+                for (; lastII < ii; lastII++)
                 {
-                    if (inp[last_ii] == '\n')
-                        line_num++;
+                    if (inp[lastII] == '\n')
+                        lineNum++;
                 }
                 // make sure this document was all in one line
-                if (!(line_num == arr.Length
-                    || (ii >= inp.Length && line_num == arr.Length - 1)))
+                if (!(lineNum == arr.Length
+                    || (ii >= inp.Length && lineNum == arr.Length - 1)))
                 {
                     if (ii >= inp.Length)
                         ii = inp.Length - 1;
@@ -1422,13 +1422,13 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// reset the lint, position, and utf8_extra_bytes of this parser
+        /// reset the lint, position, and utf8_extraBytes of this parser
         /// </summary>
         public void Reset()
         {
             lint.Clear();
             state = ParserState.STRICT;
-            utf8_extra_bytes = 0;
+            utf8ExtraBytes = 0;
             ii = 0;
         }
 
@@ -1438,7 +1438,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JsonParser Copy()
         {
-            return new JsonParser(logger_level, parse_datetimes, throw_if_logged, throw_if_fatal);//, include_extra_properties);
+            return new JsonParser(loggerLevel, parseDatetimes, throwIfLogged, throwIfFatal);//, includeExtraProperties);
         }
     }
     #endregion

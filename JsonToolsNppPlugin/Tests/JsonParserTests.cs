@@ -517,8 +517,8 @@ Got
                 new object[] { "[]", "[1, 2]", false },
                 new object[] { "1" + new string('0', 400), "NaN", true }, // really really big int representations
             };
-            bool oldThrowIfLogged = parser.throw_if_logged;
-            parser.throw_if_logged = false;
+            bool oldThrowIfLogged = parser.throwIfLogged;
+            parser.throwIfLogged = false;
             foreach (object[] test in equality_testcases)
             {
                 string astr = (string)test[0];
@@ -534,7 +534,7 @@ Got
                     Npp.AddLine($"Expected {a.ToString()} == {b.ToString()} to be {a_equals_b}, but it was called {result}");
                 }
             }
-            parser.throw_if_logged = oldThrowIfLogged;
+            parser.throwIfLogged = oldThrowIfLogged;
             #endregion
             #region TestJRegexToString
             var arrayOfJRegexes = new JArray(0, new JNode[]{ 
