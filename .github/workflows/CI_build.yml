@@ -6,6 +6,8 @@ on:
       - 'docs/**'
       - '*.md'
       - '*.txt'
+      - '*.PNG'
+      - 'makerelease.bat'
       - 'testfiles/**'
 
 jobs:
