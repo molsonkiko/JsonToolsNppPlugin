@@ -198,7 +198,7 @@ namespace JSON_Tools.JSON_Tools
     {
         public const int PPRINT_LINE_LENGTH = 79;
 
-        public static readonly string NL = Environment.NewLine;
+        public const string NL = "\r\n";
         
         public IComparable value; // null for arrays and objects
                                    // IComparable is good here because we want easy comparison of JNodes
@@ -432,6 +432,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public virtual string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
         {
+            position = 0;
             return ToString();
         }
 
@@ -448,12 +449,100 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public virtual string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
+            position = 0;
             return ToString();
         }
 
         public virtual int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
         {
             return ToStringHelper(sort_keys, ":", ",", sb, change_positions, extra_utf8_bytes, int.MaxValue);
+        }
+
+        /// <summary>
+        /// All JSON elements follow the same algorithm when compactly printing with comments:<br></br>
+        /// All comments come before all the JSON, and the JSON is compactly printed with non-minimal whitespace
+        /// (i.e., one space after colons in objects and one space after commas in iterables)
+        /// </summary>
+        public string ToStringWithComments(List<Comment> comments, bool sort_keys = true)
+        {
+            comments.Sort((x, y) => x.position.CompareTo(y.position));
+            var sb = new StringBuilder();
+            Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, int.MaxValue, "");
+            ToStringHelper(sort_keys, ": ", ", ", sb, false, 0, int.MaxValue);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// As ToStringWithComments, but changes each JSON element's position to reflect where it is in the UTF-8 encoded form of the generated string.
+        /// </summary>
+        public string ToStringWithCommentsAndChangePositions(List<Comment> comments, bool sort_keys = true)
+        {
+            comments.Sort((x, y) => x.position.CompareTo(y.position));
+            var sb = new StringBuilder();
+            (_, int extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, int.MaxValue, "");
+            position = extra_utf8_bytes;
+            ToStringHelper(sort_keys, ": ", ", ", sb, true, extra_utf8_bytes, int.MaxValue);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// for non-iterables, pretty-printing with comments is the same as compactly printing with comments.<br></br>
+        /// For iterables, pretty-printing with comments means Google-style pretty-printing,<br></br>
+        /// with each comment having the same position relative to each JSON element and each other comment 
+        /// that those comments did when the JSON was parsed.
+        /// </summary>
+        public string PrettyPrintWithComments(List<Comment> comments, int indent = 4, bool sort_keys = true, char indent_char = ' ')
+        {
+            return PrettyPrintWithComentsStarter(comments, false, indent, sort_keys, indent_char);
+        }
+
+        /// <summary>
+        /// As PrettyPrintWithComments, but changes the position of each JNode to wherever it is in the UTF-8 encoded form of the returned string
+        /// </summary>
+        public string PrettyPrintWithCommentsAndChangePositions(List<Comment> comments, int indent = 4, bool sort_keys = true, char indent_char = ' ')
+        {
+            return PrettyPrintWithComentsStarter(comments, true, indent, sort_keys, indent_char);
+        }
+
+        private string PrettyPrintWithComentsStarter(List<Comment> comments, bool change_positions, int indent, bool sort_keys, char indent_char)
+        {
+            comments.Sort((x, y) => x.position.CompareTo(y.position));
+            var sb = new StringBuilder();
+            (int comment_idx, int extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, position, "");
+            (comment_idx, _) = PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, 0, sb, change_positions, extra_utf8_bytes, indent_char);
+            sb.Append(NL);
+            Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, 0, int.MaxValue, ""); // add all comments after the last JNode
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// goal is to look like this EXAMPLE:
+        /// <code>
+        /// //comment at the beginning
+        /// /* multiline start comment*/
+        ///{
+        ///    /* every comment has a newline
+        ///    after it, even multiliners */
+        ///    "a": {
+        ///        "b": {
+        ///            "c": 2
+        ///        },
+        ///        "d": [
+        ///            // comment indentation is the same as
+        ///            // whatever it comes before
+        ///            3,
+        ///            [
+        ///                4
+        ///            ]
+        ///        ]
+        ///    }
+        ///}
+        /// // comment at the end
+        ///</code>
+        ///</summary>
+        public virtual (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        {
+            return (comment_idx, ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, int.MaxValue));
         }
         #endregion
         ///<summary>
@@ -994,7 +1083,7 @@ namespace JSON_Tools.JSON_Tools
         public override string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
         {
             var sb = new StringBuilder(7 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, position, max_length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, 0, max_length);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1004,7 +1093,7 @@ namespace JSON_Tools.JSON_Tools
         public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(8 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length, indent_char);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, 0, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1024,6 +1113,37 @@ namespace JSON_Tools.JSON_Tools
             }
             // child is small enough when compact, so use compact repr
             return child_utf8_extra;
+        }
+
+        /// <inheritdoc/>
+        public override (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        {
+            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            int ctr = 0;
+            IEnumerable<string> keys;
+            if (sort_keys)
+            {
+                keys = children.Keys.ToArray();
+                Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
+            }
+            else keys = children.Keys;
+            sb.Append('{');
+            sb.Append(NL);
+            string dent = new string(indent_char, indent * depth);
+            string extra_dent = new string(indent_char, (depth + 1) * indent);
+            foreach (string k in keys)
+            {
+                JNode v = children[k];
+                (comment_idx, extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, extra_utf8_bytes, v.position, extra_dent);
+                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
+                sb.Append($"{extra_dent}\"{k}\": ");
+                (comment_idx, extra_utf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, depth + 1, sb, change_positions, extra_utf8_bytes, indent_char);
+                if (++ctr < children.Count)
+                    sb.Append(',');
+                sb.Append(NL);
+            }
+            sb.Append($"{dent}}}");
+            return (comment_idx, extra_utf8_bytes);
         }
 
         /// <summary>
@@ -1101,7 +1221,7 @@ namespace JSON_Tools.JSON_Tools
         public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
         {
             var sb = new StringBuilder(4 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false, position, max_length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false, 0, max_length);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1140,7 +1260,7 @@ namespace JSON_Tools.JSON_Tools
         public override string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
         {
             var sb = new StringBuilder(4 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, position, max_length);
+            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, 0, max_length);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1150,7 +1270,7 @@ namespace JSON_Tools.JSON_Tools
         public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
             var sb = new StringBuilder(6 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, position, max_length, indent_char);
+            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, 0, max_length, indent_char);
             if (sb.Length >= max_length)
                 sb.Append("...");
             return sb.ToString();
@@ -1240,6 +1360,27 @@ namespace JSON_Tools.JSON_Tools
             }
             // child is small enough when compact, so use compact repr
             return child_utf8_extra;
+        }
+
+        public override (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        {
+            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            sb.Append('[');
+            sb.Append(NL);
+            string dent = new string(indent_char, indent * depth);
+            string extra_dent = new string(indent_char, (depth + 1) * indent);
+            int ctr = 0;
+            foreach (JNode v in children)
+            {
+                (comment_idx, extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, extra_utf8_bytes, v.position, extra_dent);
+                sb.Append(extra_dent);
+                (comment_idx, extra_utf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, depth + 1, sb, change_positions, extra_utf8_bytes, indent_char);
+                if (++ctr < children.Count)
+                    sb.Append(',');
+                sb.Append(NL);
+            }
+            sb.Append($"{dent}]");
+            return (comment_idx, extra_utf8_bytes);
         }
 
         /// <summary>
@@ -1463,9 +1604,63 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
+    public struct Comment
+    {
+        public string content;
+        public bool isMultiline;
+        public int position;
+
+        public Comment(string content, bool isMultiline, int position)
+        {
+            this.content = content;
+            this.isMultiline = isMultiline;
+            this.position = position;
+        }
+
+        public override string ToString()
+        {
+            return $"Comment(content=\"{content}\", isMultiline={isMultiline}, position={position})";
+        }
+
+        /// <summary>
+        /// appends the JSON comment representation (on its own line) of the comment to sb<br></br>
+        /// (i.e., "//" + comment.content for non-multiline comments, "/*" + comment.content + "*/\r\n" for multiline comments<br></br>
+        /// and returns the number of extra utf8 bytes in the comment's content.
+        /// </summary>
+        public static int ToStringHelper(StringBuilder sb, Comment comment)
+        {
+            sb.Append(comment.isMultiline ? "/*" : "//");
+            sb.Append(comment.content);
+            if (comment.isMultiline)
+                sb.Append("*/");
+            sb.Append(JNode.NL);
+            return JsonParser.ExtraUTF8BytesBetween(comment.content, 0, comment.content.Length);
+        }
+
+        /// <summary>
+        /// assumes that comments are sorted by comment.position ascending<br></br>
+        /// Keeps appending the JSON comment representations of the comments (as discussed in ToStringHelper above), each on a separate line preceded by dent<br></br>
+        /// to sb while comment_idx is less than comments.Count
+        /// and comments[comment_idx].position &lt; position
+        /// </summary>
+        public static (int comment_idx, int extra_utf8_bytes) AppendAllCommentsBeforePosition(StringBuilder sb, List<Comment> comments, int comment_idx, int extra_utf8_bytes, int position, string dent)
+        {
+            for (; comment_idx < comments.Count; comment_idx++)
+            {
+                Comment comment = comments[comment_idx];
+                if (comment.position > position)
+                    break;
+                sb.Append(dent);
+                extra_utf8_bytes += ToStringHelper(sb, comment);
+            }
+            return (comment_idx, extra_utf8_bytes);
+        }
+    }
+
     /// <summary>
     /// Extra properties that can improve the performance of certain methods
     /// and that the parser may choose to add when parsing a document.
+    /// Currently not in use
     /// </summary>
     public struct ExtraJNodeProperties
     {

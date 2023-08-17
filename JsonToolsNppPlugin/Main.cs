@@ -15,7 +15,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Runtime.Remoting.Messaging;
 
 namespace Kbg.NppPluginNET
 {
@@ -29,7 +29,8 @@ namespace Kbg.NppPluginNET
         public static JsonParser jsonParser = new JsonParser(settings.logger_level,
                                                              settings.allow_datetimes,
                                                              false,
-                                                             false);
+                                                             false,
+                                                             settings.remember_comments);
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string activeFname = null;
@@ -428,6 +429,7 @@ namespace Kbg.NppPluginNET
             }
             JNode json = new JNode();
             List<JsonLint> lints;
+            List<Comment> comments = null;
             if (noTextSelected)
             {
                 if (was_autotriggered && len > sizeThreshold)
@@ -440,6 +442,8 @@ namespace Kbg.NppPluginNET
                 else
                     json = jsonParser.Parse(text);
                 lints = jsonParser.lint.ToList();
+                if (settings.remember_comments && jsonParser.comments != null)
+                    comments = jsonParser.comments.ToList();
             }
             else
             {
@@ -515,6 +519,7 @@ namespace Kbg.NppPluginNET
             }
             if (info.tv != null)
                 info.tv.json = json;
+            info.comments = comments;
             jsonFileInfos[activeFname] = info;
             return (jsonParser.fatal, json, info.usesSelections);
         }
@@ -565,7 +570,8 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// create a new file and pretty-print this JSON in it, then set the lexer language to JSON.
+        /// create a new file and pretty-print this JSON in it, then set the lexer language to JSON.<br></br>
+        /// at present this does not support remembering comments
         /// </summary>
         /// <param name="json"></param>
         public static void PrettyPrintJsonInNewFile(JNode json)
@@ -574,14 +580,23 @@ namespace Kbg.NppPluginNET
             ReformatFileWithJson(json, PrettyPrintFromSettings, false);
         }
 
+        public static bool UseComments(JsonFileInfo info) =>
+            settings.remember_comments && !info.usesSelections && info.comments != null && info.comments.Count > 0;
+
         /// <summary>
         /// overwrite the current file or saved selections with its JSON in pretty-printed format
         /// </summary>
         public static void PrettyPrintJson()
         {
             (bool fatal, JNode json, bool usesSelections) = TryParseJson();
-            if (fatal || json == null) return;
-            ReformatFileWithJson(json, PrettyPrintFromSettings, usesSelections);
+            if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
+                return;
+            Func<JNode, string> formatter;
+            if (UseComments(info))
+                formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, settings.indent_pretty_print, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ');
+            else
+                formatter = PrettyPrintFromSettings;
+            ReformatFileWithJson(json, formatter, usesSelections);
         }
 
         /// <summary>
@@ -590,12 +605,20 @@ namespace Kbg.NppPluginNET
         public static void CompressJson()
         {
             (bool fatal, JNode json, bool usesSelections) = TryParseJson();
-            if (fatal || json == null) return;
+            if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
+                return;
             Func<JNode, string> formatter;
-            if (settings.minimal_whitespace_compression)
-                formatter = x => x.ToStringAndChangePositions(settings.sort_keys, ":", ",");
+            if (UseComments(info))
+            {
+                formatter = x => x.ToStringWithCommentsAndChangePositions(info.comments, settings.sort_keys);
+            }
             else
-                formatter = x => x.ToStringAndChangePositions(settings.sort_keys);
+            {
+                if (settings.minimal_whitespace_compression)
+                    formatter = x => x.ToStringAndChangePositions(settings.sort_keys, ":", ",");
+                else
+                    formatter = x => x.ToStringAndChangePositions(settings.sort_keys);
+            }
             ReformatFileWithJson(json, formatter, usesSelections);
         }
 
@@ -894,7 +917,7 @@ namespace Kbg.NppPluginNET
         static void OpenSettings()
         {
             settings.ShowDialog();
-            jsonParser = new JsonParser(settings.logger_level, settings.allow_datetimes, false, false);
+            jsonParser = new JsonParser(settings.logger_level, settings.allow_datetimes, false, false, settings.remember_comments);
             millisecondsAfterLastEditToParse = (settings.inactivity_seconds_before_parse < 1)
                     ? 1000
                     : 1000 * settings.inactivity_seconds_before_parse;
@@ -1116,7 +1139,7 @@ namespace Kbg.NppPluginNET
                         }
                         catch { }
                         ii = jsonChecker.ii;
-                        utf8Pos += jsonChecker.utf8_pos - startII;
+                        utf8Pos += jsonChecker.utf8Pos - startII;
                         if (!jsonChecker.exitedEarly)
                         {
                             int endUtf8Pos = utf8Pos > utf8Len ? utf8Len : utf8Pos;
@@ -1651,8 +1674,10 @@ namespace Kbg.NppPluginNET
             get { return _json; }
             set
             {
+                if (IsDisposed)
+                    return;
                 _json = value;
-                if (tv != null)
+                if (tv != null && !tv.IsDisposed)
                     tv.json = value;
             }
         }
@@ -1664,14 +1689,11 @@ namespace Kbg.NppPluginNET
         /// it is a map from positions to the JSON starting at those positions.
         /// </summary>
         public bool usesSelections;
-        ///// <summary>
-        ///// if not usesSelections, this is null
-        ///// if usesSelections, indicates if the user has performed an edit that included text inside of a JSON selection
-        ///// </summary>
-        //public Dictionary<string, bool> selectionsDirty;
+        public List<Comment> comments;
+
         public bool IsDisposed { get; private set; }
 
-        public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false)
+        public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false, List<Comment> comments = null)
         {
             _json = json;
             this.lints = lints;
@@ -1679,7 +1701,7 @@ namespace Kbg.NppPluginNET
             this.tv = tv;
             this.usesSelections = hasJsonSelections;
             IsDisposed = false;
-            //selectionsDirty = new Dictionary<string, bool>();
+            this.comments = comments;
         }
 
         public void Dispose()
@@ -1700,7 +1722,8 @@ namespace Kbg.NppPluginNET
             statusBarSection = null;
             IsDisposed = true;
             usesSelections = false;
-            //selectionsDirty.Clear();
+            if (comments != null)
+                comments.Clear();
         }
     }
 }   

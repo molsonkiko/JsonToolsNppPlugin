@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
 {
     public class JsonParserTester
     {
-        public static readonly string NL = System.Environment.NewLine;
+        public const string NL = JNode.NL;
 
         public static JNode TryParse(string input, JsonParser parser, bool is_json_lines = false)
         {
@@ -106,7 +106,7 @@ namespace JSON_Tools.Tests
 
         public static bool Test()
         {
-            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true, true);
             // includes:
             // 1. hex
             // 2. all other backslash escape sequences
@@ -337,7 +337,7 @@ Got
             }
             #endregion
             #region JNode Position Tests
-            string objstr = "{\"a\": \u205F[1, 2, 3], \xa0\"b\": {}, \u3000\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]],/*comment*/\"d\":[{\"o\":\"öyster\"},\"cät\",\"dog\"],\"e\":false,\"f\":null}";
+            string objstr = "/*foo*/ //bar\r\n{\"a\":  [1, 2, 3],  \"b\": {}, 　\"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,//😀\r\n [113, 114]]],/*cömment*/\"d\":[{\"o\":\"öyster\"},\"cät\",#python \r\n\"dog\"],\"e\":false,//cömment\r\n\"f\":null}//baz \r\n# more python\r\n/*quz\r\nzuq*/";
             // pprint-style leads to this:
             /*
 {
@@ -369,7 +369,9 @@ Got
     "f": null
 }
             */
-            // also includes some weird space like '\xa0' only allowed in JSON5
+            bool oldThrowIfLogged = parser.throwIfLogged;
+            parser.throwIfLogged = false;
+            // also includes some weird space like '\xa0' only allowed in JSON5, and all kinds of comments (including Python-style)
             JNode onode = TryParse(objstr, parser);
             if (onode != null && onode is JObject obj)
             {
@@ -402,19 +404,48 @@ Got
     {2}",
                         ii + 1, correct_pprint_objstr_tab_indent, actual_pprint_objstr_tab_indent));
                 }
+                ii++;
+                string correct_tostring_withcomments_objstr = "/*foo*/\r\n//bar\r\n//😀\r\n/*cömment*/\r\n//python \r\n//cömment\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n{\"a\": [1, 2, 3], \"b\": {}, \"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]], \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"], \"e\": false, \"f\": null}";
+                string actual_tostring_withcomments_objstr = obj.ToStringWithComments(parser.comments, false);
+                if (correct_tostring_withcomments_objstr != actual_tostring_withcomments_objstr)
+                {
+                    tests_failed++;
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected ToStringWithComments(obj) to return
+    {1}
+    instead got
+    {2}",
+                        ii + 1, correct_tostring_withcomments_objstr,
+                        actual_tostring_withcomments_objstr));
+                }
+                ii++;
+                string correct_prettyprint_withcomments_objstr = "/*foo*/\r\n//bar\r\n{\r\n    \"a\": [\r\n        1,\r\n        2,\r\n        3\r\n    ],\r\n    \"b\": {\r\n    },\r\n    \"Я草\": [\r\n    ],\r\n    \"😀\": [\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            113\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            //😀\r\n            [\r\n                113,\r\n                114\r\n            ]\r\n        ]\r\n    ],\r\n    /*cömment*/\r\n    \"d\": [\r\n        {\r\n            \"o\": \"öyster\"\r\n        },\r\n        \"cät\",\r\n        //python \r\n        \"dog\"\r\n    ],\r\n    \"e\": false,\r\n    //cömment\r\n    \"f\": null\r\n}\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n";
+                string actual_prettyprint_withcomments_objstr = obj.PrettyPrintWithComments(parser.comments, 4, false, ' ');
+                if (correct_prettyprint_withcomments_objstr != actual_prettyprint_withcomments_objstr)
+                {
+                    tests_failed++;
+                    Npp.AddLine(string.Format(@"Test {0} failed:
+    Expected PrettyPrintWithComments(obj) to return
+    {1}
+    instead got
+    {2}",
+                        ii + 1, correct_prettyprint_withcomments_objstr,
+                        actual_prettyprint_withcomments_objstr));
+                }
                 var keylines = new (string key,
                     int original_pos, int whitesmith_pos, int google_pos,
-                    int tostring_miniwhite_pos, int tostring_pos, int pprint_pos)[]
+                    int tostring_miniwhite_pos, int tostring_pos, int pprint_pos,
+                    int tostring_withcomments_pos, int prettyprint_with_comments_pos)[]
                 {
-                    ("a", 9, 13, 12, 5, 6, 12),
-                    ("b", 27, 57, 67, 17, 22, 33),
-                    ("Я草", 43, 82, 91, 28, 35, 51),
-                    ("😀", 55, 106, 114, 38, 47, 68),
-                    ("d", 289, 818, 993, 220, 272, 525),
-                    ("e", 324, 905, 1096, 255, 312, 570),
-                    ("f", 334, 918, 1113, 265, 324, 587),
+                    ("a", 24, 13, 12, 5, 6, 12, 105, 28),
+                    ("b", 42, 57, 67, 17, 22, 33, 121, 83),
+                    ("Я草", 58, 82, 91, 28, 35, 51, 134, 107),
+                    ("😀", 70, 106, 114, 38, 47, 68, 146, 130),
+                    ("d", 313, 818, 993, 220, 272, 525, 371, 1047),
+                    ("e", 358, 905, 1096, 255, 312, 570, 411, 1169),
+                    ("f", 380, 918, 1113, 265, 324, 587, 423, 1202),
                 };
-                foreach ((string key, int original_position, _, _, _, _, _) in keylines)
+                foreach ((string key, int original_position, _, _, _, _, _, _, _) in keylines)
                 {
                     ii++;
                     int got_pos = obj[key].position;
@@ -441,7 +472,7 @@ Got
                     ii++;
                 }
 
-                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos) in keylines)
+                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos, int tostring_withcomments_pos, int prettyprint_withcomments_pos) in keylines)
                 {
                     obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.Whitesmith);
                     int got_pos = obj[key].position;
@@ -483,6 +514,24 @@ Got
                         Npp.AddLine($"After PPrint-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {pprint_pos}, got {got_pos}.");
                     }
                     ii++;
+                    obj = (JObject)parser.Parse(objstr); // the WithComments methods only work if the JSON is parsed immediately before calling them
+                    obj.ToStringWithCommentsAndChangePositions(parser.comments, false);
+                    got_pos = obj[key].position;
+                    if (got_pos != tostring_withcomments_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After ToStringWithCommentsAndChangePositions(obj), expected the position of child {key} to be {tostring_withcomments_pos}, got {got_pos}.");
+                    }
+                    ii++;
+                    obj = (JObject)parser.Parse(objstr);
+                    obj.PrettyPrintWithCommentsAndChangePositions(parser.comments, 4, false, ' ');
+                    got_pos = obj[key].position;
+                    if (got_pos != prettyprint_withcomments_pos)
+                    {
+                        tests_failed++;
+                        Npp.AddLine($"After PrettyPrintWithCommentsAndChangePositions(obj), expected the position of child {key} to be {prettyprint_withcomments_pos}, got {got_pos}.");
+                    }
+                    ii++;
                 }
                 string tostr = obj.ToString(false);
                 string tostr_ch_line = obj.ToStringAndChangePositions(false);
@@ -517,8 +566,6 @@ Got
                 new object[] { "[]", "[1, 2]", false },
                 new object[] { "1" + new string('0', 400), "NaN", true }, // really really big int representations
             };
-            bool oldThrowIfLogged = parser.throwIfLogged;
-            parser.throwIfLogged = false;
             foreach (object[] test in equality_testcases)
             {
                 string astr = (string)test[0];

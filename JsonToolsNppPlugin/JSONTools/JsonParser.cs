@@ -186,6 +186,19 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public int ii;
 
+        private bool _rememberComments;
+        
+        public bool rememberComments { 
+            get { return _rememberComments; }
+            set
+            {
+                _rememberComments = value;
+                comments = value ? new List<Comment>() : null;
+            }
+        }
+
+        public List<Comment> comments;
+
         /// <summary>
         /// the number of extra bytes in the UTF-8 encoding of the text consumed
         /// so far.<br></br>
@@ -224,7 +237,7 @@ namespace JSON_Tools.JSON_Tools
         /// the number of bytes in the utf-8 representation
         /// before the current position in the current document
         /// </summary>
-        public int utf8_pos { get { return ii + utf8ExtraBytes; } }
+        public int utf8Pos { get { return ii + utf8ExtraBytes; } }
 
         public bool fatal
         {
@@ -254,7 +267,7 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        public JsonParser(LoggerLevel loggerLevel = LoggerLevel.NAN_INF, bool parseDatetimes = false, bool throwIfLogged = true, bool throwIfFatal = true)
+        public JsonParser(LoggerLevel loggerLevel = LoggerLevel.NAN_INF, bool parseDatetimes = false, bool throwIfLogged = true, bool throwIfFatal = true, bool rememberComments = false)
             //, bool includeExtraProperties = false)
         {
             this.loggerLevel = loggerLevel;
@@ -266,6 +279,7 @@ namespace JSON_Tools.JSON_Tools
             lint = new List<JsonLint>();
             state = ParserState.STRICT;
             utf8ExtraBytes = 0;
+            this.rememberComments = rememberComments;
         }
 
         #endregion
@@ -316,22 +330,47 @@ namespace JSON_Tools.JSON_Tools
                 char c = (pos >= inp.Length)
                     ? '\x00'
                     : inp[pos];
-                lint.Add(new JsonLint(message, utf8_pos, c, severity));
+                lint.Add(new JsonLint(message, utf8Pos, c, severity));
                 if (throwIfLogged || (fatal && throwIfFatal))
                 {
-                    throw new JsonParserException(message, c, utf8_pos);
+                    throw new JsonParserException(message, c, utf8Pos);
                 }
             }
             return fatal;
         }
 
+        /// <summary>
+        /// consumes characters until a '\n' is found (and consumes that too)
+        /// </summary>
+        /// <param name="inp"></param>
         private void ConsumeLine(string inp)
         {
-            while (ii < inp.Length && inp[ii] != '\n')
+            while (ii < inp.Length)
             {
-                ii++;
+                char c = inp[ii++];
+                if (c == '\n')
+                    return;
+                utf8ExtraBytes += ExtraUTF8Bytes(c);
             }
-            ii++;
+        }
+
+        /// <summary>returns -1 if ii is in the first line of the document,
+        /// or if it's in the second line and the first line was empty</summary>
+        /// <param name="inp"></param>
+        private int EndOfPreviousLine(string inp)
+        {
+            int pos = ii >= inp.Length ? inp.Length - 1 : ii;
+            while (pos >= 0)
+            {
+                char c = inp[pos--];
+                if (c == '\n')
+                {
+                    if (pos >= 0 && inp[pos] == '\r')
+                        pos--;
+                    break;
+                }
+            }
+            return pos;
         }
 
         /// <summary>
@@ -348,84 +387,100 @@ namespace JSON_Tools.JSON_Tools
                 char c = inp[ii];
                 switch (c)
                 {
-                    case ' ':
-                    case '\t':
-                    case '\r':
-                    case '\n': ii++; break;
-                    case '/':
-                        ii++;
-                        if (ii == inp.Length)
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n': ii++; break;
+                case '/':
+                    int commentStartUtf8 = utf8Pos;
+                    int commentContentStartII = ii + 2;
+                    int commentContentEndII;
+                    bool isMultiline;
+                    ii++;
+                    if (ii == inp.Length)
+                    {
+                        HandleError("Expected JavaScript comment after '/'", inp, inp.Length - 1, ParserState.FATAL);
+                        return false;
+                    }
+                    HandleError("JavaScript comments are not part of the original JSON specification", inp, ii, ParserState.JSONC);
+                    c = inp[ii];
+                    if (c == '/')
+                    {
+                        isMultiline = false;
+                        ConsumeLine(inp);
+                        commentContentEndII = EndOfPreviousLine(inp) + 1;
+                    }
+                    else if (c == '*')
+                    {
+                        isMultiline = true;
+                        bool commentEnded = false;
+                        while (ii < inp.Length - 1)
                         {
-                            HandleError("Expected JavaScript comment after '/'", inp, inp.Length - 1, ParserState.FATAL);
-                            return false;
-                        }
-                        HandleError("JavaScript comments are not part of the original JSON specification", inp, ii, ParserState.JSONC);
-                        c = inp[ii];
-                        if (c == '/')
-                        {
-                            // JavaScript single-line comment
-                            ConsumeLine(inp);
-                        }
-                        else if (c == '*')
-                        {
-                            bool commentEnded = false;
-                            while (ii < inp.Length - 1)
+                            c = inp[ii++];
+                            if (c == '*')
                             {
-                                c = inp[ii++];
-                                if (c == '*')
+                                if (inp[ii] == '/')
                                 {
-                                    if (inp[ii] == '/')
-                                    {
-                                        commentEnded = true;
-                                        ii++;
-                                        break;
-                                    }
+                                    commentEnded = true;
+                                    ii++;
+                                    break;
                                 }
                             }
-                            if (!commentEnded)
-                            {
-                                HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.BAD);
-                                ii++;
-                                return false;
-                            }
+                            else
+                                utf8ExtraBytes += ExtraUTF8Bytes(c);
                         }
-                        else
+                        if (!commentEnded)
                         {
-                            HandleError("Expected JavaScript comment after '/'", inp, ii, ParserState.FATAL);
+                            HandleError("Unterminated multi-line comment", inp, inp.Length - 1, ParserState.BAD);
+                            ii++;
                             return false;
                         }
-                        break;
-                    case '#':
-                        // Python-style single-line comment
-                        HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
-                                inp, ii, ParserState.BAD);
-                        ConsumeLine(inp);
-                        break;
-                    case '\u2028': // line separator
-                    case '\u2029': // paragraph separator
-                    case '\ufeff': // Byte-order mark
-                    // the next 16 (plus '\x20', normal whitespace) comprise the unicode space separator category
-                    case '\xa0': // non-breaking space
-                    case '\u1680': // Ogham Space Mark
-                    case '\u2000': // En Quad
-                    case '\u2001': // Em Quad
-                    case '\u2002': // En Space
-                    case '\u2003': // Em Space
-                    case '\u2004': // Three-Per-Em Space
-                    case '\u2005': // Four-Per-Em Space
-                    case '\u2006': // Six-Per-Em Space
-                    case '\u2007': // Figure Space
-                    case '\u2008': // Punctuation Space
-                    case '\u2009': // Thin Space
-                    case '\u200A': // Hair Space
-                    case '\u202F': // Narrow No-Break Space
-                    case '\u205F': // Medium Mathematical Space
-                    case '\u3000': // Ideographic Space
-                        HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5);
-                        utf8ExtraBytes += ExtraUTF8Bytes(c);
-                        ii++;
-                        break;
-                    default: return true;
+                        commentContentEndII = ii - 2;
+                    }
+                    else
+                    {
+                        HandleError("Expected JavaScript comment after '/'", inp, ii, ParserState.FATAL);
+                        return false;
+                    }
+                    if (rememberComments)
+                        comments.Add(new Comment(inp.Substring(commentContentStartII, commentContentEndII - commentContentStartII), isMultiline, commentStartUtf8));
+                    break;
+                case '#':
+                    // Python-style single-line comment
+                    commentStartUtf8 = utf8Pos;
+                    commentContentStartII = ii + 1;
+                    HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
+                            inp, ii, ParserState.BAD);
+                    ConsumeLine(inp);
+                    commentContentEndII = EndOfPreviousLine(inp) + 1;
+                    if (rememberComments)
+                        comments.Add(new Comment(inp.Substring(commentContentStartII, commentContentEndII - commentContentStartII), false, commentStartUtf8));
+                    break;
+                case '\u2028': // line separator
+                case '\u2029': // paragraph separator
+                case '\ufeff': // Byte-order mark
+                // the next 16 (plus '\x20', normal whitespace) comprise the unicode space separator category
+                case '\xa0': // non-breaking space
+                case '\u1680': // Ogham Space Mark
+                case '\u2000': // En Quad
+                case '\u2001': // Em Quad
+                case '\u2002': // En Space
+                case '\u2003': // Em Space
+                case '\u2004': // Three-Per-Em Space
+                case '\u2005': // Four-Per-Em Space
+                case '\u2006': // Six-Per-Em Space
+                case '\u2007': // Figure Space
+                case '\u2008': // Punctuation Space
+                case '\u2009': // Thin Space
+                case '\u200A': // Hair Space
+                case '\u202F': // Narrow No-Break Space
+                case '\u205F': // Medium Mathematical Space
+                case '\u3000': // Ideographic Space
+                    HandleError("Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5", inp, ii, ParserState.JSON5);
+                    utf8ExtraBytes += ExtraUTF8Bytes(c);
+                    ii++;
+                    break;
+                default: return true;
                 }
             }
             return true; // unreachable
@@ -524,7 +579,7 @@ namespace JSON_Tools.JSON_Tools
             char quoteChar = inp[ii++];
             if (quoteChar == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
             {
-                return new JNode("", Dtype.STR, utf8_pos);
+                return new JNode("", Dtype.STR, utf8Pos);
             }
             StringBuilder sb = new StringBuilder();
             while (true)
@@ -1427,6 +1482,7 @@ namespace JSON_Tools.JSON_Tools
         public void Reset()
         {
             lint.Clear();
+            comments?.Clear();
             state = ParserState.STRICT;
             utf8ExtraBytes = 0;
             ii = 0;

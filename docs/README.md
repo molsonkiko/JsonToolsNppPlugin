@@ -433,6 +433,59 @@ If this is true, keys are sorted alphabetically like so:
 ```
 As you can see, the sort is *unstable* when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
+### remember_comments ###
+*Added in version [5.6.0](/CHANGELOG.md#560---unreleased-yyyy-mm-dd).*
+
+If this is true, the JSON parser remembers the location and type of any comments it finds while parsing. If any comments are found while parsing, the next time the JSON is pretty-printed or compressed, the comments will be included.
+
+Pretty-printing with comments attempts to keep all comments in approximately the same position relative to other comments and JSON elements as they were in the original document. The only supported algorithm for pretty-printing with comments is Google style, shown above.
+
+Compressing with comments puts all comments at the beginning of the document, followed by the compressed JSON (with non-minimal whitespace).
+
+__EXAMPLE:__
+
+Suppose you start with this document:
+```json
+# python comments become JavaScript single-line
+[1, 2,/* foo */ 3,
+ {"a": [ // bar
+   1,
+   [1.5]
+   ] // any comment that begins after the last JSON element
+ } // gets moved to the very end of the doc when pretty-printing
+]
+```
+__Pretty-printing while remembering comments produces this:__
+```json
+// python comments become JavaScript single-line
+[
+    1,
+    2,
+    /* foo */
+    3,
+    {
+        "a": [
+            // bar
+            1,
+            [
+                1.5
+            ]
+        ]
+    }
+]
+// any comment that begins after the last JSON element
+// gets moved to the very end of the doc when pretty-printing
+```
+__Compressing while remembering comments produces this:__
+```json
+// python comments become JavaScript single-line
+/* foo */
+// bar
+// any comment that begins after the last JSON element
+// gets moved to the very end of the doc when pretty-printing
+[1, 2, 3, {"a": [1, [1.5]]}]
+```
+
 ## Sort form ##
 
 *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*

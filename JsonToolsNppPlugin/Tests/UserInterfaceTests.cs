@@ -348,6 +348,7 @@ namespace JSON_Tools.Tests
             int previousIndentPrettyPrint = Main.settings.indent_pretty_print;
             bool previousMinimalWhiteSpaceCompression = Main.settings.minimal_whitespace_compression;
             int previousMaxTrackedJsonSelections = Main.settings.max_tracked_json_selections;
+            bool previousRememberComments = Main.settings.remember_comments;
             bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
             // require these settings for the UI tests alone
             Main.settings.pretty_print_style = PrettyPrintStyle.PPrint;
@@ -355,6 +356,7 @@ namespace JSON_Tools.Tests
             Main.settings.indent_pretty_print = 4;
             Main.settings.minimal_whitespace_compression = true;
             Main.settings.max_tracked_json_selections = 1000;
+            Main.settings.remember_comments = false;
             // if this is false, a message-box will pop up at some point.
             // this message box doesn't block the main thread, but it introduces some asynchronous behavior
             // that was probably responsible for crashing the UI tests
@@ -413,6 +415,7 @@ namespace JSON_Tools.Tests
             Main.settings.tab_indent_pretty_print = previousTabIndentPrettyPrint;
             Main.settings.minimal_whitespace_compression = previousMinimalWhiteSpaceCompression;
             Main.settings.max_tracked_json_selections = previousMaxTrackedJsonSelections;
+            Main.settings.remember_comments = previousRememberComments;
             Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
             return failures > 0;
         }
