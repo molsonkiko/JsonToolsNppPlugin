@@ -329,13 +329,11 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (toks.Count(x => x is char c && c == '=') > 1)
                     throw new RemesPathException("Only one '=' assignment operator allowed in a query");
-                List<object> selector_toks = (List<object>)toks.Slice(0, indexOfAssignment);
-                List<object> mutator_toks = (List<object>)toks.Slice(indexOfAssignment + 1, toks.Count);
-                JNode selector = (JNode)ParseExprOrScalarFunc(selector_toks, 0).obj;
-                JNode mutator = (JNode)ParseExprOrScalarFunc(mutator_toks, 0).obj;
+                JNode selector = (JNode)ParseExprOrScalarFunc(toks, 0, indexOfAssignment).obj;
+                JNode mutator = (JNode)ParseExprOrScalarFunc(toks, indexOfAssignment + 1, toks.Count).obj;
                 return new JMutator(selector, mutator);
             }
-            var result = (JNode)ParseExprOrScalarFunc(toks, 0).obj;
+            var result = (JNode)ParseExprOrScalarFunc(toks, 0, toks.Count).obj;
             cache.SetDefault(query, result);
             return result;
         }
@@ -992,18 +990,19 @@ namespace JSON_Tools.JSON_Tools
         #endregion
         #region PARSER_FUNCTIONS
 
-        private static object PeekNextToken(List<object> toks, int pos)
+        private static object PeekNextToken(List<object> toks, int pos, int end)
         {
-            if (pos + 1 >= toks.Count) { return null; }
+            if (pos + 1 >= end)
+                return null;
             return toks[pos + 1];
         }
 
-        private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num)
+        private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num, int end)
         {
             var slicer = new int?[3];
             int slots_filled = 0;
             int? last_num = first_num;
-            while (pos < toks.Count)
+            while (pos < end)
             {
                 object t = toks[pos];
                 if (t is char tval)
@@ -1022,7 +1021,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 try
                 {
-                    Obj_Pos npo = ParseExprOrScalarFunc(toks, pos);
+                    Obj_Pos npo = ParseExprOrScalarFunc(toks, pos, end);
                     JNode numtok = (JNode)npo.obj;
                     pos = npo.pos;
                     if (numtok.type != Dtype.INT)
@@ -1057,7 +1056,7 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        private Obj_Pos ParseIndexer(List<object> toks, int pos)
+        private Obj_Pos ParseIndexer(List<object> toks, int pos, int end)
         {
             object t = toks[pos];
             object nt;
@@ -1068,7 +1067,7 @@ namespace JSON_Tools.JSON_Tools
             List<object> children = new List<object>();
             if (d == '.')
             {
-                nt = PeekNextToken(toks, pos);
+                nt = PeekNextToken(toks, pos, end);
                 if (nt != null)
                 {
                     if (nt is Binop bnt && bnt.name == "*")
@@ -1097,7 +1096,7 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (d == '{')
             {
-                return ParseProjection(toks, pos+1);
+                return ParseProjection(toks, pos+1, end);
             }
             else if (d != '[')
             {
@@ -1111,14 +1110,14 @@ namespace JSON_Tools.JSON_Tools
             if (t is Binop b && b.name == "*")
             {
                 // it was '*', indicating a star indexer
-                nt = PeekNextToken(toks, pos);
+                nt = PeekNextToken(toks, pos, end);
                 if (nt is char nd && nd  == ']')
                 {
                     return new Obj_Pos(new StarIndexer(), pos + 2);
                 }
                 throw new RemesPathException("Unacceptable first token '*' for indexer list");
             }
-            while (pos < toks.Count)
+            while (pos < end)
             {
                 t = toks[pos];
                 if (t is char)
@@ -1185,7 +1184,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (last_tok == null)
                         {
-                            Obj_Pos opo = ParseSlicer(toks, pos, null);
+                            Obj_Pos opo = ParseSlicer(toks, pos, null, end);
                             last_tok = opo.obj;
                             pos = opo.pos;
                         }
@@ -1197,7 +1196,7 @@ namespace JSON_Tools.JSON_Tools
                                 throw new RemesPathException($"Expected token other than ':' after {jlast_tok} " +
                                                              $"in an indexer");
                             }
-                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlast_tok.value));
+                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlast_tok.value), end);
                             last_tok = opo.obj;
                             pos = opo.pos;
                         }
@@ -1219,7 +1218,7 @@ namespace JSON_Tools.JSON_Tools
                 else
                 {
                     // it's a new token of some sort
-                    Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                    Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
                     last_tok = opo.obj;
                     pos = opo.pos;
                     last_type = ((JNode)last_tok).type;
@@ -1228,7 +1227,7 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException("Unterminated indexer");
         }
 
-        private Obj_Pos ParseExprOrScalar(List<object> toks, int pos)
+        private Obj_Pos ParseExprOrScalar(List<object> toks, int pos, int end)
         {
             if (toks.Count == 0)
             {
@@ -1247,10 +1246,10 @@ namespace JSON_Tools.JSON_Tools
                     throw new RemesPathException($"Invalid token {delim} at position {pos}");
                 }
                 int unclosed_parens = 1;
-                List<object> subquery = new List<object>();
-                for (int end = pos + 1; end < toks.Count; end++)
+                int subqueryStart = pos + 1;
+                for (int subqueryEnd = subqueryStart; subqueryEnd < end; subqueryEnd++)
                 {
-                    object subtok = toks[end];
+                    object subtok = toks[subqueryEnd];
                     if (subtok is char subd)
                     {
                         if (subd == '(')
@@ -1261,25 +1260,24 @@ namespace JSON_Tools.JSON_Tools
                         {
                             if (--unclosed_parens == 0)
                             {
-                                last_tok = (JNode)ParseExprOrScalarFunc(subquery, 0).obj;
-                                pos = end + 1;
+                                last_tok = (JNode)ParseExprOrScalarFunc(toks, subqueryStart, subqueryEnd).obj;
+                                pos = subqueryEnd + 1;
                                 break;
                             }
                         }
                     }
-                    subquery.Add(subtok);
                 }
             }
             else if (t is UnquotedString st)
             {
-                if (pos < toks.Count - 1
+                if (pos < end - 1
                     && toks[pos + 1] is char c && c == '(')
                 {
                     // an unquoted string followed by an open paren
                     // *might* be an ArgFunction; we need to check
                     if (ArgFunction.FUNCTIONS.TryGetValue(st.value, out ArgFunction af))
                     {
-                        Obj_Pos opo = ParseArgFunction(toks, pos + 1, af);
+                        Obj_Pos opo = ParseArgFunction(toks, pos + 1, af, end);
                         last_tok = (JNode)opo.obj;
                         pos = opo.pos;
                     }
@@ -1307,22 +1305,22 @@ namespace JSON_Tools.JSON_Tools
             {
                 // the last token is an iterable, so now we look for indexers that slice it
                 var idxrs = new List<IndexerFunc>();
-                object nt = PeekNextToken(toks, pos - 1);
+                object nt = PeekNextToken(toks, pos - 1, end);
                 object nt2, nt3;
                 while (nt != null && nt is char nd && INDEXER_STARTERS.Contains(nd))
                 {
-                    nt2 = PeekNextToken(toks, pos);
+                    nt2 = PeekNextToken(toks, pos, end);
                     bool is_recursive = false;
                     if (nt2 is char nd2 && nd2 == '.' && nd == '.')
                     {
                         is_recursive = true;
-                        nt3 = PeekNextToken(toks, pos + 1);
+                        nt3 = PeekNextToken(toks, pos + 1, end);
                         pos += (nt3 is char nd3 && nd3 == '[') ? 2 : 1;
                     }
-                    Obj_Pos opo= ParseIndexer(toks, pos);
+                    Obj_Pos opo = ParseIndexer(toks, pos, end);
                     Indexer cur_idxr = (Indexer)opo.obj;
                     pos = opo.pos;
-                    nt = PeekNextToken(toks, pos - 1);
+                    nt = PeekNextToken(toks, pos - 1, end);
                     bool is_varname_list = cur_idxr is VarnameList;
                     bool is_dict = is_varname_list & !is_recursive;
                     bool has_one_option = false;
@@ -1396,10 +1394,10 @@ namespace JSON_Tools.JSON_Tools
             return new Obj_Pos(last_tok, pos);
         }
 
-        private Obj_Pos ParseExprOrScalarFunc(List<object> toks, int pos)
+        private Obj_Pos ParseExprOrScalarFunc(List<object> toks, int pos, int end)
         {
             object curtok = null;
-            object nt = PeekNextToken(toks, pos);
+            object nt = PeekNextToken(toks, pos, end);
             // most common case is a single JNode followed by the end of the query or an expr func ender
             // e.g., in @[0,1,2], all of 0, 1, and 2 are immediately followed by an expr func ender
             // and in @.foo.bar the bar is followed by EOF
@@ -1423,7 +1421,7 @@ namespace JSON_Tools.JSON_Tools
             UnaryOp unop;
             var bwaStack = new List<BinopWithArgs>();
             var argStack = new List<object>();
-            while (pos < toks.Count)
+            while (pos < end)
             {
                 leftTok = curtok;
                 curtok = toks[pos];
@@ -1493,11 +1491,11 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    Obj_Pos opo = ParseExprOrScalar(toks, pos);
+                    Obj_Pos opo = ParseExprOrScalar(toks, pos, end);
                     pos = opo.pos;
                     if (!(opo.obj is JNode onode))
                         throw new RemesPathException($"Expected JNode, got {opo.obj.GetType()}");
-                    nt = PeekNextToken(toks, pos - 1);
+                    nt = PeekNextToken(toks, pos - 1, end);
                     if (nt == null || (nt is char nd_ && EXPR_FUNC_ENDERS.Contains(nd_)))
                     {
                         // no more binops for unary operators to fight with, so just apply all of them
@@ -1511,7 +1509,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     argStack.Add(onode);
                     // no binop coming up, so clean up the stack
-                    if (pos >= toks.Count || !(toks[pos] is Binop && bwaStack.Count > 0))
+                    if (pos >= end || !(toks[pos] is Binop && bwaStack.Count > 0))
                         leftOperand = BinopWithArgs.ResolveStack(bwaStack, argStack);
                     curtok = onode;
                 }
@@ -1523,7 +1521,7 @@ namespace JSON_Tools.JSON_Tools
             return new Obj_Pos(leftOperand, pos);
         }
 
-        private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun)
+        private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun, int end)
         {
             object t;
             pos++;
@@ -1539,7 +1537,7 @@ namespace JSON_Tools.JSON_Tools
                 return new Obj_Pos(ApplyArgFunction(withArgs), pos + 1);
             }
             JNode cur_arg = null;
-            while (pos < toks.Count)
+            while (pos < end)
             {
                 t = toks[pos];
                 // the last Dtype in an ArgFunction's input_types is either the type options for the last arg
@@ -1551,7 +1549,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     try
                     {
-                        Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                        Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
                         cur_arg = (JNode)opo.obj;
                         pos = opo.pos;
                     }
@@ -1561,7 +1559,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if ((Dtype.SLICE & type_options) != 0)
                     {
-                        object nt = PeekNextToken(toks, pos - 1);
+                        object nt = PeekNextToken(toks, pos - 1, end);
                         if (nt is char nd && nd == ':')
                         {
                             int? first_num;
@@ -1573,7 +1571,7 @@ namespace JSON_Tools.JSON_Tools
                             {
                                 first_num = Convert.ToInt32(cur_arg.value);
                             }
-                            Obj_Pos opo = ParseSlicer(toks, pos, first_num);
+                            Obj_Pos opo = ParseSlicer(toks, pos, first_num, end);
                             cur_arg = (JNode)opo.obj;
                             pos = opo.pos;
                         }
@@ -1638,16 +1636,16 @@ namespace JSON_Tools.JSON_Tools
                                          + $"({fun.minArgs} - {fun.maxArgs} args)");
         }
 
-        private Obj_Pos ParseProjection(List<object> toks, int pos)
+        private Obj_Pos ParseProjection(List<object> toks, int pos, int end)
         {
             var children = new List<object>();
             bool is_object_proj = false;
-            while (pos < toks.Count)
+            while (pos < end)
             {
-                Obj_Pos opo = ParseExprOrScalarFunc(toks, pos);
+                Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
                 JNode key = (JNode)opo.obj;
                 pos = opo.pos;
-                object nt = PeekNextToken(toks, pos - 1);
+                object nt = PeekNextToken(toks, pos - 1, end);
                 if (nt is char nd)
                 {
                     if (nd == ':')
@@ -1658,7 +1656,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         if (key.type == Dtype.STR)
                         {
-                            opo = ParseExprOrScalarFunc(toks, pos + 1);
+                            opo = ParseExprOrScalarFunc(toks, pos + 1, end);
                             JNode val = (JNode)opo.obj;
                             pos = opo.pos;
                             string keystr_in_quotes = key.ToString();
@@ -1668,7 +1666,7 @@ namespace JSON_Tools.JSON_Tools
                             // in case the user uses such a character in the projection keys in their query
                             children.Add(new KeyValuePair<string, JNode>(keystr, val));
                             is_object_proj = true;
-                            nt = PeekNextToken(toks, pos - 1);
+                            nt = PeekNextToken(toks, pos - 1, end);
                             if (!(nt is char))
                             {
                                 throw new RemesPathException("Key-value pairs in projection must be delimited by ',' and projections must end with '}'.");
