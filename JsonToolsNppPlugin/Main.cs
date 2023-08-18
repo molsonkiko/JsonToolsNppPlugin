@@ -943,14 +943,18 @@ namespace Kbg.NppPluginNET
                 FormStyle.ApplyStyle(sortForm, settings.use_npp_styling);
             if (grepperForm != null && !grepperForm.IsDisposed)
                 FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
-            foreach (string fname in jsonFileInfos.Keys)
+            string[] keys = jsonFileInfos.Keys.ToArray();
+            List<string> keysToRemove = new List<string>();
+            foreach (string fname in keys)
             {
                 JsonFileInfo info = jsonFileInfos[fname];
                 if (info == null || info.IsDisposed)
-                    jsonFileInfos.Remove(fname);
+                    keysToRemove.Add(fname);
                 else if (info.tv != null && !info.tv.IsDisposed)
                     FormStyle.ApplyStyle(info.tv, settings.use_npp_styling);
             }
+            foreach (string fname in keysToRemove)
+                jsonFileInfos.Remove(fname);
         }
 
         /// <summary>

@@ -30,12 +30,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### To Be Fixed
 
 - Improve Alt-key accelerators in forms. They don't seem to work right for some reason.
-- Improve how well the caret tracks the node selected in the query tree, after a query that selects a subset of nodes. The iterables have their line number set to 0.
-- Fix bugs in YamlDumper.cs:
-	- fails when key contains quotes and colon
-	- fails when value contains quotes and newline
-	- fails when value contains quotes and colon
-	- fails when key contains singlequotes and doublequotes
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
@@ -47,10 +41,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-1. Eliminated some annoying but harmless plugin crashes.
-2. Fix long-standing issue where closing buffer `A` with no associated treeview would not re-open the treeview of the file `B` automatically opened by Notepad++ when `A` was closed.
-3. Dramatically reduce the frequency of Notepad++ freezing and crashing while running UI tests.
-4. Fix minor issue concerning the position assigned to JSON elements when pretty-printing or compressing JSON that didn't begin at the start of the file before being reformatted.
+1. Fix crashes due to race conditions in the [JSON from files and APIs](/docs/README.md#get-json-from-files-and-apis) form.
+2. Eliminated some annoying but harmless plugin crashes.
+3. Fix long-standing issue where closing buffer `A` with no associated treeview would not re-open the treeview of the file `B` automatically opened by Notepad++ when `A` was closed.
+4. Dramatically reduce the frequency of Notepad++ freezing and crashing while running UI tests.
+5. Fix minor issue concerning the position assigned to JSON elements when pretty-printing or compressing JSON that didn't begin at the start of the file before being reformatted.
+6. Improved cursor tracking of arrays and objects when a RemesPath query selects a subset of their items.
 
 ## [5.5.0] - 2023-08-13
 

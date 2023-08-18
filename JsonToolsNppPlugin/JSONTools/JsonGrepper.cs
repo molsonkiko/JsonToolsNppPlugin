@@ -42,6 +42,8 @@ namespace JSON_Tools.JSON_Tools
             {
 				this.json_parser = json_parser;
             }
+            this.json_parser.throwIfFatal = true;
+            this.json_parser.throwIfLogged = true;
             // security protocol addresses issue: https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
@@ -97,11 +99,17 @@ namespace JSON_Tools.JSON_Tools
                 // by default Windows paths have '\\' as path sep so those need to be escaped
                 try
                 {
-					fname_json_map[JNode.StrToString(fname, false)] = json_parser.Parse(json_str);
+                    lock (fname_json_map)
+                    {
+                        fname_json_map[JNode.StrToString(fname, false)] = json_parser.Parse(json_str);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    fname_exception_map[JNode.StrToString(fname, false)] = new JNode(ex.ToString(), Dtype.STR, 0);
+                    lock (fname_exception_map)
+                    {
+                        fname_exception_map[JNode.StrToString(fname, false)] = new JNode(ex.ToString(), Dtype.STR, 0);
+                    }
                 }
             }
         }

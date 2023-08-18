@@ -619,14 +619,14 @@ namespace JSON_Tools.JSON_Tools
                             kv = (KeyValuePair<string, JNode>)inds.Current;
                             dic[kv.Key] = kv.Value;
                         }
-                        return new JObject(0, dic);
+                        return new JObject(obj.position, dic);
                     }
                     arr = new List<JNode> { (JNode)current };
                     while (inds.MoveNext())
                     {
                         arr.Add((JNode)inds.Current);
                     }
-                    return new JArray(0, arr);
+                    return new JArray(obj.position, arr);
                 }
                 if (ix.is_projection)
                 {
@@ -685,7 +685,7 @@ namespace JSON_Tools.JSON_Tools
                             dic[kv.Key] = subdex;
                         }
                     }
-                    return new JObject(0, dic);
+                    return new JObject(obj.position, dic);
                 }
                 // obj is a list iterator
                 arr = new List<JNode>();
@@ -703,7 +703,7 @@ namespace JSON_Tools.JSON_Tools
                         arr.Add(subdex);
                     }
                 }
-                return new JArray(0, arr);
+                return new JArray(obj.position, arr);
             }
             return (JNode obj) => idxr_list_func(obj, indexers, 0);
         }
