@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
-            string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
+            string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()} on Notepad++ {Npp.nppVersionStr}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
             Npp.AddLine(header);
 
             var failures = new List<string>();

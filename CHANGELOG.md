@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. New option for [preserving comments when pretty-printing or compressing](/docs/README.md#remember_comments) (just enable `remember_comments` in settings)
+2. Support for [projections of arbitrary type with the `->` operator](/docs/RemesPath.md#projections).
 
 ### Fixed
 

@@ -73,6 +73,7 @@ Syntax error at position 3: Number with two decimal points
             @"(0x[\da-fA-F]+)|" + // hex numbers
             @"(0|[1-9]\d*)(\.\d*)?([eE][-+]?\d+)?|" + // numbers
             @"(\.\d+(?:[eE][-+]?\d+)?)|" + // numbers with leading decimal point
+            @"(->)|" + // map operator
             @"(&|\||\^|=~|[!=]=|<=?|>=?|\+|-|//?|%|\*\*?)|" + // binops
             @"([,\[\]\(\)\{\}\.:=])|" + // delimiters
             @"([gj]?(?<!\\)`(?:\\`|[^`])*(?<!\\)`)|" + // backtick strings
@@ -91,78 +92,84 @@ Syntax error at position 3: Number with two decimal points
                 for (; successfulGroup < m.Groups.Count && !m.Groups[successfulGroup].Success; successfulGroup++) { }
                 switch (successfulGroup)
                 {
-                    case 1: toks.Add(new CurJson()); break;
-                    case 2: toks.Add(new JNode(long.Parse(m.Value.Substring(2), NumberStyles.HexNumber), Dtype.INT, 0)); break; // hex number
-                    case 3: // number
-                        if (!(m.Groups[4].Success || m.Groups[5].Success))
+                case 1: toks.Add(new CurJson()); break;
+                case 2: toks.Add(new JNode(long.Parse(m.Value.Substring(2), NumberStyles.HexNumber), Dtype.INT, 0)); break; // hex number
+                case 3: // number
+                    if (!(m.Groups[4].Success || m.Groups[5].Success))
+                    {
+                        // base 10 integer
+                        try
                         {
-                            // base 10 integer
-                            try
-                            {
-                                toks.Add(new JNode(long.Parse(m.Value), Dtype.INT, 0));
-                            }
-                            catch (OverflowException)
-                            {
-                                toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
-                            }
+                            toks.Add(new JNode(long.Parse(m.Value), Dtype.INT, 0));
                         }
-                        else toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
-                        break;
-                    case 6: toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0)); break; // number with leading decimal point
-                    case 7: toks.Add(Binop.BINOPS[m.Value]); break;
-                    case 8: toks.Add(m.Value[0]); break; // delimiters
-                    case 9: // backtick strings
-                        char starter = m.Value[0];
-                        StringBuilder sb = new StringBuilder();
-                        bool escaped = false;
-                        int startIdx = starter == '`' ? 1 : 2;
-                        for (int ii = startIdx; ii < m.Value.Length - 1; ii++)
+                        catch (OverflowException)
                         {
-                            char c = m.Value[ii];
-                            if (c == '\\')
-                            {
-                                if (escaped)
-                                {
-                                    sb.Append('\\');
-                                }
-                                escaped = !escaped;
-                            }
-                            else if (c == '`')
-                            {
-                                if (!escaped)
-                                    break;
-                                sb.Append('`');
-                                escaped = false;
-                            }
-                            else if (escaped)
-                            {
-                                // \r, \n, \t are the only escapes we'll give special treatment
-                                if (c == 'r')
-                                    sb.Append('\r');
-                                else if (c == 'n')
-                                    sb.Append('\n');
-                                else if (c == 't')
-                                    sb.Append('\t');
-                                else
-                                {
-                                    sb.Append('\\');
-                                    sb.Append(c);
-                                }
-                                escaped = false;
-                            }
-                            else sb.Append(c);
+                            toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
                         }
-                        string enquoted = sb.ToString();
-                        if (starter == 'j') // JSON literal
-                            toks.Add(jsonParser.Parse(enquoted));
-                        else if (starter == 'g')
-                            toks.Add(new JRegex(new Regex(enquoted, RegexOptions.Compiled)));
-                        else
-                            toks.Add(new JNode(enquoted, Dtype.STR, 0));
-                        break;
-                    case 10: toks.Add(ParseUnquotedString(m.Value)); break;
-                    default:
-                        throw new RemesLexerException($"Invalid token \"{m.Value}\" at position {m.Index}");
+                    }
+                    else toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
+                    break;
+                case 6: toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0)); break; // number with leading decimal point
+                case 7: // map operator "->" (any token(s) that would otherwise be tokenized as multiple binops)
+                    switch (m.Value)
+                    {
+                    case "->": toks.Add('>'); break;
+                    }
+                    break;
+                case 8: toks.Add(Binop.BINOPS[m.Value]); break;
+                case 9: toks.Add(m.Value[0]); break; // delimiters
+                case 10: // backtick strings
+                    char starter = m.Value[0];
+                    StringBuilder sb = new StringBuilder();
+                    bool escaped = false;
+                    int startIdx = starter == '`' ? 1 : 2;
+                    for (int ii = startIdx; ii < m.Value.Length - 1; ii++)
+                    {
+                        char c = m.Value[ii];
+                        if (c == '\\')
+                        {
+                            if (escaped)
+                            {
+                                sb.Append('\\');
+                            }
+                            escaped = !escaped;
+                        }
+                        else if (c == '`')
+                        {
+                            if (!escaped)
+                                break;
+                            sb.Append('`');
+                            escaped = false;
+                        }
+                        else if (escaped)
+                        {
+                            // \r, \n, \t are the only escapes we'll give special treatment
+                            if (c == 'r')
+                                sb.Append('\r');
+                            else if (c == 'n')
+                                sb.Append('\n');
+                            else if (c == 't')
+                                sb.Append('\t');
+                            else
+                            {
+                                sb.Append('\\');
+                                sb.Append(c);
+                            }
+                            escaped = false;
+                        }
+                        else sb.Append(c);
+                    }
+                    string enquoted = sb.ToString();
+                    if (starter == 'j') // JSON literal
+                        toks.Add(jsonParser.Parse(enquoted));
+                    else if (starter == 'g')
+                        toks.Add(new JRegex(new Regex(enquoted, RegexOptions.Compiled)));
+                    else
+                        toks.Add(new JNode(enquoted, Dtype.STR, 0));
+                    break;
+                case 11: toks.Add(ParseUnquotedString(m.Value)); break;
+                default:
+                    throw new RemesLexerException($"Invalid token \"{m.Value}\" at position {m.Index}");
                 }
             }
             BraceMatchCheck(q, regtoks, toks, '(', ')');

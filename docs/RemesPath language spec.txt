@@ -1,5 +1,6 @@
 The following language specification is in pseudo-Backus-Naur form.
 Please let me know if there are any logical inconsistencies in this language specification.
+THIS IS NOW OUT OF DATE. I MAY BRING IT BACK UP TO DATE IF ANYONE ASKS.
 _________________________________________
 expr ::= json (ws indexer_list)? projection?
 projection ::= object_projection | array_projection

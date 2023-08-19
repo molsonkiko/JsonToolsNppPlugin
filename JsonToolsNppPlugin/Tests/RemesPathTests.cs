@@ -27,6 +27,7 @@ namespace JSON_Tools.Tests
             JNode foo = jsonParser.Parse("{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
                                            "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
                                            "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}");
+            JObject fooObj = (JObject)foo;
             RemesParser remesparser = new RemesParser();
             Npp.AddLine($"The queried JSON in the RemesParser tests is:{foo.ToString()}");
             var testcases = new Query_DesiredResult[]
@@ -295,7 +296,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
                 new Query_DesiredResult("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
                     "[0, 0, 0, 0, 0, 0, 1, 0, 0]"),
-                new Query_DesiredResult("range(len(@), 0, -1)", 
+                new Query_DesiredResult("range(len(@), 0, -1)",
                     "[8, 7, 6, 5, 4, 3, 2, 1]"),
                 new Query_DesiredResult("range(-10)", "[]"),
                 new Query_DesiredResult("range(-3, -5, -1)", "[-3, -4]"),
@@ -377,6 +378,14 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("j`{\"items\": [\"a\", 1]}`.items", "[\"a\", 1]"), // using an ArgFunction name as a string rather than an ArgFunction
                 // making sure various escapes work in backtickstrings
                 new Query_DesiredResult("`\\t\\r\\n`", "\"\t\\r\\n\""),
+                // "->" (map) operator
+                new Query_DesiredResult("@ -> len(@)", fooObj.Length.ToString()),
+                new Query_DesiredResult("@.foo[:] -> stringify(@)", "[\"[0,1,2]\", \"[3.0,4.0,5.0]\", \"[6.0,7.0,8.0]\"]"),
+                new Query_DesiredResult("@.* -> 3", "{\"foo\": 3, \"bar\": 3, \"baz\": 3, \"quz\": 3, \"jub\": 3, \"guzo\": 3, \"7\": 3, \"_\": 3}"),
+                new Query_DesiredResult("@.bar.* -> type(@)", "{\"a\": \"boolean\", \"b\": \"array\"}"),
+                new Query_DesiredResult("@.`7`[:] -> s_len(stringify(@)) {s: str(@), gt1: @ > 1}", "[{\"s\": \"9\", \"gt1\": true}, {\"s\": \"1\", \"gt1\": false}]"),
+                new Query_DesiredResult("j`{\"a\": [\"1\", \"2\"], \"b\": [\"x\", \"yz\"]}`.* -> s_join(_, @) -> (s_split(@, ``)[1:-1]) -> (@ * range(1, 1 + len(@)))",
+                      "{\"a\": [\"1\", \"__\", \"222\"], \"b\": [\"x\", \"__\", \"yyy\", \"zzzz\"]}"),
             };
             int ii = 0;
             int tests_failed = 0;

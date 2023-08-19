@@ -2,8 +2,10 @@
 A query language for JSON. 
 */
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
 
@@ -360,9 +362,10 @@ namespace JSON_Tools.JSON_Tools
             return compiled_query;
         } 
 
-        public static readonly string EXPR_FUNC_ENDERS = "]:},)";
+        public const string EXPR_FUNC_ENDERS = "]:},)";
         // these tokens have high enough precedence to stop an expr_function or scalar_function
-        public static readonly string INDEXER_STARTERS = ".[{";
+        public const string INDEXER_STARTERS = ".[{>";
+        public const string PROJECTION_STARTERS = "{>";
 
         #region INDEXER_FUNCTIONS
         private Func<JNode, IEnumerable<object>> ApplyMultiIndex(object inds, bool is_varname_list, bool is_recursive = false)
@@ -642,6 +645,10 @@ namespace JSON_Tools.JSON_Tools
                         }
                         // recursively search this projection using the remaining indexers
                         return idxr_list_func(new JObject(0, dic), idxrs, ii + 1);
+                    }
+                    else if (ix.has_one_option)
+                    {
+                        return idxr_list_func((JNode)inds.Current, idxrs, ii + 1);
                     }
                     arr = new List<JNode> { (JNode)current };
                     while (inds.MoveNext())
@@ -1098,9 +1105,13 @@ namespace JSON_Tools.JSON_Tools
             {
                 return ParseProjection(toks, pos+1, end);
             }
+            else if (d == '>') // "->" map operator
+            {
+                return ParseMap(toks, pos + 1, end);
+            }
             else if (d != '[')
             {
-                throw new RemesPathException("Indexer must start with '.' or '[' or '{'");
+                throw new RemesPathException("Indexer must start with '.', '[', '{', or \"->\"");
             }
             Indexer indexer = null;
             object last_tok = null;
@@ -1301,11 +1312,12 @@ namespace JSON_Tools.JSON_Tools
             {
                 throw new RemesPathException("Found null where JNode expected");
             }
-            if ((last_tok.type & Dtype.ITERABLE) != 0)
+            object nt = PeekNextToken(toks, pos - 1, end);
+            if ((last_tok.type & Dtype.ITERABLE) != 0 || (nt is char && PROJECTION_STARTERS.Contains((char)nt)))
             {
-                // the last token is an iterable, so now we look for indexers that slice it
+                // The last token is an iterable (in which case various indexers are allowed)
+                // or the next token is the start of a projection (unlike other indexers, projections can operate on scalars too)
                 var idxrs = new List<IndexerFunc>();
-                object nt = PeekNextToken(toks, pos - 1, end);
                 object nt2, nt3;
                 while (nt != null && nt is char nd && INDEXER_STARTERS.Contains(nd))
                 {
@@ -1323,7 +1335,7 @@ namespace JSON_Tools.JSON_Tools
                     nt = PeekNextToken(toks, pos - 1, end);
                     bool is_varname_list = cur_idxr is VarnameList;
                     bool is_dict = is_varname_list & !is_recursive;
-                    bool has_one_option = false;
+                    bool has_one_option = nd == '>'; // Some slicer/varname lists return one item, but the map item always does
                     bool is_projection = false;
                     if (is_varname_list || cur_idxr is SlicerList)
                     {
@@ -1362,7 +1374,7 @@ namespace JSON_Tools.JSON_Tools
                     else if (cur_idxr is Projection proj)
                     {
                         Func<JNode, IEnumerable<object>> proj_func = proj.proj_func;
-                        idxrs.Add(new IndexerFunc(proj_func, false, true, false, false));
+                        idxrs.Add(new IndexerFunc(proj_func, has_one_option, true, false, false));
                     }
                     else
                     {
@@ -1729,6 +1741,29 @@ namespace JSON_Tools.JSON_Tools
                 pos++;
             }
             throw new RemesPathException("Unterminated projection");
+        }
+
+        /// <summary>
+        /// Consider the operation a -> b.<br></br>
+        /// If b is a function b(x) -> y, a -> b returns b(a).<br></br>
+        /// Otherwise, simply returns b<br></br>
+        /// EXAMPLES:<br></br>
+        /// Let x = [1, 2]<br></br>
+        /// x -> str(len(@)) returns "2"<br></br>
+        /// x -> 3 returns 3
+        /// </summary>
+        private Obj_Pos ParseMap(List<object> toks, int pos, int end)
+        {
+            Obj_Pos opo = ParseExprOrScalar(toks, pos, end);
+            JNode val = (JNode)opo.obj;
+            pos = opo.pos;
+            Func<JNode, JNode> outfunc;
+            if (val is CurJson cj)
+                outfunc = cj.function;
+            else
+                outfunc = x => val;
+            IEnumerable<object> iterator(JNode x) { yield return outfunc(x); }
+            return new Obj_Pos(new Projection(iterator), pos + 1);
         }
         #endregion
         #region EXCEPTION_PRETTIFIER

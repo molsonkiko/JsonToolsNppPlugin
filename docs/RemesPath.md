@@ -12,8 +12,6 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 * reshaping and summarization of JSON using [projections](#projections)
 * [editing of JSON](#editing-with-assignment-expressions)
 
-The formal description of the language in pseudo-Backus-Naur form is in ["RemesPath language spec.txt"](/docs/RemesPath%20language%20spec.txt). I'm not 100% sure this is a formally valid language spec, though.
-
 ## Indexing and selecting keys ##
 
 1. `@` selects the entirety of an object or array.
@@ -733,9 +731,12 @@ Returns the string representation of x.
 
 ## Projections ##
 
-A __projection__ (a concept from JMESpath) is an iterable (either an object or an array) that is somehow based on the current JSON. Projections can be used to reshape JSON, capture summaries, and much more.
+A __projection__ (a concept from JMESpath) is a subquery that is somehow based on the current JSON. Projections can be used to reshape JSON, capture summaries, and much more.
 
-In RemesPath, a projection can be created by following a valid RemesPath query with a comma-separated list of elements or a comma-separated list of key-value pairs.
+In RemesPath, a projection can be created by following a valid RemesPath query with:
+* a comma-separated list of elements enclosed by `{}` (curly braces) produces an *array*
+* a comma-separated list of key-value pairs enclosed by `{}` produces an *object*
+* `->` followed by any valid RemesPath expression (with some restrictions; try wrapping it in parentheses if it can't be parsed) can produce *any type* (*introduced in [v5.6](/CHANGELOG.md#560---unreleased-yyyy-mm-dd)*)
 
 For example, suppose you have an array of arrays of numbers.
 ```json
@@ -802,6 +803,16 @@ returns
 ```
 
 Note that in this example, we're using quotes around the key names `avg` and `len` to indicate that they're being used as strings and not function names. Otherwise the parser will get confused.
+
+Finally, we have the aforementioned `->` projections introduced in [v5.6](/CHANGELOG.md#560---unreleased-yyyy-mm-dd).
+
+Projections with `->` are quite simple: `a -> b` returns `b(a)` if `b` is a function, and `b` otherwise.
+
+Thus, still considering the JSON `[[1,2,3,4],[5,6],[7,8,9]]`, the query `@[:]->len(@)->(str(@)*@)` returns 
+
+```json
+["4444","22","333"]
+```
 
 ## Editing with assignment expressions ##
 

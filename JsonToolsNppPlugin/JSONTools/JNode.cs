@@ -1604,11 +1604,11 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
-    public struct Comment
+    public readonly struct Comment
     {
-        public string content;
-        public bool isMultiline;
-        public int position;
+        public readonly string content;
+        public readonly bool isMultiline;
+        public readonly int position;
 
         public Comment(string content, bool isMultiline, int position)
         {
@@ -1662,7 +1662,7 @@ namespace JSON_Tools.JSON_Tools
     /// and that the parser may choose to add when parsing a document.
     /// Currently not in use
     /// </summary>
-    public struct ExtraJNodeProperties
+    public class ExtraJNodeProperties
     {
         /// <summary>
         /// null if this is the root
