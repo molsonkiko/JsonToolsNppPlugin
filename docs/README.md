@@ -434,7 +434,7 @@ If this is true, keys are sorted alphabetically like so:
 As you can see, the sort is *unstable* when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
 ### remember_comments ###
-*Added in version [5.6.0](/CHANGELOG.md#560---unreleased-yyyy-mm-dd).*
+*Added in version [5.6.0](/CHANGELOG.md#560---2023-08-18).*
 
 If this is true, the JSON parser remembers the location and type of any comments it finds while parsing. If any comments are found while parsing, the next time the JSON is pretty-printed or compressed, the comments will be included.
 

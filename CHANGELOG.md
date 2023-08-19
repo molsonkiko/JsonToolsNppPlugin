@@ -33,12 +33,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 
-## [5.6.0] - (UNRELEASED) YYYY-MM-DD
+## [5.6.0] - 2023-08-18
 
 ### Added
 
 1. New option for [preserving comments when pretty-printing or compressing](/docs/README.md#remember_comments) (just enable `remember_comments` in settings)
 2. Support for [projections of arbitrary type with the `->` operator](/docs/RemesPath.md#projections).
+
+### Changed
+
+1. When a RemesPath query performed on a [file with multiple selections](/docs/README.md#working-with-selections) fails on a selection, that selection is not shown at all in the tree view for the query result (previously it did appear, but the selection `start,end` was mapped to `null`).
 
 ### Fixed
 
@@ -48,6 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 4. Dramatically reduce the frequency of Notepad++ freezing and crashing while running UI tests.
 5. Fix minor issue concerning the position assigned to JSON elements when pretty-printing or compressing JSON that didn't begin at the start of the file before being reformatted.
 6. Improved cursor tracking of arrays and objects when a RemesPath query selects a subset of their items.
+7. Bug where a RemesPath query that produced an object that was not a function of the input would have a runtime errror and fail to populate the treeview.
 
 ## [5.5.0] - 2023-08-13
 

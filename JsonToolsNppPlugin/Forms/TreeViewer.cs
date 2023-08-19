@@ -298,7 +298,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         private static IEnumerable<string> SortRootKeysIfUsesSelections(TreeNode node, Dictionary<string, JNode> dict, bool usesSelections)
         {
-            if (usesSelections && node.Parent == null)
+            if (usesSelections && node.Parent == null && dict.Keys.All(SelectionManager.IsStartEnd))
             {
                 string[] keys = dict.Keys.ToArray();
                 Array.Sort(keys, SelectionManager.StartEndCompareByStart);
@@ -353,7 +353,7 @@ namespace JSON_Tools.Forms
             }
             int runtimeErrorMessagesShown = 0;
             bool suppressRuntimeErrorMsg = false;
-            void RuntimeErrorMessage(Exception ex)
+            void RuntimeErrorMessage(Exception ex, string selectionStartEnd = null)
             {
                 if (!suppressRuntimeErrorMsg
                     && ++runtimeErrorMessagesShown % 5 == 0
@@ -365,7 +365,16 @@ namespace JSON_Tools.Forms
                 if (suppressRuntimeErrorMsg)
                     return;
                 string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"While executing query {query}, encountered runtime error:\n{expretty}",
+                string errorMessage;
+                if (selectionStartEnd != null && SelectionManager.IsStartEnd(selectionStartEnd))
+                {
+                    int[] startEnd = SelectionManager.ParseStartEnd(selectionStartEnd);
+                    int start = startEnd[0]; int end = startEnd[1];
+                    errorMessage = $"While executing query {query} on selection between positions {start} and {end}, encountered runtime error:\n{expretty}";
+                }
+                else
+                    errorMessage = $"While executing query {query}, encountered runtime error:\n{expretty}";
+                MessageBox.Show(errorMessage,
                                 "Runtime error while executing query",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
@@ -389,8 +398,7 @@ namespace JSON_Tools.Forms
                         }
                         catch (Exception ex)
                         {
-                            RuntimeErrorMessage(ex);
-                            query_obj[kv.Key] = kv.Value;
+                            RuntimeErrorMessage(ex, kv.Key);
                         }
                     }
                     query_func = query_obj;
@@ -429,8 +437,7 @@ namespace JSON_Tools.Forms
                         }
                         catch (Exception ex)
                         {
-                            RuntimeErrorMessage(ex);
-                            query_obj[kv.Key] = new JNode();
+                            RuntimeErrorMessage(ex, kv.Key);
                         }
                     }
                     query_result = query_obj;

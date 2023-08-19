@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kbg.NppPluginNET.PluginInfrastructure;
 
@@ -10,6 +11,10 @@ namespace JSON_Tools.Utils
 {
     public class SelectionManager
     {
+        private static readonly Regex START_END_REGEX = new Regex(@"^\d+,\d+$", RegexOptions.Compiled);
+
+        public static bool IsStartEnd(string x) => START_END_REGEX.IsMatch(x);
+
         public static List<(int start, int end)> GetSelectedRanges()
         {
             var selList = new List<(int start, int end)>();

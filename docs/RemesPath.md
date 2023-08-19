@@ -736,7 +736,7 @@ A __projection__ (a concept from JMESpath) is a subquery that is somehow based o
 In RemesPath, a projection can be created by following a valid RemesPath query with:
 * a comma-separated list of elements enclosed by `{}` (curly braces) produces an *array*
 * a comma-separated list of key-value pairs enclosed by `{}` produces an *object*
-* `->` followed by any valid RemesPath expression (with some restrictions; try wrapping it in parentheses if it can't be parsed) can produce *any type* (*introduced in [v5.6](/CHANGELOG.md#560---unreleased-yyyy-mm-dd)*)
+* `->` followed by any valid RemesPath expression (with some restrictions; try wrapping it in parentheses if it can't be parsed) can produce *any type* (*introduced in [v5.6](/CHANGELOG.md#560---2023-08-18)*)
 
 For example, suppose you have an array of arrays of numbers.
 ```json
@@ -804,7 +804,7 @@ returns
 
 Note that in this example, we're using quotes around the key names `avg` and `len` to indicate that they're being used as strings and not function names. Otherwise the parser will get confused.
 
-Finally, we have the aforementioned `->` projections introduced in [v5.6](/CHANGELOG.md#560---unreleased-yyyy-mm-dd).
+Finally, we have the aforementioned `->` projections introduced in [v5.6](/CHANGELOG.md#560---2023-08-18).
 
 Projections with `->` are quite simple: `a -> b` returns `b(a)` if `b` is a function, and `b` otherwise.
 

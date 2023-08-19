@@ -332,6 +332,10 @@ namespace JSON_Tools.Tests
             ("compare_text", new object[]{"[0.25,0.75,0.5]blah[0,1.25][\"boo\",\"a\",\"c\"]"}),
             ("compress", new object[]{}),
             ("compare_text", new object[]{"[0.25,0.75,0.5]blah[0,1.25][\"boo\",\"a\",\"c\"]"}),
+            // TEST QUERY THAT PRODUCES OBJECT WITH NON-"START,END" KEYS ON A FILE WITH SELECTIONS
+            ("tree_query", new object[]{"j`{\"a\": \"foo\", \"b\": [1, 2]}`"}),
+            ("treenode_click", new object[]{new string[] {"a : \"foo\""} }),
+            ("treenode_click", new object[]{new string[] {"b : [2]", "1 : 2"} }),
         };
 
         public static bool Test()
