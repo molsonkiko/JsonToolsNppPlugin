@@ -63,40 +63,80 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_compress_icon {
+        public static System.Drawing.Icon json_compress_toolbar {
             get {
-                object obj = ResourceManager.GetObject("json_compress_icon", resourceCulture);
+                object obj = ResourceManager.GetObject("json_compress_toolbar", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap json_compress_toolbar_bmp {
+            get {
+                object obj = ResourceManager.GetObject("json_compress_toolbar_bmp", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_path_to_position_icon {
+        public static System.Drawing.Icon json_path_to_position_toolbar {
             get {
-                object obj = ResourceManager.GetObject("json_path_to_position_icon", resourceCulture);
+                object obj = ResourceManager.GetObject("json_path_to_position_toolbar", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap json_path_to_position_toolbar_bmp {
+            get {
+                object obj = ResourceManager.GetObject("json_path_to_position_toolbar_bmp", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_pretty_print_icon {
+        public static System.Drawing.Icon json_pretty_print_toolbar {
             get {
-                object obj = ResourceManager.GetObject("json_pretty_print_icon", resourceCulture);
+                object obj = ResourceManager.GetObject("json_pretty_print_toolbar", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap json_pretty_print_toolbar_bmp {
+            get {
+                object obj = ResourceManager.GetObject("json_pretty_print_toolbar_bmp", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_tree_icon {
+        public static System.Drawing.Icon json_tree_toolbar {
             get {
-                object obj = ResourceManager.GetObject("json_tree_icon", resourceCulture);
+                object obj = ResourceManager.GetObject("json_tree_toolbar", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap json_tree_toolbar_bmp {
+            get {
+                object obj = ResourceManager.GetObject("json_tree_toolbar_bmp", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

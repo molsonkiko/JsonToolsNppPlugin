@@ -15,7 +15,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
+using PluginNetResources = NppPluginNET.Properties.Resources;
 
 namespace Kbg.NppPluginNET
 {
@@ -70,15 +70,16 @@ namespace Kbg.NppPluginNET
         private static bool currentFileTooBigToAutoParse = true;
         private static bool bufferFinishedOpening = false;
         // toolbar icons
-        static Icon treeIcon = null;
-        static Icon tbIcon = null;
-
+        static Icon dockingFormIcon = null;
         // fields related to forms
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
         static internal int AboutFormId = -1;
         static internal int sortFormId = -1;
         static internal int errorFormId = -1;
+        static internal int compressId = -1;
+        static internal int prettyPrintId = -1;
+        static internal int pathToPositionId = -1;
         #endregion
 
         #region " Startup/CleanUp "
@@ -96,15 +97,15 @@ namespace Kbg.NppPluginNET
             //            );
             PluginBase.SetCommand(0, "&Documentation", docs);
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
-            PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P));
-            PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C));
-            PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L));
+            PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P)); prettyPrintId = 1;
+            PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C)); compressId = 2;
+            PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
             PluginBase.SetCommand(4, "Select every val&id JSON in selection", SelectEveryValidJson);
             // Here you insert a separator
             PluginBase.SetCommand(5, "---", null);
             PluginBase.SetCommand(6, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 6;
             PluginBase.SetCommand(7, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 7;
-            PluginBase.SetCommand(8, "Sort arra&ys", OpenSortForm); sortFormId = 6; 
+            PluginBase.SetCommand(8, "Sort arra&ys", OpenSortForm); sortFormId = 8; 
             PluginBase.SetCommand(9, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(10, "---", null);
             PluginBase.SetCommand(11, "&Validate JSON against JSON schema", () => ValidateJson());
@@ -129,6 +130,39 @@ namespace Kbg.NppPluginNET
             if (!schemasToFnamePatternsFile.Exists || schemasToFnamePatternsFile.Length == 0)
                 WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
             ParseSchemasToFnamePatternsFile();
+        }
+
+        static internal void SetToolBarIcons()
+        {
+            var iconInfo = new (Bitmap, Icon, int)[]
+            {
+                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, jsonTreeId),
+                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, compressId),
+                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, pathToPositionId),
+                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, prettyPrintId),
+            };
+
+            foreach ((Bitmap bmp, Icon icon, int funcId) in iconInfo)
+            {
+                // create struct
+                toolbarIcons tbIcons = new toolbarIcons();
+
+                // add bmp icon
+                tbIcons.hToolbarBmp = bmp.GetHbitmap();
+                tbIcons.hToolbarIcon = icon.Handle;
+                tbIcons.hToolbarIconDarkMode = icon.Handle; // 
+
+                // convert to c++ pointer
+                IntPtr pTbIcons = Marshal.AllocHGlobal(Marshal.SizeOf(tbIcons));
+                Marshal.StructureToPtr(tbIcons, pTbIcons, false);
+
+                // call Notepad++ api
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_ADDTOOLBARICON_FORDARKMODE,
+                    PluginBase._funcItems.Items[funcId]._cmdID, pTbIcons);
+
+                // release pointer
+                Marshal.FreeHGlobal(pTbIcons);
+            }
         }
 
         public static void OnNotification(ScNotification notification)
@@ -1013,7 +1047,7 @@ namespace Kbg.NppPluginNET
                 ImageAttributes attr = new ImageAttributes();
                 attr.SetRemapTable(colorMap);
                 //g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
-                tbIcon = Icon.FromHandle(newBmp.GetHicon());
+                dockingFormIcon = Icon.FromHandle(newBmp.GetHicon());
             }
 
             NppTbData _nppTbData = new NppTbData();
@@ -1024,7 +1058,7 @@ namespace Kbg.NppPluginNET
             _nppTbData.dlgID = errorFormId;
             // dock on bottom
             _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_BOTTOM | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
-            _nppTbData.hIconTab = (uint)tbIcon.Handle;
+            _nppTbData.hIconTab = (uint)dockingFormIcon.Handle;
             _nppTbData.pszModuleName = PluginName;
             IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
             Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
@@ -1249,7 +1283,7 @@ namespace Kbg.NppPluginNET
                 ImageAttributes attr = new ImageAttributes();
                 attr.SetRemapTable(colorMap);
                 //g.DrawImage(tbBmp_tbTab, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
-                tbIcon = Icon.FromHandle(newBmp.GetHicon());
+                dockingFormIcon = Icon.FromHandle(newBmp.GetHicon());
             }
 
             NppTbData _nppTbData = new NppTbData();
@@ -1260,7 +1294,7 @@ namespace Kbg.NppPluginNET
             _nppTbData.dlgID = jsonTreeId;
             // define the default docking behaviour
             _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
-            _nppTbData.hIconTab = (uint)tbIcon.Handle;
+            _nppTbData.hIconTab = (uint)dockingFormIcon.Handle;
             _nppTbData.pszModuleName = PluginName;
             IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
             Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);

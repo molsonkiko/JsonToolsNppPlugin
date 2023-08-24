@@ -180,11 +180,6 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Resources1.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <!-- other code -->
     <Compile Include="Main.cs" />
     <Compile Include="JSONTools\JNode.cs" />
@@ -197,6 +192,11 @@
     <Compile Include="JSONTools\RemesPath.cs" />
     <Compile Include="JSONTools\RemesPathFunctions.cs" />
     <Compile Include="JSONTools\RemesPathLexer.cs" />
+    <Compile Include="Properties\Resources1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tests\Benchmarker.cs" />
     <Compile Include="Tests\JsonGrepperTests.cs" />
     <Compile Include="Tests\JsonParserTests.cs" />
@@ -264,6 +264,18 @@
   <ItemGroup>
     <!-- icons and such -->
     <Content Include="Properties\star_bmp.bmp" />
+    <None Include="Resources\json tree toolbar.ico" />
+    <None Include="Resources\json compress toolbar.ico" />
+    <None Include="Resources\json pretty print toolbar.ico" />
+    <None Include="Resources\json path to position toolbar.ico" />
+    <None Include="Resources\json tree toolbar bmp.bmp" />
+    <None Include="Resources\json compress toolbar bmp.bmp" />
+    <None Include="Resources\json path to position toolbar bmp.bmp" />
+    <None Include="Resources\json pretty print toolbar bmp.bmp" />
+    <None Include="Resources\json tree icon.bmp" />
+    <None Include="Resources\json compress icon.bmp" />
+    <None Include="Resources\json path to position icon.bmp" />
+    <None Include="Resources\json pretty print icon.bmp" />
     <None Include="Resources\json pretty print icon.ico" />
     <None Include="Resources\json path to position icon.ico" />
     <None Include="Resources\json compress icon.ico" />
