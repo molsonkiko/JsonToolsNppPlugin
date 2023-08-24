@@ -83,6 +83,16 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
+        public static System.Drawing.Icon json_compress_toolbar1 {
+            get {
+                object obj = ResourceManager.GetObject("json_compress_toolbar1", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
         public static System.Drawing.Icon json_path_to_position_toolbar {
             get {
                 object obj = ResourceManager.GetObject("json_path_to_position_toolbar", resourceCulture);
@@ -97,6 +107,16 @@ namespace NppPluginNET.Properties {
             get {
                 object obj = ResourceManager.GetObject("json_path_to_position_toolbar_bmp", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        public static System.Drawing.Icon json_path_to_position_toolbar1 {
+            get {
+                object obj = ResourceManager.GetObject("json_path_to_position_toolbar1", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
             }
         }
         
@@ -123,6 +143,16 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
+        public static System.Drawing.Icon json_pretty_print_toolbar1 {
+            get {
+                object obj = ResourceManager.GetObject("json_pretty_print_toolbar1", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
         public static System.Drawing.Icon json_tree_toolbar {
             get {
                 object obj = ResourceManager.GetObject("json_tree_toolbar", resourceCulture);
@@ -137,6 +167,16 @@ namespace NppPluginNET.Properties {
             get {
                 object obj = ResourceManager.GetObject("json_tree_toolbar_bmp", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        public static System.Drawing.Icon json_tree_toolbar1 {
+            get {
+                object obj = ResourceManager.GetObject("json_tree_toolbar1", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
             }
         }
     }

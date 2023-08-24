@@ -26,12 +26,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
 - *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance. 
+- Mark dark mode icons that look less out of place
 
 ### To Be Fixed
 
 - Improve Alt-key accelerators in forms. They don't seem to work right for some reason.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
+- Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
+
+## [5.7.0] - (UNRELEASED) YYYY-MM-DD
+
+### Added
+
+1. Toolbar icons for [JSON pretty-print, JSON compress](/docs/README.md#json-formatting), treeview, and [path to current position](/docs/README.md#path-to-current-position). Fix [issue 36](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/36).
+
+### Fixed
+
+1. [Sort form](/docs/README.md#sort-form) previously did not follow Notepad++ styling on startup.
 
 ## [5.6.0] - 2023-08-18
 

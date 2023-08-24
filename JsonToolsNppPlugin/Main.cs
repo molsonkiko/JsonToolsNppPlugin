@@ -134,15 +134,15 @@ namespace Kbg.NppPluginNET
 
         static internal void SetToolBarIcons()
         {
-            var iconInfo = new (Bitmap, Icon, int)[]
+            var iconInfo = new (Bitmap bmp, Icon icon, Icon iconDarkMode, int id)[]
             {
-                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, jsonTreeId),
-                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, compressId),
-                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, pathToPositionId),
-                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, prettyPrintId),
+                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, PluginNetResources.json_tree_toolbar1,jsonTreeId),
+                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, PluginNetResources.json_compress_toolbar1, compressId),
+                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, PluginNetResources.json_pretty_print_toolbar1, prettyPrintId),
+                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar1, pathToPositionId),
             };
 
-            foreach ((Bitmap bmp, Icon icon, int funcId) in iconInfo)
+            foreach ((Bitmap bmp, Icon icon, Icon iconDarkMode, int funcId) in iconInfo)
             {
                 // create struct
                 toolbarIcons tbIcons = new toolbarIcons();
@@ -150,7 +150,7 @@ namespace Kbg.NppPluginNET
                 // add bmp icon
                 tbIcons.hToolbarBmp = bmp.GetHbitmap();
                 tbIcons.hToolbarIcon = icon.Handle;
-                tbIcons.hToolbarIconDarkMode = icon.Handle; // 
+                tbIcons.hToolbarIconDarkMode = iconDarkMode.Handle;
 
                 // convert to c++ pointer
                 IntPtr pTbIcons = Marshal.AllocHGlobal(Marshal.SizeOf(tbIcons));

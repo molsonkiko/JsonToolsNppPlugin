@@ -264,6 +264,10 @@
   <ItemGroup>
     <!-- icons and such -->
     <Content Include="Properties\star_bmp.bmp" />
+    <None Include="Resources\json tree toolbar1.ico" />
+    <None Include="Resources\json pretty print toolbar1.ico" />
+    <None Include="Resources\json path to position toolbar1.ico" />
+    <None Include="Resources\json compress toolbar1.ico" />
     <None Include="Resources\json tree toolbar.ico" />
     <None Include="Resources\json compress toolbar.ico" />
     <None Include="Resources\json pretty print toolbar.ico" />

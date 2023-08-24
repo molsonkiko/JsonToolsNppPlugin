@@ -16,6 +16,7 @@ namespace JSON_Tools.Forms
             InitializeComponent();
             SortMethodBox.SelectedIndex = 0;
             remesParser = new RemesParser();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             //OutputFormatBox.SelectedIndex = 0;
         }
 
