@@ -4,6 +4,7 @@ A test runner for all of this package.
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JSON_Tools.Utils;
+using Kbg.NppPluginNET;
 
 namespace JSON_Tools.Tests
 {
@@ -166,8 +167,15 @@ Testing JSON grepper's file reading ability
 Testing JSON grepper's API request tool
 =========================
 ");
-                if (await JsonGrepperTester.TestApiRequester())
-                    failures.Add("JSON grepper's API request tool");
+                if (Main.settings.skip_api_request_tests)
+                {
+                    Npp.AddLine("skipped tests because settings.skip_api_request_tests was set to true");
+                }
+                else
+                {
+                    if (await JsonGrepperTester.TestApiRequester())
+                        failures.Add("JSON grepper's API request tool");
+                }
 
                 Npp.AddLine(@"=========================
 Testing generation of random JSON from schema

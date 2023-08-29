@@ -12,9 +12,9 @@ namespace JSON_Tools.Tests
 {
     public class UserInterfaceTester
     {
-        const string ui_test_filename = "UI tests.json";
-
         private static List<string> filenamesUsed;
+
+        private static int lowestFilenameNumberNotUsed = 0;
 
         private static RemesParser remesParser = new RemesParser();
 
@@ -35,14 +35,7 @@ namespace JSON_Tools.Tests
             {
             case "file_open":
                 int fileIdx = (int)args[0];
-                while (fileIdx >= filenamesUsed.Count)
-                {
-                    Npp.notepad.FileNew();
-                    Npp.notepad.SetCurrentBufferInternalName($"UI tests {filenamesUsed.Count + 1}.json");
-                    filenamesUsed.Add(Npp.notepad.GetCurrentFilePath());
-                }
-                string filename = filenamesUsed[fileIdx];
-                Npp.notepad.OpenFile(filename);
+                string filename = OpenUITestFile(fileIdx);
                 messages.Add($"Opened file {filename}");
                 break;
             case "overwrite":
@@ -296,6 +289,10 @@ namespace JSON_Tools.Tests
             ("compare_text", new object[]{"[\r\n    1,\r\n    3,\r\n    2\r\n]\r\n[\r\n    44,\r\n    5,\r\n    6\r\n]\r\n[\r\n    \"a\",\r\n    \"boo\",\r\n    \"c\"\r\n]"}),
             ("sort_form_run", new object[]{"", true, true, 3, "s_len(str(@))"}), // sort all arrays biggest to smallest using the length of a node's string representation as key
             ("compare_text", new object[]{"[\r\n    1,\r\n    3,\r\n    2\r\n]\r\n[\r\n    44,\r\n    5,\r\n    6\r\n]\r\n[\r\n    \"boo\",\r\n    \"a\",\r\n    \"c\"\r\n]"}),
+            // TEST SELECTING NON-JSON RANGE DOES NOT FORGET SELECTIONS
+            ("select", new object[]{new string[] {"8,15"} }),
+            ("compress", new object[]{}),
+            ("compare_text", new object[]{"[1,3,2]\r\n[44,5,6]\r\n[\"boo\",\"a\",\"c\"]"}),
             // TEST FILE WITH ONLY ONE JSON DOCUMENT
             ("file_open", new object[]{1}),
             ("overwrite", new object[]{"[\r\n    [\"Я\", 1, \"a\"], // foo\r\n    [\"◐\", 2, \"b\"], // bar\r\n    [\"ồ\", 3, \"c\"], // baz\r\n    [\"ｪ\", 4, \"d\"],\r\n    [\"草\", 5, \"e\"],\r\n    [\"😀\", 6, \"f\"]\r\n]"}),
@@ -306,9 +303,13 @@ namespace JSON_Tools.Tests
             ("treenode_click", new object[]{ new string[] { "5 : [3]", "1 : 6" } }),
             ("compare_selections", new object[]{new string[] {"146,146"} }),
             ("compare_path_to_position", new object[]{147, "[5][1]"}),
-            ("tree_query", new object[]{"@[:][1] = @ + 3" }),
+            ("tree_query", new object[]{"@[:][1] = @ + 3" }), // mutate document
             ("compare_text", new object[]{"[\r\n    [\"Я\", 4, \"a\"],\r\n    [\"◐\", 5, \"b\"],\r\n    [\"ồ\", 6, \"c\"],\r\n    [\"ｪ\", 7, \"d\"],\r\n    [\"草\", 8, \"e\"],\r\n    [\"😀\", 9, \"f\"]\r\n]"}),
             ("compare_path_to_position", new object[]{126, "[5][1]"}),
+            // TEST SELECT NON-JSON RANGE AND MAKE SURE WHOLE DOCUMENT STILL PARSED (WHEN NOT IN SELECTION MODE)
+            ("select", new object[]{new string[] {"1,7"} }),
+            ("compress", new object[]{}),
+            ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],[\"草\",8,\"e\"],[\"😀\",9,\"f\"]]"}),
             ("file_open", new object[]{0}),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),
@@ -343,9 +344,8 @@ namespace JSON_Tools.Tests
             var messages = new List<string>();
             int failures = 0;
             string previouslyOpenFname = Npp.notepad.GetCurrentFilePath();
-            Npp.notepad.FileNew();
-            Npp.notepad.SetCurrentBufferInternalName(ui_test_filename);
-            filenamesUsed = new List<string> { ui_test_filename };
+            filenamesUsed = new List<string>();
+            string UITestFileName = OpenUITestFile(0);
 
             PrettyPrintStyle previousPrettyPrintStyle = Main.settings.pretty_print_style;
             bool previousTabIndentPrettyPrint = Main.settings.tab_indent_pretty_print;
@@ -422,6 +422,27 @@ namespace JSON_Tools.Tests
             Main.settings.remember_comments = previousRememberComments;
             Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
             return failures > 0;
+        }
+
+        private static string UITestFilename(int ii) { return $"UI test {ii}.json"; }
+
+        private static string OpenUITestFile(int fileIdx)
+        {
+            while (fileIdx >= filenamesUsed.Count)
+            {
+                string newFilename = UITestFilename(lowestFilenameNumberNotUsed);
+                if (Npp.notepad.GetOpenFileNames().Contains(newFilename))
+                {
+                    lowestFilenameNumberNotUsed++;
+                    continue;
+                }
+                Npp.notepad.FileNew();
+                Npp.notepad.SetCurrentBufferInternalName(newFilename);
+                filenamesUsed.Add(newFilename);
+            }
+            string filename = filenamesUsed[fileIdx];
+            Npp.notepad.OpenFile(filename);
+            return filename;
         }
     }
 }

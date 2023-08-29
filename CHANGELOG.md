@@ -34,16 +34,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
+    - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
 
 ## [5.7.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 
 1. Toolbar icons for [JSON pretty-print, JSON compress](/docs/README.md#json-formatting), treeview, and [path to current position](/docs/README.md#path-to-current-position). Fix [issue 36](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/36).
+2. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
+
+### Changed
+
+1. Selections that don't begin with a valid JSON document will now be ignored when parsing a document. See [working with selections docs](/docs/README.md#working-with-selections) for more info and examples.
 
 ### Fixed
 
 1. [Sort form](/docs/README.md#sort-form) previously did not follow Notepad++ styling on startup.
+2. Problems (introduced in [v5.5](#550---2023-08-13)) with running tests multiple times without cleaning up test files.
 
 ## [5.6.0] - 2023-08-18
 

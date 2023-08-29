@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using JSON_Tools.JSON_Tools;
+using Kbg.NppPluginNET;
 using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Utils
@@ -14,6 +16,12 @@ namespace JSON_Tools.Utils
         private static readonly Regex START_END_REGEX = new Regex(@"^\d+,\d+$", RegexOptions.Compiled);
 
         public static bool IsStartEnd(string x) => START_END_REGEX.IsMatch(x);
+
+        public static (int start, int end) ParseStartEndAsTuple(string startEnd)
+        {
+            int[] startEndNums = ParseStartEnd(startEnd);
+            return (startEndNums[0], startEndNums[1]);
+        }
 
         public static List<(int start, int end)> GetSelectedRanges()
         {
@@ -54,8 +62,7 @@ namespace JSON_Tools.Utils
             var result = new List<(int start, int end)>();
             foreach (string startEnd in startEnds)
             {
-                int[] ints = ParseStartEnd(startEnd);
-                int start = ints[0], end = ints[1];
+                (int start, int end) = ParseStartEndAsTuple(startEnd);
                 result.Add((start, end));
                 if (ii++ == 0)
                 {
@@ -109,6 +116,16 @@ namespace JSON_Tools.Utils
         public static string StartEndListToJsonString(IEnumerable<string> selections)
         {
             return "[" + string.Join(", ", selections.OrderBy(x => StartFromStartEnd(x)).Select(x => $"[{x}]")) + "]";
+        }
+
+        /// <summary>
+        /// The user's selections (or the file in its entirety) are probably invalid if every selection's JSON is null and had a fatal error
+        /// </summary>
+        public static bool NoSelectionIsValidJson(JNode json, bool usesSelections, List<bool> fatalErrors)
+        {
+            return fatalErrors.All(x => x)
+                && (usesSelections && json is JObject obj && obj.children.Values.All(x => x.type == Dtype.NULL)
+                    || json.type == Dtype.NULL);
         }
     }
 }

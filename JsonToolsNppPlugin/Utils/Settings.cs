@@ -129,6 +129,10 @@ namespace JSON_Tools.Utils
                      "If \"[{tf are chosen, we consider potential strings, arrays, objects, and booleans."),
             Category("Miscellaneous"), DefaultValue("\"[{")]
         public string try_parse_start_chars { get; set; }
+
+        [Description("When running tests, skip the tests that send requests to APIs"),
+            Category("Miscellaneous"), DefaultValue(true)]
+        public bool skip_api_request_tests { get; set; }
         #endregion
 
         #region GREP_API_SETTINGS

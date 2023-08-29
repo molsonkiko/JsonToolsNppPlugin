@@ -26,6 +26,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		Color GetDefaultBackgroundColor();
 		string GetConfigDirectory();
 		int[] GetNppVersion();
+		string[] GetOpenFileNames();
 		void SetCurrentBufferInternalName(string newName);
 		void SetStatusBarSection(string message, StatusBarSection section);
 
@@ -193,11 +194,23 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 			return new int[] { major, minor, bugfix };
         }
 
-		/// <summary>
-		/// Changes the apparent name of the current buffer. Does not work on files that have already been saved to disk.<br></br>
-		/// </summary>
-		/// <param name="newName"></param>
-		public void SetCurrentBufferInternalName(string newName)
+        public string[] GetOpenFileNames()
+        {
+            int nbFile = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETNBOPENFILES, 0, 0);
+
+            using (ClikeStringArray cStrArray = new ClikeStringArray(nbFile, Win32.MAX_PATH))
+            {
+                if (Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETOPENFILENAMES, cStrArray.NativePointer, nbFile) != IntPtr.Zero)
+                    return cStrArray.ManagedStringsUnicode.ToArray();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Changes the apparent name of the current buffer. Does not work on files that have already been saved to disk.<br></br>
+        /// </summary>
+        /// <param name="newName"></param>
+        public void SetCurrentBufferInternalName(string newName)
 		{
 			IntPtr bufferId = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
 			// we need to manually do the operations that would normally happen automatically in response to a NPPN_FILEBEFORERENAME and subsequent NPPN_FILERENAMED

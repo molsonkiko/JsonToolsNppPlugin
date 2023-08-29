@@ -130,9 +130,12 @@ Now we can pretty-print the JSON in these selections. This has no effect on the 
 
 ![Pretty-print multiple JSON selections](/docs/multi%20selections%20pretty%20print.PNG)
 
-__Note that your JSON selections are only remembered until you do one of the following:__
+__Note that your JSON selections (or lack thereof) are only remembered until you do one of the following:__
 * overwrite or delete all the text in the file
 * perform a JsonTools action while you have any multi-character selection other than the remembered selections.
+    - *NOTE: starting in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), only multi-character selections that begin with a parse-able JSON document will cause the previous selections/lack thereof to be forgotten.*
+    - For example, if you had the text `foo` selected, any version since 5.7 would ignore that selection because it does not begin with a valid JSON document.
+    - However, the selection `[ blah` *would override old selections even though it's not valid JSON* because the JSON parser will parse it as an unterminated empty array.
 
 You can move the cursor around, insert and delete characters, and the plugin will move or change the JSON selections accordingly.
 

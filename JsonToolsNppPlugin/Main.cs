@@ -424,28 +424,38 @@ namespace Kbg.NppPluginNET
         /// Finally, associate the parsed JSON with the current filename in fname_jsons
         /// and return the JSON.
         /// </summary>
-        /// <param name="is_json_lines"></param>
+        /// <param name="is_json_lines">parse the document as JSON lines</param>
+        /// <param name="was_autotriggered">was triggered by a direct action of the user (e.g., reformatting, opening tree view)</param>
+        /// <param name="is_recursion">IGNORE THIS PARAMETER, IT IS ONLY FOR RECURSIVE SELF-CALLS</param>
         /// <returns></returns>
-        public static (bool fatal, JNode node, bool usesSelections) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false)
+        public static (bool fatal, JNode node, bool usesSelections) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false, bool is_recursion = false)
         {
             string fname = Npp.notepad.GetCurrentFilePath();
             List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
+            var oldSelections = new List<string>();
             (int start, int end) firstSel = selRanges[0];
             int firstSelLen = firstSel.end - firstSel.start;
-            bool noTextSelected = (selRanges.Count < 2 && firstSelLen == 0) // one selection of length 0 (i.e., just a cursor)
+            bool oneSelRange = selRanges.Count == 1;
+            bool noTextSelected = (oneSelRange && firstSelLen == 0) // one selection of length 0 (i.e., just a cursor)
                 // the grepperform's buffer is special, and allowing multiple selections in that file would mess things up
                 || (grepperForm != null && grepperForm.tv != null && activeFname == grepperForm.tv.fname);
             bool stopUsingSelections = false;
             int len = Npp.editor.GetLength();
             double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
-            JsonFileInfo info;
+            JObject oldJson = null;
+            bool hasOldSelections = TryGetInfoForFile(fname, out JsonFileInfo info) && info.usesSelections && info.json is JObject;
+            if (hasOldSelections)
+            {
+                oldJson = (JObject)info.json;
+                oldSelections.AddRange(oldJson.children.Keys);
+            }
             if (noTextSelected)
             {
-                if (TryGetInfoForFile(fname, out info) && info.usesSelections)
+                if (hasOldSelections)
                 {
                     // if the user doesn't have any text selected, and they already had one or more selections saved,
                     // preserve the existing selections
-                    selRanges = SelectionManager.SetSelectionsFromStartEnds(((JObject)info.json).children.Keys);
+                    selRanges = SelectionManager.SetSelectionsFromStartEnds(oldJson.children.Keys);
                     if (selRanges.Count > 0)
                         noTextSelected = false;
                     else
@@ -455,7 +465,7 @@ namespace Kbg.NppPluginNET
                     }
                 }
             }
-            else if (selRanges.Count == 1 && firstSelLen == len)
+            else if (oneSelRange && firstSelLen == len)
             {
                 // user can revert to no-selection mode by selecting entire doc
                 noTextSelected = true;
@@ -464,6 +474,7 @@ namespace Kbg.NppPluginNET
             JNode json = new JNode();
             List<JsonLint> lints;
             List<Comment> comments = null;
+            var fatalErrors = new List<bool>();
             if (noTextSelected)
             {
                 if (was_autotriggered && len > sizeThreshold)
@@ -475,6 +486,7 @@ namespace Kbg.NppPluginNET
                     json = jsonParser.ParseJsonLines(text);
                 else
                     json = jsonParser.Parse(text);
+                fatalErrors.Add(jsonParser.fatal);
                 lints = jsonParser.lint.ToList();
                 if (settings.remember_comments && jsonParser.comments != null)
                     comments = jsonParser.comments.ToList();
@@ -496,7 +508,16 @@ namespace Kbg.NppPluginNET
                     string key = $"{start},{end}";
                     obj[key] = subJson;
                     lints.AddRange(jsonParser.lint);
+                    fatalErrors.Add(jsonParser.fatal);
                 }
+            }
+            if (!is_recursion && oneSelRange && SelectionManager.NoSelectionIsValidJson(json, !noTextSelected, fatalErrors))
+            {
+                // If there's a single selection that doesn't begin with a valid JSON document,
+                // there's a good chance (from molsonkiko's experience) that the user was just selecting some text to copy/paste
+                // If this happens, we just treat this as an empty selection and restore old selections
+                SelectionManager.SetSelectionsFromStartEnds(oldSelections);
+                return TryParseJson(is_json_lines, was_autotriggered, true);
             }
             int lintCount = lints.Count;
             info = AddJsonForFile(fname, json);
