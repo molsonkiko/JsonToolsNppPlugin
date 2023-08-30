@@ -1458,12 +1458,19 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// First arg (itbl) must be a JArray containing only other JArrays or only other JObjects.<br></br>
-        /// Second arg (key) must be a JNode with a long value or a JNode with a string value.<br></br>
-        /// Returns a new JObject where each entry in itbl is grouped into a separate JArray under the stringified form
-        /// of the value associated with key/index key in itbl.<br></br>
-        /// EXAMPLE<br></br>
-        /// GroupBy([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar") returns:<br></br>
-        /// {"a": [{"foo": 1, "bar": "a"}, {"foo": 3, "bar": "a"}], "b": [{"foo": 2, "bar": "b"}]}
+        /// Second arg (key) must be a JNode with integer or string value OR an array of such JNodes<br></br>
+        /// <b>If key is an array of length greater than 1:</b><br></br>
+        /// * Returns a new JObject where each value of the n^th subkey in key is mapped to itbl recursively grouped by subkeys n+1, n+2,... in key.<br></br>
+        /// <b>If key is NOT an array</b> (or an array of length 1)<br></br>
+        /// * Returns a new JObject of the form described for GroupBySingleKey below.<br></br>
+        /// EXAMPLES<br></br>
+        /// * See GroupBySingleKey examples for when key is integer or string.<br></br>
+        /// * GroupBy([{"a": 1, "b": "x", "c": -0.5}, {"a": 1, "b": "y", "c": 0.0}, {"a": 2, "b": "x", "c": 0.5}], ["a", "b"]) returns:<br></br>
+        /// {"1": {"x": [{"a": 1, "b": "x", "c": -0.5}], "y": [{"a": 1, "b": "y", "c": 0.0}]}, "2": {"x": [{"a": 2, "b": "x", "c": 0.5}]}}<br></br>
+        /// * GroupBy([[1, "x", -0.5], [1, "y", 0.0], [2, "x", 0.5]], [1, 0]) returns:<br></br>
+        /// {"x": {"1": [[1, "x", -0.5]], "2": [[2, "x", 0.5]]}, "y": {"1": [[1, "y", 0.0]]}}<br></br>
+        /// * GroupBy([[1, 2, 2, 0.0], [1, 2, 3, -1.0], [1, 3, 3, -2.0], [1, 3, 4, -3.0], [2, 2, 2, -4.0]], [0, 1, 2]) returns:<br></br>
+        /// {"1": {"2": {"2": [[1, 2, 2, 0.0]], "3": [[1, 2, 3, -1.0]]}, "3": {"3": [[1, 3, 3, -2.0]], "4": [[1, 3, 4, -3.0]]}}, "2": {"2": {"2": [[2, 2, 2, -4.0]]}}}
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
@@ -1471,50 +1478,110 @@ namespace JSON_Tools.JSON_Tools
         public static JNode GroupBy(List<JNode> args)
         {
             var itbl = (JArray)args[0];
-            object key = args[1].value;
+            JNode keyNode = args[1];
+            if (keyNode is JArray arr)
+                return GroupByRecursionHelper(itbl, arr, 0);
+            return GroupBySingleKey(itbl, keyNode);
+        }
+
+        public static JNode GroupByRecursionHelper(JArray itbl, JArray keys, int currentIdx)
+        {
+            JNode key = keys[currentIdx];
+            if (currentIdx == keys.Length - 1)
+                return GroupBySingleKey(itbl, key);
+            var gb = new Dictionary<string, JNode>();
+            if (key.value is long l)
+            {
+                int i = Convert.ToInt32(l);
+                foreach (JNode child in itbl.children)
+                {
+                    AddToGroupByDict(gb, i, child);
+                }
+            }
+            else if (key.value is string s)
+            {
+                foreach (JNode child in itbl.children)
+                {
+                    AddToGroupByDict(gb, s, child);
+                }
+            }
+            var recursiveGb = new Dictionary<string, JNode>();
+            foreach (string groupKey in gb.Keys)
+            {
+                JNode group = gb[groupKey];
+                recursiveGb[groupKey] = GroupByRecursionHelper((JArray)group, keys, currentIdx + 1);
+            }
+            return new JObject(0, recursiveGb);
+        }
+
+        /// <summary>
+        /// Returns a new JObject where each entry in itbl is grouped into a separate JArray under the stringified form
+        /// of the value associated with key/index key in itbl.
+        /// EXAMPLE<br></br>
+        /// * GroupBy([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar") returns:<br></br>
+        /// {"a": [{"foo": 1, "bar": "a"}, {"foo": 3, "bar": "a"}], "b": [{"foo": 2, "bar": "b"}]}<br></br>
+        /// * GroupBy([[1, "a"], [2, "b"], [2, "c"], [3, "d"]], 0) returns:<br></br>
+        /// {"1": [[1, "a"]], "2": [[2, "b"], [2, "c"]], "3": [[3, "d"]]}
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private static JNode GroupBySingleKey(JArray itbl, JNode keyNode)
+        {
+            object key = keyNode.value;
             if (!(key is string || key is long))
             {
                 throw new ArgumentException("The GroupBy function can only group by string keys or int indices");
             }
             var gb = new Dictionary<string, JNode>();
-            string vstr;
-            if (key is long)
+            if (key is long l)
             {
-                int ikey = Convert.ToInt32(key);
-                foreach (JNode node in itbl.children)
+                int ikey = Convert.ToInt32(l);
+                foreach (JNode child in itbl.children)
                 {
-                    JArray subobj = (JArray)node;
-                    JNode val = AtIndex(subobj, ikey);
-                    vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
-                    if (gb.ContainsKey(vstr))
-                    {
-                        ((JArray)gb[vstr]).children.Add(subobj);
-                    }
-                    else
-                    {
-                        gb[vstr] = new JArray(0, new List<JNode> { subobj });
-                    }
+                    AddToGroupByDict(gb, ikey, child);
+                }
+            }
+            else if (key is string skey)
+            {
+                foreach (JNode child in itbl.children)
+                {
+                    AddToGroupByDict(gb, skey, child);
                 }
             }
             else
-            {
-                string skey = (string)key;
-                foreach (JNode node in itbl.children)
-                {
-                    JObject subobj = (JObject)node;
-                    JNode val = subobj[skey];
-                    vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
-                    if (gb.ContainsKey(vstr))
-                    {
-                        ((JArray)gb[vstr]).children.Add(subobj);
-                    }
-                    else
-                    {
-                        gb[vstr] = new JArray(0, new List<JNode> { subobj });
-                    }
-                }
-            }
+                throw new RemesPathArgumentException("group_by keys must be integers or strings (or an array thereof)", 1, FUNCTIONS["group_by"]);
             return new JObject(0, gb);
+        }
+
+        private static void AddToGroupByDict(Dictionary<string, JNode> gb, int ikey, JNode child)
+        {
+            JArray subobj = (JArray)child;
+            JNode val = AtIndex(subobj, ikey);
+            string vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
+            if (gb.ContainsKey(vstr))
+            {
+                ((JArray)gb[vstr]).children.Add(subobj);
+            }
+            else
+            {
+                gb[vstr] = new JArray(0, new List<JNode> { subobj });
+            }
+        }
+
+        private static void AddToGroupByDict(Dictionary<string, JNode> gb, string skey, JNode child)
+        {
+            JObject subobj = (JObject)child;
+            JNode val = subobj[skey];
+            string vstr = val.type == Dtype.STR ? (string)val.value : val.ToString();
+            if (gb.ContainsKey(vstr))
+            {
+                ((JArray)gb[vstr]).children.Add(subobj);
+            }
+            else
+            {
+                gb[vstr] = new JArray(0, new List<JNode> { subobj });
+            }
         }
 
         /// <summary>
@@ -2175,7 +2242,7 @@ namespace JSON_Tools.JSON_Tools
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["enumerate"] = new ArgFunction(Enumerate, "enumerate", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR, Dtype.INT }),
-            ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT}),
+            ["group_by"] = new ArgFunction(GroupBy, "group_by", Dtype.OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.ARR}),
             ["in"] = new ArgFunction(In, "in", Dtype.BOOL, 2, 2, false, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE }),
             ["index"] = new ArgFunction(Index, "index", Dtype.INT, 2, 3, false, new Dtype[] {Dtype.ITERABLE, Dtype.SCALAR, Dtype.BOOL}),
             ["items"] = new ArgFunction(Items, "items", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.OBJ }),

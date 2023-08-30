@@ -244,12 +244,13 @@ namespace JSON_Tools.JSON_Tools
 
     public class RemesPathArgumentException : RemesPathException
     {
+        /// <summary>0-based index</summary>
         public int arg_num { get; set; }
         public ArgFunction func { get; set; }
 
-        public RemesPathArgumentException(string description, int arg_num, ArgFunction func) : base(description)
+        public RemesPathArgumentException(string description, int arg_index_0_based, ArgFunction func) : base(description)
         {
-            this.arg_num = arg_num;
+            this.arg_num = arg_index_0_based;
             this.func = func;
         }
 

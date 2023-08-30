@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Toolbar icons for [JSON pretty-print, JSON compress](/docs/README.md#json-formatting), treeview, and [path to current position](/docs/README.md#path-to-current-position). Fix [issue 36](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/36).
 2. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
+3. Ability to group by multiple variables with the [`group_by` RemesPath function](/docs/RemesPath.md#non-vectorized-functions).
 
 ### Changed
 

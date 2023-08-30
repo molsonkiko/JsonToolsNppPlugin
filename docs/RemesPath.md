@@ -284,8 +284,10 @@ It's easier to understand with some __examples:__
 * `flatten([1, [2, [3, [4]]]], 3)` returns `[1, 2, 3, 4]`.
 
 ----
-`group_by(x: array, k: int | str) -> object`
+`group_by(x: array, k: int | str | array) -> object`
 
+* If `k` is an array (*and the JsonTools version is [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd) or greater*)
+   * Returns a new object where each value `v` associated with `k[n]` is mapped to all (children of itbl where `child[k[n]] == v`) recursively grouped by `[k[n + 1], k[n + 2], ...]`.
 * If `x` is an array of *arrays*:
    * If `k` is *not* an int, throw an error.
    * Return an object where key `str(v)` has an array of sub-arrays `subarr` such that `subarr[k] == v` is `true`.
@@ -297,6 +299,27 @@ It's easier to understand with some __examples:__
    * Note that `subobj[k]` might not be a string in these sub-objects.
 * If `x` is an array of anything else, or it has a mixture of arrays an objects, throw an error.
 
+__Examples:__
+* `group_by([{"foo": 1, "bar": "a"}, {"foo": 2, "bar": "b"}, {"foo": 3, "bar": "a"}], "bar")` returns
+```json
+{"a": [{"foo": 1, "bar": "a"}, {"foo": 3, "bar": "a"}], "b": [{"foo": 2, "bar": "b"}]}
+```
+* `group_by([[1, "a"], [2, "b"], [2, "c"], [3, "d"]], 0)` returns
+```json
+{"1": [[1, "a"]], "2": [[2, "b"], [2, "c"]], "3": [[3, "d"]]}
+```
+* `group_by([{"a": 1, "b": "x", "c": -0.5}, {"a": 1, "b": "y", "c": 0.0}, {"a": 2, "b": "x", "c": 0.5}], ["a", "b"])` returns
+```json
+{"1": {"x": [{"a": 1, "b": "x", "c": -0.5}], "y": [{"a": 1, "b": "y", "c": 0.0}]}, "2": {"x": [{"a": 2, "b": "x", "c": 0.5}]}}
+```
+* `group_by([[1, "x", -0.5], [1, "y", 0.0], [2, "x", 0.5]], [1, 0])` returns
+```json
+{"x": {"1": [[1, "x", -0.5]], "2": [[2, "x", 0.5]]}, "y": {"1": [[1, "y", 0.0]]}}
+```
+* `group_by([[1, 2, 2, 0.0], [1, 2, 3, -1.0], [1, 3, 3, -2.0], [1, 3, 4, -3.0], [2, 2, 2, -4.0]], [0, 1, 2])` returns
+```json
+{"1": {"2": {"2": [[1, 2, 2, 0.0]], "3": [[1, 2, 3, -1.0]]}, "3": {"3": [[1, 3, 3, -2.0]], "4": [[1, 3, 4, -3.0]]}}, "2": {"2": {"2": [[2, 2, 2, -4.0]]}}}
+```
 ----
 `in(elt: anything, itbl: object | array) -> bool`
 
