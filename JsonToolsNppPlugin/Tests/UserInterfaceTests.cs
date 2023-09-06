@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting;
 using System.Windows.Forms;
 using JSON_Tools.Forms;
 using JSON_Tools.JSON_Tools;
@@ -131,7 +130,7 @@ namespace JSON_Tools.Tests
                         string previousNodes = new JArray(0, treeNodeTextArr.children.LazySlice(0, ii).ToList()).ToString();
                         messages.Add($"Expected treeview to contain path {treeNodeTextArr.ToString()}, " +
                                      $"but did not contain {treeNodeText} after nodes {previousNodes}");
-                        return true;
+                    return true;
                     }
                 }
                 messages.Add($"click treenodes {treeNodeTextArr.ToString()}");
@@ -168,6 +167,26 @@ namespace JSON_Tools.Tests
                 Main.openTreeViewer.QueryBox.Text = query;
                 Main.openTreeViewer.SubmitQueryButton.PerformClick();
                 messages.Add($"Perform Remespath query {query}");
+                break;
+            case "select_treenode_json":
+                if (!hasTreeView)
+                {
+                    messages.Add("Wanted to select the JSON associated with a treenode, but the treeview wasn't open");
+                    return true;
+                }
+                messages.Add("Select JSON associated with treenode");
+                var selNode = openTv.Tree.SelectedNode;
+                openTv.SelectTreeNodeJson(selNode);
+                break;
+            case "select_treenode_json_children":
+                if (!hasTreeView)
+                {
+                    messages.Add("Wanted to select the children of a treenode's associated JSON, but the treeview wasn't open");
+                    return true;
+                }
+                messages.Add("Select children of JSON associated with treenode");
+                selNode = openTv.Tree.SelectedNode;
+                openTv.SelectTreeNodeJsonChildren(selNode);
                 break;
             case "sort_form_open":
                 Main.OpenSortForm();
@@ -293,6 +312,35 @@ namespace JSON_Tools.Tests
             ("select", new object[]{new string[] {"8,15"} }),
             ("compress", new object[]{}),
             ("compare_text", new object[]{"[1,3,2]\r\n[44,5,6]\r\n[\"boo\",\"a\",\"c\"]"}),
+            // TEST SELECTING JSON (AND JSON CHILDREN) FROM TREEVIEW IN SELECTION-BASED DOC
+            ("delete_text", new object[]{20, 5}), // select treenode json and json children with array
+            ("insert_text", new object[]{20, "[1, NaN,\"b\"]"}),
+            ("compare_text", new object[]{"[1,3,2]\r\n[44,5,6]\r\n[[1, NaN,\"b\"],\"a\",\"c\"]"}),
+            ("tree_query", new object[]{"@"}),
+            ("treenode_click", new object[]{new string[] {"19,41 : [3]", "0 : [3]"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"20,32"} }),
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"21,22", "24,27", "28,31"} }),
+            ("delete_text", new object[]{20, 12}), // now select treenode json and json children with object
+            ("insert_text", new object[]{20, "{\"a\": [null], \"b\": {}}"}),
+            ("tree_query", new object[]{"@"}),
+            ("treenode_click", new object[]{new string[] {"19,51 : [3]", "0 : {2}"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"20,42"} }),
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"26,32", "39,41"} }),
+            ("treenode_click", new object[]{new string[] {"19,51 : [3]", "0 : {2}", "a : [1]", "0 : null"} }), // try selecting treenode json with scalar
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"27,31"} }),
+            ("delete_text", new object[]{20, 22}), // revert to how it was before select-treenode-json tests
+            ("insert_text", new object[]{20, "\"boo\""}),
+            ("tree_query", new object[]{"@"}),
+            ("treenode_click", new object[]{new string[] {"9,17 : [3]"} }), // try selecting json and json children on a different array
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"10,12", "13,14", "15,16"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"9,17"} }),
             // TEST FILE WITH ONLY ONE JSON DOCUMENT
             ("file_open", new object[]{1}),
             ("overwrite", new object[]{"[\r\n    [\"Я\", 1, \"a\"], // foo\r\n    [\"◐\", 2, \"b\"], // bar\r\n    [\"ồ\", 3, \"c\"], // baz\r\n    [\"ｪ\", 4, \"d\"],\r\n    [\"草\", 5, \"e\"],\r\n    [\"😀\", 6, \"f\"]\r\n]"}),
@@ -310,8 +358,31 @@ namespace JSON_Tools.Tests
             ("select", new object[]{new string[] {"1,7"} }),
             ("compress", new object[]{}),
             ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],[\"草\",8,\"e\"],[\"😀\",9,\"f\"]]"}),
-            ("file_open", new object[]{0}),
+            // TEST SELECTING JSON (AND JSON CHILDREN) FROM TREEVIEW IN SELECTION-BASED DOC
+            ("tree_query", new object[]{"@"}),
+            ("treenode_click", new object[]{new string[] {"2 : [3]"} }), // try selecting json and json children with array
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"29,34", "35,36", "37,40"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"28,41"} }),
+            ("treenode_click", new object[]{new string[] {"3 : [3]", "0 : \"ｪ\"" } }), // try selecting treenode json with scalar
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"43,48"} }),
+            ("overwrite", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],{\"草\":[8],\"e\":-.5, gor:/**/ '😀'},[\"😀\",9,\"f\"]]"}), // try selecting treenode json and json children with object
+            ("tree_query", new object[]{"@"}),
+            ("treenode_click", new object[]{new string[] {"4 : {3}"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"56,92"} }),
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"63,66", "71,74", "85,91"} }),
+            ("select", new object[]{new string[]{"0,0"} }),
+            ("tree_query", new object[]{"@![4][@[1] >= 7]"}), // try selecting treenode json children when parent is RemesPath query node
+            ("treenode_click", new object[]{new string[]{ } }),
+            ("select_treenode_json_children", new object[]{}),
+            ("pretty_print", new object[]{}),
+            ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\r\n    \"ｪ\",\r\n    7,\r\n    \"d\"\r\n],{\"草\":[8],\"e\":-.5, gor:/**/ '😀'},[\r\n    \"😀\",\r\n    9,\r\n    \"f\"\r\n]]"}),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
+            ("file_open", new object[]{0}),
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),
             ("compare_text", new object[]{"[\r\n    0.25,\r\n    0.75,\r\n    0.5\r\n]\r\n[\r\n    11.0,\r\n    1.25,\r\n    1.5\r\n]\r\n[\r\n    \"boo\",\r\n    \"a\",\r\n    \"c\"\r\n]"}),
             ("treenode_click", new object[]{new string[] {"37,72 : [3]", "1 : 1.25"} }),

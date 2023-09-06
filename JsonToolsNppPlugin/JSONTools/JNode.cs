@@ -603,6 +603,26 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// Returns false and sets errorMessage to ex.ToString()
+        /// if calling this.Equals(other) throws exception ex.<br></br>
+        /// If Equals throws no exception or showErrorMessage is false, errorMessage is null.
+        /// </summary>
+        public bool TryEquals(JNode other, out string errorMessage, bool showErrorMessage = false)
+        {
+            errorMessage = null;
+            try
+            {
+                return Equals(other);
+            }
+            catch (Exception ex)
+            {
+                if (showErrorMessage)
+                    errorMessage = ex.ToString();
+                return false;
+            }
+        }
+
+        /// <summary>
         /// return a deep copy of this JNode (same in every respect except memory location)<br></br>
         /// Also recursively copies all the children of a JArray or JObject.
         /// </summary>

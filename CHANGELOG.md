@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#540---2023-07-04) to this project will be documented in this file.
+All [notable changes](#570---unreleased-yyyy-mm-dd) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -35,14 +35,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
+- bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 
 ## [5.7.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 
 1. Toolbar icons for [JSON pretty-print, JSON compress](/docs/README.md#json-formatting), treeview, and [path to current position](/docs/README.md#path-to-current-position). Fix [issue 36](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/36).
-2. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
-3. Ability to group by multiple variables with the [`group_by` RemesPath function](/docs/RemesPath.md#non-vectorized-functions).
+2. Ability to [select JSON or a JSON's children from the treeview](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57).
+3. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
+4. [Negated indexers in RemesPath](/docs/RemesPath.md#negated-indexing-and-excluding-keys-v57-only).
+5. Ability to group by multiple variables with the [`group_by` RemesPath function](/docs/RemesPath.md#non-vectorized-functions).
 
 ### Changed
 

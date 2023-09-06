@@ -1,64 +1,105 @@
-The following language specification is in pseudo-Backus-Naur form.
-Please let me know if there are any logical inconsistencies in this language specification.
-THIS IS NOW OUT OF DATE. I MAY BRING IT BACK UP TO DATE IF ANYONE ASKS.
-_________________________________________
-expr ::= json (ws indexer_list)? projection?
-projection ::= object_projection | array_projection
-object_projection ::= l_curlybrace ws key_value_pair ws (comma ws key_value_pair ws)* r_curlybrace
-array_projection ::= l_curlybrace ws expr_function ws (comma ws expr_function ws)* r_curlybrace
-l_curlybrace ::= "{"
-r_curlybrace ::= "}"
-key_value_pair ::= string ws colon ws expr_function
-json ::= cur_json | json_string
-cur_json ::= "@"
-indexer_list ::= double_dot_indexer? indexer+
-indexer ::= dot single_varname
-            | l_squarebrace ws boolean_index ws r_squarebrace
-            | l_squarebrace ws varname_list ws r_squarebrace
-            | l_squarebrace ws slicer_list ws r_squarebrace
-double_dot_indexer ::= dot single_varname
-                        | dot dot l_squarebrace ws boolean_index ws r_squarebrace
-                        | dot dot l_squarebrace ws varname_list ws r_squarebrace
-                        | dot dot l_squarebrace ws slicer_list ws r_squarebrace
-l_squarebrace ::= "["
-r_squarebrace ::= "]"
-expr_function ::= expr
-                  | (expr | scalar_function) ws binop ws expr
-                  | expr ws binop ws (expr | scalar_function)
-                  | expr_arg_function
-                  | lparen expr_function rparen
-scalar_function ::= scalar
-                    | scalar_function ws binop ws scalar_function
-                    | scalar_arg_function
-                    | lparen scalar_function rparen
-boolean_index ::= expr_function
-expr_arg_function ::= unquoted_string ws lparen ws expr_function ws (comma ws (expr_function | scalar_function) ws)* rparen
-scalar_arg_function ::= unquoted_string ws lparen ws scalar_function ws (comma ws scalar_function ws)* rparen
-single_varname ::= varname | star
-slicer_list ::= star | slicer ws (comma ws slicer ws)*
-star ::= "*"
-varname_list ::= varname ws (comma ws varname ws)*
-slicer ::= int | int? colon int? colon int?
-scalar ::= quoted_string | num | regex | constant
-varname ::= string | regex
-string ::= quoted_string | unquoted_string
-regex ::= g quoted_string
-json_string ::= j quoted_string
-quoted_string ::= backtick ascii_char* backtick ; "`" inside the string must be escaped by "\\"; see the BACKTICK_STRING_REGEX below
-unquoted_string ::= "[a-zA-Z_][a-zA-Z_0-9]*"
-ascii_char ::= "[\x00-\xff]"
-num ::= int dec_part? exp_part?
-int ::= "(-?(?:0|[1-9]\d*))"
-dec_part ::= "(\.\d+)"
-exp_part ::= "([eE][-+]?\d+)?"
-constant ::= bool | "Infinity" | null | "NaN" | "-Infinity"
-null ::= "null"
-bool ::= "true" | "false"
-ws ::= "[ \t\n\r]*"
-binop ::= "&" | "|" | "^" | "=~" | "[=><!]=" | "<" | ">" | "+" | "-"
-          | "/" | "//" | star | star star | "in"
-colon ::= ":"
-comma ::= ","
-dot ::= "."
-g ::= "g"
-j ::= "j"
+This is the pseudo-Backus-Naur grammar of RemesPath as of JsonTools 5.7.
+In the future it will likely change with the addition of things like variable assignment, user-defined functions, and multiple statements.
+==========================
+STATEMENT := ASSIGNMENT_EXPR
+    | EXPR_FUNC
+ASSIGNMENT_EXPR := EXPR_FUNC EQUALS_SIGN EXPR_FUNC
+EQUALS_SIGN := WHITESPACE "=" WHITESPACE
+EXPR_FUNC := OPEN_PAREN EXPR_FUNC CLOSE_PAREN
+    | EXPR_FUNC BINOP EXPR_FUNC
+    | UNARY_OP EXPR_FUNC
+    | EXPR
+EXPR := WHITESPACE (ARG_FUNC
+    | CUR_JSON 
+    | JSON_LITERAL
+    | SCALAR
+    | EXPR INDEXER) WHITESPACE
+ARG_FUNC := UNQUOTED_STR OPEN_PAREN ARGS? CLOSE_PAREN
+ARGS := EXPR_FUNC COMMA ARGS | EXPR_FUNC
+COMMA := WHITESPACE "," WHITESPACE
+CUR_JSON := "@"
+JSON_LITERAL := "j" QUOTED_STR
+REGEX := "g" QUOTED_STR
+SLICER := INTEGER? COLON INTEGER? (COLON INTEGER?)?
+SCALAR := STR | NUMBER | BOOL | REGEX | NULL
+STR := QUOTED_STR | UNQUOTED_STR
+NUMBER := INTEGER | FLOAT
+INTEGER := HEX_INT | DEC_INT
+NEG = "-"
+PLUS := "+"
+PLUS_MINUS := PLUS | NEG
+HEX_INT := "0x" HEX_DIGITS
+HEX_DIGITS := HEX_DIGIT HEX_DIGITS
+    | HEX_DIGIT
+HEX_DIGIT := A-F | a-f | DIGIT
+NONZERO_DIGIT := "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+DIGIT := "0" | NONZERO_DIGIT
+DEC_INT := NONZERO_DIGIT DIGITS
+    | NONZERO_DIGIT
+DIGITS := DIGITS DIGIT | DIGIT
+FLOAT := DOT_PART EXP_PART?
+DOT_PART := DEC_INT
+    | DEC_INT (DOT DEC_INT)?
+    | DOT DEC_INT
+EXP_PART := ("E" | "e") PLUS_MINUS? DEC_INT
+BOOL := "true" | "false"
+NULL := "null"
+UNQUOTED_STR := (see JSON5 spec for unquoted object keys)
+QUOTED_STR := BACKTICK QUOTED_STR_CONTENTS BACKTICK
+QUOTED_STR_CONTENTS := QUOTED_STR_CHAR QUOTED_STR_CONTENTS
+    | QUOTED_STR_CHAR?
+QUOTED_STR_CHAR := BACKSLASH_ESCAPE
+    | UNESCAPED_UNICODE
+UNESCAPED_UNICODE := UNICODE (excluding ESCAPED_CHAR)
+UNICODE := (any Unicode character)
+BACKSLASH_ESCAPE := BACKSLASH ESCAPED_CHAR
+ESCAPED_CHAR := BACKSLASH | BACKTICK | DOUBLEQUOTE
+BACKSLASH := "\"
+BACKTICK := "`"
+WHITESPACE := WHITESPACE_CHAR WHITESPACE | WHITESPACE_CHAR?
+WHITESPACE_CHAR := "\x20" | "\t" | "\r" | "\n"
+OPEN_PAREN := WHITESPACE "(" WHITESPACE
+CLOSE_PAREN := WHITESPACE ")" WHITESPACE
+OPEN_CURLYBRACE := WHITESPACE "{" WHITESPACE
+CLOSE_CURLYBRACE := WHITESPACE "}" WHITESPACE
+OPEN_SQUAREBRACE := WHITESPACE "[" WHITESPACE
+CLOSE_SQUAREBRACE := WHITESPACE "]" WHITESPACE
+INDEXER := BOOLEAN_INDEXER
+    | DOT_INDEXER
+    | VARNAME_LIST
+    | SLICER_LIST
+    | PROJECTION
+    | NEGATED_INDEXER
+BOOLEAN_INDEXER := OPEN_SQUAREBRACE EXPR_FUNC CLOSE_SQUAREBRACE
+DOT_INDEXER := WHITESPACE DOTS WHITESPACE DOT_INDEXER_ITEM WHITESPACE
+DOT := "."
+DOUBLEDOT := ".."
+DOTS := DOT | DOUBLEDOT
+DOT_INDEXER_ITEM := STAR | STR | REGEX
+STAR := "*"
+VARNAME_LIST := DOUBLEDOT? OPEN_SQUAREBRACE VARNAMES CLOSE_SQUAREBRACE
+VARNAMES := VARNAME COMMA VARNAMES | VARNAME
+VARNAME := STR | REGEX
+SLICER_LIST := OPEN_SQUAREBRACE SLICER_INTS CLOSE_SQUAREBRACE
+SLICER_INTS := SLICER_INT SLICER_INTS | SLICER_INT
+SLICER_INT := INTEGER | SLICER
+PROJECTION := ARRAY_PROJECTION
+    | OBJECT_PROJECTION
+    | MAP_PROJECTION
+ARRAY_PROJECTION := OPEN_CURLYBRACE ARGS? CLOSE_CURLYBRACE
+OBJECT_PROJECTION := OPEN_CURLYBRACE KEY_VALUE_PAIRS CLOSE_CURLYBRACE
+KEY_VALUE_PAIRS := KEY_VALUE COMMA KEY_VALUE_PAIRS | KEY_VALUE
+KEY_VALUE := STR COLON EXPR_FUNCTION
+COLON := WHITESPACE ":" WHITESPACE
+MAP_PROJECTION := FORWARD_ARROW EXPR_FUNCTION
+FORWARD_ARROW := WHITESPACE "->" WHITESPACE
+NEGATED_INDEXER := NEGATED_VARNAME_LIST | NEGATED_SLICER_LIST
+NEGATED_VARNAME_LIST := BANG OPEN_SQUAREBRACE VARNAMES CLOSE_SQUAREBRACE
+    | BANG WHITESPACE DOT WHITESPACE VARNAME WHITESPACE
+NEGATED_SLICER_LIST := BANG SLICER_LIST
+BANG := WHITESPACE "!" WHITESPACE
+BINOP := STAR | NEG | PLUS | "/" | "//" | "**" | "==" | "!=" | "=~" | "<=" | ">=" | "<" | ">" | "&" | "|" | "%" | "^"
+UNARY_OP := "not" | NEG | PLUS
+NEG := "-"
+PLUS := "+"
+DOUBLEQUOTE := '"'

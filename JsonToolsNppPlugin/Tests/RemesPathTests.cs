@@ -24,12 +24,14 @@ namespace JSON_Tools.Tests
         public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
-            JNode foo = jsonParser.Parse("{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
-                                           "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
-                                           "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}");
+            string fooStr = "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
+                            "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
+                            "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}";
+            JNode foo = jsonParser.Parse(fooStr);
             JObject fooObj = (JObject)foo;
+            int fooLen = fooObj.Length;
             RemesParser remesparser = new RemesParser();
-            Npp.AddLine($"The queried JSON in the RemesParser tests is:{foo.ToString()}");
+            Npp.AddLine($"The queried JSON in the RemesParser tests is:{fooStr}");
             var testcases = new Query_DesiredResult[]
             {
                 // subtraction
@@ -201,8 +203,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@[foo][0][:1, 2:]", "[0, 2]"),
                 new Query_DesiredResult("@[foo][0][0, 2:4]", "[0, 2]"),
                 new Query_DesiredResult("@[foo][0][3:, 0]", "[0]"),
-                new Query_DesiredResult("@.*", foo.ToString()),
+                new Query_DesiredResult("@.*", fooStr),
                 new Query_DesiredResult("@.foo[*]", "[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]"),
+                new Query_DesiredResult("@[*]", fooStr),
                 new Query_DesiredResult("@.foo[:2][2*@[0] >= @[1]]", "[[3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("@.foo[-1]", "[6.0, 7.0, 8.0]"),
                 // out-of-bounds index tests
@@ -222,9 +225,45 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("j`[1,2,3]`[@ < 0]", "[]"),
                 new Query_DesiredResult("j`[1,2,3]`[false]", "[]"),
                 new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[false]", "{}"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[len(@) > 0]", "{\"a\": 1, \"b\": 2}"),
+                new Query_DesiredResult("j`{\"a\": 1, \"b\": 2}`[true]", "{\"a\": 1, \"b\": 2}"),
                 new Query_DesiredResult("@.foo[:]{a: @[0], b: @[1], c: @[2], d: @[2] / @[0]}[@.a * @.c < @.b][@ > 1]", "[{\"c\": 2, \"d\": Infinity}]"),
+                // negated varname list tests
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}!.e", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4}"),
+                new Query_DesiredResult("j`{a: 1, b: 2, c: 3, d: 4, e: 5}`!.d", "{\"a\": 1, \"b\": 2, \"c\": 3, \"e\": 5}"),
+                new Query_DesiredResult("j`{a: 1, b: 2, c: 3, d: 4, e: 5}`!.g`[a-d]`", "{\"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![e]", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![f]", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4, \"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}!.g`f`", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4, \"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}!.g`e`", "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![g`[de]`, c]", "{\"a\": 1, \"b\": 2}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![g`[de]`, g`[ac]`, g`f`]", "{\"b\": 2}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![g`[de]`, g`[acd]`, g`[fe]`]", "{\"b\": 2}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, b, d, e]", "{\"c\": 3}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, b, c, d, e]", "{}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, b, g`[bc]`]", "{\"d\": 4, \"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, b, g`c`, g`d`]", "{\"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, b, f, g`[cd]`]", "{\"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![a, g`[b]`, g`[cd]`]", "{\"e\": 5}"),
+                new Query_DesiredResult("@{a: 1, b: 2, c: 3, d: 4, e: 5}![f, g`[b]`, g`[cd]`]", "{\"a\": 1, \"e\": 5}"),
+                new Query_DesiredResult("@{a: @{1, 2}, b: @{3}, c: 3, d: 4, e: 5}![c, d, e][:]{@, str(@)}", "{\"a\": [[1,\"1\"],[2,\"2\"]], \"b\": [[3,\"3\"]]}"),
+                // negated slicer list tests
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![0]", "[1, 2, 3, 4]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![1:]", "[0]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:2, -2]", "[2, 4]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:2, -4]", "[2, 3, 4]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:2, 4]", "[2, 3]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:3:2]", "[1, 3, 4]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:3:2, -1]", "[1, 3]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:3:2, -2:]", "[1]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![:3, -2:]", "[]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![0, 1, 2, 4]", "[3]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![0, -3, 2, -1]", "[1, 3]"),
+                new Query_DesiredResult("j`[0, 1, 2, 3, 4]`![2, 1::3]", "[0, 3]"),
+                new Query_DesiredResult("j`[[0,-1], 1, 2, [3,-4], 4]`![2, 1::3][1]", "[-1,-4]"),
+                new Query_DesiredResult("j`[{\"a\": 0,\"b\":-1}, {\"c\":1}, {\"a\":1}, {\"a\":3,\"b\":-4}, 4]`[:3]!.a", "[{\"b\": -1},{\"c\":1}]"),
                 // ufunction tests
-                new Query_DesiredResult("len(@)", ((JObject)foo).Length.ToString()),
+                new Query_DesiredResult("len(@)", fooLen.ToString()),
                 new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
                 new Query_DesiredResult("in(1, @.foo[0])", "true"),
                 new Query_DesiredResult("in(4.0, @.foo[0])", "false"),
@@ -293,7 +332,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("zip(j`[1,2,3]`, j`[\"a\", \"b\", \"c\"]`)", "[[1, \"a\"], [2, \"b\"], [3, \"c\"]]"),
                 new Query_DesiredResult("zip(@.foo[0], @.foo[1], @.foo[2], j`[-20, -30, -40]`)", "[[0, 3.0, 6.0, -20], [1, 4.0, 7.0, -30], [2, 5.0, 8.0, -40]]"),
                 new Query_DesiredResult("dict(zip(keys(@.bar), j`[1, 2]`))", "{\"a\": 1, \"b\": 2}"),
-                new Query_DesiredResult("dict(items(@))", foo.ToString()),
+                new Query_DesiredResult("dict(items(@))", fooStr),
                 new Query_DesiredResult("dict(j`[[\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"a\": 1, \"b\": 2, \"c\": 3}"),
                 new Query_DesiredResult("items(j`{\"a\": 1, \"b\": 2, \"c\": 3}`)", "[[\"a\", 1], [\"b\", 2], [\"c\", 3]]"),
                 new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
@@ -316,7 +355,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("range(0, -len(@) * len(@))", "[]"),
                 new Query_DesiredResult("range(0, 5, -len(@))", "[]"),
                 new Query_DesiredResult("-len(@) + len(@)", "0"), // see if binops of uminus'd CurJson are also causing problems when they're not the second arg to the range function
-                new Query_DesiredResult("-len(@) * len(@)", (-(((JObject)foo).Length * ((JObject)foo).Length)).ToString()),
+                new Query_DesiredResult("-len(@) * len(@)", (-(fooLen * fooLen)).ToString()),
                 new Query_DesiredResult("abs(-len(@) + len(@))", "0"), // see if other functions (not just range) of binops of uminus'd CurJson cause problems
                 new Query_DesiredResult("range(0, abs(-len(@) + len(@)))", "[]"),
                 new Query_DesiredResult("range(0, -abs(-len(@) + len(@)))", "[]"),
@@ -382,13 +421,17 @@ namespace JSON_Tools.Tests
                 // making sure various escapes work in backtickstrings
                 new Query_DesiredResult("`\\t\\r\\n`", "\"\t\\r\\n\""),
                 // "->" (map) operator
-                new Query_DesiredResult("@ -> len(@)", fooObj.Length.ToString()),
+                new Query_DesiredResult("@ -> len(@)", fooLen.ToString()),
                 new Query_DesiredResult("@.foo[:] -> stringify(@)", "[\"[0,1,2]\", \"[3.0,4.0,5.0]\", \"[6.0,7.0,8.0]\"]"),
                 new Query_DesiredResult("@.* -> 3", "{\"foo\": 3, \"bar\": 3, \"baz\": 3, \"quz\": 3, \"jub\": 3, \"guzo\": 3, \"7\": 3, \"_\": 3}"),
                 new Query_DesiredResult("@.bar.* -> type(@)", "{\"a\": \"boolean\", \"b\": \"array\"}"),
                 new Query_DesiredResult("@.`7`[:] -> s_len(stringify(@)) {s: str(@), gt1: @ > 1}", "[{\"s\": \"9\", \"gt1\": true}, {\"s\": \"1\", \"gt1\": false}]"),
                 new Query_DesiredResult("j`{\"a\": [\"1\", \"2\"], \"b\": [\"x\", \"yz\"]}`.* -> s_join(_, @) -> (s_split(@, ``)[1:-1]) -> (@ * range(1, 1 + len(@)))",
                       "{\"a\": [\"1\", \"__\", \"222\"], \"b\": [\"x\", \"__\", \"yyy\", \"zzzz\"]}"),
+                new Query_DesiredResult("j`[1,2,3]` -> @ * 3", "[3, 6, 9]"),
+                new Query_DesiredResult("j`[{\"a\": [[1], [2, 3]], \"b\": [null]}, {\"a\": [[4, 5], [6], []], \"b\": [1.5, {}]}]`" +
+                                        "[:]{al: @.a[:]->len(@)*2, bt: @.b[:]->type(@)}",
+                                        "[{\"al\": [2, 4], \"bt\": [\"null\"]}, {\"al\": [4, 2, 0], \"bt\": [\"number\", \"object\"]}]"),
             };
             int ii = 0;
             int tests_failed = 0;
@@ -417,7 +460,7 @@ namespace JSON_Tools.Tests
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!(result.type == jdesired_result.type && result.Equals(jdesired_result)))
+                if (!result.TryEquals(jdesired_result, out _))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
@@ -510,7 +553,7 @@ namespace JSON_Tools.Tests
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!(result.type == desired_result.type && result.Equals(desired_result)))
+                if (!result.TryEquals(desired_result, out _))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, " +
@@ -554,6 +597,14 @@ namespace JSON_Tools.Tests
                 new []{"group_by(@, -4)", "[[1, 2], [2, 3]]"},
                 new []{"s_slice(@, -4)", "[\"abc\", \"cde\"]"},
                 new []{"s_slice(@, 7)", "[\"abc\", \"cde\"]"},
+                // disallowed negated indices (recursive, star, boolean, projection)
+                new []{"@!..a", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},
+                new []{"@!..[a, c]", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},
+                new []{"@!..[0, -1:]", "[1, 2, 3, 4]"},
+                new []{"@!.*", "[1, 2, 3, 4]"},
+                new []{"@!..*", "[1, 2, 3, 4]"},
+                new []{"@![@ > 3]", "[1, 2, 3, 4]"},
+                new []{"@!{@ > 3}", "[1, 2, 3, 4]"},
             });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
@@ -634,6 +685,10 @@ namespace JSON_Tools.Tests
                     "{\"foo\": [-1, 2, 3], \"bar\": \"ab\", \"baz\": \"de\"}" },
                 new string[]{ foostr, "@.g`b` = s_len(@)",
                     "{\"foo\": [-1, 2, 3], \"bar\": 3, \"baz\": 2}" },
+                new string[]{ foostr, "@!.foo = s_len(@)",
+                    "{\"foo\": [-1, 2, 3], \"bar\": 3, \"baz\": 2}" },
+                new string[]{ "[1, 2, 3, 4, 5]", "@![:1, -1] = @ * -2",
+                    "[1, -4, -6, -8, 5]" },
             };
             foreach (string[] test in testcases)
             {
@@ -653,13 +708,13 @@ namespace JSON_Tools.Tests
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (inp.type != jdesired_result.type || !inp.Equals(jdesired_result))
+                if (!inp.TryEquals(jdesired_result, out _))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to mutate {inpstr} into {jdesired_result.ToString()}, " +
                                       $"but instead got {inp.ToString()}.");
                 }
-                if (result.type != jdesired_result.type || !result.Equals(jdesired_result))
+                if (!result.TryEquals(jdesired_result, out _))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to return {jdesired_result.ToString()}, " +

@@ -75,7 +75,7 @@ Syntax error at position 3: Number with two decimal points
             @"(\.\d+(?:[eE][-+]?\d+)?)|" + // numbers with leading decimal point
             @"(->)|" + // map operator
             @"(&|\||\^|=~|[!=]=|<=?|>=?|\+|-|//?|%|\*\*?)|" + // binops
-            @"([,\[\]\(\)\{\}\.:=])|" + // delimiters
+            @"([,\[\]\(\)\{\}\.:=!])|" + // delimiters
             @"([gj]?(?<!\\)`(?:\\`|[^`])*(?<!\\)`)|" + // backtick strings
             $@"({JsonParser.UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{JsonParser.UNQUOTED_START})*)|" + // unquoted strings
             @"(\S+)", // anything non-whitespace non-token stuff (will cause error)

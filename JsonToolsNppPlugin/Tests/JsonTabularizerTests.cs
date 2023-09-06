@@ -441,15 +441,7 @@ namespace JSON_Tools.Tests
 				try
 				{
 					result = tabularizer.BuildTable(jinp, schema, key_sep);
-					try
-					{
-						if (!jdesired_out.Equals(result))
-						{
-							tests_failed++;
-							Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
-						}
-					}
-					catch
+					if (!jdesired_out.TryEquals(result, out _))
 					{
 						tests_failed++;
 						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -675,15 +667,7 @@ namespace JSON_Tools.Tests
 				try
 				{
 					result = no_recursion_tabularizer.BuildTable(jinp, schema);
-					try
-					{
-						if (!jdesired_out.Equals(result))
-						{
-							tests_failed++;
-							Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
-						}
-					}
-					catch
+					if (!jdesired_out.TryEquals(result, out _))
 					{
 						tests_failed++;
 						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -735,15 +719,7 @@ namespace JSON_Tools.Tests
 				try
 				{
 					result = full_recursive_tabularizer.BuildTable(jinp, schema);
-					try
-					{
-						if (!jdesired_out.Equals(result))
-						{
-							tests_failed++;
-							Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
-						}
-					}
-					catch
+					if (!jdesired_out.TryEquals(result, out _))
 					{
 						tests_failed++;
 						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -847,15 +823,7 @@ namespace JSON_Tools.Tests
 				try
 				{
 					result = stringify_iterables_tabularizer.BuildTable(jinp, schema);
-					try
-					{
-						if (!jdesired_out.Equals(result))
-						{
-							tests_failed++;
-							Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
-						}
-					}
-					catch
+					if (!jdesired_out.TryEquals(result, out _))
 					{
 						tests_failed++;
 						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");

@@ -210,19 +210,10 @@ namespace JSON_Tools.Tests
                 try
                 {
                     schema = JsonSchemaMaker.GetSchema(jinp);
-                    try
+                    if (!schema.TryEquals(desired_schema, out _))
                     {
-                        if (!schema.Equals(desired_schema))
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead got\n{schema.ToString()}");
-                        }
-                    }
-                    catch
-                    {
-                        // probably because of something like trying to compare an array to a non-array
                         tests_failed++;
-                        Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead got {schema.ToString()}");
+                        Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead got\n{schema.ToString()}");
                     }
                 }
                 catch (Exception e)

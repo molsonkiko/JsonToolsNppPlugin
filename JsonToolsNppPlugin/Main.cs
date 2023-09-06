@@ -1177,6 +1177,7 @@ namespace Kbg.NppPluginNET
             JsonParser jsonChecker = new JsonParser(LoggerLevel.NAN_INF, false, true);
             var startEnds = new List<string>();
             int lastEnd = 0;
+            Predicate<char> isTryParseStart = c => settings.try_parse_start_chars.IndexOf(c) >= 0;
             foreach ((int start, int end) in selections)
             {
                 string text = Npp.GetSlice(start, end);
@@ -1186,7 +1187,7 @@ namespace Kbg.NppPluginNET
                 while (ii < len)
                 {
                     char c = text[ii];
-                    if (settings.try_parse_start_chars.Contains(c))
+                    if (isTryParseStart(c))
                     {
                         int startUtf8Pos = utf8Pos;
                         int startII = ii;
@@ -1628,6 +1629,89 @@ namespace Kbg.NppPluginNET
             sortForm.Focus();
         }
         #endregion
+        #region more_helper_functions
+        /// <summary>
+        /// Assumes that startUtf8Pos is the start of a JNode in the current document.<br></br>
+        /// Returns the position in that document of the end of that JNode.
+        /// </summary>
+        /// <param name="startUtf8Pos"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public static int EndOfJNodeAtPos(int startUtf8Pos, int end)
+        {
+            string slice = Npp.GetSlice(startUtf8Pos, end);
+            var parser = new JsonParser(LoggerLevel.JSON5, false, true, true, false);
+            try
+            {
+                parser.ParseSomething(slice, 0);
+            }
+            catch
+            {
+                return startUtf8Pos;
+            }
+            return startUtf8Pos + parser.utf8Pos;
+        }
+
+        /// <summary>
+        /// Assumes that positions is a set of start positions for non-root JNodes in the current document.<br></br>
+        /// If any of those start positions is 0, do nothing because it is not possible for any JNode
+        /// other than the root to have a position of 0 in a parsed document (it is only possible in a RemesPath query result).<br></br>
+        /// Otherwise, attempts to parse the document starting at each position, and if parsing is successful,
+        /// adds a new selection of the parsed child starting at that position.
+        /// </summary>
+        public static void SelectAllChildren(IEnumerable<int> positions)
+        {
+            int[] sortedPositions = positions.Distinct().ToArray();
+            if (sortedPositions.Length == 0)
+                return;
+            Array.Sort(sortedPositions);
+            int minPos = sortedPositions[0];
+            if (minPos == 0)
+            {
+                // it's not possible for a child of a parsed JNode to have a position of 0,
+                // because only the root can be at position 0.
+                // this would only happen if this is being invoked from the right click context menu
+                // on the treeview for a RemesPath query result
+                MessageBox.Show("Cannot select all children because one or more of the children does not correspond to a JSON node in the document",
+                    "Can't select all children", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
+            string slice = Npp.GetSlice(minPos, Npp.editor.GetLength());
+            var parser = new JsonParser(LoggerLevel.JSON5, false, true, true);
+            int utf8ExtraBytes = 0;
+            int positionsIdx = 0;
+            int nextStartPos = 0;
+            var selections = new List<string>();
+            int ii = 0;
+            while (ii < slice.Length)
+            {
+                if (ii + utf8ExtraBytes == nextStartPos)
+                {
+                    parser.Reset();
+                    parser.ii = ii;
+                    try
+                    {
+                        parser.ParseSomething(slice, 0);
+                        int selStart = minPos + nextStartPos;
+                        selections.Add($"{selStart},{selStart + parser.utf8Pos - ii}");
+                    }
+                    catch { }
+                    ii = parser.ii;
+                    utf8ExtraBytes += parser.utf8Pos - ii;
+                    positionsIdx++;
+                    if (positionsIdx == sortedPositions.Length)
+                        break;
+                    nextStartPos = sortedPositions[positionsIdx] - minPos;
+                }
+                else
+                {
+                    utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(slice[ii]);
+                    ii++;
+                }
+            }
+            SelectionManager.SetSelectionsFromStartEnds(selections);
+        }
+        #endregion // more_helper_functions
         #region timer_stuff
         /// <summary>
         /// This callback fires once every second.<br></br>

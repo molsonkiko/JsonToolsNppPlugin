@@ -60,10 +60,12 @@ namespace JSON_Tools.Forms
             this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.OpenSortFormItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.RefreshButton = new System.Windows.Forms.Button();
             this.FindReplaceButton = new System.Windows.Forms.Button();
-            this.OpenSortFormItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SelectThisItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SelectAllChildrenItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -157,9 +159,11 @@ namespace JSON_Tools.Forms
             this.CopyKeyItem,
             this.CopyPathItem,
             this.ToggleSubtreesItem,
-            this.OpenSortFormItem});
+            this.SelectThisItem,
+            this.OpenSortFormItem,
+            this.SelectAllChildrenItem});
             this.NodeRightClickMenu.Name = "NodeRightClickMenu";
-            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 152);
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 200);
             // 
             // CopyValueMenuItem
             // 
@@ -229,6 +233,13 @@ namespace JSON_Tools.Forms
             this.ToggleSubtreesItem.Size = new System.Drawing.Size(267, 24);
             this.ToggleSubtreesItem.Text = "Expand/collapse all subtrees";
             // 
+            // OpenSortFormItem
+            // 
+            this.OpenSortFormItem.Name = "OpenSortFormItem";
+            this.OpenSortFormItem.Size = new System.Drawing.Size(267, 24);
+            this.OpenSortFormItem.Text = "Sort array...";
+            this.OpenSortFormItem.Visible = false;
+            // 
             // CurrentPathBox
             // 
             this.CurrentPathBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
@@ -265,12 +276,18 @@ namespace JSON_Tools.Forms
             this.FindReplaceButton.Click += new System.EventHandler(this.FindReplaceButton_Click);
             this.FindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
-            // OpenSortFormItem
+            // SelectThisItem
             // 
-            this.OpenSortFormItem.Name = "OpenSortFormItem";
-            this.OpenSortFormItem.Size = new System.Drawing.Size(267, 24);
-            this.OpenSortFormItem.Text = "Sort array...";
-            this.OpenSortFormItem.Visible = false;
+            this.SelectThisItem.Name = "SelectThisItem";
+            this.SelectThisItem.Size = new System.Drawing.Size(267, 24);
+            this.SelectThisItem.Text = "Select this";
+            // 
+            // SelectAllChildrenItem
+            // 
+            this.SelectAllChildrenItem.Name = "SelectAllChildrenItem";
+            this.SelectAllChildrenItem.Size = new System.Drawing.Size(267, 24);
+            this.SelectAllChildrenItem.Text = "Select all children";
+            this.SelectAllChildrenItem.Visible = false;
             // 
             // TreeViewer
             // 
@@ -318,5 +335,7 @@ namespace JSON_Tools.Forms
         internal System.Windows.Forms.Button SubmitQueryButton;
         internal System.Windows.Forms.Button RefreshButton;
         private System.Windows.Forms.ToolStripMenuItem OpenSortFormItem;
+        private System.Windows.Forms.ToolStripMenuItem SelectThisItem;
+        private System.Windows.Forms.ToolStripMenuItem SelectAllChildrenItem;
     }
 }

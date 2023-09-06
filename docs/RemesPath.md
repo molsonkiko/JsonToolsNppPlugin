@@ -50,6 +50,19 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
     2. Consider the object `{"a": 1, "b": 2}`
         * Queries `@.z` and `@[x, j]` will both return `{}`
 
+### Negated indexing and *excluding* keys (v5.7+ only) ###
+
+Suppose you want to match every key in an object *except `c` and `d`*, or every element in an array *except the 3rd*. RemesPath has always offered ways to do this (often roundabout), but beginning in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), this is much easier with `!` (exclamation point) before any of the key-selecting or index-selecting indexers described above:
+
+* To select every key *except `c` and `d`*, use the query `@![c, d]`
+    * The query `@![c, d]` on JSON `{"a": 1, "b": 2, "c": 3, "d": 4}` returns `{"a": 1, "b": 2}`
+* To select every key that *does not match the regex `[a-c]`*, use the query ``@!.g`[a-c]` ``
+    * The query ``@!.g`[a-c]` `` on JSON `{"a": 1, "b": 2, "c": 3, "d": 4}` returns `{"d": 4}`
+* To select every value of an array *except the 3rd and the last three*, use the query `@![2, -3:]`
+    * The query `@![2, -3:]` on JSON `[1, 2, 3, 4, 5, 6, 7, 8]` returns `[1, 2, 4, 5]`
+
+__Negated indexing does not work with recursive key selection.__ For example `@!..a` will raise an error.
+
 ## Vectorized operations ##
 
 1. Many operations are *vectorized* in RemesPath. That is, they are applied to every element in an iterable.

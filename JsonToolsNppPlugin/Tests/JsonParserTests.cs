@@ -60,7 +60,7 @@ namespace JSON_Tools.Tests
                     continue;
                 }
                 JNode cp = node.Copy();
-                if (!node.Equals(cp))
+                if (!node.TryEquals(cp, out _))
                 {
                     tests_failed++;
                     Npp.AddLine($"Expected Copy({node.ToString()}) to return\n{node.ToString()}\nInstead got {cp.ToString()}");
@@ -230,7 +230,7 @@ Got
                 }
                 ii++;
                 JNode json_from_norm_str_out = parser.Parse(norm_str_out);
-                if (!json_from_norm_str_out.Equals(json)
+                if (!json_from_norm_str_out.TryEquals(json, out _)
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
                     tests_failed++;
@@ -257,7 +257,7 @@ Got
                 }
                 ii++;
                 JNode json_from_pprint_out = parser.Parse(pprint_out);
-                if (!json_from_pprint_out.Equals(json)
+                if (!json_from_pprint_out.TryEquals(json, out _)
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
                     tests_failed++;
@@ -574,7 +574,7 @@ Got
                 ii++;
                 JNode a = parser.Parse(astr);
                 JNode b = parser.Parse(bstr);
-                bool result = a.Equals(b);
+                bool result = a.TryEquals(b, out _);
                 if (result != a_equals_b)
                 {
                     tests_failed++;
@@ -723,15 +723,7 @@ multiline comment
                 try
                 {
                     result = parser.Parse(inp);
-                    try
-                    {
-                        if (!desired_out.Equals(result))
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
-                        }
-                    }
-                    catch
+                    if (!desired_out.TryEquals(result, out _))
                     {
                         tests_failed++;
                         Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
@@ -945,15 +937,7 @@ multiline comment
                     }
                     lint_sb.Append("]");
                     string lint_str = lint_sb.ToString();
-                    try
-                    {
-                        if (!jdesired.Equals(result) || lint_str != expected_lint_str)
-                        {
-                            tests_failed++;
-                            Npp.AddLine($"{base_message}Instead returned\n{result.ToString()} and had lint {lint_str}");
-                        }
-                    }
-                    catch
+                    if (!jdesired.TryEquals(result, out _) || lint_str != expected_lint_str)
                     {
                         tests_failed++;
                         Npp.AddLine($"{base_message}Instead returned\n{result.ToString()} and had lint {lint_str}");
@@ -1008,7 +992,7 @@ multiline comment
                     tests_failed++;
                     continue;
                 }
-                if (!json.Equals(desired_output))
+                if (!json.TryEquals(desired_output, out _))
                 {
                     tests_failed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:

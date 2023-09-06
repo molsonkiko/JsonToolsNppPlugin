@@ -65,7 +65,9 @@ namespace JSON_Tools.Forms
         private static MouseEventHandler keyToClipboardHandler_Python = null;
         private static MouseEventHandler keyToClipboardHandler_Javascript = null;
         private static MouseEventHandler ToggleSubtreesHandler = null;
+        private static MouseEventHandler selectThisHandler = null;
         private static MouseEventHandler showSortFormHandler = null;
+        private static MouseEventHandler selectAllChildrenHandler = null;
 
         public TreeViewer(JNode json)
         {
@@ -505,28 +507,47 @@ namespace JSON_Tools.Forms
             }
             catch { return; }
             if (node == null) return;
-            int pos = pathsToJNodes[node.FullPath].position;
-            if (UsesSelections())
-            {
-                // the document is divided into sub-jsons (one for each selection)
-                // each sub-json treats the position of its selection start as 0
-                // we need to correct for this
-                TreeNode parent = node;
-                while (parent.Parent != null)
-                {
-                    Match mtch = Regex.Match(parent.Text, @"^(\d+),\d+ : ");
-                    if (mtch.Success)
-                    {
-                        int start = int.Parse(mtch.Groups[1].Value);
-                        pos += start;
-                        break;
-                    }
-                    parent = parent.Parent;
-                }
-            }
-            Npp.editor.GotoPos(pos);
+            Npp.editor.GotoPos(NodePosInJsonDoc(node));
             // might also want to make it so that the selected line is scrolled to the top
             CurrentPathBox.Text = PathToTreeNode(node, Main.settings.key_style);
+        }
+
+        /// <summary>
+        /// For TreeViews of multi-selection documents, each selection has its own sub-tree<br></br>
+        /// associated with the key "{selection start},{selection end}"<br></br>
+        /// To determine which selection a TreeNode belongs to, we recursively search the parent hierarchy of node
+        /// until we find a node whose text has a key of that form,<br></br>
+        /// then we return {selection start} from the key "{selection start},{selection end}"<br></br>
+        /// For a whole-document treeview, return 0.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private int ParentSelectionStartPos(TreeNode node)
+        {
+            if (!UsesSelections())
+                return 0;
+            int start = 0;
+            while (node.Parent != null)
+            {
+                Match mtch = Regex.Match(node.Text, @"^(\d+),\d+ : ");
+                if (mtch.Success)
+                {
+                    start = int.Parse(mtch.Groups[1].Value);
+                    break;
+                }
+                node = node.Parent;
+            }
+            return start;
+        }
+
+        /// <summary>
+        /// position of associated JNode, after factoring in the position of the JNode's parent selection
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private int NodePosInJsonDoc(TreeNode node)
+        {
+            return pathsToJNodes[node.FullPath].position + ParentSelectionStartPos(node);
         }
 
         private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -823,7 +844,14 @@ namespace JSON_Tools.Forms
                     }
                 );
                 NodeRightClickMenu.Items[3].MouseUp += ToggleSubtreesHandler;
-                var sortFormOpenItem = NodeRightClickMenu.Items[4];
+                var selectThisItem = NodeRightClickMenu.Items[4];
+                selectThisItem.MouseUp -= selectThisHandler;
+                selectThisHandler = new MouseEventHandler(
+                    (s2, e2) => SelectTreeNodeJson(node)
+                );
+                selectThisItem.MouseUp += selectThisHandler;
+                var sortFormOpenItem = NodeRightClickMenu.Items[5];
+                var selectAllChildrenItem = NodeRightClickMenu.Items[6];
                 if (nodeJson is JArray || nodeJson is JObject)
                 {
                     sortFormOpenItem.Visible = true;
@@ -838,8 +866,18 @@ namespace JSON_Tools.Forms
                         }
                     );
                     sortFormOpenItem.MouseUp += showSortFormHandler;
+                    selectAllChildrenItem.Visible = true;
+                    selectAllChildrenItem.MouseUp -= selectAllChildrenHandler;
+                    selectAllChildrenHandler = new MouseEventHandler(
+                        (s2, e2) => SelectTreeNodeJsonChildren(node)
+                    );
+                    selectAllChildrenItem.MouseUp += selectAllChildrenHandler;
                 }
-                else sortFormOpenItem.Visible = false;
+                else
+                {
+                    sortFormOpenItem.Visible = false;
+                    selectAllChildrenItem.Visible = false;
+                }
                 NodeRightClickMenu.Show(MousePosition);
             }
             if (node.IsSelected)
@@ -894,6 +932,49 @@ namespace JSON_Tools.Forms
                 return $"[{idx}]";
             }
             return JNode.FormatKey(node.Name, style);
+        }
+
+        public void SelectTreeNodeJson(TreeNode node)
+        {
+            if (Main.activeFname != fname)
+                return;
+            int nodeStartPos = 0, nodeEndPos = 0;
+            if (pathsToJNodes.TryGetValue(node.FullPath, out _))
+            {
+                nodeStartPos = NodePosInJsonDoc(node);
+                nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, Npp.editor.GetLength());
+            }
+            if (nodeStartPos == nodeEndPos)
+                MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
+                    "Couldn't select associated JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            else
+            {
+                Npp.editor.ClearSelections();
+                Npp.editor.SetSelection(nodeStartPos, nodeEndPos);
+                Npp.editor.GrabFocus();
+            }
+        }
+
+        public void SelectTreeNodeJsonChildren(TreeNode node)
+        {
+            if (Main.activeFname != fname)
+                return;
+            if (!pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
+                MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
+                    "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            int selectionStartPos = ParentSelectionStartPos(node);
+            IEnumerable<int> positions;
+            if (jnode is JArray arr)
+                positions = arr.children.Select(x => selectionStartPos + x.position);
+            else if (jnode is JObject obj)
+                positions = obj.children.Values.Select(x => selectionStartPos + x.position);
+            else
+            {
+                MessageBox.Show("The selected JSON is not an object or array, and thus has no children.",
+                    "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            Main.SelectAllChildren(positions);
         }
 
         /// <summary>

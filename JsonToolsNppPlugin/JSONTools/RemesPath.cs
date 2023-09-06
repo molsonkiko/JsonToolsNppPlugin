@@ -2,10 +2,8 @@
 A query language for JSON. 
 */
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
 
@@ -20,8 +18,45 @@ namespace JSON_Tools.JSON_Tools
         public Obj_Pos(object obj, int pos) { this.obj = obj; this.pos = pos; }
     }
     #endregion DATA_HOLDER_STRUCTS
-    
+
     #region OTHER_HELPER_CLASSES
+    [Flags]
+    public enum IndexerStart
+    {
+        NOT_AN_INDEXER = 1,
+        /// <summary>[</summary>
+        SQUAREBRACE = NOT_AN_INDEXER * 2,
+        /// <summary>{</summary>
+        CURLYBRACE = SQUAREBRACE * 2,
+        /// <summary>.</summary>
+        DOT = CURLYBRACE * 2,
+        /// <summary>..</summary>
+        DOUBLEDOT = DOT * 2,
+        /// <summary>..[</summary>
+        DOUBLEDOT_SQUAREBRACE = DOUBLEDOT * 2,
+        /// <summary>-&gt;</summary>
+        FORWARD_ARROW = DOUBLEDOT_SQUAREBRACE * 2,
+        /// <summary>![</summary>
+        BANG_SQUAREBRACE = FORWARD_ARROW * 2,
+        /// <summary>!.</summary>
+        BANG_DOT = BANG_SQUAREBRACE * 2,
+        // currently recursive negated indices are not supported because (a) annoying to implement and (b) potentially very counterintuitive
+        ///// <summary>!..</summary>
+        //BANG_DOUBLEDOT = BANG_DOT * 2,
+        ///// <summary>!..[</summary>
+        //BANG_DOUBLEDOT_SQUAREBRACE = BANG_DOUBLEDOT * 2,
+
+        ANY_DOT_TYPE = DOT | DOUBLEDOT | BANG_DOT /*| BANG_DOUBLEDOT*/,
+
+        PROJECTION = CURLYBRACE | FORWARD_ARROW,
+
+        ANY_SQUAREBRACE_TYPE = BANG_SQUAREBRACE | SQUAREBRACE | DOUBLEDOT_SQUAREBRACE,
+
+        ANY_BANG_TYPE = BANG_DOT | BANG_SQUAREBRACE /*| BANG_DOUBLEDOT | BANG_DOUBLEDOT_SQUAREBRACE*/,
+
+        ANY_DOUBLEDOT_TYPE = DOUBLEDOT | DOUBLEDOT_SQUAREBRACE /*| BANG_DOUBLEDOT | BANG_DOUBLEDOT_SQUAREBRACE*/,
+    }
+
     /// <summary>
     /// anything that filters the keys of an object or the indices of an array
     /// </summary>
@@ -361,11 +396,13 @@ namespace JSON_Tools.JSON_Tools
                 return mut.Mutate(obj);
             }
             return compiled_query;
-        } 
+        }
 
+        /// <summary>
+        /// these tokens have high enough precedence to stop an expr_function or scalar_function
+        /// </summary>
         public const string EXPR_FUNC_ENDERS = "]:},)";
-        // these tokens have high enough precedence to stop an expr_function or scalar_function
-        public const string INDEXER_STARTERS = ".[{>";
+        public const string INDEXER_STARTERS = ".[{>!";
         public const string PROJECTION_STARTERS = "{>";
 
         #region INDEXER_FUNCTIONS
@@ -507,6 +544,130 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return multi_idx_func;
             }
+        }
+
+        /// <summary>
+        /// returns a predicate that evaluates whether a key s matches a varname list<br></br>
+        /// (e.g., ".bar" matches the key "bar",<br></br>
+        /// "[bar, g`baz`]" matches the key "bar" or the regex "baz" 
+        /// </summary>
+        /// <param name="inds"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathException"></exception>
+        private Predicate<string> VarnameListMatcher(List<object> inds)
+        {
+            var keys = new HashSet<string>();
+            var regexes = new List<Regex>();
+            foreach (object obj in inds)
+            {
+                if (obj is string s)
+                    keys.Add(s);
+                else
+                    regexes.Add((Regex)obj);
+            }
+            int keyCount = keys.Count;
+            int rexCount = regexes.Count;
+            string firstKey = keyCount == 0 ? null : keys.ToArray()[0];
+            Regex firstRegex = rexCount == 0 ? null : regexes[0];
+            if (keyCount > 0)
+            {
+                if (rexCount > 0)
+                {
+                    if (keyCount == 1)
+                    {
+                        if (rexCount == 1)
+                            return s => (s == firstKey) || firstRegex.IsMatch(s);
+                        else 
+                            return s => (s == firstKey) || regexes.Any(rex => rex.IsMatch(s));
+                    }
+                    else if (rexCount == 1)
+                        return s => keys.Contains(s) || firstRegex.IsMatch(s);
+                    else // multiple keys, multiple regexes
+                        return s => keys.Contains(s) || regexes.Any(rex => rex.IsMatch(s));
+                }
+                else // multiple keys, no regexes
+                    return keys.Contains;
+            }
+            else if (rexCount > 0)
+            {
+                if (rexCount == 1) // one regex, no keys
+                    return firstRegex.IsMatch;
+                return s => regexes.Any(rex => rex.IsMatch(s));
+            }
+            else
+                throw new RemesPathException("Negated indexer with no strings or regexes"); // should never happen due to earlier checks
+        }
+
+        private Func<JNode, IEnumerable<object>> ApplyNegatedVarnameList(List<object> inds)
+        {
+            //if (is_recursive)
+            //{
+            //    IEnumerable<JNode> negatedVarnameListFunc(JNode node)
+            //    {
+            //        if (node is JArray arr)
+            //        {
+            //            foreach (JNode child in arr.children)
+            //            {
+            //                foreach (JNode subchild in negatedVarnameListFunc(child))
+            //                    yield return subchild;
+            //            }
+            //        }
+            //        else if (node is JObject obj)
+            //        {
+            //            foreach (KeyValuePair<string, JNode> kv in obj.children)
+            //            {
+            //                if (!matcher(kv.Key))
+            //                    yield return kv.Value;
+            //            }
+            //        }
+            //    }
+            //    return negatedVarnameListFunc;
+            //}
+            //else
+            //{
+            Predicate<string> matcher = VarnameListMatcher(inds);
+            IEnumerable<object> negatedVarnameListFunc(JNode node)
+            {
+                var obj = (JObject)node;
+                foreach (KeyValuePair<string, JNode> kv in obj.children)
+                {
+                    if (!matcher(kv.Key))
+                        yield return kv;
+                }
+            };
+            return negatedVarnameListFunc;
+            //}
+        }
+
+        private int[] IndicesMatchingNegatedSlicerList(List<object> inds, int length)
+        {
+            if (length == 0)
+                return new int[0];
+            var allIndices = new int[length];
+            for (int ii = 0; ii < length; ii++)
+                allIndices[ii] = ii;
+            var potentialIndices = new HashSet<int>(allIndices);
+            foreach (object ind in inds)
+            {
+                if (ind is int ii)
+                    potentialIndices.Remove(ii < 0 ? ii + length : ii);
+                else if (ind is int?[] slicer)
+                    potentialIndices.ExceptWith(allIndices.LazySlice(slicer));
+            }
+            var matchedIndices = potentialIndices.ToArray();
+            Array.Sort(matchedIndices);
+            return matchedIndices;
+        }
+
+        private Func<JNode, IEnumerable<JNode>> ApplyNegatedSlicerList(List<object> inds)
+        {
+            IEnumerable<JNode> negatedSlicerListFunc(JNode node)
+            {
+                JArray arr = (JArray)node;
+                foreach (int ii in IndicesMatchingNegatedSlicerList(inds, arr.Length))
+                    yield return arr.children[ii];
+            }
+            return negatedSlicerListFunc;
         }
 
         private IEnumerable<KeyValuePair<string, JNode>> ApplyRegexIndex(JObject obj, Regex regex)
@@ -1064,64 +1225,104 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        private Obj_Pos ParseIndexer(List<object> toks, int pos, int end)
+        private static (IndexerStart indStart, int pos) DetermineIndexerStart(List<object> toks, int pos, int end)
+        {
+            object t = PeekNextToken(toks, pos - 1, end);
+            if (!(t is char d) || !INDEXER_STARTERS.Contains(d))
+            {
+                return (IndexerStart.NOT_AN_INDEXER, pos);
+            }
+            object nt = PeekNextToken(toks, pos, end);
+            if (nt is char nd)
+            {
+                if (d == '.' && nd == '.')
+                {
+                    object nnt = PeekNextToken(toks, pos + 1, end);
+                    if (nnt is char nnd && nnd == '[')
+                        return (IndexerStart.DOUBLEDOT_SQUAREBRACE, pos + 3);
+                    return (IndexerStart.DOUBLEDOT, pos + 2);
+                }
+                if (d == '!')
+                {
+                    if (nd == '.')
+                    {
+                        //object nnt = PeekNextToken(toks, pos + 1, end);
+                        //if (nnt is char nnd && nnd == '.') // uncomment if bringing back support for negated recursive indexers
+                        //{
+                        //    object nnnt = PeekNextToken(toks, pos + 2, end);
+                        //    if (nnnt is char nnnd && nnnd == '[')
+                        //        return (IndexerStart.BANG_DOUBLEDOT_SQUAREBRACE, pos + 4);
+                        //    return (IndexerStart.BANG_DOUBLEDOT, pos + 3);
+                        //}
+                        return (IndexerStart.BANG_DOT, pos + 2);
+                    }
+                    else if (nd == '[')
+                        return (IndexerStart.BANG_SQUAREBRACE, pos + 2);
+                    return (IndexerStart.NOT_AN_INDEXER, pos);
+                }
+            }
+            switch (d)
+            {
+            case '[': return (IndexerStart.SQUAREBRACE, pos + 1);
+            case '{': return (IndexerStart.CURLYBRACE, pos + 1);
+            case '.': return (IndexerStart.DOT, pos + 1);
+            case '>': return (IndexerStart.FORWARD_ARROW, pos + 1);
+            default: return (IndexerStart.NOT_AN_INDEXER, pos);
+            }
+        }
+
+        private Obj_Pos ParseIndexer(List<object> toks, int pos, int end, IndexerStart indStart)
         {
             object t = toks[pos];
             object nt;
-            if (!(t is char d))
-            {
-                throw new RemesPathException("Expected delimiter at the start of indexer");
-            }
             List<object> children = new List<object>();
-            if (d == '.')
+            if (IndexerStart.ANY_DOT_TYPE.HasFlag(indStart))
             {
-                nt = PeekNextToken(toks, pos, end);
-                if (nt != null)
+                if (t != null)
                 {
-                    if (nt is Binop bnt && bnt.name == "*")
+                    if (t is Binop bt && bt.name == "*")
                     {
                         // it's a '*' indexer, which means select all keys/indices
-                        return new Obj_Pos(new StarIndexer(), pos + 2);
+                        return new Obj_Pos(new StarIndexer(), pos + 1);
                     }
-                    JNode jnt = (nt is UnquotedString st)
+                    JNode jt = (t is UnquotedString st)
                         ? new JNode(st.value, Dtype.STR, 0)
-                        : (JNode)nt;
-                    if ((jnt.type & Dtype.STR_OR_REGEX) == 0)
+                        : (JNode)t;
+                    if ((jt.type & Dtype.STR_OR_REGEX) == 0)
                     {
                         throw new RemesPathException("'.' syntax for indexers requires that the indexer be a string, " +
                                                     "regex, or '*'");
                     }
-                    if (jnt is JRegex jnreg)
+                    if (jt is JRegex jnreg)
                     {
                         children.Add(jnreg.regex);
                     }
                     else
                     {
-                        children.Add(jnt.value);
+                        children.Add(jt.value);
                     }
-                    return new Obj_Pos(new VarnameList(children), pos + 2);
+                    return new Obj_Pos(new VarnameList(children), pos + 1);
                 }
             }
-            else if (d == '{')
+            else if (indStart == IndexerStart.CURLYBRACE)
             {
-                return ParseProjection(toks, pos+1, end);
+                return ParseProjection(toks, pos, end);
             }
-            else if (d == '>') // "->" map operator
+            else if (indStart == IndexerStart.FORWARD_ARROW)
             {
-                return ParseMap(toks, pos + 1, end);
+                return ParseMap(toks, pos, end);
             }
-            else if (d != '[')
+            else if (!IndexerStart.ANY_SQUAREBRACE_TYPE.HasFlag(indStart))
             {
-                throw new RemesPathException("Indexer must start with '.', '[', '{', or \"->\"");
+                throw new RemesPathException("Indexer must start with '.', '[', '{', '!', or \"->\"");
             }
             Indexer indexer = null;
             object last_tok = null;
             JNode jlast_tok;
             Dtype last_type = Dtype.UNKNOWN;
-            t = toks[++pos];
             if (t is Binop b && b.name == "*")
             {
-                // it was '*', indicating a star indexer
+                // it was '*', indicating star indexer in squarebraces ("[*]")
                 nt = PeekNextToken(toks, pos, end);
                 if (nt is char nd && nd  == ']')
                 {
@@ -1132,9 +1333,8 @@ namespace JSON_Tools.JSON_Tools
             while (pos < end)
             {
                 t = toks[pos];
-                if (t is char)
+                if (t is char d)
                 {
-                    d = (char)t;
                     if (d == ']')
                     {
                         // it's a ']' that terminates the indexer
@@ -1313,30 +1513,24 @@ namespace JSON_Tools.JSON_Tools
             {
                 throw new RemesPathException("Found null where JNode expected");
             }
-            object nt = PeekNextToken(toks, pos - 1, end);
-            if ((last_tok.type & Dtype.ITERABLE) != 0 || (nt is char && PROJECTION_STARTERS.Contains((char)nt)))
+            (IndexerStart indStart, int indStartEndPos) = DetermineIndexerStart(toks, pos, end);
+            if ((last_tok.type & Dtype.ITERABLE) != 0 || IndexerStart.PROJECTION.HasFlag(indStart))
             {
                 // The last token is an iterable (in which case various indexers are allowed)
                 // or the next token is the start of a projection (unlike other indexers, projections can operate on scalars too)
                 var idxrs = new List<IndexerFunc>();
-                object nt2, nt3;
-                while (nt != null && nt is char nd && INDEXER_STARTERS.Contains(nd))
+                pos = indStartEndPos;
+                while (indStart != IndexerStart.NOT_AN_INDEXER)
                 {
-                    nt2 = PeekNextToken(toks, pos, end);
-                    bool is_recursive = false;
-                    if (nt2 is char nd2 && nd2 == '.' && nd == '.')
-                    {
-                        is_recursive = true;
-                        nt3 = PeekNextToken(toks, pos + 1, end);
-                        pos += (nt3 is char nd3 && nd3 == '[') ? 2 : 1;
-                    }
-                    Obj_Pos opo = ParseIndexer(toks, pos, end);
+                    bool is_recursive = IndexerStart.ANY_DOUBLEDOT_TYPE.HasFlag(indStart);
+                    bool is_negated = IndexerStart.ANY_BANG_TYPE.HasFlag(indStart);
+                    if (is_recursive && is_negated)
+                        throw new RemesPathException("Recursive negated indexers (of the form \"!..a\" or \"!..[g`a`]\") are not currently supported.");
+                    Obj_Pos opo = ParseIndexer(toks, pos, end, indStart);
                     Indexer cur_idxr = (Indexer)opo.obj;
-                    pos = opo.pos;
-                    nt = PeekNextToken(toks, pos - 1, end);
                     bool is_varname_list = cur_idxr is VarnameList;
                     bool is_dict = is_varname_list & !is_recursive;
-                    bool has_one_option = nd == '>'; // Some slicer/varname lists return one item, but the map item always does
+                    bool has_one_option = indStart == IndexerStart.FORWARD_ARROW; // Some slicer/varname lists return one item, but the map item always does
                     bool is_projection = false;
                     if (is_varname_list || cur_idxr is SlicerList)
                     {
@@ -1345,7 +1539,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             children = ((VarnameList)cur_idxr).children;
                             // recursive search means that even selecting a single key/index could select from multiple arrays/dicts and thus get multiple results
-                            if (!is_recursive && children.Count == 1 && children[0] is string)
+                            if (!is_recursive && !is_negated && children.Count == 1 && children[0] is string)
                             {
                                 // the indexer only selects a single key from a dict
                                 // Since the key is defined implicitly by this choice, this indexer will only return the value
@@ -1355,18 +1549,29 @@ namespace JSON_Tools.JSON_Tools
                         else
                         {
                             children = ((SlicerList)cur_idxr).children;
-                            if (!is_recursive && children.Count == 1 && children[0] is int)
+                            if (!is_recursive && !is_negated && children.Count == 1 && children[0] is int)
                             {
                                 // the indexer only selects a single index from an array
                                 // Since the index is defined implicitly by this choice, this indexer will only return the value
                                 has_one_option = true;
                             }
                         }
-                        Func<JNode, IEnumerable<object>> idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
+                        Func<JNode, IEnumerable<object>> idx_func;
+                        if (is_negated)
+                        {
+                            if (is_varname_list)
+                                idx_func = ApplyNegatedVarnameList(children);
+                            else
+                                idx_func = ApplyNegatedSlicerList(children);
+                        }
+                        else
+                            idx_func = ApplyMultiIndex(children, is_varname_list, is_recursive);
                         idxrs.Add(new IndexerFunc(idx_func, has_one_option, is_projection, is_dict, is_recursive));
                     }
                     else if (cur_idxr is BooleanIndex boodex)
                     {
+                        if (is_negated)
+                            throw new RemesPathException("Negated boolean indices are not supported; just invert the logic to get the same effect.");
                         JNode boodex_fun = (JNode)boodex.value;
                         var idxr = new IndexerFunc(null, has_one_option, is_projection, is_dict, is_recursive);
                         idxr.idxr = idxr.ApplyBooleanIndex(boodex_fun);
@@ -1374,17 +1579,22 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else if (cur_idxr is Projection proj)
                     {
+                        if (is_negated)
+                            throw new RemesPathException("Negated projections are not supported.");
                         Func<JNode, IEnumerable<object>> proj_func = proj.proj_func;
                         idxrs.Add(new IndexerFunc(proj_func, has_one_option, true, false, false));
                     }
                     else
                     {
+                        if (is_negated)
+                            throw new RemesPathException("Negated star indexers are not supported.");
                         // it's a star indexer
                         if (is_recursive)
                             idxrs.Add(new IndexerFunc(RecursivelyFlattenIterable, false, false, false, true));
                         else
                             idxrs.Add(new IndexerFunc(ApplyStarIndexer, has_one_option, is_projection, is_dict, false));
                     }
+                    (indStart, pos) = DetermineIndexerStart(toks, opo.pos, end);
                 }
                 if (idxrs.Count > 0)
                 {
@@ -1755,7 +1965,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private Obj_Pos ParseMap(List<object> toks, int pos, int end)
         {
-            Obj_Pos opo = ParseExprOrScalar(toks, pos, end);
+            Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
             JNode val = (JNode)opo.obj;
             pos = opo.pos;
             Func<JNode, JNode> outfunc;
@@ -1764,7 +1974,7 @@ namespace JSON_Tools.JSON_Tools
             else
                 outfunc = x => val;
             IEnumerable<object> iterator(JNode x) { yield return outfunc(x); }
-            return new Obj_Pos(new Projection(iterator), pos + 1);
+            return new Obj_Pos(new Projection(iterator), pos);
         }
         #endregion
         #region EXCEPTION_PRETTIFIER

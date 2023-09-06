@@ -337,6 +337,14 @@ In versions 3.4.0 through 3.6.1.1, you can also click on the `Current path` butt
 
 ![Current path button for path to current tree node](/docs/path%20to%20current%20tree%20node%20button.PNG)
 
+### Select tree node's JSON (or its children) *(added in v5.7)* ###
+
+Starting in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), you can use the tree view to select any JSON element or the children of that element.
+
+![Treeview select associated JSON children](/docs/treeview%20select%20associated%20json%20children.PNG)
+
+In some cases this feature will fail to select JSON after entering a RemesPath query. This is expected behavior and not a bug, for reasons that are hard to articulate.
+
 ## JSON formatting ##
 
 *Added in version 3.3.0*
