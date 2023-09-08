@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Text;
 using JSON_Tools.Utils;
+using System.Linq;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -73,9 +74,9 @@ Syntax error at position 3: Number with two decimal points
             @"(0x[\da-fA-F]+)|" + // hex numbers
             @"(0|[1-9]\d*)(\.\d*)?([eE][-+]?\d+)?|" + // numbers
             @"(\.\d+(?:[eE][-+]?\d+)?)|" + // numbers with leading decimal point
-            @"(->)|" + // map operator
+            @"(->)|" + // delimiters containing characters that conflict with binops
             @"(&|\||\^|=~|[!=]=|<=?|>=?|\+|-|//?|%|\*\*?)|" + // binops
-            @"([,\[\]\(\)\{\}\.:=!])|" + // delimiters
+            @"([,\[\]\(\)\{\}\.:=!;])|" + // delimiters
             @"([gj]?(?<!\\)`(?:\\`|[^`])*(?<!\\)`)|" + // backtick strings
             $@"({JsonParser.UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{JsonParser.UNQUOTED_START})*)|" + // unquoted strings
             @"(\S+)", // anything non-whitespace non-token stuff (will cause error)
@@ -186,6 +187,16 @@ Syntax error at position 3: Number with two decimal points
             ["true"] = true,
             ["false"] = false
         };
+
+        public static readonly string[] VAR_ASSIGN_KEYWORDS = new string[] { "var" };
+
+        public static readonly string[] MISC_KEYWORDS = new string[] { "not" };
+
+        public static readonly HashSet<string> KEYWORDS =
+            CONSTANTS.Keys
+            .Concat(VAR_ASSIGN_KEYWORDS)
+            .Concat(MISC_KEYWORDS)
+            .ToHashSet();
 
         /// <summary>
         /// Parses a reference to a named function, or an unquoted string, or a reference to a constant like true or false or NaN

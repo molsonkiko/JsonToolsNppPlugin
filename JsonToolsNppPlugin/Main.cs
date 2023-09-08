@@ -683,13 +683,13 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="json"></param>
         /// <param name="formatter"></param>
-        public static void ReformatFileWithJson(JNode json, Func<JNode, string> formatter, bool usesSelections)
+        public static Dictionary<string, (string newKey, JNode child)> ReformatFileWithJson(JNode json, Func<JNode, string> formatter, bool usesSelections)
         {
+            var keyChanges = new Dictionary<string, (string newKey, JNode child)>();
             if (usesSelections)
             {
                 var obj = (JObject)json;
                 int delta = 0;
-                var keyChanges = new Dictionary<string, (string newKey, JNode child)>();
                 pluginIsEditing = true;
                 Npp.editor.BeginUndoAction();
                 var keyvalues = obj.children.ToArray();
@@ -724,9 +724,10 @@ namespace Kbg.NppPluginNET
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             IsCurrentFileBig();
+            return keyChanges;
         }
 
-        static JNode RenameAll(Dictionary<string, (string, JNode)> keyChanges, JObject obj)
+        public static JNode RenameAll(Dictionary<string, (string, JNode)> keyChanges, JObject obj)
         {
             foreach (string oldKey in keyChanges.Keys)
             {

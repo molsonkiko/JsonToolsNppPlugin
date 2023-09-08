@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -32,7 +33,7 @@ namespace JSON_Tools.Forms
         /// <summary>
         /// result of latest RemesPath query
         /// </summary>
-        public JNode query_result;
+        public JNode queryResult;
 
         public JNode json;
 
@@ -76,7 +77,7 @@ namespace JSON_Tools.Forms
             pathsToJNodes = new Dictionary<string, JNode>();
             fname = Npp.notepad.GetCurrentFilePath();
             this.json = json;
-            query_result = json;
+            queryResult = json;
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             findReplaceForm = null;
@@ -339,10 +340,14 @@ namespace JSON_Tools.Forms
                 RefreshButton.PerformClick();
             bool usesSelections = UsesSelections();
             string query = QueryBox.Text;
-            JNode query_func;
+            JNode queryFunc;
+            // complex queries may mutate the input JSON but return only a subset of the JSON.
+            // in this case, we want the tree to be populated by the subset returned by query_func.Operate (because the point of the tree is to provide a view into subsets of the input)
+            // but we want the document to be repopulated with the original JSON (after its mutation by the complex query)
+            JNode treeFunc;
             try
             {
-                query_func = remesParser.Compile(query);
+                queryFunc = remesParser.Compile(query);
             }
             catch (Exception ex)
             {
@@ -381,35 +386,46 @@ namespace JSON_Tools.Forms
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             };
-            // if the query is an assignment expression, we need to overwrite the file with the
+            // if the query mutates input, we need to overwrite the file with the
             // modified JSON after the query has been executed
-            if (query_func is JMutator mut)
+            if (queryFunc.IsMutator)
             {
+                bool isMultiStepQuery = queryFunc is JQueryContext;
                 if (usesSelections)
                 {
                     // in order to track which query results are in which selections,
                     // each query needs to be performed separately on each selection
                     var obj = (JObject)json;
-                    var query_obj = new JObject();
+                    var queryObj = new JObject();
+                    var treeObj = isMultiStepQuery ? new JObject() : queryObj;
                     foreach (KeyValuePair<string, JNode> kv in obj.children)
                     {
                         try
                         {
-                            var subquery_func = mut.Mutate(kv.Value);
-                            query_obj[kv.Key] = subquery_func;
+                            var subquery_func = queryFunc.Operate(kv.Value);
+                            if (isMultiStepQuery)
+                            {
+                                treeObj[kv.Key] = subquery_func;
+                                queryObj[kv.Key] = kv.Value;
+                            }
+                            else
+                                queryObj[kv.Key] = subquery_func;
                         }
                         catch (Exception ex)
                         {
                             RuntimeErrorMessage(ex, kv.Key);
                         }
                     }
-                    query_func = query_obj;
+                    treeFunc = treeObj;
+                    queryFunc = queryObj;
                 }
                 else
                 {
                     try
                     {
-                        query_func = mut.Mutate(json);
+                        JNode result = queryFunc.Operate(json);
+                        treeFunc = result;
+                        queryFunc = isMultiStepQuery ? json : result;
                     }
                     catch (Exception ex)
                     {
@@ -417,38 +433,49 @@ namespace JSON_Tools.Forms
                         return;
                     }
                 }
-                Main.ReformatFileWithJson(query_func, Main.PrettyPrintFromSettings, UsesSelections());
-                json = query_func;
-                Main.jsonFileInfos[fname].json = query_func;
-                query_result = query_func;
+                Dictionary<string, (string, JNode)> keyChanges = Main.ReformatFileWithJson(queryFunc, Main.PrettyPrintFromSettings, usesSelections);
+                if (isMultiStepQuery && usesSelections && treeFunc is JObject treeObj_)
+                {
+                    var treeKeyChanges = new Dictionary<string, (string, JNode)>();
+                    foreach (string changedKey in keyChanges.Keys)
+                    {
+                        string newKey = keyChanges[changedKey].Item1;
+                        if (treeObj_.children.TryGetValue(changedKey, out JNode changedKeyVal))
+                            treeKeyChanges[changedKey] = (newKey, changedKeyVal);
+                    }
+                    Main.RenameAll(treeKeyChanges, treeObj_);
+                }
+                json = queryFunc;
+                Main.jsonFileInfos[fname].json = queryFunc;
+                queryResult = treeFunc;
             }
             // not an assignment expression, so executing the query changes the contents of the tree
             // but leaves the text of the document unchanged
-            else if (query_func is CurJson qf)
+            else if (queryFunc.CanOperate)
             {
                 if (usesSelections)
                 {
                     var obj = (JObject)json;
-                    var query_obj = new JObject();
+                    var queryObj = new JObject();
                     foreach (KeyValuePair<string, JNode> kv in obj.children)
                     {
                         try
                         {
-                            JNode subquery_result = qf.function(kv.Value);
-                            query_obj[kv.Key] = subquery_result;
+                            JNode subquery_result = queryFunc.Operate(kv.Value);
+                            queryObj[kv.Key] = subquery_result;
                         }
                         catch (Exception ex)
                         {
                             RuntimeErrorMessage(ex, kv.Key);
                         }
                     }
-                    query_result = query_obj;
+                    queryResult = queryObj;
                 }
                 else
                 {
                     try
                     {
-                        query_result = qf.function(json);
+                        queryResult = queryFunc.Operate(json);
                     }
                     catch (Exception ex)
                     {
@@ -456,26 +483,28 @@ namespace JSON_Tools.Forms
                         return;
                     }
                 }
+                treeFunc = queryResult;
             }
             else
             {
                 // query_func is a constant, so just set the query to that
-                query_result = query_func;
+                queryResult = queryFunc;
+                treeFunc = queryResult;
             }
-            JsonTreePopulate(query_result);
+            JsonTreePopulate(treeFunc);
         }
 
         private void QueryToCsvButton_Click(object sender, EventArgs e)
         {
-            if (query_result == null) return;
-            using (var jsonToCsv = new JsonToCsvForm(query_result))
+            if (queryResult == null) return;
+            using (var jsonToCsv = new JsonToCsvForm(queryResult))
                 jsonToCsv.ShowDialog();
         }
 
         private void SaveQueryResultButton_Click(object sender, EventArgs e)
         {
-            if (query_result == null) return;
-            Main.PrettyPrintJsonInNewFile(query_result);
+            if (queryResult == null) return;
+            Main.PrettyPrintJsonInNewFile(queryResult);
         }
 
         private void FindReplaceButton_Click(object sender, EventArgs e)
@@ -992,7 +1021,7 @@ namespace JSON_Tools.Forms
                 return;
             fname = cur_fname;
             json = new_json;
-            query_result = json;
+            queryResult = json;
             JsonTreePopulate(json);
         }
 

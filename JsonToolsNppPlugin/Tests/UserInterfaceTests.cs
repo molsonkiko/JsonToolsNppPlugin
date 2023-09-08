@@ -47,6 +47,11 @@ namespace JSON_Tools.Tests
                 messages.Add($"select {SelectionManager.StartEndListToJsonString(startEndStrings)}");
                 SelectionManager.SetSelectionsFromStartEnds(startEndStrings);
                 break;
+            case "select_whole_doc":
+                var wholeSelStr = $"0,{Npp.editor.GetLength()}";
+                messages.Add("select whole document");
+                SelectionManager.SetSelectionsFromStartEnds(new string[] { wholeSelStr });
+                break;
             case "select_every_valid":
                 Main.SelectEveryValidJson();
                 messages.Add("select every valid JSON");
@@ -102,7 +107,7 @@ namespace JSON_Tools.Tests
             case "treenode_click":
                 if (!hasTreeView)
                 {
-                    messages.Add("Wanted to click a treenode, but treeview wasn't open");
+                    messages.Add("FAIL: Wanted to click a treenode, but treeview wasn't open");
                     return true;
                 }
                 // the text of each parent of the treenode to be clicked (except the root treenode)
@@ -128,7 +133,7 @@ namespace JSON_Tools.Tests
                     if (!hasFoundNewRoot)
                     {
                         string previousNodes = new JArray(0, treeNodeTextArr.children.LazySlice(0, ii).ToList()).ToString();
-                        messages.Add($"Expected treeview to contain path {treeNodeTextArr.ToString()}, " +
+                        messages.Add($"FAIL: Expected treeview to contain path {treeNodeTextArr.ToString()}, " +
                                      $"but did not contain {treeNodeText} after nodes {previousNodes}");
                     return true;
                     }
@@ -139,7 +144,7 @@ namespace JSON_Tools.Tests
             case "tree_query":
                 if (!hasTreeView)
                 {
-                    messages.Add("Wanted to execute a RemesPath query, but the treeview wasn't open");
+                    messages.Add("FAIL: Wanted to execute a RemesPath query, but the treeview wasn't open");
                     return true;
                 }
                 var query = (string)args[0];
@@ -161,7 +166,7 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    messages.Add($"RemesPath query {query} was invalid, produced exception {ex}");
+                    messages.Add($"FAIL: RemesPath query {query} was invalid, produced exception {ex}");
                     return true;
                 }
                 Main.openTreeViewer.QueryBox.Text = query;
@@ -171,7 +176,7 @@ namespace JSON_Tools.Tests
             case "select_treenode_json":
                 if (!hasTreeView)
                 {
-                    messages.Add("Wanted to select the JSON associated with a treenode, but the treeview wasn't open");
+                    messages.Add("FAIL: Wanted to select the JSON associated with a treenode, but the treeview wasn't open");
                     return true;
                 }
                 messages.Add("Select JSON associated with treenode");
@@ -181,12 +186,28 @@ namespace JSON_Tools.Tests
             case "select_treenode_json_children":
                 if (!hasTreeView)
                 {
-                    messages.Add("Wanted to select the children of a treenode's associated JSON, but the treeview wasn't open");
+                    messages.Add("FAIL: Wanted to select the children of a treenode's associated JSON, but the treeview wasn't open");
                     return true;
                 }
                 messages.Add("Select children of JSON associated with treenode");
                 selNode = openTv.Tree.SelectedNode;
                 openTv.SelectTreeNodeJsonChildren(selNode);
+                break;
+            case "tree_compare_query_result":
+                if (!hasTreeView)
+                {
+                    messages.Add("FAIL: Wanted to compare the tree's query result, but the treeview wasn't open");
+                    return true;
+                }
+                string correctQueryResultStr = (string)args[0];
+                JNode gotQueryResult = openTv.queryResult;
+                string gotQueryResultStr = gotQueryResult.ToString();
+                if (correctQueryResultStr != gotQueryResultStr)
+                {
+                    messages.Add($"FAIL: expected query result to be\r\n{correctQueryResultStr}\r\nbut it was\r\n{gotQueryResultStr}");
+                    return true;
+                }
+                messages.Add("tree_compare_query_result passed");
                 break;
             case "sort_form_open":
                 Main.OpenSortForm();
@@ -195,7 +216,7 @@ namespace JSON_Tools.Tests
             case "sort_form_run":
                 if (Main.sortForm == null)
                 {
-                    messages.Add("Wanted to use sort form, but it wasn't open");
+                    messages.Add("FAIL: Wanted to use sort form, but it wasn't open");
                     return true;
                 }
                 var path = (string)args[0];
@@ -220,7 +241,7 @@ namespace JSON_Tools.Tests
                 Main.CopyPathToCurrentPosition();
                 string gotPathtoCurrentPosition = Clipboard.GetText();
                 if (gotPathtoCurrentPosition != correctPathToCurrentPosition)
-                    messages.Add($"Expected path to position {position} to be {correctPathToCurrentPosition}, but got {gotPathtoCurrentPosition}");
+                    messages.Add($"FAIL: Expected path to position {position} to be {correctPathToCurrentPosition}, but got {gotPathtoCurrentPosition}");
                 else
                     messages.Add($"Passed test of path to position {position}");
                 break;
@@ -381,6 +402,39 @@ namespace JSON_Tools.Tests
             ("select_treenode_json_children", new object[]{}),
             ("pretty_print", new object[]{}),
             ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\r\n    \"ｪ\",\r\n    7,\r\n    \"d\"\r\n],{\"草\":[8],\"e\":-.5, gor:/**/ '😀'},[\r\n    \"😀\",\r\n    9,\r\n    \"f\"\r\n]]"}),
+            // TEST NON-MUTATING MULTI-STATEMENT QUERIES ON A DOCUMENT THAT DOES NOT USE SELECTIONS
+            ("select_whole_doc", new object[]{}),
+            ("compress", new object[]{}),
+            ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],{\"e\":-0.5,\"gor\":\"😀\",\"草\":[8]},[\"😀\",9,\"f\"]]"}),
+            ("tree_query", new object[]{"var a = @[0];\r\nvar b = @[1];\r\nvar c = @[-1];\r\nvar d = a + b * s_len(str(c));"}),
+            ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],{\"e\":-0.5,\"gor\":\"😀\",\"草\":[8]},[\"😀\",9,\"f\"]]"}),
+            ("treenode_click", new object[]{new string[] { "0 : \"Я◐◐\"" } }),
+            ("treenode_click", new object[]{new string[] {"1 : 9"} }),
+            ("treenode_click", new object[]{new string[] { "2 : \"ab\"" } }),
+            ("tree_query", new object[]{"var mod_3s = (@[:][type(@) != object])[:]->append(@, @[1] % 3);\r\n" +
+                                        "var gb_m3 = group_by(mod_3s, -1);\r\n" +
+                                        "gb_m3.`1`"}),
+            ("compare_text", new object[]{"[[\"Я\",4,\"a\"],[\"◐\",5,\"b\"],[\"ồ\",6,\"c\"],[\"ｪ\",7,\"d\"],{\"e\":-0.5,\"gor\":\"😀\",\"草\":[8]},[\"😀\",9,\"f\"]]"}),
+            ("treenode_click", new object[]{new string[] { "0 : [4]", "2 : \"a\"" } }),
+            ("treenode_click", new object[]{new string[] { "1 : [4]", "1 : 7" } }),
+            // TEST MUTATING MULTI-STATEMENT QUERIES ON A DOCUMENT THAT DOES NOT USE SELECTIONS
+            ("tree_query", new object[]{"var a = @[0];\r\n" +
+                                        "var b = @[1];\r\n" +
+                                        "var c = @[-1];\r\n" +
+                                        "var d = a + b * s_len(str(c));\r\n" +
+                                        "a[0] = @ + d[0];\r\nb[1] = @ + c[1];\r\nc[2] = @ + a[0]"}),
+            ("compare_text", new object[]{"[\r\n    [\"ЯЯ◐◐\", 4, \"a\"],\r\n    [\"◐\", 14, \"b\"],\r\n    [\"ồ\", 6, \"c\"],\r\n    [\"ｪ\", 7, \"d\"],\r\n    {\"e\": -0.5, \"gor\": \"😀\", \"草\": [8]},\r\n    [\"😀\", 9, \"fЯЯ◐◐\"]\r\n]"}),
+            ("treenode_click", new object[]{new string[]{"0 : [3]", "0 : \"ЯЯ◐◐\"" } }),
+            ("compare_selections", new object[]{new string[]{ "8,8" } }),
+            ("treenode_click", new object[]{new string[] {"1 : [3]", "1 : 14" } }),
+            ("compare_selections", new object[]{new string[]{ "44,44" } }),
+            ("treenode_click", new object[]{new string[]{"5 : [3]", "2 : \"fЯЯ◐◐\"" } }),
+            ("compare_selections", new object[]{new string[]{ "160,160" } }),
+            ("tree_query", new object[]{"var bumba = @[1][1]; bumba = @ / 7; bumba"}),
+            ("compare_text", new object[]{"[\r\n    [\"ЯЯ◐◐\", 4, \"a\"],\r\n    [\"◐\", 2.0, \"b\"],\r\n    [\"ồ\", 6, \"c\"],\r\n    [\"ｪ\", 7, \"d\"],\r\n    {\"e\": -0.5, \"gor\": \"😀\", \"草\": [8]},\r\n    [\"😀\", 9, \"fЯЯ◐◐\"]\r\n]"}),
+            ("treenode_click", new object[]{ new string[] { } }),
+            ("compare_selections", new object[]{new string[] {"44,44"} }),
+            ("tree_compare_query_result", new object[]{"2.0"}),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
             ("file_open", new object[]{0}),
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),
@@ -408,6 +462,32 @@ namespace JSON_Tools.Tests
             ("tree_query", new object[]{"j`{\"a\": \"foo\", \"b\": [1, 2]}`"}),
             ("treenode_click", new object[]{new string[] {"a : \"foo\""} }),
             ("treenode_click", new object[]{new string[] {"b : [2]", "1 : 2"} }),
+            // TEST MULTI-STATEMENT QUERY THAT DOESN'T MUTATE ON A FILE WITH SELECTIONS
+            ("tree_query", new object[]{"var s = str(@);\r\n" +
+                                        "var sl = s_len(s);\r\n" +
+                                        "(s + ` `) * sl"}),
+            ("treenode_click", new object[]{new string[] {"27,42 : [3]", "0 : \"boo boo boo \""} }),
+            ("compare_text", new object[]{"[0.25,0.75,0.5]blah[0,1.25][\"boo\",\"a\",\"c\"]"}),
+            ("tree_query", new object[]{"var this_s = @[:]{@, str(@)};\r\n" +
+                                        "var s_lens = s_len(this_s[:][1]);\r\n" +
+                                        "var min_slen = min(s_lens);\r\n" +
+                                        "var shortest_strs = this_s[s_lens == min_slen][0]"}),
+            ("compare_text", new object[]{"[0.25,0.75,0.5]blah[0,1.25][\"boo\",\"a\",\"c\"]"}),
+            ("treenode_click", new object[]{ new string[] { "0,15 : [1]", "0 : 0.5"} }),
+            ("compare_selections", new object[]{new string[]{"11,11" } }),
+            ("treenode_click", new object[]{ new string[] { "27,42 : [2]", "1 : \"c\""} }),
+            ("compare_selections", new object[]{new string[]{"38,38" } }),
+            // TEST MULTI-STATEMENT QUERY THAT *DOES* MUTATE ON A FILE WITH SELECTIONS
+            ("tree_query", new object[]{"var this_s = @[:]{@, str(@)};\r\n" +
+                                        "var s_lens = s_len(this_s[:][1]);\r\n" +
+                                        "var max_slen = max(s_lens);\r\n" +
+                                        "var longest_strs = this_s[s_lens == max_slen][0];\r\n" +
+                                        "longest_strs = str(@) + ` is champion!`;\r\n" +
+                                        "longest_strs"}),
+            ("compare_text", new object[]{"[\r\n    \"0.25 is champion!\",\r\n    \"0.75 is champion!\",\r\n    0.5\r\n]blah[\r\n    0,\r\n    \"1.25 is champion!\"\r\n][\r\n    \"boo is champion!\",\r\n    \"a\",\r\n    \"c\"\r\n]"}),
+            ("treenode_click", new object[]{ new string[] { "69,106 : [1]", "0 : \"1.25 is champion!\""} }),
+            ("treenode_click", new object[]{ new string[] { "106,154 : [1]", "0 : \"boo is champion!\""} }),
+            ("tree_compare_query_result", new object[]{"{\"0,65\": [\"0.25 is champion!\", \"0.75 is champion!\"], \"106,154\": [\"boo is champion!\"], \"69,106\": [\"1.25 is champion!\"]}"}),
         };
 
         public static bool Test()

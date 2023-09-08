@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
+- issue with treeview closing when a file with a treeview is moved from one view to another
 
 ## [5.7.0] - (UNRELEASED) YYYY-MM-DD
 
@@ -43,9 +44,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Toolbar icons for [JSON pretty-print, JSON compress](/docs/README.md#json-formatting), treeview, and [path to current position](/docs/README.md#path-to-current-position). Fix [issue 36](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/36).
 2. Ability to [select JSON or a JSON's children from the treeview](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57).
-3. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
+3. [Variable assignment in RemesPath](/docs/RemesPath.md#assigning-variables-added-in-v57-and-executing-multi-statement-queries).
 4. [Negated indexers in RemesPath](/docs/RemesPath.md#negated-indexing-and-excluding-keys-v57-only).
 5. Ability to group by multiple variables with the [`group_by` RemesPath function](/docs/RemesPath.md#non-vectorized-functions).
+6. Option to skip the API request test when [running tests](/docs/README.md#running-tests).
 
 ### Changed
 

@@ -882,3 +882,60 @@ Some examples:
 * The query `@.foo[@ < 0] = @ + 1` will yield `{"foo": [0, 2, 3], "bar": "abc", "baz": "de"}`
 * The query `@.bar = s_slice(@, :2)` will yield `{"foo": [-1, 2, 3], "bar": "ab", "baz": "de"}`
 * The query `@.g``b`` = s_len(@)` will yield `{"foo": [-1, 2, 3], "bar": 3, "baz": 2}`
+
+## Assigning variables *(added in v5.7)* and executing multi-statement queries ##
+
+Beginning in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), it is possible to run queries with multiple statements. __Each statement in the query must be terminated by a semicolon (`;`).__
+
+In addition, you can assign variables using the syntax `var <name> = <statement>`
+
+Let's see how this works in practice with the following multi-statement query.
+
+```
+var a = 1;
+var b = @[0];
+var c = a + 2;
+b = @ * c;
+@[:][1]
+```
+
+If we run this query on the JSON 
+```json
+[
+    [-1, 1],
+    [1, 2]
+]
+```
+here's what will happen:
+1. The variable `a` will be set to value __`a = 1`__.
+2. The variable `b` will be set to `@[0]`, i.e., the first element of the input array. So __`b = [-1, 1]`__
+3. The variable `c` will be set to value `a + 2`, which is just __`c = 3`__.
+4. The variable `b` will be mutated by multiplying every element by `c`, because *a statement of the form `<LHS> = <RHS>` is an [assignment expression](#editing-with-assignment-expressions) as described above unless it is preceded by the `var` keyword.*
+    * Since this is an assignment expression, __b has been changed to `b = [-3, 3]`, and the input JSON has also been changed!__
+5. Finally, we run the query `@[:][1]` on the input JSON. This gets the second element of every sub-array in the input JSON.
+    * Since the previous statement `b = @ * c` changed the input to `[[-3, 3], [1, 2]]`, __the final result is:__
+```json
+[3, 1]
+```
+
+While this toy example doesn't fully showcase the utility of variable assignment, it should be obvious that this is a significant improvement in the expressive power of RemesPath.
+
+Some notes:
+* Variables can have the same name as [functions](#functions), because an unquoted string is only interpreted as the name of a function if it is immediately followed by an open parenthesis.
+    * For example, the query `var ifelse = blah; var s_len = s_len(ifelse); ifelse(s_len < 3, foo, bar)` is actually perfectly legal, even though it declares two variables that have the same name as functions that are also used in it.
+    * Obviously this behavior will no longer be sustainable if it becomes possible to pass functions as arguments to other functions in RemesPath, but that may never happen.
+* The tree view (as well as the "query result" JSON that can be converted to a CSV or pasted in a new document)
+* To redefine the value of a variable named `a`, just use `var a = <whatever>` to redefine it. This is acceptable because, as noted above, the statement `a = <whatever>` is already reserved for [assignment expressions](#editing-with-assignment-expressions).
+* For example, given the input `{bar: "bar", baz: "baz"}`, the query
+```
+var bar = @.bar;
+var baz = @.baz;
+var barbaz = bar + baz;
+var baz = @{bar, baz, barbaz};
+baz
+```
+will return
+```json
+["bar", "baz", "barbaz"]
+```
+because when baz is redefined, it just uses the value of baz that was previously defined, and no weird infinite loops of self-reference will happen.

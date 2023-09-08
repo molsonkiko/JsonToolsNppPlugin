@@ -75,20 +75,6 @@ Testing YAML dumper
                 failures.Add("YAML dumper");
 
             Npp.AddLine(@"=========================
-Testing Binops
-=========================
-");
-            if (BinopTester.Test())
-                failures.Add("Binops");
-
-            Npp.AddLine(@"=========================
-Testing ArgFunctions
-=========================
-");
-            if (ArgFunctionTester.Test())
-                failures.Add("argfunctions");
-
-            Npp.AddLine(@"=========================
 Testing slice extension
 =========================
 ");
@@ -129,6 +115,13 @@ Testing that RemesPath produces sane outputs on randomly generated queries
 ");
             if (RemesPathFuzzTester.Test(10000, 20))
                 failures.Add("randomly generated queries");
+
+            Npp.AddLine(@"=========================
+Testing multi-statement queries in RemesPath
+=========================
+");
+            if (RemesPathComplexQueryTester.Test())
+                failures.Add("multi-statement queries");
 
             Npp.AddLine(@"=========================
 Testing JsonSchema generator

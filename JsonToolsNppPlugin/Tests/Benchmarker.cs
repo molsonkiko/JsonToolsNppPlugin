@@ -118,15 +118,9 @@ Performance tests for RemesPath ({description})
                     watch.Start();
                     try
                     {
-                        if (query_func is CurJson selector)
+                        if (query_func.CanOperate)
                         {
-                            result = selector.function(json);
-                            if (old_result is null)
-                                old_result = result;
-                        }
-                        else if (query_func is JMutator mutator)
-                        {
-                            result = mutator.Mutate(json);
+                            result = query_func.Operate(json);
                             if (old_result is null)
                                 old_result = result;
                         }

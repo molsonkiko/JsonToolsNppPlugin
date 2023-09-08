@@ -903,6 +903,32 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// does this embody a function that mutates JNode input?
+        /// </summary>
+        public virtual bool IsMutator => false;
+
+        /// <summary>
+        /// does this embody a function that can operate on JNode input?<br></br>
+        /// if not, this.Operate MUST throw a NotImplementedException
+        /// </summary>
+        public virtual bool CanOperate => false;
+
+        /// <summary>
+        /// If this is a JNode that operates on input, return the result of this JNode's default operation on inp.<br></br>
+        /// If this does not operate on input, throw NotImplementedException
+        /// Currently the JNode types that <i>can operate on input</i> (and their default operations) are:<br></br>
+        /// * CurJson cj (cj.function)<br></br>
+        /// * JMutator jm (jm.Mutate)<br></br>
+        /// * JQueryContext jq (jq.Evaluate)
+        /// </summary>
+        /// <returns>the result of operating on input</returns>
+        /// <exception cref="NotImplementedException">if this has no function of JNode input</exception>
+        public virtual JNode Operate(JNode inp)
+        {
+            throw new NotImplementedException("This type of JNode cannot operate on input");
+        }
+
+        /// <summary>
         /// Changes the type and value of this to the type and value of vnew.<br></br>
         /// This and vnew are still separate objects.<br></br>
         /// Cannot change a non-iterable into an iterable.<br></br>
@@ -1504,6 +1530,8 @@ namespace JSON_Tools.JSON_Tools
     public class CurJson : JNode
     {
         public Func<JNode, JNode> function;
+        public override bool CanOperate => true;
+
         public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
         {
             this.function = function;
@@ -1526,6 +1554,12 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Identity(JNode obj)
         {
             return obj;
+        }
+
+        /// <inheritdoc/>
+        public override JNode Operate(JNode inp)
+        {
+            return function(inp);
         }
     }
 
@@ -1552,6 +1586,9 @@ namespace JSON_Tools.JSON_Tools
         /// 2. a function that mutates each child that was selected by selector
         /// </summary>
         public JNode mutator;
+
+        public override bool CanOperate => true;
+        public override bool IsMutator => true;
 
         public JMutator(JNode selector, JNode mutator) : base(null, Dtype.UNKNOWN, 0)
         {
@@ -1621,6 +1658,190 @@ namespace JSON_Tools.JSON_Tools
                 selected.MutateInto(mutator);
             }
             return inp;
+        }
+
+        /// <inheritdoc/>
+        public override JNode Operate(JNode inp)
+        {
+            return Mutate(inp);
+        }
+    }
+
+    /// <summary>
+    /// Contains the necessary context to repeatedly execute a multi-statement RemesPath query,<br></br>
+    /// possibly including variable assignments or multiple mutations.<br></br>
+    /// The type is always UNKNOWN, the position is always 0, and the value is always null.
+    /// </summary>
+    public class JQueryContext : JNode
+    {
+        private int indexInStatements = 0;
+        /// <summary>
+        /// Will the query mutate input?
+        /// </summary>
+        private bool mutatesInput = false;
+        public override bool CanOperate => true;
+        public override bool IsMutator => mutatesInput;
+        private List<JNode> statements;
+        /// <summary>
+        /// variables not dependent on input are stored as JNodes here,<br></br>
+        /// but any variables that depend on input as stored as CurJson
+        /// </summary>
+        private Dictionary<string, JNode> locals;
+        /// <summary>
+        /// variables <i>not dependent on input</i> are not found in here.<br></br>
+        /// variables dependent on input are stored as the result of execution of the CurJson stored under the same name in locals.
+        /// </summary>
+        private Dictionary<string, JNode> cachedLocals;
+
+        public JQueryContext() : base(null, Dtype.UNKNOWN, 0)
+        {
+            statements = new List<JNode>();
+            locals = new Dictionary<string, JNode>();
+            cachedLocals = new Dictionary<string, JNode>();
+        }
+
+        /// <inheritdoc/>
+        public override JNode Operate(JNode inp)
+        {
+            return Evaluate(inp);
+        }
+
+        /// <summary>
+        /// a "simple query" is a query with one statement and no variable assignments.<br></br>
+        /// This definition is useful because up until JsonTools 5.7 it was the only kind of query possible.<br></br>
+        /// If true, you can keep the first statement and discard the context.
+        /// </summary>
+        public bool IsSimpleQuery
+        {
+            get
+            {
+                if (statements.Count > 1)
+                    return false;
+                JNode firstStatement = statements[0];
+                return !(firstStatement is VarAssign);
+            }
+        }
+
+        public string[] Varnames()
+        {
+            return locals.Keys.ToArray();
+        }
+
+        public void AddStatement(JNode statement)
+        {
+            statements.Add(statement);
+            if (statement is VarAssign va)
+                locals[va.Name] = (JNode)va.value;
+            else if (statement is JMutator)
+                mutatesInput = true;
+        }
+
+        /// <summary>
+        /// gets the value of a variable declared in a previous statement in the query.
+        /// </summary>
+        /// <param name="varname"></param>
+        /// <param name="val"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathNameException">if varname is the name of a variable that is declared in a subsequent statment</exception>
+        public bool TryGetValue(string varname, out JNode val)
+        {
+            val = null;
+            if (!locals.TryGetValue(varname, out JNode locval))
+                return false;
+            if (locval is null) // placeholder for undeclared variables
+            {
+                int indexOfDeclaration = statements.FindIndex(x => x is VarAssign va && va.Name == varname);
+                throw new RemesPathNameException(varname, indexInStatements, indexOfDeclaration);
+            }
+            if (locval is CurJson cj)
+            {
+                // the variable is a function of input, so use the cached result of evaluating it
+                Func<JNode, JNode> getCachedValueForVarname = x => cachedLocals[varname];
+                val = new CurJson(cj.type, getCachedValueForVarname);
+                return true;
+            }
+            val = locval;
+            return true;
+        }
+
+        /// <summary>
+        /// if this is a simple query (one statement that isn't a variable assignment)
+        /// return the first statement.<br></br>
+        /// otherwise, return this
+        /// </summary>
+        /// <returns></returns>
+        public JNode GetQuery()
+        {
+            if (IsSimpleQuery)
+                return statements[0];
+            // clear locals because it was necessary to use actual values while building for propagation
+            Reset();
+            return this;
+        }
+
+        public JNode Evaluate(JNode inp)
+        {
+            JNode lastStatement = null;
+            for (indexInStatements = 0; indexInStatements < statements.Count; indexInStatements++)
+            {
+                JNode statement = statements[indexInStatements];
+                if (statement is VarAssign va)
+                    lastStatement = AssignVariable(va, inp);
+                else if (statement.CanOperate)
+                    lastStatement = statement.Operate(inp);
+                else
+                    lastStatement = statement;
+            }
+            Reset();
+            return lastStatement;
+        }
+
+        private JNode AssignVariable(VarAssign va, JNode inp)
+        {
+            JNode vaval = (JNode)va.value;
+            string varname = va.Name;
+            locals[varname] = null;
+            // important: add varname to locals AFTER evaluating cj.function(inp) and setting locals[varname] to null
+            // because this way we correctly deal with issues where a variable is referenced
+            // in the expression that first assigns it. (e.g. "var a = a + 3")
+            JNode cachedVal = null;
+            if (vaval is CurJson cj)
+            {
+                cachedVal = cj.function(inp);
+                cachedLocals[varname] = cachedVal;
+            }
+            locals[varname] = vaval;
+            return cachedVal is null ? vaval : cachedVal;
+        }
+
+        /// <summary>
+        /// set all locals to null as placeholder and clear cached values of CurJson variables.
+        /// </summary>
+        private void Reset()
+        {
+            foreach (string varname in Varnames())
+                locals[varname] = null;
+            cachedLocals.Clear();
+        }
+    }
+
+    /// <summary>
+    /// represents a variable assignment in RemesPath.<br></br>
+    /// The value field is the JNode associated with the Name field.<br></br>
+    /// The type is always UNKNOWN and the position is always 0.
+    /// </summary>
+    public class VarAssign : JNode
+    {
+        public string Name { get; private set; }
+
+        public VarAssign(string name, JNode json) : base(json, Dtype.UNKNOWN, 0)
+        {
+            Name = name;
+        }
+
+        public override string ToString()
+        {
+            return $"VarAssign(name =\"{Name}\", value={((JNode)value).ToString()}";
         }
     }
 

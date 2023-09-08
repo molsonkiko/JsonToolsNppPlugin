@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -320,6 +321,30 @@ namespace JSON_Tools.JSON_Tools
             return $"Index {index} out of range for {typeName} {node.ToString()}";
         }
     }
+
+    /// <summary>
+    /// thrown by JQueryContext.TryGetValue when a variable name is referenced,
+    /// but the variable isn't declared until a later statement.
+    /// </summary>
+    public class RemesPathNameException : RemesPathException
+    {
+        public string varname;
+        public int indexInStatements;
+        public int indexOfDeclaration;
+
+        public RemesPathNameException(string varname, int indexInStatements, int indexOfDeclaration) : base("")
+        {
+            this.varname = varname;
+            this.indexInStatements = indexInStatements;
+            this.indexOfDeclaration = indexOfDeclaration;
+        }
+
+        public override string ToString()
+        {
+            return $"Variable named \"{varname}\" was referenced in statement {indexInStatements + 1}, " +
+                   $"but was not declared until statement {indexOfDeclaration + 1}";
+        }
+    }
     #endregion
     /// <summary>
     /// RemesPath is similar to JMESPath, but more fully featured.<br></br>
@@ -347,9 +372,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Parse a query and compile it into a RemesPath function that operates on JSON.<br></br>
-        /// If the query is not a function of input, it will instead just output fixed JSON.<br></br>
-        /// If is_assignment_expr is true, this means that the query is an assignment expression<br></br>
-        /// (i.e., a query that mutates the underlying JSON)
+        /// If the query is not a function of input, it will instead just output fixed JSON.
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
@@ -358,20 +381,7 @@ namespace JSON_Tools.JSON_Tools
             if (cache.TryGetValue(query, out JNode old_result))
                 return old_result;
             List<object> toks = lexer.Tokenize(query);
-            int indexOfAssignment = toks.IndexOf('=');
-            if (indexOfAssignment == 0)
-                throw new RemesPathException("Assignment with no LHS");
-            if (indexOfAssignment == toks.Count - 1)
-                throw new RemesPathException("Assignment with no RHS");
-            if (indexOfAssignment > 0)
-            {
-                if (toks.Count(x => x is char c && c == '=') > 1)
-                    throw new RemesPathException("Only one '=' assignment operator allowed in a query");
-                JNode selector = (JNode)ParseExprOrScalarFunc(toks, 0, indexOfAssignment).obj;
-                JNode mutator = (JNode)ParseExprOrScalarFunc(toks, indexOfAssignment + 1, toks.Count).obj;
-                return new JMutator(selector, mutator);
-            }
-            var result = (JNode)ParseExprOrScalarFunc(toks, 0, toks.Count).obj;
+            JNode result = ParseQuery(toks);
             cache.SetDefault(query, result);
             return result;
         }
@@ -387,21 +397,15 @@ namespace JSON_Tools.JSON_Tools
         public JNode Search(string query, JNode obj)
         {
             JNode compiled_query = Compile(query);
-            if (compiled_query is CurJson cjres)
-            {
-                return cjres.function(obj);
-            }
-            else if (compiled_query is JMutator mut)
-            {
-                return mut.Mutate(obj);
-            }
+            if (compiled_query.CanOperate)
+                return compiled_query.Operate(obj);
             return compiled_query;
         }
 
         /// <summary>
-        /// these tokens have high enough precedence to stop an expr_function or scalar_function
+        /// these tokens have high enough precedence to stop an expr_func (parsed by ParseExprFunc)
         /// </summary>
-        public const string EXPR_FUNC_ENDERS = "]:},)";
+        public const string EXPR_FUNC_ENDERS = "]:},);";
         public const string INDEXER_STARTERS = ".[{>!";
         public const string PROJECTION_STARTERS = "{>";
 
@@ -1166,7 +1170,83 @@ namespace JSON_Tools.JSON_Tools
             return toks[pos + 1];
         }
 
-        private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num, int end)
+        /// <summary>
+        /// Parses toks as a series of statements terminated by semicolons (a semicolon after the last statement is optional).<br></br>
+        /// See ParseStatement for details on how those statements are parsed
+        /// </summary>
+        /// <param name="toks"></param>
+        /// <returns></returns>
+        private JNode ParseQuery(List<object> toks)
+        {
+            int pos = 0;
+            int end = toks.Count;
+            var context = new JQueryContext();
+            while (pos < end)
+            {
+                int nextSemicolon = toks.IndexOf(';', pos, end - pos);
+                int endOfStatement = nextSemicolon < 0 ? end : nextSemicolon;
+                JNode statement = ParseStatement(toks, pos, endOfStatement, context);
+                context.AddStatement(statement);
+                pos = endOfStatement + 1;
+            }
+            return context.GetQuery();
+        }
+
+        private JNode ParseStatement(List<object> toks, int start, int end, JQueryContext context)
+        {
+            int indexOfAssignment = toks.IndexOf('=', start, end - start);
+            if (indexOfAssignment == start)
+                throw new RemesPathException("Assignment operator '=' with no left-hand side");
+            if (indexOfAssignment == end - 1)
+                throw new RemesPathException("Assignment operator '=' with no right-hand side");
+            if (indexOfAssignment >= 0)
+            {
+                if (toks.IndexOf('=', indexOfAssignment + 1, end - indexOfAssignment - 1) >= 0)
+                    throw new RemesPathException("Only one '=' assignment operator allowed in a statement");
+                if (StatementIsVarAssign(toks, start, end, out string varname))
+                {
+                    // variable assignment
+                    // TODO: need to figure out what to do if variable name collides with function names
+                    return ParseVariableAssignment(toks, start + 3, end, varname, context);
+                }
+                return ParseAssignmentExpr(toks, start, end, indexOfAssignment, context);
+            }
+            return (JNode)ParseExprFunc(toks, start, end, context).obj;
+        }
+
+        private JMutator ParseAssignmentExpr(List<object> toks, int start, int end, int indexOfAssignment, JQueryContext context)
+        {
+            JNode selector = (JNode)ParseExprFunc(toks, start, indexOfAssignment, context).obj;
+            JNode mutator = (JNode)ParseExprFunc(toks, indexOfAssignment + 1, end, context).obj;
+            return new JMutator(selector, mutator);
+        }
+        
+        private JNode ParseVariableAssignment(List<object> toks, int start, int end, string name, JQueryContext context)
+        {
+            JNode value = (JNode)ParseExprFunc(toks, start, end, context).obj;
+            return new VarAssign(name, value);
+        }
+
+        /// <summary>
+        /// VAR_ASSIGN := var_keyword varname "=" ExprFunc<br></br>
+        /// returns true and varname = the varname between var_keyword and "=" (where var_keyword can at present only be "var")<br></br>
+        /// if the statement is not of that form, return false and varname = null.
+        /// </summary>
+        private bool StatementIsVarAssign(List<object> toks, int start, int end, out string varname)
+        {
+            varname = null;
+            if (end <= toks.Count && start <= end - 4 // [var, name, =, end] - there are 4 tokens in a minimal assignment expression 
+                && toks[start] is UnquotedString uqs && RemesPathLexer.VAR_ASSIGN_KEYWORDS.Contains(uqs.value)
+                && toks[start + 1] is UnquotedString varnameUqs
+                && toks[start + 2] is char c && c == '=')
+            {
+                varname = varnameUqs.value;
+                return true;
+            }
+            return false;
+        }
+
+        private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num, int end, JQueryContext context)
         {
             var slicer = new int?[3];
             int slots_filled = 0;
@@ -1190,7 +1270,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 try
                 {
-                    Obj_Pos npo = ParseExprOrScalarFunc(toks, pos, end);
+                    Obj_Pos npo = ParseExprFunc(toks, pos, end, context);
                     JNode numtok = (JNode)npo.obj;
                     pos = npo.pos;
                     if (numtok.type != Dtype.INT)
@@ -1271,7 +1351,10 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        private Obj_Pos ParseIndexer(List<object> toks, int pos, int end, IndexerStart indStart)
+        /// <summary>
+        /// Parses all indexers, including projections.
+        /// </summary>
+        private Obj_Pos ParseIndexer(List<object> toks, int pos, int end, IndexerStart indStart, JQueryContext context)
         {
             object t = toks[pos];
             object nt;
@@ -1306,11 +1389,11 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (indStart == IndexerStart.CURLYBRACE)
             {
-                return ParseProjection(toks, pos, end);
+                return ParseProjection(toks, pos, end, context);
             }
             else if (indStart == IndexerStart.FORWARD_ARROW)
             {
-                return ParseMap(toks, pos, end);
+                return ParseMap(toks, pos, end, context);
             }
             else if (!IndexerStart.ANY_SQUAREBRACE_TYPE.HasFlag(indStart))
             {
@@ -1396,7 +1479,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (last_tok == null)
                         {
-                            Obj_Pos opo = ParseSlicer(toks, pos, null, end);
+                            Obj_Pos opo = ParseSlicer(toks, pos, null, end, context);
                             last_tok = opo.obj;
                             pos = opo.pos;
                         }
@@ -1408,7 +1491,7 @@ namespace JSON_Tools.JSON_Tools
                                 throw new RemesPathException($"Expected token other than ':' after {jlast_tok} " +
                                                              $"in an indexer");
                             }
-                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlast_tok.value), end);
+                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlast_tok.value), end, context);
                             last_tok = opo.obj;
                             pos = opo.pos;
                         }
@@ -1430,7 +1513,7 @@ namespace JSON_Tools.JSON_Tools
                 else
                 {
                     // it's a new token of some sort
-                    Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
+                    Obj_Pos opo = ParseExprFunc(toks, pos, end, context);
                     last_tok = opo.obj;
                     pos = opo.pos;
                     last_type = ((JNode)last_tok).type;
@@ -1439,7 +1522,13 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException("Unterminated indexer");
         }
 
-        private Obj_Pos ParseExprOrScalar(List<object> toks, int pos, int end)
+        /// <summary>
+        /// handles the following:<br></br>
+        /// * grouping parentheses<br></br>
+        /// * determining whether an unquoted string is an arg function or just a string<br></br>
+        /// * parsing and applying chained indexers
+        /// </summary>
+        private Obj_Pos ParseExpr(List<object> toks, int pos, int end, JQueryContext context)
         {
             if (toks.Count == 0)
             {
@@ -1472,7 +1561,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             if (--unclosed_parens == 0)
                             {
-                                last_tok = (JNode)ParseExprOrScalarFunc(toks, subqueryStart, subqueryEnd).obj;
+                                last_tok = (JNode)ParseExprFunc(toks, subqueryStart, subqueryEnd, context).obj;
                                 pos = subqueryEnd + 1;
                                 break;
                             }
@@ -1482,25 +1571,26 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (t is UnquotedString st)
             {
+                string s = st.value;
                 if (pos < end - 1
                     && toks[pos + 1] is char c && c == '(')
                 {
                     // an unquoted string followed by an open paren
                     // *might* be an ArgFunction; we need to check
-                    if (ArgFunction.FUNCTIONS.TryGetValue(st.value, out ArgFunction af))
+                    if (ArgFunction.FUNCTIONS.TryGetValue(s, out ArgFunction af))
                     {
-                        Obj_Pos opo = ParseArgFunction(toks, pos + 1, af, end);
+                        Obj_Pos opo = ParseArgFunction(toks, pos + 1, af, end, context);
                         last_tok = (JNode)opo.obj;
                         pos = opo.pos;
                     }
                     else
                     {
-                        throw new RemesPathException($"'{st.value}' is not the name of a RemesPath function.");
+                        throw new RemesPathException($"'{s}' is not the name of a RemesPath function.");
                     }
                 }
-                else // unquoted string just being used as a string
+                else
                 {
-                    last_tok = new JNode(st.value, Dtype.STR, 0);
+                    last_tok = ParseNonFunctionUnquotedStr(st, context);
                     pos++;
                 }
             }
@@ -1526,7 +1616,7 @@ namespace JSON_Tools.JSON_Tools
                     bool is_negated = IndexerStart.ANY_BANG_TYPE.HasFlag(indStart);
                     if (is_recursive && is_negated)
                         throw new RemesPathException("Recursive negated indexers (of the form \"!..a\" or \"!..[g`a`]\") are not currently supported.");
-                    Obj_Pos opo = ParseIndexer(toks, pos, end, indStart);
+                    Obj_Pos opo = ParseIndexer(toks, pos, end, indStart, context);
                     Indexer cur_idxr = (Indexer)opo.obj;
                     bool is_varname_list = cur_idxr is VarnameList;
                     bool is_dict = is_varname_list & !is_recursive;
@@ -1611,13 +1701,22 @@ namespace JSON_Tools.JSON_Tools
                     {
                         return new Obj_Pos(idxrs_func(last_obj), pos);
                     }
-                    return new Obj_Pos(idxrs_func((JArray)last_tok), pos);
+                    return new Obj_Pos(idxrs_func(last_tok), pos);
                 }
             }
             return new Obj_Pos(last_tok, pos);
         }
 
-        private Obj_Pos ParseExprOrScalarFunc(List<object> toks, int pos, int end)
+        private JNode ParseNonFunctionUnquotedStr(UnquotedString uqs, JQueryContext context)
+        {
+            string s = uqs.value;
+            if (context.TryGetValue(s, out JNode varNamedS))
+                return varNamedS; // it's a variable reference
+            // not a variable, just a string
+            return new JNode(uqs.value, Dtype.STR, 0);
+        }
+
+        private Obj_Pos ParseExprFunc(List<object> toks, int pos, int end, JQueryContext context)
         {
             object curtok = null;
             object nt = PeekNextToken(toks, pos, end);
@@ -1628,9 +1727,9 @@ namespace JSON_Tools.JSON_Tools
             if (nt == null || (nt is char nd && EXPR_FUNC_ENDERS.Contains(nd)))
             {
                 curtok = toks[pos];
-                if (curtok is UnquotedString uqs)
+                if (curtok is UnquotedString st)
                 {
-                    curtok = new JNode(uqs.value, Dtype.STR, 0);
+                    curtok = ParseNonFunctionUnquotedStr(st, context);
                 }
                 if (!(curtok is JNode))
                 {
@@ -1714,7 +1813,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    Obj_Pos opo = ParseExprOrScalar(toks, pos, end);
+                    Obj_Pos opo = ParseExpr(toks, pos, end, context);
                     pos = opo.pos;
                     if (!(opo.obj is JNode onode))
                         throw new RemesPathException($"Expected JNode, got {opo.obj.GetType()}");
@@ -1744,7 +1843,7 @@ namespace JSON_Tools.JSON_Tools
             return new Obj_Pos(leftOperand, pos);
         }
 
-        private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun, int end)
+        private Obj_Pos ParseArgFunction(List<object> toks, int pos, ArgFunction fun, int end, JQueryContext context)
         {
             object t;
             pos++;
@@ -1772,7 +1871,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     try
                     {
-                        Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
+                        Obj_Pos opo = ParseExprFunc(toks, pos, end, context);
                         cur_arg = (JNode)opo.obj;
                         pos = opo.pos;
                     }
@@ -1794,7 +1893,7 @@ namespace JSON_Tools.JSON_Tools
                             {
                                 first_num = Convert.ToInt32(cur_arg.value);
                             }
-                            Obj_Pos opo = ParseSlicer(toks, pos, first_num, end);
+                            Obj_Pos opo = ParseSlicer(toks, pos, first_num, end, context);
                             cur_arg = (JNode)opo.obj;
                             pos = opo.pos;
                         }
@@ -1859,13 +1958,13 @@ namespace JSON_Tools.JSON_Tools
                                          + $"({fun.minArgs} - {fun.maxArgs} args)");
         }
 
-        private Obj_Pos ParseProjection(List<object> toks, int pos, int end)
+        private Obj_Pos ParseProjection(List<object> toks, int pos, int end, JQueryContext context)
         {
             var children = new List<object>();
             bool is_object_proj = false;
             while (pos < end)
             {
-                Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
+                Obj_Pos opo = ParseExprFunc(toks, pos, end, context);
                 JNode key = (JNode)opo.obj;
                 pos = opo.pos;
                 object nt = PeekNextToken(toks, pos - 1, end);
@@ -1879,7 +1978,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         if (key.type == Dtype.STR)
                         {
-                            opo = ParseExprOrScalarFunc(toks, pos + 1, end);
+                            opo = ParseExprFunc(toks, pos + 1, end, context);
                             JNode val = (JNode)opo.obj;
                             pos = opo.pos;
                             string keystr_in_quotes = key.ToString();
@@ -1963,9 +2062,9 @@ namespace JSON_Tools.JSON_Tools
         /// x -> str(len(@)) returns "2"<br></br>
         /// x -> 3 returns 3
         /// </summary>
-        private Obj_Pos ParseMap(List<object> toks, int pos, int end)
+        private Obj_Pos ParseMap(List<object> toks, int pos, int end, JQueryContext context)
         {
-            Obj_Pos opo = ParseExprOrScalarFunc(toks, pos, end);
+            Obj_Pos opo = ParseExprFunc(toks, pos, end, context);
             JNode val = (JNode)opo.obj;
             pos = opo.pos;
             Func<JNode, JNode> outfunc;

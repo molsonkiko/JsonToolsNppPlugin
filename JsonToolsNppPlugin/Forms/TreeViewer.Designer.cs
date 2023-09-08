@@ -18,7 +18,7 @@ namespace JSON_Tools.Forms
             if (pathsToJNodes != null)
                 pathsToJNodes.Clear();
             json = null;
-            query_result = null;
+            queryResult = null;
             pathsToJNodes = null;
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
             {

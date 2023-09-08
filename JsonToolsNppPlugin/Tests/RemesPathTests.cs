@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
+using static JSON_Tools.Tests.RemesParserTester;
 
 namespace JSON_Tools.Tests
 {
@@ -21,17 +22,18 @@ namespace JSON_Tools.Tests
             }
         }
 
+        public static readonly string fooStr = "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
+            "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
+            "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}";
+        public static readonly JNode foo = new JsonParser(LoggerLevel.JSON5).Parse(fooStr);
+        public static readonly JObject fooObj = (JObject)foo;
+        public static readonly int fooLen = fooObj.Length;
+
         public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
-            string fooStr = "{\"foo\": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], " +
-                            "\"bar\": {\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"baz\": \"z\", " +
-                            "\"quz\": {}, \"jub\": [], \"guzo\": [[[1]], [[2], [3]]], \"7\": [{\"foo\": 2}, 1], \"_\": {\"0\": 0}}";
-            JNode foo = jsonParser.Parse(fooStr);
-            JObject fooObj = (JObject)foo;
-            int fooLen = fooObj.Length;
             RemesParser remesparser = new RemesParser();
-            Npp.AddLine($"The queried JSON in the RemesParser tests is:{fooStr}");
+            Npp.AddLine($"The queried JSON in the RemesParser tests is named foo:{fooStr}");
             var testcases = new Query_DesiredResult[]
             {
                 // subtraction
@@ -400,6 +402,10 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
                 new Query_DesiredResult("@{foo: .125E3, $baz: 0x2eFb, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 0xabcdefABCDEF}", // JSON5-compliant unquoted strings
                     "{\"foo\": 125, \"$baz\": 12027, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\\\b\\\\n\": 188900977659375}"),
+                new Query_DesiredResult("1{1, 2}", "[1, 2]"), // projections off of scalars
+                new Query_DesiredResult("baz{a: 1}", "{\"a\": 1}"),
+                new Query_DesiredResult("null{foo: 1.5->1, b: true->9.75, c: b{9}, d: 1{bar: baz}}",
+                    "{\"foo\": 1, \"b\": 9.75, \"c\": [9], \"d\": {\"bar\": \"baz\"}}"),
                 // recursive search
                 new Query_DesiredResult("@..g`\\\\d`", "[[{\"foo\": 2}, 1], 0]"),
                 new Query_DesiredResult("@..[foo,`0`]", "[[[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], 2, 0]"),
@@ -693,9 +699,11 @@ namespace JSON_Tools.Tests
             foreach (string[] test in testcases)
             {
                 string inpstr = test[0];
-                JNode inp = jsonParser.Parse(test[0]);
+                JNode inp = JsonParserTester.TryParse(test[0], jsonParser);
                 string query = test[1];
-                JNode jdesired_result = jsonParser.Parse(test[2]);
+                JNode jdesired_result = JsonParserTester.TryParse(test[2], jsonParser);
+                if (inp is null || jdesired_result is null)
+                    continue;
                 ii += 2;
                 try
                 {
@@ -755,87 +763,79 @@ namespace JSON_Tools.Tests
         }
     }
 
-    class BinopTester
+    /// <summary>
+    /// test multi-statement queries
+    /// </summary>
+    public class RemesPathComplexQueryTester
     {
         public static bool Test()
         {
             JsonParser jsonParser = new JsonParser();
-            JNode jtrue = jsonParser.Parse("true"); JNode jfalse = jsonParser.Parse("false");
-            var testcases = new object[][]
+            RemesParser remesparser = new RemesParser();
+            Npp.AddLine($"The queried JSON in the RemesParser complex query tests is named foo:{fooStr}");
+            var testcases = new Query_DesiredResult[]
             {
-                new object[]{ jsonParser.Parse("1"), jsonParser.Parse("3"), Binop.BINOPS["-"], jsonParser.Parse("-2"), "subtraction of ints" },
-                new object[]{ jsonParser.Parse("2.5"), jsonParser.Parse("5"), Binop.BINOPS["/"], jsonParser.Parse("0.5"), "division of float by int" },
-                new object[]{ jsonParser.Parse("\"a\""), jsonParser.Parse("\"b\""), Binop.BINOPS["+"], jsonParser.Parse("\"ab\""), "addition of strings" },
-                new object[]{ jsonParser.Parse("3"), jsonParser.Parse("4"), Binop.BINOPS[">="], jfalse, "comparison ge" },
-                new object[]{ jsonParser.Parse("7"), jsonParser.Parse("9"), Binop.BINOPS["<"], jtrue, "comparison lt" },
-                new object[]{ jsonParser.Parse("\"abc\""), jsonParser.Parse("\"ab+\""), Binop.BINOPS["=~"], jtrue, "has_pattern" },
+                new Query_DesiredResult("var a = 1; " +
+                                        "var b = @.foo[0]; " +
+                                        "var c = a + 2; " +
+                                        "b = @ * c; " + // not reassigning b (use "var b = @ * c" for that), but rather mutating it
+                                        "@.foo[:][1]",
+                    "[3, 4.0, 7.0]"),
+                new Query_DesiredResult("var two = @.foo[1]; " + // [3.0, 4.0, 5.0]
+                                        "var one = @.foo[0]; " + // [0, 1, 2]
+                                        "var one_two = one[::-1] + two; " + // [5.0, 5.0, 5.0]
+                                        "two = @ + one_two[1]; " + // [8.0, 9.0, 10.0]
+                                        "two",
+                    "[8.0, 9.0, 10.0]"),
+                new Query_DesiredResult("var two = @.foo[1]; " + // [3.0, 4.0, 5.0]
+                                        "var one = @.foo[0]; " + // [0, 1, 2]
+                                        "var mintwo = min(two); " + // 3.0
+                                        "var z = one[:]{@, @ - mintwo};", // [[0, -3.0], [1, -2.0], [2, -1.0]]
+                    "[[0, -3.0], [1, -2.0], [2, -1.0]]"),
+                new Query_DesiredResult("var ifelse = blah; var s_len = s_len(ifelse); ifelse(s_len < 3, foo, bar)",
+                    "\"bar\""), // variables with same names as argfunctions
+                new Query_DesiredResult("var bar_a = @.bar.a; " + // false
+                                        "var baz = @.baz; " + // "z"
+                                        "var bazbar = str(bar_a) + baz; " + // "falsez"
+                                        "var baz = @{baz, bazbar}; " +
+                                        "var baz = @{bar_a, baz, bazbar}; " +
+                                        "baz",
+                    "[false, [\"z\", \"falsez\"], \"falsez\"]"), // redefining variables
             };
-            int tests_failed = 0;
             int ii = 0;
-            foreach (object[] test in testcases)
-            {
-                JNode x = (JNode)test[0], y = (JNode)test[1], desired = (JNode)test[3];
-                Binop bop = (Binop)test[2];
-                string msg = (string)test[4];
-                JNode output = bop.Call(x, y);
-                string str_desired = desired.ToString();
-                string str_output = output.ToString();
-                if (str_desired != str_output)
-                {
-
-                    tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (input \"{1}({2}, {3})\", {4}) failed:\n" +
-                                                    "Expected\n{5}\nGot\n{6}",
-                                                    ii + 1, bop, x.ToString(), y.ToString(), msg, str_desired, str_output));
-                }
-                ii++;
-            }
-            ii = testcases.Length;
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
-        }
-    }
-
-    class ArgFunctionTester
-    {
-        public static bool Test()
-        {
-            JsonParser jsonParser = new JsonParser();
-            JNode jtrue = jsonParser.Parse("true");
-            JNode jfalse = jsonParser.Parse("false");
-            var testcases = new (List<JNode> args, ArgFunction f, JNode desired_output)[]
-            {
-                ( new List<JNode>{jsonParser.Parse("[1,2]")}, ArgFunction.FUNCTIONS["len"], new JNode(Convert.ToInt64(2), Dtype.INT, 0) ),
-                ( new List<JNode>{jsonParser.Parse("[1,2]"), jtrue}, ArgFunction.FUNCTIONS["sorted"], jsonParser.Parse("[2,1]") ),
-                ( new List<JNode>{jsonParser.Parse("[[1,2], [4, 1]]"), new JNode(Convert.ToInt64(1), Dtype.INT, 0), jfalse }, ArgFunction.FUNCTIONS["sort_by"], jsonParser.Parse("[[4, 1], [1, 2]]") ),
-                ( new List<JNode>{jsonParser.Parse("[1, 3, 2]")}, ArgFunction.FUNCTIONS["mean"], new JNode(2.0, Dtype.FLOAT, 0) ),
-            };
             int tests_failed = 0;
-            int ii = 0;
-            foreach ((List<JNode> args, ArgFunction f, JNode desired_output) in testcases)
+            JNode result;
+            foreach (Query_DesiredResult qd in testcases)
             {
-                JNode output = f.Call(args);
-                var sb = new StringBuilder();
-                sb.Append('{');
-                int argnum = 0;
-                while (argnum < args.Count)
-                {
-                    sb.Append(args[argnum++].ToString());
-                    if (argnum < (args.Count - 1)) { sb.Append(", "); }
-                }
-                sb.Append('}');
-                string argstrings = sb.ToString();
-                string str_desired = desired_output.ToString();
-                string str_output = output.ToString();
-                if (str_desired != str_output)
-                {
-
-                    tests_failed++;
-                    Npp.AddLine(String.Format("Test {0} (input \"{1}({2}) failed:\nExpected\n{3}\nGot\n{4}",
-                                                    ii + 1, f, argstrings, str_desired, str_output));
-                }
                 ii++;
+                JNode jdesired_result;
+                JNode foo = RemesParserTester.foo.Copy(); // need a fresh copy each time b/c queries could mutate it
+                try
+                {
+                    jdesired_result = jsonParser.Parse(qd.desired_result);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Got an error while parsing {qd.desired_result}:\n{ex}");
+                    continue;
+                }
+                try
+                {
+                    result = remesparser.Search(qd.query, foo);
+                }
+                catch (Exception ex)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, but instead threw" +
+                                      $" an exception:\n{ex}");
+                    continue;
+                }
+                if (!result.TryEquals(jdesired_result, out _))
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
+                                      $"but instead got {result.ToString()}.");
+                }
             }
             ii = testcases.Length;
             Npp.AddLine($"Failed {tests_failed} tests.");
