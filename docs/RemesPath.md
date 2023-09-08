@@ -52,7 +52,7 @@ RemesPath is a JSON query language inspired by [JMESpath](https://jmespath.org/)
 
 ### Negated indexing and *excluding* keys (v5.7+ only) ###
 
-Suppose you want to match every key in an object *except `c` and `d`*, or every element in an array *except the 3rd*. RemesPath has always offered ways to do this (often roundabout), but beginning in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), this is much easier with `!` (exclamation point) before any of the key-selecting or index-selecting indexers described above:
+Suppose you want to match every key in an object *except `c` and `d`*, or every element in an array *except the 3rd*. RemesPath has always offered ways to do this (often roundabout), but beginning in [v5.7](/CHANGELOG.md#570---2023-09-08), this is much easier with `!` (exclamation point) before any of the key-selecting or index-selecting indexers described above:
 
 * To select every key *except `c` and `d`*, use the query `@![c, d]`
     * The query `@![c, d]` on JSON `{"a": 1, "b": 2, "c": 3, "d": 4}` returns `{"a": 1, "b": 2}`
@@ -299,7 +299,7 @@ It's easier to understand with some __examples:__
 ----
 `group_by(x: array, k: int | str | array) -> object`
 
-* If `k` is an array (*and the JsonTools version is [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd) or greater*)
+* If `k` is an array (*and the JsonTools version is [v5.7](/CHANGELOG.md#570---2023-09-08) or greater*)
    * Returns a new object where each value `v` associated with `k[n]` is mapped to all (children of itbl where `child[k[n]] == v`) recursively grouped by `[k[n + 1], k[n + 2], ...]`.
 * If `x` is an array of *arrays*:
    * If `k` is *not* an int, throw an error.
@@ -885,7 +885,7 @@ Some examples:
 
 ## Assigning variables *(added in v5.7)* and executing multi-statement queries ##
 
-Beginning in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), it is possible to run queries with multiple statements. __Each statement in the query must be terminated by a semicolon (`;`).__
+Beginning in [v5.7](/CHANGELOG.md#570---2023-09-08), it is possible to run queries with multiple statements. __Each statement in the query must be terminated by a semicolon (`;`).__
 
 In addition, you can assign variables using the syntax `var <name> = <statement>`
 

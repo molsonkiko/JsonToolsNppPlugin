@@ -133,7 +133,7 @@ Now we can pretty-print the JSON in these selections. This has no effect on the 
 __Note that your JSON selections (or lack thereof) are only remembered until you do one of the following:__
 * overwrite or delete all the text in the file
 * perform a JsonTools action while you have any multi-character selection other than the remembered selections.
-    - *NOTE: starting in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), only multi-character selections that begin with a parse-able JSON document will cause the previous selections/lack thereof to be forgotten.*
+    - *NOTE: starting in [v5.7](/CHANGELOG.md#570---2023-09-08), only multi-character selections that begin with a parse-able JSON document will cause the previous selections/lack thereof to be forgotten.*
     - For example, if you had the text `foo` selected, any version since 5.7 would ignore that selection because it does not begin with a valid JSON document.
     - However, the selection `[ blah` *would override old selections even though it's not valid JSON* because the JSON parser will parse it as an unterminated empty array.
 
@@ -339,7 +339,7 @@ In versions 3.4.0 through 3.6.1.1, you can also click on the `Current path` butt
 
 ### Select tree node's JSON (or its children) *(added in v5.7)* ###
 
-Starting in [v5.7](/CHANGELOG.md#570---unreleased-yyyy-mm-dd), you can use the tree view to select any JSON element or the children of that element.
+Starting in [v5.7](/CHANGELOG.md#570---2023-09-08), you can use the tree view to select any JSON element or the children of that element.
 
 ![Treeview select associated JSON children](/docs/treeview%20select%20associated%20json%20children.PNG)
 

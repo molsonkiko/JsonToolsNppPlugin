@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#570---unreleased-yyyy-mm-dd) to this project will be documented in this file.
+All [notable changes](#570---2023-09-08) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
 
-## [5.7.0] - (UNRELEASED) YYYY-MM-DD
+## [5.7.0] - 2023-09-08
 
 ### Added
 
