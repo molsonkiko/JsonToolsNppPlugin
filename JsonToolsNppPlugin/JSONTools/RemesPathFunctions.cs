@@ -2,6 +2,7 @@
 A library of built-in functions for the RemesPath query language.
 */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -804,10 +805,17 @@ namespace JSON_Tools.JSON_Tools
             this.isDeterministic = isDeterministic;
         }
 
-        public Dtype[] InputTypes()
+        /// <summary>
+        /// valid type options for a given argument number to the function
+        /// </summary>
+        /// <param name="argNum"></param>
+        /// <returns></returns>
+        public Dtype TypeOptions(int argNum)
         {
-            return inputTypes.Select(x => x | Dtype.UNKNOWN).ToArray();
-            // UNKNOWN is always a valid argument type.
+            return (argNum >= inputTypes.Length
+                ? inputTypes[inputTypes.Length - 1] // last type in inputTypes applies to all optional args for funcs with arbitrary numbers of args
+                : inputTypes[argNum])
+                | Dtype.UNKNOWN; // UNKNOWN is always a valid argument type.
         }
 
         public JNode Call(List<JNode> args)
@@ -818,6 +826,66 @@ namespace JSON_Tools.JSON_Tools
         public override string ToString()
         {
             return $"ArgFunction({name}, {type})";
+        }
+
+        /// <summary>
+        /// Vectorized functions take on the type of the iterable they're vectorized across,
+        /// but they have a set type when operating on scalars<br></br>
+        /// (e.g. s_len returns an array when acting on an array
+        /// and an object when operating on an object,
+        /// but s_len always returns an int when acting on a single string).<br></br>
+        /// Non-vectorized functions always return the same type.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public Dtype OutputType(JNode x)
+        {
+            return isVectorized && ((x.type & Dtype.ITERABLE) != 0) ? x.type : type;
+        }
+
+        /// <summary>
+        /// if x is null or its type is not one of the appropriate types for argument argNum to this function,
+        /// throw a RemesPathArgumentException
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="argNum"></param>
+        /// <exception cref="RemesPathArgumentException"></exception>
+        public void CheckType(JNode x, int argNum)
+        {
+            Dtype typeOptions = TypeOptions(argNum);
+            if (x == null || (x.type & typeOptions) == 0)
+            {
+                Dtype arg_type = x == null ? Dtype.NULL : x.type;
+                throw new RemesPathArgumentException($"got type {JNode.FormatDtype(arg_type)}", argNum, this);
+            }
+        }
+
+        /// <summary>
+        /// throw a RemesPathException because count arguments were given to this function,
+        /// which requires between minArgs and maxArgs args.
+        /// </summary>
+        /// <param name="count"></param>
+        /// <exception cref="RemesPathException"></exception>
+        public void ThrowWrongArgCount(int count)
+        {
+            char correct_char_after_arg = count == maxArgs ? ')' : ',';
+            string num_args_description = (minArgs == maxArgs) ? $"({maxArgs} args)" : $"({minArgs} - {maxArgs} args)";
+            throw new RemesPathException($"Expected '{correct_char_after_arg}' after argument {count} of function {name} {num_args_description}");
+        }
+
+        /// <summary>
+        /// for functions that have a fixed number of optional args, pad the unfilled args with null nodes
+        /// </summary>
+        public void PadToMaxArgs(List<JNode> args)
+        {
+            int argNum = args.Count;
+            if (maxArgs < int.MaxValue)
+            {
+                for (int arg2 = argNum; arg2 < maxArgs; arg2++)
+                {
+                    args.Add(new JNode());
+                }
+            }
         }
 
         #region NON_VECTORIZED_ARG_FUNCTIONS
@@ -1704,6 +1772,57 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// At(json: array | object, inds_or_keys: string | integer | array) -> anything<br></br>
+        /// first arg must be an object or array.<br></br>
+        /// second arg must be an integer, a string, an array of integers, or an array of strings.<br></br>
+        /// Assuming json is an array, returns json[ind] for each integer index in inds_or_keys<br></br>
+        /// Assuming json is an object, returns json[key] for each string key in inds_or_keys<br></br>
+        /// EXAMPLES<br></br>
+        /// at([1, 2, 3], 0) -> 1<br></br>
+        /// at(["foo", "bar", "baz"], [-1, 0]) -> ["baz", "foo"]<br></br>
+        /// at({"foo": 1, "bar": 2}, "bar") -> 2<br></br>
+        /// at({"foo": 1, "bar": 2}, ["bar", "foo"]) -> [2, 1]
+        /// </summary>
+        public static JNode At(List<JNode> args)
+        {
+            JNode json = args[0];
+            JNode indsOrKeys = args[1];
+            if (json is JArray arr)
+            {
+                var children = arr.children;
+                int ind;
+                if (indsOrKeys is JArray indArr)
+                {
+                    var atList = new List<JNode>();
+                    foreach (JNode indNode in indArr.children)
+                    {
+                        ind = Convert.ToInt32(indNode.value);
+                        if (ArrayExtensions.WrappedIndex(children, ind, out JNode atInd))
+                            atList.Add(atInd);
+                        else
+                            throw new RemesPathIndexOutOfRangeException(ind, arr);
+                    }
+                    return new JArray(0, atList);
+                }
+                ind = Convert.ToInt32(indsOrKeys.value);
+                if (ArrayExtensions.WrappedIndex(children, ind, out JNode atIndsOrKeys))
+                    return atIndsOrKeys;
+                else
+                    throw new RemesPathIndexOutOfRangeException(ind, arr);
+            }
+            else if (json is JObject obj)
+            {
+                var children = obj.children;
+                if (indsOrKeys is JArray indArr)
+                {
+                    return new JArray(0, indArr.children.Select(key => children[(string)key.value]).ToList());
+                }
+                return obj[(string)indsOrKeys.value];
+            }
+            else throw new RemesPathArgumentException($"got type {json.type}", 0, ArgFunction.FUNCTIONS["at"]);
+        }
+
+        /// <summary>
         /// The 3+ arguments must have the types (obj: object, ...: string, anything alternating)<br></br>
         /// Returns a <em>new object</em> with the key-value pair(s) k_i-v_i added.<br></br>
         /// <em>Does not mutate the original object.</em><br></br>
@@ -2226,9 +2345,7 @@ namespace JSON_Tools.JSON_Tools
             return arr;
         }
 
-        // VectorizeArgFunction used to be here, but it's not necessary now that I reimplemented all the
-        // vectorized ArgFunctions to take List<JNode> as arguments
-
+        
         public static Dictionary<string, ArgFunction> FUNCTIONS =
         new Dictionary<string, ArgFunction>
         {
@@ -2237,6 +2354,7 @@ namespace JSON_Tools.JSON_Tools
             ["all"] = new ArgFunction(All, "all", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["any"] = new ArgFunction(Any, "any", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
+            ["at"] = new ArgFunction(At, "at", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR_OR_OBJ, Dtype.ARR | Dtype.INT | Dtype.STR}),
             ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, int.MaxValue, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, /* any # of args */ Dtype.ITERABLE }),
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR }),

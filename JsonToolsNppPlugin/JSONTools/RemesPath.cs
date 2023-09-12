@@ -292,7 +292,7 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString()
         {
-            string fmt_dtype = JNode.FormatDtype(func.InputTypes()[arg_num]);
+            string fmt_dtype = JNode.FormatDtype(func.TypeOptions(arg_num));
             return $"For argument {arg_num} of function {func.name}, expected {fmt_dtype}, instead {description}";
         }
     }
@@ -899,11 +899,7 @@ namespace JSON_Tools.JSON_Tools
                 if (arg is CurJson) { other_callables = true; }
                 other_args.Add(arg);
             }
-            // vectorized functions take on the type of the iterable they're vectorized across, but they have a set type
-            // when operating on scalars (e.g. s_len returns an array when acting on an array and a dict
-            // when operating on a dict, but s_len always returns an int when acting on a single string)
-            // non-vectorized functions always return the same type
-            Dtype out_type = func.function.isVectorized && ((x.type & Dtype.ITERABLE) != 0) ? x.type : func.function.type;
+            Dtype out_type = func.function.OutputType(x);
             List<JNode> all_args = new List<JNode>(func.args.Count);
             foreach (var a in func.args)
                 all_args.Add(null);
@@ -1848,7 +1844,6 @@ namespace JSON_Tools.JSON_Tools
             object t;
             pos++;
             int arg_num = 0;
-            Dtype[] intypes = fun.InputTypes();
             List<JNode> args = new List<JNode>(fun.minArgs);
             if (fun.maxArgs == 0)
             {
@@ -1864,9 +1859,11 @@ namespace JSON_Tools.JSON_Tools
                 t = toks[pos];
                 // the last Dtype in an ArgFunction's input_types is either the type options for the last arg
                 // or the type options for every optional arg (if the function can have infinitely many args)
-                Dtype type_options = arg_num >= intypes.Length 
-                    ? intypes[intypes.Length - 1]
-                    : intypes[arg_num];
+                Dtype type_options = fun.TypeOptions(arg_num); 
+                // Python style *args syntax; e.g. zip(*@) is equivalent to zip(@[0], @[1], @[2], ..., @[-1])
+                bool spread_cur_arg = t is Binop b && b.name == "*";
+                if (spread_cur_arg)
+                    pos++;
                 try
                 {
                     try
@@ -1898,11 +1895,8 @@ namespace JSON_Tools.JSON_Tools
                             pos = opo.pos;
                         }
                     }
-                    if (cur_arg == null || (cur_arg.type & type_options) == 0)
-                    {
-                        Dtype arg_type = cur_arg == null ? Dtype.NULL : cur_arg.type;
-                        throw new RemesPathArgumentException($"got type {JNode.FormatDtype(arg_type)}", arg_num, fun);
-                    }
+                    if (!spread_cur_arg) // if spreading, we'll check the type of each element of cur_arg separately
+                        fun.CheckType(cur_arg, arg_num);
                 }
                 catch (Exception ex)
                 {
@@ -1910,6 +1904,7 @@ namespace JSON_Tools.JSON_Tools
                     throw new RemesPathArgumentException($"threw exception {ex}.", arg_num, fun);
                 }
                 t = toks[pos];
+                pos++;
                 bool comma = false;
                 bool close_paren = false;
                 if (t is char d)
@@ -1921,43 +1916,64 @@ namespace JSON_Tools.JSON_Tools
                 {
                     throw new RemesPathException($"Arguments of arg functions must be followed by ',' or ')', not {t}");
                 }
-                if (arg_num + 1 < fun.minArgs && !comma)
+                if (spread_cur_arg)
                 {
-                    if (fun.minArgs == fun.maxArgs)
-                        throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
-                    throw new RemesPathException($"Expected ',' after argument {arg_num} of function {fun.name} " +
-                                                 $"({fun.minArgs} - {fun.maxArgs} args)");
+                    if (!close_paren)
+                        throw new RemesPathException("There can be no arguments to a function after an array that was spread to multiple args using the '*' operator");
+                    // current argument is an array being "spread", meaning that each element is being used as a separate argument
+                    var spreadResult = SpreadArrayToArgFunctionArgs(args, cur_arg, fun);
+                    return new Obj_Pos(spreadResult, pos);
                 }
-                if (arg_num + 1 == fun.maxArgs && !close_paren)
+                else
                 {
-                    if (fun.minArgs == fun.maxArgs)
-                        throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
-                    throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} " +
-                                                 $"({fun.minArgs} - {fun.maxArgs} args)");
+                    args.Add(cur_arg);
+                    arg_num++;
                 }
-                args.Add(cur_arg);
-                arg_num++;
-                pos++;
+                if ((arg_num < fun.minArgs && !comma)
+                    || (arg_num == fun.maxArgs && !close_paren))
+                    fun.ThrowWrongArgCount(arg_num);
                 if (close_paren)
                 {
                     var withargs = new ArgFunctionWithArgs(fun, args);
-                    if (fun.maxArgs < int.MaxValue)
-                    {
-                        // for functions that have a fixed number of optional args, pad the unfilled args with null nodes
-                        for (int arg2 = arg_num; arg2 < fun.maxArgs; arg2++)
-                        {
-                            args.Add(new JNode());
-                        }
-                    }
+                    fun.PadToMaxArgs(args);
                     return new Obj_Pos(ApplyArgFunction(withargs), pos);
                 }
             }
-            if (fun.minArgs == fun.maxArgs)
-                throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} ({fun.maxArgs} args)");
-            throw new RemesPathException($"Expected ')' after argument {arg_num} of function {fun.name} "
-                                         + $"({fun.minArgs} - {fun.maxArgs} args)");
+            fun.ThrowWrongArgCount(arg_num);
+            throw new Exception("unreachable");
         }
 
+        private JNode SpreadArrayToArgFunctionArgs(List<JNode> args, JNode cur_arg, ArgFunction fun)
+        {
+            if (cur_arg is CurJson cj)
+            {
+                Func<JNode, JNode> spreadFun = (JNode inp) =>
+                {
+                    var inpArr = cj.function(inp);
+                    var argsCalledOnInp = args.Select(x => x is CurJson xcj ? xcj.function(inp) : x).ToList();
+                    return SpreadArrayToArgFunctionArgs(argsCalledOnInp, inpArr, fun);
+                };
+                var spreadCj = new CurJson(fun.OutputType(cur_arg), spreadFun);
+                return spreadCj;
+            }
+            var argsCpy = args.ToList();
+            if (!(cur_arg is JArray cur_arr))
+            {
+                throw new RemesPathException($"Any function argument preceded by '*' must be an array, got type {JNode.FormatDtype(cur_arg.type)}");
+            }
+            int arg_num = argsCpy.Count;
+            cur_arr.children.ForEach(child =>
+            {
+                fun.CheckType(child, arg_num);
+                argsCpy.Add(child);
+                arg_num++;
+            });
+            if (arg_num < fun.minArgs || arg_num > fun.maxArgs)
+                fun.ThrowWrongArgCount(arg_num);
+            fun.PadToMaxArgs(argsCpy);
+            var withargs = new ArgFunctionWithArgs(fun, argsCpy);
+            return ApplyArgFunction(withargs);
+        }
         private Obj_Pos ParseProjection(List<object> toks, int pos, int end, JQueryContext context)
         {
             var children = new List<object>();

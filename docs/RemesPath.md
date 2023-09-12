@@ -246,6 +246,20 @@ __EXAMPLES__
 - `append([], 1, false, "a", [4]) -> [1, false, "a", [4]]`
 
 -----
+`at(x: array | object, inds: array | int | str) -> float`
+
+If x is an array, inds must be an integer or an array of integers.
+If x is an object, inds must be a string or an array of strings.
+If inds is an array:
+* returns `x[k]` for key/index `k` in `inds`.
+
+__EXAMPLES__
+- at([1, 2, 3], 0) -> 1<br></br>
+- at(["foo", "bar", "baz"], [-1, 0]) -> ["baz", "foo"]
+- at({"foo": 1, "bar": 2}, "bar") -> 2<br></br>
+- at({"foo": 1, "bar": 2}, ["bar", "foo"]) -> [2, 1]
+
+-----
 `avg(x: array) -> float`
 
 Finds the arithmetic mean of an array of numbers. `mean` is an alias for this function.
@@ -939,3 +953,18 @@ will return
 ["bar", "baz", "barbaz"]
 ```
 because when baz is redefined, it just uses the value of baz that was previously defined, and no weird infinite loops of self-reference will happen.
+
+### Spreading function args to fill multiple arguments (added in v5.8) ###
+
+Beginning in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the `*` spread operator has been added that allows the user to pass in an array to stand for multiple arguments, which RemesPath will attempt to get from the elements of that array.
+
+__Examples:__
+* ``zip(*j`[[1, 2], ["a", "b"], [true, false]]`)`` returns `[[1, "a", true], [2, "b", false]]`
+* Consider the input
+```json
+{
+    "a": [[[1, 0], [0, 1]], 1],
+    "b": [[[1, 0], [0, 1]], 0]
+}
+```
+The query `@.*->max_by(*@)` returns `{"a": [0, 1], "b": [1, 0]}` because when working with key `a`, we max by the second element of each subarray, and when working with key `b`, we max by the first element.

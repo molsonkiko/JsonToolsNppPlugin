@@ -38,6 +38,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
 
+## [5.8.0] - (UNRELEASED) YYYY-MM-DD
+
+### Added
+
+1. [Python-style spreading of an array](/docs/RemesPath.md#spreading-function-args-to-fill-multiple-arguments-added-in-v58) with `*` to fill multiple arguments of a function.
+2. New RemesPath function(s): `At` function for indexing into array or object at an index or key determined at runtime (since indexing with square braces does not support keys/indices that are functions of input).
+
 ## [5.7.0] - 2023-09-08
 
 ### Added

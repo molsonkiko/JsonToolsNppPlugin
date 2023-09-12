@@ -386,6 +386,15 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("parse(j`[\"[1,2,NaN,null,\\\"\\\"]\", \"{\\\"foo\\\": false}\", \"u\"]`)", "[{\"result\": [1,2,NaN,null,\"\"]}, {\"result\": {\"foo\": false}}, {\"error\": \"No valid literal possible at position 0 (char 'u')\"}]"),
                 new Query_DesiredResult("stringify(j`[1,2,\"foo\"]`)", "\"[1,2,\\\"foo\\\"]\""),
                 new Query_DesiredResult("j`[true,null,1,NaN,{},[], \"\"]`[:]{type(@)}[0]", "[\"boolean\", \"null\", \"integer\", \"number\", \"object\", \"array\", \"string\"]"),
+                new Query_DesiredResult("at(@.foo[1], -@.foo[0] - 1)", "[5.0, 4.0, 3.0]"),
+                new Query_DesiredResult("at(@.foo[1], @.foo[0][2])", "5.0"),
+                new Query_DesiredResult("at(@, keys(@)[:][s_slice(@, 0) == b])", "[{\"a\": false, \"b\": [\"a`g\", \"bah\"]}, \"z\"]"),
+                new Query_DesiredResult("at(@, ifelse(@.bar.a, bar, baz))", "\"z\""),
+                // '*' spread operator for array arguments to arg functions
+                new Query_DesiredResult("zip(*@.foo)", "[[0, 3.0, 6.0], [1, 4.0, 7.0], [2, 5.0, 8.0]]"),
+                new Query_DesiredResult("zip(@.foo[2] * 3, *@.foo[:]->(@ ** 2))", "[[18.0, 0, 9.0, 36.0], [21.0, 1, 16.0, 49.0], [24.0, 4, 25.0, 64.0]]"),
+                new Query_DesiredResult("concat(j`[\"a\", \"b\", \"c\"]`, *j`[[1, 2], [3, 4]]`)", "[\"a\", \"b\", \"c\", 1, 2, 3, 4]"),
+                new Query_DesiredResult("j`{\"a\": [[[1, 0], [0, 1]], 1], \"b\": [[[1, 0], [0, 1]], 0]}`.*->max_by(*@)", "{\"a\": [0, 1], \"b\": [1, 0]}"),
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
@@ -603,6 +612,9 @@ namespace JSON_Tools.Tests
                 new []{"group_by(@, -4)", "[[1, 2], [2, 3]]"},
                 new []{"s_slice(@, -4)", "[\"abc\", \"cde\"]"},
                 new []{"s_slice(@, 7)", "[\"abc\", \"cde\"]"},
+                new []{"s_slice(*@)", "[\"abc\", 1, 2]"}, // * spread operator spreading an array that would cause function to have too many args
+                new []{"s_slice(*@)", "[\"abc\"]"}, // * spread operator spreading an array that would cause function to have too few args
+                new []{"s_slice(*@)", "[\"abc\", \"b\"]"}, // * spread operator spreading an array that would cause function to have arg of wrong type
                 // disallowed negated indices (recursive, star, boolean, projection)
                 new []{"@!..a", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},
                 new []{"@!..[a, c]", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},
@@ -801,6 +813,11 @@ namespace JSON_Tools.Tests
                                         "var baz = @{bar_a, baz, bazbar}; " +
                                         "baz",
                     "[false, [\"z\", \"falsez\"], \"falsez\"]"), // redefining variables
+                new Query_DesiredResult("var foobar = @{foo, bar}; " +
+                                        "var foobar_keys = sorted(keys(@)[:][in(@, foobar)], true); " +
+                                        "var o_a = s_slice(foobar_keys, 1){@ * 2, @[::-1]}; " +
+                                        "o_a[:]->s_sub(foobar_keys, *@)",
+                    "[[\"faa\", \"bar\"], [\"foo\", \"bor\"]]"), // '*' spread operator for array arguments to arg functions
             };
             int ii = 0;
             int tests_failed = 0;
