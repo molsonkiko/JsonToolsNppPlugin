@@ -141,3 +141,7 @@ a,b,c
 1,3,c
 ```
 which is the same behavior as the `No recursion` and `Default` strategies.
+
+# Notes #
+
+* In [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the line terminator for the generated CSV file was changed from `LF` (Unix) to `CRLF` (Windows).

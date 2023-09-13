@@ -459,13 +459,13 @@ namespace JSON_Tools.Tests
 
 			var csv_testcases = new object[][]
 			{
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '"', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '"', null, false },
 				new object[] {
 				"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"d\": 4}, {\"a\": 1, \"b\": 2}]",
-				"a,b,c,d\n" + // test missing entries in some rows
-				"1,2,3,\n" +
-				"2,3,,4\n" +
-				"1,2,,\n",
+				"a,b,c,d\r\n" + // test missing entries in some rows
+				"1,2,3,\r\n" +
+				"2,3,,4\r\n" +
+				"1,2,,\r\n",
 				',', '"', null, false
 				},
 				new object[] {
@@ -473,64 +473,72 @@ namespace JSON_Tools.Tests
 					"{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
 					"{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
 				"]", // test stringified iterables
-				"a\tb\tc\n" +
-				"1\t[1, 2, 3]\t{\"d\": \"y\"}\n" +
-				"2\t[4, 5, 6]\t{\"d\": \"z\"}\n",
+				"a\tb\tc\r\n" +
+				"1\t[1, 2, 3]\t{\"d\": \"y\"}\r\n" +
+				"2\t[4, 5, 6]\t{\"d\": \"z\"}\r\n",
 				'\t', '"', null, false
 				},
 				new object[] { "[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
-				"a,b\n,1.0\nblah,NaN\n",
+				"a,b\r\n,1.0\r\nblah,NaN\r\n",
 				',', '"', null, false
 				},
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '"', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '\'', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\n1\ta\n2\tb\n", '\t', '\'', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\na,1\nb,2\n", ',', '"', new string[]{"b", "a"}, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\na\t1\nb\t2\n", '\t', '"', new string[]{"b", "a"}, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,\"a,b\"\n2,c\n", ',', '"', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,'a,b'\n2,c\n", ',', '\'', null, false }, // delims in values
-				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\n1,a\n2,b\n", ',', '"', null, false },
-				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\n1,a\n2,b\n", ',', '\'', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '"', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '\'', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\r\na,1\r\nb,2\r\n", ',', '"', new string[]{"b", "a"}, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\r\na\t1\r\nb\t2\r\n", '\t', '"', new string[]{"b", "a"}, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,\"a,b\"\r\n2,c\r\n", ',', '"', null, false },
+				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,'a,b'\r\n2,c\r\n", ',', '\'', null, false }, // delims in values
+				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\r\n1,a\r\n2,b\r\n", ',', '"', null, false },
+				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false },
 				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
-				"b,\"a,b\"\na,1\nb,2\n",
+				"b,\"a,b\"\r\na,1\r\nb,2\r\n",
 				',', '"', new string[]{"b", "a,b"}, false
 				},
 				new object[] { "[{\"a\\tb\": 1, \"b\": \"a\"}, {\"a\\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
-				"a\\tb\tb\n1\ta\n2\tb\n",
+				"a\\tb\tb\r\n1\ta\r\n2\tb\r\n",
 				'\t', '"', null, false
 				},
 				new object[] { "[{\"a\": 1, \"b\": \"a\\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
-				"a\tb\n1\t\"a\tb\"\n2\tc\n",
+				"a\tb\r\n1\t\"a\tb\"\r\n2\tc\r\n",
 				'\t', '"', null, false
 				},
 				new object[]{"[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]",
-				"a\n1\n2\n3\n", // one column
+				"a\r\n1\r\n2\r\n3\r\n", // one column
 				',', '"', null, false},
 				new object[]{"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]",
-				"a|b|c\n1|2|3\n2|3|4\n3|4|5\n",
+				"a|b|c\r\n1|2|3\r\n2|3|4\r\n3|4|5\r\n",
 				'|', '"', null, false},
 				new object[]{"[{\"date\": \"1999-01-03\", \"cost\": 100.5, \"num\": 13}, {\"date\": \"2000-03-15\", \"cost\": 157.0, \"num\": 17}]",
-				"cost,date,num\n100.5,1999-01-03,13\n157.0,2000-03-15,17\n", // dates
+				"cost,date,num\r\n100.5,1999-01-03,13\r\n157.0,2000-03-15,17\r\n", // dates
 				',', '"', null, false},
 				new object[]{"[{\"date\": \"1999-01-03 07:03:29\", \"cost\": 100.5, \"num\": 13}]",
-				"cost,date,num\n100.5,1999-01-03 07:03:29,13\n", // datetimes
+				"cost,date,num\r\n100.5,1999-01-03 07:03:29,13\r\n", // datetimes
 				',', '"', null, false },
 				new object[]{"[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
 				"{\"name\": \"\\\"Fjordlak the Deranged\\\"\", \"phone number\": \"blo-od4-blud\"}]", // internal quote chars
-				"name,phone number\n\"Dr. Blutentharst\",420-997-1043\n\"Fjordlak the Deranged\",blo-od4-blud\n",
+				"name,phone number\r\n\"Dr. Blutentharst\",420-997-1043\r\n\"Fjordlak the Deranged\",blo-od4-blud\r\n",
 				',', '"', null, false},
 				new object[]{"[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
-				"a,b\nnew\\nline,1\n",
+				"a,b\r\nnew\\nline,1\r\n",
 				',', '"', null, false
 				},
-				new object[]{
+                new object[]{"[{\"a\": \"n,ew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
+				"a,b,c\r\n\"n,ew\\nl\\\"i\rne\",1,abc\r\n",
+                ',', '"', null, false
+                },
+                new object[]{"[{\"a\": \"n\tew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
+				"a\tb\tc\r\n\"n\tew\\nl\\\"i\rne\"\t1\tabc\r\n",
+                '\t', '"', null, false
+                },
+                new object[]{
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints false
-				"a,b\ntrue,foo\nfalse,bar\n",
+				"a,b\r\ntrue,foo\r\nfalse,bar\r\n",
 				',', '"', null, false
 				},
 				new object[]{
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints true
-				"a,b\n1,foo\n0,bar\n",
+				"a,b\r\n1,foo\r\n0,bar\r\n",
 				',', '"', null, true
 				},
 				new object[]{
@@ -540,7 +548,7 @@ namespace JSON_Tools.Tests
 					"{\"a\": true, \"b\": 8}," +
 					"{\"a\": false, \"b\": 9}" +
 				"]", // missing keys
-				"a,b,c.d\n1,1,y\ntrue,7,\ntrue,8,\nfalse,9,\n",
+				"a,b,c.d\r\n1,1,y\r\ntrue,7,\r\ntrue,8,\r\nfalse,9,\r\n",
 				',', '"', null, false
 				},
 				new object[]
@@ -552,14 +560,14 @@ namespace JSON_Tools.Tests
                  "{\"a\": \"\\u8349\", \"b\": 5, \"c\": \"e\"}," + // Taiwanese char for "grass"
 				 "{\"a\": \"Love \\u8349. It \\ud83d\\ude00\", \"b\": 5, \"c\": \"e\"}," + // ascii to non-ascii back to ascii and then to emoji
                  "{\"a\": \"\\ud83d\\ude00\", \"b\": 6, \"c\": \"f\"}]", // smily face (\U0001F600)
-				"a,b,c\n" +
-                "\u042f,1,a\n" +
-                "\u25d0,2,b\n" +
-                "\u1ed3,3,c\n" +
-				"\uff6a,4,d\n" +
-                "\u8349,5,e\n" +
-				"Love \u8349. It \ud83d\ude00,5,e\n" +
-                "\ud83d\ude00,6,f\n",
+				"a,b,c\r\n" +
+                "\u042f,1,a\r\n" +
+                "\u25d0,2,b\r\n" +
+                "\u1ed3,3,c\r\n" +
+				"\uff6a,4,d\r\n" +
+                "\u8349,5,e\r\n" +
+				"Love \u8349. It \ud83d\ude00,5,e\r\n" +
+                "\ud83d\ude00,6,f\r\n",
 				',', '"', null, false
 				},
 			};

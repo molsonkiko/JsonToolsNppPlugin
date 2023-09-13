@@ -867,7 +867,7 @@ namespace JSON_Tools.JSON_Tools
 				sb.Append(ApplyQuotesIfNeeded(col, delim, quote_char));
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
-			sb.Append('\n');
+			sb.Append(JNode.NL);
 			foreach (JNode row in table.children)
 			{
 				JObject orow = (JObject)row;
@@ -910,7 +910,7 @@ namespace JSON_Tools.JSON_Tools
 					}
 					if (ii < header.Length - 1) sb.Append(delim);
 				}
-				sb.Append('\n');
+				sb.Append(JNode.NL);
 			}
 			return sb.ToString();
 		}
