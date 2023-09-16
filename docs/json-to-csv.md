@@ -32,7 +32,9 @@ b_a
 
 2. __The *Delimiter in output file*__ (one of `'\t'`, `','`, or `'|'`) is the character used to separate the fields in the output file. By default this is `','`, so you output a CSV. `'\t'` would result in a TSV (tab-separated variables).
 
-3. __Convert booleans to integers__ takes all instances of `true` and `false` and replaces them with `1` and `0`, respectively. Can be useful sometimes.
+3. __The *Line terminator in output file*__ (one of `CRLF`, `CR`, or `LF`) setting (*added in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd)*) is the line terminator. By default this is Unix `LF`, which was the only line terminator available prior to this release.
+
+4. __Convert booleans to integers__ takes all instances of `true` and `false` and replaces them with `1` and `0`, respectively. Can be useful sometimes.
 
 # Strategies #
 ## Default ##
@@ -141,7 +143,3 @@ a,b,c
 1,3,c
 ```
 which is the same behavior as the `No recursion` and `Default` strategies.
-
-# Notes #
-
-* In [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the line terminator for the generated CSV file was changed from `LF` (Unix) to `CRLF` (Windows).

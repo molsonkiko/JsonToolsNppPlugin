@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Forms
 {
@@ -21,6 +22,7 @@ namespace JSON_Tools.Forms
             this.json = json;
             DelimBox.SelectedIndex = 0;
             StrategyBox.SelectedIndex = 0;
+            eolComboBox.SelectedIndex = (int)Main.settings.csv_newline;
         }
 
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
@@ -61,7 +63,8 @@ namespace JSON_Tools.Forms
             {
                 Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(json);
                 JNode tab = tabularizer.BuildTable(json, schema, keysep);
-                csv = tabularizer.TableToCsv((JArray)tab, delim, '"', null, BoolsToIntsCheckBox.Checked);
+                string eol = Npp.GetEndOfLineString(eolComboBox.SelectedIndex);
+                csv = tabularizer.TableToCsv((JArray)tab, delim, '"', null, BoolsToIntsCheckBox.Checked, eol);
             }
             catch (Exception ex)
             {

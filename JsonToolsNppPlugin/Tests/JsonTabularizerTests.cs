@@ -457,18 +457,20 @@ namespace JSON_Tools.Tests
 			// TEST CSV CREATION
 			JsonParser fancyParser = new JsonParser(LoggerLevel.JSON5);
 
-			var csv_testcases = new object[][]
+			var csv_testcases = new (string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol)[]
 			{
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '"', null, false },
-				new object[] {
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '"', null, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r1,a\r2,b\r", ',', '"', null, false, "\r" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\n1,a\n2,b\n", ',', '"', null, false, "\n" ),
+				(
 				"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"d\": 4}, {\"a\": 1, \"b\": 2}]",
 				"a,b,c,d\r\n" + // test missing entries in some rows
 				"1,2,3,\r\n" +
 				"2,3,,4\r\n" +
 				"1,2,,\r\n",
-				',', '"', null, false
-				},
-				new object[] {
+				',', '"', null, false, "\r\n"
+				),
+				(
 				"[" +
 					"{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
 					"{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
@@ -476,72 +478,83 @@ namespace JSON_Tools.Tests
 				"a\tb\tc\r\n" +
 				"1\t[1, 2, 3]\t{\"d\": \"y\"}\r\n" +
 				"2\t[4, 5, 6]\t{\"d\": \"z\"}\r\n",
-				'\t', '"', null, false
-				},
-				new object[] { "[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
+				'\t', '"', null, false, "\r\n"
+				),
+				( "[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
 				"a,b\r\n,1.0\r\nblah,NaN\r\n",
-				',', '"', null, false
-				},
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '"', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '\'', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\r\na,1\r\nb,2\r\n", ',', '"', new string[]{"b", "a"}, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\r\na\t1\r\nb\t2\r\n", '\t', '"', new string[]{"b", "a"}, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,\"a,b\"\r\n2,c\r\n", ',', '"', null, false },
-				new object[] { "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,'a,b'\r\n2,c\r\n", ',', '\'', null, false }, // delims in values
-				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\r\n1,a\r\n2,b\r\n", ',', '"', null, false },
-				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false },
-				new object[] { "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
+				',', '"', null, false, "\r\n"
+				),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '"', null, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a\tb\r\n1\ta\r\n2\tb\r\n", '\t', '\'', null, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b,a\r\na,1\r\nb,2\r\n", ',', '"', new string[]{"b", "a"}, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "b\ta\r\na\t1\r\nb\t2\r\n", '\t', '"', new string[]{"b", "a"}, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,\"a,b\"\r\n2,c\r\n", ',', '"', null, false, "\r\n" ),
+				( "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r\n1,'a,b'\r\n2,c\r\n", ',', '\'', null, false, "\r\n" ), // delims in values
+				( "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\r1,'a,b'\r2,c\r", ',', '\'', null, false, "\r" ), // delims in values
+				( "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,'a,b'\n2,c\n", ',', '\'', null, false, "\n" ), // delims in values
+				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\r\n1,a\r\n2,b\r\n", ',', '"', null, false, "\r\n" ),
+				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false, "\r\n" ),
+				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
 				"b,\"a,b\"\r\na,1\r\nb,2\r\n",
-				',', '"', new string[]{"b", "a,b"}, false
-				},
-				new object[] { "[{\"a\\tb\": 1, \"b\": \"a\"}, {\"a\\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
+				',', '"', new string[]{"b", "a,b"}, false, "\r\n"
+				),
+				( "[{\"a\\tb\": 1, \"b\": \"a\"}, {\"a\\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
 				"a\\tb\tb\r\n1\ta\r\n2\tb\r\n",
-				'\t', '"', null, false
-				},
-				new object[] { "[{\"a\": 1, \"b\": \"a\\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
+				'\t', '"', null, false, "\r\n"
+				),
+				( "[{\"a\": 1, \"b\": \"a\\tb\"}, {\"a\": 2, \"b\": \"c\"}]",
 				"a\tb\r\n1\t\"a\tb\"\r\n2\tc\r\n",
-				'\t', '"', null, false
-				},
-				new object[]{"[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]",
+				'\t', '"', null, false, "\r\n"
+				),
+				("[{\"a\": 1}, {\"a\": 2}, {\"a\": 3}]",
 				"a\r\n1\r\n2\r\n3\r\n", // one column
-				',', '"', null, false},
-				new object[]{"[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]",
+				',', '"', null, false, "\r\n"
+				),
+				("[{\"a\": 1, \"b\": 2, \"c\": 3}, {\"a\": 2, \"b\": 3, \"c\": 4}, {\"a\": 3, \"b\": 4, \"c\": 5}]",
 				"a|b|c\r\n1|2|3\r\n2|3|4\r\n3|4|5\r\n",
-				'|', '"', null, false},
-				new object[]{"[{\"date\": \"1999-01-03\", \"cost\": 100.5, \"num\": 13}, {\"date\": \"2000-03-15\", \"cost\": 157.0, \"num\": 17}]",
+				'|', '"', null, false, "\r\n"
+				),
+				("[{\"date\": \"1999-01-03\", \"cost\": 100.5, \"num\": 13}, {\"date\": \"2000-03-15\", \"cost\": 157.0, \"num\": 17}]",
 				"cost,date,num\r\n100.5,1999-01-03,13\r\n157.0,2000-03-15,17\r\n", // dates
-				',', '"', null, false},
-				new object[]{"[{\"date\": \"1999-01-03 07:03:29\", \"cost\": 100.5, \"num\": 13}]",
+				',', '"', null, false, "\r\n"
+				),
+				("[{\"date\": \"1999-01-03 07:03:29\", \"cost\": 100.5, \"num\": 13}]",
 				"cost,date,num\r\n100.5,1999-01-03 07:03:29,13\r\n", // datetimes
-				',', '"', null, false },
-				new object[]{"[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
+				',', '"', null, false, "\r\n"
+				),
+				("[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
 				"{\"name\": \"\\\"Fjordlak the Deranged\\\"\", \"phone number\": \"blo-od4-blud\"}]", // internal quote chars
 				"name,phone number\r\n\"Dr. Blutentharst\",420-997-1043\r\n\"Fjordlak the Deranged\",blo-od4-blud\r\n",
-				',', '"', null, false},
-				new object[]{"[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
+				',', '"', null, false, "\r\n"
+				),
+				("[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
 				"a,b\r\nnew\\nline,1\r\n",
-				',', '"', null, false
-				},
-                new object[]{"[{\"a\": \"n,ew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
-				"a,b,c\r\n\"n,ew\\nl\\\"i\rne\",1,abc\r\n",
-                ',', '"', null, false
-                },
-                new object[]{"[{\"a\": \"n\tew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
-				"a\tb\tc\r\n\"n\tew\\nl\\\"i\rne\"\t1\tabc\r\n",
-                '\t', '"', null, false
-                },
-                new object[]{
+				',', '"', null, false, "\r\n"
+				),
+                ("[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
+				"a,b\nnew\\nline,1\n",
+                ',', '"', null, false, "\n"
+                ),
+                ("[{\"a\": \"n,ew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
+				"a,b,c\r\n\"n,ew\\nl\\\"i\\rne\",1,abc\r\n",
+                ',', '"', null, false, "\r\n"
+                ),
+                ("[{\"a\": \"n\tew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
+				"a\tb\tc\r\n\"n\tew\\nl\\\"i\\rne\"\t1\tabc\r\n",
+                '\t', '"', null, false, "\r\n"
+                ),
+                (
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints false
 				"a,b\r\ntrue,foo\r\nfalse,bar\r\n",
-				',', '"', null, false
-				},
-				new object[]{
+				',', '"', null, false, "\r\n"
+				),
+				(
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints true
 				"a,b\r\n1,foo\r\n0,bar\r\n",
-				',', '"', null, true
-				},
-				new object[]{
+				',', '"', null, true, "\r\n"
+				),
+				(
 				"[" +
 					"{\"a\": 1, \"b\": 1, \"c.d\": \"y\"}," +
 					"{\"a\": true, \"b\": 7}," +
@@ -549,11 +562,9 @@ namespace JSON_Tools.Tests
 					"{\"a\": false, \"b\": 9}" +
 				"]", // missing keys
 				"a,b,c.d\r\n1,1,y\r\ntrue,7,\r\ntrue,8,\r\nfalse,9,\r\n",
-				',', '"', null, false
-				},
-				new object[]
-                {
-				"[{\"a\": \"\\u042f\", \"b\": 1, \"c\": \"a\"}," + // backward R cyrillic char
+				',', '"', null, false, "\r\n"
+				),
+				("[{\"a\": \"\\u042f\", \"b\": 1, \"c\": \"a\"}," + // backward R cyrillic char
                  "{\"a\": \"\\u25d0\", \"b\": 2, \"c\": \"b\"}," + // circle where half black and half white
                  "{\"a\": \"\\u1ed3\", \"b\": 3, \"c\": \"c\"}," + // o with hat and accent
                  "{\"a\": \"\\uff6a\", \"b\": 4, \"c\": \"d\"}, " + // HALFWIDTH KATAKANA LETTER SMALL E
@@ -568,17 +579,11 @@ namespace JSON_Tools.Tests
                 "\u8349,5,e\r\n" +
 				"Love \u8349. It \ud83d\ude00,5,e\r\n" +
                 "\ud83d\ude00,6,f\r\n",
-				',', '"', null, false
-				},
+				',', '"', null, false, "\r\n"
+				),
 			};
-			foreach (object[] test in csv_testcases)
+			foreach ((string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol) in csv_testcases)
 			{
-				string inp = (string)test[0];
-				string desired_out = (string)test[1];
-				char delim = (char)test[2];
-				char quote_char = (char)test[3];
-				string[] header = (string[])test[4];
-				bool bools_as_ints = (bool)test[5];
 				ii++;
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
@@ -588,7 +593,7 @@ namespace JSON_Tools.Tests
 				int msg_len = Encoding.UTF8.GetByteCount(desired_out) + 1 + message_without_desired.Length;
 				try
 				{
-					result = tabularizer.TableToCsv((JArray)table, delim, quote_char, header, bools_as_ints);
+					result = tabularizer.TableToCsv((JArray)table, delim, quote_char, header, bools_as_ints, eol);
 					int result_len = Encoding.UTF8.GetByteCount(result);
 					try
 					{

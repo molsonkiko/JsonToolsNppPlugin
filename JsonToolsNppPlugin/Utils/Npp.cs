@@ -174,6 +174,17 @@ namespace JSON_Tools.Utils
             return ansi;
         }
 
+        private static readonly string[] newlines = new string[] { "\r\n", "\r", "\n" };
+
+        /// <summary>0: CRLF, 1: CR, 2: LF<br></br>
+        /// Anything less than 0 or greater than 2: LF</summary>
+        public static string GetEndOfLineString(int eolType)
+        {
+            if (eolType < 0 || eolType >= 3)
+                return "\n";
+            return newlines[eolType];
+        }
+
         public static readonly Dictionary<int, string> ModificationTypeFlagNames = new Dictionary<int, string>
         {
             [0x01] = "SC_MOD_INSERTTEXT",

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using JSON_Tools.JSON_Tools;
 using CsvQuery.PluginInfrastructure; // for SettingsBase
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Utils
 {
@@ -133,6 +134,10 @@ namespace JSON_Tools.Utils
         [Description("When running tests, skip the tests that send requests to APIs"),
             Category("Miscellaneous"), DefaultValue(true)]
         public bool skip_api_request_tests { get; set; }
+
+        [Description("Which type of newline to use for generated CSV files."),
+            Category("Miscellaneous"), DefaultValue(EndOfLine.LF)]
+        public EndOfLine csv_newline { get; set; }
         #endregion
 
         #region GREP_API_SETTINGS

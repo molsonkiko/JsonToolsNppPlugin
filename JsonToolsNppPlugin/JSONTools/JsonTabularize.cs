@@ -819,9 +819,14 @@ namespace JSON_Tools.JSON_Tools
 				foreach (char c in s)
                 {
 					if (c == quote_char)
-						sb.Append("\\\"");
+					{
+						sb.Append('\\');
+						sb.Append(quote_char);
+					}
 					else if (c == '\n')
 						sb.Append("\\n");
+					else if (c == '\r')
+						sb.Append("\\r");
 					else
 						sb.Append(c);
                 }
@@ -833,13 +838,15 @@ namespace JSON_Tools.JSON_Tools
             {
 				if (c == '\n')
 					sb.Append("\\n");
-				else
+                else if (c == '\r')
+                    sb.Append("\\r");
+                else
 					sb.Append(c);
             }
 			return sb.ToString();
 		}
 
-		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false)
+		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false, string newline = "\n")
 		{
 			// allow the user to supply their own column order. If they don't, just alphabetically sort colnames
 			if (header == null)
@@ -867,7 +874,7 @@ namespace JSON_Tools.JSON_Tools
 				sb.Append(ApplyQuotesIfNeeded(col, delim, quote_char));
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
-			sb.Append(JNode.NL);
+			sb.Append(newline);
 			foreach (JNode row in table.children)
 			{
 				JObject orow = (JObject)row;
@@ -910,7 +917,7 @@ namespace JSON_Tools.JSON_Tools
 					}
 					if (ii < header.Length - 1) sb.Append(delim);
 				}
-				sb.Append(JNode.NL);
+				sb.Append(newline);
 			}
 			return sb.ToString();
 		}

@@ -40,6 +40,8 @@
             this.GenerateCSVButton = new System.Windows.Forms.Button();
             this.DocsButton = new System.Windows.Forms.Button();
             this.AcceptCancelButton = new System.Windows.Forms.Button();
+            this.eolComboBoxLabel = new System.Windows.Forms.Label();
+            this.eolComboBox = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // KeySepBox
@@ -60,7 +62,7 @@
             this.JsonToCsvFormTitle.Location = new System.Drawing.Point(53, 9);
             this.JsonToCsvFormTitle.Name = "JsonToCsvFormTitle";
             this.JsonToCsvFormTitle.Size = new System.Drawing.Size(242, 25);
-            this.JsonToCsvFormTitle.TabIndex = 1;
+            this.JsonToCsvFormTitle.TabIndex = 7;
             this.JsonToCsvFormTitle.Text = "Create CSV from JSON";
             // 
             // DelimBox
@@ -81,10 +83,10 @@
             // 
             this.BoolsToIntsCheckBox.AutoSize = true;
             this.BoolsToIntsCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BoolsToIntsCheckBox.Location = new System.Drawing.Point(30, 148);
+            this.BoolsToIntsCheckBox.Location = new System.Drawing.Point(30, 191);
             this.BoolsToIntsCheckBox.Name = "BoolsToIntsCheckBox";
             this.BoolsToIntsCheckBox.Size = new System.Drawing.Size(195, 22);
-            this.BoolsToIntsCheckBox.TabIndex = 2;
+            this.BoolsToIntsCheckBox.TabIndex = 3;
             this.BoolsToIntsCheckBox.Text = "Convert true/false to 1/0?";
             this.BoolsToIntsCheckBox.UseVisualStyleBackColor = true;
             this.BoolsToIntsCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
@@ -98,20 +100,20 @@
             "Full recursive",
             "No recursion",
             "Stringify iterables"});
-            this.StrategyBox.Location = new System.Drawing.Point(30, 188);
+            this.StrategyBox.Location = new System.Drawing.Point(30, 231);
             this.StrategyBox.Name = "StrategyBox";
             this.StrategyBox.Size = new System.Drawing.Size(195, 26);
-            this.StrategyBox.TabIndex = 3;
+            this.StrategyBox.TabIndex = 4;
             this.StrategyBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // StrategyBoxLabel
             // 
             this.StrategyBoxLabel.AutoSize = true;
             this.StrategyBoxLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.StrategyBoxLabel.Location = new System.Drawing.Point(245, 191);
+            this.StrategyBoxLabel.Location = new System.Drawing.Point(245, 234);
             this.StrategyBoxLabel.Name = "StrategyBoxLabel";
             this.StrategyBoxLabel.Size = new System.Drawing.Size(62, 18);
-            this.StrategyBoxLabel.TabIndex = 5;
+            this.StrategyBoxLabel.TabIndex = 12;
             this.StrategyBoxLabel.Text = "Strategy";
             // 
             // KeySepBoxLabel
@@ -121,7 +123,7 @@
             this.KeySepBoxLabel.Location = new System.Drawing.Point(123, 59);
             this.KeySepBoxLabel.Name = "KeySepBoxLabel";
             this.KeySepBoxLabel.Size = new System.Drawing.Size(102, 18);
-            this.KeySepBoxLabel.TabIndex = 6;
+            this.KeySepBoxLabel.TabIndex = 8;
             this.KeySepBoxLabel.Text = "Key Separator";
             // 
             // DelimBoxLabel
@@ -131,16 +133,16 @@
             this.DelimBoxLabel.Location = new System.Drawing.Point(123, 105);
             this.DelimBoxLabel.Name = "DelimBoxLabel";
             this.DelimBoxLabel.Size = new System.Drawing.Size(148, 18);
-            this.DelimBoxLabel.TabIndex = 7;
+            this.DelimBoxLabel.TabIndex = 9;
             this.DelimBoxLabel.Text = "Delimiter in output file";
             // 
             // GenerateCSVButton
             // 
             this.GenerateCSVButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.GenerateCSVButton.Location = new System.Drawing.Point(30, 239);
+            this.GenerateCSVButton.Location = new System.Drawing.Point(30, 282);
             this.GenerateCSVButton.Name = "GenerateCSVButton";
             this.GenerateCSVButton.Size = new System.Drawing.Size(127, 27);
-            this.GenerateCSVButton.TabIndex = 8;
+            this.GenerateCSVButton.TabIndex = 5;
             this.GenerateCSVButton.Text = "Generate CSV";
             this.GenerateCSVButton.UseVisualStyleBackColor = true;
             this.GenerateCSVButton.Click += new System.EventHandler(this.GenerateCSVButton_Click);
@@ -149,10 +151,10 @@
             // DocsButton
             // 
             this.DocsButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DocsButton.Location = new System.Drawing.Point(221, 239);
+            this.DocsButton.Location = new System.Drawing.Point(221, 282);
             this.DocsButton.Name = "DocsButton";
             this.DocsButton.Size = new System.Drawing.Size(74, 27);
-            this.DocsButton.TabIndex = 9;
+            this.DocsButton.TabIndex = 6;
             this.DocsButton.Text = "Docs";
             this.DocsButton.UseVisualStyleBackColor = true;
             this.DocsButton.Click += new System.EventHandler(this.DocsButton_Click);
@@ -161,14 +163,37 @@
             // AcceptCancelButton
             // 
             this.AcceptCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.AcceptCancelButton.Location = new System.Drawing.Point(231, 150);
+            this.AcceptCancelButton.Location = new System.Drawing.Point(231, 193);
             this.AcceptCancelButton.Name = "AcceptCancelButton";
             this.AcceptCancelButton.Size = new System.Drawing.Size(112, 23);
-            this.AcceptCancelButton.TabIndex = 10;
+            this.AcceptCancelButton.TabIndex = 11;
             this.AcceptCancelButton.TabStop = false;
             this.AcceptCancelButton.Text = "AcceptCancelButton";
             this.AcceptCancelButton.UseVisualStyleBackColor = true;
             this.AcceptCancelButton.Visible = false;
+            // 
+            // eolComboBoxLabel
+            // 
+            this.eolComboBoxLabel.AutoSize = true;
+            this.eolComboBoxLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.eolComboBoxLabel.Location = new System.Drawing.Point(123, 149);
+            this.eolComboBoxLabel.Name = "eolComboBoxLabel";
+            this.eolComboBoxLabel.Size = new System.Drawing.Size(188, 18);
+            this.eolComboBoxLabel.TabIndex = 10;
+            this.eolComboBoxLabel.Text = "Line terminator in output file";
+            // 
+            // eolComboBox
+            // 
+            this.eolComboBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.eolComboBox.FormattingEnabled = true;
+            this.eolComboBox.Items.AddRange(new object[] {
+            "CRLF",
+            "CR",
+            "LF"});
+            this.eolComboBox.Location = new System.Drawing.Point(30, 146);
+            this.eolComboBox.Name = "eolComboBox";
+            this.eolComboBox.Size = new System.Drawing.Size(75, 26);
+            this.eolComboBox.TabIndex = 2;
             // 
             // JsonToCsvForm
             // 
@@ -176,7 +201,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.AcceptCancelButton;
-            this.ClientSize = new System.Drawing.Size(355, 278);
+            this.ClientSize = new System.Drawing.Size(355, 328);
+            this.Controls.Add(this.eolComboBoxLabel);
+            this.Controls.Add(this.eolComboBox);
             this.Controls.Add(this.AcceptCancelButton);
             this.Controls.Add(this.DocsButton);
             this.Controls.Add(this.GenerateCSVButton);
@@ -210,5 +237,7 @@
         private System.Windows.Forms.Button GenerateCSVButton;
         private System.Windows.Forms.Button DocsButton;
         private System.Windows.Forms.Button AcceptCancelButton;
+        private System.Windows.Forms.Label eolComboBoxLabel;
+        private System.Windows.Forms.ComboBox eolComboBox;
     }
 }

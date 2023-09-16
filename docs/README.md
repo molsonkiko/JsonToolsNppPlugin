@@ -296,6 +296,8 @@ This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON 
 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
 
+In [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the line terminator for generated CSV files became customizable (default Unix `LF`, can choose from `CRLF`, `CR`, and `LF`). 
+
 ## Changing how much JSON tree is displayed ##
 
 Beginning in version [4.13.1](/CHANGELOG.md#4140---2023-04-12), the tree view is loaded on-demand, whenever the user expands a tree node. The tree is thus very responsive and quick to load.
