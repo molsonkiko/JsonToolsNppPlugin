@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Fixed bug where changing the `try_parse_start_chars` setting would cause UI tests to fail.
+2. Plugin crashes with single-line comments (both Python-style and JavaScript-style) that had no trailing newline.
 
 ## [5.7.0] - 2023-09-08
 

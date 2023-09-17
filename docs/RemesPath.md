@@ -958,6 +958,7 @@ because when baz is redefined, it just uses the value of baz that was previously
 
 Beginning in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the `*` spread operator has been added that allows the user to pass in an array to stand for multiple arguments, which RemesPath will attempt to get from the elements of that array.
 
+
 __Examples:__
 * ``zip(*j`[[1, 2], ["a", "b"], [true, false]]`)`` returns `[[1, "a", true], [2, "b", false]]`
 * Consider the input
@@ -968,3 +969,6 @@ __Examples:__
 }
 ```
 The query `@.*->max_by(*@)` returns `{"a": [0, 1], "b": [1, 0]}` because when working with key `a`, we max by the second element of each subarray, and when working with key `b`, we max by the first element.
+
+__Notes:__
+* *Only the final argument to a function can be spread.* For example, ``zip(*j`[1, 2]`, j`[3, 4]`)`` is not a legal query because a non-final argument was spread.

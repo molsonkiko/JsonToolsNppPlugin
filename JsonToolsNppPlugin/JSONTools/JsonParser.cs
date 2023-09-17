@@ -354,23 +354,19 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        /// <summary>returns -1 if ii is in the first line of the document,
-        /// or if it's in the second line and the first line was empty</summary>
+        /// <summary>assumes that ii is at the start of a line or at the end of the document</summary>
         /// <param name="inp"></param>
-        private int EndOfPreviousLine(string inp)
+        private int EndOfPreviousLine(string inp, int start)
         {
-            int pos = ii >= inp.Length ? inp.Length - 1 : ii;
-            while (pos >= 0)
-            {
-                char c = inp[pos--];
-                if (c == '\n')
-                {
-                    if (pos >= 0 && inp[pos] == '\r')
-                        pos--;
-                    break;
-                }
-            }
-            return pos;
+            int pos = ii >= inp.Length ? inp.Length - 1 : ii - 1;
+            if (pos <= start)
+                return start;
+            char c = inp[pos];
+            if (c != '\n') // end of line is the end of the document
+                return pos + 1;
+            if (pos >= 1 && inp[pos - 1] == '\r')
+                return pos - 1; // last newline was CRLF
+            return pos; // last newline was LF
         }
 
         /// <summary>
@@ -408,7 +404,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         isMultiline = false;
                         ConsumeLine(inp);
-                        commentContentEndII = EndOfPreviousLine(inp) + 1;
+                        commentContentEndII = EndOfPreviousLine(inp,commentContentStartII);
                     }
                     else if (c == '*')
                     {
@@ -452,7 +448,7 @@ namespace JSON_Tools.JSON_Tools
                     HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
                             inp, ii, ParserState.BAD);
                     ConsumeLine(inp);
-                    commentContentEndII = EndOfPreviousLine(inp) + 1;
+                    commentContentEndII = EndOfPreviousLine(inp, commentContentStartII);
                     if (rememberComments)
                         comments.Add(new Comment(inp.Substring(commentContentStartII, commentContentEndII - commentContentStartII), false, commentStartUtf8));
                     break;

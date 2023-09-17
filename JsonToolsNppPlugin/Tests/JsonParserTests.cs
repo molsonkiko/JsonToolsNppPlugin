@@ -706,6 +706,11 @@ multiline comment
                     TryParse("{\"a\":[1,2,{\"a\":1},4,5]}", simpleparser)),
                  ("[1// single-line comment immediately after number\n,2]", TryParse("[1,2]", simpleparser)),
                  ("[1/* multiline comment immediately after number*/,2]", TryParse("[1,2]", simpleparser)),
+                 ("[1,2]#python comment with no trailing EOL", TryParse("[1,2]", simpleparser)),
+                 ("[1,\n2]\n#another python comment with no trailing EOL", TryParse("[1,2]", simpleparser)),
+                 ("[1,\r\n  2,\r\n  3\r\n]\r\n//javascript comment with no trailing EOL", TryParse("[1,2,3]", simpleparser)),
+                 ("[1,\r\n  2,\r\n  3\r\n]\r\n//", TryParse("[1,2,3]", simpleparser)), // empty javascript comment with no trailing EOL
+                 ("[1,\r\n  2,\r\n  3\r\n]\r\n//", TryParse("[1,2,3]", simpleparser)), // empty Python comment with no trailing EOL
             };
             int tests_failed = 0;
             int ii = 0;
