@@ -448,9 +448,9 @@ namespace JSON_Tools.Tests
             ("overwrite", new object[]{"[1,2,\r\n3]#bar"}),
             ("compress", new object[]{}),
             ("compare_text", new object[]{"[1,2,3]"}),
-            ("overwrite", new object[]{"[1,2,3]\r\n//foo"}),
+            ("overwrite", new object[]{"[1,2,-9e15]\r\n//foo"}),
             ("compress", new object[]{}),
-            ("compare_text", new object[]{"[1,2,3]"}),
+            ("compare_text", new object[]{"[1,2,-9E+15]"}),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
             ("file_open", new object[]{0}),
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),

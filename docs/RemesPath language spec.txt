@@ -1,4 +1,4 @@
-This is the pseudo-Backus-Naur grammar of RemesPath as of JsonTools 5.7.
+This is the pseudo-Backus-Naur grammar of RemesPath as of JsonTools 5.8.
 In the future it will likely change with the addition of things like user-defined functions.
 ==========================
 QUERY := QUERY SEMICOLON STATEMENT |
@@ -54,7 +54,8 @@ KEYWORD_FLOAT := NAN | INF
 NAN := "NaN"
 INF := "Infinity"
 DOT_PART := DEC_INT
-    | DEC_INT (DOT DEC_INT)?
+    | DEC_INT DOT
+    | DEC_INT DOT DEC_INT
     | DOT DEC_INT
 EXP_PART := ("E" | "e") PLUS_MINUS? DEC_INT
 BOOL := "true" | "false"

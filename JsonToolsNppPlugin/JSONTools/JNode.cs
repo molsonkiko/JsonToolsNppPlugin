@@ -359,12 +359,15 @@ namespace JSON_Tools.JSON_Tools
                         return (v < 0) ? "-Infinity" : "Infinity";
                     }
                     if (double.IsNaN(v)) { return "NaN"; }
-                    if (v == Math.Round(v) && !(v > long.MaxValue || v < long.MinValue))
+                    string dubstring = v.ToString(DOT_DECIMAL_SEP);
+                    if (v == Math.Round(v) && !(v > long.MaxValue || v < long.MinValue) && dubstring.IndexOf('E') < 0)
                     {
                         // add ending ".0" to distinguish doubles equal to integers from actual integers
-                        return v.ToString(DOT_DECIMAL_SEP) + ".0";
+                        // unless they use exponential notation, in which case you mess things up
+                        // by turning something like 3.123E+15 into 3.123E+15.0 (a non-JSON number representation)
+                        return dubstring + ".0";
                     }
-                    return v.ToString(DOT_DECIMAL_SEP);
+                    return dubstring;
                 }
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";

@@ -203,6 +203,11 @@ namespace JSON_Tools.Tests
                     + NL + "\"Spb\": 1"
                     + NL + "}",
                     "culture-sensitive sorting of keys (e.g., 'baßk' should sort before 'basst')"),
+                ("[3.1234e15, -2.178e15, 7.59e15, 5.71138315710726E+18]",
+                    "[3.1234E+15, -2.178E+15, 7.59E+15, 5.71138315710726E+18]",
+                    "["+NL+"3.1234E+15,"+NL+"-2.178E+15,"+NL+"7.59E+15,"+NL+"5.71138315710726E+18"+NL+"]",
+                    "floating point numbers using 'E' notation that can exactly represent integers"
+                ),
             };
             int tests_failed = 0;
             int ii = 0;
