@@ -1,6 +1,6 @@
-Test results for JsonTools v5.7.0.5 on Notepad++ 8.5.7 64bit
+Test results for JsonTools v5.7.0.6 on Notepad++ 8.5.7 64bit
 NOTE: Ctrl-F (regular expressions *on*) for "Failed [1-9]\d*" to find all failed tests
-Tests failed: YAML dumper
+Tests failed: YAML dumper, INI file parser
 =========================
 Testing JNode Copy method
 =========================
@@ -30,13 +30,13 @@ Testing if JSON parser throws errors on bad inputs
 Failed 0 tests.
 Passed 5 tests.
 =========================
-Testing JSON parser advanced options (javascript comments, dates, datetimes, singlequoted strings)
+Testing JSON parser advanced options
 =========================
 
 Failed 0 tests.
 Passed 29 tests.
 =========================
-Testing JSON parser's linter functionality
+Testing JSON parser's linter
 =========================
 
 Failed 0 tests.
@@ -48,7 +48,7 @@ Testing JSON Lines parser
 Failed 0 tests.
 Passed 8 tests.
 =========================
-Testing that parsing of numbers does not depend on current culture
+Testing parsing of numbers does not depend on current culture
 =========================
 
 Failed 0 tests.
@@ -108,9 +108,9 @@ Testing RemesPath parser and compiler
 
 The queried JSON in the RemesParser tests is named foo:{"foo": [[0, 1, 2], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], "bar": {"a": false, "b": ["a`g", "bah"]}, "baz": "z", "quz": {}, "jub": [], "guzo": [[[1]], [[2], [3]]], "7": [{"foo": 2}, 1], "_": {"0": 0}}
 Failed 0 tests.
-Passed 406 tests.
+Passed 407 tests.
 =========================
-Testing that RemesPath throws errors on bad inputs
+Testing RemesPath throws errors on bad inputs
 =========================
 
 Failed 0 tests.
@@ -122,7 +122,7 @@ Testing RemesPath assignment operations
 Failed 0 tests.
 Passed 24 tests.
 =========================
-Testing that RemesPath produces sane outputs on randomly generated queries
+Testing RemesPath produces sane outputs on randomly generated queries
 =========================
 
 Fuzz tests query
@@ -161,14 +161,6 @@ Testing JSON grepper's file reading ability
 Failed 0 tests.
 Passed 6 tests.
 =========================
-Testing JSON grepper's API request tool
-=========================
-
-Testing with 3 urls
-Testing with 1 urls
-Failed 0 tests.
-Passed 4 tests.
-=========================
 Testing generation of random JSON from schema
 =========================
 
@@ -187,61 +179,87 @@ Testing JNode PathToPosition method
 Failed 0 tests.
 Passed 24 tests.
 =========================
-Performing UI tests by faking user actions
+Testing INI file parser
+=========================
+
+Parsing ini file (shown here as JSON string)
+"# cömment before foo section\r\n[föo]\r\nbär : 草 \r\nbaz : 34\r\n\r\n;comment after foo.baz\r\n\r\nquz = a multiline \r\n    response\r\n  to quz\r\n#comment ending quz\r\n    indented header = in unindented section\r\n    \r\n    ; but we need a comment at end of indented section\r\n    [indented section]\r\n    subsection 1 = \"5\"\r\n    \r\n    subsection 2 = some more text\r\n     even on another line\r\n   \r\n    ; indented　comment\r\n   　    whoa : even more indentation\t\r\n        \r\n        [triple indentation]\r\n        \r\n        subsection:1\r\n[ dedented section ]\r\nempty\tvalue\theader :  \r\n# the previous section name had an empty string as value\r\nempty =\r\n\r\n[empty section ]\r\n[interpolation example]\r\ndollar sign = use $$ instead\r\nfoo header : tab\tsep\ttext\r\n\r\nbar = ${foo header}\r\n; above line should be same as foo header\r\n    [ another empty section]\r\n    # but with a comment inside\r\n[interpolation from other sections]\r\nbaz = ${foo reference} ${föo:baz}\r\n\r\n# to test if references to interpolated values work correctly\r\nfoo reference = ${interpolation example:foo header}\r\n[colons_and_equals_signs]\r\nequals=inside value=fine\r\ncolon=inside value : also fine\r\n    :even on separate line (if indented)"
+EXPECTED JSON
+{" another empty section": {}, " dedented section ": {"empty": "", "empty\tvalue\theader": ""}, "colons_and_equals_signs": {"colon": "inside value : also fine\r\n    :even on separate line (if indented)", "equals": "inside value=fine"}, "empty section ": {}, "föo": {"bär": "草", "baz": "34", "indented header": "in unindented section", "quz": "a multiline\r\n    response to\r\n  quz"}, "indented section": {"subsection 1": "\"5\"", "subsection 2": "some more text\r\n     even on another line", "whoa": "even more indentation\t"}, "interpolation example": {"bar": "${foo header}", "dollar sign": "use $$ instead", "foo header": "tab\tsep\ttext"}, "interpolation from other sections": {"baz": "${foo reference} ${föo:baz}", "foo reference": "${interpolation example:foo header}"}, "triple indentation": {"subsection": "1"}}
+GOT JSON
+{}
+Parsing ini file (shown here as JSON string)
+"# cömment before foo section\r\n[föo]\r\nbär : 草 \r\nbaz : 34\r\n\r\n;comment after foo.baz\r\n\r\nquz = a multiline \r\n    response\r\n  to quz\r\n#comment ending quz\r\n    indented header = in unindented section\r\n    \r\n    ; but we need a comment at end of indented section\r\n    [indented section]\r\n    subsection 1 = \"5\"\r\n    \r\n    subsection 2 = some more text\r\n     even on another line\r\n   \r\n    ; indented　comment\r\n   　    whoa : even more indentation\t\r\n        \r\n        [triple indentation]\r\n        \r\n        subsection:1\r\n[ dedented section ]\r\nempty\tvalue\theader :  \r\n# the previous section name had an empty string as value\r\nempty =\r\n\r\n[empty section ]\r\n[interpolation example]\r\ndollar sign = use $$ instead\r\nfoo header : tab\tsep\ttext\r\n\r\nbar = ${foo header}\r\n; above line should be same as foo header\r\n    [ another empty section]\r\n    # but with a comment inside\r\n[interpolation from other sections]\r\nbaz = ${foo reference} ${föo:baz}\r\n\r\n# to test if references to interpolated values work correctly\r\nfoo reference = ${interpolation example:foo header}\r\n[colons_and_equals_signs]\r\nequals=inside value=fine\r\ncolon=inside value : also fine\r\n    :even on separate line (if indented)"
+EXPECTED JSON
+{" another empty section": {}, " dedented section ": {"empty": "", "empty\tvalue\theader": ""}, "colons_and_equals_signs": {"colon": "inside value : also fine\r\n    :even on separate line (if indented)", "equals": "inside value=fine"}, "empty section ": {}, "föo": {"bär": "草", "baz": "34", "indented header": "in unindented section", "quz": "a multiline\r\n    response to\r\n  quz"}, "indented section": {"subsection 1": "\"5\"", "subsection 2": "some more text\r\n     even on another line", "whoa": "even more indentation\t"}, "interpolation example": {"bar": "${foo header}", "dollar sign": "use $$ instead", "foo header": "tab\tsep\ttext"}, "interpolation from other sections": {"baz": "${foo reference} ${föo:baz}", "foo reference": "${interpolation example:foo header}"}, "triple indentation": {"subsection": "1"}}
+GOT JSON
+{}
+Failed 6 tests.
+Passed 0 tests.
+=========================
+Testing UI tests
 =========================
 
 Failed 0 tests
-Passed 209 tests
+Passed 199 tests
 =========================
-Performance tests for JsonParser
+Testing JsonParser performance
 =========================
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To convert JSON string of size 89556 into JNode took 3.4 +/- 2.55 ms over 32 trials
-Load times (ms): 5, 2, 2, 2, 3, 1, 5, 1, 1, 2, 2, 1, 1, 5, 2, 2, 2, 3, 2, 2, 11, 12, 2, 2, 5, 2, 2, 1, 2, 1, 1, 4
+To convert JSON string of size 89556 into JNode took 2.644 +/- 1.272 ms over 32 trials
+Load times (ms): 1, 3, 2, 1, 1, 5, 4, 2, 2, 4, 1, 1, 2, 3, 1, 1, 4, 1, 1, 1, 2, 1, 1, 4, 1, 1, 2, 4, 2, 2, 5, 1
 =========================
 Performance tests for RemesPath (float arithmetic)
 =========================
 
-Compiling query "@[@[:].a * @[:].t < @[:].e]" into took 1.655 +/- 12.403 microseconds over 64 trials
-To run pre-compiled query "@[@[:].a * @[:].t < @[:].e]" on JNode from JSON of size 89556 into took 0.031 +/- 0.013 ms over 64 trials
-Query times (ms): 0.071, 0.046, 0.035, 0.034, 0.035, 0.034, 0.036, 0.038, 0.033, 0.033, 0.035, 0.042, 0.036, 0.035, 0.036, 0.036, 0.035, 0.035, 0.034, 0.036, 0.036, 0.086, 0.032, 0.023, 0.022, 0.078, 0.038, 0.051, 0.024, 0.022, 0.024, 0.029, 0.022, 0.022, 0.023, 0.022, 0.022, 0.023, 0.024, 0.023, 0.023, 0.029, 0.022, 0.022, 0.022, 0.024, 0.023, 0.023, 0.022, 0.023, 0.033, 0.028, 0.022, 0.023, 0.022, 0.022, 0.024, 0.023, 0.022, 0.023, 0.023, 0.035, 0.022, 0.023
+Compiling query "@[@[:].a * @[:].t < @[:].e]" into took 1.295 +/- 9.777 microseconds over 64 trials
+To run pre-compiled query "@[@[:].a * @[:].t < @[:].e]" on JNode from JSON of size 89556 into took 0.025 +/- 0.008 ms over 64 trials
+Query times (ms): 0.089, 0.036, 0.024, 0.023, 0.024, 0.023, 0.023, 0.023, 0.023, 0.022, 0.023, 0.028, 0.024, 0.023, 0.023, 0.022, 0.023, 0.022, 0.022, 0.023, 0.022, 0.026, 0.023, 0.024, 0.023, 0.022, 0.023, 0.023, 0.023, 0.022, 0.022, 0.026, 0.023, 0.023, 0.023, 0.023, 0.023, 0.023, 0.023, 0.023, 0.023, 0.026, 0.023, 0.023, 0.023, 0.023, 0.024, 0.022, 0.022, 0.023, 0.023, 0.026, 0.023, 0.024, 0.028, 0.023, 0.023, 0.023, 0.022, 0.022, 0.023, 0.026, 0.023, 0.023
 Preview of result: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
 =========================
 Performance tests for RemesPath (string operations)
 =========================
 
-Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 1.744 +/- 13.06 microseconds over 64 trials
-To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 89556 into took 0.095 +/- 0.219 ms over 64 trials
-Query times (ms): 0.141, 0.102, 0.104, 0.101, 0.098, 0.099, 0.099, 0.1, 0.094, 0.096, 0.107, 0.099, 0.106, 0.083, 0.058, 0.054, 0.055, 0.052, 0.052, 0.053, 0.055, 0.055, 0.054, 0.055, 0.054, 0.055, 0.053, 0.054, 0.053, 1.824, 0.071, 0.053, 0.052, 0.054, 0.052, 0.053, 0.054, 0.055, 0.055, 0.055, 0.055, 0.054, 0.054, 0.055, 0.054, 0.055, 0.055, 0.055, 0.055, 0.056, 0.054, 0.056, 0.055, 0.055, 0.06, 0.053, 0.054, 0.057, 0.057, 0.055, 0.075, 0.11, 0.099, 0.1
+Compiling query "@[@[:].z =~ `(?i)[a-z]{5}`]" into took 0.939 +/- 6.862 microseconds over 64 trials
+To run pre-compiled query "@[@[:].z =~ `(?i)[a-z]{5}`]" on JNode from JSON of size 89556 into took 0.054 +/- 0.01 ms over 64 trials
+Query times (ms): 0.128, 0.055, 0.054, 0.07, 0.077, 0.051, 0.051, 0.051, 0.052, 0.051, 0.051, 0.053, 0.054, 0.052, 0.052, 0.051, 0.051, 0.05, 0.051, 0.051, 0.051, 0.054, 0.053, 0.053, 0.052, 0.051, 0.051, 0.051, 0.051, 0.05, 0.052, 0.051, 0.052, 0.05, 0.051, 0.051, 0.05, 0.05, 0.051, 0.051, 0.05, 0.051, 0.051, 0.072, 0.05, 0.052, 0.051, 0.051, 0.051, 0.05, 0.051, 0.052, 0.052, 0.051, 0.052, 0.051, 0.054, 0.052, 0.053, 0.051, 0.051, 0.052, 0.06, 0.054
 Preview of result: [{"A": "\n]o1VQ5t6g", "a": 4710024278, "b": 3268860721, "B": "g4Y7+ew^.v", "C": "<E_7XL7YS`", "c": 4921465277, "d": 9420665097, "D": "Q&S>NK<OOn", "E": "M?6Ll1W\nFM", "e": 4146283970, "f": 8384193493, "F": "z[jPvslL\tc", "g": 1578133296, "G": "m'M4h,`|Wk", "H": {"a": 5184250383, "b": 5337791147, "c"
 ...
 =========================
 Performance tests for RemesPath (basic recursive search)
 =========================
 
-Compiling query "@..*" into took 0.519 +/- 3.765 microseconds over 64 trials
-To run pre-compiled query "@..*" on JNode from JSON of size 89556 into took 0.317 +/- 0.278 ms over 64 trials
-Query times (ms): 0.258, 0.274, 0.256, 0.373, 0.385, 0.39, 0.374, 0.371, 0.389, 0.28, 0.24, 0.274, 0.242, 0.224, 0.22, 0.223, 0.226, 0.223, 0.348, 0.373, 0.36, 0.24, 2.335, 0.24, 0.23, 0.221, 0.224, 0.224, 0.22, 0.224, 0.327, 0.227, 0.218, 0.216, 0.217, 0.715, 0.226, 0.224, 0.223, 0.223, 0.239, 0.343, 0.334, 0.349, 0.337, 0.837, 0.245, 0.244, 0.234, 0.227, 0.233, 0.226, 0.227, 0.228, 0.627, 0.228, 0.227, 0.232, 0.235, 0.232, 0.233, 0.233, 0.24, 0.229
+Compiling query "@..*" into took 0.739 +/- 5.501 microseconds over 64 trials
+To run pre-compiled query "@..*" on JNode from JSON of size 89556 into took 0.44 +/- 0.347 ms over 64 trials
+Query times (ms): 0.317, 0.251, 0.242, 0.242, 0.242, 0.307, 0.422, 0.418, 0.413, 0.411, 0.414, 0.44, 0.55, 0.561, 0.492, 0.49, 0.474, 0.482, 2.989, 0.396, 0.378, 0.384, 0.382, 0.384, 0.386, 0.39, 0.386, 0.383, 0.976, 0.393, 0.388, 0.395, 0.393, 0.377, 0.235, 0.23, 0.228, 0.257, 0.289, 0.287, 0.292, 0.294, 0.31, 0.626, 0.23, 0.305, 0.463, 0.528, 0.413, 0.399, 0.39, 0.397, 0.395, 0.392, 0.395, 0.393, 0.391, 0.388, 0.442, 0.507, 0.919, 0.398, 0.394, 0.395
 Preview of result: [1850111954, 9318359041, 7974777124, 2670309238, 6958410336, 8050244728, 3799657125, 2612807147, 7785993340, 9842767454, 2257474583, 2736529372, 4821265864, 3302084501, null, Infinity, true, false, true, 0.201077552261751, 0.110978036654776, 0.50917270025261, 0.798199326980627, 0.615212956451379, 0.
 ...
 =========================
-Performance tests for JSON compression and pretty-printing
+Testing performance of JSON compression and pretty-printing
 =========================
 
 Preview of json: [{"A": "Ky'c^g#~)0", "a": 1850111954, "b": 9318359041, "B": "Oyi:/ xxe2", "C": "sKCSa_^7Gg", "c": 7974777124, "d": 2670309238, "D": "0d_K)HmX!.", "E": ".uM*Z{0EJ_", "e": 6958410336, "f": 8050244728, "F": "1%SG_A!xB\t", "g": 3799657125, "G": "il1^k\\\nat*", "H": {"a": 6079042826, "b": 7292804611, "c"
 ...
-To compress JNode from JSON string of 89556 took 4.753 +/- 1.006 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
-To compress JNode from JSON string of 89556 took 2.322 +/- 0.375 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
-To Google-style pretty-print JNode from JSON string of 89556 took 4.546 +/- 0.626 ms over 64 trials (sort_keys=true, indent=4)
-To Whitesmith-style pretty-print JNode from JSON string of 89556 took 4.605 +/- 0.7 ms over 64 trials (sort_keys=true, indent=4)
-To PPrint-style pretty-print JNode from JSON string of 89556 took 7.454 +/- 1.189 ms over 64 trials (sort_keys=true, indent=4)
+To compress JNode from JSON string of 89556 took 5.261 +/- 1.456 ms over 64 trials (minimal whitespace, sort_keys=TRUE)
+To compress JNode from JSON string of 89556 took 3.085 +/- 1.034 ms over 64 trials (minimal whitespace, sort_keys=FALSE)
+To Google-style pretty-print JNode from JSON string of 89556 took 7.732 +/- 2.206 ms over 64 trials (sort_keys=true, indent=4)
+To Whitesmith-style pretty-print JNode from JSON string of 89556 took 6.856 +/- 2.371 ms over 64 trials (sort_keys=true, indent=4)
+To PPrint-style pretty-print JNode from JSON string of 89556 took 9.125 +/- 2.79 ms over 64 trials (sort_keys=true, indent=4)
 =========================
-Performance tests for JsonSchemaValidator and random JSON creation
+Testing performance of JsonSchemaValidator and random JSON creation
 =========================
 
-To create a random set of tweet JSON of size 134762 (15 tweets) based on the matching schema took 6.462 +/- 3.168 ms over 64 trials
-To compile the tweet schema to a validation function took 0.401 +/- 0.981 ms over 64 trials
-To validate tweet JSON of size 134762 (15 tweets) based on the compiled schema took 1.082 +/- 0.204 ms over 64 trials
+To create a random set of tweet JSON of size 177085 (15 tweets) based on the matching schema took 8.92 +/- 4.108 ms over 64 trials
+To compile the tweet schema to a validation function took 0.373 +/- 0.549 ms over 64 trials
+To validate tweet JSON of size 177085 (15 tweets) based on the compiled schema took 1.421 +/- 0.341 ms over 64 trials
+=========================
+Testing JSON grepper's API request tool
+=========================
+
+Testing with 3 urls
+Testing with 1 urls
+Failed 0 tests.
+Passed 4 tests.

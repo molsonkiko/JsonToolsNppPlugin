@@ -573,6 +573,7 @@ __NOTES:__
 - The `Array to JSON Lines` command (*added in v3.3.0*) on the plugin menu allows you to convert a normal JSON array into a JSON Lines document. 
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
+- Beginning in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the plugin will by default prompt to confirm if you try to pretty-print a document with the `.jsonl` extension, because *pretty-printing a JSON Lines document will probably make it invalid.* This prompt can be disabled in the settings. 
 
 ## Running tests ##
 

@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Text;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Tests
 {
@@ -25,7 +21,7 @@ namespace JSON_Tools.Tests
         /// </summary>
         /// <param name="query"></param>
         /// <param name="num_parse_trials"></param>
-        public static void BenchmarkParserAndRemesPath(string[][] queries_and_descriptions, 
+        public static bool BenchmarkParserAndRemesPath(string[][] queries_and_descriptions, 
                                      string fname,
                                      int num_parse_trials,
                                      int num_query_trials)
@@ -36,7 +32,7 @@ namespace JSON_Tools.Tests
             if (!File.Exists(fname))
             {
                 Npp.AddLine($"Can't run benchmark tests because file {fname}\ndoes not exist");
-                return;
+                return true;
             }
             string jsonstr = File.ReadAllText(fname);
             int len = jsonstr.Length;
@@ -54,7 +50,7 @@ namespace JSON_Tools.Tests
                 catch (Exception ex)
                 {
                     Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
-                    return;
+                    return true;
                 }
                 watch.Stop();
                 long t = watch.Elapsed.Ticks;
@@ -95,7 +91,7 @@ Performance tests for RemesPath ({description})
                     catch (Exception ex)
                     {
                         Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
-                        return;
+                        return true;
                     }
                     watch.Stop();
                     long t = watch.Elapsed.Ticks;
@@ -153,9 +149,10 @@ Performance tests for RemesPath ({description})
                 string result_preview = result.ToString().Slice(":300") + "\n...";
                 Npp.AddLine($"Preview of result: {result_preview}");
             }
+            return false;
         }
 
-        public static void BenchmarkJNodeToString(int num_trials, string fname)
+        public static bool BenchmarkJNodeToString(int num_trials, string fname)
         {
             // setup
             JsonParser jsonParser = new JsonParser();
@@ -163,7 +160,7 @@ Performance tests for RemesPath ({description})
             if (!File.Exists(fname))
             {
                 Npp.AddLine($"Can't run benchmark tests because file {fname}\ndoes not exist");
-                return;
+                return true;
             }
             string jsonstr = File.ReadAllText(fname);
             int len = jsonstr.Length;
@@ -175,7 +172,7 @@ Performance tests for RemesPath ({description})
             catch (Exception ex)
             {
                 Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
-                return;
+                return true;
             }
             string json_preview = json.ToString().Slice(":300") + "\n...";
             Npp.AddLine($"Preview of json: {json_preview}");
@@ -225,9 +222,10 @@ Performance tests for RemesPath ({description})
                 Npp.AddLine($"To {style}-style pretty-print JNode from JSON string of {len} took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
                     $"ms over {prettyPrint_times.Length} trials (sort_keys=true, indent=4)");
             }
+            return false;
         }
 
-        public static void BenchmarkRandomJsonAndSchemaValidation(int num_trials)
+        public static bool BenchmarkRandomJsonAndSchemaValidation(int num_trials)
         {
             var parser = new JsonParser();
             var tweetSchema = (JObject)parser.Parse(File.ReadAllText(@"plugins\JsonTools\testfiles\tweet_schema.json"));
@@ -296,6 +294,7 @@ Performance tests for RemesPath ({description})
             Npp.AddLine($"To compile the tweet schema to a validation function took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
             (mean, sd) = GetMeanAndSd(validate_times);
             Npp.AddLine($"To validate tweet JSON of size {len} ({num_tweets} tweets) based on the compiled schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {num_trials} trials");
+            return false;
         }
 
 

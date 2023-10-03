@@ -165,6 +165,18 @@ namespace JSON_Tools.JSON_Tools
     }
 
     /// <summary>
+    /// types of documents that can be parsed in JsonTools
+    /// </summary>
+    public enum DocumentType
+    {
+        JSON,
+        /// <summary>JSON Lines documents</summary>
+        JSONL,
+        /// <summary>ini files</summary>
+        INI,
+    }
+
+    /// <summary>
     /// JSON documents are parsed as JNodes, JObjects, and JArrays. JObjects and JArrays are subclasses of JNode.
     ///    A JSON node, for use in creating a drop-down tree
     ///    Here's an example of how a small JSON document (with newlines as shown, and assuming `\r\n` newline)
@@ -1195,6 +1207,11 @@ namespace JSON_Tools.JSON_Tools
             return (comment_idx, extra_utf8_bytes);
         }
 
+        public string ToIniFile(List<Comment> comments)
+        {
+            return "";
+        }
+
         /// <summary>
         /// Returns true if and only if other is a JObject with all the same key-value pairs.<br></br>
         /// Throws an ArgumentException if other is not a JObject.
@@ -1867,13 +1884,13 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// appends the JSON comment representation (on its own line) of the comment to sb<br></br>
-        /// (i.e., "//" + comment.content for non-multiline comments, "/*" + comment.content + "*/\r\n" for multiline comments<br></br>
+        /// appends the comment representation (on its own line) of a comment to sb<br></br>
+        /// (e.g., "//" + comment.content for single-line comments in JSON, "/*" + comment.content + "*/\r\n" for multiline comments<br></br>
         /// and returns the number of extra utf8 bytes in the comment's content.
         /// </summary>
-        public static int ToStringHelper(StringBuilder sb, Comment comment)
+        public static int ToStringHelper(StringBuilder sb, Comment comment, string singleLineCommentStart)
         {
-            sb.Append(comment.isMultiline ? "/*" : "//");
+            sb.Append(comment.isMultiline ? "/*" : singleLineCommentStart);
             sb.Append(comment.content);
             if (comment.isMultiline)
                 sb.Append("*/");
@@ -1881,21 +1898,30 @@ namespace JSON_Tools.JSON_Tools
             return JsonParser.ExtraUTF8BytesBetween(comment.content, 0, comment.content.Length);
         }
 
+        public static readonly Dictionary<DocumentType, string> singleLineCommentStarts = new Dictionary<DocumentType, string>
+        {
+            [DocumentType.JSON] = "//",
+            [DocumentType.JSONL] = "//",
+            [DocumentType.INI] = ";",
+        };
+
         /// <summary>
         /// assumes that comments are sorted by comment.position ascending<br></br>
         /// Keeps appending the JSON comment representations of the comments (as discussed in ToStringHelper above), each on a separate line preceded by dent<br></br>
         /// to sb while comment_idx is less than comments.Count
         /// and comments[comment_idx].position &lt; position
         /// </summary>
-        public static (int comment_idx, int extra_utf8_bytes) AppendAllCommentsBeforePosition(StringBuilder sb, List<Comment> comments, int comment_idx, int extra_utf8_bytes, int position, string dent)
+        public static (int comment_idx, int extra_utf8_bytes) AppendAllCommentsBeforePosition(StringBuilder sb, List<Comment> comments, int comment_idx, int extra_utf8_bytes, int position, string dent, DocumentType commentType = DocumentType.JSON)
         {
+            if (!singleLineCommentStarts.TryGetValue(commentType, out string singleLineCommentStart))
+                throw new ArgumentException($"{commentType} is not a valid comment type");
             for (; comment_idx < comments.Count; comment_idx++)
             {
                 Comment comment = comments[comment_idx];
                 if (comment.position > position)
                     break;
                 sb.Append(dent);
-                extra_utf8_bytes += ToStringHelper(sb, comment);
+                extra_utf8_bytes += ToStringHelper(sb, comment, singleLineCommentStart);
             }
             return (comment_idx, extra_utf8_bytes);
         }

@@ -182,6 +182,7 @@
     </Compile>
     <!-- other code -->
     <Compile Include="Main.cs" />
+    <Compile Include="JSONTools\IniFileParser.cs" />
     <Compile Include="JSONTools\JNode.cs" />
     <Compile Include="JSONTools\JsonGrepper.cs" />
     <Compile Include="JSONTools\JsonParser.cs" />
@@ -198,6 +199,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Tests\Benchmarker.cs" />
+    <Compile Include="Tests\IniFileParserTests.cs" />
     <Compile Include="Tests\JsonGrepperTests.cs" />
     <Compile Include="Tests\JsonParserTests.cs" />
     <Compile Include="Tests\JsonSchemaTests.cs" />

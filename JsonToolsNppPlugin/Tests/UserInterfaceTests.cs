@@ -515,6 +515,7 @@ namespace JSON_Tools.Tests
             string UITestFileName = OpenUITestFile(0);
 
             PrettyPrintStyle previousPrettyPrintStyle = Main.settings.pretty_print_style;
+            bool previousSortKeys = Main.settings.sort_keys;
             string previousTryParseStartChars = Main.settings.try_parse_start_chars;
             bool previousTabIndentPrettyPrint = Main.settings.tab_indent_pretty_print;
             int previousIndentPrettyPrint = Main.settings.indent_pretty_print;
@@ -524,6 +525,7 @@ namespace JSON_Tools.Tests
             bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
             // require these settings for the UI tests alone
             Main.settings.pretty_print_style = PrettyPrintStyle.PPrint;
+            Main.settings.sort_keys = true;
             Main.settings.try_parse_start_chars = "\"[{";
             Main.settings.tab_indent_pretty_print = false;
             Main.settings.indent_pretty_print = 4;
@@ -585,6 +587,7 @@ namespace JSON_Tools.Tests
             Npp.AddLine($"Passed {testcases.Count - failures} tests");
             // restore old settings
             Main.settings.pretty_print_style = previousPrettyPrintStyle;
+            Main.settings.sort_keys = previousSortKeys;
             Main.settings.try_parse_start_chars = previousTryParseStartChars;
             Main.settings.indent_pretty_print = previousIndentPrettyPrint;
             Main.settings.tab_indent_pretty_print = previousTabIndentPrettyPrint;

@@ -49,12 +49,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. All instances of `\r` (carriage return) in strings are now escaped to `\\r` when generating CSVs with the [JSON to CSV form](/CHANGELOG.md#580---unreleased-yyyy-mm-dd).
+2. Prompt user (can disable the prompt if desired) before pretty-printing [JSON Lines documents](/docs/README.md#json-lines-documents).
 
 ### Fixed
 
 1. Bug where reformatting some large floating-point numbers would output text that could not subsequently be parsed.
 2. Fixed bug where changing the `try_parse_start_chars` setting would cause UI tests to fail.
 3. Plugin crashes with single-line comments (both Python-style and JavaScript-style) that had no trailing newline.
+4. UI test failures when `sort_keys` setting was false.
 
 ## [5.7.0] - 2023-09-08
 

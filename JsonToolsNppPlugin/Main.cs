@@ -646,6 +646,16 @@ namespace Kbg.NppPluginNET
             (bool fatal, JNode json, bool usesSelections) = TryParseJson();
             if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
                 return;
+            if (Npp.FileExtension() == "jsonl" && (settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.DONT_DO_DONT_ASK
+                || settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.ASK_BEFORE_DOING
+                    && MessageBox.Show(
+                        "Pretty-printing a JSON Lines document will generally lead to it no longer being a valid JSON Lines document. Pretty-print anyway?",
+                        "Pretty-print JSON Lines document?",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning
+                    ) == DialogResult.No)
+                )
+                return;
             Func<JNode, string> formatter;
             if (UseComments(info))
                 formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, settings.indent_pretty_print, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ');

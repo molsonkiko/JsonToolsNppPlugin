@@ -117,6 +117,10 @@ namespace JSON_Tools.Utils
                     ),
             Category("JSON formatting"), DefaultValue(false)]
         public bool remember_comments { get; set; }
+
+        [Description("Ask before pretty-printing JSON Lines documents, ignore requests to pretty-print, or pretty-print without asking?"),
+            Category("JSON formatting"), DefaultValue(AskUserWhetherToDoThing.ASK_BEFORE_DOING)]
+        public AskUserWhetherToDoThing ask_before_pretty_printing_json_lines { get; set; }
         #endregion
 
         #region MISCELLANEOUS

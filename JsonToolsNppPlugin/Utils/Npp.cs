@@ -233,4 +233,11 @@ namespace JSON_Tools.Utils
             return include32bitVs64bit ? $"{nppVerStr} {IntPtr.Size * 8}bit" : nppVerStr;
         }
     }
+
+    public enum AskUserWhetherToDoThing
+    {
+        DONT_DO_DONT_ASK,
+        ASK_BEFORE_DOING,
+        DO_WITHOUT_ASKING,
+    }
 }

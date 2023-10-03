@@ -447,6 +447,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("j`[{\"a\": [[1], [2, 3]], \"b\": [null]}, {\"a\": [[4, 5], [6], []], \"b\": [1.5, {}]}]`" +
                                         "[:]{al: @.a[:]->len(@)*2, bt: @.b[:]->type(@)}",
                                         "[{\"al\": [2, 4], \"bt\": [\"null\"]}, {\"al\": [4, 2, 0], \"bt\": [\"number\", \"object\"]}]"),
+                new Query_DesiredResult("concat(@.foo[0][:]->(str(@)*(@+1)), keys(@.`7`[0])[:]->(@ + s_slice(@, ::-1)))",
+                    "[\"0\", \"11\", \"222\", \"foooof\"]"),
             };
             int ii = 0;
             int tests_failed = 0;

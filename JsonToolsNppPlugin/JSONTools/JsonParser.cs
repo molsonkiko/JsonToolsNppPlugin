@@ -356,7 +356,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>assumes that ii is at the start of a line or at the end of the document</summary>
         /// <param name="inp"></param>
-        private int EndOfPreviousLine(string inp, int start)
+        public static int EndOfPreviousLine(string inp, int ii, int start)
         {
             int pos = ii >= inp.Length ? inp.Length - 1 : ii - 1;
             if (pos <= start)
@@ -371,7 +371,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Consume comments and whitespace until the next character that is not
-        /// '#', '/', ' ', '\t', '\r', or '\n'.
+        /// '#', '/', or whitespace.
         /// Return false if an unacceptable error occurred.
         /// </summary>
         /// <param name="inp"></param>
@@ -404,7 +404,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         isMultiline = false;
                         ConsumeLine(inp);
-                        commentContentEndII = EndOfPreviousLine(inp,commentContentStartII);
+                        commentContentEndII = EndOfPreviousLine(inp, ii, commentContentStartII);
                     }
                     else if (c == '*')
                     {
@@ -448,7 +448,7 @@ namespace JSON_Tools.JSON_Tools
                     HandleError("Python-style '#' comments are not part of any well-accepted JSON specification",
                             inp, ii, ParserState.BAD);
                     ConsumeLine(inp);
-                    commentContentEndII = EndOfPreviousLine(inp, commentContentStartII);
+                    commentContentEndII = EndOfPreviousLine(inp, ii, commentContentStartII);
                     if (rememberComments)
                         comments.Add(new Comment(inp.Substring(commentContentStartII, commentContentEndII - commentContentStartII), false, commentStartUtf8));
                     break;
@@ -479,7 +479,7 @@ namespace JSON_Tools.JSON_Tools
                 default: return true;
                 }
             }
-            return true; // unreachable
+            return true;
         }
 
         /// <summary>
