@@ -344,6 +344,15 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// mostly useful for quickly converting a JObject key (which must be escaped during parsing) into the raw string that it represents<br></br>
+        /// Choose strAlreadyQuoted = true only if str is already wrapped in double quotes.
+        /// </summary>
+        public static string UnescapedJsonString(string str, bool strAlreadyQuoted)
+        {
+            return (string)new JsonParser().ParseString(strAlreadyQuoted ? str : $"\"{str}\"").value;
+        }
+
+        /// <summary>
         /// Compactly prints the JSON.<br></br>
         /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
@@ -1207,9 +1216,45 @@ namespace JSON_Tools.JSON_Tools
             return (comment_idx, extra_utf8_bytes);
         }
 
+        /// <summary>
+        /// dump this JObject as an ini file
+        /// </summary>
+        /// <param name="comments"></param>
+        /// <param name="changePositions"></param>
+        /// <returns></returns>
         public string ToIniFile(List<Comment> comments)
         {
-            return "";
+            var sb = new StringBuilder();
+            int positionInComments = 0;
+            int utf8ExtraBytes = 0;
+            foreach (KeyValuePair<string, JNode> kv in children)
+            {
+                string header = kv.Key;
+                if (!(kv.Value is JObject section))
+                {
+                    throw new InvalidOperationException("Only objects where all children are objects with only string values can be converted to ini files");
+                }
+                // section is treated as beginning just before the open squarebrace of the header
+                (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, section.position, "", DocumentType.INI);
+                string unescapedHeader = UnescapedJsonString(header, false);
+                sb.Append($"[{unescapedHeader}]\r\n");
+                utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(unescapedHeader, 0, unescapedHeader.Length);
+                foreach (KeyValuePair<string, JNode> sectKv in section.children)
+                {
+                    string key = sectKv.Key;
+                    JNode value = sectKv.Value;
+                    if (!(value.value is string valueStr))
+                    {
+                        throw new InvalidOperationException("Only objects where all children are objects with only string values can be converted to ini files");
+                    }
+                    (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, value.position, "", DocumentType.INI);
+                    string unescapedKey = UnescapedJsonString(key, false);
+                    sb.Append($"{unescapedKey}={valueStr}\r\n");
+                    utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(unescapedKey, 0, unescapedKey.Length);
+                    utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(valueStr, 0, valueStr.Length);
+                }
+            }
+            return sb.ToString();
         }
 
         /// <summary>

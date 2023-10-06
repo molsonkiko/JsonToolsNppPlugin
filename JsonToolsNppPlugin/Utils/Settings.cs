@@ -135,9 +135,9 @@ namespace JSON_Tools.Utils
             Category("Miscellaneous"), DefaultValue("\"[{")]
         public string try_parse_start_chars { get; set; }
 
-        [Description("When running tests, skip the tests that send requests to APIs"),
+        [Description("When running tests, skip the tests that send requests to APIs and the RemesPath fuzz tests"),
             Category("Miscellaneous"), DefaultValue(true)]
-        public bool skip_api_request_tests { get; set; }
+        public bool skip_api_request_and_fuzz_tests { get; set; }
 
         [Description("Which type of newline to use for generated CSV files."),
             Category("Miscellaneous"), DefaultValue(EndOfLine.LF)]

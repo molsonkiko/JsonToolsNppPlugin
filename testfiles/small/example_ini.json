@@ -1,10 +1,10 @@
 // cömment before foo section
 {
     "föo": {
-        "bär": "草",
+        "bär": "草 ",
         "baz": "34",
         //comment after foo.baz
-        "quz": "a multiline\r\n    response to\r\n  quz",
+        "quz": "a multiline \r\n    response\r\n  to quz",
         //comment ending quz
         "indented header": "in unindented section"
     },
@@ -13,7 +13,7 @@
         "subsection 1": "\"5\"",
         "subsection 2": "some more text\r\n     even on another line",
         // indented　comment
-        "whoa": "even more indentation\t"
+        "key indent": "lower than section is fine\t"
     },
     "triple indentation": {
         "subsection": "1"
@@ -36,11 +36,16 @@
     // but with a comment inside
     "interpolation from other sections": {
         "baz": "${foo reference} ${föo:baz}",
+        //
         // to test if references to interpolated values work correctly
         "foo reference": "${interpolation example:foo header}"
     },
-    "colons_and_equals_signs": {
+    "special\\_chars": {
         "equals": "inside value=fine",
-        "colon": "inside value : also fine\r\n    :even on separate line (if indented)"
+        "colon": "inside value : also fine\r\n    :even on separate line (if indented)",
+        "squarebraces, semicolons, and hashtags *in values*": "#define INLINE_COMMENTS 0\n    const arr = [1];",
+        // but obviously hashtags
+        // and semicolons as first non-whitespace are treated as comments
+        "non-colon, non-equals special chars in [\"#keys\"];": "a-OK"
     }
 }

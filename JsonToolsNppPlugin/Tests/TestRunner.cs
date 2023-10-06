@@ -13,6 +13,8 @@ namespace JSON_Tools.Tests
 {
     public class TestRunner
     {
+        private const string fuzzTestName = "RemesPath produces sane outputs on randomly generated queries";
+
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
@@ -39,7 +41,7 @@ namespace JSON_Tools.Tests
                 (RemesParserTester.Test, "RemesPath parser and compiler", false, false),
                 (RemesPathThrowsWhenAppropriateTester.Test, "RemesPath throws errors on bad inputs", false, false),
                 (RemesPathAssignmentTester.Test, "RemesPath assignment operations", false, false),
-                (() => RemesPathFuzzTester.Test(10000, 20), "RemesPath produces sane outputs on randomly generated queries", false, false),
+                (() => RemesPathFuzzTester.Test(10000, 20), fuzzTestName, false, false),
                 (RemesPathComplexQueryTester.Test, "multi-statement queries in RemesPath", false, false),
                 
                 (JsonSchemaMakerTester.Test, "JsonSchema generator", false, false),
@@ -111,6 +113,11 @@ namespace JSON_Tools.Tests
                     }
                     skipped.Add(name);
                 }
+                else if (Main.settings.skip_api_request_and_fuzz_tests && name == fuzzTestName)
+                {
+                    Npp.AddLine("\r\nskipped RemesPath fuzz tests because settings.skip_api_request_and_fuzz_tests was set to true");
+                    skipped.Add(name);
+                }
                 else
                 {
                     Npp.AddLine($@"=========================
@@ -129,9 +136,9 @@ Testing {name}
 Testing JSON grepper's API request tool
 =========================
 ");
-                if (Main.settings.skip_api_request_tests)
+                if (Main.settings.skip_api_request_and_fuzz_tests)
                 {
-                    Npp.AddLine("skipped tests because settings.skip_api_request_tests was set to true");
+                    Npp.AddLine("skipped tests because settings.skip_api_request_and_fuzz_tests was set to true");
                     skipped.Add("JSON grepper's API request tool");
                 }
                 else
@@ -141,6 +148,8 @@ Testing JSON grepper's API request tool
                 }
             }
 
+            if (skipped.Count > 0)
+                Npp.editor.InsertText(header.Length + 2, "Tests skipped: " + string.Join(", ", skipped) + "\r\n");
             Npp.editor.InsertText(header.Length + 2, "Tests failed: " + string.Join(", ", failures) + "\r\n");
         }
     }

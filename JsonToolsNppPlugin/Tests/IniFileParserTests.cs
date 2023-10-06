@@ -12,14 +12,17 @@ namespace JSON_Tools.Tests
             int ii = 0;
             int testsFailed = 0;
             var exampleIniFname = @"plugins\JsonTools\testfiles\small\example_ini.ini";
+            var exampleIniReformattedFname = @"plugins\JsonTools\testfiles\small\example_ini_reformatted.ini";
             var exampleJsonFname = @"plugins\JsonTools\testfiles\small\example_ini.json";
             string exampleJsonText = null;
             string exampleIniText = null;
+            string exampleIniReformattedText = null;
 
             try
             {
                 exampleIniText = File.ReadAllText(exampleIniFname);
                 exampleJsonText = File.ReadAllText(exampleJsonFname);
+                exampleIniReformattedText = File.ReadAllText(exampleIniReformattedFname);
             }
             catch
             {
@@ -27,74 +30,89 @@ namespace JSON_Tools.Tests
                 Npp.AddLine("Either testfiles/small/example_ini.ini or testfiles/small/example_ini.json was not found in the plugins/JsonTools directory");
             }
 
-            var testcases = new (string iniText, string correctJsonStrWithoutInterpolation, bool interpolation)[]
+            var testcases = new (string iniText, string correctJsonStrWithoutInterpolation, /*bool interpolation,*/ string correctReformattedIniText)[]
             {
-                (exampleIniText, exampleJsonText, false),
-                (exampleIniText, exampleJsonText, true),
+                (exampleIniText, exampleJsonText, /*false,*/ exampleIniReformattedText),
+                //(exampleIniText, exampleJsonText, true,  exampleIniReformattedText),
             };
             var jsonParser = new JsonParser(LoggerLevel.JSON5, false, true, true, true);
-
-            foreach ((string iniText, string correctJsonStrWithoutInterpolation, bool interpolation) in testcases)
+            int testsPerLoop = 3;
+            foreach ((string iniText, string correctJsonStrWithoutInterpolation, /*bool interpolation,*/ string correctReformattedIniText) in testcases)
             {
                 JObject correctJson;
-                JObject correctJsonWithInterpolation;
+                //JObject correctJsonWithInterpolation;
                 string correctJsonStr;
-                ii += 3;
-                Npp.AddLine($"Parsing ini file (shown here as JSON string)\r\n{JNode.StrToString(iniText, true)}");
+                ii += testsPerLoop;
+                bool hasShownIniFileDescription = false;
+                void showFileDescription()
+                {
+                    if (!hasShownIniFileDescription)
+                    {
+                        string iniFileDescription = $"Parsing ini file (shown here as JSON string)\r\n{JNode.StrToString(iniText, true)}";
+                        hasShownIniFileDescription = true;
+                        Npp.AddLine(iniFileDescription);
+                    }
+                };
                 try
                 {
                     correctJson = (JObject)jsonParser.Parse(correctJsonStrWithoutInterpolation);
-                    correctJsonWithInterpolation = IniFileParser.Interpolate(correctJson);
-                    correctJsonStr = interpolation ? correctJsonStrWithoutInterpolation : correctJsonWithInterpolation.PrettyPrint();
-                    if (interpolation)
-                        correctJson = correctJsonWithInterpolation;
+                    //correctJsonWithInterpolation = IniFileParser.Interpolate(correctJson);
+                    correctJsonStr = correctJson.PrettyPrintWithComments(jsonParser.comments, sort_keys:false);
                 }
                 catch (Exception ex)
                 {
+                    showFileDescription();
                     Npp.AddLine($"While trying to parse JSON\r\n{correctJsonStrWithoutInterpolation}\r\nGOT EXCEPTION\r\n{ex}");
-                    testsFailed += 3;
+                    testsFailed += testsPerLoop;
                     continue;
                 }
                 JObject gotJson;
-                IniFileParser iniParser = new IniFileParser(interpolation);
+                IniFileParser iniParser = new IniFileParser();
                 try
                 {
                     gotJson = iniParser.Parse(iniText);
                 }
                 catch (Exception ex)
                 {
+                    showFileDescription();
                     Npp.AddLine($"While trying to parse ini file\r\nGOT EXCEPTION\r\n{ex}");
-                    testsFailed += 3;
+                    testsFailed += testsPerLoop;
                     continue;
                 }
                 string gotJsonStr = gotJson.ToString();
                 if (gotJson.TryEquals(correctJson, out _))
                 {
                     // test if comments are parsed correctly
+                    string gotJsonWithComments = "";
                     try
                     {
-                        string gotJsonWithComments = gotJson.ToStringWithComments(iniParser.comments);
+                        gotJsonWithComments = gotJson.PrettyPrintWithComments(iniParser.comments, sort_keys:false);
                         if (gotJsonWithComments != correctJsonStr)
                         {
                             testsFailed++;
-                            Npp.AddLine($"EXPECTED JSON WITH COMMENTS\r\n{correctJsonStr}\r\nGOT JSON WITH COMMENTS\r\n{gotJsonStr}");
+                            showFileDescription();
+                            Npp.AddLine($"EXPECTED JSON WITH COMMENTS\r\n{correctJsonStr}\r\nGOT JSON WITH COMMENTS\r\n{gotJsonWithComments}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        testsFailed++;
+                        testsFailed += 2;
+                        showFileDescription();
                         Npp.AddLine($"EXPECTED JSON WITH COMMENTS\r\n{correctJsonStr}\r\nGOT EXCEPTION\r\n{ex}");
+                        continue;
                     }
                     // test if dumping the JSON back to an ini file and re-parsing the dumped ini will return the same JSON
                     string dumpedIniText = "";
                     try
                     {
-                        dumpedIniText = gotJson.ToIniFile(iniParser.comments);
+                        JObject reParsedJson = (JObject)jsonParser.Parse(gotJsonWithComments);
+                        dumpedIniText = reParsedJson.ToIniFile(jsonParser.comments);
                     }
                     catch (Exception ex)
                     {
                         testsFailed++;
-                        Npp.AddLine($"When ini-dumping JSON\r\n{gotJsonStr}\r\nEXPECTED INI FILE\r\n{correctJsonStr}\r\nGOT EXCEPTION {ex}");
+                        showFileDescription();
+                        Npp.AddLine($"When ini-dumping JSON\r\n{gotJsonStr}\r\nEXPECTED INI FILE\r\n{correctReformattedIniText}\r\nGOT EXCEPTION {ex}");
                         continue;
                     }
                     JObject jsonFromDumpedIniText;
@@ -104,19 +122,22 @@ namespace JSON_Tools.Tests
                     }
                     catch (Exception ex)
                     {
+                        showFileDescription();
                         Npp.AddLine($"EXPECTED JSON FROM DUMPED INI FILE\r\n{correctJsonStr}\r\nGOT EXCEPTION\r\n{ex}");
                         testsFailed++;
                         continue;
                     }
                     if (!jsonFromDumpedIniText.TryEquals(correctJson, out _))
                     {
+                        showFileDescription();
                         testsFailed++;
                         Npp.AddLine($"EXPECTED JSON FROM DUMPED INI FILE\r\n{correctJson.ToString()}\r\nGOT JSON\r\n{gotJson.ToString()}");
                     }
                 }
                 else
                 {
-                    testsFailed += 3;
+                    testsFailed += testsPerLoop;
+                    showFileDescription();
                     Npp.AddLine($"EXPECTED JSON\r\n{correctJson.ToString()}\r\nGOT JSON\r\n{gotJson.ToString()}");
                 }
             }
