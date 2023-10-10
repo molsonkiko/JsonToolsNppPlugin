@@ -956,7 +956,7 @@ because when baz is redefined, it just uses the value of baz that was previously
 
 ### Spreading function args to fill multiple arguments (added in v5.8) ###
 
-Beginning in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the `*` spread operator has been added that allows the user to pass in an array to stand for multiple arguments, which RemesPath will attempt to get from the elements of that array.
+Beginning in [v5.8](/CHANGELOG.md#580---2023-10-09), the `*` spread operator has been added that allows the user to pass in an array to stand for multiple arguments, which RemesPath will attempt to get from the elements of that array.
 
 
 __Examples:__

@@ -296,7 +296,7 @@ This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON 
 
 At present the __Strategy__ option for the CSV Generation form has four options. You can read more about these strategies in the [docs](/docs/json-to-csv.md).
 
-In [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the line terminator for generated CSV files became customizable (default Unix `LF`, can choose from `CRLF`, `CR`, and `LF`). 
+In [v5.8](/CHANGELOG.md#580---2023-10-09), the line terminator for generated CSV files became customizable (default Unix `LF`, can choose from `CRLF`, `CR`, and `LF`). 
 
 ## Changing how much JSON tree is displayed ##
 
@@ -573,7 +573,8 @@ __NOTES:__
 - The `Array to JSON Lines` command (*added in v3.3.0*) on the plugin menu allows you to convert a normal JSON array into a JSON Lines document. 
 - If you query a JSON Lines doc with RemesPath, the query result will be formatted as normal JSON.
 - If you have a JSON Lines document that doesn't have the `.jsonl` extension, you can use the `Plugins->JsonTools->Parse JSON Lines document` command in the main menu.
-- Beginning in [v5.8](/CHANGELOG.md#580---unreleased-yyyy-mm-dd), the plugin will by default prompt to confirm if you try to pretty-print a document with the `.jsonl` extension, because *pretty-printing a JSON Lines document will probably make it invalid.* This prompt can be disabled in the settings. 
+- Beginning in [v5.8](/CHANGELOG.md#580---2023-10-09), the plugin will by default prompt to confirm if you try to pretty-print a document with the `.jsonl` extension, because *pretty-printing a JSON Lines document will probably make it invalid.* This prompt can be disabled in the settings.
+- Also beginning in [v5.8](/CHANGELOG.md#580---2023-10-09), [editing a JSON Lines document with RemesPath](/docs/RemesPath.md#editing-with-assignment-expressions) will keep the document in JSON Lines format.
 
 ## Running tests ##
 
@@ -584,6 +585,50 @@ This repository also contains ["most recent errors.txt"](/most%20recent%20errors
 Prior to version [4.2.0](/CHANGELOG.md#420---2022-10-29), running these tests should cause the plugin to crash after printing the line `Testing JSON grepper's file reading ability` because some tests referenced an absolute file path.
 
 An easy way to figure out which tests are failing is to use Notepad++'s find/replace form to search for __`Failed\s+[^0]`__ (*with regular expressions on*).
+
+## Parsing INI files ##
+
+*Added in version [v5.8](/CHANGELOG.md#580---2023-10-09)*
+
+INI files (which typically have the `ini` file extension) are often used as config files.
+
+JsonTools can parse INI files with a format like the following example:
+```
+; comments can begin with ';'
+# comments can also begin with '#'
+[header]
+equals can separate keys and values = yes
+  ; any indentation of keys within a section is fine
+  colon can also separate keys and values : true
+
+[another header]
+another key=foo
+  ; comment to indicate that the header on the next line isn't part of a multiline value
+  [indented section]
+  multiline value = first line
+    subsequent lines of multiline value
+    need to be more indented than the first
+    ; comments end the multiline value
+
+[final section]
+more about comments: this ';' does not start a comment
+  because the ';' is not the first non-whitespace of the line
+
+even more about comments=this is true for '#' as well
+```
+
+INI files will always be parsed as objects, with section headers mapped to objects representing sections. __All the values in a section object will be strings.__
+
+Here's the tree view created for the example above:
+
+![ini file tree view](/docs/ini%20file%20tree%20view.PNG)
+
+INI files can be pretty-printed (as reformatted INI files) and edited with RemesPath.
+
+### Notes
+1. It is a __fatal error__ for a document has duplicate section names, or two of the same key within a section.
+2. Currently the only file extension that will automatically be parsed as an INI file is `.ini`. If you wish to parse a document with another extension as INI, you need to use the `Open tree for INI file` (Alt-P-J-I-I-Enter using accelerator keys) to parse the document as an INI file.
+3. After a RemesPath query converting values to non-strings, they're converted back to strings.
 
 # Get JSON from files and APIs #
 

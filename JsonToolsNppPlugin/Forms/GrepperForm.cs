@@ -203,7 +203,7 @@ namespace JSON_Tools.Forms
                 tv.json = grepper.fname_jsons;
                 string file_open = Npp.notepad.GetCurrentFilePath();
                 Npp.notepad.OpenFile(tv.fname);
-                Npp.editor.SetText(tv.json.PrettyPrintAndChangePositions());
+                Npp.editor.SetText(Main.PrettyPrintFromSettings(tv.json));
                 tv.SubmitQueryButton.PerformClick();
                 Npp.notepad.OpenFile(file_open);
                 if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
@@ -223,7 +223,7 @@ namespace JSON_Tools.Forms
             }
             tv = new TreeViewer(grepper.fname_jsons);
             AddOwnedForm(tv);
-            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false);
+            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false, DocumentType.JSON);
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                 Npp.notepad.HideDockingForm(Main.openTreeViewer);
         }

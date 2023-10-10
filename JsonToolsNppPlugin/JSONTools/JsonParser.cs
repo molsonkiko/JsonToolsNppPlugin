@@ -360,7 +360,13 @@ namespace JSON_Tools.JSON_Tools
         {
             int pos = ii >= inp.Length ? inp.Length - 1 : ii - 1;
             if (pos <= start)
+            {
+                if (start == inp.Length - 1)
+                    // we special case this so that a substring from start to EndOfPreviousLine
+                    // will still have a length of 1
+                    return inp.Length;
                 return start;
+            }
             char c = inp[pos];
             if (c != '\n') // end of line is the end of the document
                 return pos + 1;

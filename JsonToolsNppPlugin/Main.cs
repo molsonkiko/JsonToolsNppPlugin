@@ -31,6 +31,7 @@ namespace Kbg.NppPluginNET
                                                              false,
                                                              false,
                                                              settings.remember_comments);
+        public static IniFileParser iniParser = new IniFileParser();
         public static RemesParser remesParser = new RemesParser();
         public static YamlDumper yamlDumper = new YamlDumper();
         public static string activeFname = null;
@@ -66,7 +67,7 @@ namespace Kbg.NppPluginNET
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
-        private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl" };
+        private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl", "json5" };
         private static bool currentFileTooBigToAutoParse = true;
         private static bool bufferFinishedOpening = false;
         // toolbar icons
@@ -118,11 +119,13 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(18, "See most recent syntax &errors in this file", () => OpenErrorForm(activeFname, false)); errorFormId = 18;
             PluginBase.SetCommand(19, "JSON to YAML", DumpYaml);
             PluginBase.SetCommand(20, "---", null);
-            PluginBase.SetCommand(21, "Parse JSON Li&nes document", () => OpenJsonTree(true));
+            PluginBase.SetCommand(21, "Parse JSON Li&nes document", () => OpenJsonTree(DocumentType.JSONL));
             PluginBase.SetCommand(22, "&Array to JSON Lines", DumpJsonLines);
             PluginBase.SetCommand(23, "---", null);
             PluginBase.SetCommand(24, "D&ump selected text as JSON string(s)", DumpSelectedTextAsJsonString);
             PluginBase.SetCommand(25, "Dump JSON string(s) as ra&w text", DumpSelectedJsonStringsAsText);
+            PluginBase.SetCommand(26, "---", null);
+            PluginBase.SetCommand(27, "Open tree for &INI file", () => OpenJsonTree(DocumentType.INI));
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -424,11 +427,11 @@ namespace Kbg.NppPluginNET
         /// Finally, associate the parsed JSON with the current filename in fname_jsons
         /// and return the JSON.
         /// </summary>
-        /// <param name="is_json_lines">parse the document as JSON lines</param>
-        /// <param name="was_autotriggered">was triggered by a direct action of the user (e.g., reformatting, opening tree view)</param>
-        /// <param name="is_recursion">IGNORE THIS PARAMETER, IT IS ONLY FOR RECURSIVE SELF-CALLS</param>
+        /// <param name="documentType">what type of document to parse the document as (JSON, JSON Lines, or INI file)</param>
+        /// <param name="wasAutotriggered">was triggered by a direct action of the user (e.g., reformatting, opening tree view)</param>
+        /// <param name="isRecursion">IGNORE THIS PARAMETER, IT IS ONLY FOR RECURSIVE SELF-CALLS</param>
         /// <returns></returns>
-        public static (bool fatal, JNode node, bool usesSelections) TryParseJson(bool is_json_lines = false, bool was_autotriggered = false, bool is_recursion = false)
+        public static (bool fatal, JNode node, bool usesSelections, DocumentType DocumentType) TryParseJson(DocumentType documentType = DocumentType.JSON, bool wasAutotriggered = false, bool isRecursion = false)
         {
             string fname = Npp.notepad.GetCurrentFilePath();
             List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
@@ -443,7 +446,14 @@ namespace Kbg.NppPluginNET
             int len = Npp.editor.GetLength();
             double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
             JObject oldJson = null;
-            bool hasOldSelections = TryGetInfoForFile(fname, out JsonFileInfo info) && info.usesSelections && info.json is JObject;
+            JsonFileInfo info = null;
+            bool hasOldSelections = false;
+            DocumentType previouslyChosenDocType = DocumentType.NONE;
+            if (TryGetInfoForFile(fname, out info))
+            {
+                hasOldSelections = info.usesSelections && info.json is JObject;
+                previouslyChosenDocType = info.documentType;
+            }
             if (hasOldSelections)
             {
                 oldJson = (JObject)info.json;
@@ -475,32 +485,68 @@ namespace Kbg.NppPluginNET
             List<JsonLint> lints;
             List<Comment> comments = null;
             var fatalErrors = new List<bool>();
+            string errorMessage = null;
             if (noTextSelected)
             {
-                if (was_autotriggered && len > sizeThreshold)
-                    return (false, null, false);
+                if (wasAutotriggered && len > sizeThreshold)
+                    return (false, null, false, DocumentType.NONE);
                 string text = Npp.editor.GetText(len + 1);
-                // always parse ".jsonl" documents as Json Lines 
-                is_json_lines |= Npp.FileExtension() == "jsonl";
-                if (is_json_lines)
-                    json = jsonParser.ParseJsonLines(text);
+                if (documentType == DocumentType.JSON || documentType == DocumentType.NONE)
+                {
+                    // if user didn't specify how to parse the document:
+                    // 1. check if the document has a file extension with an associated DocumentType
+                    string fileExtension = Npp.FileExtension().ToLower();
+                    DocumentType docTypeFromExtension = Npp.DocumentTypeFromFileExtension(fileExtension);
+                    if (docTypeFromExtension != DocumentType.NONE)
+                        documentType = docTypeFromExtension;
+                    // 2. check if the user previously chose a document type, and use that if so.
+                    //    this overrides the default for the file extension.
+                    if (previouslyChosenDocType != DocumentType.NONE)
+                        documentType = previouslyChosenDocType;
+                }
+                if (documentType == DocumentType.INI)
+                {
+                    lints = new List<JsonLint>();
+                    try
+                    {
+                        json = iniParser.Parse(text);
+                        documentType = DocumentType.INI;
+                    }
+                    catch (Exception ex)
+                    {
+                        errorMessage = ex.ToString();
+                        if (ex is IniParserException iniEx)
+                        {
+                            lints.Add(iniEx.ToJsonLint());
+                        }
+                    }
+                    fatalErrors.Add(errorMessage != null);
+                    comments = iniParser.comments;
+                }
                 else
-                    json = jsonParser.Parse(text);
-                fatalErrors.Add(jsonParser.fatal);
-                lints = jsonParser.lint.ToList();
-                if (settings.remember_comments && jsonParser.comments != null)
-                    comments = jsonParser.comments.ToList();
+                {
+                    if (documentType == DocumentType.JSONL)
+                        json = jsonParser.ParseJsonLines(text);
+                    else
+                        json = jsonParser.Parse(text);
+                    fatalErrors.Add(jsonParser.fatal);
+                    errorMessage = jsonParser.fatalError?.ToString();
+                    lints = jsonParser.lint.ToList();
+                    if (settings.remember_comments && jsonParser.comments != null)
+                        comments = jsonParser.comments.ToList();
+                }
             }
             else
             {
+                // it's a selection-based document, so type of document doesn't matter
                 json = new JObject();
                 JObject obj = (JObject)json;
                 lints = new List<JsonLint>();
                 int combinedLength = 0;
                 foreach ((int start, int end) in selRanges)
                     combinedLength += end - start;
-                if (was_autotriggered && combinedLength > sizeThreshold)
-                    return (false, null, false);
+                if (wasAutotriggered && combinedLength > sizeThreshold)
+                    return (false, null, false, DocumentType.NONE);
                 foreach ((int start, int end) in selRanges)
                 {
                     string selRange = Npp.GetSlice(start, end);
@@ -509,18 +555,22 @@ namespace Kbg.NppPluginNET
                     obj[key] = subJson;
                     lints.AddRange(jsonParser.lint);
                     fatalErrors.Add(jsonParser.fatal);
+                    if (errorMessage == null)
+                        errorMessage = jsonParser.fatalError?.ToString();
                 }
             }
-            if (!is_recursion && oneSelRange && SelectionManager.NoSelectionIsValidJson(json, !noTextSelected, fatalErrors))
+            if (!isRecursion && oneSelRange && SelectionManager.NoSelectionIsValidJson(json, !noTextSelected, fatalErrors))
             {
                 // If there's a single selection that doesn't begin with a valid JSON document,
                 // there's a good chance (from molsonkiko's experience) that the user was just selecting some text to copy/paste
                 // If this happens, we just treat this as an empty selection and restore old selections
                 SelectionManager.SetSelectionsFromStartEnds(oldSelections);
-                return TryParseJson(is_json_lines, was_autotriggered, true);
+                return TryParseJson(documentType, wasAutotriggered, true);
             }
             int lintCount = lints.Count;
             info = AddJsonForFile(fname, json);
+            bool fatal = errorMessage != null;
+            info.documentType = fatal ? DocumentType.NONE : documentType;
             if (stopUsingSelections)
                 info.usesSelections = false;
             else
@@ -535,12 +585,11 @@ namespace Kbg.NppPluginNET
                 }
             }
             info.lints = lints;
-            if (jsonParser.fatal)
+            if (fatal)
             {
                 // unacceptable error, show message box
-                string errorMessage = jsonParser.fatalError?.ToString();
                 MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
-                                "Error while trying to parse JSON",
+                                $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                 string ext = Npp.FileExtension(fname);
@@ -552,7 +601,7 @@ namespace Kbg.NppPluginNET
                     Npp.notepad.SetStatusBarSection($"JSON with fatal errors - {lintCount} errors (Alt-P-J-E to view)",
                         StatusBarSection.DocType);
             }
-            else
+            else if (!(!info.usesSelections && documentType == DocumentType.INI)) // leave ini file status bar alone
             {
                 string doctypeDescription;
                 switch (jsonParser.state)
@@ -576,7 +625,7 @@ namespace Kbg.NppPluginNET
                 info.tv.json = json;
             info.comments = comments;
             jsonFileInfos[activeFname] = info;
-            return (jsonParser.fatal, json, info.usesSelections);
+            return (fatal, json, info.usesSelections, documentType);
         }
 
         public static JsonFileInfo AddJsonForFile(string fname, JNode json)
@@ -643,10 +692,11 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void PrettyPrintJson()
         {
-            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections, DocumentType documentType) = TryParseJson();
             if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
                 return;
-            if (Npp.FileExtension() == "jsonl" && (settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.DONT_DO_DONT_ASK
+            bool isJsonLines = info.documentType == DocumentType.JSONL;
+            if (isJsonLines && (settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.DONT_DO_DONT_ASK
                 || settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.ASK_BEFORE_DOING
                     && MessageBox.Show(
                         "Pretty-printing a JSON Lines document will generally lead to it no longer being a valid JSON Lines document. Pretty-print anyway?",
@@ -656,11 +706,15 @@ namespace Kbg.NppPluginNET
                     ) == DialogResult.No)
                 )
                 return;
+            int indent = settings.tab_indent_pretty_print ? 1 : settings.indent_pretty_print; 
             Func<JNode, string> formatter;
             if (UseComments(info))
-                formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, settings.indent_pretty_print, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ');
+                formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, indent, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ');
             else
                 formatter = PrettyPrintFromSettings;
+            if (isJsonLines)
+                // pretty-printing a JSON Lines document makes it a JSON document (not JSON Lines anymore)
+                info.documentType = DocumentType.JSON;
             ReformatFileWithJson(json, formatter, usesSelections);
         }
 
@@ -669,7 +723,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void CompressJson()
         {
-            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections, DocumentType _) = TryParseJson();
             if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
                 return;
             Func<JNode, string> formatter;
@@ -724,6 +778,21 @@ namespace Kbg.NppPluginNET
                 Npp.editor.EndUndoAction();
                 json = obj;
             }
+            else if (TryGetInfoForFile(activeFname, out JsonFileInfo info) && info.documentType == DocumentType.INI && json is JObject obj)
+            {
+                string iniText;
+                try
+                {
+                    iniText = obj.ToIniFile(info.comments);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error while reformatting INI file:\r\n{ex.ToString()}", "Error while reformatting INI file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return keyChanges;
+                }
+                Npp.editor.SetText(iniText);
+                Npp.SetLangIni(false, false);
+            }
             else
             {
                 string newText = formatter(json);
@@ -763,7 +832,7 @@ namespace Kbg.NppPluginNET
                 || !(info.json is JObject obj))
                 return;
 #if DEBUG
-            var modTypeFlagsSet = Npp.GetModificationTypeFlagsSet(modType);
+            //var modTypeFlagsSet = Npp.GetModificationTypeFlagsSet(modType);
 #endif // DEBUG
             // just normal deletion/insertion of text (number of chars = notif.Length)
             // for each saved selection, if its start is after notif.Position, increment start by notif.Length
@@ -932,7 +1001,7 @@ namespace Kbg.NppPluginNET
                             MessageBoxIcon.Warning)
                 == DialogResult.Cancel)
                 return;
-            (bool fatal, JNode json, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson();
             if (fatal || json == null) return;
             Npp.notepad.FileNew();
             string yaml = "";
@@ -954,13 +1023,21 @@ namespace Kbg.NppPluginNET
             Npp.notepad.SetCurrentLanguage(LangType.L_YAML);
         }
 
+        public static string ToJsonLinesFromSettings(JNode json)
+        {
+            if (settings.minimal_whitespace_compression)
+                return ((JArray)json).ToJsonLines(settings.sort_keys, ":", ",");
+            return ((JArray)json).ToJsonLines(settings.sort_keys);
+
+        }
+
         /// <summary>
         /// If the current file is a JSON array, open a new buffer with a JSON Lines
         /// document containing all entries in the array.
         /// </summary>
         static void DumpJsonLines()
         {
-            (bool fatal, JNode json, bool usesSelections) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections, _) = TryParseJson();
             if (fatal || json == null) return;
             if (!(json is JArray))
             {
@@ -970,12 +1047,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.notepad.FileNew();
-            Func<JNode, string> formatter;
-            if (settings.minimal_whitespace_compression)
-                formatter = x => ((JArray)x).ToJsonLines(settings.sort_keys, ":", ",");
-            else
-                formatter = x => ((JArray)x).ToJsonLines(settings.sort_keys);
-            ReformatFileWithJson(json, formatter, usesSelections);
+            ReformatFileWithJson(json, ToJsonLinesFromSettings, usesSelections);
         }
 
         //form opening stuff
@@ -1146,7 +1218,7 @@ namespace Kbg.NppPluginNET
             }
             if (json == null)
             {
-                (fatal, json, usesSelections) = TryParseJson();
+                (fatal, json, usesSelections, _) = TryParseJson();
                 if (fatal || json == null)
                     return "";
             }
@@ -1233,15 +1305,15 @@ namespace Kbg.NppPluginNET
             }
             else
                 SelectionManager.SetSelectionsFromStartEnds(startEnds);
-            TryParseJson(false, false);
+            TryParseJson(DocumentType.JSON, false);
         }
 
         /// <summary>
         /// Try to parse a JSON document and then open up the tree view.<br></br>
-        /// If is_json_lines or the file extension is ".jsonl", try to parse it as a JSON Lines document.<br></br>
         /// If the tree view is already open, close it instead.
         /// </summary>
-        public static void OpenJsonTree(bool is_json_lines = false)
+        /// <param name="documentType">see the documentType argument for TryParseJson above</param>
+        public static void OpenJsonTree(DocumentType documentType = DocumentType.JSON)
         {
             if (openTreeViewer != null)
             {
@@ -1284,13 +1356,15 @@ namespace Kbg.NppPluginNET
                     return;
                 }
             }
-            (_, JNode json, bool usesSelections) = TryParseJson(is_json_lines);
+            JNode json;
+            bool usesSelections;
+            (_, json, usesSelections, documentType) = TryParseJson(documentType);
             if (json == null || json == new JNode() || !TryGetInfoForFile(activeFname, out info)) // open a tree view for partially parsed JSON
                 return; // don't open the tree view for non-json files
             openTreeViewer = new TreeViewer(json);
             info.tv = openTreeViewer;
             jsonFileInfos[activeFname] = info;
-            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}", usesSelections);
+            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}", usesSelections, documentType);
         }
 
         static void OpenGrepperForm()
@@ -1304,7 +1378,7 @@ namespace Kbg.NppPluginNET
             }
         }
 
-        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title, bool usesSelections)
+        public static void DisplayJsonTree(TreeViewer treeViewer, JNode json, string title, bool usesSelections, DocumentType documentType)
         {
             using (Bitmap newBmp = new Bitmap(16, 16))
             {
@@ -1332,10 +1406,9 @@ namespace Kbg.NppPluginNET
             IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
             Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
 
+            Npp.SetLangBasedOnDocType(jsonParser.fatal, usesSelections, documentType);
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             // Following message will toogle both menu item state and toolbar button
-            if (!jsonParser.fatal && !usesSelections)
-                Npp.SetLangJson();
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
             treeViewer.JsonTreePopulate(json);
@@ -1383,7 +1456,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void ValidateJson(string schema_path = null, bool message_on_success = true)
         {
-            (bool fatal, JNode json, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson();
             if (fatal || json == null) return;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             if (schema_path == null)
@@ -1429,7 +1502,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateJsonSchema()
         {
-            (bool fatal, JNode json, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson();
             if (fatal || json == null) return;
             JNode schema;
             try
@@ -1457,7 +1530,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateRandomJson()
         {
-            (bool fatal, JNode json, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson();
             if (fatal || json == null) return;
             JNode randomJson = new JNode();
             try
@@ -1727,7 +1800,7 @@ namespace Kbg.NppPluginNET
         /// <summary>
         /// This callback fires once every second.<br></br>
         /// It checks if the last edit was more than 2 seconds ago.<br></br>
-        /// If it was, it checks if the filename is one of ["json", "jsonc", "jsonl"]
+        /// If it was, it checks if the filename is one of fileExtensionsToAutoParse (see above)
         /// and also if the filename is 
         /// </summary>
         /// <param name="state"></param>
@@ -1749,7 +1822,7 @@ namespace Kbg.NppPluginNET
                 || !fileExtensionsToAutoParse.Contains(ext))
                 return;
             // filename matches but it's not associated with a schema, so just parse normally
-            TryParseJson(false, true);
+            TryParseJson(DocumentType.JSON, true);
         }
 
         /// <summary>
@@ -1844,10 +1917,11 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public bool usesSelections;
         public List<Comment> comments;
+        public DocumentType documentType;
 
         public bool IsDisposed { get; private set; }
 
-        public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false, List<Comment> comments = null)
+        public JsonFileInfo(JNode json = null, List<JsonLint> lints = null, string statusBarSection = null, TreeViewer tv = null, bool hasJsonSelections = false, List<Comment> comments = null, DocumentType documentType = DocumentType.JSON)
         {
             _json = json;
             this.lints = lints;
@@ -1856,6 +1930,7 @@ namespace Kbg.NppPluginNET
             this.usesSelections = hasJsonSelections;
             IsDisposed = false;
             this.comments = comments;
+            this.documentType = documentType;
         }
 
         public void Dispose()

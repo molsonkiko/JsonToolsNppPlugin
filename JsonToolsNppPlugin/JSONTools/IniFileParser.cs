@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System;
-using System.Text.RegularExpressions;
-using System.Security.Principal;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -10,17 +8,29 @@ namespace JSON_Tools.JSON_Tools
         public new string Message { get; set; }
         public char CurChar { get; set; }
         public int Position { get; set; }
+        public int LineNum { get; set; }
 
-        public IniParserException(string Message, char c, int pos)
+        /// <summary>lineNum arg is 0-based, but LineNum attribute will be 1-based</summary>
+        /// <param name="Message"></param>
+        /// <param name="c">character where error happened (approx)</param>
+        /// <param name="pos">position in utf-8 encoding of input</param>
+        /// <param name="lineNum">the 0-based line number (this will be incremented by 1 to the 1-based line number in the LineNum attribute)</param>
+        public IniParserException(string Message, char c, int pos, int lineNum)
         {
             this.Message = Message;
             this.CurChar = c;
             this.Position = pos;
+            this.LineNum = lineNum + 1;
         }
 
         public override string ToString()
         {
-            return $"{Message} at position {Position} (char {JsonLint.CharDisplay(CurChar)})";
+            return $"{Message} at line {LineNum}, position {Position} (char {JsonLint.CharDisplay(CurChar)})";
+        }
+
+        public JsonLint ToJsonLint()
+        {
+            return new JsonLint(Message, Position, CurChar, ParserState.FATAL);
         }
     }
 
@@ -42,6 +52,7 @@ namespace JSON_Tools.JSON_Tools
         {
             ii = 0;
             utf8ExtraBytes = 0;
+            lineNum = 0;
             comments = new List<Comment>();
             //UseInterpolation = useInterpolation;
         }
@@ -49,6 +60,7 @@ namespace JSON_Tools.JSON_Tools
         public void Reset()
         {
             ii = 0;
+            lineNum = 0;
             utf8ExtraBytes = 0;
             comments.Clear();
         }
@@ -107,27 +119,29 @@ namespace JSON_Tools.JSON_Tools
                             ii++;
                             lineNum++;
                             if (endOfHeader < 0)
-                                throw new IniParserException("Opening '[' and closing ']' of section header were not on the same line", c, headerStartUtf8 - 1);
+                                throw new IniParserException("Opening '[' and closing ']' of section header were not on the same line", c, headerStartUtf8 - 1, lineNum);
                             else
                                 goto headerFinished;
                         default:
                             if (endOfHeader > 0)
-                                throw new IniParserException("Non-whitespace between end of section header and end of header line", '[', headerStartUtf8 - 1);
+                                throw new IniParserException("Non-whitespace between end of section header and end of header line", '[', headerStartUtf8 - 1, lineNum);
                             utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(c);
                             break;
                         }
                         ii++;
                     }
-                    headerFinished:
+                headerFinished:
                     string header = JNode.StrToString(inp.Substring(startOfHeader, endOfHeader - startOfHeader), false);
                     if (doc.ContainsKey(header))
                     {
-                        throw new IniParserException($"Document has duplicate section header [{header}]", c, headerStartUtf8 - 1);
+                        throw new IniParserException($"Document has duplicate section header [{header}]", c, headerStartUtf8 - 1, lineNum);
                     }
                     JObject section = ParseSection(inp, header);
                     section.position = headerStartUtf8;
                     doc[header] = section;
                 }
+                else
+                    throw new IniParserException("Expected section header", c, ii, lineNum);
             }
             return new JObject(0, doc);
         }
@@ -148,7 +162,7 @@ namespace JSON_Tools.JSON_Tools
                 KeyValuePair<string, JNode> kv = ParseKeyValuePair(inp, indent);
                 if (section.ContainsKey(kv.Key))
                 {
-                    throw new IniParserException($"Section [{header}] has duplicate key \"{kv.Key}\"", c, keyStartUtf8);
+                    throw new IniParserException($"Section [{header}] has duplicate key \"{kv.Key}\"", c, keyStartUtf8, lineNum);
                 }
                 section[kv.Key] = kv.Value;
             }
@@ -158,7 +172,7 @@ namespace JSON_Tools.JSON_Tools
         public KeyValuePair<string, JNode> ParseKeyValuePair(string inp, int keyIndent)
         {
             if (ii >= inp.Length)
-                throw new IniParserException("EOF when expecting key-value pair", inp[inp.Length - 1], inp.Length - 1);
+                throw new IniParserException("EOF when expecting key-value pair", inp[inp.Length - 1], inp.Length - 1, lineNum);
             int startOfKey = ii;
             char startC = inp[ii];
             int keyStartUtf8 = utf8Pos;
@@ -200,17 +214,17 @@ namespace JSON_Tools.JSON_Tools
                     break;
                 case '\n':
                     if (!foundKeyValueSep)
-                        throw new IniParserException("No '=' or ':' on same line as key", startC, keyStartUtf8);
+                        throw new IniParserException("No '=' or ':' on same line as key", startC, keyStartUtf8, lineNum);
                     // key with empty value
                     goto exitKeyLoop;
                 default:
-                    utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(c);
                     if (foundKeyValueSep)
                     {
                         // first non-whitespace char after ':' or '='
                         goto exitKeyLoop;
                     }
                     // last non-whitespace seen so far before ':' or '='
+                    utf8ExtraBytes += JsonParser.ExtraUTF8Bytes(c);
                     endOfKey = ii;
                     break;
                 }
@@ -219,7 +233,6 @@ namespace JSON_Tools.JSON_Tools
         exitKeyLoop:
             string key = JNode.StrToString(inp.Substring(startOfKey, endOfKey + 1 - startOfKey), false);
             int startOfValue = ii;
-            int valueStartUtf8 = utf8Pos;
             int endOfValue = ii;
             while (ii < inp.Length)
             {
@@ -244,7 +257,10 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             string valueStr = inp.Substring(startOfValue, endOfValue - startOfValue);
-            JNode valueNode = new JNode(valueStr, valueStartUtf8);
+            if (key.IndexOf('=') >= 0 || key.IndexOf(':') >= 0)
+                throw new IniParserException("Invalid key is empty or contains ':' or '='", inp[startOfValue], startOfValue, lineNum);
+            // node is assigned position at start of key (not the start of the line the key is on)
+            JNode valueNode = new JNode(valueStr, keyStartUtf8);
             return new KeyValuePair<string, JNode>(key, valueNode);
         }
 

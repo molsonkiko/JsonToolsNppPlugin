@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -169,6 +170,8 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public enum DocumentType
     {
+        /// <summary>null value for use in some functions</summary>
+        NONE,
         JSON,
         /// <summary>JSON Lines documents</summary>
         JSONL,
@@ -939,7 +942,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// If this is a JNode that operates on input, return the result of this JNode's default operation on inp.<br></br>
-        /// If this does not operate on input, throw NotImplementedException
+        /// If this does not operate on input, throw NotImplementedException<br></br>
         /// Currently the JNode types that <i>can operate on input</i> (and their default operations) are:<br></br>
         /// * CurJson cj (cj.function)<br></br>
         /// * JMutator jm (jm.Mutate)<br></br>
@@ -1217,11 +1220,38 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// if this JObject represents an ini file, all the values must be strings. Calling this method ensures that this is so.
+        /// </summary>
+        /// <returns></returns>
+        public void StringifyAllValuesInIniFile()
+        {
+            var sectionKeysToChange = new List<(string sectionName, string key, string newValue)>();
+            foreach (KeyValuePair<string, JNode> kv in children)
+            {
+                if (!(kv.Value is JObject section))
+                {
+                    throw new InvalidOperationException("Only objects where all children are objects with only string values can be converted to ini files");
+                }
+                foreach (KeyValuePair<string, JNode> sectKv in section.children)
+                {
+                    string key = sectKv.Key;
+                    JNode value = sectKv.Value;
+                    if (!(value.value is string))
+                    {
+                        sectionKeysToChange.Add((kv.Key, key, value.ToString()));
+                    }
+                }
+            }
+            foreach ((string sectionName, string key, string newValue) in sectionKeysToChange)
+            {
+                JObject section = (JObject)this[sectionName];
+                section[key] = new JNode(newValue);
+            }
+        }
+
+        /// <summary>
         /// dump this JObject as an ini file
         /// </summary>
-        /// <param name="comments"></param>
-        /// <param name="changePositions"></param>
-        /// <returns></returns>
         public string ToIniFile(List<Comment> comments)
         {
             var sb = new StringBuilder();
@@ -1247,13 +1277,14 @@ namespace JSON_Tools.JSON_Tools
                     {
                         throw new InvalidOperationException("Only objects where all children are objects with only string values can be converted to ini files");
                     }
-                    (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, value.position, "", DocumentType.INI);
                     string unescapedKey = UnescapedJsonString(key, false);
+                    (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, value.position, "", DocumentType.INI);
                     sb.Append($"{unescapedKey}={valueStr}\r\n");
                     utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(unescapedKey, 0, unescapedKey.Length);
                     utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(valueStr, 0, valueStr.Length);
                 }
             }
+            Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, int.MaxValue, "", DocumentType.INI);
             return sb.ToString();
         }
 

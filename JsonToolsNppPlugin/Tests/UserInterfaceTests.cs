@@ -69,8 +69,22 @@ namespace JSON_Tools.Tests
                 Npp.editor.DeleteRange(start, length);
                 break;
             case "pretty_print":
+                bool tabIndent = args.Length >= 1 && args[0] is bool && (bool)args[0];
+                bool rememberComments = args.Length >= 2 && args[1] is bool && (bool)args[1];
+                bool previousTabIndent = Main.settings.tab_indent_pretty_print;
+                bool previousRememberComments = Main.settings.remember_comments;
+                if (tabIndent)
+                    Main.settings.tab_indent_pretty_print = tabIndent;
+                if (rememberComments)
+                    Main.settings.remember_comments = rememberComments;
                 Main.PrettyPrintJson();
-                messages.Add("pretty-print");
+                messages.Add(tabIndent
+                    ?  rememberComments ? "pretty-print with tabs and comments" : "pretty-print with tabs"
+                    : rememberComments ? "pretty-print with comments" : "pretty-print");
+                if (tabIndent)
+                    Main.settings.tab_indent_pretty_print = previousTabIndent;
+                if (rememberComments)
+                    Main.settings.remember_comments = previousRememberComments;
                 break;
             case "compress":
                 Main.CompressJson();
@@ -100,8 +114,8 @@ namespace JSON_Tools.Tests
                 messages.Add("compare_text passed");
                 break;
             case "tree_open":
-                bool isJsonLines = args.Length >= 1 ? (bool)args[0] : false;
-                Main.OpenJsonTree(isJsonLines);
+                DocumentType documentType = args.Length >= 1 ? (DocumentType)args[0] : DocumentType.JSON;
+                Main.OpenJsonTree(documentType);
                 messages.Add("tree_open");
                 break;
             case "treenode_click":
@@ -364,6 +378,18 @@ namespace JSON_Tools.Tests
             ("compare_selections", new object[]{new string[] {"9,17"} }),
             // TEST FILE WITH ONLY ONE JSON DOCUMENT
             ("file_open", new object[]{1}),
+            ("overwrite", new object[]{"[\r\n    [\"Я\", 1, \"a\"], // foo\r\n    [\"◐\", 2, \"b\"], // bar\r\n    [\"ồ\", 3, \"c\"], // baz\r\n    [\"ｪ\", 4, \"d\"],\r\n    [\"草\", 5, \"e\"],\r\n    [\"😀\", 6, \"f\"]\r\n]//a"}),
+            // TEST PRETTY-PRINT WITH COMMENTS AND TABS
+            ("pretty_print", new object[]{true, true}),
+            ("compare_text", new object[]{"[\r\n\t[\r\n\t\t\"Я\",\r\n\t\t1,\r\n\t\t\"a\"\r\n\t],\r\n\t// foo\r\n\t[\r\n\t\t\"◐\",\r\n\t\t2,\r\n\t\t\"b\"\r\n\t],\r\n\t// bar\r\n\t[\r\n\t\t\"ồ\",\r\n\t\t3,\r\n\t\t\"c\"\r\n\t],\r\n\t// baz\r\n\t[\r\n\t\t\"ｪ\",\r\n\t\t4,\r\n\t\t\"d\"\r\n\t],\r\n\t[\r\n\t\t\"草\",\r\n\t\t5,\r\n\t\t\"e\"\r\n\t],\r\n\t[\r\n\t\t\"😀\",\r\n\t\t6,\r\n\t\t\"f\"\r\n\t]\r\n]\r\n//a\r\n"}),
+            // TEST PRETTY-PRINT WITH COMMENTS ONLY
+            ("pretty_print", new object[]{false, true}),
+            ("compare_text", new object[]{"[\r\n    [\r\n        \"Я\",\r\n        1,\r\n        \"a\"\r\n    ],\r\n    // foo\r\n    [\r\n        \"◐\",\r\n        2,\r\n        \"b\"\r\n    ],\r\n    // bar\r\n    [\r\n        \"ồ\",\r\n        3,\r\n        \"c\"\r\n    ],\r\n    // baz\r\n    [\r\n        \"ｪ\",\r\n        4,\r\n        \"d\"\r\n    ],\r\n    [\r\n        \"草\",\r\n        5,\r\n        \"e\"\r\n    ],\r\n    [\r\n        \"😀\",\r\n        6,\r\n        \"f\"\r\n    ]\r\n]\r\n//a\r\n"
+}),
+            // TEST PRETTY-PRINT WITH TABS ONLY
+            ("pretty_print", new object[]{true}),
+            ("compare_text", new object[]{"[\r\n\t[\"Я\", 1, \"a\"],\r\n\t[\"◐\", 2, \"b\"],\r\n\t[\"ồ\", 3, \"c\"],\r\n\t[\"ｪ\", 4, \"d\"],\r\n\t[\"草\", 5, \"e\"],\r\n\t[\"😀\", 6, \"f\"]\r\n]"}),
+            // TEST TREE ON WHOLE DOCUMENT
             ("overwrite", new object[]{"[\r\n    [\"Я\", 1, \"a\"], // foo\r\n    [\"◐\", 2, \"b\"], // bar\r\n    [\"ồ\", 3, \"c\"], // baz\r\n    [\"ｪ\", 4, \"d\"],\r\n    [\"草\", 5, \"e\"],\r\n    [\"😀\", 6, \"f\"]\r\n]"}),
             ("tree_open", new object[]{}),
             ("treenode_click", new object[]{new string[] {"1 : [3]", "0 : \"◐\"" } }),
@@ -451,6 +477,26 @@ namespace JSON_Tools.Tests
             ("overwrite", new object[]{"[1,2,-9e15]\r\n//foo"}),
             ("compress", new object[]{}),
             ("compare_text", new object[]{"[1,2,-9E+15]"}),
+            // TEST PARSE JSON LINES
+            ("overwrite", new object[]{"[1,2,3]\r\n{\"a\": 1, \"b\": [-3,-4]}\r\n-7\r\nfalse"}),
+            ("tree_open", new object[]{}), // to close the tree so it can be reopened
+            ("tree_open", new object[]{DocumentType.JSONL}),
+            ("tree_query", new object[]{"@..* [abs(+@) < 3] = @ / 4"}), // divide values in open range (-3, 3) by 4; this should keep the file in JSON Lines format
+            ("compare_text", new object[]{"[0.25,0.5,3]\n{\"a\":0.25,\"b\":[-3,-4]}\n-7\n0.0"}),
+            ("tree_query", new object[]{"@"}), // re-parse document
+            ("treenode_click", new object[]{new string[] {"3 : 0.0"} }),
+            ("compare_selections", new object[]{new string[] {"39,39"} }),
+            ("compare_path_to_position", new object[]{32, "[1].b[1]"}),
+            // TEST PARSE INI FILE
+            ("overwrite", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\n  bar=2\r\n  [дaz]\r\n  baz=3\r\n  ;b\r\n  baz2 = 7 \r\n[quz]\r\nquz=4\r\n;c"}),
+            ("tree_open", new object[]{}),
+            ("tree_open", new object[]{DocumentType.INI}), 
+            ("tree_query", new object[]{"@..g`z`"}),
+            ("treenode_click", new object[]{new string[] {"0 : {2}", "baz2 : \"7 \""} }),
+            ("compare_selections", new object[]{new string[]{"63,63" } }),
+            ("compare_path_to_position", new object[]{81, "quz.quz"}),
+            ("tree_query", new object[]{"@.bar.bar = @ * int(@)"}), // edit one value
+            ("compare_text", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\nbar=22\r\n[дaz]\r\nbaz=3\r\n;b\r\nbaz2=7 \r\n[quz]\r\nquz=4\r\n;c\r\n"}),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
             ("file_open", new object[]{0}),
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),
@@ -504,6 +550,9 @@ namespace JSON_Tools.Tests
             ("treenode_click", new object[]{ new string[] { "69,106 : [1]", "0 : \"1.25 is champion!\""} }),
             ("treenode_click", new object[]{ new string[] { "106,154 : [1]", "0 : \"boo is champion!\""} }),
             ("tree_compare_query_result", new object[]{"{\"0,65\": [\"0.25 is champion!\", \"0.75 is champion!\"], \"106,154\": [\"boo is champion!\"], \"69,106\": [\"1.25 is champion!\"]}"}),
+            // TEST PRINTING SELECTION-BASED FILE WITH TABS
+            ("pretty_print", new object[]{true}),
+            ("compare_text", new object[]{"[\r\n\t\"0.25 is champion!\",\r\n\t\"0.75 is champion!\",\r\n\t0.5\r\n]blah[\r\n\t0,\r\n\t\"1.25 is champion!\"\r\n][\r\n\t\"boo is champion!\",\r\n\t\"a\",\r\n\t\"c\"\r\n]"}),
         };
 
         public static bool Test()

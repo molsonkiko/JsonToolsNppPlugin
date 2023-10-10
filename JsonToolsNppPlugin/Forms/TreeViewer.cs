@@ -91,6 +91,13 @@ namespace JSON_Tools.Forms
             return info.usesSelections;
         }
 
+        public DocumentType GetDocumentType()
+        {
+            if (Main.TryGetInfoForFile(fname, out JsonFileInfo info))
+                return info.documentType;
+            return DocumentType.JSON;
+        }
+
         /// <summary>
         /// suppress annoying ding when user hits a key in the tree view
         /// </summary>
@@ -433,7 +440,26 @@ namespace JSON_Tools.Forms
                         return;
                     }
                 }
-                Dictionary<string, (string, JNode)> keyChanges = Main.ReformatFileWithJson(queryFunc, Main.PrettyPrintFromSettings, usesSelections);
+                Func<JNode, string> formatter = Main.PrettyPrintFromSettings;
+                DocumentType documentType = GetDocumentType();
+                if (documentType == DocumentType.INI && queryFunc is JObject iniObj)
+                {
+                    try
+                    {
+                        iniObj.StringifyAllValuesInIniFile();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Could not mutate ini file because of error while trying to stringify all values:\n{ex}",
+                                "Error while stringifying ini file values after RemesPath mutation",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else if (documentType == DocumentType.JSONL && queryFunc is JArray arr)
+                    formatter = Main.ToJsonLinesFromSettings;
+                Dictionary<string, (string, JNode)> keyChanges = Main.ReformatFileWithJson(queryFunc, formatter, usesSelections);
                 if (isMultiStepQuery && usesSelections && treeFunc is JObject treeObj_)
                 {
                     var treeKeyChanges = new Dictionary<string, (string, JNode)>();
@@ -1016,7 +1042,7 @@ namespace JSON_Tools.Forms
         {
             shouldRefresh = false;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode new_json, bool _) = Main.TryParseJson();
+            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson();
             if (new_json == null)
                 return;
             fname = cur_fname;
