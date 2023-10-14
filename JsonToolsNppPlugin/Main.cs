@@ -146,7 +146,7 @@ namespace Kbg.NppPluginNET
                 (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar1, pathToPositionId, 'o'),
             }
                 .Where(x => iconsToUseChars.IndexOf(x.representingChar) >= 0)
-                .OrderBy(x => x.representingChar);
+                .OrderBy(x => iconsToUseChars.IndexOf(x.representingChar));
             // order the icons according to their order in settings.toolbar_icons, and exclude those without their representing char listed
 
             foreach ((Bitmap bmp, Icon icon, Icon iconDarkMode, int funcId, char representingChar) in iconInfo)
