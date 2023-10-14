@@ -30,13 +30,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
-- Improve Alt-key accelerators in forms. They don't seem to work right for some reason.
+- Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
+
+## [5.9.0] - (UNRELEASED) 2023-MM-DD
+
+### Added
+
+1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 
 ## [5.8.0] - 2023-10-09
 

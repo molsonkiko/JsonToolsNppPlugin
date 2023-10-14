@@ -188,9 +188,13 @@ Syntax error at position 3: Number with two decimal points
             ["false"] = false
         };
 
-        public static readonly string[] VAR_ASSIGN_KEYWORDS = new string[] { "var" };
+        public static readonly string[] LOOP_VAR_KEYWORDS = new string[] { /* "for" */ };
 
-        public static readonly string[] MISC_KEYWORDS = new string[] { "not" };
+        public static readonly string[] NON_LOOP_VAR_KEYWORDS = new string[] { "var" };
+
+        public static readonly string[] VAR_ASSIGN_KEYWORDS = NON_LOOP_VAR_KEYWORDS.Concat(LOOP_VAR_KEYWORDS).ToArray();
+
+        public static readonly string[] MISC_KEYWORDS = new string[] { "not", "end" };
 
         public static readonly HashSet<string> KEYWORDS =
             CONSTANTS.Keys

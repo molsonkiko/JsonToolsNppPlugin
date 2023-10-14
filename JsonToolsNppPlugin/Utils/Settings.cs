@@ -142,6 +142,13 @@ namespace JSON_Tools.Utils
         [Description("Which type of newline to use for generated CSV files."),
             Category("Miscellaneous"), DefaultValue(EndOfLine.LF)]
         public EndOfLine csv_newline { get; set; }
+
+        [Description("Specify one of these chars for each toolbar icon you want to show, in the order you want:\r\n" +
+                    "('t' = tree view, 'c' = compress, 'p' = pretty-print, 'o' = path to current position)\r\n" +
+                    "This setting will take effect the next time you start Notepad++.\r\n" +
+                    "If you want there to be NO toolbar icons, enter a character that does not represent an icon; do NOT leave this field empty."),
+            Category("Miscellaneous"), DefaultValue("tcpo")]
+        public string toolbar_icons { get; set; }
         #endregion
 
         #region GREP_API_SETTINGS

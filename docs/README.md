@@ -803,6 +803,14 @@ Below we can see an example of what happens when a file with a name that matches
 
 *Note*: the first release where this feature was implemented without causing potential crashes at startup is [4.11.1](/CHANGELOG.md#4111---2023-03-17).
 
+## Toolbar icons ##
+
+Starting in [v5.7](/CHANGELOG.md#570---2023-09-08), JsonTools has toolbar icons for [the tree view](#the-basics), [compressing, pretty-printing](#json-formatting), and [path to current position](#path-to-current-position).
+
+The `toolbar_icons` option in settings lets you customize which toolbar icons show up, and their order, according to the case-insensitive mapping `{'t': 'tree view', 'c': 'compress', 'p': 'pretty-print', 'o': 'path to current position'}`.
+
+Thus, `cot` would give the icon sequence `(compress, path to current position, tree view)`, `P` would give only the pretty-print icon, and `A` would give no icons at all.
+
 ## DSON ##
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.

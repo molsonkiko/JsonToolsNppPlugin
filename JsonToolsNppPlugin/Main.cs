@@ -137,15 +137,19 @@ namespace Kbg.NppPluginNET
 
         static internal void SetToolBarIcons()
         {
-            var iconInfo = new (Bitmap bmp, Icon icon, Icon iconDarkMode, int id)[]
+            string iconsToUseChars = settings.toolbar_icons.ToLower();
+            var iconInfo = new (Bitmap bmp, Icon icon, Icon iconDarkMode, int id, char representingChar)[]
             {
-                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, PluginNetResources.json_tree_toolbar1,jsonTreeId),
-                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, PluginNetResources.json_compress_toolbar1, compressId),
-                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, PluginNetResources.json_pretty_print_toolbar1, prettyPrintId),
-                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar1, pathToPositionId),
-            };
+                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, PluginNetResources.json_tree_toolbar1,jsonTreeId, 't'),
+                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, PluginNetResources.json_compress_toolbar1, compressId, 'c'),
+                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, PluginNetResources.json_pretty_print_toolbar1, prettyPrintId, 'p'),
+                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar1, pathToPositionId, 'o'),
+            }
+                .Where(x => iconsToUseChars.IndexOf(x.representingChar) >= 0)
+                .OrderBy(x => x.representingChar);
+            // order the icons according to their order in settings.toolbar_icons, and exclude those without their representing char listed
 
-            foreach ((Bitmap bmp, Icon icon, Icon iconDarkMode, int funcId) in iconInfo)
+            foreach ((Bitmap bmp, Icon icon, Icon iconDarkMode, int funcId, char representingChar) in iconInfo)
             {
                 // create struct
                 toolbarIcons tbIcons = new toolbarIcons();
