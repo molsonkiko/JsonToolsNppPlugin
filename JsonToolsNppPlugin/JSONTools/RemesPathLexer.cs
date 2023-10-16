@@ -188,17 +188,22 @@ Syntax error at position 3: Number with two decimal points
             ["false"] = false
         };
 
-        public static readonly string[] LOOP_VAR_KEYWORDS = new string[] { /* "for" */ };
+        public static readonly string[] LOOP_VAR_KEYWORDS = new string[] { "for" };
 
         public static readonly string[] NON_LOOP_VAR_KEYWORDS = new string[] { "var" };
 
-        public static readonly string[] VAR_ASSIGN_KEYWORDS = NON_LOOP_VAR_KEYWORDS.Concat(LOOP_VAR_KEYWORDS).ToArray();
+        public static readonly Dictionary<string, VariableAssignmentType> VAR_ASSIGN_KEYWORDS_TO_TYPES =
+            LOOP_VAR_KEYWORDS.Select(x => (x, VariableAssignmentType.LOOP))
+            .Concat(NON_LOOP_VAR_KEYWORDS.Select(x => (x, VariableAssignmentType.NORMAL)))
+            .ToDictionary(x => x.Item1, x => x.Item2);
 
-        public static readonly string[] MISC_KEYWORDS = new string[] { "not", "end" };
+        public static readonly string LOOP_END_KEYWORD = "end";
+
+        public static readonly string[] MISC_KEYWORDS = new string[] { "not", LOOP_END_KEYWORD };
 
         public static readonly HashSet<string> KEYWORDS =
             CONSTANTS.Keys
-            .Concat(VAR_ASSIGN_KEYWORDS)
+            .Concat(VAR_ASSIGN_KEYWORDS_TO_TYPES.Keys)
             .Concat(MISC_KEYWORDS)
             .ToHashSet();
 

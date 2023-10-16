@@ -935,6 +935,9 @@ here's what will happen:
 While this toy example doesn't fully showcase the utility of variable assignment, it should be obvious that this is a significant improvement in the expressive power of RemesPath.
 
 Some notes:
+* *All variables are always passed by reference in RemesPath, not by value.*
+    * For example, the statement `var x = 1; var y = x; y = @ + 1; x` will return `2` because *the statement `var y = x;` turns `y` into a reference to `x`*, and the mutation `y = @ + 1` will also change `x`.
+    * On the other hand, if you *redefine y not as a function of x*, it will no longer reference `x`. Thus `var x = 1; var y = x; var y = @ + 1; x` will return `1`, because `y` was redefined and not mutated.
 * Variables can have the same name as [functions](#functions), because an unquoted string is only interpreted as the name of a function if it is immediately followed by an open parenthesis.
     * For example, the query `var ifelse = blah; var s_len = s_len(ifelse); ifelse(s_len < 3, foo, bar)` is actually perfectly legal, even though it declares two variables that have the same name as functions that are also used in it.
     * Obviously this behavior will no longer be sustainable if it becomes possible to pass functions as arguments to other functions in RemesPath, but that may never happen.
@@ -953,6 +956,57 @@ will return
 ["bar", "baz", "barbaz"]
 ```
 because when baz is redefined, it just uses the value of baz that was previously defined, and no weird infinite loops of self-reference will happen.
+
+## Loop variables *(added in v5.9)* ##
+
+Beginning in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
+
+When you assign a variable `x` to an array with the `for` keyword, here is what happens:
+```
+toLoopOver = x
+start of loop = statement after assignment of x
+end of loop = end of query OR next instance of "end for;" statement
+for each value of toLoopOver:
+    x = value
+    execute each statement between start of loop and end of loop
+```
+
+Let's see an example of loop variables on this JSON:
+```json
+{
+    "a" : [1, 2, 3],
+    "b": ["a", "bb", "c"]
+}
+```
+and this query:
+```
+var a = @.a;
+var b = @.b;
+var b_maxlen = ``;
+for i = range(len(a));
+    var bval = at(b, i);
+    bval = @ * at(a, i);
+    var b_maxlen = ifelse(s_len(bval) > s_len(b_maxlen), bval, b_maxlen);
+end for;
+b_maxlen;
+```
+The query *will return `"bbbb"`*
+and *will mutate the JSON to*
+```json
+{
+	"a": [1, 2, 3],
+	"b": ["a", "bbbb", "ccc"]
+}
+```
+
+Here's how the query is executed:
+1. Set the variable `a` to `[3, 2, 1]` (which is `@.a`)
+2. Set the variable `b` to `["a", "bb", "c"]` (statement `@.b`)
+3. Set the variable `b_maxlen` to an *initial value of `""`* (statement ```var b_maxlen = ``;```)
+4. For each index `i` of array `a` (statement `for i = range(len(a));`):
+    1. First, mutate the current element of `b` by multiplying it by the corresponding element of `a` (statements `var bval = at(b, i);` and `bval = @ * at(a, i)`)
+    2. Now check if the current element of `b` is longer than `b_maxlen`. If it is, reassign `b_maxlen` to the current element of `b` (statement `var b_maxlen = ifelse(s_len(bval) > s_len(b_maxlen), bval, b_maxlen);`)
+5. Return the current value of `b_maxlen`,  which is `"bbbb"` because that's the longest string in the JSON after the transformation.
 
 ### Spreading function args to fill multiple arguments (added in v5.8) ###
 

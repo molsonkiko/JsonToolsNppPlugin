@@ -204,7 +204,8 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public static JNode HasPattern(JNode node, JNode sub)
         {
-            string s = (string)node.value;
+            if (!(node.value is string s))
+                throw new RemesPathException("For \"x =~ y\" expressions, x must be a string and y must be string or regex");
             if (sub is JRegex jregex)
             {
                 return new JNode(jregex.regex.IsMatch(s), Dtype.BOOL, 0);

@@ -43,6 +43,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
+2. [For loops in RemesPath](/docs/RemesPath.md#loop-variables-added-in-v59)
+
+### Fixed
+
+1. Fixed some weird issues where mutating a variable in RemesPath could cause re-executing a query on the same input to return a different value. A minimal example: `var x = 1; x = @ + 1; x` would return 1 + (the number of times the query was executed) prior to this fix. This was also true of a bunch of other things in RemesPath, including [projections and the map operator](/docs/RemesPath.md#projections).
 
 ## [5.8.0] - 2023-10-09
 

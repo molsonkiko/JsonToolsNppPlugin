@@ -1,11 +1,12 @@
 ﻿/*
 A class for representing arbitrary JSON.
 */
+using JSON_Tools.Utils;
 using System;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -1319,7 +1320,7 @@ namespace JSON_Tools.JSON_Tools
         /// <inheritdoc/>
         public override JNode Copy()
         {
-            JObject copy = new JObject();
+            JObject copy = new JObject(position, new Dictionary<string, JNode>(children.Count));
             foreach (KeyValuePair<string, JNode> kv in children)
             {
                 copy[kv.Key] = kv.Value.Copy();
@@ -1558,7 +1559,7 @@ namespace JSON_Tools.JSON_Tools
         /// <inheritdoc/>
         public override JNode Copy()
         {
-            JArray copy = new JArray();
+            JArray copy = new JArray(position, new List<JNode>(children.Count));
             foreach (JNode child in children)
             {
                 copy.children.Add(child.Copy());
@@ -1710,7 +1711,7 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode selected = selector is CurJson cjsel
                 ? cjsel.function(inp) // selector filters input
-                : selector.Copy();   // selector is a constant JNode indepenedent of input
+                : selector;   // selector is a constant JNode indepenedent of input
             if (mutator is CurJson cjmut)
             {
                 var func = cjmut.function;
@@ -1770,7 +1771,7 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public class JQueryContext : JNode
     {
-        private int indexInStatements = 0;
+        public int indexInStatements { get; private set; } = 0;
         /// <summary>
         /// Will the query mutate input?
         /// </summary>
@@ -1788,12 +1789,18 @@ namespace JSON_Tools.JSON_Tools
         /// variables dependent on input are stored as the result of execution of the CurJson stored under the same name in locals.
         /// </summary>
         private Dictionary<string, JNode> cachedLocals;
+        /// <summary>
+        /// when a loop variable (declared with "for" instead of "var") is assigned, it is added to the stack.<br></br>
+        /// when the loop is ended with "end for;", it is popped off the stack.
+        /// </summary>
+        private List<VarAssign> loopVariableAssignmentStack;
 
         public JQueryContext() : base(null, Dtype.UNKNOWN, 0)
         {
             statements = new List<JNode>();
             locals = new Dictionary<string, JNode>();
             cachedLocals = new Dictionary<string, JNode>();
+            loopVariableAssignmentStack = new List<VarAssign>();
         }
 
         /// <inheritdoc/>
@@ -1823,11 +1830,37 @@ namespace JSON_Tools.JSON_Tools
             return locals.Keys.ToArray();
         }
 
+        /// <summary>
+        /// add a statement to the end of this.statements and do all the necessary operations after a statement was added, including:<br></br>
+        /// 1. incrementing this.indexInStatements<br></br>
+        /// 2. updating this.locals<br></br>
+        /// 3. if the statement is a loop variable assignment, pushing it onto the loopVariableAssignmentStack<br></br>
+        /// 4. if the statement is a loop end, updating the IndexOfLoopEnd for the popped variable assignment<br></br>
+        /// 5. if the statement is a JMutator, updating this.mutatesInput to true
+        /// </summary>
+        /// <param name="statement"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void AddStatement(JNode statement)
         {
             statements.Add(statement);
+            indexInStatements = statements.Count;
             if (statement is VarAssign va)
-                locals[va.Name] = (JNode)va.value;
+            {
+                if (va.AssignmentType == VariableAssignmentType.LOOP)
+                {
+                    loopVariableAssignmentStack.Add(va);
+                }
+                locals[va.Name] = va.GetInitialValueOfVariable(true);
+            }
+            else if (statement is LoopEnd)
+            {
+                if (loopVariableAssignmentStack.Count == 0)
+                {
+                    throw new InvalidOperationException("No loop variable was assigned when a LoopEnd was created");
+                }
+                var lastAssignedLoopVar = loopVariableAssignmentStack.Pop();
+                lastAssignedLoopVar.IndexOfLoopEnd = indexInStatements;
+            }
             else if (statement is JMutator)
                 mutatesInput = true;
         }
@@ -1875,26 +1908,34 @@ namespace JSON_Tools.JSON_Tools
             return this;
         }
 
+        /// <summary>
+        /// run all the statements
+        /// </summary>
+        /// <param name="inp"></param>
+        /// <returns></returns>
         public JNode Evaluate(JNode inp)
         {
-            JNode lastStatement = null;
-            for (indexInStatements = 0; indexInStatements < statements.Count; indexInStatements++)
-            {
-                JNode statement = statements[indexInStatements];
-                if (statement is VarAssign va)
-                    lastStatement = AssignVariable(va, inp);
-                else if (statement.CanOperate)
-                    lastStatement = statement.Operate(inp);
-                else
-                    lastStatement = statement;
-            }
+            JNode lastStatement = EvaluateStatementsFromStartToEnd(inp, 0, statements.Count);
             Reset();
             return lastStatement;
         }
 
+        /// <summary>
+        /// called during the EvaluateStatementsFromStartToEnd loop.<br></br>
+        /// NOT called when the VarAssign is first created.<br></br>
+        /// 1. resets va.value to va.OriginalValue (if needed)<br></br>
+        /// 2. adds va.value to locals<br></br>
+        /// 3a. if va.value is a function of input:<br></br>
+        ///     evaluates va.value on inp and caches the result in cachedLocals<br></br>
+        /// 3b. else:<br></br>
+        ///     returns va.value
+        /// </summary>
+        /// <param name="va"></param>
+        /// <param name="inp"></param>
+        /// <returns></returns>
         private JNode AssignVariable(VarAssign va, JNode inp)
         {
-            JNode vaval = (JNode)va.value;
+            JNode vaval = va.GetInitialValueOfVariable(false);
             string varname = va.Name;
             locals[varname] = null;
             // important: add varname to locals AFTER evaluating cj.function(inp) and setting locals[varname] to null
@@ -1911,6 +1952,77 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// Given a loop variable va that is either a constant array or a function of input that evaluates to an array<br></br>
+        /// run through every statement between va's declaration and the end of the loop (an "end for" or the end of the query)<br></br>
+        /// once for every value in va's value.<br></br>
+        /// Thus if va's value is [1, 2] for some input,<br></br>
+        /// and there are three statements between va's declaration and the end of the query,<br></br>
+        /// those three statements are evaluated once for va = 1 and once for va = 2.<br></br>
+        /// When this function is finished running, this.indexInStatements will equal va.IndexOfLoopEnd or this.statements.Count, whichever is less 
+        /// </summary>
+        /// <param name="va"></param>
+        /// <param name="inp"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathLoopVarNotAnArrayException">if va does not evaluate to an array</exception>
+        private JNode EvaluateForLoop(VarAssign va, JNode inp)
+        {
+            if (!cachedLocals.TryGetValue(va.Name, out JNode toLoopOver))
+                throw new RemesPathNameException(va.Name, indexInStatements, va.IndexOfDeclaration);
+            if (!(toLoopOver is JArray arr))
+            {
+                throw new RemesPathLoopVarNotAnArrayException(va, toLoopOver.type);
+            }
+            int endOfLoop = va.IndexOfLoopEnd > statements.Count ? statements.Count : va.IndexOfLoopEnd;
+            int startOfLoop = va.IndexOfDeclaration + 1;
+            if (startOfLoop >= endOfLoop)
+            {
+                // no loop body; just return toLoopOver and don't waste time looping over its values
+                indexInStatements = endOfLoop;
+                return toLoopOver;
+            }
+            foreach (JNode child in arr.children)
+            {
+                cachedLocals[va.Name] = child;
+                EvaluateStatementsFromStartToEnd(inp, startOfLoop, endOfLoop);
+            }
+            return toLoopOver;
+        }
+
+        /// <summary>
+        /// loop through statements from index start to end.<br></br>
+        /// when this function returns, this.indexInStatements will be equal to end.
+        /// </summary>
+        /// <param name="inp"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        private JNode EvaluateStatementsFromStartToEnd(JNode inp, int start, int end)
+        {
+            JNode lastStatement = null;
+            indexInStatements = start;
+            while (indexInStatements < end)
+            {
+                JNode statement = statements[indexInStatements];
+                if (statement is VarAssign va)
+                {
+                    lastStatement = AssignVariable(va, inp);
+                    if (va.AssignmentType == VariableAssignmentType.LOOP)
+                        EvaluateForLoop(va, inp);
+                    else
+                        indexInStatements++;
+                }
+                else if (statement is LoopEnd)
+                    indexInStatements++;
+                else
+                {
+                    lastStatement = statement.CanOperate ? statement.Operate(inp) : statement;
+                    indexInStatements++;
+                }
+            }
+            return lastStatement;
+        }
+
+        /// <summary>
         /// set all locals to null as placeholder and clear cached values of CurJson variables.
         /// </summary>
         private void Reset()
@@ -1921,23 +2033,85 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
+    public enum VariableAssignmentType
+    {
+        INVALID,
+        NORMAL,
+        LOOP,
+    }
+
     /// <summary>
     /// represents a variable assignment in RemesPath.<br></br>
-    /// The value field is the JNode associated with the Name field.<br></br>
+    /// The value field is the JNode associated with the Name field by a "(var|for) &lt;Name&gt; = &lt;value&gt;;" expression.<br></br>
+    /// The AssignmentType field is true if and only if the variable was declared using "for" instead of "var".<br></br>
     /// The type is always UNKNOWN and the position is always 0.
     /// </summary>
     public class VarAssign : JNode
     {
         public string Name { get; private set; }
+        public VariableAssignmentType AssignmentType { get; private set; }
+        /// <summary>
+        /// the 0-based index of the statement where this variable was declared
+        /// </summary>
+        public int IndexOfDeclaration { get; private set; }
+        /// <summary>
+        /// the 0-based index of the statement where this variable's loop ends.<br></br>
+        /// default int.MaxValue, so that by default the loop goes until the last statement
+        /// </summary>
+        public int IndexOfLoopEnd = int.MaxValue;
+        /// <summary>
+        /// a copy of the value of the variable when it was originally declared.<br></br>
+        /// this.value can be mutated, but OriginalValue stays constant.
+        /// </summary>
+        private JNode OriginalValue;
+        /// <summary>
+        /// true if:<br></br>
+        /// * this is originally declared as a function of input<br></br>
+        /// * this is mutated at some point<br></br>
+        /// * this is originally declared as a constant, but then redefined as a function of input
+        /// </summary>
+        public bool IsFunctionOfInput;
 
-        public VarAssign(string name, JNode json) : base(json, Dtype.UNKNOWN, 0)
+        public VarAssign(string name, JNode json, int indexOfDeclaration = 0, VariableAssignmentType assignmentType = VariableAssignmentType.NORMAL, bool isFunctionOfInput = false) : base(json, Dtype.UNKNOWN, 0)
         {
             Name = name;
+            if (assignmentType == VariableAssignmentType.INVALID)
+                throw new ArgumentException($"assignment type {assignmentType} is not valid", "assignmentType");
+            IndexOfDeclaration = indexOfDeclaration;
+            AssignmentType = assignmentType;
+            OriginalValue = json is CurJson ? json : json.Copy();
+            IsFunctionOfInput = isFunctionOfInput;
+        }
+
+        /// <summary>
+        /// if this.value is CurJson OR NOT this.IsFunctionOfInput, returns this and mutates no state<br></br>
+        /// Otherwise, reset this.value to a copy of this.OriginalValue and returns a CurJson that returns the copy when called.
+        /// </summary>
+        /// <returns></returns>
+        public JNode GetInitialValueOfVariable(bool isCompiling)
+        {
+            bool valueNeedsReset = !(value is CurJson) && IsFunctionOfInput;
+            if (valueNeedsReset && !isCompiling) // if it's compiling, this was just initialized so its value doesn't need to be reset
+                value = OriginalValue.Copy(); 
+            JNode vaval = (JNode)value;
+            if (valueNeedsReset)
+                return new CurJson(vaval.type, x => vaval);
+            return vaval;
         }
 
         public override string ToString()
         {
-            return $"VarAssign(name =\"{Name}\", value={((JNode)value).ToString()}";
+            return $"VarAssign(name =\"{Name}\", value={((JNode)value).ToString()}, indexOfDeclaration = {IndexOfDeclaration}, indexOfCompletion = {IndexOfLoopEnd}, assignmentType = {AssignmentType})";
+        }
+    }
+
+    public class LoopEnd : JNode
+    {
+        public LoopEnd() : base() { }
+
+        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        {
+            return "LoopEnd()";
         }
     }
 

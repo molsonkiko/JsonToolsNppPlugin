@@ -64,11 +64,45 @@ namespace JSON_Tools.Tests
                 //     * *To see how fast the code actually is, you need to run the executable outside of Visual Studio.**
                 (() => Benchmarker.BenchmarkParserAndRemesPath(
                     new string[][] {
-                        new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic" },
-                        new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations" },
-                        new string[] { "@..*", "basic recursive search" },
+                        new string[] { "@[@[:].a * @[:].t < @[:].e]", "float arithmetic"
+                        },
+                        new string[] { "@[@[:].z =~ `(?i)[a-z]{5}`]", "string operations"
+                        },
+                        new string[] { "@..*", "basic recursive search"
+                        },
+                        new string[] { "group_by(@, s).*{\r\n" +
+                                       "    Hmax: max((@[:].H)..*[is_num(@)][abs(@) < Infinity]),\r\n" +
+                                       "    min_N: min((@[:].N)..*[is_num(@)][abs(@) < Infinity])\r\n" +
+                                       "}",
+                            "group_by, projections and aggregations"
+                        },
+                        new string[]{ "var qmask = @[:].q;\r\n" +
+                                      "var nmax_q = max(@[qmask].n);\r\n" +
+                                      "var nmax_notq = max(@[not qmask].n);\r\n" +
+                                      "ifelse(nmax_q > nmax_notq, `when q=true, nmax = ` + str(nmax_q), `when q=false, nmax= ` + str(nmax_notq))",
+                            "variable assignments and simple aggregations"
+                        },
+                        new string[]{ "var X = X;\r\n" +
+                                      "var onetwo = j`[1, 2]`;\r\n" +
+                                      "@[:]->at(@, X)->at(@, onetwo)",
+                            "references to compile-time constant variables"
+                        },
+                        new string[]{ "var X = @->`X`;\r\n" +
+                                      "var onetwo = @{1, 2};\r\n" +
+                                      "@[:]->at(@, X)->at(@, onetwo)",
+                            "references to variables that are not compile-time constants"
+                        },
+                        new string[]{"@[:].z = s_sub(@, g, B)", "simple string mutations"
+                        },
+                        new string[]{"@[:].x = ifelse(@ < 0.5, @ + 3, @ - 3)", "simple number mutations"
+                        },
+                        new string[]{"var xhalf = @[:].x < 0.5;\r\n" +
+                                    "for lx = zip(@[:].l, xhalf);\r\n" +
+                                    "    lx[0] = ifelse(lx[1], foo, bar);\r\n" +
+                                    "end for;",
+                            "mutations with a for loop"}
                     },
-                    big_random_fname, 32, 64
+                    big_random_fname, 32, 40
                     ), 
                     "JsonParser performance",
                     true, false

@@ -345,6 +345,23 @@ namespace JSON_Tools.JSON_Tools
                    $"but was not declared until statement {indexOfDeclaration + 1}";
         }
     }
+
+    public class RemesPathLoopVarNotAnArrayException : RemesPathException
+    {
+        public VarAssign Va;
+        public Dtype Dtype_;
+
+        public RemesPathLoopVarNotAnArrayException(VarAssign va, Dtype dtype) : base("")
+        {
+            this.Va = va;
+            this.Dtype_ = dtype;
+        }
+
+        public override string ToString()
+        {
+            return $"Loop variable named {Va.Name} must be an array, but got type {JNode.DtypeStrings[Dtype_]}";
+        }
+    }
     #endregion
     /// <summary>
     /// RemesPath is similar to JMESPath, but more fully featured.<br></br>
@@ -1177,18 +1194,112 @@ namespace JSON_Tools.JSON_Tools
             int pos = 0;
             int end = toks.Count;
             var context = new JQueryContext();
+            Dictionary<string, bool> isVarnameFunctionOfInput = DetermineWhichVariablesAreFunctionsOfInput(toks);
             while (pos < end)
             {
                 int nextSemicolon = toks.IndexOf(';', pos, end - pos);
                 int endOfStatement = nextSemicolon < 0 ? end : nextSemicolon;
-                JNode statement = ParseStatement(toks, pos, endOfStatement, context);
+                JNode statement = ParseStatement(toks, pos, endOfStatement, context, isVarnameFunctionOfInput);
                 context.AddStatement(statement);
                 pos = endOfStatement + 1;
             }
             return context.GetQuery();
         }
 
-        private JNode ParseStatement(List<object> toks, int start, int end, JQueryContext context)
+        /// <summary>
+        /// If a variable is not a function of the input, RemesPath can evaluate all functions and binops that reference that variable at compile time.<br></br>
+        /// However, sometimes a variable could be assigned to a compile-time constant value, referenced in a function,<br></br>
+        /// and then later reassigned to a value that is a function of input.<br></br>
+        /// The only way to know for sure that a variable is a function of input (and thus ineligible for constant propagation in functions)<br></br>
+        /// is to scan through the entire input before actually evaluating functions and flag whether each variable is a function of input.<br></br>
+        /// Returns a map from variable names to the predicate (the variable with that name is a function of input)
+        /// </summary>
+        /// <param name="toks"></param>
+        /// <returns></returns>
+        private Dictionary<string, bool> DetermineWhichVariablesAreFunctionsOfInput(List<object> toks)
+        {
+            var isVarnameFunctionOfInput = new Dictionary<string, bool>();
+            int pos = 0;
+            int end = toks.Count;
+            bool containsMutation = false;
+            while (pos < end)
+            {
+                int nextSemicolon = toks.IndexOf(';', pos, end - pos);
+                int endOfStatement = nextSemicolon < 0 ? end : nextSemicolon;
+                int nextEqualsSign = toks.IndexOf('=', pos, end - pos);
+                if (nextEqualsSign >= 0 && nextEqualsSign < endOfStatement)
+                {
+                    // it's an assignment expression or a variable assignment.
+                    // either way, we will assume that any variable referenced on the LHS *could* be a function of the input
+                    // if the RHS references the input.
+                    (pos, containsMutation) = CheckStatementForInputReferences(toks, pos, nextEqualsSign, endOfStatement, isVarnameFunctionOfInput, containsMutation);
+                }
+                else
+                    pos = endOfStatement + 1;
+            }
+            if (containsMutation)
+            {
+                // no variable is safe from the mutation, not even ones that were declared before the mutation expression (thanks, for loops!)
+                foreach (string varname in isVarnameFunctionOfInput.Keys.ToArray())
+                    isVarnameFunctionOfInput[varname] = true;
+            }
+            return isVarnameFunctionOfInput;
+        }
+
+        /// <summary>
+        /// always returns endOfStatement + 1.<br></br>
+        /// If the RHS of the current statement (tokens in toks between equalsPosition and endOfStatement) contains any references to input (@)
+        /// or variables that themselves reference the current input,<br></br>
+        /// also sets isVarnameFunctionOfInput[varname] = true for all variable names on the LHS of the current statement (tokens in toks between pos and equalsPosition)<br></br>
+        /// If RHS is NOT function of input, sets isVarnameFunctionOfInput[varname] = false for every varname on LHS *if isVanameFunctionOfInput[varname] is not already true*
+        /// </summary>
+        /// <param name="toks">list of tokens</param>
+        /// <param name="pos">position to start iterating</param>
+        /// <param name="equalsPosition">the position of the next '=' sign</param>
+        /// <param name="endOfStatement">the position of the next semicolon or the end of the query</param>
+        /// <param name="isVarnameFunctionOfInput">map from variable name to bool (this variable is a function of input)</param>
+        /// <returns></returns>
+        private (int end, bool containsMutation) CheckStatementForInputReferences(List<object> toks, int pos, int equalsPosition, int endOfStatement, Dictionary<string, bool> isVarnameFunctionOfInput, bool containsMutation)
+        {
+            if (StatementIsVarAssign(toks, pos, endOfStatement, out string varname, out VariableAssignmentType assignmentType))
+            {
+                // variable assignment; obviously the varname is on the LHS
+                if (containsMutation || assignmentType == VariableAssignmentType.LOOP)
+                {
+                    // loop variables are re-cached for every iteration of the loop
+                    // so even if you're looping over a compile-time known constant, it's effectively a function of input
+                    isVarnameFunctionOfInput[varname] = true;
+                    return (endOfStatement + 1, containsMutation);
+                }
+            }
+            else
+            {
+                // it's a mutator expression (aka assignment expression)
+                // we can't assume that ANY variable is safe from this mutation without doing some really complex analysis of the reference graph
+                // so we'll just quit and assume that all variables are functions of input
+                return (endOfStatement + 1, true);
+                
+            }
+            // LHS is variable assignment and there are no mutation expressions in the query; check RHS for functions of input
+            for (pos = equalsPosition + 1; pos < endOfStatement; pos++)
+            {
+                object tok = toks[pos];
+                if (tok is CurJson // RHS references input directly
+                    || (tok is UnquotedString otherVarUqs && isVarnameFunctionOfInput.TryGetValue(otherVarUqs.value, out bool otherVarReferencesInput)
+                        && otherVarReferencesInput)) // varname in RHS references input
+                {
+                    isVarnameFunctionOfInput[varname] = true;
+                    return (endOfStatement + 1, false);
+                }
+            }
+            // rhs doesn't ref input, so all variables on LHS are assumed not to ref input
+            // unless they were previously defined in a way that referenced input
+            if (!(isVarnameFunctionOfInput.TryGetValue(varname, out bool wasAlreadyFunctionOfInput) && wasAlreadyFunctionOfInput))
+                isVarnameFunctionOfInput[varname] = false;
+            return (endOfStatement + 1, false);
+        }
+
+        private JNode ParseStatement(List<object> toks, int start, int end, JQueryContext context, Dictionary<string, bool> isVarnameFunctionOfInput)
         {
             int indexOfAssignment = toks.IndexOf('=', start, end - start);
             if (indexOfAssignment == start)
@@ -1199,13 +1310,18 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (toks.IndexOf('=', indexOfAssignment + 1, end - indexOfAssignment - 1) >= 0)
                     throw new RemesPathException("Only one '=' assignment operator allowed in a statement");
-                if (StatementIsVarAssign(toks, start, end, out string varname))
+                if (StatementIsVarAssign(toks, start, end, out string varname, out VariableAssignmentType assignmentType))
                 {
                     // variable assignment
                     // TODO: need to figure out what to do if variable name collides with function names
-                    return ParseVariableAssignment(toks, start + 3, end, varname, context);
+                    bool isFunctionOfInput = isVarnameFunctionOfInput[varname];
+                    return ParseVariableAssignment(toks, start + 3, end, varname, context, assignmentType, isFunctionOfInput);
                 }
                 return ParseAssignmentExpr(toks, start, end, indexOfAssignment, context);
+            }
+            else if (StatementIsLoopEnd(toks, start, end))
+            {
+                return new LoopEnd();
             }
             return (JNode)ParseExprFunc(toks, start, end, context).obj;
         }
@@ -1217,22 +1333,24 @@ namespace JSON_Tools.JSON_Tools
             return new JMutator(selector, mutator);
         }
         
-        private JNode ParseVariableAssignment(List<object> toks, int start, int end, string name, JQueryContext context)
+        private JNode ParseVariableAssignment(List<object> toks, int start, int end, string name, JQueryContext context, VariableAssignmentType assignmentType, bool isFunctionOfInput)
         {
             JNode value = (JNode)ParseExprFunc(toks, start, end, context).obj;
-            return new VarAssign(name, value);
+            return new VarAssign(name, value, context.indexInStatements, assignmentType, isFunctionOfInput);
         }
 
         /// <summary>
-        /// VAR_ASSIGN := var_keyword varname "=" ExprFunc<br></br>
-        /// returns true and varname = the varname between var_keyword and "=" (where var_keyword can at present only be "var")<br></br>
-        /// if the statement is not of that form, return false and varname = null.
+        /// VAR_ASSIGN := VAR_KEYWORD VARNAME "=" ExprFunc<br></br>
+        /// returns true, assignmentType = RemesPathLexer.VAR_ASSIGN_KEYWORDS_TO_TYPES[VAR_KEYWORD], and VARNAME = (an unquoted string between var_keyword and "=")<br></br>
+        /// At present VAR_KEYWORD can only be "var" or "for".<br></br>
+        /// if the statement is not of that form, return false, varname = null, and assignmentType = VariableAssignmentType.INVALID.
         /// </summary>
-        private bool StatementIsVarAssign(List<object> toks, int start, int end, out string varname)
+        private bool StatementIsVarAssign(List<object> toks, int start, int end, out string varname, out VariableAssignmentType assignmentType)
         {
             varname = null;
+            assignmentType = VariableAssignmentType.INVALID;
             if (end <= toks.Count && start <= end - 4 // [var, name, =, end] - there are 4 tokens in a minimal assignment expression 
-                && toks[start] is UnquotedString uqs && RemesPathLexer.VAR_ASSIGN_KEYWORDS.Contains(uqs.value)
+                && toks[start] is UnquotedString uqs && RemesPathLexer.VAR_ASSIGN_KEYWORDS_TO_TYPES.TryGetValue(uqs.value, out assignmentType)
                 && toks[start + 1] is UnquotedString varnameUqs
                 && toks[start + 2] is char c && c == '=')
             {
@@ -1240,6 +1358,18 @@ namespace JSON_Tools.JSON_Tools
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// LOOP_END := LOOP_END_KEYWORD LOOP_KEYWORD<br></br>
+        /// returns true if the statement is of this form.
+        /// LOOP_END_KEYWORD is currently "end" and LOOP_KEYWORD is currently "for"<br></br>
+        /// </summary>
+        private bool StatementIsLoopEnd(List<object> toks, int start, int end)
+        {
+            return (end <= toks.Count && start == end - 2
+                && toks[start] is UnquotedString keywordUqs && keywordUqs.value == RemesPathLexer.LOOP_END_KEYWORD
+                && toks[start + 1] is UnquotedString uqs && RemesPathLexer.LOOP_VAR_KEYWORDS.Contains(uqs.value));
         }
 
         private Obj_Pos ParseSlicer(List<object> toks, int pos, int? first_num, int end, JQueryContext context)
@@ -2034,7 +2164,7 @@ namespace JSON_Tools.JSON_Tools
                                         kv.Key,
                                         kv.Value is CurJson cj
                                             ? cj.function(obj)
-                                            : kv.Value
+                                            : kv.Value.Copy()
                                     );
                                 }
                             };
@@ -2049,7 +2179,7 @@ namespace JSON_Tools.JSON_Tools
                                     var node = (JNode)child;
                                     yield return node is CurJson cj
                                         ? cj.function(obj)
-                                        : node;
+                                        : node.Copy();
                                 }
                             };
                             return new Obj_Pos(new Projection(proj_func), pos + 1);
@@ -2087,7 +2217,7 @@ namespace JSON_Tools.JSON_Tools
             if (val is CurJson cj)
                 outfunc = cj.function;
             else
-                outfunc = x => val;
+                outfunc = x => val.Copy();
             IEnumerable<object> iterator(JNode x) { yield return outfunc(x); }
             return new Obj_Pos(new Projection(iterator), pos);
         }

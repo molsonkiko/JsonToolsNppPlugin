@@ -176,7 +176,7 @@ namespace JSON_Tools.Tests
                         }
                     }
                     else // not using selections
-                        remesParser.Search(query, Main.openTreeViewer.json.Copy());
+                        remesParser.Search(query, copyJson);
                 }
                 catch (Exception ex)
                 {
@@ -494,9 +494,28 @@ namespace JSON_Tools.Tests
             ("tree_query", new object[]{"@..g`z`"}),
             ("treenode_click", new object[]{new string[] {"0 : {2}", "baz2 : \"7 \""} }),
             ("compare_selections", new object[]{new string[]{"63,63" } }),
-            ("compare_path_to_position", new object[]{81, "quz.quz"}),
+            ("compare_path_to_position", new object[]{81, ".quz.quz"}),
             ("tree_query", new object[]{"@.bar.bar = @ * int(@)"}), // edit one value
             ("compare_text", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\nbar=22\r\n[дaz]\r\nbaz=3\r\n;b\r\nbaz2=7 \r\n[quz]\r\nquz=4\r\n;c\r\n"}),
+            // TEST RUNNING SAME QUERY MULTIPLE TIMES ON SAME INPUT DOES NOT HAVE DIFFERENT RESULTS
+            // test when mutating a compile-time constant array
+            ("tree_query", new object[]{"var onetwo = j`[1,1]`; onetwo[1] = @ + 1; onetwo"}),
+            ("tree_query", new object[]{"var onetwo = j`[1,1]`; onetwo[1] = @ + 1; onetwo"}),
+            ("treenode_click", new object[]{new string[] {"1 : 2"} }),
+            // test when mutating a compile-time constant loop variable
+            ("tree_query", new object[]{"for onetwo = j`[1,1]`; onetwo = @ + 1; end for;"}),
+            ("tree_query", new object[]{"for onetwo = j`[1,1]`; onetwo = @ + 1; end for;"}),
+            ("treenode_click", new object[]{new string[] {"0 : 2"} }),
+            ("treenode_click", new object[]{new string[] {"1 : 2"} }),
+            // test when mutating projections (both object and array)
+            ("tree_query", new object[]{"var onetwo = @{1, 1}; var mappy = @{a: 1}; onetwo[1] = @ + 1; mappy.a = @ + 1; @{onetwo, mappy}"}),
+            ("tree_query", new object[]{"var onetwo = @{1, 1}; var mappy = @{a: 1}; onetwo[1] = @ + 1; mappy.a = @ + 1; @{onetwo, mappy}"}),
+            ("treenode_click", new object[]{new string[] {"0 : [2]", "1 : 2"} }),
+            ("treenode_click", new object[]{new string[] {"1 : {1}", "a : 2"} }),
+            // test when mutating map projection
+            ("tree_query", new object[]{"var x = @->j`[-1]`; x[0] = @ + 1; x"}),
+            ("tree_query", new object[]{"var x = @->j`[-1]`; x[0] = @ + 1; x"}),
+            ("treenode_click", new object[]{new string[] {"0 : 0"} }),
             // TEST ASSIGNMENT OPERATIONS ON MULTIPLE SELECTIONS (back to file with three arrays that were sorted by the sort form)
             ("file_open", new object[]{0}),
             ("tree_query", new object[]{"@[:][is_num(@)] = @ / 4"}),
@@ -553,6 +572,17 @@ namespace JSON_Tools.Tests
             // TEST PRINTING SELECTION-BASED FILE WITH TABS
             ("pretty_print", new object[]{true}),
             ("compare_text", new object[]{"[\r\n\t\"0.25 is champion!\",\r\n\t\"0.75 is champion!\",\r\n\t0.5\r\n]blah[\r\n\t0,\r\n\t\"1.25 is champion!\"\r\n][\r\n\t\"boo is champion!\",\r\n\t\"a\",\r\n\t\"c\"\r\n]"}),
+            // TEST QUERIES WITH LOOP VARIABLES ON SELECTION-BASED FILE
+            ("tree_query", new object[]{// find all the strings in the array, then add the i^th string in the array to the i^th-from-last string in the array
+                                        "var strs = @[:][is_str(@)];\r\n" +
+                                        "var strs_cpy = str(strs);\r\n" +
+                                        // need to iterate through (the i^th string, a *copy* of the i^th string, and a *copy* of the i^th-from-last string), 
+                                        // because if we don't we will mutate some strings multiple times due to the in-place nature of mutation
+                                        "for s = zip(strs, strs_cpy, strs_cpy[::-1]);\r\n" +
+                                        "    s[0] = s[1] + s[2];\r\n" +
+                                        "end for"
+                                        }),
+            ("compare_text", new object[]{"[\r\n    \"0.25 is champion!0.75 is champion!\",\r\n    \"0.75 is champion!0.25 is champion!\",\r\n    0.5\r\n]blah[\r\n    0,\r\n    \"1.25 is champion!1.25 is champion!\"\r\n][\r\n    \"boo is champion!c\",\r\n    \"aa\",\r\n    \"cboo is champion!\"\r\n]"}),
         };
 
         public static bool Test()

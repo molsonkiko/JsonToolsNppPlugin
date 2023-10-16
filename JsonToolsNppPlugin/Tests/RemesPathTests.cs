@@ -709,6 +709,7 @@ namespace JSON_Tools.Tests
                     "{\"foo\": [-1, 2, 3], \"bar\": 3, \"baz\": 2}" },
                 new string[]{ "[1, 2, 3, 4, 5]", "@![:1, -1] = @ * -2",
                     "[1, -4, -6, -8, 5]" },
+                new string[]{"2", "2 = 3", "2"}, // mutating something that's not a function of input; the input is still returned
             };
             foreach (string[] test in testcases)
             {
@@ -820,6 +821,72 @@ namespace JSON_Tools.Tests
                                         "var o_a = s_slice(foobar_keys, 1){@ * 2, @[::-1]}; " +
                                         "o_a[:]->s_sub(foobar_keys, *@)",
                     "[[\"faa\", \"bar\"], [\"foo\", \"bor\"]]"), // '*' spread operator for array arguments to arg functions
+                new Query_DesiredResult("for f = @.foo; " +
+                                        "  for g = range(len(f)); " +
+                                        "    at(f, g) = @ + g;", // for each subarray in foo, increase each value in that subarray by its index in the subarray
+                    "[[0, 2, 4], [3.0, 5.0, 7.0], [6.0, 8.0, 10.0]]"),
+                new Query_DesiredResult("var a = @.foo[0][2:0:-1] + 1;\r\n" + // [3, 2]
+                                        "var b = @.bar.b;\r\n" +   // ["a`g", "bah"]
+                                        "var b_maxlen = ``;\r\n" +
+                                        "for i = range(len(a));\r\n" +
+                                        "    var bval = at(b, i);\r\n" +
+                                        "    bval = @ * at(a, i);\r\n" + // string-multiply each element in b by the corresponding element in a
+                                        "    b_maxlen = ifelse(s_len(bval) > s_len(b_maxlen), bval, b_maxlen);\r\n" + // if bval is longer than b_maxlen, set b_maxlen = bval
+                                        "end for;\r\n" + // at this point @.bar.b has been mutated to ["a`ga`ga`g", "bahbah"]
+                                        "b_maxlen", // return the longest value in b (after it's been mutated by the above loop)
+                    "\"a`ga`ga`g\""
+                ),
+                new Query_DesiredResult("var foo = @.foo;\r\n" +
+                                        "for z = zip(foo[0], foo[2]);\r\n" +
+                                        "    z[0] = z[1];\r\n" +
+                                        "end for;\r\n" +
+                                        "foo[0, -1]",
+                    "[[6.0, 7.0, 8.0], [6.0, 7.0, 8.0]]"
+                ),
+                new Query_DesiredResult("var numStrMap = j`[\"foo\", \"bar\", \"baz\"]`;\r\n" +
+                                        "for ii_numStr = enumerate(numStrMap);\r\n" +
+                                        "    var ii = ii_numStr[0];\r\n" +
+                                        "    var numStr = ii_numStr[1];\r\n" +
+                                        "    at(@.foo[1], ii) = numStr;\r\n" +
+                                        "end for;\r\n" +
+                                        "@.foo[1]",
+                    "[\"foo\", \"bar\", \"baz\"]"
+                ),
+                new Query_DesiredResult("var cumsum = 0;\r\n" + // replace each value of @.foo with the cumulative sum of mutfoo up to that point
+                                                                // where mutfoo is a mutated version of @.foo where the first value of each subarray is reduced by 1
+                                        "for foo = @.foo;\r\n" +
+                                        "    foo[0] = @ - 1;" +
+                                        "    for a = foo;\r\n" +
+                                        "        cumsum = @ + a;\r\n" +
+                                        "        a = cumsum;\r\n" +
+                                        "    end for;" +
+                                        "end for", // test that the return value of a query that ends on an "end for;" statement
+                    // [[-1, 1, 2], [2.0, 4.0, 5.0], [5.0, 7.0, 8.0]]
+                    "[[-1, 0, 2], [4.0, 8.0, 13.0], [18.0, 25.0, 33.0]]"
+                ),
+                new Query_DesiredResult("for f = @.foo;\r\n" +
+                                        "    for b = f;\r\n" +
+                                        "        b = str(@);\r\n" +
+                                        "    end for;", // test that nested for loops where only one of the loops is closed still work fine
+                    "[[\"0\", \"1\", \"2\"], [\"3.0\", \"4.0\", \"5.0\"], [\"6.0\", \"7.0\", \"8.0\"]]"
+                ),
+                new Query_DesiredResult("for f = @.foo[0]", "[0, 1, 2]" // make sure that for loops with no body don't cause an infinite loop
+                ),
+                new Query_DesiredResult("for f = j`[0, 1, 2]`", "[0, 1, 2]" // make sure that for loops that aren't functions of input with no body don't cause an infinite loop
+                ),
+                new Query_DesiredResult("var z = @.foo[:]{@, 1}; z[1][1] = @ + 1; z[:][1]",
+                    "[1, 2, 1]"
+                    // make sure that if something returns an array of projections where one value in the projection is a compile-time constant,
+                    // mutating one instance of the projection doesn't mutate all the instances
+                ),
+                new Query_DesiredResult(
+                    "var y = 1; var x = y; for z  = j`[1, 2, 3]`; x = @ * z; end for; y",
+                    "6" // x is a reference to y, and x is mutated; make sure mutations propagate to y
+                ),
+                new Query_DesiredResult(
+                    "var x = 3; var xarr = append(j`[1,2]`, x); for f = xarr; var x = f; f = @ * x; end for; @{x, xarr}",
+                    "[9, [1, 4, 9]]"
+                ),
             };
             int ii = 0;
             int tests_failed = 0;
