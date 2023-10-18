@@ -899,7 +899,7 @@ Some examples:
 
 ## Assigning variables *(added in v5.7)* and executing multi-statement queries ##
 
-Beginning in [v5.7](/CHANGELOG.md#570---2023-09-08), it is possible to run queries with multiple statements. __Each statement in the query must be terminated by a semicolon (`;`).__
+Beginning in [v5.7](/CHANGELOG.md#570---2023-09-08), it is possible to run queries with multiple statements. __Each statement in the query must be terminated by a semicolon (`;`), except the final statement.__
 
 In addition, you can assign variables using the syntax `var <name> = <statement>`
 
@@ -937,7 +937,7 @@ While this toy example doesn't fully showcase the utility of variable assignment
 Some notes:
 * *All variables are always passed by reference in RemesPath, not by value.*
     * For example, the statement `var x = 1; var y = x; y = @ + 1; x` will return `2` because *the statement `var y = x;` turns `y` into a reference to `x`*, and the mutation `y = @ + 1` will also change `x`.
-    * On the other hand, if you *redefine y not as a function of x*, it will no longer reference `x`. Thus `var x = 1; var y = x; var y = @ + 1; x` will return `1`, because `y` was redefined and not mutated.
+    * However, *defining a variable as a non-identity function of another variable copies the first variable.* Thus, `var x = 1; var y = x + 0; y = @ + 1` will not affect `x` because `var y = x + 0;` creates a copy that is the result of adding 0 to x.
 * Variables can have the same name as [functions](#functions), because an unquoted string is only interpreted as the name of a function if it is immediately followed by an open parenthesis.
     * For example, the query `var ifelse = blah; var s_len = s_len(ifelse); ifelse(s_len < 3, foo, bar)` is actually perfectly legal, even though it declares two variables that have the same name as functions that are also used in it.
     * Obviously this behavior will no longer be sustainable if it becomes possible to pass functions as arguments to other functions in RemesPath, but that may never happen.
@@ -957,7 +957,7 @@ will return
 ```
 because when baz is redefined, it just uses the value of baz that was previously defined, and no weird infinite loops of self-reference will happen.
 
-## Loop variables *(added in v5.9)* ##
+## For loops/Loop variables *(added in v5.9)* ##
 
 Beginning in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
 
@@ -970,6 +970,11 @@ for each value of toLoopOver:
     x = value
     execute each statement between start of loop and end of loop
 ```
+
+#### Notes ####
+
+1. If the last statement of a query is `end for;`, or if a `for` loop is not closed, the value returned by the query (and thus the value that the tree view will be populated with) is *the array that was looped over.* For example, the return value of the query ``for x = j`[1, 2, 3]`; x = @ + 1; end for;`` is `[2, 3, 4]`, since we added 1 to every value in the array.
+2. As in Python, a loop variable persists after a for loop is finished. Thus ``for x = j`[1, 2];` end for; x`` returns `2`, since that was the last value in the array `[1, 2]` that was looped through. 
 
 Let's see an example of loop variables on this JSON:
 ```json
