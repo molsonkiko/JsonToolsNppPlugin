@@ -2034,6 +2034,113 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, result_list);
         }
 
+        public const string CSV_BASE_COLUMN_REGEX = "((?!{QUOTE})(?:(?!{NEWLINE})[^{DELIM}])*(?<!{QUOTE})|{QUOTE}(?:[^{QUOTE}]|\\\\{QUOTE})*{QUOTE})";
+
+        /// <summary>
+        /// converts the delimiter to a format suitable for use in regular expressions 
+        /// </summary>
+        private static string CsvCleanDelimiter(char delim)
+        {
+            return delim == '\t' ? "\\t" : Regex.Unescape(new string(delim, 1));
+        }
+
+        private static string CsvColumnRegex(string delimiter, string newline, string quote)
+        {
+            return CSV_BASE_COLUMN_REGEX.Replace("{QUOTE}", quote).Replace("{NEWLINE}", newline).Replace("{DELIM}", delimiter);
+        }
+
+        /// <summary>
+        /// returns a regex that matches a single row of a CSV file with:<br></br>
+        /// - nColumns columns,<br></br>
+        /// - delimiter as the column separator,<br></br>
+        /// - newline as the line terminator (must be \r\n, \r, \n, or an escaped variant thereof)<br></br>
+        /// - and quote as the quote character (used to enclose columns that include a delimiter or a newline in their text).<br></br>
+        /// Thus we might call CsvRegex(5, '\t', '\n', '\'') to match a tab-separated variables file with 5 columns, UNIX LF newline, and "'" (single quote) as the quote character)
+        /// </summary>
+        /// <exception cref="ArgumentException">if newline is not a valid line end</exception>
+        public static string CsvRowRegex(int nColumns, char delimiter=',', string newline="\r\n", char quote = '"')
+        {
+            string cleanDelim = CsvCleanDelimiter(delimiter);
+            string escapedQuote = Regex.Escape(new string(quote, 1));
+            string escapedNewline;
+            switch (newline)
+            {
+            case "\r":
+            case "\\r":
+                escapedNewline = "\\r";
+                break;
+            case "\n":
+            case "\\n":
+                escapedNewline = "\\n";
+                break;
+            case "\r\n":
+            case "\\r\\n":
+                escapedNewline = "\\r\\n";
+                break;
+            default:
+                throw new ArgumentException("newline must be one of [\\r\\n, \\r, \\n] or an escaped form of one of those", "newline");
+            }
+            string column = CsvColumnRegex(cleanDelim, escapedNewline, escapedQuote);
+            string startOfLine = $"(?:\\A|(?<={escapedNewline}))";
+            string endOfLine = $"(?=\\Z|{escapedNewline})";
+            var sb = new StringBuilder(startOfLine);
+            for (int ii = 0; ii < nColumns - 1; ii++)
+            {
+                sb.Append(column);
+                sb.Append(cleanDelim);
+            }
+            sb.Append(column);
+            sb.Append(endOfLine);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"")<br></br>
+        /// returns an array of strings (if nColumns is 1)
+        /// or an array of arrays of strings (where the number of strings in each subarray is the 2nd arg nColumns)<br></br>
+        /// Note that this method will ignore any rows that do not have exactly nColumns columns,<br></br>
+        /// and you may get unexpected results if the delimiter or quote or newline are incorrectly specified.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathArgumentException"></exception>
+        public static JNode CsvRead(List<JNode> args)
+        {
+            string csvText = (string)args[0].value;
+            // CsvRegex(int nColumns, char delimiter=',', string newline="\r\n", char quote = '"')
+            if (args[1].type != Dtype.INT)
+                throw new RemesPathArgumentException("second arg (nColumns) to s_csv must be integer", 1, FUNCTIONS["s_csv"]);
+            int nColumns = Convert.ToInt32(args[1].value);
+            char delim = args[2].type == Dtype.NULL ? ',' : ((string)args[2].value)[0];
+            string newline = args[3].type == Dtype.NULL ? "\r\n" : (string)args[3].value;
+            char quote = args[4].type == Dtype.NULL ? '"' : ((string)args[4].value)[0];
+            string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
+            Regex rex = new Regex(rexPat, RegexOptions.Compiled);
+            int nextMatchStart = 0;
+            var rows = new List<JNode>();
+            while (nextMatchStart < csvText.Length)
+            {
+                Match m = rex.Match(csvText, nextMatchStart);
+                if (!m.Success)
+                    break;
+                nextMatchStart = m.Index + m.Length + newline.Length;
+                if (nColumns == 1)
+                    rows.Add(new JNode(m.Value, m.Index));
+                else
+                {
+                    var row = new List<JNode>();
+                    for (int jj = 1; jj < m.Groups.Count; jj++)
+                    {
+                        Group grp = m.Groups[jj];
+                        JNode item = new JNode(grp.Value, grp.Index);
+                        row.Add(item);
+                    }
+                    rows.Add(new JArray(m.Index, row));
+                }
+            }
+            return new JArray(0, rows);
+        }
+
         public static JNode StrSplit(List<JNode> args)
         {
             JNode node = args[0];
@@ -2403,7 +2510,8 @@ namespace JSON_Tools.JSON_Tools
             ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
-            ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
+            ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
+            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, 5, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR, Dtype.STR, Dtype.STR}),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),

@@ -2474,11 +2474,18 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public unsafe string GetTag(int tagNumber)
         {
-            byte[] tagValueBuffer = new byte[10000];
+            if (tagNumber < 0)
+            {
+                throw new ArgumentException("tagNumber must be non-negative integer");
+            }
+            IntPtr tagPtr = (IntPtr)tagNumber;
+            // first call SCI_GETTAG with null buffer to get length
+            int tagLength = (int)Win32.SendMessage(scintilla, SciMsg.SCI_GETTAG, tagPtr, IntPtr.Zero);
+            byte[] tagValueBuffer = new byte[tagLength];
             fixed (byte* tagValuePtr = tagValueBuffer)
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_GETTAG, (IntPtr) tagNumber, (IntPtr) tagValuePtr);
-                return Encoding.UTF8.GetString(tagValueBuffer).TrimEnd('\0');
+                return Encoding.UTF8.GetString(tagValueBuffer);
             }
         }
 

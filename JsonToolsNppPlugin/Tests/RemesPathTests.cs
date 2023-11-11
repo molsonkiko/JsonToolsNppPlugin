@@ -449,6 +449,47 @@ namespace JSON_Tools.Tests
                                         "[{\"al\": [2, 4], \"bt\": [\"null\"]}, {\"al\": [4, 2, 0], \"bt\": [\"number\", \"object\"]}]"),
                 new Query_DesiredResult("concat(@.foo[0][:]->(str(@)*(@+1)), keys(@.`7`[0])[:]->(@ + s_slice(@, ::-1)))",
                     "[\"0\", \"11\", \"222\", \"foooof\"]"),
+                // s_csv CSV parser
+                // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
+                new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +
+                                                "nan,Bluds,BUS\\r\\n" +
+                                                ",,\\r\\n" +
+                                                "nan,\"\",BUS" +
+                                                "\\r\\n0.5,\"df\\r\\ns \\\"d\\\" \",FUDG\\r\\n" +
+                                                "0.5,df\"sd,FUDG\\r\\n" + // valid; unescaped quotes are fine on a quoted line
+                                                "\"\",,FUDG\\r\\n" +
+                                                "0.5,df\\ns\\rd,\"\"\\r\\n" + // valid; neither \n nor \r is the designated newline
+                                                "1.2,qere,GOLAR\\r\\n" +
+                                                "1.2,qere,GOLAR\\r\\n" +
+                                                "3.4,flodt,\"q,tun\"\\r\\n" +
+                                                "4.6,Kjond,YUNOB\\r\\n" +
+                                                "4.6,Kjond,YUNOB\\r\\n" +
+                                                "7,Unyir,\\r\\n`" +
+                                                ", 3)", // only 3 columns and string need to be specified; comma delim, CRLF newline, and '"' quote are defaults
+                    "[[\"nums\",\"names\",\"cities\"],[\"nan\",\"Bluds\",\"BUS\"],[\"\",\"\",\"\"],[\"nan\",\"\\\"\\\"\",\"BUS\"],[\"0.5\",\"\\\"df\\r\\ns \\\\\\\"d\\\\\\\" \\\"\",\"FUDG\"],[\"0.5\",\"df\\\"sd\",\"FUDG\"],[\"\\\"\\\"\",\"\",\"FUDG\"],[\"0.5\",\"df\\ns\\rd\",\"\\\"\\\"\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"3.4\",\"flodt\",\"\\\"q,tun\\\"\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"7\",\"Unyir\",\"\"]]"),
+                // 7 columns, 8 rows '\t' delimiter, LF newline, '\'' quote character, no newline before EOF
+                new Query_DesiredResult("s_csv(`nums\\tnames\\tcities\\tdate\\tzone\\tsubzone\\tcontaminated\\n" +
+                                                "nan\\tBluds\\tBUS\\t\\t1\\t''\\tTRUE\\n" +
+                                                "0.5\\tdfsd\\tFUDG\\t12/13/2020 0:00\\t2\\tc\\tTRUE\\n" +
+                                                "\\tqere\\tGOLAR\\t\\t3\\tf\\t\\n" +
+                                                "1.2\\tqere\\t'GOL\\\\'AR'\\t\\t3\\th\\tTRUE\\n" +
+                                                "''\\tflodt\\t'q\\ttun'\\t\\t4\\tq\\tFALSE\\n" +
+                                                "4.6\\tKjond\\t\\t\\t\\tw\\t''\\n" +
+                                                "4.6\\t'Kj\\nond'\\tYUNOB\\t10/17/2014 0:00\\t5\\tz\\tFALSE`" +
+                                                ", 7, `\t`, `\n`, `'`)",
+                    "[[\"nums\",\"names\",\"cities\",\"date\",\"zone\",\"subzone\",\"contaminated\"],[\"nan\",\"Bluds\",\"BUS\",\"\",\"1\",\"''\",\"TRUE\"],[\"0.5\",\"dfsd\",\"FUDG\",\"12/13/2020 0:00\",\"2\",\"c\",\"TRUE\"],[\"\",\"qere\",\"GOLAR\",\"\",\"3\",\"f\",\"\"],[\"1.2\",\"qere\",\"'GOL\\\\'AR'\",\"\",\"3\",\"h\",\"TRUE\"],[\"''\",\"flodt\",\"'q\\ttun'\",\"\",\"4\",\"q\",\"FALSE\"],[\"4.6\",\"Kjond\",\"\",\"\",\"\",\"w\",\"''\"],[\"4.6\",\"'Kj\\nond'\",\"YUNOB\",\"10/17/2014 0:00\",\"5\",\"z\",\"FALSE\"]]"),
+                // 1-column, '^' delimiter, '$' quote character, '\r' newline, 7 valid rows with 2 invalid rows at the end
+                new Query_DesiredResult("s_csv(`a\\r" +
+                                               "$b^c$\\r" +
+                                               "$new\\r\\$line\\$$\\r" +
+                                               "\\r" +
+                                               "\\r" +
+                                               "$$\\r" +
+                                               "d$\ne\\r" +
+                                               "$ $ $\\r" + // invalid because there's an unescaped quote character on a quoted line
+                                               "f^g`" + // invalid because there's a delimiter on an unquoted line
+                                               ", 1, `^`, `\\r`, `$`)",
+                    "[\"a\",\"$b^c$\",\"$new\\r\\\\$line\\\\$$\",\"\",\"\",\"$$\",\"d$\\ne\"]"),
             };
             int ii = 0;
             int tests_failed = 0;

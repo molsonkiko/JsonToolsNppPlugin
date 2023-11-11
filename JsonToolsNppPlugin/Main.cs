@@ -53,6 +53,8 @@ namespace Kbg.NppPluginNET
         public static SortForm sortForm = null;
         // error form stuff
         public static ErrorForm errorForm = null;
+        // regex search to json stuff
+        public static RegexSearchForm regexSearchForm = null;
         // schema auto-validation stuff
         private static string schemasToFnamePatternsFname = null;
         private static JObject schemasToFnamePatterns = new JObject();
@@ -78,6 +80,7 @@ namespace Kbg.NppPluginNET
         static internal int AboutFormId = -1;
         static internal int sortFormId = -1;
         static internal int errorFormId = -1;
+        static internal int regexSearchToJsonFormId = -1;
         static internal int compressId = -1;
         static internal int prettyPrintId = -1;
         static internal int pathToPositionId = -1;
@@ -126,6 +129,8 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(25, "Dump JSON string(s) as ra&w text", DumpSelectedJsonStringsAsText);
             PluginBase.SetCommand(26, "---", null);
             PluginBase.SetCommand(27, "Open tree for &INI file", () => OpenJsonTree(DocumentType.INI));
+            PluginBase.SetCommand(28, "---", null);
+            PluginBase.SetCommand(29, "Rege&x search to JSON", RegexSearchToJson);
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -1799,7 +1804,25 @@ namespace Kbg.NppPluginNET
             }
             SelectionManager.SetSelectionsFromStartEnds(selections);
         }
+
+        public static void RegexSearchToJson()
+        {
+            if (regexSearchForm == null)
+            {
+                regexSearchForm = new RegexSearchForm();
+                regexSearchForm.Show();
+            }
+            else if (!regexSearchForm.Focused)
+            {
+                regexSearchForm.GrabFocus();
+            }
+            else
+            {
+                Npp.editor.GrabFocus();
+            }
+        }
         #endregion // more_helper_functions
+
         #region timer_stuff
         /// <summary>
         /// This callback fires once every second.<br></br>

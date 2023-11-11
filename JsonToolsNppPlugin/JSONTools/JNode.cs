@@ -178,6 +178,8 @@ namespace JSON_Tools.JSON_Tools
         JSONL,
         /// <summary>ini files</summary>
         INI,
+        /// <summary>regex search results</summary>
+        REGEX,
     }
 
     /// <summary>

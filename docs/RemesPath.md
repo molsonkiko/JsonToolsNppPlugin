@@ -702,6 +702,60 @@ The query `parse(@)` will return
 
 Returns the number of times substring/regex `sub` occurs in `x`.
 
+---
+`s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"")`
+
+__[Introduced in v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd).__
+
+__Arguments:__
+* `csvText` (1st arg): the text of a CSV file encoded as a JSON string
+* `nColumns` (2nd arg): the number of columns
+* `delimiter` (3rd arg, default `,`): the column separator
+* `newline` (4th arg default `CR LF`): the newline
+* `quote` (5th arg, default `"`): the character used to wrap columns that contain `newline` or `delimiter`.
+
+__Return value:__
+* if `nColumns` is 1, returns an array of strings
+* otherwise, returns an array of arrays of strings, where each sub-array is a row that has exactly `nColumns` columns.
+
+__Notes:__
+* *Any row that does not have exactly `nColumns` columns will be ignored completely.*
+* Any column that starts and ends with a quote character is assumed to be a quoted string. In a quoted string, anything is fine, but *literal quote characters in a quoted column must be escaped with `\\` (backslash)*.
+    * For example, `"\"quoted\",string,in,quoted column"` is a valid column in a file with `,` delimiter and `"` quote character.
+    * On the other hand, `" " "` is *not a valid column if `"` is the quote character* because it contains an unescaped `"` in a quoted column.
+    * Finally, `a,b` would be treated as two columns in a CSV file with `"` quote character, but `"a,b"` is a single column because a comma is not treated as a column separator in a quoted column.
+
+__Example:__
+Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL\\'AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
+
+which represents this CSV file (7 columns, comma delimiter, `LF` newline, `'` quote character):
+```
+nums,names,cities,date,zone,subzone,contaminated
+nan,Bluds,BUS,,1,'',TRUE
+0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE
+,qere,GOLAR,,3,f,
+1.2,qere,'GOL\'AR',,3,h,TRUE
+'',flodt,'q,tun',,4,q,FALSE
+4.6,Kjond,,,,w,''
+4.6,'Kj
+ond',YUNOB,10/17/2014 0:00,5,z,FALSE
+```
+Notice that the 8th row of this CSV file has a newline in the middle of the second column, and this is fine, because as discussed above, this column is quoted and newlines are allowed within a quoted column.
+
+The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array of eight 7-string subarrays*, shown below:
+```json
+[
+    ["nums", "names", "cities", "date", "zone", "subzone", "contaminated"],
+    ["nan", "Bluds", "BUS", "", "1", "''", "TRUE"],
+    ["0.5", "dfsd", "FUDG", "12/13/2020 0:00", "2", "c", "TRUE"],
+    ["", "qere", "GOLAR", "", "3", "f", ""],
+    ["1.2", "qere", "'GOL\\'AR'", "", "3", "h", "TRUE"],
+    ["''", "flodt", "'q,tun'", "", "4", "q", "FALSE"],
+    ["4.6", "Kjond", "", "", "", "w", "''"],
+    ["4.6", "'Kj\nond'", "YUNOB", "10/17/2014 0:00", "5", "z", "FALSE"]
+]
+``` 
+
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
 

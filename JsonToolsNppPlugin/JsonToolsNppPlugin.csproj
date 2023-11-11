@@ -97,6 +97,12 @@
     <Compile Include="Forms\JsonToCsvForm.Designer.cs">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\RegexSearchForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RegexSearchForm.Designer.cs">
+      <DependentUpon>RegexSearchForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\SortForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -250,6 +256,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\JsonToCsvForm.resx">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RegexSearchForm.resx">
+      <DependentUpon>RegexSearchForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SortForm.resx">
       <DependentUpon>SortForm.cs</DependentUpon>

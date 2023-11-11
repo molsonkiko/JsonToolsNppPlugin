@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
+- __IMPROVE REGEX-REPLACE, REGEX SEARCH FUNCTIONS IN REMESPATH__
+- __MAKE FIRST CLASS FUNCTIONS A THING IN REMESPATH__
+- __ADD ABILITY TO REGEX SEARCH DOCUMENT UNPARSED DOCUMENT (USING REMESPATH)__
 - If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
 - *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance. 
 - Mark dark mode icons that look less out of place
@@ -44,10 +47,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v59)
+3. [`s_csv` vectorized arg function in RemesPath](/docs/RemesPath.md#vectorized-functions) that can parse a CSV file encoded as a JSON string.
 
 ### Fixed
 
 1. Fixed some weird issues where mutating a variable in RemesPath could cause re-executing a query on the same input to return a different value. A minimal example: `var x = 1; x = @ + 1; x` would return 1 + (the number of times the query was executed) prior to this fix, but now it will always return `2` as expected. This was also true of a bunch of other things in RemesPath, including [projections and the map operator](/docs/RemesPath.md#projections).
+2. Running tests would previously cause clipboard data to be lost irreversably. Now, if the user's clipboard contained text before running tests, the contents of the clipboard are restored to their pre-test values rather than being hijacked. __Non-text data that was copied to the clipboard is still lost when running tests, and I may try to fix that in the future.__ 
 
 ## [5.8.0] - 2023-10-09
 

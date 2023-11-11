@@ -15,6 +15,11 @@ namespace JSON_Tools.Tests
 
         private static int lowestFilenameNumberNotUsed = 0;
 
+        // later on tests will be added in a method; we don't want to add them every time the tests are run, only the first time
+        public static bool hasRunTestsThisSession = false;
+
+        public static string lastClipboardValue = null;
+
         private static RemesParser remesParser = new RemesParser();
 
         /// <summary>
@@ -254,6 +259,7 @@ namespace JSON_Tools.Tests
                 SelectionManager.SetSelectionsFromStartEnds(new string[] { $"{position},{position}" });
                 Main.CopyPathToCurrentPosition();
                 string gotPathtoCurrentPosition = Clipboard.GetText();
+                lastClipboardValue = gotPathtoCurrentPosition;
                 if (gotPathtoCurrentPosition != correctPathToCurrentPosition)
                     messages.Add($"FAIL: Expected path to position {position} to be {correctPathToCurrentPosition}, but got {gotPathtoCurrentPosition}");
                 else
@@ -602,6 +608,8 @@ namespace JSON_Tools.Tests
             int previousMaxTrackedJsonSelections = Main.settings.max_tracked_json_selections;
             bool previousRememberComments = Main.settings.remember_comments;
             bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
+            // remember what the user's clipboard was before tests start, because the tests hijack the clipboard and that's not nice
+            string clipboardValueBeforeTests = Clipboard.GetText();
             // require these settings for the UI tests alone
             Main.settings.pretty_print_style = PrettyPrintStyle.PPrint;
             Main.settings.sort_keys = true;
@@ -615,26 +623,30 @@ namespace JSON_Tools.Tests
             // this message box doesn't block the main thread, but it introduces some asynchronous behavior
             // that was probably responsible for crashing the UI tests
             Main.hasWarnedSelectionsForgotten = true;
-            // add command to overwrite with a lot of arrays and select every valid json
-            try
+            if (!hasRunTestsThisSession)
             {
-                string oneArray2000xStr = (string)remesParser.Search("@ * 2000", new JNode("[1]\r\n")).value;
-                JArray oneArray2000x = (JArray)new JsonParser().ParseJsonLines(oneArray2000xStr);
-                string[] oneArray2000xSelections = ((JArray)remesParser.Search("(range(2000) * 5)[:]{@, @ + 3}{s_join(`,`, str(@))}[0]", new JNode())).children
-                    .Select(x => (string)x.value)
-                    .ToArray();
-                string[] oneArray2000xPPrintSelections = ((JArray)remesParser.Search("(range(2000) * 13)[:]{@, @ + 11}{s_join(`,`, str(@))}[0]", new JNode())).children
-                    .Select(x => (string)x.value)
-                    .ToArray();
-                testcases.Add(("overwrite", new object[] { oneArray2000xStr }));
-                testcases.Add(("select_every_valid", new object[] { }));
-                testcases.Add(("compare_selections", new object[] { oneArray2000xSelections }));
-                testcases.Add(("pretty_print", new object[] { }));
-                testcases.Add(("compare_selections", new object[] { oneArray2000xPPrintSelections }));
-            }
-            catch (Exception ex)
-            {
-                messages.Add($"Failed to add testcases due to exception {ex}");
+                hasRunTestsThisSession = true;
+                // add command to overwrite with a lot of arrays and select every valid json
+                try
+                {
+                    string oneArray2000xStr = (string)remesParser.Search("@ * 2000", new JNode("[1]\r\n")).value;
+                    JArray oneArray2000x = (JArray)new JsonParser().ParseJsonLines(oneArray2000xStr);
+                    string[] oneArray2000xSelections = ((JArray)remesParser.Search("(range(2000) * 5)[:]{@, @ + 3}{s_join(`,`, str(@))}[0]", new JNode())).children
+                        .Select(x => (string)x.value)
+                        .ToArray();
+                    string[] oneArray2000xPPrintSelections = ((JArray)remesParser.Search("(range(2000) * 13)[:]{@, @ + 11}{s_join(`,`, str(@))}[0]", new JNode())).children
+                        .Select(x => (string)x.value)
+                        .ToArray();
+                    testcases.Add(("overwrite", new object[] { oneArray2000xStr }));
+                    testcases.Add(("select_every_valid", new object[] { }));
+                    testcases.Add(("compare_selections", new object[] { oneArray2000xSelections }));
+                    testcases.Add(("pretty_print", new object[] { }));
+                    testcases.Add(("compare_selections", new object[] { oneArray2000xPPrintSelections }));
+                }
+                catch (Exception ex)
+                {
+                    messages.Add($"Failed to add testcases due to exception {ex}");
+                }
             }
             // run all the commands
             int lastFailureIndex = messages.Count;
@@ -674,6 +686,12 @@ namespace JSON_Tools.Tests
             Main.settings.max_tracked_json_selections = previousMaxTrackedJsonSelections;
             Main.settings.remember_comments = previousRememberComments;
             Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
+            // if the user's clipboard is still set to whatever we most recently hijacked it with, reset it to whatever it was before the tests
+            // this won't work if their clipboard contained non-text data beforehand, but it's better than nothing
+            if (Clipboard.GetText() == lastClipboardValue && !(clipboardValueBeforeTests is null) && clipboardValueBeforeTests.Length > 0)
+            {
+                Npp.TryCopyToClipboard(clipboardValueBeforeTests);
+            }
             return failures > 0;
         }
 
