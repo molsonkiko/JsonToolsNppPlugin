@@ -2,12 +2,10 @@
 A library of built-in functions for the RemesPath query language.
 */
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -77,6 +75,15 @@ namespace JSON_Tools.JSON_Tools
             return Function(left, right);
         }
 
+        //public static void ThrowIfTypeNotIntersects(JNode arg, Dtype mustIntersect, bool argIsLHS, string binopName)
+        //{
+        //    if ((arg.type & mustIntersect) == 0)
+        //    {
+        //        string argSide = argIsLHS ? "left" : "right";
+        //        throw new RemesPathException($"Invalid type {arg.type} for {argSide} argument to binop \"{binopName}\" (must be a type in {JNode.FormatDtype(mustIntersect)})");
+        //    }
+        //}
+
         public static JNode Add(JNode a, JNode b)
         {
             object aval = a.value; object bval = b.value;
@@ -96,6 +103,64 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException($"Can't add objects of types {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
 
+        //// ADD VARIANTS WITH ONE SIDE CONSTANT
+
+        //public static JNode AddRhsConstStr(JNode a, string b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.STR, true, "+");
+        //    return new JNode(Convert.ToString(a.value) + b);
+        //}
+
+        //public static JNode AddLhsConstStr(string a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.STR, false, "+");
+        //    return new JNode(a + Convert.ToString(b.value));
+        //}
+
+        //public static JNode AddRhsConstInt(JNode a, long b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) + Convert.ToDouble(b));
+        //    return new JNode(Convert.ToInt64(a.value) + b);
+        //}
+
+        //public static JNode AddLhsConstInt(long a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(b.value) + Convert.ToDouble(a));
+        //    return new JNode(Convert.ToInt64(b.value) + a);
+        //}
+
+        //public static JNode AddRhsConstBool(JNode a, bool b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) + (b ? 1d : 0d));
+        //    return new JNode(Convert.ToInt64(a.value) + (b ? 1L : 0L));
+        //}
+
+        //public static JNode AddLhsConstBool(bool a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(b.value) + (a ? 1d : 0d));
+        //    return new JNode(Convert.ToInt64(b.value) + (a ? 1L : 0L));
+        //}
+
+        //public static JNode AddRhsConstFloat(JNode a, double b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
+        //    return new JNode(Convert.ToDouble(a.value) + b);
+        //}
+
+        //public static JNode AddLhsConstFloat(double a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
+        //    return new JNode(Convert.ToDouble(b.value) + a);
+        //}
+
         public static JNode Sub(JNode a, JNode b)
         {
             object aval = a.value, bval = b.value;
@@ -109,6 +174,52 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException($"Can't subtract objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
 
+        //// SUB VARIANTS WITH ONE SIDE CONSTANT
+
+        //public static JNode SubRhsConstInt(JNode a, long b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) - Convert.ToDouble(b));
+        //    return new JNode(Convert.ToInt64(a.value) - b);
+        //}
+
+        //public static JNode SubLhsConstInt(long a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a) - Convert.ToDouble(b.value));
+        //    return new JNode(a - Convert.ToInt64(b.value));
+        //}
+
+        //public static JNode SubRhsConstBool(JNode a, bool b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) - (b ? 1d : 0d));
+        //    return new JNode(Convert.ToInt64(a.value) - (b ? 1L : 0L));
+        //}
+
+        //public static JNode SubLhsConstBool(bool a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode((a ? 1d : 0d) - Convert.ToDouble(b.value));
+        //    return new JNode((a ? 1L : 0L) - Convert.ToInt64(b.value));
+        //}
+
+        //public static JNode SubRhsConstFloat(JNode a, double b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
+        //    return new JNode(Convert.ToDouble(a.value) - b);
+        //}
+
+        //public static JNode SubLhsConstFloat(double a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
+        //    return new JNode(a - Convert.ToDouble(b.value));
+        //}
+
         public static JNode Mul(JNode a, JNode b)
         {
             object aval = a.value, bval = b.value;
@@ -118,12 +229,70 @@ namespace JSON_Tools.JSON_Tools
                 if ((atype & Dtype.INT_OR_BOOL) != 0)
                     return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
                 else if (atype == Dtype.STR) // can multiply string by int, but not int by string
-                    return ArgFunction.StrMulHelper(a, b);
+                    return new JNode(ArgFunction.StrMulHelper((string)a.value, Convert.ToInt32(b.value)));
             }
             if (JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
                 return new JNode(Convert.ToDouble(aval) * Convert.ToDouble(bval), Dtype.FLOAT, 0);
             throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
+
+        //// MUL VARIANTS WITH ONE SIDE CONSTANT
+
+        //public static JNode MulLhsConstStr(string a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.INT_OR_BOOL, false, "*");
+        //    if (b.type == Dtype.BOOL)
+        //        return new JNode(((bool)b.value) ? a : "");
+        //    return new JNode(ArgFunction.StrMulHelper(a, (long)b.value));
+        //}
+
+        //public static JNode MulRhsConstInt(JNode a, long b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM |  Dtype.STR, true, "*");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) * Convert.ToDouble(b));
+        //    if (a.type == Dtype.STR)
+        //        return new JNode(ArgFunction.StrMulHelper((string)a.value, b));
+        //    return new JNode(Convert.ToInt64(a.value) * b);
+        //}
+
+        //public static JNode MulLhsConstInt(long a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a) * Convert.ToDouble(b.value));
+        //    return new JNode(a * Convert.ToInt64(b.value));
+        //}
+
+        //public static JNode MulRhsConstBool(JNode a, bool b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM | Dtype.STR, true, "*");
+        //    if (a.type == Dtype.FLOAT)
+        //        return new JNode(Convert.ToDouble(a.value) * (b ? 1d : 0d));
+        //    if (a.type == Dtype.STR)
+        //        return new JNode(b ? (string)a.value : "");
+        //    return new JNode(Convert.ToInt64(a.value) * (b ? 1L : 0L));
+        //}
+
+        //public static JNode MulLhsConstBool(bool a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
+        //    if (b.type == Dtype.FLOAT)
+        //        return new JNode((a ? 1d : 0d) * Convert.ToDouble(b.value));
+        //    return new JNode((a ? 1L : 0L) * Convert.ToInt64(b.value));
+        //}
+
+        //public static JNode MulRhsConstFloat(JNode a, double b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "*");
+        //    return new JNode(Convert.ToDouble(a.value) * b);
+        //}
+
+        //public static JNode MulLhsConstFloat(double a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
+        //    return new JNode(a * Convert.ToDouble(b.value));
+        //}
 
         public static JNode Divide(JNode a, JNode b)
         {
@@ -131,6 +300,44 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b.value), Dtype.FLOAT, 0);
             throw new RemesPathException($"Can't divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
+
+        //// DIVIDE VARIANTS WITH ONE SIDE CONSTANT
+
+        //public static JNode DivideRhsConstInt(JNode a, long b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
+        //    return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b));
+        //}
+
+        //public static JNode DivideLhsConstInt(long a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
+        //    return new JNode(Convert.ToDouble(a) / Convert.ToDouble(b.value));
+        //}
+
+        //public static JNode DivideRhsConstBool(JNode a, bool b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
+        //    return new JNode(Convert.ToDouble(a.value) / (b ? 1d : 0d));
+        //}
+
+        //public static JNode DivideLhsConstBool(bool a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
+        //    return new JNode(a ? 1d/Convert.ToDouble(b.value) : 0d);
+        //}
+
+        //public static JNode DivideRhsConstFloat(JNode a, double b)
+        //{
+        //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
+        //    return new JNode(Convert.ToDouble(a.value) / b);
+        //}
+
+        //public static JNode DivideLhsConstFloat(double a, JNode b)
+        //{
+        //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
+        //    return new JNode(a / Convert.ToDouble(b.value));
+        //}
 
         public static JNode FloorDivide(JNode a, JNode b)
         {
@@ -1968,18 +2175,22 @@ namespace JSON_Tools.JSON_Tools
             throw new RemesPathException("StrLen only works for strings");
         }
 
-        public static JNode StrMulHelper(JNode node, JNode n)
+        /// <summary>
+        /// returns a new string that contains n consecutive instances of s with no break between
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static string StrMulHelper(string s, int num)
         {
-            int num = Convert.ToInt32(n.value);
             if (num <= 0)
-                return new JNode("");
-            string s = (string)node.value;
+                return "";
             var sb = new StringBuilder(s.Length * num);
             for (int i = 0; i < num; i++)
             {
                 sb.Append(s);
             }
-            return new JNode(sb.ToString());
+            return sb.ToString();
         }
 
         /// <summary>
@@ -1992,7 +2203,10 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="ArgumentException"></exception>
         public static JNode StrMul(List<JNode> args)
         {
-            return StrMulHelper(args[0], args[1]);
+            var arg2 = args[1];
+            if ((arg2.type & Dtype.INT_OR_BOOL) == 0)
+                throw new RemesPathArgumentException("second arg (n) to s_mul must be integer", 1, FUNCTIONS["s_mul"]);
+            return new JNode(StrMulHelper((string)args[0].value, Convert.ToInt32(arg2.value)));
         }
 
         /// <summary>
@@ -2035,6 +2249,16 @@ namespace JSON_Tools.JSON_Tools
         }
 
         public const string CSV_BASE_COLUMN_REGEX = "((?!{QUOTE})(?:(?!{NEWLINE})[^{DELIM}])*(?<!{QUOTE})|{QUOTE}(?:[^{QUOTE}]|\\\\{QUOTE})*{QUOTE})";
+
+        // captures an integer (0x<HEX> or normal decimal) with leading + or - sign
+        public const string CAPTURED_INT_REGEX_STR = "([+-]?(?:0x[\\da-fA-F]+|\\d+))";
+
+        // captures a floating point number. Scientific notation is allowed, as are trailing or leading decimal points 
+        public const string CAPTURED_FLOAT_REGEX_STR = "([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
+
+        // variants of the above two, but they don't capture
+        public const string NONCAPTURING_INT_REGEX_STR = "(?:[+-]?(?:0x[\\da-fA-F]+|\\d+))";
+        public const string NONCAPTURING_FLOAT_REGEX_STR = "(?:[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
 
         /// <summary>
         /// converts the delimiter to a format suitable for use in regular expressions 
@@ -2095,50 +2319,153 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"")<br></br>
-        /// returns an array of strings (if nColumns is 1)
+        /// replace all instances of "(INT)" with a regex that captures a decimal or hex integer,
+        /// and all instances of "(NUMBER)" with a regex that captures a decimal floating point number<br></br>
+        /// Also insert noncapturing versions of the int and float regexes respectively in place of each instance of "(?:INT)" or "(?:NUMBER)"
+        /// </summary>
+        /// <param name="regexOrString"></param>
+        /// <returns></returns>
+        public static Regex TransformRegex(JNode regexOrString)
+        {
+            string pat = regexOrString is JRegex jregex ? jregex.regex.ToString() : (string)regexOrString.value;
+            string fixedPat = Regex.Replace(pat, @"\((?:\?:)?(?:INT|NUMBER)\)", m =>
+            {
+                string mtch = m.Value;
+                if (mtch[2] == ':')
+                    return mtch[3] == 'I' ? NONCAPTURING_INT_REGEX_STR : NONCAPTURING_FLOAT_REGEX_STR;
+                return mtch[1] == 'I' ? CAPTURED_INT_REGEX_STR : CAPTURED_FLOAT_REGEX_STR;
+            });
+            return new Regex(fixedPat, RegexOptions.Compiled | RegexOptions.Multiline);
+        }
+
+        /// <summary>
+        /// return an array of strings(if rex has 0 or 1 capture group(s)) or an array of arrays of strings (if there are multiple capture groups)<br></br> 
+        /// The arguments in args at index firstOptionalArgNum onward will be treated as the 1-based indices of capture groups to parse as numbers<br></br>
+        /// A negative number can be used for a columnsToParseAsNumber arg, and it can be wrapped according to standard Python negative indexing rules.<br></br>
+        /// A failed attempt to parse a capture group as a number will return the string value of the capture group, or "" if that capture group was failed.
+        /// </summary>
+        /// <param name="text">text to search in</param>
+        /// <param name="rex">regex to search with</param>
+        /// <param name="args">the args originally passed to the function calling this</param>
+        /// <param name="firstOptionalArgNum">every arg from here onwards is the 0-based index of a capture group to parse as a number</param>
+        /// <param name="funcName">name of invoking function</param>
+        /// <param name="nColumns">number of columns (only used for s_csv)</param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathArgumentException"></exception>
+        public static JNode StrFindAllHelper(string text, JNode regexOrString, List<JNode> args, int firstOptionalArgNum, string funcName, int nColumns=-1)
+        {
+            var columnNumbersToParseAsNumber = args.LazySlice($"{firstOptionalArgNum}:").Select(x =>
+            {
+                if (x.type != Dtype.INT)
+                    throw new RemesPathArgumentException($"Arguments {nColumns} onward to {funcName} must be integers", 5, FUNCTIONS[funcName]);
+                int xVal = Convert.ToInt32(x.value);
+                if (nColumns >= 1 && xVal < 0)
+                    return nColumns + 1 + xVal;
+                return xVal;
+            })
+                .ToArray<int>();
+            Regex rex = TransformRegex(regexOrString);
+            Array.Sort(columnNumbersToParseAsNumber);
+            int nextMatchStart = 0;
+            var rows = new List<JNode>();
+            while (nextMatchStart < text.Length)
+            {
+                Match m = rex.Match(text, nextMatchStart);
+                if (!m.Success)
+                    break;
+                int matchStart = m.Index;
+                int matchEnd = m.Index + m.Length;
+                nextMatchStart = matchEnd > matchStart ? matchEnd : matchStart + 1;
+                int indexInColsToParseAsNumber = 0;
+                int nextColToParseAsNumber = columnNumbersToParseAsNumber.Length == 0 ? -1 : columnNumbersToParseAsNumber[0];
+                if (nColumns < 0)
+                    nColumns = m.Groups.Count - 1;
+                if (nColumns < 2)
+                {
+                    string mValue = nColumns == 1 ? m.Groups[1].Value : m.Value;
+                    rows.Add(nextColToParseAsNumber >= 0 ? JsonParser.TryParseNumber(mValue, 0, m.Length, matchStart) : new JNode(mValue, matchStart));
+                }
+                else
+                {
+                    var row = new List<JNode>();
+                    for (int jj = 1; jj <= nColumns; jj++)
+                    {
+                        Group grp = m.Groups[jj];
+                        string captured = grp.Value;
+                        JNode item;
+                        if (captured is null)
+                        {
+                            item = new JNode("");
+                        }
+                        else
+                        {
+                            if (nextColToParseAsNumber == jj)
+                            {
+                                item = JsonParser.TryParseNumber(captured, 0, captured.Length, matchStart);
+                                indexInColsToParseAsNumber++;
+                                nextColToParseAsNumber = columnNumbersToParseAsNumber.Length > indexInColsToParseAsNumber
+                                    ? columnNumbersToParseAsNumber[indexInColsToParseAsNumber]
+                                    : -1;
+                            }
+                            else
+                                item = new JNode(captured, grp.Index);
+                        }
+                        row.Add(item);
+                    }
+                    rows.Add(new JArray(matchStart, row));
+                }
+            }
+            return new JArray(0, rows);
+        }
+
+        /// <summary>
+        /// s_csv(csvText: string, nColumns: int, delimiter: string|null=",", newline: string|null="\r\n", quote: string|null="\"", *columnsToParseAsNumber: int)<br></br>
+        /// If delimiter, newline, or quote is null, their defaults are used.<br></br>
+        /// returns an array of strings (if nColumns is 1)<br></br>
         /// or an array of arrays of strings (where the number of strings in each subarray is the 2nd arg nColumns)<br></br>
         /// Note that this method will ignore any rows that do not have exactly nColumns columns,<br></br>
-        /// and you may get unexpected results if the delimiter or quote or newline are incorrectly specified.
+        /// and you may get unexpected results if the delimiter or quote or newline are incorrectly specified.<br></br>
+        /// See StrFindAllHelper for how the optional columnsToParseAsNumber args are handled
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
         public static JNode CsvRead(List<JNode> args)
         {
-            string csvText = (string)args[0].value;
-            // CsvRegex(int nColumns, char delimiter=',', string newline="\r\n", char quote = '"')
+            string text = (string)args[0].value;
             if (args[1].type != Dtype.INT)
                 throw new RemesPathArgumentException("second arg (nColumns) to s_csv must be integer", 1, FUNCTIONS["s_csv"]);
             int nColumns = Convert.ToInt32(args[1].value);
-            char delim = args[2].type == Dtype.NULL ? ',' : ((string)args[2].value)[0];
-            string newline = args[3].type == Dtype.NULL ? "\r\n" : (string)args[3].value;
-            char quote = args[4].type == Dtype.NULL ? '"' : ((string)args[4].value)[0];
-            string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
-            Regex rex = new Regex(rexPat, RegexOptions.Compiled);
-            int nextMatchStart = 0;
-            var rows = new List<JNode>();
-            while (nextMatchStart < csvText.Length)
+            char delim = ',';
+            string newline = "\r\n";
+            char quote = '"';
+            if (args.Count > 2)
             {
-                Match m = rex.Match(csvText, nextMatchStart);
-                if (!m.Success)
-                    break;
-                nextMatchStart = m.Index + m.Length + newline.Length;
-                if (nColumns == 1)
-                    rows.Add(new JNode(m.Value, m.Index));
-                else
+                delim = args[2].type == Dtype.NULL ? ',' : ((string)args[2].value)[0];
+                if (args.Count > 3)
                 {
-                    var row = new List<JNode>();
-                    for (int jj = 1; jj < m.Groups.Count; jj++)
-                    {
-                        Group grp = m.Groups[jj];
-                        JNode item = new JNode(grp.Value, grp.Index);
-                        row.Add(item);
-                    }
-                    rows.Add(new JArray(m.Index, row));
+                    newline = args[3].type == Dtype.NULL ? "\r\n" : (string)args[3].value;
+                    if (args.Count > 4)
+                        quote = args[4].type == Dtype.NULL ? '"' : ((string)args[4].value)[0];
                 }
             }
-            return new JArray(0, rows);
+            string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
+            return StrFindAllHelper(text, new JNode(rexPat), args, 5, "s_csv", nColumns);
+        }
+
+        /// <summary>
+        /// s_fa(text: string, rex: regex | string, *colunsToParseAsNumber: int (optional))<br></br>
+        /// If rex is a string, converts it to a regex<br></br>
+        /// columnsToParseAsNumber: any number of optional int args, the 0-based indices of capture groups to parse as numbers<br></br>
+        /// see StrFindAllHelper for more
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode StrFindAll(List<JNode> args)
+        {
+            string text = (string)args[0].value;
+            JNode rexNode = args[1];
+            return StrFindAllHelper(text, rexNode, args, 2, "s_fa");
         }
 
         public static JNode StrSplit(List<JNode> args)
@@ -2511,7 +2838,8 @@ namespace JSON_Tools.JSON_Tools
             ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
-            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, 5, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR, Dtype.STR, Dtype.STR}),
+            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}),
+            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.INT}),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),

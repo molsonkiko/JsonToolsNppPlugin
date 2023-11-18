@@ -912,6 +912,8 @@ multiline comment
                     "False is not an accepted part of any JSON specification",
                     "None is not an accepted part of any JSON specification"
                 }),
+                ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
+                ("-0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
             };
 
             int tests_failed = 0;
@@ -1062,6 +1064,66 @@ Got
             CultureInfo.CurrentCulture = currentCulture;
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");
+            return tests_failed > 0;
+        }
+
+        public static bool TestTryParseNumber()
+        {
+            var testcases = new (string inp, int start, int end, string correctJNodeToStr)[]
+            {
+                ("foo,12,bar", 4, 6, "12"),
+                ("foo,12,bar", 4, 7, "\"12,\""),
+                ("blah,-8.", 5, 10, "-8.0"),
+                ("blah,+5.", 5, 8, "5.0"),
+                ("blah,+48.", 5, 9, "48.0"),
+                ("blah,-48.", 5, 9, "-48.0"),
+                ("blah,-8.", 4, 8, "\",-8.\""),
+                (".5,boo", 0, 2, "0.5"),
+                ("df,.75,boo", 3, 6, "0.75"),
+                ("df,-.75,boo", 3, 7, "-0.75"),
+                ("df,+.25,boo", 3, 7, "0.25"),
+                ("df,+a,boo", 3, 5, "\"+a\""),
+                ("df,-foo,boo", 3, 7, "\"-foo\""),
+                (".5,boo", 0, 3, "\".5,\""),
+                ("1,15.5e3E7", 2, 8, "15500.0"),
+                ("1,15.5e3E70", 2, 10, "\"15.5e3E7\""),
+                ("1,2.8e-7,7", 2, 8, "2.8E-07"),
+                (";17.4e+11,7", 1, 9, "1740000000000.0"),
+                ("1,15.5e3e7", 2, 8, "15500.0"),
+                ("1,15.5e3e70", 2, 10, "\"15.5e3e7\""),
+                ("1,2.8E-7,7", 2, 8, "2.8E-07"),
+                (";17.4E+11,7", 1, 9, "1740000000000.0"),
+                ("1,15.5Eb,ekr", 2, 8, "\"15.5Eb\""),
+                ("a,0x123456789abc,3", 2, 16, "20015998343868"),
+                ("a,0xABCDEFabcdef123,3", 2, 19, "773738404492800291"),
+                ("a,-0xABCDEFabcdef123,3", 2, 20, "-773738404492800291"),
+                ("a,+0xABCDEFabcdef123,3", 2, 20, "773738404492800291"),
+                ("a,+0xABCDEFabcdef123,3", 2, 21, "\"+0xABCDEFabcdef123,\""),
+                ("a,-0xABCDEFabcdef123,3", 2, 21, "\"-0xABCDEFabcdef123,\""),
+                ("a,NaN,b", 2, 5, "NaN"),
+                ("a,-NaN,b", 2, 6, "NaN"),
+                ("a,+NaN,b", 2, 6, "NaN"),
+                ("a,NaNa,b", 2, 6, "\"NaNa\""),
+                ("ab,Infinity,b", 3, 11, "Infinity"),
+                ("ab,Infinity,b", 3, 12, "\"Infinity,\""),
+                ("ab,+Infinity,b", 3, 12, "Infinity"),
+                ("ab,-Infinity,b", 3, 12, "-Infinity"),
+                ("ab,+Infinity,b", 3, 13, "\"+Infinity,\""),
+                ("ab,-Infinity,b", 3, 13, "\"-Infinity,\""),
+            };
+            int tests_failed = 0;
+            foreach ((string inp, int start, int end, string correctJNodeStr) in testcases)
+            {
+                JNode tryParseResult = JsonParser.TryParseNumber(inp, start, end, 0);
+                string tryParseStr = tryParseResult.ToString();
+                if (tryParseStr != correctJNodeStr)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Expected TryParseNumber(\"{inp}\", {start}, {end}) to return {correctJNodeStr}, got {tryParseStr}");
+                }
+            }
+            Npp.AddLine($"Failed {tests_failed} tests.");
+            Npp.AddLine($"Passed {testcases.Length - tests_failed} tests.");
             return tests_failed > 0;
         }
     }

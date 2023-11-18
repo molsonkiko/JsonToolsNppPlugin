@@ -703,7 +703,7 @@ The query `parse(@)` will return
 Returns the number of times substring/regex `sub` occurs in `x`.
 
 ---
-`s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"")`
+`s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"", ...: int)`
 
 __[Introduced in v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd).__
 
@@ -713,6 +713,7 @@ __Arguments:__
 * `delimiter` (3rd arg, default `,`): the column separator
 * `newline` (4th arg default `CR LF`): the newline
 * `quote` (5th arg, default `"`): the character used to wrap columns that contain `newline` or `delimiter`.
+* `...` (6th and subsequent args): the numbers of columns to attempt to parse as numbers. [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. You can pass a negative number here to get the nth-to-last column rather than the nth column.
 
 __Return value:__
 * if `nColumns` is 1, returns an array of strings
@@ -724,6 +725,7 @@ __Notes:__
     * For example, `"\"quoted\",string,in,quoted column"` is a valid column in a file with `,` delimiter and `"` quote character.
     * On the other hand, `" " "` is *not a valid column if `"` is the quote character* because it contains an unescaped `"` in a quoted column.
     * Finally, `a,b` would be treated as two columns in a CSV file with `"` quote character, but `"a,b"` is a single column because a comma is not treated as a column separator in a quoted column.
+* You can pass in `null` for the 3rd, 4th, and 5th args. Any instance of `null` in those args will be replaced with the default value.
 
 __Example:__
 Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL\\'AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
@@ -756,8 +758,46 @@ The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array
 ]
 ``` 
 
+The query ``s_csv(@, 7, `,`, `\n`, `'`, 1, -3)`` will correctly parse this as *an array of eight 7-item subarrays with the 1st and 3rd-to-last (i.e. 5th) columns parsed as numbers where possible*, shown below:
+```json
+[
+    ["nums", "names", "cities", "date", "zone", "subzone", "contaminated"],
+    ["nan", "Bluds", "BUS", "", 1, "''", "TRUE"],
+    [0.5, "dfsd", "FUDG", "12/13/2020 0:00", 2, "c", "TRUE"],
+    ["", "qere", "GOLAR", "", 3, "f", ""],
+    [1.2, "qere", "'GOL\\'AR'", "", 3, "h", "TRUE"],
+    ["''", "flodt", "'q,tun'", "", 4, "q", "FALSE"],
+    [4.6, "Kjond", "", "", "", "w", "''"],
+    [4.6, "'Kj\nond'", "YUNOB", "10/17/2014 0:00", 5, "z", "FALSE"]
+]
+``` 
+
+---
+`s_fa(x: string, pat: regex | string, ...: int) -> array[string | number] | array[array[string | number]]`
+
+__Added in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd).__
+
+* If `pat` is a regex with no capture groups or one capture group, returns an array of the substrings of `x` that match `pat`.
+* If `pat` has multiple capture groups, returns an array of subarrays of substrings, where each subarray has a number of elements equal to the number of capture groups.
+* The third argument and any subsequent argument must all be the number of a capture group to attempt to parse as a number (`1` matches the match value if there were no capture groups). [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. If a capture group cannot be parsed as a number, the capture group is returned.
+
+__SPECIAL NOTES FOR `s_fa`:__
+1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools `^` matches only the beginning of the string and `$` matches only the end of the string.
+2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex number preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
+3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number. A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
+4. Although `s_csv` allows you to parse the nth-to-last column as a number with negative numbers for 6th and subsequent args, negative numbers *cannot* be used as optional args to this function to parse the nth-to-last capture groups as numbers.
+
+__Examples:__
+1. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B`, `(INT)`)`` will return `["1", "-1", "+2", "-0xF", "+0x1a", "0x2B"]`
+2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`, 1)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `1` as the third arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which couldn't be parsed as an integer because it could not be represented as a 64-bit signed integer.
+3. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2)`` will return `[["a",1.5,"1"],["b",-30000.0,"2"],["c",-0.2,"6"]]`. Note that the second column but not the third will be parsed as a number, because only `2` was passed in as the number of a capture group to parse as a number.
+4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2, 3)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second and third columns because `2` and `3` were passed as optional args.
+5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`, 2)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex
+
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
+
+__As of [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd), *this function is DEPRECATED in favor of `s_fa`*.__
 
 Returns an array of all the substrings in `x` that match `sub`.
 

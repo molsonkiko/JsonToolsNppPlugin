@@ -449,7 +449,7 @@ namespace JSON_Tools.Tests
                                         "[{\"al\": [2, 4], \"bt\": [\"null\"]}, {\"al\": [4, 2, 0], \"bt\": [\"number\", \"object\"]}]"),
                 new Query_DesiredResult("concat(@.foo[0][:]->(str(@)*(@+1)), keys(@.`7`[0])[:]->(@ + s_slice(@, ::-1)))",
                     "[\"0\", \"11\", \"222\", \"foooof\"]"),
-                // s_csv CSV parser
+                // ===================== s_csv CSV parser ========================
                 // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
                 new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +
                                                 "nan,Bluds,BUS\\r\\n" +
@@ -490,6 +490,59 @@ namespace JSON_Tools.Tests
                                                "f^g`" + // invalid because there's a delimiter on an unquoted line
                                                ", 1, `^`, `\\r`, `$`)",
                     "[\"a\",\"$b^c$\",\"$new\\r\\\\$line\\\\$$\",\"\",\"\",\"$$\",\"d$\\ne\"]"),
+                // 1-column, default (delimiter, newline, and quote), parse column 1 as number, 4 number rows and 4 non-number rows
+                new Query_DesiredResult("s_csv(`1.5\\r\\n" +
+                                               "-2\\r\\n" +
+                                               "3e14\\r\\n" +
+                                               "2e-3\\r\\n" +
+                                               "\\r\\n" +
+                                               "1e3b\\r\\n" +
+                                               "2.5a\\r\\n" +
+                                               "1b`" + 
+                                               ", 1, null, null, null, 1)",
+                    "[1.5,-2,3e14,2e-3,\"\",\"1e3b\",\"2.5a\", \"1b\"]"),
+                // 3-column, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
+                new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
+                                        "a,-3,NaN\\r\\n" +
+                                        "baz,quz,-Infinity`" +
+                                        ", 3, null, null, null, 1, -1)",
+                "[[1.5, \"foo\", \"bar\"], [\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
+                // ====================== s_fa function for parsing regex search results as string arrays or arrays of arrays of strings =========
+                // 2 capture groups (2nd optional), parse the first group as number
+                new Query_DesiredResult("s_fa(`1. foo  boo\\r\\n" +
+                                        "2.  bar gar\\r\\n" +
+                                        "  3. baz\\t schnaz\\r\\n" +
+                                        "4. 7 a\\r\\n" +
+                                        "5. `" +
+                                        ", `^[\\x20\\t]*(\\d+)\\.\\s*(\\w+)?`, 1)",
+                    "[[1, \"foo\"], [2, \"bar\"], [3, \"baz\"], [4, \"7\"], [5, \"\"]]"),
+                // no capture groups, capture and parse hex numbers
+                new Query_DesiredResult("s_fa(`-0x12345  0x000abcdef\\r\\n0x067890 -0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, `(?:INT)`, 1)", "[-74565,11259375,424080,-11259375, \"0x123456789abcdefABCDEF\"]"),
+                // no capture groups, capture hex numbers but do not parse as numbers
+                new Query_DesiredResult("s_fa(`0x12345  0x000abcdef\\r\\n0x067890 0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, g`(?:INT)`)", "[\"0x12345\",\"0x000abcdef\",\"0x067890\",\"0x0ABCDEF\",\"0x123456789abcdefABCDEF\"]"),
+                new Query_DesiredResult("s_fa(`-1 23 +7 -99 +0x1a -0xA2 0x7b`, g`(INT)`, 1)", "[-1,23,7,-99,26,-162,123]"),
+                // capture every (word, floating point number, floating point number, two lowercase letters separated) tuple inside a <p> element in HTML,
+                // and parse the values in the 2nd and third columns as numbers
+                new Query_DesiredResult("s_fa(`<p>captured 2 +3 a_b \\r\\n\\r\\n failure 1 2 A_B \\r\\nalsocaptured -8\\t  5 \\tq_r</p>" +
+                                              "<p><span>anothercatch\\t +3.5 -4.2  s_t</span></p>" +
+                                              "\\r\\n <div>\\r\\n <h2>nocatch -3 0.7E3</h2>\\r\\n" +
+                                              "uncaught -8e5 4</div>\\r\\n" +
+                                              "<p> finalcatch -9E2 7 y_z\\t</p>`, " +
+                    "g`(?s-i)(?:<p>|(?!\\A)\\G)" + // match starting at a <p> tag OR wherever the last match ended unless wraparound (?!\A)\G
+                    "(?:(?!</p>).)*?" + // keep matching until the close </p> tag
+                    "([a-zA-Z]+)\\s+(NUMBER)\\s+(NUMBER)\\s+([a-z]_[a-z])`," +
+                    "*j`[2, 3]`)",
+                    "[[\"captured\",2,3, \"a_b\"],[\"alsocaptured\",-8,5, \"q_r\"],[\"anothercatch\",3.5,-4.2, \"s_t\"],[\"finalcatch\",-900.0,7, \"y_z\"]]"),
+                // lines of 3 a-z chars (captured), then a not-captured (a dash and a number less than 9)
+                new Query_DesiredResult("s_fa(`abc-1\\r\\nbcd-7\\r\\ncde--19.5\\r\\ndef--9.2\\r\\nefg-10\\r\\nfgh-9\\r\\nab-1`" +
+                                        ", `^([a-z]{3})-(?!9|[1-9]\\d{1,})(?:NUMBER)\\r?$`)",
+                    "[\"abc\", \"bcd\", \"cde\", \"def\"]"),
+                // entire line must be a word (not captured), then a number (captured and parsed) then a word (not captured)
+                new Query_DesiredResult("s_fa(`foo 1. fun\\n" +
+                                              "bar .25 Baal\\n" +
+                                              "quz -2.3e2 quail`" +
+                                              ", `^\\w+ (NUMBER) \\w+$`, 1)",
+                    "[1.0, 0.25, -230.0]"),
             };
             int ii = 0;
             int tests_failed = 0;

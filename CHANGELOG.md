@@ -47,12 +47,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v59)
-3. [`s_csv` vectorized arg function in RemesPath](/docs/RemesPath.md#vectorized-functions) that can parse a CSV file encoded as a JSON string.
+3. [`s_csv` and `s_fa` vectorized arg function in RemesPath](/docs/RemesPath.md#vectorized-functions)
 
 ### Fixed
 
-1. Fixed some weird issues where mutating a variable in RemesPath could cause re-executing a query on the same input to return a different value. A minimal example: `var x = 1; x = @ + 1; x` would return 1 + (the number of times the query was executed) prior to this fix, but now it will always return `2` as expected. This was also true of a bunch of other things in RemesPath, including [projections and the map operator](/docs/RemesPath.md#projections).
-2. Running tests would previously cause clipboard data to be lost irreversably. Now, if the user's clipboard contained text before running tests, the contents of the clipboard are restored to their pre-test values rather than being hijacked. __Non-text data that was copied to the clipboard is still lost when running tests, and I may try to fix that in the future.__ 
+1. Fixed plugin crash when attempting to parse too-large hex numbers like `0x100000000000000000000`. Now the parser will fatally fail and add a lint indicating the issue, but the plugin will not actually crash.
+2. Fixed some weird issues where mutating a variable in RemesPath could cause re-executing a query on the same input to return a different value. A minimal example: `var x = 1; x = @ + 1; x` would return 1 + (the number of times the query was executed) prior to this fix, but now it will always return `2` as expected. This was also true of a bunch of other things in RemesPath, including [projections and the map operator](/docs/RemesPath.md#projections).
+3. Running tests would previously cause clipboard data to be lost irreversably. Now, if the user's clipboard contained text before running tests, the contents of the clipboard are restored to their pre-test values rather than being hijacked. __Non-text data that was copied to the clipboard is still lost when running tests, and I may try to fix that in the future.__ 
 
 ## [5.8.0] - 2023-10-09
 

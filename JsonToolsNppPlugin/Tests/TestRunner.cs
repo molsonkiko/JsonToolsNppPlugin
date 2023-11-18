@@ -31,7 +31,8 @@ namespace JSON_Tools.Tests
                 (JsonParserTester.TestLinter, "JSON parser's linter", false, false),
                 (JsonParserTester.TestJsonLines, "JSON Lines parser", false, false),
                 (JsonParserTester.TestCultureIssues, "parsing of numbers does not depend on current culture", false, false),
-                
+                (JsonParserTester.TestTryParseNumber, "JsonParser.TryParseNumber method", false, false),
+
                 (YamlDumperTester.Test, "YAML dumper", false, false),
                 
                 (SliceTester.Test, "slice extension", false, false),

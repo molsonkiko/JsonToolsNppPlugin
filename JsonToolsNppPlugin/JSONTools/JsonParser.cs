@@ -932,8 +932,16 @@ namespace JSON_Tools.JSON_Tools
                         break;
                     ii++;
                 }
-                var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
-                return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
+                try
+                {
+                    var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
+                    return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
+                }
+                catch
+                {
+                    HandleError("Hex number too large for a 64-bit signed integer type", inp, start, ParserState.FATAL);
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
+                }
             }
             while (ii < inp.Length)
             {
@@ -1498,7 +1506,155 @@ namespace JSON_Tools.JSON_Tools
         {
             return new JsonParser(loggerLevel, parseDatetimes, throwIfLogged, throwIfFatal);//, includeExtraProperties);
         }
+        #endregion
+        #region MISC_OTHER_FUNCTIONS
+        /// <summary>
+        /// returns inp if start == 0 and end == inp.Length (to avoid wasteful copying), otherwise returns inp.Substring(start, end - start)
+        /// </summary>
+        /// <param name="inp"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public static string SubstringUnlessAll(string inp, int start, int end)
+        {
+            return (start == 0 && end == inp.Length) ? inp : inp.Substring(start, end - start);
+        }
+
+        /// <summary>
+        /// Try to parse inp[start:end] (start inclusive, end exclusive) as a number within the JSON5 specification, then return that number as a JNode<br></br>
+        /// If inp[start:end] can't be parsed as a JSON5 number, return inp[start:end] as a JNode.
+        /// </summary>
+        /// <param name="inp">the JSON string</param>
+        /// <param name="start">the position to start parsing from</param>
+        /// <param name="end">the position to end parsing at</param>
+        /// <param name="jnodePosition">the value to assign to the position attribute of the JNode returned</param>
+        /// <returns>a JNode with type = Dtype.INT or Dtype.FLOAT, and the position of the end of the number.
+        /// </returns>
+        public static JNode TryParseNumber(string inp, int start, int end, int jnodePosition)
+        {
+            end = inp.Length < end ? inp.Length : end;
+            if (start >= end)
+                return new JNode("");
+            // parsed tracks which portions of a number have been parsed.
+            // So if the int part has been parsed, it will be 1.
+            // If the int and decimal point parts have been parsed, it will be 3.
+            // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
+            int parsed = 1;
+            int ogStart = start;
+            char c = inp[start];
+            bool negative = false;
+            if (c < '0' || c > '9')
+            {
+                if (c == '-' || c == '+')
+                {
+                    negative = c == '-';
+                    start++;
+                    if (start >= end)
+                        return new JNode(SubstringUnlessAll(inp, start, end), jnodePosition);
+                    c = inp[start];
+                }
+                if (start == end - 8 && c == 'I' && inp[start + 1] == 'n' && inp.Substring(start + 2, 6) == "finity")
+                {
+                    // try Infinity
+                    return new JNode(negative ? NanInf.neginf : NanInf.inf, jnodePosition);
+                }
+                else if (start == end - 3 && c == 'N' && inp[start + 1] == 'a' && inp[start + 2] == 'N')
+                {
+                    // try NaN
+                    return new JNode(NanInf.nan, jnodePosition);
+                }
+            }
+            int ii = start;
+            if (c == '0' && ii < end - 1 && inp[ii + 1] == 'x')
+            {
+                ii += 2;
+                start = ii;
+                while (ii < end)
+                {
+                    c = inp[ii];
+                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                        return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
+                    ii++;
+                }
+                try
+                {
+                    var hexnum = long.Parse(inp.Substring(start, end - start), NumberStyles.HexNumber);
+                    return new JNode(negative ? -hexnum : hexnum, jnodePosition);
+                }
+                catch
+                {
+                    // probably overflow error
+                    return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
+                }
+            }
+            while (ii < end)
+            {
+                c = inp[ii];
+                if (c >= '0' && c <= '9')
+                {
+                    ii++;
+                }
+                else if (c == '.')
+                {
+                    if (parsed != 1)
+                    {
+                        // two decimal places in the number
+                        goto notANumber;
+                    }
+                    parsed = 3;
+                    ii++;
+                }
+                else if (c == 'e' || c == 'E')
+                {
+                    if ((parsed & 4) != 0)
+                    {
+                        break;
+                    }
+                    parsed += 4;
+                    ii++;
+                    if (ii < end)
+                    {
+                        c = inp[ii];
+                        if (c == '+' || c == '-')
+                        {
+                            ii++;
+                        }
+                    }
+                    else
+                    {
+                        // Scientific notation 'e' with no number following
+                        goto notANumber;
+                    }
+                }
+                else
+                    goto notANumber;
+            }
+            string numstr = inp.Substring(start, end - start);
+            if (parsed == 1)
+            {
+                try
+                {
+                    long l = long.Parse(numstr);
+                    return new JNode(negative ? -l : l, jnodePosition);
+                }
+                catch (OverflowException)
+                {
+                    // doubles can represent much larger numbers than 64-bit ints,
+                    // albeit with loss of precision
+                }
+            }
+            try
+            {
+                double d = double.Parse(numstr, JNode.DOT_DECIMAL_SEP);
+                return new JNode(negative ? -d : d, jnodePosition);
+            }
+            catch
+            {
+                return new JNode(numstr);
+            }
+            notANumber:
+            return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
+        }
+        #endregion
     }
-    #endregion
-        
 }
