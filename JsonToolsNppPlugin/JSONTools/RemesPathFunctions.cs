@@ -2319,7 +2319,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// replace all instances of "(INT)" with a regex that captures a decimal or hex integer,
+        /// replace all instances of "(INT)" with a regex that captures a decimal or hex integer,<br></br>
         /// and all instances of "(NUMBER)" with a regex that captures a decimal floating point number<br></br>
         /// Also insert noncapturing versions of the int and float regexes respectively in place of each instance of "(?:INT)" or "(?:NUMBER)"
         /// </summary>
@@ -2328,7 +2328,7 @@ namespace JSON_Tools.JSON_Tools
         public static Regex TransformRegex(JNode regexOrString)
         {
             string pat = regexOrString is JRegex jregex ? jregex.regex.ToString() : (string)regexOrString.value;
-            string fixedPat = Regex.Replace(pat, @"\((?:\?:)?(?:INT|NUMBER)\)", m =>
+            string fixedPat = Regex.Replace(pat, @"(?<!\\)\((?:\?:)?(?:INT|NUMBER)\)", m =>
             {
                 string mtch = m.Value;
                 if (mtch[2] == ':')
@@ -2473,10 +2473,12 @@ namespace JSON_Tools.JSON_Tools
             JNode node = args[0];
             JNode sepNode = args[1];
             string s = (string)node.value;
+            if (sepNode.type == Dtype.NULL)
+                return new JArray(0, Regex.Split(s, "\\s+").Select(x => new JNode(x)).ToList());
             string[] parts = (sepNode.value is string sep)
                 ? Regex.Split(s, sep)
                 : ((JRegex)sepNode).regex.Split(s);
-            var out_nodes = new List<JNode>();
+            var out_nodes = new List<JNode>(parts.Length);
             foreach (string part in parts)
             {
                 out_nodes.Add(new JNode(part));
@@ -2845,7 +2847,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT }),
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
-            ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
+            ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 1, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR}),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),

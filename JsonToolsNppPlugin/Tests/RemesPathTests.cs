@@ -323,6 +323,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
                 new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
                 new Query_DesiredResult("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
+                new Query_DesiredResult("s_split(`foo\\r\\nb\\t c \\r bar-baz\\n`)", "[\"foo\", \"b\", \"c\", \"bar-baz\", \"\"]"),
                 new Query_DesiredResult("group_by(@.foo, 0)", "{\"0\": [[0, 1, 2]], \"3.0\": [[3.0, 4.0, 5.0]], \"6.0\": [[6.0, 7.0, 8.0]]}"),
                 new Query_DesiredResult("group_by(j`[{\"foo\": 1, \"bar\": \"a\"}, {\"foo\": 2, \"bar\": \"b\"}, {\"foo\": 3, \"bar\": \"b\"}]`, bar).*{`sum`: sum(@[:].foo), `count`: len(@)}", "{\"a\": {\"sum\": 1.0, \"count\": 1}, \"b\": {\"sum\": 5.0, \"count\": 2}}"),
                 new Query_DesiredResult("group_by(j`[{\"a\": 1, \"b\": \"x\", \"c\": -0.5}, {\"a\": 1, \"b\": \"y\", \"c\": 0.0}, {\"a\": 2, \"b\": \"x\", \"c\": 0.5}]`, j`[\"a\", \"b\"]`)", "{\"1\": {\"x\": [{\"a\": 1, \"b\": \"x\", \"c\": -0.5}], \"y\": [{\"a\": 1, \"b\": \"y\", \"c\": 0.0}]}, \"2\": {\"x\": [{\"a\": 2, \"b\": \"x\", \"c\": 0.5}]}}"),

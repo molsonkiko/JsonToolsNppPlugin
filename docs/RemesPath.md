@@ -789,7 +789,7 @@ __SPECIAL NOTES FOR `s_fa`:__
 
 __Examples:__
 1. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B`, `(INT)`)`` will return `["1", "-1", "+2", "-0xF", "+0x1a", "0x2B"]`
-2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`, 1)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `1` as the third arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which couldn't be parsed as an integer because it could not be represented as a 64-bit signed integer.
+2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`, 1)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `1` as the third arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which stayed as a string because its numeric value was too big for the 64-bit integers used in JsonTools.
 3. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2)`` will return `[["a",1.5,"1"],["b",-30000.0,"2"],["c",-0.2,"6"]]`. Note that the second column but not the third will be parsed as a number, because only `2` was passed in as the number of a capture group to parse as a number.
 4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2, 3)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second and third columns because `2` and `3` were passed as optional args.
 5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`, 2)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex
@@ -828,7 +828,11 @@ Returns the appropriate slice/index of `x`.
 Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed for the `sli` argument.
 
 ----
-`s_split(x: string, sep: regex | string) -> array[string]`
+``s_split(x: string, sep: regex | string=g`\s+`) -> array[string]``
+
+If `sep` is not specified (the function is called with one argument):
+* Returns `x` split by whitespace.
+    * E.g., ``s_split(`a b c\n d `)`` returns `["a", "b", "c", "d", ""]` (the last empty string is because `x` ends with whitespace)
 
 If `sep` is a string:
 * Returns an array containing all the substrings of `x` that don't contain `sep`, split by the places where `sep` occurs.

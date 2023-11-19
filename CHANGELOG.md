@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v59)
-3. [`s_csv` and `s_fa` vectorized arg function in RemesPath](/docs/RemesPath.md#vectorized-functions)
+3. [`s_csv` and `s_fa` vectorized arg functions in RemesPath](/docs/RemesPath.md#vectorized-functions)
+4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
 
 ### Fixed
 
