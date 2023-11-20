@@ -482,6 +482,13 @@ Then the returned value is `0.6*10 + 0.4*8`, or 9.2.
 
 Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
 
+---
+`randint(start: int, end: int=null) -> int`
+
+*Added in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd)*
+Returns a random integer greater than or equal to `start` and less than `end`.
+If `end` is not specified, instead return a random integer greater than or equal to 0 and less than `start`.
+
 ----
 `range(start: int, end: int = null, step: int = 1) -> array[int]`
 

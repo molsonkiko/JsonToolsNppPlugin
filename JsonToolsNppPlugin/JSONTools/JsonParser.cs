@@ -1587,6 +1587,7 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
                 }
             }
+            string numstr = SubstringUnlessAll(inp, ogStart, end);
             while (ii < end)
             {
                 c = inp[ii];
@@ -1629,13 +1630,12 @@ namespace JSON_Tools.JSON_Tools
                 else
                     goto notANumber;
             }
-            string numstr = inp.Substring(start, end - start);
             if (parsed == 1)
             {
                 try
                 {
                     long l = long.Parse(numstr);
-                    return new JNode(negative ? -l : l, jnodePosition);
+                    return new JNode(l, jnodePosition);
                 }
                 catch (OverflowException)
                 {
@@ -1646,14 +1646,14 @@ namespace JSON_Tools.JSON_Tools
             try
             {
                 double d = double.Parse(numstr, JNode.DOT_DECIMAL_SEP);
-                return new JNode(negative ? -d : d, jnodePosition);
+                return new JNode(d, jnodePosition);
             }
             catch
             {
                 return new JNode(numstr);
             }
             notANumber:
-            return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
+            return new JNode(numstr, jnodePosition);
         }
         #endregion
     }

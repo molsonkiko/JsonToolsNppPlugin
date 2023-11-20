@@ -1716,7 +1716,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    last_tok = ParseNonFunctionUnquotedStr(st, context);
+                    last_tok = ParseNonFunctionUnquotedStr(pos, st, context);
                     pos++;
                 }
             }
@@ -1815,6 +1815,7 @@ namespace JSON_Tools.JSON_Tools
                 if (idxrs.Count > 0)
                 {
                     Func<JNode, JNode> idxrs_func = ApplyIndexerList(idxrs);
+                    // if we're indexing on a function of input, we can't evaluate the indexers at compile time
                     if (last_tok is CurJson lcur)
                     {
                         JNode idx_func(JNode inp)
@@ -1822,6 +1823,16 @@ namespace JSON_Tools.JSON_Tools
                             return idxrs_func(lcur.function(inp));
                         }
                         return new Obj_Pos(new CurJson(lcur.type, idx_func), pos);
+                    }
+                    // if a variable is referenced in the indexers (e.g., "var x = @; range(10)[:]->at(x, @ % len(x))",
+                    // we also need to wait until runtime to evaluate the indexers
+                    if (context.TryGetFirstVariableNameReferencedInRange(indStartEndPos, pos, out _))
+                    {
+                        JNode idx_func_var_ref(JNode _)
+                        {
+                            return idxrs_func(last_tok);
+                        }
+                        return new Obj_Pos(new CurJson(last_tok.type, idx_func_var_ref), pos);
                     }
                     if (last_tok is JObject last_obj)
                     {
@@ -1833,13 +1844,13 @@ namespace JSON_Tools.JSON_Tools
             return new Obj_Pos(last_tok, pos);
         }
 
-        private JNode ParseNonFunctionUnquotedStr(UnquotedString uqs, JQueryContext context)
+        private JNode ParseNonFunctionUnquotedStr(int tokenIndex, UnquotedString uqs, JQueryContext context)
         {
             string s = uqs.value;
-            if (context.TryGetValue(s, out JNode varNamedS))
+            if (context.TryGetValue(tokenIndex, s, out JNode varNamedS))
                 return varNamedS; // it's a variable reference
             // not a variable, just a string
-            return new JNode(uqs.value, Dtype.STR, 0);
+            return new JNode(s);
         }
 
         private Obj_Pos ParseExprFunc(List<object> toks, int pos, int end, JQueryContext context)
@@ -1855,7 +1866,7 @@ namespace JSON_Tools.JSON_Tools
                 curtok = toks[pos];
                 if (curtok is UnquotedString st)
                 {
-                    curtok = ParseNonFunctionUnquotedStr(st, context);
+                    curtok = ParseNonFunctionUnquotedStr(pos, st, context);
                 }
                 if (!(curtok is JNode))
                 {

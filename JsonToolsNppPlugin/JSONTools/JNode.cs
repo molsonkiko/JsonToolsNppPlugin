@@ -46,11 +46,11 @@ namespace JSON_Tools.JSON_Tools
         /// A YYYY-MM-DD hh:mm:ss.sss datetime
         /// </summary>
         DATETIME = 2048,
-        ///// <summary>
-        ///// An HH:MM:SS 24-hour time
-        ///// </summary>
-        //TIME = 4096,
-        /* COMPOSITE TYPES */
+        /// <summary>
+        /// a JNode has this type if and only if it is CurJson
+        /// </summary>
+        FUNCTION = 4096,
+        /********* COMPOSITE TYPES *********/
         FLOAT_OR_INT = FLOAT | INT,
         INT_OR_BOOL = INT | BOOL,
         /// <summary>
@@ -1631,7 +1631,7 @@ namespace JSON_Tools.JSON_Tools
         public Func<JNode, JNode> function;
         public override bool CanOperate => true;
 
-        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
+        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type /*| Dtype.FUNCTION*/, 0)
         {
             this.function = function;
         }
@@ -1640,7 +1640,7 @@ namespace JSON_Tools.JSON_Tools
         /// A CurJson node that simply stands in for the current json itself (represented by @)
         /// Its function is the identity function.
         /// </summary>
-        public CurJson() : base(null, Dtype.UNKNOWN, 0)
+        public CurJson() : base(null, Dtype.UNKNOWN /*| Dtype.FUNCTION*/, 0)
         {
             function = Identity;
         }
@@ -1796,6 +1796,7 @@ namespace JSON_Tools.JSON_Tools
         /// when the loop is ended with "end for;", it is popped off the stack.
         /// </summary>
         private List<VarAssign> loopVariableAssignmentStack;
+        private Dictionary<int, string> tokenIndicesOfVariableReferences;
 
         public JQueryContext() : base(null, Dtype.UNKNOWN, 0)
         {
@@ -1803,6 +1804,7 @@ namespace JSON_Tools.JSON_Tools
             locals = new Dictionary<string, JNode>();
             cachedLocals = new Dictionary<string, JNode>();
             loopVariableAssignmentStack = new List<VarAssign>();
+            tokenIndicesOfVariableReferences = new Dictionary<int, string>();
         }
 
         /// <inheritdoc/>
@@ -1874,7 +1876,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="val"></param>
         /// <returns></returns>
         /// <exception cref="RemesPathNameException">if varname is the name of a variable that is declared in a subsequent statment</exception>
-        public bool TryGetValue(string varname, out JNode val)
+        public bool TryGetValue(int tokenIndex, string varname, out JNode val)
         {
             val = null;
             if (!locals.TryGetValue(varname, out JNode locval))
@@ -1887,12 +1889,28 @@ namespace JSON_Tools.JSON_Tools
             if (locval is CurJson cj)
             {
                 // the variable is a function of input, so use the cached result of evaluating it
+                tokenIndicesOfVariableReferences[tokenIndex] = varname;
                 Func<JNode, JNode> getCachedValueForVarname = x => cachedLocals[varname];
                 val = new CurJson(cj.type, getCachedValueForVarname);
                 return true;
             }
             val = locval;
             return true;
+        }
+
+        /// <summary>
+        /// set varReferenced to the first variable name referenced at any index in tokens &gt;= startIndex and &lt; endIndex, and return true<br></br>
+        /// if no variable names referenced in that range of indices, varReferenced = null and return false
+        /// </summary>
+        public bool TryGetFirstVariableNameReferencedInRange(int startIndex, int endIndex, out string varReferenced)
+        {
+            varReferenced = null;
+            for (int ii = startIndex; ii < endIndex; ii++)
+            {
+                if (tokenIndicesOfVariableReferences.TryGetValue(ii, out varReferenced))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>

@@ -1503,6 +1503,28 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// randint(start: int, end: int=null)  -> int<br></br>
+        /// returns a random integer from start (inclusive) to end (exclusive)<br></br>
+        /// If end is not provided, returns a random integer from 0 (inclusive) to start (exclusive)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode RandomInteger(List<JNode> args)
+        {
+            JNode startNode = args[0];
+            if (startNode.type != Dtype.INT)
+                throw new RemesPathArgumentException("both args to randint must be integers", 0, FUNCTIONS["randint"]);
+            int start = Convert.ToInt32(startNode.value);
+            JNode endNode = args[1];
+            if (endNode.type == Dtype.NULL)
+                return new JNode((long)RandomJsonFromSchema.random.Next(start));
+            if (endNode.type != Dtype.INT)
+                throw new RemesPathArgumentException("both args to randint must be integers", 1, FUNCTIONS["randint"]);
+            int end = Convert.ToInt32(endNode.value);
+            return new JNode((long)RandomJsonFromSchema.random.Next(start, end));
+        }
+
+        /// <summary>
         /// Three args, one required.<br></br>
         /// If only first arg provided: return all integers in [0, args[0])<br></br>
         /// If first and second arg provided: return all integers in [args[0], args[1])<br></br>
@@ -2805,16 +2827,17 @@ namespace JSON_Tools.JSON_Tools
             ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ}),
             ["len"] = new ArgFunction(Len, "len", Dtype.INT, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
             ["max"] = new ArgFunction(Max, "max", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
-            ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT}),
+            ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
-            ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT}),
+            ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
+            ["randint"] = new ArgFunction(RandomInteger, "randint", Dtype.INT, 1, 2, false, new Dtype[] {Dtype.INT, Dtype.INT}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR}),
-            ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.BOOL }),
+            ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION, Dtype.BOOL }),
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
@@ -2824,11 +2847,10 @@ namespace JSON_Tools.JSON_Tools
             ["value_counts"] = new ArgFunction(ValueCounts, "value_counts",Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["values"] = new ArgFunction(Values, "values", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ}),
             ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] {Dtype.ARR, Dtype.ARR, /* any # of args */ Dtype.ARR }),
-            //["agg_by"] = new ArgFunction(AggBy, "agg_by", Dtype.OBJ, 3, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.ITERABLE | Dtype.SCALAR }),
             // VECTORIZED FUNCTIONS
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
-            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ITERABLE | Dtype.SCALAR, Dtype.ITERABLE | Dtype.SCALAR}),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}),
             ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),

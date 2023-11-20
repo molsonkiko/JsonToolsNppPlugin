@@ -498,10 +498,10 @@ namespace JSON_Tools.Tests
                                                "2e-3\\r\\n" +
                                                "\\r\\n" +
                                                "1e3b\\r\\n" +
-                                               "2.5a\\r\\n" +
-                                               "1b`" + 
+                                               "-a\\r\\n" +
+                                               "+b`" + 
                                                ", 1, null, null, null, 1)",
-                    "[1.5,-2,3e14,2e-3,\"\",\"1e3b\",\"2.5a\", \"1b\"]"),
+                    "[1.5,-2,3e14,2e-3,\"\",\"1e3b\",\"-a\", \"+b\"]"),
                 // 3-column, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
                 new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
                                         "a,-3,NaN\\r\\n" +
@@ -579,10 +579,41 @@ namespace JSON_Tools.Tests
                                       $"but instead got {result.ToString()}.");
                 }
             }
-            // the rand() function requires a special test because its output is nondeterministic
-            ii += 3;
+            // the rand() and randint() functions require a special test because their outputs are nondeterministic
+            ii += 6;
             bool test_failed = false;
-            for (int randNum = 0; randNum < 40 && !test_failed; randNum++)
+            string randints1argQuery = "flatten(@.foo)[:]->randint(1000)";
+            string randints2argQuery = "range(9)[:]->randint(-700, 800)";
+            string randintsIfElseQuery = "var stuff = j`[\"foo\", \"bar\", \"baz\", \"quz\"]`; range(17)[:]->at(stuff, abs(randint(-20, 20) % 4))";
+            JArray firstRandints1arg = null, firstRandints2args = null, firstRandintsIfElse = null;
+            try
+            {
+                firstRandints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
+                if (!(firstRandints1arg.children.All(x => x.value is long l && l >= 0 && l < 1000) && firstRandints1arg.children.Any(x => x.value is long l && l != (long)firstRandints1arg[0].value)))
+                {
+                    Npp.AddLine($"Expected all values in result of \"{randints1argQuery}\" to be in [0, 1000), and some of them to not be equal to the first value in that array, got {firstRandints1arg}");
+                }
+                firstRandints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
+                if (!(firstRandints2args.children.All(x => x.value is long l && l >= -700 && l < 800)
+                    && firstRandints2args.children.Any(x => x.value is long l && l > 0)
+                    && firstRandints2args.children.Any(x => x.value is long l && l < 0)))
+                {
+                    Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args}");
+                }
+                firstRandintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
+                if (!(firstRandintsIfElse.children.All(x => x.value is string s && (s == "foo" || s == "bar" || s == "baz" || s == "quz"))
+                    && firstRandintsIfElse.children.Any(x => x.value is string s && s != (string)firstRandintsIfElse[0].value)))
+                {
+                    Npp.AddLine($"In the value of \"{randintsIfElseQuery}\", expected all values in (\"foo\", \"bar\", \"baz\", \"quz\") and not all values equal to first value, got {firstRandintsIfElse}");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                tests_failed += 3;
+                Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
+            }
+            for (int randNum = 0; randNum < 28 && !test_failed; randNum++)
             {
                 // rand()
                 try
@@ -638,6 +669,31 @@ namespace JSON_Tools.Tests
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
                                       $" an exception:\n{ex}");
+                }
+                if (firstRandintsIfElse is null || firstRandints1arg is null || firstRandints2args is null)
+                    continue;
+                try
+                {
+                    JArray randints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
+                    if (randints1arg.Equals(firstRandints1arg))
+                    {
+                        Npp.AddLine($"Expected running {randints1argQuery} to not return the same thing twice, but got {randints1arg} twice");
+                    }
+                    JArray randints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
+                    if (randints1arg.Equals(firstRandints1arg))
+                    {
+                        Npp.AddLine($"Expected running {randints2argQuery} to not return the same thing twice, but got {randints2args} twice");
+                    }
+                    JArray randintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
+                    if (randints1arg.Equals(firstRandints1arg))
+                    {
+                        Npp.AddLine($"Expected running {randintsIfElseQuery} to not return the same thing twice, but got {randintsIfElse} twice");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    tests_failed += 3;
+                    Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
                 }
             }
             string onetofive_str = "[1,2,3,4,5]";
@@ -981,6 +1037,14 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult(
                     "var x = 3; var xarr = append(j`[1,2]`, x); for f = xarr; var x = f; f = @ * x; end for; @{x, xarr}",
                     "[9, [1, 4, 9]]"
+                ),
+                // indexers where the indexer is a function of the input but the thing being indexed on is a constant
+                new Query_DesiredResult("var f = @.foo[1];\r\nrange(6)[:]{at(f, @ % len(f))};",
+                    "[[3.0], [4.0], [5.0], [3.0], [4.0], [5.0]]"
+                ),
+                // another indexer where the indexer is a function of the input but the thing being indexed on is a constant
+                new Query_DesiredResult("var blah = @{1, 3, 5};\r\n1->blah;",
+                    "[1, 3, 5]"
                 ),
             };
             int ii = 0;
