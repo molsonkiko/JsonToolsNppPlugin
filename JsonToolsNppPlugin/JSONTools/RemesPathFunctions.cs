@@ -930,29 +930,11 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// same rules for "truthiness" as in Python and JavaScript:<br></br>
-        /// 1. not number &lt;-&gt; number != 0<br></br> 
-        /// 2. not string &lt;-&gt; string.Length == 0<br></br>
-        /// 3. not array/object &lt;-&gt; (array/object).Length == 0<br></br> 
-        /// 4. not null == true
+        /// returns a JNode containing the opposite of whatever ArgFunction.ToBoolHelper would return (see below)
         /// </summary>
         public static JNode Not(JNode x)
         {
-            if (x.value is bool b)
-                return new JNode(!b);
-            if (x.value is long l)
-                return new JNode(l == 0L);
-            if (x.value is double d)
-                return new JNode(d == 0d);
-            if (x.value is string s)
-                return new JNode(s.Length == 0);
-            if (x is JArray arr)
-                return new JNode(arr.Length == 0);
-            if (x is JObject obj)
-                return new JNode(obj.Length == 0);
-            if (x.type == Dtype.NULL)
-                return new JNode(true);
-            throw new RemesPathException("Invalid argument to unary operator 'not'");
+            return new JNode(!ArgFunction.ToBoolHelper(x));
         }
 
         public static JNode Uplus(JNode x)
@@ -1387,20 +1369,35 @@ namespace JSON_Tools.JSON_Tools
             return atKint;
         }
 
+        /// <summary>
+        /// sort_by(arr: array, key: function | integer | string, reverse: bool=false) -> array<br></br>
+        /// return a copy of arr sorted by one of the following:<br></br>
+        /// * if key is an integer, assume that each element of arr is also an array, and sort by subarr[key] for each subarray subarr of arr<br></br>
+        /// * if key is an string, assume that each element of arr is an object, and sort by subobj[key] for each subobject subobj of arr<br></br>
+        /// * if key is a function (CurJson), sort by key(child) for each child of arr
+        /// </summary>
         public static JNode SortBy(List<JNode> args)
         {
             var arr = ((JArray)args[0]).children;
-            var key = args[1].value;
             var reverse = args[2].value;
+            var keyNode = args[1];
             List<JNode> sorted;
-            if (key is string kstr)
+            if (keyNode is CurJson cj)
             {
-                sorted = arr.OrderBy(x => ((JObject)x).children[kstr]).ToList();
+                sorted = arr.OrderBy(cj.function).ToList();
             }
             else
             {
-                int kint = Convert.ToInt32(key);
-                sorted = arr.OrderBy(x => AtIndex(x, kint)).ToList();
+                var key = keyNode.value;
+                if (key is string kstr)
+                {
+                    sorted = arr.OrderBy(x => ((JObject)x).children[kstr]).ToList();
+                }
+                else
+                {
+                    int kint = Convert.ToInt32(key);
+                    sorted = arr.OrderBy(x => AtIndex(x, kint)).ToList();
+                }
             }
             if (reverse != null && (bool)reverse)
             {
@@ -1409,17 +1406,39 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, sorted);
         }
 
+        /// <summary>
+        /// max_by(arr: array, key: function | integer | string) -> anything<br></br>
+        /// return the largest element of arr according to some number-valued function of each element:<br></br>
+        /// * if key is an integer, assume that each element of arr is also an array, and find the child subarr of arr for which subarr[key] is largest<br></br>
+        /// * if key is an string, assume that each element of arr is an object, and find the child subobj of arr for which subobj[key] is largest<br></br>
+        /// * if key is a function (CurJson), find child of arr such that key(child) is larges
+        /// </summary>
         public static JNode MaxBy(List<JNode> args)
         {
-            var itbl = (JArray)args[0];
-            var key = args[1].value;
-            if (itbl.Length == 0)
-                return new JNode(null, Dtype.NULL, 0);
+            var itbl = ((JArray)args[0]).children;
+            var max = new JNode();
+            if (itbl.Count == 0)
+                return max;
+            var keyNode = args[1];
+            double maxval = NanInf.neginf;
+            if (keyNode is CurJson cj)
+            {
+                Func<JNode, JNode> fun = cj.function;
+                foreach (JNode x in itbl)
+                {
+                    var xval = Convert.ToDouble(fun(x).value);
+                    if (xval > maxval)
+                    {
+                        max = x;
+                        maxval = xval;
+                    }
+                }
+                return max;
+            }
+            var key = keyNode.value;
             if (key is string keystr)
             {
-                var max = (JObject)itbl[0];
-                var maxval = Convert.ToDouble(max[keystr].value);
-                for (int ii = 1; ii < itbl.children.Count; ii++)
+                for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JObject)itbl[ii];
                     var xval = Convert.ToDouble(x[keystr].value);
@@ -1429,14 +1448,11 @@ namespace JSON_Tools.JSON_Tools
                         maxval = xval;
                     }
                 }
-                return max;
             }
             else
             {
                 int kint = Convert.ToInt32(key);
-                var max = (JArray)itbl[0];
-                var maxval = Convert.ToDouble(AtIndex(max, kint).value);
-                for (int ii = 1; ii < itbl.children.Count; ii++)
+                for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JArray)itbl[ii];
                     var xval = Convert.ToDouble(AtIndex(x, kint).value);
@@ -1446,21 +1462,40 @@ namespace JSON_Tools.JSON_Tools
                         maxval = xval;
                     }
                 }
-                return max;
             }
+            return max;
         }
 
+        /// <summary>
+        /// min_by(arr: array, key: function | integer | string) -> anything<br></br>
+        /// as max_by, but replace "maximize" with "minimize" everywhere in the description
+        /// </summary>
         public static JNode MinBy(List<JNode> args)
         {
-            var itbl = (JArray)args[0];
-            var key = args[1].value;
-            if (itbl.Length == 0)
-                return new JNode(null, Dtype.NULL, 0);
+            var itbl = ((JArray)args[0]).children;
+            var min = new JNode();
+            if (itbl.Count == 0)
+                return min;
+            var keyNode = args[1];
+            double minval = NanInf.inf;
+            if (keyNode is CurJson cj)
+            {
+                Func<JNode, JNode> fun = cj.function;
+                foreach (JNode x in itbl)
+                {
+                    var xval = Convert.ToDouble(fun(x).value);
+                    if (xval < minval)
+                    {
+                        min = x;
+                        minval = xval;
+                    }
+                }
+                return min;
+            }
+            var key = keyNode.value;
             if (key is string keystr)
             {
-                var min = (JObject)itbl[0];
-                var minval = Convert.ToDouble(min[keystr].value);
-                for (int ii = 1; ii < itbl.children.Count; ii++)
+                for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JObject)itbl[ii];
                     var xval = Convert.ToDouble(x[keystr].value);
@@ -1470,14 +1505,11 @@ namespace JSON_Tools.JSON_Tools
                         minval = xval;
                     }
                 }
-                return min;
             }
             else
             {
                 int kint = Convert.ToInt32(key);
-                var min = (JArray)itbl[0];
-                var minval = Convert.ToDouble(AtIndex(min, kint).value);
-                for (int ii = 1; ii < itbl.children.Count; ii++)
+                for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JArray)itbl[ii];
                     var xval = Convert.ToDouble(AtIndex(x, kint).value);
@@ -1487,8 +1519,8 @@ namespace JSON_Tools.JSON_Tools
                         minval = xval;
                     }
                 }
-                return min;
             }
+            return min;
         }
 
         /// <summary>
@@ -1522,6 +1554,35 @@ namespace JSON_Tools.JSON_Tools
                 throw new RemesPathArgumentException("both args to randint must be integers", 1, FUNCTIONS["randint"]);
             int end = Convert.ToInt32(endNode.value);
             return new JNode((long)RandomJsonFromSchema.random.Next(start, end));
+        }
+
+        /// <summary>
+        /// this is the value returned by the LoopCount function below.<br></br>
+        /// If you are writing a function that would allow users to call the loop() function<br></br>
+        /// <i>do not just increment the value before every time a CurJson is called.</i><br></br>
+        /// Instead, you should use the following pattern:<br></br>
+        /// <b>var loopCountBeforeCall = loopCountValue;<br></br>
+        /// var something = curjson.function(inp); // calling this function could mutate loopCountValue!<br></br>
+        /// loopCountValue = loopCountBeforeCall + 1; // this ensures that the next time curjson.function(inp) is called,
+        /// it sees loopCountValue = 1 + the last value it saw</b>
+        /// </summary>
+        private static long loopCountValue = -1;
+
+        /// <summary>
+        /// loop() -> int<br></br>
+        /// returns 1 + the current number of iterations of some repetitive process<br></br>
+        /// THIS FUNCTION ALWAYS RETURNS -1 UNLESS CALLED IN THE FOLLOWING CONTEXT(S):<br></br>
+        /// * the callback (3rd argument) of the s_sub function, if the 2nd argument is a regex.
+        /// EXAMPLE:<br></br>
+        /// s_sub(`a b c` , g`[a-z]`, @[0]*loop()) returns "a bb ccc"<br></br>
+        /// because there are three matches, "a", "b", and "c", and loop() returns 1 on the first match, 2 on the second, and 3 on the third 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathException"></exception>
+        public static JNode LoopCount(List<JNode> args)
+        {
+            return new JNode(loopCountValue);
         }
 
         /// <summary>
@@ -2539,30 +2600,62 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// first arg: a string<br></br>
-        /// second arg: a string or regex to be replaced<br></br>
-        /// third arg: a string<br></br>
+        /// s_sub(s: string, to_replace: string | regex, repl: string | function) -> string<br></br> 
+        /// first arg (s): a string<br></br>
+        /// second arg (toReplace): a string or regex to be replaced<br></br>
+        /// third arg (repl: a string (or function that returns a string)<br></br>
         /// Returns:<br></br>
-        /// * if arg 2 is a string, a new string with all instances of arg 2 in arg 1 replaced with arg 3<br></br>
-        /// * if arg 2 is a regex, a new string with all matches to that regex in arg 1 replaced with arg 3<br></br>
+        /// * if toReplace is a string, a new string with all instances of toReplace in s replaced with repl<br></br>
+        /// * if toReplace is a regex and repl is a string, uses .NET regex-replacement syntax (see https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions)<br></br>
+        /// * if toReplace is a regex and repl is a function, returns a <br></br>
         /// EXAMPLES:<br></br>
-        /// * StrSub("abbbbc", Regex("b+"), "z") -> "azc"<br></br>
-        /// * StrSub("123 123", "1", "z") -> "z23 z23"<br></br>
+        /// * s_sub(abbbbc, g`b+`, z) -> "azc"<br></br>
+        /// * s_sub(`123 123`, `1`, `z`) -> "z23 z23"<br></br>
+        /// * s_sub(g`a b c`, g`[a-z]`, @[0]*loop())
         /// <i>NOTE: prior to JsonTools 4.10.1, it didn't matter whether arg 2 was a string or regex; it always treated it as a regex.</i> 
         /// </summary>
-         /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
+        /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
         public static JNode StrSub(List<JNode> args)
         {
-            JNode node = args[0];
+            string val = (string)args[0].value;
             JNode toReplace = args[1];
             JNode repl = args[2];
-            string replStr = (string)repl.value;
-            string val = (string)node.value;
-            if (toReplace.value is string toReplaceStr)
+            string replStr;
+            if (toReplace is JRegex jRegex)
             {
-                return new JNode(val.Replace(toReplaceStr, replStr));
+                Regex regex = TransformRegex(jRegex);
+                if (repl is CurJson cj)
+                {
+                    Func<JNode, JNode> fun = cj.function;
+                    long previousLoopCountValue = loopCountValue;
+                    loopCountValue = 0;
+                    string replacementFunction(Match m)
+                    {
+                        int groupCount = m.Groups.Count;
+                        var matchArrChildren = new List<JNode>(groupCount);
+                        for (int ii = 0; ii < groupCount; ii++)
+                        {
+                            matchArrChildren.Add(new JNode(m.Groups[ii].Value));
+                        }
+                        long loopCountBeforeCall = loopCountValue;
+                        var matchArr = new JArray(0, matchArrChildren);
+                        loopCountValue = loopCountBeforeCall + 1;
+                        return (string)fun(matchArr).value;
+                    }
+                    JNode resultNode = new JNode(regex.Replace(val, replacementFunction));
+                    // reset to 0 so that it can't be used anywhere else
+                    loopCountValue = previousLoopCountValue;
+                    return resultNode;
+                }
+                else
+                {
+                    replStr = (string)repl.value;
+                    return new JNode(regex.Replace(val, replStr));
+                }
             }
-            return new JNode(((JRegex)toReplace).regex.Replace(val, replStr));
+            replStr = (string)repl.value;
+            string toReplaceStr = (string)toReplace.value;
+            return new JNode(val.Replace(toReplaceStr, replStr));
         }
 
         /// <summary>
@@ -2595,13 +2688,13 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// if first arg is true, returns second arg. Else returns first arg.
+        /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns first arg.
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
         public static JNode IfElse(List<JNode> args)
         {
-            return (bool)args[0].value ? args[1] : args[2];
+            return ToBoolHelper(args[0]) ? args[1] : args[2];
         }
 
         public static JNode Log(List<JNode> args)
@@ -2637,6 +2730,42 @@ namespace JSON_Tools.JSON_Tools
         public static JNode IsNa(List<JNode> args)
         {
             return new JNode(double.IsNaN(Convert.ToDouble(args[0].value)));
+        }
+
+        /// <summary>
+        /// same "truthiness" rules as JavaScript and Python:<br></br>
+        /// * if val is bool, return val<br></br>
+        /// * if val is integer or number, return val != 0<br></br>
+        /// * if val is string or array or object, return val.length > 0<br></br>
+        /// * if val is null, return false<br></br>
+        /// * if val is any other type (incl. regex, datetime), return true
+        /// </summary>
+        /// <param name="val"></param>
+        public static bool ToBoolHelper(JNode val)
+        {
+            switch (val.type)
+            {
+            case Dtype.BOOL:  return (bool)val.value;
+            case Dtype.INT:   return 0L != (long)val.value;
+            case Dtype.FLOAT: return 0d != (double)val.value;
+            case Dtype.STR:   return 0 < ((string)val.value).Length;
+            case Dtype.ARR:   return 0 < ((JArray)val).Length;
+            case Dtype.OBJ:   return 0 < ((JObject)val).Length;
+            case Dtype.NULL:  return false;
+            case Dtype.REGEX: return 0 < ((JRegex)val).regex.ToString().Length;
+            default:          return true;
+            }
+        }
+
+        /// <summary>
+        /// bool(x: anything) -> boolean<br></br>
+        /// see ArgFunction.ToBoolHelper for truthiness rules (similar to Python and JavaScript)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode ToBool(List<JNode> args)
+        {
+            return new JNode(ToBoolHelper(args[0]));
         }
 
         public static JNode ToStr(List<JNode> args)
@@ -2770,41 +2899,6 @@ namespace JSON_Tools.JSON_Tools
             throw new ArgumentException("Cannot convert any objects to JNode except null, long, double, bool, string, List<object>, or Dictionary<string, object");
         }
 
-        /// <summary>
-        /// Recursively extract the values from a JNode, converting JArrays into lists of objects,
-        /// JObjects into Dictionaries mapping strings to objects, and everything else to its value.
-        /// </summary>
-        /// <param name="node"></param>
-        /// <returns></returns>
-        public static object JNodeToObjects(JNode node)
-        {
-            // if it's not an obj, arr, or unknown, just return its value
-            if ((node.type & Dtype.ITERABLE) == 0)
-            {
-                return node.value;
-            }
-            if (node.type == Dtype.UNKNOWN)
-            {
-                return (CurJson)node;
-            }
-            if (node is JObject onode)
-            {
-                var dic = new Dictionary<string, object>();
-                foreach (KeyValuePair<string, JNode> kv in onode.children)
-                {
-                    dic[kv.Key] = JNodeToObjects(kv.Value);
-                }
-                return dic;
-            }
-            var arr = new List<object>();
-            foreach (JNode val in ((JArray)node).children)
-            {
-                arr.Add(JNodeToObjects(val));
-            }
-            return arr;
-        }
-
-        
         public static Dictionary<string, ArgFunction> FUNCTIONS =
         new Dictionary<string, ArgFunction>
         {
@@ -2826,11 +2920,12 @@ namespace JSON_Tools.JSON_Tools
             ["iterable"] = new ArgFunction(IsExpr, "iterable", Dtype.BOOL, 1, 1, false, new Dtype[] {Dtype.ANYTHING}),
             ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ}),
             ["len"] = new ArgFunction(Len, "len", Dtype.INT, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
+            ["loop"] = new ArgFunction(LoopCount, "loop", Dtype.INT, 0, 0, false, new Dtype[] {}, false),
             ["max"] = new ArgFunction(Max, "max", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
-            ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
+            ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
-            ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ARR_OR_OBJ, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
+            ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
@@ -2849,8 +2944,9 @@ namespace JSON_Tools.JSON_Tools
             ["zip"] = new ArgFunction(Zip, "zip", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] {Dtype.ARR, Dtype.ARR, /* any # of args */ Dtype.ARR }),
             // VECTORIZED FUNCTIONS
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["bool"] = new ArgFunction(ToBool, "bool", Dtype.BOOL, 1, 1, true, new Dtype[] { Dtype.ANYTHING }),
             ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
-            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING}),
             ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
@@ -2871,7 +2967,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
             ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 1, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR}),
+            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING})
         };

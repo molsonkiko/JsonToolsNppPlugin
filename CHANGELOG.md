@@ -24,8 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
-- __IMPROVE REGEX-REPLACE, REGEX SEARCH FUNCTIONS IN REMESPATH__
-- __MAKE FIRST CLASS FUNCTIONS A THING IN REMESPATH__
 - __ADD ABILITY TO REGEX SEARCH DOCUMENT UNPARSED DOCUMENT (USING REMESPATH)__
 - If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
 - *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance. 
@@ -40,14 +38,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
+- `loop()` function used in `s_sub` callbacks is not thread-safe. This doesn't matter right now because RemesPath is single-threaded, but it could matter in the future.
 
-## [5.9.0] - (UNRELEASED) 2023-MM-DD
+## [6.0.0] - (UNRELEASED) 2023-MM-DD
 
 ### Added
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
-2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v59)
-3. [`s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` non-vectorized arg function](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
+2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
+3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` non-vectorized arg function](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
+*
 4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
 
 ### Fixed

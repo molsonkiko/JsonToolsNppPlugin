@@ -278,15 +278,36 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("flatten(@.guzo, 2)", "[1, 2, 3]"),
                 new Query_DesiredResult("min_by(@.foo, 1)", "[0, 1, 2]"),
                 new Query_DesiredResult("min_by(@.foo, -3)", "[0, 1, 2]"),
-                new Query_DesiredResult("min_by(@.foo, -1)", "[0, 1, 2]"),
+                new Query_DesiredResult("min_by(@.foo, @[1] % 4)", "[3.0, 4.0, 5.0]"), // min_by with function as input
                 new Query_DesiredResult("min_by(@.foo[:]{a: @[0], b: @[1], c: @[2]}, a)", "{\"a\": 0, \"b\": 1, \"c\": 2}"),
                 new Query_DesiredResult("s_sub(@.bar.b, g`a(\\`?)`, `$1z`)", "[\"`zg\", \"bzh\"]"), // regex to_replace
                 new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, `.`, ``)", "[\"120\", \"15\", \"2\"]"), // string to_replace with special char
                 new Query_DesiredResult("s_sub(j`[\"12.0\", \"1.5\", \"2\"]`, g`.`, ``)", "[\"\", \"\", \"\"]"), // regex to_replace with special char
+                new Query_DesiredResult("s_sub(`a b c`, g`[a-z]`, @[0] * loop())", "\"a bb ccc\""),
+                // loop() within an s_sub call nested inside an s_sub callback
+                new Query_DesiredResult("s_sub(\r\n" +
+                                        "    `11. the foo\\n" +
+                                             "+5. big bar\\n" +
+                                             "-3. baby baz`,\r\n" +
+                                        "   g`^(INT)\\. (\\w+)`,\r\n" + // an integer (capture group 1) followed by . at the start of a line,
+                                                                         // then a word (capture group 2) 
+                                        "   s_sub(\r\n" +
+                                        "       @[2],\r\n" + // replace all the letters from b-g in the second capture group with that letter repeated n+1 times
+                                                             // where n is the number of replacements that have been made in the second capture group
+                                        "       g`[a-g]`,\r\n" +
+                                        "       @[0]*( loop() + 1 )" +
+                                        "   )\r\n" +
+                                        "   + str( int(@[1]) * loop() )\r\n" + // add the replaced second capture group to the first capture group as an integer
+                                                                               // multiplied by the number of replacements so far in the input string
+                                        ")",
+                    "\"thee11 foo\\nbbiggg10 bar\\nbbaaabbbby-9 baz\""),
                 new Query_DesiredResult("isna(@.foo[0])", "[false, false, false]"),
                 new Query_DesiredResult("s_slice(@.bar.b, 2)", "[\"g\", \"h\"]"),
                 new Query_DesiredResult("s_slice(@.bar.b, ::2)", "[\"ag\", \"bh\"]"),
                 new Query_DesiredResult("str(@.foo[2])", "[\"6.0\", \"7.0\", \"8.0\"]"),
+                new Query_DesiredResult("bool(j`[\"a\", \"\",   [] , [1,7],   {} , {\"a\": 1},  null, true, false,   0  ,  3  ,  0.0 , -17.0,  -2 ,  4.5]`)",
+                                             "  [true, false, false, true , false,    true   , false, true, false, false, true, false,  true, true, true]"
+                    ),
                 new Query_DesiredResult("int(@.foo[1])", "[3, 4, 5]"),
                 new Query_DesiredResult("s_slice(str(@.foo[2]), 2:)", "[\"0\", \"0\", \"0\"]"),
                 new Query_DesiredResult("s_slice(str(@.foo[2]), ::-1)", "[\"0.6\", \"0.7\", \"0.8\"]"),
@@ -303,6 +324,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("value_counts(j`[\"a\", \"b\", \"c\", \"c\", \"c\", \"b\"]`, true)", "[[\"c\", 3], [\"b\", 2], [\"a\", 1]]"),
                 new Query_DesiredResult("sort_by(value_counts(j`[1, 2, 1, 3, 1]`), 0)", "[[1, 3], [2, 1], [3, 1]]"),
                 new Query_DesiredResult("sort_by(j`[[1, 2], [3, 1], [4, -1]]`, -1)", "[[4, -1], [3, 1], [1, 2]]"),
+                new Query_DesiredResult("sort_by(j`[\"abc\", \"defg\", \"h\", \"ij\"]`, s_len(@), true)", "[\"defg\", \"abc\", \"ij\", \"h\"]"), // sort_by with function as input
                 new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
                 new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
                 new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
@@ -314,6 +336,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("s_count(@.bar.b, g`[a-z]`)", "[2, 3]"),
                 new Query_DesiredResult("ifelse(@.foo[0] > quantile(@.foo[0], 0.5), `big`, `small`)", "[\"small\", \"small\", \"big\"]"),
                 new Query_DesiredResult("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
+                new Query_DesiredResult("ifelse(j`[\"\", 3, [], {\"a\": 1}]`, y, n)", "[\"n\", \"y\", \"n\", \"y\"]"), // truthiness with ifelse
                 new Query_DesiredResult("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
                 new Query_DesiredResult("s_strip(` a dog!\t`)", "\"a dog!\""),
                 new Query_DesiredResult("log(2.718281828459045 ** @.foo[0])", $"[0.0, 1.0, 2.0]"),
@@ -408,6 +431,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("str(@.foo[0]{a: @[0], b: @[1]})", "{\"a\": \"0\", \"b\": \"1\"}"),
                 new Query_DesiredResult("max_by(@.foo[:]{-@}[0], 1)", "[0, -1, -2]"),
                 new Query_DesiredResult("max_by(@.foo[:]{-@}[0], -2)", "[0, -1, -2]"),
+                new Query_DesiredResult("max_by(@.foo, @[2] % 4)", "[0, 1, 2]"), // max_by with function as input
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
                 new Query_DesiredResult("@{foo: .125E3, $baz: 0x2eFb, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 0xabcdefABCDEF}", // JSON5-compliant unquoted strings
@@ -755,7 +779,6 @@ namespace JSON_Tools.Tests
                 new []{"+ a", "1"}, // unary functions with invalid args
                 new []{"+[]", "1" },
                 new []{"+{}", "1" }, 
-                new []{"not g`a`", "1"},
                 new []{"-a", "1"},
                 new []{"-[[]]", "1" },
                 new []{"-@", "[{}]"},

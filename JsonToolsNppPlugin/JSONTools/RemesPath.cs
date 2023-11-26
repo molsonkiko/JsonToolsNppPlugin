@@ -910,10 +910,13 @@ namespace JSON_Tools.JSON_Tools
             JNode x = func.args[0];
             bool other_callables = false;
             List<JNode> other_args = new List<JNode>(func.args.Count - 1);
+            bool[] argsCanBeFunctions = new bool[func.args.Count - 1]; // for each othe_args index, whether that arg can be a function
+            bool firstArgCanBeFunction = (func.function.TypeOptions(0) & Dtype.FUNCTION) != 0;
             for (int ii = 0; ii < func.args.Count - 1; ii++)
             {
                 JNode arg = func.args[ii + 1];
                 if (arg is CurJson) { other_callables = true; }
+                argsCanBeFunctions[ii] = (func.function.TypeOptions(ii + 1) & Dtype.FUNCTION) != 0;
                 other_args.Add(arg);
             }
             Dtype out_type = func.function.OutputType(x);
@@ -929,11 +932,11 @@ namespace JSON_Tools.JSON_Tools
                         // x is a function of the current JSON, as is at least one other argument
                         JNode arg_outfunc(JNode inp)
                         {
-                            var itbl = xcur.function(inp);
+                            var itbl = firstArgCanBeFunction ? xcur : xcur.function(inp);
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                                all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                             }
                             if (itbl is JObject otbl)
                             {
@@ -973,7 +976,7 @@ namespace JSON_Tools.JSON_Tools
                         JNode arg_outfunc(JNode inp)
                         {
                             
-                            var itbl = xcur.function(inp);
+                            var itbl = firstArgCanBeFunction ? xcur : xcur.function(inp);
                             if (itbl is JObject otbl)
                             {
                                 var dic = new Dictionary<string, JNode>(otbl.Length);
@@ -1013,7 +1016,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                                all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                             }
                             foreach (KeyValuePair<string, JNode> xkv in xobj.children)
                             {
@@ -1034,7 +1037,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                                all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                             }
                             foreach (JNode val in xarr.children)
                             {
@@ -1053,7 +1056,7 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                                all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                             }
                             all_args[0] = x;
                             return func.function.Call(all_args);
@@ -1080,9 +1083,9 @@ namespace JSON_Tools.JSON_Tools
                             for (int ii = 0; ii < other_args.Count; ii++)
                             {
                                 JNode other_arg = other_args[ii];
-                                all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                                all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                             }
-                            all_args[0] = xcur.function(inp);
+                            all_args[0] = firstArgCanBeFunction ? xcur : xcur.function(inp);
                             return func.function.Call(all_args);
                         }
                         return new CurJson(out_type, arg_outfunc);
@@ -1096,7 +1099,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         JNode arg_outfunc(JNode inp)
                         {
-                            all_args[0] = xcur.function(inp);
+                            all_args[0] = firstArgCanBeFunction ? xcur : xcur.function(inp);
                             return func.function.Call(all_args);
                         }
                         return new CurJson(out_type, arg_outfunc);
@@ -1111,7 +1114,7 @@ namespace JSON_Tools.JSON_Tools
                         for (int ii = 0; ii < other_args.Count; ii++)
                         {
                             JNode other_arg = other_args[ii];
-                            all_args[ii + 1] = other_arg is CurJson cjoa ? cjoa.function(inp) : other_arg;
+                            all_args[ii + 1] = (other_arg is CurJson cjoa && !argsCanBeFunctions[ii]) ? cjoa.function(inp) : other_arg;
                         }
                         all_args[0] = x;
                         return func.function.Call(all_args);
@@ -1826,7 +1829,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     // if a variable is referenced in the indexers (e.g., "var x = @; range(10)[:]->at(x, @ % len(x))",
                     // we also need to wait until runtime to evaluate the indexers
-                    if (context.TryGetFirstVariableNameReferencedInRange(indStartEndPos, pos, out _))
+                    if (context.AnyVariableReferencedInRange(indStartEndPos, pos))
                     {
                         JNode idx_func_var_ref(JNode _)
                         {

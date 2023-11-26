@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -47,7 +46,8 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         DATETIME = 2048,
         /// <summary>
-        /// a JNode has this type if and only if it is CurJson
+        /// NO JNODES ACTUALLY HAVE THE FUNCTION TYPE.<br></br>
+        /// It is used in RemesPath to distinguish CurJson from non-CurJson
         /// </summary>
         FUNCTION = 4096,
         /********* COMPOSITE TYPES *********/
@@ -1631,7 +1631,7 @@ namespace JSON_Tools.JSON_Tools
         public Func<JNode, JNode> function;
         public override bool CanOperate => true;
 
-        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type /*| Dtype.FUNCTION*/, 0)
+        public CurJson(Dtype type, Func<JNode, JNode> function) : base(null, type, 0)
         {
             this.function = function;
         }
@@ -1640,7 +1640,7 @@ namespace JSON_Tools.JSON_Tools
         /// A CurJson node that simply stands in for the current json itself (represented by @)
         /// Its function is the identity function.
         /// </summary>
-        public CurJson() : base(null, Dtype.UNKNOWN /*| Dtype.FUNCTION*/, 0)
+        public CurJson() : base(null, Dtype.UNKNOWN, 0)
         {
             function = Identity;
         }
@@ -1899,18 +1899,11 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// set varReferenced to the first variable name referenced at any index in tokens &gt;= startIndex and &lt; endIndex, and return true<br></br>
-        /// if no variable names referenced in that range of indices, varReferenced = null and return false
+        /// return true if and only if a variable is referenced at any index ii in tokens such that ii &gt;= startIndex and ii &lt; endIndex
         /// </summary>
-        public bool TryGetFirstVariableNameReferencedInRange(int startIndex, int endIndex, out string varReferenced)
+        public bool AnyVariableReferencedInRange(int startIndex, int endIndex)
         {
-            varReferenced = null;
-            for (int ii = startIndex; ii < endIndex; ii++)
-            {
-                if (tokenIndicesOfVariableReferences.TryGetValue(ii, out varReferenced))
-                    return true;
-            }
-            return false;
+            return tokenIndicesOfVariableReferences.Keys.Any(x => x >= startIndex && x < endIndex);
         }
 
         /// <summary>

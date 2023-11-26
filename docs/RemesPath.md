@@ -394,15 +394,22 @@ Returns the number of key-value pairs in `x` (if an object) or the number of ele
 Returns a floating-point number equal to the maximum value in an array.
 
 ----
-`max_by(x: array, k: int | str) -> array | object`
+`max_by(x: array, k: int | str | function) -> anything`
 
+* *If `k` is a function:*
+    * Return the child `maxchild` in `x` such that `k(maxchild) >= k(child2)` for every other child `child2` in `x`.
 * If `x` is an array of *arrays*:
-   * If `k` is not an int or if `k >= len(x) or k < -len(x)`, throw an error.
-   * Return the subarray `maxarr` such that `maxarr[k] >= subarr[k]` for all sub-arrays `subarr` in `x`.
-   * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed at all.
+    * If `k` is not an int or if `k >= len(x) or k < -len(x)`, throw an error.
+    * Return the subarray `maxarr` such that `maxarr[k] >= subarr[k]` for all other sub-arrays `subarr` in `x`.
+    * NOTE: prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed at all.
 * If `x` is an array of *objects*:
     * If `k` is not a string, throw an error.
-   * Return the subobject `maxobj` such that `maxobj[k] >= subobj[k]` for all sub-objects `subobj` in `x`.
+    * Return the subobject `maxobj` such that `maxobj[k] >= subobj[k]` for all other sub-objects `subobj` in `x`.
+
+__Examples:__
+* With `[[1, 2], [2, 0], [3, -1]]` as input, `max_by(@, 0)` returns `[3, -1]` because that is the subarray with the largest first element.
+* With `[{"a": 1, "b": 3}, {"a": 2, "b": 2}, {"a": 3, "b": 1}]` as input, `max_by(@, b)` returns `{"a": 1, "b": 3}` because that is the subobject with the largest value associated with key `b`.
+* With `["a", "bbb", "cc"]` as input, `max_by(@, s_len(@))` returns `"bbb"`, because that is the child with the greatest length (recall that `s_len` returns the length of a string).
 
 ----
 `min(x: array) -> float`
@@ -412,7 +419,7 @@ Returns a floating-point number equal to the minimum value in an array.
 ----
 `min_by(x: array, k: int | str) -> array | object`
 
-See `max_by`.
+See `max_by`, but minimizing instead of maximizing.
 
 ---
 `pivot(x: array[object | array], by: str | int, val_col: str | int, ...: str | int) -> object[str, array]`
@@ -485,7 +492,7 @@ Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGEL
 ---
 `randint(start: int, end: int=null) -> int`
 
-*Added in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
 Returns a random integer greater than or equal to `start` and less than `end`.
 If `end` is not specified, instead return a random integer greater than or equal to 0 and less than `start`.
 
@@ -523,6 +530,11 @@ Analogous to SQL `ORDER BY`.
 By default, these sub-iterables are sorted ascending. If `descending` is `true`, they will instead be sorted descending.
 
 Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices were not allowed for the `k` argument.
+
+__Examples:__
+* With `[[1, 2], [2, 0], [3, -1]]` as input, `sort_by(@, 1)` returns `[[3,-1],[2,0],[1,2]]` because it sorts ascending by the second element.
+* With `[{"a": 1, "b": 3}, {"a": 2, "b": 2}, {"a": 3, "b": 1}]` as input, `sort_by(@, a, true)` returns `[{"a":3,"b":1},{"a":2,"b":2},{"a":1,"b":3}]` because it sorts ascending by key `a`.
+* With `["a", "bbb", "cc"]` as input, `sort_by(@, s_len(@))` returns `["a", "cc", "bbb"]`, because the children are ordered by string length ascending
 
 ----
 `sorted(x: array, descending: bool = false)`
@@ -607,6 +619,11 @@ All the vectorized string functions have names beginning with `s_`.
 
 Returns the absolute value of x.
 
+---
+`bool(x: anything) -> bool`
+
+Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator](#unary-operators).
+
 ----
 `float(x: number) -> number`
 
@@ -615,7 +632,7 @@ Returns a 64-bit floating-point number equal to x.
 ----
 `ifelse(cond: bool, if_true: anything, if_false: anything) -> anything`
 
-Returns `if_true` if `cond` is `true`, otherwise returns `if_false`.
+Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to true), otherwise returns `if_false`.
 
 ----
 `int(x: number) -> int`
@@ -712,7 +729,7 @@ Returns the number of times substring/regex `sub` occurs in `x`.
 ---
 `s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"", ...: int)`
 
-__[Introduced in v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd).__
+__[Introduced in v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
 
 __Arguments:__
 * `csvText` (1st arg): the text of a CSV file encoded as a JSON string
@@ -782,7 +799,7 @@ The query ``s_csv(@, 7, `,`, `\n`, `'`, 1, -3)`` will correctly parse this as *a
 ---
 `s_fa(x: string, pat: regex | string, ...: int) -> array[string | number] | array[array[string | number]]`
 
-__Added in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd).__
+__Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
 
 * If `pat` is a regex with no capture groups or one capture group, returns an array of the substrings of `x` that match `pat`.
 * If `pat` has multiple capture groups, returns an array of subarrays of substrings, where each subarray has a number of elements equal to the number of capture groups.
@@ -804,7 +821,7 @@ __Examples:__
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
 
-__As of [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd), *this function is DEPRECATED in favor of `s_fa`*.__
+__As of [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), *this function is DEPRECATED in favor of `s_fa`*.__
 
 Returns an array of all the substrings in `x` that match `sub`.
 
@@ -858,21 +875,45 @@ If `sep` is a regex:
 Strips the whitespace off both ends of x.
 
 ----
-`s_sub(x: string, to_replace: regex | string, replacement: string) -> string`
+`s_sub(x: string, to_replace: regex | string, replacement: string | function) -> string`
 
 Replaces all instances of string/regex `to_replace` in `x` with `replacement`.
 
-If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101---2023-03-02). Prior to that, this function treated `to_replace` as a regex no matter what.*
-
-If `to_replace` is a regex, replaces all matches to the `to_replace` pattern with `replacement`.
-
-See the [C# regular expressions reference on substitutions](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
+* If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101---2023-03-02). Prior to that, this function treated `to_replace` as a regex no matter what.*
+* If `to_replace` is a regex:
+    1. if `replacement` is a string, replaces every instance of `to_replace` with the `replacement` string according to  [C# regex substitution syntax](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
+    2. If `replacement` is a function *(which must take an array as input and return a string)*, replaces every instance of `to_replace` with that function called on the array of strings captured by the regex. __New in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
+        * Within the callback function, you can reference `loop()`, a no-argument function that returns 1 + the number of replacements made so far. 
 
 __Examples:__
 
-* ``s_sub(abbbbbc, g`b+`, z)`` returns `azc`.
+* ``s_sub(abbbbbcb, g`b+`, z)`` returns `azcz`.
 * ``s_sub(abbbbbc, `b+`, z)`` returns `abbbbbc`, because `b+` is not being matched as a regex. *Prior to version 4.10.1, this would return the same thing as ``s_sub(abbbbbc, g`b+`, z)``.*
 * ``s_sub(abbbbbc, b, z)`` returns `azzzzzc`, because every instance of `b` is replaced by `z`.
+
+Consider as input the JSON string version of the following:
+```
+1. Frank Foomeister
+2. Bob Barheim
+3. Bill Bazenstein
+```
+The regex-replace ``s_sub(@, g`^(\d+)\. (\w+)`, @[2] + str(int(@[1]) * loop()))`` would return
+```
+Frank1 Foomeister
+Bob4 Barheim
+Bill9 Bazenstein
+```
+Let's unpack how that worked:
+* the regex we're searching for, ``g`^(\d+)\. (\w+)` ``, matches an integer (`(\d+)`, the first capture group) at the start of a line, then `.`, then a space, then a word (`(\w+)`, the second capture group).
+* every time the regex is matched, the callback function `@[2] + str(int(@[1]) * loop())` is invoked on an array containing `[the captured string, the first capture group, the second capture group]`.
+* This concatenates the second capture group to the integer value of the first capture group multiplied by `loop()`, which is `1 + the number of replacements made so far`.
+* Thus the callback function returns `Frank` + `1 * 1` when called on the line `1. Frank Foomeister` because the match array is `["1. Frank", "Frank", "1"]`.
+* On the second match, `loop()` returns `2`, so we the callback function returns `Bob` + `2 * 2` when invoked on `2. Bob Barheim`.
+
+__Notes on regular expressions in `s_sub`:__
+
+1. *Like the function `s_fa`, `s_sub` uses `^` and `$` to match the start and end of lines*, rather than the start and end of a string. Elsewhere in RemesPath, `^` and `$` match only at the start and end of a string.
+2. *`(INT)` and `(NUMBER)` match integers and floating point decimals, respectively, just as in `s_fa` above.* `(?:INT)` and `(?:NUMBER)` are non-capturing versions of the same regular expressions.
 
 ----
 `s_upper(x: string) -> string`
@@ -1062,9 +1103,9 @@ will return
 ```
 because when baz is redefined, it just uses the value of baz that was previously defined, and no weird infinite loops of self-reference will happen.
 
-## For loops/Loop variables *(added in v5.9)* ##
+## For loops/Loop variables *(added in v6.0)* ##
 
-Beginning in [v5.9](/CHANGELOG.md#590---unreleased-2023-mm-dd), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
+Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
 
 When you assign a variable `x` to an array with the `for` keyword, here is what happens:
 ```
