@@ -907,6 +907,7 @@ namespace JSON_Tools.JSON_Tools
                     return new CurJson(func.function.type, blah => func.function.Call(func.args));
                 return func.function.Call(func.args);
             }
+            func.function.argsTransform?.Transform(func.args);
             JNode x = func.args[0];
             bool other_callables = false;
             List<JNode> other_args = new List<JNode>(func.args.Count - 1);

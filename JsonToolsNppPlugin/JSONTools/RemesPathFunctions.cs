@@ -969,6 +969,10 @@ namespace JSON_Tools.JSON_Tools
         /// if false, the function is random
         /// </summary>
         public bool isDeterministic;
+        /// <summary>
+        /// transforms arguments at compile time
+        /// </summary>
+        public ArgsTransform argsTransform;
 
         /// <summary>
         /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
@@ -983,7 +987,8 @@ namespace JSON_Tools.JSON_Tools
             int maxArgs,
             bool isVectorized,
             Dtype[] inputTypes,
-            bool isDeterministic = true)
+            bool isDeterministic = true,
+            ArgsTransform argsTransform = null)
         {
             Function = function;
             this.name = name;
@@ -993,6 +998,7 @@ namespace JSON_Tools.JSON_Tools
             this.isVectorized = isVectorized;
             this.inputTypes = inputTypes;
             this.isDeterministic = isDeterministic;
+            this.argsTransform = argsTransform;
         }
 
         /// <summary>
@@ -2408,7 +2414,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="regexOrString"></param>
         /// <returns></returns>
-        public static Regex TransformRegex(JNode regexOrString)
+        public static JRegex TransformRegex(JNode regexOrString)
         {
             string pat = regexOrString is JRegex jregex ? jregex.regex.ToString() : (string)regexOrString.value;
             string fixedPat = Regex.Replace(pat, @"(?<!\\)\((?:\?:)?(?:INT|NUMBER)\)", m =>
@@ -2418,7 +2424,7 @@ namespace JSON_Tools.JSON_Tools
                     return mtch[3] == 'I' ? NONCAPTURING_INT_REGEX_STR : NONCAPTURING_FLOAT_REGEX_STR;
                 return mtch[1] == 'I' ? CAPTURED_INT_REGEX_STR : CAPTURED_FLOAT_REGEX_STR;
             });
-            return new Regex(fixedPat, RegexOptions.Compiled | RegexOptions.Multiline);
+            return new JRegex(new Regex(fixedPat, RegexOptions.Compiled | RegexOptions.Multiline));
         }
 
         /// <summary>
@@ -2435,7 +2441,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="nColumns">number of columns (only used for s_csv)</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
-        public static JNode StrFindAllHelper(string text, JNode regexOrString, List<JNode> args, int firstOptionalArgNum, string funcName, int nColumns=-1)
+        public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int nColumns=-1)
         {
             var columnNumbersToParseAsNumber = args.LazySlice($"{firstOptionalArgNum}:").Select(x =>
             {
@@ -2447,7 +2453,6 @@ namespace JSON_Tools.JSON_Tools
                 return xVal;
             })
                 .ToArray<int>();
-            Regex rex = TransformRegex(regexOrString);
             Array.Sort(columnNumbersToParseAsNumber);
             int nextMatchStart = 0;
             var rows = new List<JNode>();
@@ -2519,21 +2524,11 @@ namespace JSON_Tools.JSON_Tools
             if (args[1].type != Dtype.INT)
                 throw new RemesPathArgumentException("second arg (nColumns) to s_csv must be integer", 1, FUNCTIONS["s_csv"]);
             int nColumns = Convert.ToInt32(args[1].value);
-            char delim = ',';
-            string newline = "\r\n";
-            char quote = '"';
-            if (args.Count > 2)
-            {
-                delim = args[2].type == Dtype.NULL ? ',' : ((string)args[2].value)[0];
-                if (args.Count > 3)
-                {
-                    newline = args[3].type == Dtype.NULL ? "\r\n" : (string)args[3].value;
-                    if (args.Count > 4)
-                        quote = args[4].type == Dtype.NULL ? '"' : ((string)args[4].value)[0];
-                }
-            }
+            char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
+            string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
+            char quote = args.Count > 4 ? ((string)args[4].value)[0] : '"';
             string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
-            return StrFindAllHelper(text, new JNode(rexPat), args, 5, "s_csv", nColumns);
+            return StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 5, "s_csv", nColumns);
         }
 
         /// <summary>
@@ -2547,8 +2542,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode StrFindAll(List<JNode> args)
         {
             string text = (string)args[0].value;
-            JNode rexNode = args[1];
-            return StrFindAllHelper(text, rexNode, args, 2, "s_fa");
+            Regex rex = ((JRegex)args[1]).regex;
+            return StrFindAllHelper(text, rex, args, 2, "s_fa");
         }
 
         public static JNode StrSplit(List<JNode> args)
@@ -2607,11 +2602,11 @@ namespace JSON_Tools.JSON_Tools
         /// Returns:<br></br>
         /// * if toReplace is a string, a new string with all instances of toReplace in s replaced with repl<br></br>
         /// * if toReplace is a regex and repl is a string, uses .NET regex-replacement syntax (see https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions)<br></br>
-        /// * if toReplace is a regex and repl is a function, returns a <br></br>
+        /// * if toReplace is a regex and repl is a function (must take an array as input and return a string), returns that function applied to the "match array" for each regex match. The "match array" always has the captured string as its first element and the n^th capture group as its (n+1)^th element. You can access the number of matches made so far within the callback using the loop() function.<br></br>
         /// EXAMPLES:<br></br>
         /// * s_sub(abbbbc, g`b+`, z) -> "azc"<br></br>
         /// * s_sub(`123 123`, `1`, `z`) -> "z23 z23"<br></br>
-        /// * s_sub(g`a b c`, g`[a-z]`, @[0]*loop())
+        /// * s_sub(`1a 2b 3c`, g`(\d)([a-z])`, (@[2]*loop()) + @[1]) -> "a1 bb2 ccc3" (the callback function (arg 3) returns any instance of a digit, then a letter letter with (that letter * (the number of matches made so far + 1), followed by the digit)<br></br>
         /// <i>NOTE: prior to JsonTools 4.10.1, it didn't matter whether arg 2 was a string or regex; it always treated it as a regex.</i> 
         /// </summary>
         /// <returns>new JNode of type = Dtype.STR with all replacements made</returns>
@@ -2623,7 +2618,7 @@ namespace JSON_Tools.JSON_Tools
             string replStr;
             if (toReplace is JRegex jRegex)
             {
-                Regex regex = TransformRegex(jRegex);
+                Regex regex = jRegex.regex;
                 if (repl is CurJson cj)
                 {
                     Func<JNode, JNode> fun = cj.function;
@@ -2958,8 +2953,8 @@ namespace JSON_Tools.JSON_Tools
             ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
-            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}),
-            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.INT}),
+            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((2, Dtype.NULL, x => new JNode(",")), (3, Dtype.NULL, x => new JNode("\r\n")), (4, Dtype.NULL, x => new JNode("\"")))),
+            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex))),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
@@ -2967,7 +2962,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
             ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 1, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}),
+            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}, true, new ArgsTransform((1, Dtype.REGEX, TransformRegex))),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING})
         };
@@ -2988,6 +2983,37 @@ namespace JSON_Tools.JSON_Tools
         public JNode Call()
         {
             return function.Call(args);
+        }
+    }
+
+    /// <summary>
+    /// used to transform the args of an ArgFunction at compile time, before the function is ever called.<br></br>
+    /// this may be useful for replacing null optional args with their default value, or performing expensive transformations<br></br>
+    /// like the "(INT)" -> (integer-matching regex) transformation of regexes for s_sub and s_fa.
+    /// </summary>
+    public class ArgsTransform
+    {
+        private (int index, Dtype typesToTransform, Func<JNode, JNode> tranformer)[] transformers;
+
+        public ArgsTransform(params (int index, Dtype typesToTransform, Func<JNode, JNode> transformer)[] args)
+        {
+            transformers = args;
+        }
+
+        /// <summary>
+        /// if args[Index] has a type in TypesToTransform, replace args[Index] with Transformer(args[Index])
+        /// </summary>
+        public void Transform(List<JNode> args)
+        {
+            foreach ((int index, Dtype typesToTransform, Func<JNode, JNode> transformer) in transformers)
+            {
+                if (args.Count > index)
+                {
+                    var arg = args[index];
+                    if ((arg.type & typesToTransform) != 0)
+                        args[index] = transformer(arg);
+                }
+            }
         }
     }
 }
