@@ -6,9 +6,7 @@ Uses an algorithm to flatten nested JSON.
 */
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -798,52 +796,33 @@ namespace JSON_Tools.JSON_Tools
 		}
 
 		/// <summary>
-		/// If a string contains the delimiter, wrap that string in quotes.<br></br>
-		/// Also replace any newlines with "\\n".<br></br>
-		/// Otherwise, leave it alone.
+		/// If a string contains the delimiter or a newline, append (the string wrapped in quotes) to sb<br></br>
+		/// Otherwise, append s to sb.
 		/// </summary>
 		/// <param name="s"></param>
 		/// <param name="delim"></param>
 		/// <param name="quote_char"></param>
 		/// <returns></returns>
-		private string ApplyQuotesIfNeeded(string s, char delim, char quote_char)
+		private void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char, string newline)
 		{
-			StringBuilder sb = new StringBuilder();
-			if (s.Contains(delim))
+			if (s.IndexOf(delim) >= 0 || s.IndexOf(newline) >= 0)
 			{
-				// if the string contains the delimiter, we need to wrap it in quotes
+				// if the string contains the delimiter or a newline, we need to wrap it in quotes
 				// we also need to escape all literal quote characters in the string
-				// regardless of what happens, we need to replace internal newlines with "\\n"
-				// so we don't get fake rows
 				sb.Append(quote_char);
 				foreach (char c in s)
-                {
+				{
 					if (c == quote_char)
 					{
 						sb.Append('\\');
 						sb.Append(quote_char);
 					}
-					else if (c == '\n')
-						sb.Append("\\n");
-					else if (c == '\r')
-						sb.Append("\\r");
 					else
 						sb.Append(c);
-                }
+				}
 				sb.Append(quote_char);
-				return sb.ToString();
 			}
-			// just replace newlines
-			foreach (char c in s)
-            {
-				if (c == '\n')
-					sb.Append("\\n");
-                else if (c == '\r')
-                    sb.Append("\\r");
-                else
-					sb.Append(c);
-            }
-			return sb.ToString();
+			else sb.Append(s);
 		}
 
 		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false, string newline = "\n")
@@ -871,7 +850,7 @@ namespace JSON_Tools.JSON_Tools
 			for (int ii = 0; ii < header.Length; ii++)
 			{
 				string col = header[ii];
-				sb.Append(ApplyQuotesIfNeeded(col, delim, quote_char));
+				ApplyQuotesIfNeeded(sb, col, delim, quote_char, newline);
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);
@@ -891,7 +870,7 @@ namespace JSON_Tools.JSON_Tools
 					switch (val.type)
 					{
 						case Dtype.STR:
-							sb.Append(ApplyQuotesIfNeeded((string)val.value, delim, quote_char));
+							ApplyQuotesIfNeeded(sb, (string)val.value, delim, quote_char, newline);
 							break; // only apply quotes if internal delim
 						case Dtype.DATE:
 							sb.Append(((DateTime)val.value).ToString("yyyy-MM-dd"));

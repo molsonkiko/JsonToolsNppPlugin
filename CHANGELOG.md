@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     ]
 }
 ```
-3. Add option for users to choose newline in JSON Lines and JSON-to-CSV.
+3. Add option for users to choose newline in JSON Lines.
+4. Option for users to choose whether to escape newlines in CSV files.
  
 ### To Be Changed
 
@@ -47,8 +48,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
 3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` non-vectorized arg function](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
-*
 4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
+
+### Changed
+
+1. The way object keys are represented internally has been changed (*this has no effect on the GUI-based API, but only for developers*). Previously, when pretty-printing and compressing JSON, object keys would be output as is (without escaping special characters), meaning that *prior to v6.0, some strings were not valid object keys (again, this did not affect parsing of JSON, but only some programmatic applications that constructed JOBjects directly without parsing).* Now all strings are valid object keys.
+2. When using the JSON-to-CSV form to create CSV files, newline characters will no longer be escaped in strings. Instead, strings containing newlines will be wrapped in quotes, which should be sufficient to allow most CSV parsers to handle them correctly.
 
 ### Fixed
 
@@ -56,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Fixed some weird issues where mutating a variable in RemesPath could cause re-executing a query on the same input to return a different value. A minimal example: `var x = 1; x = @ + 1; x` would return 1 + (the number of times the query was executed) prior to this fix, but now it will always return `2` as expected. This was also true of a bunch of other things in RemesPath, including [projections and the map operator](/docs/RemesPath.md#projections).
 3. Fix issues where running a RemesPath query with a projection that referenced a variable indexing on a compile-time constant would cause an error. For example, `var x = @; 1->x` should return `@` (the input to the query), but prior to this fix, it would instead cause an error.
 4. Running tests would previously cause clipboard data to be lost irreversably. Now, if the user's clipboard contained text before running tests, the contents of the clipboard are restored to their pre-test values rather than being hijacked. __Non-text data that was copied to the clipboard is still lost when running tests, and I may try to fix that in the future.__ 
+5. `dict` function in RemesPath previously had a bug that could create invalid JSON if the strings to be turned into keys contained special characters (e.g., literal quote chars, `\r`, `\n`).
 
 ## [5.8.0] - 2023-10-09
 

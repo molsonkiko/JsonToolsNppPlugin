@@ -727,7 +727,7 @@ The query `parse(@)` will return
 Returns the number of times substring/regex `sub` occurs in `x`.
 
 ---
-`s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"", ...: int)`
+`s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"", header_handling: string="n", ...: int) -> array[(array[string | number] | object[string | number])]`
 
 __[Introduced in v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
 
@@ -737,7 +737,11 @@ __Arguments:__
 * `delimiter` (3rd arg, default `,`): the column separator
 * `newline` (4th arg default `CR LF`): the newline
 * `quote` (5th arg, default `"`): the character used to wrap columns that contain `newline` or `delimiter`.
-* `...` (6th and subsequent args): the numbers of columns to attempt to parse as numbers. [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. You can pass a negative number here to get the nth-to-last column rather than the nth column.
+* `header_handling` (6th arg, default `n`): how the header row is treated. *Must be one of `n`, `d`, or `h`.* Each of these options will be explained in the list below.
+    * *`n`: skip header row (this is the default)*.                    This would parse the CSV file `"foo,bar\n1,2` as `[["1", "2"]]`
+    * *`h`: include header row*.                                       This would parse the CSV file `"foo,bar\n1,2` as `[["foo", "bar"], ["1", "2"]]`
+    * *`d`: return an array of objects, using the header row as keys.* This would parse the CSV file `"foo,bar\n1,2` as `[{"foo": "1", "bar": "2"}]`
+* `...` (7th and subsequent args): the numbers of columns to attempt to parse as numbers. [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. You can pass a negative number here to get the nth-to-last column rather than the nth column.
 
 __Return value:__
 * if `nColumns` is 1, returns an array of strings
@@ -768,10 +772,9 @@ ond',YUNOB,10/17/2014 0:00,5,z,FALSE
 ```
 Notice that the 8th row of this CSV file has a newline in the middle of the second column, and this is fine, because as discussed above, this column is quoted and newlines are allowed within a quoted column.
 
-The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array of eight 7-string subarrays*, shown below:
+The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array of seven 7-string subarrays (omitting the header)*, shown below:
 ```json
 [
-    ["nums", "names", "cities", "date", "zone", "subzone", "contaminated"],
     ["nan", "Bluds", "BUS", "", "1", "''", "TRUE"],
     ["0.5", "dfsd", "FUDG", "12/13/2020 0:00", "2", "c", "TRUE"],
     ["", "qere", "GOLAR", "", "3", "f", ""],
@@ -782,7 +785,7 @@ The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array
 ]
 ``` 
 
-The query ``s_csv(@, 7, `,`, `\n`, `'`, 1, -3)`` will correctly parse this as *an array of eight 7-item subarrays with the 1st and 3rd-to-last (i.e. 5th) columns parsed as numbers where possible*, shown below:
+The query ``s_csv(@, 7, `,`, `\n`, `'`, h, 1, -3)`` will correctly parse this as *an array of eight 7-item subarrays (including the heaader) with the 1st and 3rd-to-last (i.e. 5th) columns parsed as numbers where possible*, shown below:
 ```json
 [
     ["nums", "names", "cities", "date", "zone", "subzone", "contaminated"],
@@ -1177,3 +1180,10 @@ The query `@.*->max_by(*@)` returns `{"a": [0, 1], "b": [1, 0]}` because when wo
 
 __Notes:__
 * *Only the final argument to a function can be spread.* For example, ``zip(*j`[1, 2]`, j`[3, 4]`)`` is not a legal query because a non-final argument was spread.
+
+### Omitting optional function arguments before the final argument (added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)) ###
+
+Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), if a function has multiple optional arguments, you can leave any number of optional arguments (including the last) empty, rather than writing `null`.
+For example, if the function `foo` has two optional arguments:
+* `foo(1, , 2)` would be equivalent to `foo(1, null, 2)`
+* `foo(1, 2, )` would be equivalent to `foo(1, 2, null)` or `foo(1, 2)`.

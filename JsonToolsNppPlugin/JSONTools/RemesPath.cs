@@ -2002,6 +2002,24 @@ namespace JSON_Tools.JSON_Tools
             while (pos < end)
             {
                 t = toks[pos];
+                if (t is char d_ && (d_ == ',' || d_ == ')'))
+                {
+                    if (!(fun.maxArgs > fun.minArgs && arg_num >= fun.minArgs
+                    && ((d_ == ',' && arg_num < fun.maxArgs - 1) // ignore an optional arg that's not the last arg. e.g., "foo(a,,1)", where the second and third args are optional.
+                        || d_ == ')'))) // ignore the last arg if it is optional. e.g., "foo(a,)", where all args after the first are optional.
+                        throw new RemesPathArgumentException("Omitting a required argument for a function is not allowed", arg_num, fun);
+                    // set defaults to optional args JavaScript-style, by simply omitting a token where the argument would normally go.
+                    args.Add(new JNode());
+                    arg_num++;
+                    pos++;
+                    if (d_ == ')') // last arg was omitted and optional
+                    {
+                        var withargs = new ArgFunctionWithArgs(fun, args);
+                        fun.PadToMaxArgs(args);
+                        return new Obj_Pos(ApplyArgFunction(withargs), pos);
+                    }
+                    continue;
+                }
                 // the last Dtype in an ArgFunction's input_types is either the type options for the last arg
                 // or the type options for every optional arg (if the function can have infinitely many args)
                 Dtype type_options = fun.TypeOptions(arg_num); 

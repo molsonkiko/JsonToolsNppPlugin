@@ -275,7 +275,9 @@ Syntax error at position 3: Number with two decimal points
                 }
                 else if (tok is char c)
                 {
-                    sb.Append($"'{JNode.CharToString(c)}'");
+                    sb.Append('\'');
+                    JNode.CharToSb(sb, c);
+                    sb.Append('\'');
                 }
                 else if (tok is UnquotedString uqs)
                 {

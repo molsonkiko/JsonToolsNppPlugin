@@ -286,48 +286,48 @@ namespace JSON_Tools.JSON_Tools
         };
         #region TOSTRING_FUNCS
         /// <summary>
-        /// string representation of any characters in JSON
+        /// appends the JSON representation of char c to a StringBuilder.<br></br>
+        /// for most characters, this just means appending the character itself, but for example '\n' would become "\\n", '\t' would become "\\t",<br></br>
+        /// and most other chars less than 32 would be appended as "\\u00{char value in hex}" (e.g., '\x14' becomes "\\u0014")
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        public static string CharToString(char c)
+        public static void CharToSb(StringBuilder sb, char c)
         {
             switch (c)
             {
-                case '\\':   return "\\\\";
-                case '"':    return "\\\"";
-                case '\x01': return "\\u0001";
-                case '\x02': return "\\u0002";
-                case '\x03': return "\\u0003";
-                case '\x04': return "\\u0004";
-                case '\x05': return "\\u0005";
-                case '\x06': return "\\u0006";
-                case '\x07': return "\\u0007";
-                case '\x08': return "\\b";
-                case '\x09': return "\\t";
-                case '\x0A': return "\\n";
-                case '\x0B': return "\\v";
-                case '\x0C': return "\\f";
-                case '\x0D': return "\\r";
-                case '\x0E': return "\\u000E";
-                case '\x0F': return "\\u000F";
-                case '\x10': return "\\u0010";
-                case '\x11': return "\\u0011";
-                case '\x12': return "\\u0012";
-                case '\x13': return "\\u0013";
-                case '\x14': return "\\u0014";
-                case '\x15': return "\\u0015";
-                case '\x16': return "\\u0016";
-                case '\x17': return "\\u0017";
-                case '\x18': return "\\u0018";
-                case '\x19': return "\\u0019";
-                case '\x1A': return "\\u001A";
-                case '\x1B': return "\\u001B";
-                case '\x1C': return "\\u001C";
-                case '\x1D': return "\\u001D";
-                case '\x1E': return "\\u001E";
-                case '\x1F': return "\\u001F";
-                default: return new string(c, 1);
+            case '\\':   sb.Append("\\\\"   ); break;
+            case '"':    sb.Append("\\\""   ); break;
+            case '\x01': sb.Append("\\u0001"); break;
+            case '\x02': sb.Append("\\u0002"); break;
+            case '\x03': sb.Append("\\u0003"); break;
+            case '\x04': sb.Append("\\u0004"); break;
+            case '\x05': sb.Append("\\u0005"); break;
+            case '\x06': sb.Append("\\u0006"); break;
+            case '\x07': sb.Append("\\u0007"); break;
+            case '\x08': sb.Append("\\b"    ); break;
+            case '\x09': sb.Append("\\t"    ); break;
+            case '\x0A': sb.Append("\\n"    ); break;
+            case '\x0B': sb.Append("\\v"    ); break;
+            case '\x0C': sb.Append("\\f"    ); break;
+            case '\x0D': sb.Append("\\r"    ); break;
+            case '\x0E': sb.Append("\\u000E"); break;
+            case '\x0F': sb.Append("\\u000F"); break;
+            case '\x10': sb.Append("\\u0010"); break;
+            case '\x11': sb.Append("\\u0011"); break;
+            case '\x12': sb.Append("\\u0012"); break;
+            case '\x13': sb.Append("\\u0013"); break;
+            case '\x14': sb.Append("\\u0014"); break;
+            case '\x15': sb.Append("\\u0015"); break;
+            case '\x16': sb.Append("\\u0016"); break;
+            case '\x17': sb.Append("\\u0017"); break;
+            case '\x18': sb.Append("\\u0018"); break;
+            case '\x19': sb.Append("\\u0019"); break;
+            case '\x1A': sb.Append("\\u001A"); break;
+            case '\x1B': sb.Append("\\u001B"); break;
+            case '\x1C': sb.Append("\\u001C"); break;
+            case '\x1D': sb.Append("\\u001D"); break;
+            case '\x1E': sb.Append("\\u001E"); break;
+            case '\x1F': sb.Append("\\u001F"); break;
+            default:     sb.Append(c);         break;
             }
         }
 
@@ -343,7 +343,7 @@ namespace JSON_Tools.JSON_Tools
             if (quoted)
                 sb.Append('"');
             foreach (char c in s)
-                sb.Append(CharToString(c));
+                CharToSb(sb, c);
             if (quoted)
                 sb.Append('"');
             return sb.ToString();
@@ -374,7 +374,7 @@ namespace JSON_Tools.JSON_Tools
                     var sb = new StringBuilder();
                     sb.Append('"');
                     foreach (char c in (string)value)
-                        sb.Append(CharToString(c));
+                        CharToSb(sb, c);
                     sb.Append('"');
                     return sb.ToString();
                 }

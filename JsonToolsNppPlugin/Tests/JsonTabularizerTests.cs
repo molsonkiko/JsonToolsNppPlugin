@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Tests
 {
@@ -528,21 +526,17 @@ namespace JSON_Tools.Tests
 				"name,phone number\r\n\"Dr. Blutentharst\",420-997-1043\r\n\"Fjordlak the Deranged\",blo-od4-blud\r\n",
 				',', '"', null, false, "\r\n"
 				),
-				("[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
-				"a,b\r\nnew\\nline,1\r\n",
+				("[{\"a\": \"new\\r\\nline\", \"b\": 1}]", // internal newlines
+				"a,b\r\n\"new\r\nline\",1\r\n",
 				',', '"', null, false, "\r\n"
 				),
-                ("[{\"a\": \"new\\nline\", \"b\": 1}]", // internal newlines
-				"a,b\nnew\\nline,1\n",
-                ',', '"', null, false, "\n"
+                ("[{\"a\": \"new\\rline\", \"b\": 1}]", // internal newlines
+				"a,b\r\"new\rline\",1\r",
+                ',', '"', null, false, "\r"
                 ),
-                ("[{\"a\": \"n,ew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
-				"a,b,c\r\n\"n,ew\\nl\\\"i\\rne\",1,abc\r\n",
-                ',', '"', null, false, "\r\n"
-                ),
-                ("[{\"a\": \"n\tew\\nl\\\"i\\rne\", \"b\": 1, \"c\": \"abc\"}]", // internal newlines and quote chars and delims
-				"a\tb\tc\r\n\"n\tew\\nl\\\"i\\rne\"\t1\tabc\r\n",
-                '\t', '"', null, false, "\r\n"
+                ("[{\"a\": \"n,ew\\nl'i\\rne\", \"b\": 1, \"c\": \"a\\r\\nbc\"}]", // internal newlines and quote chars (use '\'') and delims
+				"a,b,c\r\n'n,ew\nl\\'i\rne',1,'a\r\nbc'\r\n",
+                ',', '\'', null, false, "\r\n"
                 ),
                 (
 				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints false
@@ -588,7 +582,8 @@ namespace JSON_Tools.Tests
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
 				string head_str = header == null ? "null" : '[' + string.Join(", ", header) + ']';
-				string message_without_desired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str})\nto return\n";
+				string escapedEol = JNode.StrToString(eol, true);
+				string message_without_desired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str}, {escapedEol})\nto return\n";
 				string base_message = $"{message_without_desired}{desired_out}\n";
 				int msg_len = Encoding.UTF8.GetByteCount(desired_out) + 1 + message_without_desired.Length;
 				try

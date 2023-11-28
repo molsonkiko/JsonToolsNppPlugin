@@ -346,7 +346,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
                 new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
                 new Query_DesiredResult("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
-                new Query_DesiredResult("s_split(`foo\\r\\nb\\t c \\r bar-baz\\n`)", "[\"foo\", \"b\", \"c\", \"bar-baz\", \"\"]"),
+                new Query_DesiredResult("s_split(`foo\\r\\nb\\t c \\r bar-baz\\n`, )", "[\"foo\", \"b\", \"c\", \"bar-baz\", \"\"]"), // omit optional 2nd arg; split on whitespace
                 new Query_DesiredResult("group_by(@.foo, 0)", "{\"0\": [[0, 1, 2]], \"3.0\": [[3.0, 4.0, 5.0]], \"6.0\": [[6.0, 7.0, 8.0]]}"),
                 new Query_DesiredResult("group_by(j`[{\"foo\": 1, \"bar\": \"a\"}, {\"foo\": 2, \"bar\": \"b\"}, {\"foo\": 3, \"bar\": \"b\"}]`, bar).*{`sum`: sum(@[:].foo), `count`: len(@)}", "{\"a\": {\"sum\": 1.0, \"count\": 1}, \"b\": {\"sum\": 5.0, \"count\": 2}}"),
                 new Query_DesiredResult("group_by(j`[{\"a\": 1, \"b\": \"x\", \"c\": -0.5}, {\"a\": 1, \"b\": \"y\", \"c\": 0.0}, {\"a\": 2, \"b\": \"x\", \"c\": 0.5}]`, j`[\"a\", \"b\"]`)", "{\"1\": {\"x\": [{\"a\": 1, \"b\": \"x\", \"c\": -0.5}], \"y\": [{\"a\": 1, \"b\": \"y\", \"c\": 0.0}]}, \"2\": {\"x\": [{\"a\": 2, \"b\": \"x\", \"c\": 0.5}]}}"),
@@ -359,7 +359,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("zip(@.foo[0], @.foo[1], @.foo[2], j`[-20, -30, -40]`)", "[[0, 3.0, 6.0, -20], [1, 4.0, 7.0, -30], [2, 5.0, 8.0, -40]]"),
                 new Query_DesiredResult("dict(zip(keys(@.bar), j`[1, 2]`))", "{\"a\": 1, \"b\": 2}"),
                 new Query_DesiredResult("dict(items(@))", fooStr),
-                new Query_DesiredResult("dict(j`[[\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"a\": 1, \"b\": 2, \"c\": 3}"),
+                new Query_DesiredResult("dict(j`[[\"\\\"a\", 1], [\"b\", 2], [\"c\", 3]]`)", "{\"\\\"a\": 1, \"b\": 2, \"c\": 3}"),
                 new Query_DesiredResult("items(j`{\"a\": 1, \"b\": 2, \"c\": 3}`)", "[[\"a\", 1], [\"b\", 2], [\"c\", 3]]"),
                 new Query_DesiredResult("isnull(@.foo)", "[false, false, false]"),
                 new Query_DesiredResult("int(isnull(j`[1, 1.5, [], \"a\", \"2000-07-19\", \"1975-07-14 01:48:21\", null, false, {}]`))",
@@ -370,7 +370,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("range(-3, -5, -1)", "[-3, -4]"),
                 new Query_DesiredResult("range(2, 19, -5)", "[]"),
                 new Query_DesiredResult("range(2, 19, 5)", "[2, 7, 12, 17]"),
-                new Query_DesiredResult("range(3)", "[0, 1, 2]"),
+                new Query_DesiredResult("range(3,)", "[0, 1, 2]"),
                 new Query_DesiredResult("range(3, 5)", "[3, 4]"),
                 new Query_DesiredResult("range(-len(@))", "[]"),
                 new Query_DesiredResult("range(0, -len(@))", "[]"),
@@ -378,7 +378,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("range(0, -len(@) + len(@))", "[]"), 
                 // uminus'd CurJson appears to be causing problems with other arithmetic binops as the second arg to the range function
                 new Query_DesiredResult("range(0, -len(@) - len(@))", "[]"),
-                new Query_DesiredResult("range(0, -len(@) * len(@))", "[]"),
+                new Query_DesiredResult("range(0, -len(@) * len(@), )", "[]"), // omit third arg, using "no token instead of optional arg" shorthand
                 new Query_DesiredResult("range(0, 5, -len(@))", "[]"),
                 new Query_DesiredResult("-len(@) + len(@)", "0"), // see if binops of uminus'd CurJson are also causing problems when they're not the second arg to the range function
                 new Query_DesiredResult("-len(@) * len(@)", (-(fooLen * fooLen)).ToString()),
@@ -490,7 +490,7 @@ namespace JSON_Tools.Tests
                                                 "4.6,Kjond,YUNOB\\r\\n" +
                                                 "4.6,Kjond,YUNOB\\r\\n" +
                                                 "7,Unyir,\\r\\n`" +
-                                                ", 3)", // only 3 columns and string need to be specified; comma delim, CRLF newline, and '"' quote are defaults
+                                                ", 3, , , , h)", // only 3 columns and string need to be specified; comma delim, CRLF newline, and '"' quote are defaults
                     "[[\"nums\",\"names\",\"cities\"],[\"nan\",\"Bluds\",\"BUS\"],[\"\",\"\",\"\"],[\"nan\",\"\\\"\\\"\",\"BUS\"],[\"0.5\",\"\\\"df\\r\\ns \\\\\\\"d\\\\\\\" \\\"\",\"FUDG\"],[\"0.5\",\"df\\\"sd\",\"FUDG\"],[\"\\\"\\\"\",\"\",\"FUDG\"],[\"0.5\",\"df\\ns\\rd\",\"\\\"\\\"\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"3.4\",\"flodt\",\"\\\"q,tun\\\"\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"7\",\"Unyir\",\"\"]]"),
                 // 7 columns, 8 rows '\t' delimiter, LF newline, '\'' quote character, no newline before EOF
                 new Query_DesiredResult("s_csv(`nums\\tnames\\tcities\\tdate\\tzone\\tsubzone\\tcontaminated\\n" +
@@ -501,7 +501,7 @@ namespace JSON_Tools.Tests
                                                 "''\\tflodt\\t'q\\ttun'\\t\\t4\\tq\\tFALSE\\n" +
                                                 "4.6\\tKjond\\t\\t\\t\\tw\\t''\\n" +
                                                 "4.6\\t'Kj\\nond'\\tYUNOB\\t10/17/2014 0:00\\t5\\tz\\tFALSE`" +
-                                                ", 7, `\t`, `\n`, `'`)",
+                                                ", 7, `\t`, `\n`, `'`, h)",
                     "[[\"nums\",\"names\",\"cities\",\"date\",\"zone\",\"subzone\",\"contaminated\"],[\"nan\",\"Bluds\",\"BUS\",\"\",\"1\",\"''\",\"TRUE\"],[\"0.5\",\"dfsd\",\"FUDG\",\"12/13/2020 0:00\",\"2\",\"c\",\"TRUE\"],[\"\",\"qere\",\"GOLAR\",\"\",\"3\",\"f\",\"\"],[\"1.2\",\"qere\",\"'GOL\\\\'AR'\",\"\",\"3\",\"h\",\"TRUE\"],[\"''\",\"flodt\",\"'q\\ttun'\",\"\",\"4\",\"q\",\"FALSE\"],[\"4.6\",\"Kjond\",\"\",\"\",\"\",\"w\",\"''\"],[\"4.6\",\"'Kj\\nond'\",\"YUNOB\",\"10/17/2014 0:00\",\"5\",\"z\",\"FALSE\"]]"),
                 // 1-column, '^' delimiter, '$' quote character, '\r' newline, 7 valid rows with 2 invalid rows at the end
                 new Query_DesiredResult("s_csv(`a\\r" +
@@ -513,7 +513,7 @@ namespace JSON_Tools.Tests
                                                "d$\ne\\r" +
                                                "$ $ $\\r" + // invalid because there's an unescaped quote character on a quoted line
                                                "f^g`" + // invalid because there's a delimiter on an unquoted line
-                                               ", 1, `^`, `\\r`, `$`)",
+                                               ", 1, `^`, `\\r`, `$`, h)",
                     "[\"a\",\"$b^c$\",\"$new\\r\\\\$line\\\\$$\",\"\",\"\",\"$$\",\"d$\\ne\"]"),
                 // 1-column, default (delimiter, newline, and quote), parse column 1 as number, 4 number rows and 4 non-number rows
                 new Query_DesiredResult("s_csv(`1.5\\r\\n" +
@@ -524,14 +524,52 @@ namespace JSON_Tools.Tests
                                                "1e3b\\r\\n" +
                                                "-a\\r\\n" +
                                                "+b`" + 
-                                               ", 1, null, null, null, 1)",
+                                               ", 1, , , , h, 1)", // use shorthand to omit delimiter, newline, and quote
                     "[1.5,-2,3e14,2e-3,\"\",\"1e3b\",\"-a\", \"+b\"]"),
                 // 3-column, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
                 new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
                                         "a,-3,NaN\\r\\n" +
                                         "baz,quz,-Infinity`" +
-                                        ", 3, null, null, null, 1, -1)",
+                                        ", 3, null, null, null, h, 1, -1)",
                 "[[1.5, \"foo\", \"bar\"], [\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
+                // 3-column, skip header, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
+                new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
+                                        "a,-3,NaN\\r\\n" +
+                                        "baz,quz,-Infinity`" +
+                                        ", 3, null, null, null, n, 1, -1)",
+                "[[\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
+                // 4-column, map header to values, '\t' separator, '\n' newline, parse 2nd-to-last column as numbers
+                new Query_DesiredResult("s_csv(`col1\\tcol2\\tcol3\\tcol4\\n" +
+                                               "ab\\tcd\\t0xfa\\tefg\\n" +
+                                               "hi\\tjk\\t-5.3E000\\tlmn\\n" +
+                                               "opq\\trs\\t.7e-11\\ttuv\\n" +
+                                               "wx\\ty\\t+85\\tz`" +
+                                               ", 4, `\\t`, `\\n`, , d, -2)",
+                        "[{\"col1\":\"ab\",\"col2\":\"cd\",\"col3\":250,\"col4\":\"efg\"},{\"col1\":\"hi\",\"col2\":\"jk\",\"col3\":-5.3,\"col4\":\"lmn\"},{\"col1\":\"opq\",\"col2\":\"rs\",\"col3\":7E-12,\"col4\":\"tuv\"},{\"col1\":\"wx\",\"col2\":\"y\",\"col3\":85,\"col4\":\"z\"}]"),
+                // 1-column, map header to values, '^' delimiter, '$' quote character, '\r' newline
+                new Query_DesiredResult("s_csv(`a\\r" +
+                                               "$b^c$\\r" +
+                                               "\\r" +
+                                               "$$\\r" +
+                                               "d$\ne`" +
+                                               ", 1, `^`, `\\r`, `$`, d)",
+                    "[{\"a\": \"$b^c$\"}, {\"a\": \"\"}, {\"a\": \"$$\"}, {\"a\": \"d$\\ne\"}]"),
+                // 1-column, skip header, '^' delimiter, '$' quote character, '\r' newline, parse as numbers
+                new Query_DesiredResult("s_csv(`a\\r" +
+                                               "1\\r" +
+                                               ".3\\r" +
+                                               "5\\r" +
+                                               "-7.2`" +
+                                               ", 1, `^`, `\\r`, `$`, , 1)", // omit header arg because it is default
+                    "[1, 0.3, 5, -7.2]"),
+                // 1-column, map header to values, '^' delimiter, '$' quote character, '\r' newline, parse as numbers
+                new Query_DesiredResult("s_csv(`foo\\r" +
+                                               "1\\r" +
+                                               ".3\\r" +
+                                               "5\\r" +
+                                               "-7.2`" +
+                                               ", 1, `^`, `\\r`, `$`, d, 1)",
+                    "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": -7.2}]"),
                 // ====================== s_fa function for parsing regex search results as string arrays or arrays of arrays of strings =========
                 // 2 capture groups (2nd optional), parse the first group as number
                 new Query_DesiredResult("s_fa(`1. foo  boo\\r\\n" +
@@ -799,6 +837,7 @@ namespace JSON_Tools.Tests
                 new []{"@!..*", "[1, 2, 3, 4]"},
                 new []{"@![@ > 3]", "[1, 2, 3, 4]"},
                 new []{"@!{@ > 3}", "[1, 2, 3, 4]"},
+                new []{"s_mul(,1)", "[]"}, // omitting a non-optional argument with the "no-token-instead-of-null" shorthand
             });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
