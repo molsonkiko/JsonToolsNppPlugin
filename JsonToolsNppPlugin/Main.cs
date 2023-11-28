@@ -1112,7 +1112,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="fname"></param>
         /// <param name="wasAutoTriggered"></param>
-        private static void OpenErrorForm(string fname, bool wasAutoTriggered)
+        public static void OpenErrorForm(string fname, bool wasAutoTriggered)
         {
             bool wasVisible = errorForm != null && errorForm.Visible;
             if ((!TryGetInfoForFile(fname, out JsonFileInfo info)

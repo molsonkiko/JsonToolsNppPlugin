@@ -769,11 +769,11 @@ multiline comment
                     new string[]{ "NaN is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification",
                                   "Infinity is not part of the original JSON specification" }),
-                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']', Comma after last key-value pair of object" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']'", "Comma after last key-value pair of object" }),
                 ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
                 ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
                 ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
-                                                                                                "Unterminated array", 
+                                                                                                "Unterminated array",
                                                                                                 "Unterminated object" }),
                 ("{", "{}", new string[] { "Unterminated object" }),
                 ("[", "[]", new string[] { "Unterminated array" }),
@@ -809,7 +809,7 @@ multiline comment
                 ("froeu", "null", new string[]{"Expected literal starting with 'f' to be false"}),
                 ("Froeu", "null", new string[]{"Expected literal starting with 'F' to be False"}),
                 ("nurnoe", "null",new string[]{"Expected literal starting with 'n' to be null or nan"}),
-                ("Hugre", "null", new string[]{"Badly located character"}),
+                ("Hugre", "null", new string[]{"Badly located character \"H\""}),
                 ("[undefined, underpants]", "[null, null]",
                 new string[]{
                     "undefined is not part of any JSON specification",
@@ -914,6 +914,64 @@ multiline comment
                 }),
                 ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
                 ("-0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
+                ("{\"a\": [[1, 2], [3, 4, \"b\": [5 , \"c\": [, \"d\": 6}", "{\"a\": [[1, 2], [3, 4]], \"b\": [5], \"c\": [], \"d\": 6}",
+                    new string[]{ "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
+                                  "No comma between array members",
+                                  "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
+                                  "No comma after key-value pair 0 in object",
+                                  "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
+                                  "No comma after key-value pair 1 in object",
+                                  "Comma before first value in array",
+                                  "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
+                                  "No comma after key-value pair 2 in object"}
+                ),
+                (   "[{\"a\": 0, null" + // seeing the 2 where a key was expected triggers falling out of the object
+                    ", {2" + // we fall out of the empty object upon seeing this invalid key
+                    ", {,3" + // we fall out of the empty object upon seeing the comma
+                    ", {\"b\": [4, 5," +
+                    "       {\"c\": 6, \"d\" ]}" + // seeing this ']' instead of a colon triggers falling out of the object, and reinterpreting the "d" as a member of the parent array
+                    ", {\"e\": {" +
+                    "       \"f\": [null, \"g\": {" + // seeing the colon after "g" triggers falling out of the array, and reinterpreting the "g" as a key of the parent object
+                    "           \"h\": 7, \"i\"" + // seeing this comma instead of a colon triggers falling out of the object (and its parent object, and its grandparent object), and finally reinterpreting the "i" as a child of the great-grandparent array
+                    ", \"j\"]",
+                    "[{\"a\": 0}, null, {}, 2, {}, 3, {\"b\": [4, 5, {\"c\": 6}, \"d\"]}, {\"e\": {\"f\": [null], \"g\": {\"h\": 7}}}, \"i\", \"j\"]",
+                    new string[]{
+                            "Unquoted keys are only supported in JSON5",
+                            "Found ',' after key 1 when colon expected",
+                            "No comma between array members",
+                            "No valid unquoted key beginning at 17",
+                            "No comma between array members",
+                            "Comma before first value in object",
+                            "No valid unquoted key beginning at 22",
+                            "No comma between array members",
+                            "Found ']' after key 1 when colon expected",
+                            "No comma between array members",
+                            "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
+                            "No comma after key-value pair 0 in object",
+                            "Found ',' after key 1 when colon expected",
+                            "No comma after key-value pair 1 in object",
+                            "Found ',' after key 2 when colon expected",
+                            "No comma after key-value pair 0 in object",
+                            "Found ',' after key 1 when colon expected",
+                            "No comma between array members"
+                    }
+                ),
+                (
+                    "[ \r\n" +
+                    "    {\"foo\": 1, \"bar\": [\"a\", \"b\"},\r\n" +  // missing close ']' of array
+                    "    {\"foo\": 2, \"bar\": [\"c\", \"d\"]},\r\n" + // at the start of this object, the parser thinks it's parsing the last array
+                                                                       // however, when it tries to parse the '{' opening this object as a key, it fails, and falls back into the parent array
+                                                                       // once the parser has fallen through to the parent array, everything is fine.
+                    "    {\"foo\": 3, \"bar\": [\"e\", \"f\"]}\r\n" +  // also fine
+                    "]",
+                    "[{\"foo\": 1, \"bar\": [\"a\", \"b\"]}, {\"foo\": 2, \"bar\": [\"c\", \"d\"]}, {\"foo\": 3, \"bar\": [\"e\", \"f\"]}]",
+                    new string[]
+                    {
+                            "Tried to terminate an array with '}'",
+                            "No valid unquoted key beginning at 43",
+                            "No comma between array members"
+                    }
+                ),
             };
 
             int tests_failed = 0;
@@ -929,7 +987,7 @@ multiline comment
                     continue;
                 }
                 JNode result = new JNode();
-                string expected_lint_str = "[" + string.Join(", ", expected_lint) + "]";
+                string expected_lint_str = "[" + string.Join(", ", expected_lint.Select(x => JNode.StrToString(x, true))) + "]";
                 string base_message = $"Expected JsonParser(LoggerLevel.STRICT).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
                 try
                 {
@@ -944,7 +1002,7 @@ multiline comment
                     lint_sb.Append('[');
                     for (int jj = 0; jj < parser.lint.Count; jj++)
                     {
-                        lint_sb.Append(parser.lint[jj].message);
+                        lint_sb.Append(JNode.StrToString(parser.lint[jj].message, true));
                         if (jj < parser.lint.Count - 1) lint_sb.Append(", ");
                     }
                     lint_sb.Append("]");

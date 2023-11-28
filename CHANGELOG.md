@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
 3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` non-vectorized arg function](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
 4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
+5. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
+6. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
 
 ### Changed
 

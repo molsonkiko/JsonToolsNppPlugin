@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Kbg.NppPluginNET;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
+using System.Runtime;
 
 namespace JSON_Tools.Forms
 {
@@ -137,6 +138,47 @@ namespace JSON_Tools.Forms
             HandleCellOrRowClick(newRow); // move to location of error
         }
 
+        /// <summary>
+        /// right-clicking the grid shows a drop-down where the user can choose to refresh the form or export the lints as JSON.
+        /// </summary>
+        private void ErrorForm_RightClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                errorGridRightClickStrip.Show(MousePosition);
+            }
+        }
+
+        private void RefreshMenuItem_Click(object sender, EventArgs e)
+        {
+            Npp.notepad.HideDockingForm(this);
+            Main.OpenErrorForm(Npp.notepad.GetCurrentFilePath(), false);
+        }
+
+        private void ExportLintsToJsonMenuItem_Click(object sender, EventArgs e)
+        {
+            int lintCount = lints == null ? 0 : lints.Count;
+            if (lintCount == 0)
+            {
+                MessageBox.Show($"No JSON syntax errors (at or below {Main.settings.logger_level} level) for {fname}",
+                    "No JSON syntax errors for this file",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var lintArrChildren = new List<JNode>();
+            foreach (JsonLint lint in lints)
+            {
+                var lintObj = lint.ToJson();
+                lintArrChildren.Add(lintObj);
+            }
+            var lintArr = new JArray(0, lintArrChildren);
+            Main.PrettyPrintJsonInNewFile(lintArr);
+        }
+
+        /// <summary>
+        /// hitting enter refreshes<br></br>
+        /// hitting the first letter of any error description goes to that error description
+        /// </summary>
         private void ErrorForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape)

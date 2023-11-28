@@ -28,12 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ErrorForm));
             this.ErrorGrid = new System.Windows.Forms.DataGridView();
             this.Severity = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Description = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Position = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.errorGridRightClickStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.refreshMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportToJsonMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.ErrorGrid)).BeginInit();
+            this.errorGridRightClickStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // ErrorGrid
@@ -55,6 +60,7 @@
             this.ErrorGrid.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.ErrorGrid_CellEnter);
             this.ErrorGrid.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.ErrorGrid_CellEnter);
             this.ErrorGrid.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyDown);
+            this.ErrorGrid.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ErrorForm_RightClick);
             this.ErrorGrid.Resize += new System.EventHandler(this.ErrorGrid_Resize);
             // 
             // Severity
@@ -81,6 +87,29 @@
             this.Position.ReadOnly = true;
             this.Position.Width = 75;
             // 
+            // errorGridRightClickStrip
+            // 
+            this.errorGridRightClickStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.errorGridRightClickStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.refreshMenuItem,
+            this.exportToJsonMenuItem});
+            this.errorGridRightClickStrip.Name = "errorGridRightClickStrip";
+            this.errorGridRightClickStrip.Size = new System.Drawing.Size(252, 80);
+            // 
+            // refreshMenuItem
+            // 
+            this.refreshMenuItem.Name = "refreshMenuItem";
+            this.refreshMenuItem.Size = new System.Drawing.Size(251, 24);
+            this.refreshMenuItem.Text = "Refresh with current errors";
+            this.refreshMenuItem.Click += new System.EventHandler(this.RefreshMenuItem_Click);
+            // 
+            // exportToJsonMenuItem
+            // 
+            this.exportToJsonMenuItem.Name = "exportToJsonMenuItem";
+            this.exportToJsonMenuItem.Size = new System.Drawing.Size(190, 24);
+            this.exportToJsonMenuItem.Text = "Export to JSON";
+            this.exportToJsonMenuItem.Click += new System.EventHandler(this.ExportLintsToJsonMenuItem_Click);
+            // 
             // ErrorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -92,6 +121,7 @@
             this.Text = "Syntax errors in JSON";
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.ErrorGrid)).EndInit();
+            this.errorGridRightClickStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -101,5 +131,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Description;
         private System.Windows.Forms.DataGridViewTextBoxColumn Position;
         private System.Windows.Forms.DataGridView ErrorGrid;
+        private System.Windows.Forms.ContextMenuStrip errorGridRightClickStrip;
+        private System.Windows.Forms.ToolStripMenuItem refreshMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportToJsonMenuItem;
     }
 }

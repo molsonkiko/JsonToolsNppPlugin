@@ -100,7 +100,7 @@ Error reporting can be customized with the `logger_level` setting, which has 5 l
     * Python-style '#' comments
     * Python constants `None`, *`nan`, and `inf` (starting in [5.4.0](/CHANGELOG.md#540---2023-07-04))*.
     * missing commas between array members
-    * missing ']' or '}' at the ends of arrays and objects
+    * missing ']' or '}' at the ends of arrays and objects (supported for a long time, but *JsonTools got much better at this beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*)
     * a bunch of other common syntax errors
 6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
     * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, `nan`, `inf` and `undefined`.
@@ -166,6 +166,8 @@ If you click "Yes", a docking form will open up at the bottom of the document. E
 Clicking on or paging to a row in the error form with the arrow keys will move the caret to the location in the document where that error was found.
 
 Hitting `Enter` while in the form refreshes the form with the JSON in the current document. You can also seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
+
+Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), you can right-click on this form to gain the option of exporting all errors to JSON or refreshing the form.
 
 In addition to this form, the document type status bar section will show how many errors were logged.
 
@@ -654,7 +656,7 @@ Here's an example of what you get with successful request(s):
 
 The URLs of successful requests show up in the box on the right. I used the `View results in buffer` button at the bottom of the form to open the buffer and tree view shown here.
 
-Of course, sometimes an API request will fail. You can click the [View errors button](#viewing-errors) to see any errors that happened.
+Of course, sometimes an API request will fail. You can click the [View errors button](#error-form-and-status-bar) to see any errors that happened.
 
 ## Getting JSON from local directories ##
 

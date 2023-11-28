@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
+using static System.Windows.Forms.LinkLabel;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -73,6 +74,19 @@ namespace JSON_Tools.JSON_Tools
                 case '\'': return "'\\''";
                 default: return $"'{c}'";
             }
+        }
+
+        /// <summary>
+        /// the object {"message": this.message, "position": this.pos, "severity": this.severity}
+        /// </summary>
+        public JNode ToJson()
+        {
+            return new JObject(0, new Dictionary<string, JNode>
+            {
+                ["message"] = new JNode(message),
+                ["position"] = new JNode((long)pos),
+                ["severity"] = new JNode(severity.ToString()),
+            });
         }
     }
 
@@ -762,9 +776,9 @@ namespace JSON_Tools.JSON_Tools
         public string ParseUnquotedKey(string inp)
         {
             var match = UNQUOTED_KEY_REGEX.Match(inp, ii);
-            if (!match.Success)
+            if (!match.Success || match.Index != ii)
             {
-                HandleError($"No valid unquoted key beginning at {ii}", inp, ii, ParserState.FATAL);
+                HandleError($"No valid unquoted key beginning at {ii}", inp, ii, ParserState.BAD);
                 return null;
             }
             HandleError("Unquoted keys are only supported in JSON5", inp, ii, ParserState.JSON5);
@@ -1120,7 +1134,17 @@ namespace JSON_Tools.JSON_Tools
                     // a new array member of some sort
                     alreadySeenComma = false;
                     JNode newObj;
+                    int iiBeforeParse = ii;
+                    int utf8ExtraBeforeParse = utf8ExtraBytes;
                     newObj = ParseSomething(inp, recursionDepth);
+                    if (newObj.type == Dtype.STR && ii < inp.Length && inp[ii] == ':')
+                    {
+                        // maybe the user forgot the closing ']' of an array that's the child of an object.
+                        HandleError("':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?", inp, ii, ParserState.BAD);
+                        ii = iiBeforeParse;
+                        utf8ExtraBytes = utf8ExtraBeforeParse;
+                        return arr;
+                    }
                     //if (includeExtraProperties)
                     //{
                     //    newObj.extras = new ExtraJNodeProperties(arr, ii, children.Count);
@@ -1212,9 +1236,13 @@ namespace JSON_Tools.JSON_Tools
                         return obj;
                     }
                     // a new key-value pair
+                    int iiBeforeKey = ii;
+                    int utf8ExtraBeforeKey = utf8ExtraBytes;
                     string key = ParseKey(inp);
                     if (fatal || key == null)
                     {
+                        // key could be null if there's a valid JSON there that is not a valid key
+                        // this covers the possibility that the user forgot to close the object before this (presumed) key, and in fact it's meant to be a value in a parent array
                         return obj;
                     }
                     if (ii >= inp.Length)
@@ -1233,9 +1261,19 @@ namespace JSON_Tools.JSON_Tools
                         {
                             break;
                         }
-                        if (inp[ii] == ':')
+                        char c = inp[ii];
+                        if (c == ':')
                         {
                             ii++;
+                        }
+                        else if (c == ',' || c == ']')
+                        {
+                            // comma or ']' after key instead of value could mean that this is supposed to be a value in a parent array,
+                            // so we'll try bailing out here and reinterpreting the key as such
+                            HandleError($"Found '{c}' after key {childCount} when colon expected", inp, ii, ParserState.BAD);
+                            ii = iiBeforeKey;
+                            utf8ExtraBytes = utf8ExtraBeforeKey;
+                            return obj;
                         }
                         else HandleError($"No ':' between key {childCount} and value {childCount} of object", inp, ii, ParserState.BAD);
                     }
@@ -1376,7 +1414,7 @@ namespace JSON_Tools.JSON_Tools
                                               inp, ii + 1, ParserState.FATAL);
                 return new JNode(null, Dtype.NULL, startUtf8Pos);
             }
-            HandleError("Badly located character", inp, ii, ParserState.FATAL);
+            HandleError("Badly located character " + (ii >= inp.Length ? "\"\\x00\"" : JNode.StrToString(inp.Substring(ii, 1), true)), inp, ii, ParserState.FATAL);
             return new JNode(null, Dtype.NULL, startUtf8Pos);
         }
 
