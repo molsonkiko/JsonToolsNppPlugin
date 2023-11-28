@@ -29,7 +29,7 @@ namespace JSON_Tools.Utils
         public LoggerLevel logger_level { get; set; }
 
         [Description("When the document is parsed, show a prompt to see syntax errors in the document."),
-            Category("JSON Parser"), DefaultValue(false)]
+            Category("JSON Parser"), DefaultValue(true)]
         public bool offer_to_show_lint { get; set; }
 
         [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),

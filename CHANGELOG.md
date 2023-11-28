@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. The way object keys are represented internally has been changed (*this has no effect on the GUI-based API, but only for developers*). Previously, when pretty-printing and compressing JSON, object keys would be output as is (without escaping special characters), meaning that *prior to v6.0, some strings were not valid object keys (again, this did not affect parsing of JSON, but only some programmatic applications that constructed JOBjects directly without parsing).* Now all strings are valid object keys.
 2. When using the JSON-to-CSV form to create CSV files, newline characters will no longer be escaped in strings. Instead, strings containing newlines will be wrapped in quotes, which should be sufficient to allow most CSV parsers to handle them correctly.
+3. Made [`offer_to_show_lint` setting](/docs/README.md#parser-settings) (which controls whether a prompt is shown when errors are found) true by default, so that a fresh installation will show the prompt.
 
 ### Fixed
 
@@ -62,6 +63,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Fix issues where running a RemesPath query with a projection that referenced a variable indexing on a compile-time constant would cause an error. For example, `var x = @; 1->x` should return `@` (the input to the query), but prior to this fix, it would instead cause an error.
 4. Running tests would previously cause clipboard data to be lost irreversably. Now, if the user's clipboard contained text before running tests, the contents of the clipboard are restored to their pre-test values rather than being hijacked. __Non-text data that was copied to the clipboard is still lost when running tests, and I may try to fix that in the future.__ 
 5. `dict` function in RemesPath previously had a bug that could create invalid JSON if the strings to be turned into keys contained special characters (e.g., literal quote chars, `\r`, `\n`).
+6. access violations when loading [error form](/docs/README.md#error-form-and-status-bar)
+7. unnecessary prompt when manually reloading [error form](/docs/README.md#error-form-and-status-bar)
+8. issue with trying to view error form when the error form was already open
 
 ## [5.8.0] - 2023-10-09
 

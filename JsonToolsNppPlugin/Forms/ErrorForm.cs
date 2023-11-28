@@ -17,7 +17,7 @@ namespace JSON_Tools.Forms
     public partial class ErrorForm : Form
     {
         public const int SLOW_RELOAD_THRESHOLD = 300; // completely arbitrary
-        public const int LINT_ROW_COUNT = 5000;
+        public const int LINT_MAX_ROW_COUNT = 5000;
         public string fname;
         public List<JsonLint> lints;
 
@@ -28,7 +28,7 @@ namespace JSON_Tools.Forms
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
-        public bool SlowReloadExpected(IList<JsonLint> lints) { return lints.Count >= SLOW_RELOAD_THRESHOLD; }
+        public bool SlowReloadExpected(IList<JsonLint> lints) { return lints is null || lints.Count >= SLOW_RELOAD_THRESHOLD; }
 
         public void Reload(string fname, List<JsonLint> lints, bool onStartup = false)
         {
@@ -50,18 +50,19 @@ namespace JSON_Tools.Forms
             Text = "JSON errors in current file";
             ErrorGrid.Rows.Clear();
             int interval = 1;
+            int lintCount = lints is null ? 0 : lints.Count;
             // add a row that warns not all rows are shown
-            if (LINT_ROW_COUNT < lints.Count)
+            if (LINT_MAX_ROW_COUNT < lintCount)
             {
-                interval = lints.Count / LINT_ROW_COUNT;
+                interval = lintCount / LINT_MAX_ROW_COUNT;
                 var warningNotAllRowsShown = new DataGridViewRow();
                 warningNotAllRowsShown.CreateCells(ErrorGrid);
-                warningNotAllRowsShown.Cells[1].Value = $"Showing approximately {LINT_ROW_COUNT} of {lints.Count} rows";
+                warningNotAllRowsShown.Cells[1].Value = $"Showing approximately {LINT_MAX_ROW_COUNT} of {lintCount} rows";
                 ErrorGrid.Rows.Add(warningNotAllRowsShown);
             }
             int ii = 0;
             int cycler = 0;
-            while (ii < lints.Count)
+            while (ii < lintCount)
             {
                 var lint = lints[ii];
                 var row = new DataGridViewRow();
@@ -148,7 +149,11 @@ namespace JSON_Tools.Forms
             {
                 // refresh error form based on current contents of current file
                 e.Handled = true;
+                // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
+                bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
+                Main.settings.offer_to_show_lint = false;
                 Main.TryParseJson();
+                Main.settings.offer_to_show_lint = previousOfferToShowLint;
                 if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
                     && info.lints != null)
                     Reload(Main.activeFname, info.lints);

@@ -576,7 +576,7 @@ namespace Kbg.NppPluginNET
                 SelectionManager.SetSelectionsFromStartEnds(oldSelections);
                 return TryParseJson(documentType, wasAutotriggered, true);
             }
-            int lintCount = lints.Count;
+            int lintCount = lints is null ? 0 : lints.Count;
             info = AddJsonForFile(fname, json);
             bool fatal = errorMessage != null;
             info.documentType = fatal ? DocumentType.NONE : documentType;
@@ -584,16 +584,18 @@ namespace Kbg.NppPluginNET
                 info.usesSelections = false;
             else
                 info.usesSelections |= !noTextSelected;
+            info.lints = lints;
             if (lintCount > 0 && settings.offer_to_show_lint)
             {
-                string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?";
+                string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))";
                 if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                     == DialogResult.Yes)
                 {
+                    if (errorForm != null)
+                        Npp.notepad.HideDockingForm(errorForm);
                     OpenErrorForm(activeFname, true);
                 }
             }
-            info.lints = lints;
             if (fatal)
             {
                 // unacceptable error, show message box
