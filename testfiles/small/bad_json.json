@@ -14,7 +14,7 @@ y":
             .75 
 -0xF            +0xabcde
 0xABCDE
-            },
+            , // missing ']' here
       "y
 u":
             [
