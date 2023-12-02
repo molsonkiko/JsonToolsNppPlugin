@@ -470,12 +470,12 @@ namespace JSON_Tools.Tests
 				),
 				(
 				"[" +
-					"{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
-					"{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
-				"]", // test stringified iterables
+                    "{\"a\": 1, \"b\": \"[1, 2, 3]\", \"c\": \"{\\\"d\\\": \\\"y\\\"}\"}," +
+                    "{\"a\": 2, \"b\": \"[4, 5, 6]\", \"c\": \"{\\\"d\\\": \\\"z\\\"}\"}" +
+                "]", // test stringified iterables
 				"a\tb\tc\r\n" +
-				"1\t[1, 2, 3]\t{\"d\": \"y\"}\r\n" +
-				"2\t[4, 5, 6]\t{\"d\": \"z\"}\r\n",
+				"1\t[1, 2, 3]\t\"{\"\"d\"\": \"\"y\"\"}\"\r\n" +
+				"2\t[4, 5, 6]\t\"{\"\"d\"\": \"\"z\"\"}\"\r\n",
 				'\t', '"', null, false, "\r\n"
 				),
 				( "[{\"a\": null, \"b\": 1.0}, {\"a\": \"blah\", \"b\": NaN}]", // nulls and NaNs
@@ -521,9 +521,9 @@ namespace JSON_Tools.Tests
 				"cost,date,num\r\n100.5,1999-01-03 07:03:29,13\r\n", // datetimes
 				',', '"', null, false, "\r\n"
 				),
-				("[{\"name\": \"\\\"Dr. Blutentharst\\\"\", \"phone number\": \"420-997-1043\"}," +
+				("[{\"name\": \"The Exalted \\\"Samuel Blutentharst\\\" of Doom\", \"phone number\": \"420-997-1043\"}," +
 				"{\"name\": \"\\\"Fjordlak the Deranged\\\"\", \"phone number\": \"blo-od4-blud\"}]", // internal quote chars
-				"name,phone number\r\n\"Dr. Blutentharst\",420-997-1043\r\n\"Fjordlak the Deranged\",blo-od4-blud\r\n",
+				"name,phone number\r\n\"The Exalted \"\"Samuel Blutentharst\"\" of Doom\",420-997-1043\r\n\"\"\"Fjordlak the Deranged\"\"\",blo-od4-blud\r\n",
 				',', '"', null, false, "\r\n"
 				),
 				("[{\"a\": \"new\\r\\nline\", \"b\": 1}]", // internal newlines
@@ -535,7 +535,7 @@ namespace JSON_Tools.Tests
                 ',', '"', null, false, "\r"
                 ),
                 ("[{\"a\": \"n,ew\\nl'i\\rne\", \"b\": 1, \"c\": \"a\\r\\nbc\"}]", // internal newlines and quote chars (use '\'') and delims
-				"a,b,c\r\n'n,ew\nl\\'i\rne',1,'a\r\nbc'\r\n",
+				"a,b,c\r\n'n,ew\nl''i\rne',1,'a\r\nbc'\r\n",
                 ',', '\'', null, false, "\r\n"
                 ),
                 (

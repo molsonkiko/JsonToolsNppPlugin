@@ -795,30 +795,26 @@ namespace JSON_Tools.JSON_Tools
 			return new JArray(0, result);
 		}
 
-		/// <summary>
-		/// If a string contains the delimiter or a newline, append (the string wrapped in quotes) to sb<br></br>
-		/// Otherwise, append s to sb.
-		/// </summary>
-		/// <param name="s"></param>
-		/// <param name="delim"></param>
-		/// <param name="quote_char"></param>
-		/// <returns></returns>
-		private void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char, string newline)
+        /// <summary>
+        /// If string s contains the delimiter, '\r', '\n', or a literal quote character, append (the string wrapped in quotes) to sb.<br></br>
+        /// If s contains literal quote character, it is escaped by doubling it up according to the CSV RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)<br></br>
+        /// Otherwise, append s to sb unchanged
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="delim"></param>
+        /// <param name="quote_char"></param>
+        /// <returns></returns>
+        private void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char)
 		{
-			if (s.IndexOf(delim) >= 0 || s.IndexOf(newline) >= 0)
+			if (s.IndexOfAny(new char[] {delim, '\r', '\n', quote_char}) >= 0)
 			{
-				// if the string contains the delimiter or a newline, we need to wrap it in quotes
-				// we also need to escape all literal quote characters in the string
 				sb.Append(quote_char);
-				foreach (char c in s)
+				for (int ii = 0; ii < s.Length; ii++)
 				{
+					char c = s[ii];
+					sb.Append(c);
 					if (c == quote_char)
-					{
-						sb.Append('\\');
-						sb.Append(quote_char);
-					}
-					else
-						sb.Append(c);
+                        sb.Append(quote_char);
 				}
 				sb.Append(quote_char);
 			}
@@ -850,7 +846,7 @@ namespace JSON_Tools.JSON_Tools
 			for (int ii = 0; ii < header.Length; ii++)
 			{
 				string col = header[ii];
-				ApplyQuotesIfNeeded(sb, col, delim, quote_char, newline);
+				ApplyQuotesIfNeeded(sb, col, delim, quote_char);
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);
@@ -870,7 +866,7 @@ namespace JSON_Tools.JSON_Tools
 					switch (val.type)
 					{
 						case Dtype.STR:
-							ApplyQuotesIfNeeded(sb, (string)val.value, delim, quote_char, newline);
+							ApplyQuotesIfNeeded(sb, (string)val.value, delim, quote_char);
 							break; // only apply quotes if internal delim
 						case Dtype.DATE:
 							sb.Append(((DateTime)val.value).ToString("yyyy-MM-dd"));

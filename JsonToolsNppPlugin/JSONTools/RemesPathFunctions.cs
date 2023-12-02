@@ -1990,7 +1990,7 @@ namespace JSON_Tools.JSON_Tools
                 JNode key = pair[0];
                 JNode val = pair[1];
                 if (!(key.value is string k))
-                    throw new RemesPathException("The Dict function's first argument must be an array of all strings");
+                    throw new RemesPathException("The Dict function's argument must be an array of two-item subarrays where the first item of each subarray is a string.");
                 rst[JNode.StrToString(k, false)] = val;
             }
             return new JObject(0, rst);
@@ -2139,7 +2139,7 @@ namespace JSON_Tools.JSON_Tools
                 if (k.type != Dtype.STR)
                     throw new RemesPathException("Even-numbered args to 'add_items' function (new keys) must be strings");
                 JNode v = args[ii++];
-                new_obj[(string)k.value] = v;
+                new_obj[JNode.StrToString((string)k.value, false)] = v;
             }
             return new JObject(0, new_obj);
         }
@@ -2336,7 +2336,10 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, result_list);
         }
 
-        public const string CSV_BASE_COLUMN_REGEX = "((?!{QUOTE})(?:(?!{NEWLINE})[^{DELIM}])*(?<!{QUOTE})|{QUOTE}(?:[^{QUOTE}]|\\\\{QUOTE})*{QUOTE})";
+        //public const int MAX_DOC_SIZE_CACHE_REGEX_SEARCH = 10_000_000;
+
+        // parses a single CSV value (one column in one row) according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)
+        public const string CSV_BASE_COLUMN_REGEX = "([^{DELIM}\\r\\n{QUOTE}]*|{QUOTE}(?:[^{QUOTE}]|{QUOTE}{2})*{QUOTE})";
 
         // captures an integer (0x<HEX> or normal decimal) with leading + or - sign
         public const string CAPTURED_INT_REGEX_STR = "([+-]?(?:0x[\\da-fA-F]+|\\d+))";
@@ -2356,13 +2359,13 @@ namespace JSON_Tools.JSON_Tools
             return delim == '\t' ? "\\t" : Regex.Unescape(new string(delim, 1));
         }
 
-        private static string CsvColumnRegex(string delimiter, string newline, string quote)
+        private static string CsvColumnRegex(string delimiter, string quote)
         {
-            return CSV_BASE_COLUMN_REGEX.Replace("{QUOTE}", quote).Replace("{NEWLINE}", newline).Replace("{DELIM}", delimiter);
+            return CSV_BASE_COLUMN_REGEX.Replace("{QUOTE}", quote).Replace("{DELIM}", delimiter);
         }
 
         /// <summary>
-        /// returns a regex that matches a single row of a CSV file with:<br></br>
+        /// returns a regex that matches a single row of a CSV file (formatted according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)) with:<br></br>
         /// - nColumns columns,<br></br>
         /// - delimiter as the column separator,<br></br>
         /// - newline as the line terminator (must be \r\n, \r, \n, or an escaped variant thereof)<br></br>
@@ -2392,7 +2395,7 @@ namespace JSON_Tools.JSON_Tools
             default:
                 throw new ArgumentException("newline must be one of [\\r\\n, \\r, \\n] or an escaped form of one of those", "newline");
             }
-            string column = CsvColumnRegex(cleanDelim, escapedNewline, escapedQuote);
+            string column = CsvColumnRegex(cleanDelim, escapedQuote);
             string startOfLine = $"(?:\\A|(?<={escapedNewline}))";
             string endOfLine = $"(?=\\Z|{escapedNewline})";
             var sb = new StringBuilder(startOfLine);
@@ -2407,14 +2410,46 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// `csv_regex(nColumns: int, delim: string=",", newline: string="\r\n", quote_char: string="\"")`
+        /// Returns the regex that s_csv (see ReadCsv function below) uses to match a single row of a CSV file
+        /// with delimiter `delim`, `nColumns` columns, quote character `quote_char`, and newline `newline`.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathArgumentException"></exception>
+        public static JNode CsvRegexAsJNode(List<JNode> args)
+        {
+            JNode nColumnsNode = args[0];
+            if (nColumnsNode.type != Dtype.INT)
+                throw new RemesPathArgumentException($"first arg to csv_regex must be integer, not {nColumnsNode.type}", 0, FUNCTIONS["csv_regex"]);
+            int nColumns = Convert.ToInt32(nColumnsNode.value);
+            JNode delimNode = args[1];
+            char delim = delimNode.value is string delimStr ? delimStr[0] : ',';
+            JNode newlineNode = args[2];
+            string newline = newlineNode.value is string newlineStr ? newlineStr : "\r\n";
+            JNode quoteNode = args[3];
+            char quote = quoteNode.value is string quoteStr ? quoteStr[0] : '"';
+            Regex rex = new Regex(CsvRowRegex(nColumns, delim, newline, quote), RegexOptions.Compiled);
+            return new JRegex(rex);
+        }
+
+        /// <summary>
         /// replace all instances of "(INT)" with a regex that captures a decimal or hex integer,<br></br>
         /// and all instances of "(NUMBER)" with a regex that captures a decimal floating point number<br></br>
         /// Also insert noncapturing versions of the int and float regexes respectively in place of each instance of "(?:INT)" or "(?:NUMBER)"
         /// </summary>
         /// <param name="regexOrString"></param>
         /// <returns></returns>
-        public static JRegex TransformRegex(JNode regexOrString)
+        public static JNode TransformRegex(JNode regexOrString)
         {
+            if (regexOrString is CurJson cj)
+            {
+                JNode newRex(JNode x)
+                {
+                    return TransformRegex(cj.function(x));
+                }
+                return new CurJson(Dtype.REGEX, newRex);
+            }
             string pat = regexOrString is JRegex jregex ? jregex.regex.ToString() : (string)regexOrString.value;
             string fixedPat = Regex.Replace(pat, @"(?<!\\)\((?:\?:)?(?:INT|NUMBER)\)", m =>
             {
@@ -2426,16 +2461,25 @@ namespace JSON_Tools.JSON_Tools
             return new JRegex(new Regex(fixedPat, RegexOptions.Compiled | RegexOptions.Multiline));
         }
 
+        /// <summary>
+        /// assumes args[firstOptionalArgNum] and every element thereafter of args is an integer. If this is not true, throws a RemesPathArgumentException<br></br>
+        /// returns all the integers from firstOptionalArgNum on, wrapped using Python-style negative indexing if needed
+        /// </summary>
+        /// <param name="firstOptionalArgNum">first arg to use</param>
+        /// <param name="nColumns">number of columns in each row of a CSV (for s_csv only)</param>
+        /// <param name="funcName">just for showing if a RemesPathArgumentException is thrown</param>
+        /// <returns></returns>
+        /// <exception cref="RemesPathArgumentException"></exception>
         private static int[] ColumnNumbersToParseAsNumber(List<JNode> args, int firstOptionalArgNum, int nColumns, string funcName)
         {
             return args.LazySlice($"{firstOptionalArgNum}:")
                 .Select(x =>
             {
                 if (x.type != Dtype.INT)
-                    throw new RemesPathArgumentException($"Arguments {nColumns} onward to {funcName} must be integers", 5, FUNCTIONS[funcName]);
+                    throw new RemesPathArgumentException($"Arguments {firstOptionalArgNum} onward to {funcName} must be integers", firstOptionalArgNum, FUNCTIONS[funcName]);
                 int xVal = Convert.ToInt32(x.value);
                 if (nColumns >= 1 && xVal < 0)
-                    return nColumns + 1 + xVal;
+                    return nColumns + xVal;
                 return xVal;
             })
                 .ToArray<int>();
@@ -2470,6 +2514,15 @@ namespace JSON_Tools.JSON_Tools
             /// 2,baz,-3
             /// </summary>
             MAP_HEADER_TO_ROWS,
+            /// <summary>
+            /// not actually an option for CSV header handling, but rather includes the full text of the match as the first item of the returned array.<br></br>
+            /// for example, returns [["a,b,c", "a", "b", "c"], ["1,foo,2.5", "1, "foo", "2.5"], ["2,baz,-3", "2", "baz", "-3"]]<br></br>
+            /// when using s_fa with the csv-parser regex "^([^,\r\n]*),([^,\r\n]*),([^,\r\n]*)$ to parse<br></br>
+            /// a,b,c<br></br>
+            /// 1,foo,2.5<br></br>
+            /// 2,baz,-3
+            /// </summary>
+            INCLUDE_FULL_MATCH_AS_FIRST_ITEM,
         }
 
         private static readonly Dictionary<string, HeaderHandlingInCsv> HEADER_HANDLING_ABBREVIATIONS = new Dictionary<string, HeaderHandlingInCsv>
@@ -2477,14 +2530,15 @@ namespace JSON_Tools.JSON_Tools
             ["n"] = HeaderHandlingInCsv.SKIP_HEADER_ROWS_AS_ARRAYS,
             ["h"] = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS,
             ["d"] = HeaderHandlingInCsv.MAP_HEADER_TO_ROWS,
+            //["i"] = HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM // this is not accessible, because it's not for CSV parsing
         };
 
-        public static IEnumerable<(int utf8Extra, JNode item)> EnumerateGroupsOfRegexMatch(string text, int matchStart, int utf8ExtraBytes, int nColumns, int[] columnsToParseAsNumber, Match m)
+        public static IEnumerable<JNode> EnumerateGroupsOfRegexMatch(string text, int matchStart, int utf8ExtraBytes, int minGroupNum, int maxGroupNum, int[] columnsToParseAsNumber, Match m, Func<string, bool, int, JNode> matchEvaluator)
         {
             int groupStart = matchStart;
             int nextColToParseAsNumber = columnsToParseAsNumber.Length == 0 ? -1 : columnsToParseAsNumber[0];
             int indexInColsToParseAsNumber = 0;
-            for (int jj = 1; jj <= nColumns; jj++)
+            for (int jj = minGroupNum; jj <= maxGroupNum; jj++)
             {
                 Group grp = m.Groups[jj];
                 string captured = grp.Value;
@@ -2498,24 +2552,24 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    if (nextColToParseAsNumber == jj)
+                    if (nextColToParseAsNumber == jj - minGroupNum)
                     {
-                        item = JsonParser.TryParseNumber(captured, 0, captured.Length, jnodeIndex);
+                        item = matchEvaluator(captured, true, jnodeIndex);
                         indexInColsToParseAsNumber++;
                         nextColToParseAsNumber = columnsToParseAsNumber.Length > indexInColsToParseAsNumber
                             ? columnsToParseAsNumber[indexInColsToParseAsNumber]
                             : -1;
                     }
                     else
-                        item = new JNode(captured, jnodeIndex);
+                        item = matchEvaluator(captured, false, jnodeIndex);
                 }
-                yield return (utf8ExtraBytes, item);
+                yield return item;
             }
         }
 
         /// <summary>
         /// return an array of strings(if rex has 0 or 1 capture group(s)) or an array of arrays of strings (if there are multiple capture groups)<br></br> 
-        /// The arguments in args at index firstOptionalArgNum onward will be treated as the 1-based indices of capture groups to parse as numbers<br></br>
+        /// The arguments in args at index firstOptionalArgNum onward will be treated as the 0-based indices of capture groups to parse as numbers<br></br>
         /// A negative number can be used for a columns_to_parse_as_number arg, and it can be wrapped according to standard Python negative indexing rules.<br></br>
         /// A failed attempt to parse a capture group as a number will return the string value of the capture group, or "" if that capture group was failed.
         /// </summary>
@@ -2524,12 +2578,14 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args">the args originally passed to the function calling this</param>
         /// <param name="firstOptionalArgNum">every arg from here onwards is the 0-based index of a capture group to parse as a number</param>
         /// <param name="funcName">name of invoking function</param>
-        /// <param name="nColumns">number of columns (only used for s_csv)</param>
+        /// <param name="maxGroupNum">highest capture group number (number of columns in s_csv)</param>
+        /// <param name="headerHandling">how headers are used, see the HeaderHandlingInCsv enum (only for s_csv)</param>
+        /// <param name="csvQuoteChar">the quote character (only used in s_csv)</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
-        public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int nColumns=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS)
+        public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int maxGroupNum=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS, char csvQuoteChar = '\x00')
         {
-            var columnsToParseAsNumber = ColumnNumbersToParseAsNumber(args, firstOptionalArgNum, nColumns, funcName);
+            int[] columnsToParseAsNumber = ColumnNumbersToParseAsNumber(args, firstOptionalArgNum, maxGroupNum, funcName);
             Array.Sort(columnsToParseAsNumber);
             int nextMatchStart = 0;
             int matchEnd = 0;
@@ -2537,6 +2593,23 @@ namespace JSON_Tools.JSON_Tools
             var rows = new List<JNode>();
             List<string> header = null;
             bool isFirstRow = true;
+            string doubleQuoteStr = csvQuoteChar > 0 ? new string(csvQuoteChar, 2) : "";
+            string quoteStr = csvQuoteChar > 0 ? new string(csvQuoteChar, 1) : "";
+            JNode matchEvaluator(string mValue, bool tryParseAsNumber, int jnodePosition)
+            {
+                if (tryParseAsNumber)
+                {
+                    JNode parsed = JsonParser.TryParseNumber(mValue, 0, mValue.Length, jnodePosition);
+                    if (csvQuoteChar > 0 && parsed.value is string parsedStr && parsedStr.Length > 0 && parsedStr[0] == csvQuoteChar)
+                        parsed.value = parsedStr.Substring(1, parsedStr.Length - 2).Replace(doubleQuoteStr, quoteStr);
+                    return parsed;
+                }
+                if (csvQuoteChar > 0 && mValue.Length > 0 && mValue[0] == csvQuoteChar)
+                    return new JNode(mValue.Substring(1, mValue.Length - 2).Replace(doubleQuoteStr, quoteStr));
+                return new JNode(mValue);
+            }
+            int minGroupNum = headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM ? 0 : 1;
+            int nColumns = minGroupNum >= maxGroupNum ? 1 : maxGroupNum + 1 - minGroupNum;
             while (nextMatchStart < text.Length)
             {
                 Match m = rex.Match(text, nextMatchStart);
@@ -2546,23 +2619,34 @@ namespace JSON_Tools.JSON_Tools
                 utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchEnd, matchStart);
                 int jnodePos = matchStart + utf8ExtraBytes;
                 matchEnd = m.Index + m.Length;
-                if (nColumns < 0)
-                    nColumns = m.Groups.Count - 1;
-                int headerLength = nColumns < 2 ? 1 : nColumns;
-                if (nColumns < 2)
+                if (maxGroupNum < 0)
+                {
+                    maxGroupNum = m.Groups.Count - 1;
+                    nColumns = minGroupNum >= maxGroupNum ? 1 : maxGroupNum + 1 - minGroupNum;
+                    for (int ii = 0; ii < columnsToParseAsNumber.Length; ii++)
+                    {
+                        if (columnsToParseAsNumber[ii] < 0)
+                        {
+                            columnsToParseAsNumber[ii] += maxGroupNum;
+                        }
+                    }
+                    Array.Sort(columnsToParseAsNumber);
+                }
+                bool parseMatchesAsRow = headerHandling == HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS || headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM || !isFirstRow;
+                if (nColumns == 1)
                 {
                     int nextColToParseAsNumber = columnsToParseAsNumber.Length == 0 ? -1 : columnsToParseAsNumber[0];
-                    string mValue = nColumns == 1 ? m.Groups[1].Value : m.Value;
+                    string mValue = maxGroupNum == 1 ? m.Groups[1].Value : m.Value;
                     if (isFirstRow)
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
-                            header = new List<string> { mValue };  
+                            header = new List<string> { JNode.StrToString(mValue, false) };  
                         }
                     }
-                    if (!isFirstRow || headerHandling == HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS)
+                    if (parseMatchesAsRow)
                     {
-                        JNode nodeToAdd = nextColToParseAsNumber >= 0 ? JsonParser.TryParseNumber(mValue, 0, m.Length, jnodePos) : new JNode(mValue, jnodePos);
+                        JNode nodeToAdd = matchEvaluator(mValue, nextColToParseAsNumber >= 0, jnodePos);
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
                             // if we have a 1-column file and we want to map the header to rows, we will map the one value
@@ -2579,32 +2663,32 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
-                            header = new List<string>(headerLength);
-                            for (int ii = 1; ii <= nColumns; ii++)
+                            header = new List<string>(nColumns);
+                            for (int ii = minGroupNum; ii <= maxGroupNum; ii++)
                                 header.Add(JNode.StrToString(m.Groups[ii].Value, false));
                         }
                     }
-                    if (!isFirstRow || headerHandling == HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS)
+                    if (parseMatchesAsRow)
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
                             var rowObj = new Dictionary<string, JNode>(nColumns);
                             int ii = 0;
-                            foreach ((int utf8Extra, JNode val) in EnumerateGroupsOfRegexMatch(text, matchStart, utf8ExtraBytes, nColumns, columnsToParseAsNumber, m))
+                            foreach (JNode val in EnumerateGroupsOfRegexMatch(text, matchStart, utf8ExtraBytes, minGroupNum, maxGroupNum, columnsToParseAsNumber, m, matchEvaluator))
                             {
                                 rowObj[header[ii++]] = val;
-                                utf8ExtraBytes = utf8Extra;
                             }
+                            utf8ExtraBytes = rowObj[header[header.Count - 1]].position - m.Groups[maxGroupNum].Index;
                             rows.Add(new JObject(jnodePos, rowObj));
                         }
                         else
                         {
-                            var row = new List<JNode>();
-                            foreach ((int utf8Extra, JNode val) in EnumerateGroupsOfRegexMatch(text, matchStart, utf8ExtraBytes, nColumns, columnsToParseAsNumber, m))
+                            var row = new List<JNode>(nColumns);
+                            foreach (JNode val in EnumerateGroupsOfRegexMatch(text, matchStart, utf8ExtraBytes, minGroupNum, maxGroupNum, columnsToParseAsNumber, m, matchEvaluator))
                             {
                                 row.Add(val);
-                                utf8ExtraBytes = utf8Extra;
                             }
+                            utf8ExtraBytes = row[row.Count - 1].position - m.Groups[maxGroupNum].Index;
                             rows.Add(new JArray(jnodePos, row));
                         }
                     }
@@ -2634,7 +2718,7 @@ namespace JSON_Tools.JSON_Tools
         {
             string text = (string)args[0].value;
             if (args[1].type != Dtype.INT)
-                throw new RemesPathArgumentException("second arg (nColumns) to s_csv must be integer", 1, FUNCTIONS["s_csv"]);
+                throw new RemesPathArgumentException($"second arg (nColumns) to s_csv must be integer, not {args[1].type}", 1, FUNCTIONS["s_csv"]);
             int nColumns = Convert.ToInt32(args[1].value);
             char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
             string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
@@ -2643,12 +2727,13 @@ namespace JSON_Tools.JSON_Tools
             if (!HEADER_HANDLING_ABBREVIATIONS.TryGetValue(headerHandlingAbbrev, out HeaderHandlingInCsv headerHandling))
                 throw new RemesPathArgumentException("header_handling (6th argument, default 'n') must be 'n' (no header, rows as arrays), 'h' (include header, rows as arrays), or 'd' (rows as objects with header as keys)", 5, FUNCTIONS["s_csv"]);
             string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
-            return StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 6, "s_csv", nColumns, headerHandling);
+            return (JArray)StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 6, "s_csv", nColumns, headerHandling, quote);
         }
 
         /// <summary>
-        /// s_fa(text: string, rex: regex | string, *colunsToParseAsNumber: int (optional))<br></br>
+        /// s_fa(text: string, rex: regex | string, includeFullMatchAsFirstItem: bool = false, *colunsToParseAsNumber: int (optional))<br></br>
         /// If rex is a string, converts it to a regex<br></br>
+        /// if includeFullMatchAsFirstItem and there is at least one capture group, the full match string will come before the capture groups as the first element of each subarray<br></br>
         /// columns_to_parse_as_number: any number of optional int args, the 0-based indices of capture groups to parse as numbers<br></br>
         /// see StrFindAllHelper for more
         /// </summary>
@@ -2658,7 +2743,9 @@ namespace JSON_Tools.JSON_Tools
         {
             string text = (string)args[0].value;
             Regex rex = ((JRegex)args[1]).regex;
-            return StrFindAllHelper(text, rex, args, 2, "s_fa");
+            bool includeFullMatchAsFirstItem = args.Count > 2 && (bool)args[2].value;
+            HeaderHandlingInCsv headerHandling = includeFullMatchAsFirstItem ? HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM : HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS;
+            return StrFindAllHelper(text, rex, args, 3, "s_fa", -1, headerHandling);
         }
 
         public static JNode StrSplit(List<JNode> args)
@@ -3025,6 +3112,7 @@ namespace JSON_Tools.JSON_Tools
             ["at"] = new ArgFunction(At, "at", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR_OR_OBJ, Dtype.ARR | Dtype.INT | Dtype.STR}),
             ["avg"] = new ArgFunction(Mean, "avg", Dtype.FLOAT, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["concat"] = new ArgFunction(Concat, "concat", Dtype.ARR_OR_OBJ, 2, int.MaxValue, false, new Dtype[] { Dtype.ITERABLE, Dtype.ITERABLE, /* any # of args */ Dtype.ITERABLE }),
+            ["csv_regex"] = new ArgFunction(CsvRegexAsJNode, "csv_regex", Dtype.REGEX, 1, 4, false, new Dtype[] {Dtype.INT, Dtype.STR, Dtype.STR, Dtype.STR}),
             ["dict"] = new ArgFunction(Dict, "dict", Dtype.OBJ, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["enumerate"] = new ArgFunction(Enumerate, "enumerate", Dtype.ARR, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["flatten"] = new ArgFunction(Flatten, "flatten", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ARR, Dtype.INT }),
@@ -3074,7 +3162,7 @@ namespace JSON_Tools.JSON_Tools
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((2, Dtype.NULL, x => new JNode(",")), (3, Dtype.NULL, x => new JNode("\r\n")), (4, Dtype.NULL, x => new JNode("\"")), (5, Dtype.NULL, x => new JNode("n")))),
-            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex))),
+            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.BOOL | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex), (2, Dtype.NULL, x => new JNode(false)))),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),

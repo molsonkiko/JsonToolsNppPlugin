@@ -283,6 +283,11 @@ __EXAMPLES__
 - `concat([1, 2], {"a": 2})` raises an exception because you can't concatenate arrays with objects.
 - `concat(1, [1, 2])` raises an exception because you can't concatenate anything with non-iterables.
 
+----
+`csv_regex(nColumns: int, delim: string=",", newline: string="\r\n", quote_char: string="\"")`
+
+Returns the regex that [`s_csv`](#vectorized-functions) uses to match a single row of a CSV file (formatted according to [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt)) with delimiter `delim`, `nColumns` columns, quote character `quote_char`, and newline `newline`.
+
 -----
 `dict(x: array) -> object`
 
@@ -735,8 +740,8 @@ __Arguments:__
 * `csvText` (1st arg): the text of a CSV file encoded as a JSON string
 * `nColumns` (2nd arg): the number of columns
 * `delimiter` (3rd arg, default `,`): the column separator
-* `newline` (4th arg default `CR LF`): the newline
-* `quote` (5th arg, default `"`): the character used to wrap columns that contain `newline` or `delimiter`.
+* `newline` (4th arg default `\r\n`): the newline. Must be one of (``)
+* `quote` (5th arg, default `"`): the character used to wrap columns that `newline`, `quote`, or `delimiter`.
 * `header_handling` (6th arg, default `n`): how the header row is treated. *Must be one of `n`, `d`, or `h`.* Each of these options will be explained in the list below.
     * *`n`: skip header row (this is the default)*.                    This would parse the CSV file `"foo,bar\n1,2` as `[["1", "2"]]`
     * *`h`: include header row*.                                       This would parse the CSV file `"foo,bar\n1,2` as `[["foo", "bar"], ["1", "2"]]`
@@ -749,14 +754,17 @@ __Return value:__
 
 __Notes:__
 * *Any row that does not have exactly `nColumns` columns will be ignored completely.*
-* Any column that starts and ends with a quote character is assumed to be a quoted string. In a quoted string, anything is fine, but *literal quote characters in a quoted column must be escaped with `\\` (backslash)*.
-    * For example, `"\"quoted\",string,in,quoted column"` is a valid column in a file with `,` delimiter and `"` quote character.
+* See [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) for the accepted format of CSV files. A brief synopsis is below.
+* Any column that starts and ends with a quote character is assumed to be a quoted string. In a quoted string, anything is fine, but *a literal quote character in a quoted column must be escaped with itself*.
+    * For example, `"""quoted"",string,in,quoted column"` is a valid column in a file with `,` delimiter and `"` quote character.
     * On the other hand, `" " "` is *not a valid column if `"` is the quote character* because it contains an unescaped `"` in a quoted column.
     * Finally, `a,b` would be treated as two columns in a CSV file with `"` quote character, but `"a,b"` is a single column because a comma is not treated as a column separator in a quoted column.
+* Columns containing literal quote characters or the newline characters `\r` and `\n` must be wrapped in quotes.
+* When `s_csv` parses a file, quoted values are parsed without the enclosing quotes and with any internal doubled quote characters replaced with a single instance of the quote character. Thus the valid value (for `"` quote character)`"foo""bar"` would be parsed as the JSON string `"foo\"bar"`
 * You can pass in `null` for the 3rd, 4th, and 5th args. Any instance of `null` in those args will be replaced with the default value.
 
 __Example:__
-Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL\\'AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
+Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL''AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
 
 which represents this CSV file (7 columns, comma delimiter, `LF` newline, `'` quote character):
 ```
@@ -764,7 +772,7 @@ nums,names,cities,date,zone,subzone,contaminated
 nan,Bluds,BUS,,1,'',TRUE
 0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE
 ,qere,GOLAR,,3,f,
-1.2,qere,'GOL\'AR',,3,h,TRUE
+1.2,qere,'GOL''AR',,3,h,TRUE
 '',flodt,'q,tun',,4,q,FALSE
 4.6,Kjond,,,,w,''
 4.6,'Kj
@@ -775,51 +783,58 @@ Notice that the 8th row of this CSV file has a newline in the middle of the seco
 The query ``s_csv(@, 7, `,`, `\n`, `'`)`` will correctly parse this as *an array of seven 7-string subarrays (omitting the header)*, shown below:
 ```json
 [
-    ["nan", "Bluds", "BUS", "", "1", "''", "TRUE"],
+    ["nan", "Bluds", "BUS", "", "1", "", "TRUE"],
     ["0.5", "dfsd", "FUDG", "12/13/2020 0:00", "2", "c", "TRUE"],
     ["", "qere", "GOLAR", "", "3", "f", ""],
-    ["1.2", "qere", "'GOL\\'AR'", "", "3", "h", "TRUE"],
-    ["''", "flodt", "'q,tun'", "", "4", "q", "FALSE"],
-    ["4.6", "Kjond", "", "", "", "w", "''"],
-    ["4.6", "'Kj\nond'", "YUNOB", "10/17/2014 0:00", "5", "z", "FALSE"]
+    ["1.2", "qere", "GOL'AR", "", "3", "h", "TRUE"],
+    ["", "flodt", "q,tun", "", "4", "q", "FALSE"],
+    ["4.6", "Kjond", "", "", "", "w", ""],
+    ["4.6", "Kj\nond", "YUNOB", "10/17/2014 0:00", "5", "z", "FALSE"]
 ]
 ``` 
 
-The query ``s_csv(@, 7, `,`, `\n`, `'`, h, 1, -3)`` will correctly parse this as *an array of eight 7-item subarrays (including the heaader) with the 1st and 3rd-to-last (i.e. 5th) columns parsed as numbers where possible*, shown below:
+The query ``s_csv(@, 7, `,`, `\n`, `'`, h, 0, -3)`` will correctly parse this as *an array of eight 7-item subarrays (including the heaader) with the 1st and 3rd-to-last (i.e. 5th) columns parsed as numbers where possible*, shown below:
 ```json
 [
     ["nums", "names", "cities", "date", "zone", "subzone", "contaminated"],
-    ["nan", "Bluds", "BUS", "", 1, "''", "TRUE"],
+    ["nan", "Bluds", "BUS", "", 1, "", "TRUE"],
     [0.5, "dfsd", "FUDG", "12/13/2020 0:00", 2, "c", "TRUE"],
     ["", "qere", "GOLAR", "", 3, "f", ""],
-    [1.2, "qere", "'GOL\\'AR'", "", 3, "h", "TRUE"],
-    ["''", "flodt", "'q,tun'", "", 4, "q", "FALSE"],
-    [4.6, "Kjond", "", "", "", "w", "''"],
-    [4.6, "'Kj\nond'", "YUNOB", "10/17/2014 0:00", 5, "z", "FALSE"]
+    [1.2, "qere", "GOL'AR", "", 3, "h", "TRUE"],
+    ["", "flodt", "q,tun", "", 4, "q", "FALSE"],
+    [4.6, "Kjond", "", "", "", "w", ""],
+    [4.6, "Kj\nond", "YUNOB", "10/17/2014 0:00", 5, "z", "FALSE"]
 ]
 ``` 
 
 ---
-`s_fa(x: string, pat: regex | string, ...: int) -> array[string | number] | array[array[string | number]]`
+`s_fa(x: string, pat: regex | string, includeFullMatchAsFirstItem: bool = false, ...: int) -> array[string | number] | array[array[string | number]]`
 
 __Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
 
-* If `pat` is a regex with no capture groups or one capture group, returns an array of the substrings of `x` that match `pat`.
-* If `pat` has multiple capture groups, returns an array of subarrays of substrings, where each subarray has a number of elements equal to the number of capture groups.
-* The third argument and any subsequent argument must all be the number of a capture group to attempt to parse as a number (`1` matches the match value if there were no capture groups). [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. If a capture group cannot be parsed as a number, the capture group is returned.
+* If the third argument, `includeFullMatchAsFirstItem`, is set to `false` (the default):
+    * If `pat` is a regex with *no capture groups or one capture group*, returns an array of the substrings of `x` that match `pat`.
+    * If `pat` has *multiple capture groups*, returns an array of subarrays of substrings, where each subarray has a number of elements equal to the number of capture groups.
+* otherwise:
+    * If `pat` is a regex with *no capture groups*, returns an array of the substrings of `x` that match `pat`.
+    * If `pat` has *at least one capture group*, returns an array of subarrays of substrings, where each subarray has a number of elements equal to the number of capture groups + 1, *and the first element of each subarray is the entire text of the match (including the uncaptured text)*.
+
+The fourth argument and any subsequent argument must all be the number of a capture group to attempt to parse as a number (`0` matches the match value if there were no capture groups). [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. If a capture group cannot be parsed as a number, the capture group is returned. As with `s_csv` above, you can use a negative number to parse the nth-to-last column as a number instead of the nth column as a numer.
 
 __SPECIAL NOTES FOR `s_fa`:__
 1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools `^` matches only the beginning of the string and `$` matches only the end of the string.
 2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex number preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
 3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number. A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
-4. Although `s_csv` allows you to parse the nth-to-last column as a number with negative numbers for 6th and subsequent args, negative numbers *cannot* be used as optional args to this function to parse the nth-to-last capture groups as numbers.
+4. *`s_fa` may be very slow if `pat` is a function of input,* because the above described regex transformations need to be applied every time the function is called instead of just once at compile time.
 
 __Examples:__
 1. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B`, `(INT)`)`` will return `["1", "-1", "+2", "-0xF", "+0x1a", "0x2B"]`
-2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`, 1)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `1` as the third arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which stayed as a string because its numeric value was too big for the 64-bit integers used in JsonTools.
-3. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2)`` will return `[["a",1.5,"1"],["b",-30000.0,"2"],["c",-0.2,"6"]]`. Note that the second column but not the third will be parsed as a number, because only `2` was passed in as the number of a capture group to parse as a number.
-4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`, 2, 3)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second and third columns because `2` and `3` were passed as optional args.
-5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`, 2)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex
+2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`,false, 0)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `0` as the fourth arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which stayed as a string because its numeric value was too big for the 64-bit integers used in JsonTools.
+3. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`,false, 1)`` will return `[["a",1.5,"1"],["b",-30000.0,"2"],["c",-0.2,"6"]]`. Note that the second column but not the third will be parsed as a number, because only `1` was passed in as the number of a capture group to parse as a number.
+4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`,false, -2, 2)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second-to-last and third columns because `-2` and `2` were passed as optional args.
+5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`,false, 1)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex.
+6. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](INT)`, true, 1)`` will return `[["a1",1],["b+2",2],["c-0xF",-15],["d+0x1a",26]]` because the third argument is `true` and there is one capture group, meaning that the matches will be represented as two-element subarrays, with the first element being the full text of the match, and the second element being the captured integer parsed as a number.
+6. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](?:INT)`, true)`` will return `["a1","b+2","c-0xF","d+0x1a"]` because the third argument is `true` but there are no capture groups, so an array of strings is returned instead of 1-element subarrays.
 
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`

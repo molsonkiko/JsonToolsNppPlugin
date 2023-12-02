@@ -326,6 +326,9 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("sort_by(j`[[1, 2], [3, 1], [4, -1]]`, -1)", "[[4, -1], [3, 1], [1, 2]]"),
                 new Query_DesiredResult("sort_by(j`[\"abc\", \"defg\", \"h\", \"ij\"]`, s_len(@), true)", "[\"defg\", \"abc\", \"ij\", \"h\"]"), // sort_by with function as input
                 new Query_DesiredResult("quantile(flatten(@.foo[1:]), 0.5)", "5.5"),
+                new Query_DesiredResult("@{`b\\\\e\"\\r\\n\\t\\``: 1}.`b\\\\e\"\\r\\n\\t\\``", "1"), // make sure that indexing with the same quoted string used for the key returns the value associated with that key, even if the quoted string has escapes and stuff
+                new Query_DesiredResult("`\\\\\\` \\\\`", "\"\\\\` \\\\\""), // escapes directly before a backtick must be supported, as well as internal backticks preceded by an even number of '\\' chars
+                new Query_DesiredResult("j`{\"b\\\\\\\\e\\\"\\r\\n\\t\\`\": 1}`.`b\\\\e\"\\r\\n\\t\\``", "1"), // as above, but using a JSON literal for the same object
                 new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
                 new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
                 new Query_DesiredResult("round(@.foo[0] * 1.66)", "[0, 2, 3]"),
@@ -474,16 +477,19 @@ namespace JSON_Tools.Tests
                                         "[{\"al\": [2, 4], \"bt\": [\"null\"]}, {\"al\": [4, 2, 0], \"bt\": [\"number\", \"object\"]}]"),
                 new Query_DesiredResult("concat(@.foo[0][:]->(str(@)*(@+1)), keys(@.`7`[0])[:]->(@ + s_slice(@, ::-1)))",
                     "[\"0\", \"11\", \"222\", \"foooof\"]"),
+                new Query_DesiredResult("s_fa(`a&b&c\\nfoo&#b&ar#&##`, csv_regex(@.foo[0][2] + 1, `&`, `\\n`, `#`))",
+                    "[[\"a\", \"b\", \"c\"], [\"foo\", \"#b&ar#\", \"##\"]]"), // this is different from calling s_csv(3, `&`, `\n`, `#`) on the same input, because s_fa doesn't do the postprocessing of strings with quote characters
+                new Query_DesiredResult("str(csv_regex(5, , , `'`))", JNode.StrToString(JNode.StrToString(ArgFunction.CsvRowRegex(5, quote:'\''), true), true)),
                 // ===================== s_csv CSV parser ========================
                 // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
                 new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +
                                                 "nan,Bluds,BUS\\r\\n" +
                                                 ",,\\r\\n" +
-                                                "nan,\"\",BUS" +
-                                                "\\r\\n0.5,\"df\\r\\ns \\\"d\\\" \",FUDG\\r\\n" +
-                                                "0.5,df\"sd,FUDG\\r\\n" + // valid; unescaped quotes are fine on a quoted line
+                                                "nan,\"\",BUS\\r\\n" +
+                                                "0.5,\"df\\r\\ns \"\"d\"\" \",FUDG\\r\\n" + // newlines and quotes inside a value
+                                                "0.5,\"df\"\"sd\",FUDG\\r\\n" +
                                                 "\"\",,FUDG\\r\\n" +
-                                                "0.5,df\\ns\\rd,\"\"\\r\\n" + // valid; neither \n nor \r is the designated newline
+                                                "0.5,\"df\\ns\\rd\",\"\"\\r\\n" +
                                                 "1.2,qere,GOLAR\\r\\n" +
                                                 "1.2,qere,GOLAR\\r\\n" +
                                                 "3.4,flodt,\"q,tun\"\\r\\n" +
@@ -491,30 +497,30 @@ namespace JSON_Tools.Tests
                                                 "4.6,Kjond,YUNOB\\r\\n" +
                                                 "7,Unyir,\\r\\n`" +
                                                 ", 3, , , , h)", // only 3 columns and string need to be specified; comma delim, CRLF newline, and '"' quote are defaults
-                    "[[\"nums\",\"names\",\"cities\"],[\"nan\",\"Bluds\",\"BUS\"],[\"\",\"\",\"\"],[\"nan\",\"\\\"\\\"\",\"BUS\"],[\"0.5\",\"\\\"df\\r\\ns \\\\\\\"d\\\\\\\" \\\"\",\"FUDG\"],[\"0.5\",\"df\\\"sd\",\"FUDG\"],[\"\\\"\\\"\",\"\",\"FUDG\"],[\"0.5\",\"df\\ns\\rd\",\"\\\"\\\"\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"3.4\",\"flodt\",\"\\\"q,tun\\\"\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"7\",\"Unyir\",\"\"]]"),
+                    "[[\"nums\",\"names\",\"cities\"],[\"nan\",\"Bluds\",\"BUS\"],[\"\",\"\",\"\"],[\"nan\",\"\",\"BUS\"],[\"0.5\",\"df\\r\\ns \\\"d\\\" \",\"FUDG\"],[\"0.5\",\"df\\\"sd\",\"FUDG\"],[\"\",\"\",\"FUDG\"],[\"0.5\",\"df\\ns\\rd\",\"\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"1.2\",\"qere\",\"GOLAR\"],[\"3.4\",\"flodt\",\"q,tun\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"4.6\",\"Kjond\",\"YUNOB\"],[\"7\",\"Unyir\",\"\"]]"),
                 // 7 columns, 8 rows '\t' delimiter, LF newline, '\'' quote character, no newline before EOF
                 new Query_DesiredResult("s_csv(`nums\\tnames\\tcities\\tdate\\tzone\\tsubzone\\tcontaminated\\n" +
                                                 "nan\\tBluds\\tBUS\\t\\t1\\t''\\tTRUE\\n" +
                                                 "0.5\\tdfsd\\tFUDG\\t12/13/2020 0:00\\t2\\tc\\tTRUE\\n" +
                                                 "\\tqere\\tGOLAR\\t\\t3\\tf\\t\\n" +
-                                                "1.2\\tqere\\t'GOL\\\\'AR'\\t\\t3\\th\\tTRUE\\n" +
+                                                "1.2\\tqere\\t'GO\\tLA''R'\\t\\t3\\th\\tTRUE\\n" + // third column is "GO\tLA'R"; the internal quote character ' is escaped by itself.
                                                 "''\\tflodt\\t'q\\ttun'\\t\\t4\\tq\\tFALSE\\n" +
                                                 "4.6\\tKjond\\t\\t\\t\\tw\\t''\\n" +
                                                 "4.6\\t'Kj\\nond'\\tYUNOB\\t10/17/2014 0:00\\t5\\tz\\tFALSE`" +
-                                                ", 7, `\t`, `\n`, `'`, h)",
-                    "[[\"nums\",\"names\",\"cities\",\"date\",\"zone\",\"subzone\",\"contaminated\"],[\"nan\",\"Bluds\",\"BUS\",\"\",\"1\",\"''\",\"TRUE\"],[\"0.5\",\"dfsd\",\"FUDG\",\"12/13/2020 0:00\",\"2\",\"c\",\"TRUE\"],[\"\",\"qere\",\"GOLAR\",\"\",\"3\",\"f\",\"\"],[\"1.2\",\"qere\",\"'GOL\\\\'AR'\",\"\",\"3\",\"h\",\"TRUE\"],[\"''\",\"flodt\",\"'q\\ttun'\",\"\",\"4\",\"q\",\"FALSE\"],[\"4.6\",\"Kjond\",\"\",\"\",\"\",\"w\",\"''\"],[\"4.6\",\"'Kj\\nond'\",\"YUNOB\",\"10/17/2014 0:00\",\"5\",\"z\",\"FALSE\"]]"),
+                                                ", 7, `\t`, `\\n`, `'`, h)",
+                    "[[\"nums\",\"names\",\"cities\",\"date\",\"zone\",\"subzone\",\"contaminated\"],[\"nan\",\"Bluds\",\"BUS\",\"\",\"1\",\"\",\"TRUE\"],[\"0.5\",\"dfsd\",\"FUDG\",\"12/13/2020 0:00\",\"2\",\"c\",\"TRUE\"],[\"\",\"qere\",\"GOLAR\",\"\",\"3\",\"f\",\"\"],[\"1.2\",\"qere\",\"GO\\tLA'R\",\"\",\"3\",\"h\",\"TRUE\"],[\"\",\"flodt\",\"q\\ttun\",\"\",\"4\",\"q\",\"FALSE\"],[\"4.6\",\"Kjond\",\"\",\"\",\"\",\"w\",\"\"],[\"4.6\",\"Kj\\nond\",\"YUNOB\",\"10/17/2014 0:00\",\"5\",\"z\",\"FALSE\"]]"),
                 // 1-column, '^' delimiter, '$' quote character, '\r' newline, 7 valid rows with 2 invalid rows at the end
                 new Query_DesiredResult("s_csv(`a\\r" +
                                                "$b^c$\\r" +
-                                               "$new\\r\\$line\\$$\\r" +
+                                               "$new\\r$$line\\$$$\\r" + // two places where quote char escapes itself
                                                "\\r" +
                                                "\\r" +
                                                "$$\\r" +
-                                               "d$\ne\\r" +
+                                               "$d$$\\ne$\\r" +
                                                "$ $ $\\r" + // invalid because there's an unescaped quote character on a quoted line
                                                "f^g`" + // invalid because there's a delimiter on an unquoted line
                                                ", 1, `^`, `\\r`, `$`, h)",
-                    "[\"a\",\"$b^c$\",\"$new\\r\\\\$line\\\\$$\",\"\",\"\",\"$$\",\"d$\\ne\"]"),
+                    "[\"a\",\"b^c\",\"new\\r$line\\\\$\",\"\",\"\",\"\",\"d$\\ne\"]"),
                 // 1-column, default (delimiter, newline, and quote), parse column 1 as number, 4 number rows and 4 non-number rows
                 new Query_DesiredResult("s_csv(`1.5\\r\\n" +
                                                "-2\\r\\n" +
@@ -524,19 +530,19 @@ namespace JSON_Tools.Tests
                                                "1e3b\\r\\n" +
                                                "-a\\r\\n" +
                                                "+b`" + 
-                                               ", 1, , , , h, 1)", // use shorthand to omit delimiter, newline, and quote
+                                               ", 1, , , , h, 0)", // use shorthand to omit delimiter, newline, and quote
                     "[1.5,-2,3e14,2e-3,\"\",\"1e3b\",\"-a\", \"+b\"]"),
-                // 3-column, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
+                // 3-column, default (delimiter, newline, and quote), parse columns 0 and -1 (becomes column 3) as numbers
                 new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
                                         "a,-3,NaN\\r\\n" +
                                         "baz,quz,-Infinity`" +
-                                        ", 3, null, null, null, h, 1, -1)",
+                                        ", 3, null, null, null, h, 0, -1)",
                 "[[1.5, \"foo\", \"bar\"], [\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
-                // 3-column, skip header, default (delimiter, newline, and quote), parse columns 1 and -1 (becomes column 3) as numbers
+                // 3-column, skip header, default (delimiter, newline, and quote), parse columns 0 and -1 (becomes column 2) as numbers
                 new Query_DesiredResult("s_csv(`1.5,foo,bar\\r\\n" +
                                         "a,-3,NaN\\r\\n" +
                                         "baz,quz,-Infinity`" +
-                                        ", 3, null, null, null, n, 1, -1)",
+                                        ", 3, null, null, null, n, 0, -1)",
                 "[[\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
                 // 4-column, map header to values, '\t' separator, '\n' newline, parse 2nd-to-last column as numbers
                 new Query_DesiredResult("s_csv(`col1\\tcol2\\tcol3\\tcol4\\n" +
@@ -550,17 +556,17 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("s_csv(`a\\r" +
                                                "$b^c$\\r" +
                                                "\\r" +
-                                               "$$\\r" +
-                                               "d$\ne`" +
+                                               "$$$$\\r" + // need four consecutive quote chars to represent a value that is exactly one literal quote char
+                                               "d\\ne`" + // invalid b/c internal '\n'
                                                ", 1, `^`, `\\r`, `$`, d)",
-                    "[{\"a\": \"$b^c$\"}, {\"a\": \"\"}, {\"a\": \"$$\"}, {\"a\": \"d$\\ne\"}]"),
+                    "[{\"a\": \"b^c\"}, {\"a\": \"\"}, {\"a\": \"$\"}]"),
                 // 1-column, skip header, '^' delimiter, '$' quote character, '\r' newline, parse as numbers
                 new Query_DesiredResult("s_csv(`a\\r" +
                                                "1\\r" +
                                                ".3\\r" +
                                                "5\\r" +
                                                "-7.2`" +
-                                               ", 1, `^`, `\\r`, `$`, , 1)", // omit header arg because it is default
+                                               ", 1, `^`, `\\r`, `$`, , 0)", // omit header arg because it is default
                     "[1, 0.3, 5, -7.2]"),
                 // 1-column, map header to values, '^' delimiter, '$' quote character, '\r' newline, parse as numbers
                 new Query_DesiredResult("s_csv(`foo\\r" +
@@ -568,7 +574,7 @@ namespace JSON_Tools.Tests
                                                ".3\\r" +
                                                "5\\r" +
                                                "-7.2`" +
-                                               ", 1, `^`, `\\r`, `$`, d, 1)",
+                                               ", 1, `^`, `\\r`, `$`, d, 0)",
                     "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": -7.2}]"),
                 // ====================== s_fa function for parsing regex search results as string arrays or arrays of arrays of strings =========
                 // 2 capture groups (2nd optional), parse the first group as number
@@ -577,15 +583,20 @@ namespace JSON_Tools.Tests
                                         "  3. baz\\t schnaz\\r\\n" +
                                         "4. 7 a\\r\\n" +
                                         "5. `" +
-                                        ", `^[\\x20\\t]*(\\d+)\\.\\s*(\\w+)?`, 1)",
+                                        ", `^[\\x20\\t]*(\\d+)\\.\\s*(\\w+)?`,,0)",
                     "[[1, \"foo\"], [2, \"bar\"], [3, \"baz\"], [4, \"7\"], [5, \"\"]]"),
                 // no capture groups, capture and parse hex numbers
-                new Query_DesiredResult("s_fa(`-0x12345  0x000abcdef\\r\\n0x067890 -0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, `(?:INT)`, 1)", "[-74565,11259375,424080,-11259375, \"0x123456789abcdefABCDEF\"]"),
+                new Query_DesiredResult("s_fa(`-0x12345  0x000abcdef\\r\\n0x067890 -0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, `(?:INT)`,, 0)", "[-74565,11259375,424080,-11259375, \"0x123456789abcdefABCDEF\"]"),
                 // no capture groups, capture hex numbers but do not parse as numbers
                 new Query_DesiredResult("s_fa(`0x12345  0x000abcdef\\r\\n0x067890 0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, g`(?:INT)`)", "[\"0x12345\",\"0x000abcdef\",\"0x067890\",\"0x0ABCDEF\",\"0x123456789abcdefABCDEF\"]"),
-                new Query_DesiredResult("s_fa(`-1 23 +7 -99 +0x1a -0xA2 0x7b`, g`(INT)`, 1)", "[-1,23,7,-99,26,-162,123]"),
-                // capture every (word, floating point number, floating point number, two lowercase letters separated) tuple inside a <p> element in HTML,
-                // and parse the values in the 2nd and third columns as numbers
+                // no capture groups, include full match as first item, capture hex numbers but don't parse as numbers
+                new Query_DesiredResult("s_fa(`0x12345  0x000abcdef\\r\\n0x067890 0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, g`(?:INT)`, true)", "[\"0x12345\",\"0x000abcdef\",\"0x067890\",\"0x0ABCDEF\",\"0x123456789abcdefABCDEF\"]"),
+                // 1 capture group, include full match as first item, capture numbers and parse full match as numbers (but not first capture group)
+                new Query_DesiredResult("s_fa(`-1 23 +7 -99`, g`(INT)`, true, 0)", "[[-1, \"-1\"], [23, \"23\"], [7, \"+7\"], [-99, \"-99\"]]"),
+                // 1 capture group, capture hex numbers and parse as numbers
+                new Query_DesiredResult("s_fa(`-1 23 +7 -99 +0x1a -0xA2 0x7b`, g`(INT)`,, 0)", "[-1,23,7,-99,26,-162,123]"),
+                // capture every (word, floating point number, floating point number, two lowercase letters separated by '_') tuple inside a <p> element in HTML,
+                // and parse the values in the 2nd and 2nd-to-last columns as numbers
                 new Query_DesiredResult("s_fa(`<p>captured 2 +3 a_b \\r\\n\\r\\n failure 1 2 A_B \\r\\nalsocaptured -8\\t  5 \\tq_r</p>" +
                                               "<p><span>anothercatch\\t +3.5 -4.2  s_t</span></p>" +
                                               "\\r\\n <div>\\r\\n <h2>nocatch -3 0.7E3</h2>\\r\\n" +
@@ -593,8 +604,8 @@ namespace JSON_Tools.Tests
                                               "<p> finalcatch -9E2 7 y_z\\t</p>`, " +
                     "g`(?s-i)(?:<p>|(?!\\A)\\G)" + // match starting at a <p> tag OR wherever the last match ended unless wraparound (?!\A)\G
                     "(?:(?!</p>).)*?" + // keep matching until the close </p> tag
-                    "([a-zA-Z]+)\\s+(NUMBER)\\s+(NUMBER)\\s+([a-z]_[a-z])`," +
-                    "*j`[2, 3]`)",
+                    "([a-zA-Z]+)\\s+(NUMBER)\\s+(NUMBER)\\s+([a-z]_[a-z])`" +
+                    ", false, *j`[1, -2]`)",
                     "[[\"captured\",2,3, \"a_b\"],[\"alsocaptured\",-8,5, \"q_r\"],[\"anothercatch\",3.5,-4.2, \"s_t\"],[\"finalcatch\",-900.0,7, \"y_z\"]]"),
                 // lines of 3 a-z chars (captured), then a not-captured (a dash and a number less than 9)
                 new Query_DesiredResult("s_fa(`abc-1\\r\\nbcd-7\\r\\ncde--19.5\\r\\ndef--9.2\\r\\nefg-10\\r\\nfgh-9\\r\\nab-1`" +
@@ -604,8 +615,15 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("s_fa(`foo 1. fun\\n" +
                                               "bar .25 Baal\\n" +
                                               "quz -2.3e2 quail`" +
-                                              ", `^\\w+ (NUMBER) \\w+$`, 1)",
+                                              ", `^\\w+ (NUMBER) \\w+$`,, 1)",
                     "[1.0, 0.25, -230.0]"),
+                // entire line must be a three-letter word (all lowercase), followed by a colon, then any number of space chars, then (a number (capture group 1)), then any number of space chars, then (a word (capture group 2)), then an optional trailing s after capture group 2, then EOL
+                // full line is included as first item of capture group
+                new Query_DesiredResult("s_fa(`foo: 1  bagel\\r\\n" +
+                                              "BAR: 83 dogs\\r\\n" + // not matched (leading 3-letter word is uppercase)
+                                              "xyz: 9314 quiches`" +
+                                       ", `^[a-z]{3}:\\x20+(\\d+)\\x20+(\\w+?)s?\\r?$`, true, 1)",
+                        "[[\"foo: 1  bagel\\r\", 1, \"bagel\"], [\"xyz: 9314 quiches\", 9314, \"quiche\"]]"),
             };
             int ii = 0;
             int tests_failed = 0;
@@ -838,6 +856,7 @@ namespace JSON_Tools.Tests
                 new []{"@![@ > 3]", "[1, 2, 3, 4]"},
                 new []{"@!{@ > 3}", "[1, 2, 3, 4]"},
                 new []{"s_mul(,1)", "[]"}, // omitting a non-optional argument with the "no-token-instead-of-null" shorthand
+                new []{"`\\\\``", "[]"}, // even number of escapes before a backtick inside a string
             });
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };

@@ -7,7 +7,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
-using static System.Windows.Forms.LinkLabel;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -717,7 +716,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         sb.Append('\\');
                         sb.Append(nextChar);
-                        ii += 1;
+                        ii++;
                     }
                     else if (nextChar == 'u')
                     {

@@ -180,6 +180,8 @@ namespace JSON_Tools.JSON_Tools
         INI,
         /// <summary>regex search results</summary>
         REGEX,
+        /// <summary>csv files (differs from REGEX only in handling of quoted values)</summary>
+        CSV,
     }
 
     /// <summary>
@@ -339,11 +341,26 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public static string StrToString(string s, bool quoted)
         {
+            int slen = s.Length;
+            int ii = 0;
+            for (; ii < slen; ii++)
+            {
+                char c = s[ii];
+                if (c < 32 || c == '\\' || c == '"')
+                    break;
+            }
+            if (ii == slen)
+                return quoted ? $"\"{s}\"" : s;
             var sb = new StringBuilder();
             if (quoted)
                 sb.Append('"');
-            foreach (char c in s)
-                CharToSb(sb, c);
+            if (ii > 0)
+            {
+                ii--;
+                sb.Append(s, 0, ii);
+            }
+            for (; ii < slen; ii++)
+                CharToSb(sb, s[ii]);
             if (quoted)
                 sb.Append('"');
             return sb.ToString();
@@ -359,6 +376,36 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// adds the escaped JSON representation (BUT WITHOUT ENCLOSING QUOTES) of a string s to StringBuilder sb.
+        /// </summary>
+        public static void StrToSb(StringBuilder sb, string s)
+        {
+            int ii = 0;
+            int slen = s.Length;
+            // if s contains no control chars
+            for (; ii < slen; ii++)
+            {
+                char c = s[ii];
+                if (c < 32 || c == '\\' || c == '"')
+                    break;
+            }
+            if (ii == slen)
+                sb.Append(s);
+            else
+            {
+                if (ii > 0)
+                {
+                    ii--;
+                    sb.Append(s, 0, ii);
+                }
+                for (; ii < slen; ii++)
+                {
+                    CharToSb(sb, s[ii]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Compactly prints the JSON.<br></br>
         /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
@@ -371,12 +418,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 case Dtype.STR:
                 {
-                    var sb = new StringBuilder();
-                    sb.Append('"');
-                    foreach (char c in (string)value)
-                        CharToSb(sb, c);
-                    sb.Append('"');
-                    return sb.ToString();
+                    return StrToString((string)value, true);
                 }
                 case Dtype.FLOAT:
                 {
@@ -849,7 +891,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (DOT_COMPATIBLE_REGEX.IsMatch(key))
                             return $".{key}";
-                        string key_dubquotes_unescaped = key.Replace("\\", "\\\\").Replace("`", "\\`");
+                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"").Replace("`", "\\`");
                         return $"[`{key_dubquotes_unescaped}`]";
                     }
                 case KeyStyle.JavaScript:

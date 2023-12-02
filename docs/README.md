@@ -66,6 +66,7 @@ __NOTES__
     - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
     - Up and down arrow keys can also navigate the tree.
     - `Escape` takes focus from the tree view back to the editor.
+5. Beginning in [v4.4.0](/CHANGELOG.md#440---2022-11-23), you can have multiple tree views open.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 
@@ -257,6 +258,8 @@ You can submit RemesPath queries in textbox above the tree, which by default has
 
 Once you've submitted a query, you can use several other features of the JSON viewer.
 First, you can open a new buffer containing the query result.
+
+Prior to [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), submitting a query automatically attempted to parse whatever document was currently open, thus potentially rebinding the tree to a different document. Starting in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), submitting a query only triggers parsing of whatever document the treeview is currently associated with.
 
 ![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG)
 
@@ -670,7 +673,7 @@ For every file that the JSON tries and fails to parse, the exception will be cau
 
 If you want to see the JSON found by this tool, just click the `View results in buffer` button. This will open a new buffer in Notepad++ with an object mapping filenames and URLs to the JSON associated with them.
 
-This form has its own tree viewer associated with this buffer. You can use this plugin's normal tree viewer for other buffers. If you close the buffer, the tree viewer is destroyed.
+This form has its own tree viewer associated with this buffer. You can use this plugin's normal tree viewers for other buffers. If you close the buffer, the tree viewer is destroyed.
 
 ## Clearing selected files ##
 

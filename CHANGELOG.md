@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Changed
 
-- __ADD ABILITY TO REGEX SEARCH DOCUMENT UNPARSED DOCUMENT (USING REMESPATH)__
 - If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
 - *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance. 
 - Mark dark mode icons that look less out of place
@@ -47,16 +46,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
-3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` non-vectorized arg function](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
+3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` and `csv_regex` non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
 4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
 5. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
 6. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
 
 ### Changed
 
-1. The way object keys are represented internally has been changed (*this has no effect on the GUI-based API, but only for developers*). Previously, when pretty-printing and compressing JSON, object keys would be output as is (without escaping special characters), meaning that *prior to v6.0, some strings were not valid object keys (again, this did not affect parsing of JSON, but only some programmatic applications that constructed JOBjects directly without parsing).* Now all strings are valid object keys.
-2. When using the JSON-to-CSV form to create CSV files, newline characters will no longer be escaped in strings. Instead, strings containing newlines will be wrapped in quotes, which should be sufficient to allow most CSV parsers to handle them correctly.
-3. Made [`offer_to_show_lint` setting](/docs/README.md#parser-settings) (which controls whether a prompt is shown when errors are found) true by default, so that a fresh installation will show the prompt.
+1. When using the JSON-to-CSV form to create CSV files, newline characters will no longer be escaped in strings. Instead, strings containing newlines will be wrapped in quotes, which should be sufficient to allow most CSV parsers to handle them correctly.
+2. Made [`offer_to_show_lint` setting](/docs/README.md#parser-settings) (which controls whether a prompt is shown when errors are found) true by default, so that a fresh installation will show the prompt.
+3. Change RemesPath indexers to reduce the number of backslash escapes needed to get keys containing special characters like `"a\\b"` or `"\"foo\"\tbar"`. For instance, previously ``@.`\\n\\\\a\"` `` would be required to match the key `"\n\\a\""`, whereas now `` @.`\n\\a"` `` matches it.
+4. Running a RemesPath query only causes an attempted re-parsing of the document if the treeview's current file is open.
 
 ### Fixed
 
@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 6. access violations when loading [error form](/docs/README.md#error-form-and-status-bar)
 7. unnecessary prompt when manually reloading [error form](/docs/README.md#error-form-and-status-bar)
 8. issue with trying to view error form when the error form was already open
+9. RemesPath backtick strings now can have a literal `\` character just before the closing backtick. Previously this was impossible because of a regex-writing bug.
 
 ## [5.8.0] - 2023-10-09
 

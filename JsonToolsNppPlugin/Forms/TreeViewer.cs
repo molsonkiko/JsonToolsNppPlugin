@@ -343,8 +343,8 @@ namespace JSON_Tools.Forms
         private void SubmitQueryButton_Click(object sender, EventArgs e)
         {
             if (json == null) return;
-            if (shouldRefresh)
-                RefreshButton.PerformClick();
+            if (shouldRefresh && Npp.notepad.GetCurrentFilePath() == fname)
+                RefreshButton.PerformClick(); // as of v6.0, queries only trigger auto-refresh if current fname is open; this avoids accidental refreshes with different document
             bool usesSelections = UsesSelections();
             string query = QueryBox.Text;
             JNode queryFunc;

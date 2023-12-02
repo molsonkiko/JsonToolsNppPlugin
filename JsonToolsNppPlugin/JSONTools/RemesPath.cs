@@ -1427,7 +1427,7 @@ namespace JSON_Tools.JSON_Tools
         {
             switch (ind.type)
             {
-                case Dtype.STR: return (string)ind.value;
+                case Dtype.STR: return JNode.StrToString((string)ind.value, false);
                 case Dtype.INT: return Convert.ToInt32(ind.value);
                 case Dtype.SLICE: return ((JSlicer)ind).slicer;
                 case Dtype.REGEX: return ((JRegex)ind).regex;
@@ -1512,7 +1512,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else
                     {
-                        children.Add(jt.value);
+                        children.Add(JNode.StrToString((string)jt.value, false));
                     }
                     return new Obj_Pos(new VarnameList(children), pos + 1);
                 }
@@ -2155,17 +2155,12 @@ namespace JSON_Tools.JSON_Tools
                         {
                             throw new RemesPathException("Mixture of values and key-value pairs in object/array projection");
                         }
-                        if (key.type == Dtype.STR)
+                        if (key.value is string keystr)
                         {
                             opo = ParseExprFunc(toks, pos + 1, end, context);
                             JNode val = (JNode)opo.obj;
                             pos = opo.pos;
-                            string keystr_in_quotes = key.ToString();
-                            string keystr = keystr_in_quotes.Substring(1, keystr_in_quotes.Length - 2);
-                            // do proper JSON string representation of characters that should not be in JSON keys
-                            // (e.g., '\n', '\t', '\f')
-                            // in case the user uses such a character in the projection keys in their query
-                            children.Add(new KeyValuePair<string, JNode>(keystr, val));
+                            children.Add(new KeyValuePair<string, JNode>(JNode.StrToString(keystr, false), val));
                             is_object_proj = true;
                             nt = PeekNextToken(toks, pos - 1, end);
                             if (!(nt is char))
@@ -2176,7 +2171,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         else
                         {
-                            throw new RemesPathException($"Object projection keys must be string, not {JNode.FormatDtype(key.type)}");
+                            throw new RemesPathException($"Object projection keys must be string, not type {JNode.FormatDtype(key.type)} (value {key.ToString()})");
                         }
                     }
                     else

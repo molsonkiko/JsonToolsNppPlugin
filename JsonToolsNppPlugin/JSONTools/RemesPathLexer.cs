@@ -77,7 +77,7 @@ Syntax error at position 3: Number with two decimal points
             @"(->)|" + // delimiters containing characters that conflict with binops
             @"(&|\||\^|=~|[!=]=|<=?|>=?|\+|-|//?|%|\*\*?)|" + // binops
             @"([,\[\]\(\)\{\}\.:=!;])|" + // delimiters
-            @"([gj]?(?<!\\)`(?:\\`|[^`])*(?<!\\)`)|" + // backtick strings
+            @"([gj]?(?<!\\)`(?:\\\\|\\`|[^`\r\n])*`)|" + // backtick strings
             $@"({JsonParser.UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{JsonParser.UNQUOTED_START})*)|" + // unquoted strings
             @"(\S+)", // anything non-whitespace non-token stuff (will cause error)
             RegexOptions.Compiled
@@ -260,6 +260,27 @@ Syntax error at position 3: Number with two decimal points
             {
                 throw new RemesLexerException(lastUnclosed, q, $"Unclosed '{open}'");
             }
+        }
+
+        public static string StringToBacktickString(string s)
+        {
+            var sb = new StringBuilder();
+            sb.Append('`');
+            for (int ii = 0; ii < s.Length; ii++)
+            {
+                char c = s[ii];
+                switch (c)
+                {
+                case '`': sb.Append("\\`"); break;
+                case '\\': sb.Append("\\\\"); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\t': sb.Append("\\t"); break;
+                case '\r': sb.Append("\\r"); break;
+                default: sb.Append(c); break;
+                }
+            }
+            sb.Append('`');
+            return sb.ToString();
         }
 
         public static string TokensToString(List<object> tokens)
