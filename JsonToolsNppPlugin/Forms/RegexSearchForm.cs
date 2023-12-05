@@ -1,244 +1,177 @@
 ﻿using Kbg.NppPluginNET;
-using Kbg.NppPluginNET.PluginInfrastructure;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using JSON_Tools.Utils;
 using JSON_Tools.JSON_Tools;
-using System.Globalization;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace JSON_Tools.Forms
 {
     public partial class RegexSearchForm : Form
     {
-        public string regex;
         private JsonParser jsonParser;
+        private JsonSchemaValidator.ValidationFunc settingsValidator;
 
         public RegexSearchForm()
         {
             InitializeComponent();
-            jsonParser = new JsonParser();
+            FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
+            HeaderHandlingComboBox.SelectedIndex = 0;
+            NewlineComboBox.SelectedIndex = 0;
+            jsonParser = new JsonParser(LoggerLevel.JSON5, false, false, false, false);
+            settingsValidator = JsonSchemaValidator.CompileValidationFunc(new JsonParser().Parse(
+                "{\r\n" +
+                 "\t\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n" +
+                 "\t\"anyOf\": [\r\n" +
+                 "\t\t{\r\n" + // somewhat kludgy: if "csv" is true, follow this schema
+                 "\t\t\t\"type\": \"object\",\r\n" +
+                 "\t\t\t\"required\": [\"csv\", \"delim\", \"header\", \"nColumns\", \"newline\", \"quote\"],\r\n" +
+                 "\t\t\t\"properties\": {\r\n" +
+                 "\t\t\t\t\"csv\": {\"enum\": [true]},\r\n" + // sets the ParseCsvButton
+                 "\t\t\t\t\"delim\": {\"type\": \"string\", \"minLength\": 1, \"maxLength\": 2},\r\n" + // sets the delimiter text box
+                 "\t\t\t\t\"newline\": {\"enum\": [\"\\r\\n\", \"\\r\", \"\\n\", 0, 1, 2]},\r\n" + // sets the newline combo box (0 and "\r\n" map to "\r\n", 1 and "\n" map to "\n", 2 and "\r" map to "\r")
+                 "\t\t\t\t\"header\": {\"enum\": [0, 1, 2, \"n\", \"d\", \"h\"]},\r\n" + // sets the header handling combo box (0 and "n" map to skipping header, 1 and "h" map to including header, 2 and "d" map to using header as keys)
+                 "\t\t\t\t\"nColumns\": {\"type\": \"integer\", \"exclusiveMinimum\": 0},\r\n" + // nColumns text box
+                 "\t\t\t\t\"quote\": {\"type\": \"string\", \"minLength\": 1, \"maxLength\": 1},\r\n" + // quote box
+                 "\t\t\t\t\"numCols\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}, \"minItems\": 1}\r\n" + // column numbers to parse as number (omit instead of using 0-length array)
+                 "\t\t\t}\r\n" +
+                 "\t\t},\r\n" +
+                 "\t\t{\r\n" + // and if "csv" is false, follow this schema
+                 "\t\t\t\"type\": \"object\",\r\n" +
+                 "\t\t\t\"required\": [\"csv\", \"regex\", \"fullMatch\", \"ignoreCase\"],\r\n" +
+                 "\t\t\t\"properties\": {\r\n" +
+                 "\t\t\t\t\"csv\": {\"enum\": [false]},\r\n" + // same as first branch
+                 "\t\t\t\t\"regex\": {\"type\": \"string\", \"minLength\": 1},\r\n" + // regex text box
+                 "\t\t\t\t\"ignoreCase\": {\"type\": \"boolean\"},\r\n" + // ignore case checkbox
+                 "\t\t\t\t\"fullMatch\": {\"type\": \"boolean\"},\r\n" + // include full match as first item checkbox
+                 "\t\t\t\t\"numCols\": {\"type\": \"array\", \"items\": {\"type\": \"integer\"}, \"minItems\": 1}\r\n" + // same as first branch
+                 "\t\t\t}\r\n" +
+                 "\t\t}\r\n" +
+                 "\t]\r\n" +
+                 "}")
+            );
         }
 
         public void GrabFocus()
         {
+            Show();
             RegexTextBox.Focus();
         }
 
-        public void SearchButton_Click(object sender, EventArgs e)
+        /// <summary>
+        /// if a treeview is open for the current document, do nothing<br></br>
+        /// Otherwise, show a message box warning of no tree view (unless that message box has already been shown)
+        /// then open a treeview for the current document
+        /// </summary>
+        /// <returns></returns>
+        private void WarnIfNoTreeView()
         {
-            regex = RegexTextBox.Text;
-            if (regex.IndexOf('(') < 0)
+            if (Main.openTreeViewer is null || Main.openTreeViewer.IsDisposed || Main.openTreeViewer.fname != Npp.notepad.GetCurrentFilePath())
             {
-                MessageBox.Show("Regex must have at least one capture group", "No capture groups", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            int regexLen = Encoding.UTF8.GetByteCount(regex);
-            FindOption findOption = FindOption.REGEXP;
-            if (!IgnoreCaseCheckBox.Checked)
-                findOption |= FindOption.MATCHCASE;
-            Npp.editor.SetSearchFlags(findOption);
-            var startEnds = SelectionManager.GetSelectedRanges();
-            (int searchStart, int searchEnd) = startEnds[0];
-            if (startEnds.Count == 1 && searchEnd > searchStart)
-            {
-                // for simplicity, only set target to selection for nonzero length single selection
-                Npp.editor.TargetFromSelection();
-            }
-            else
-            {
-                Npp.editor.TargetWholeDocument();
-            }
-            int[] groupsToParseAsNumber;
-            if (NumGroupsTextBox.Text.Length == 0)
-            {
-                groupsToParseAsNumber = new int[0];
-            }
-            else
-            {
-                try
-                {
-                    groupsToParseAsNumber = jsonParser.ParseArray(NumGroupsTextBox.Text, 0).children
-                        .Select(x => (int)x.value)
-                        .ToArray();
-                    if (!groupsToParseAsNumber.All(x => x > 0))
-                        throw new ArgumentException("All group numbers to be parsed as number must be greater than 0");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"While trying to parse \"Groups to parse as number\" box as integer array, got error {RemesParser.PrettifyException(ex)}",
-                        "Could not parse \"groups to parse as number\" box",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    groupsToParseAsNumber = new int[0];
-                }
-            }
-            var allMatches = new List<JNode>();
-            int numTags = int.MaxValue;
-            int indexInGroupsToParseAsNumber = 0;
-            while (true)
-            {
-                int nextMatchPos = Npp.editor.SearchInTarget(regexLen, regex);
-                if (nextMatchPos < 0)
-                    break;
-                var tagJsons = new List<JNode>();
-                for (int currentTag = 1; currentTag < numTags; currentTag++)
-                {
-                    string tagText = Npp.editor.GetTag(currentTag);
-                    // TODO: How to deal with actual empty capture groups (as opposed to a dummy after the last capture group)?
-                    // PythonScript somehow has direct access to the Boost regex match objects; how can we access those?
-                    if (tagText.Length == 0 && numTags == int.MaxValue)
-                        break;
-                    JNode tagJson;
-                    if (indexInGroupsToParseAsNumber < groupsToParseAsNumber.Length && groupsToParseAsNumber[indexInGroupsToParseAsNumber] == currentTag)
-                    {
-                        tagJson = ParseNumber(tagText, nextMatchPos);
-                        indexInGroupsToParseAsNumber++;
-                    }
-                    else
-                        tagJson = new JNode(tagText, nextMatchPos);
-                    tagJsons.Add(tagJson);
-                }
-                if (tagJsons.Count > 0)
-                    allMatches.Add(new JArray(nextMatchPos, tagJsons));
-            }
-            if (allMatches.Count > 0)
-            {
-                var newJson = new JArray(searchStart, allMatches);
-                Main.AddJsonForFile(Npp.notepad.GetCurrentFilePath(), newJson);
-            }
-            else
-            {
-                MessageBox.Show("No matches, or no capture groups", "Search failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                Main.OpenJsonTree(DocumentType.REGEX);
             }
         }
 
-        /// <summary>
-        /// try to parse inp as a number. If inp can't be parsed as a number, return a JNode with inp as value.<br></br>
-        /// The following number formats (and corresponding types) can be parsed (leading + and - signs are both allowed for all)<br></br>
-        /// integers (base 10 or hex) => integer<br></br>
-        /// decimal numbers (leading or trailing '.' both allowed, as is scientific notation)<br></br>
-        /// NaN -> NaN<br></br>
-        /// Infinity -> Infinity
-        /// </summary>
-        /// <param name="inp"></param>
-        /// <param name="pos"></param>
-        /// <returns></returns>
-        public JNode ParseNumber(string inp, int pos)
+        private static readonly string[] EOLS = new[] { "`\\r\\n`", "`\\n`", "`\\r`" };
+
+        private const string HEADER_HANDLING_ABBREVS = "nhd";
+
+        private static readonly Dictionary<string, int> HEADER_HANDLING_ABBREV_MAP = new Dictionary<string, int> { ["\"h\""] = 1, ["\"n\""] = 0, ["\"d\""] = 2, ["1"] = 1, ["2"] = 2, ["0"] = 0 };
+
+        private static readonly Dictionary<string, int> NEWLINE_MAP = new Dictionary<string, int> { ["\"\\r\\n\""] = 0, ["\"\\n\""] = 1, ["\"\\r\""] = 2, ["0"] = 0, ["1"] = 1, ["2"] = 2 };
+        
+        public void SearchButton_Click(object sender, EventArgs e)
         {
-            // parsed tracks which portions of a number have been parsed.
-            // So if the int part has been parsed, it will be 1.
-            // If the int and decimal point parts have been parsed, it will be 3.
-            // If the int, decimal point, and scientific notation parts have been parsed, it will be 7
-            int parsed = 1;
-            char c = inp[0];
-            bool negative = false;
-            int ii = 0;
-            if (c < '0' || c > '9')
+            WarnIfNoTreeView();
+            string columnsToParseAsNumber = "";
+            if (ColumnsToParseAsNumberTextBox.Text.Length > 0)
             {
-                if (c == '-' || c == '+')
-                {
-                    if (c == '-')
-                        negative = true;
-                    ii++;
-                }
-                c = inp[ii];
-                // Infinity
-                if (c == 'I' && ii <= inp.Length - 8 && inp[ii + 1] == 'n' && inp.Substring(ii + 2, 6) == "finity")
-                {
-                    double infty = negative ? NanInf.neginf : NanInf.inf;
-                    return new JNode(infty, pos);
-                }
-                // NaN
-                else if (c == 'N' && ii <= inp.Length - 3 && inp[ii + 1] == 'a' && inp[ii + 2] == 'N')
-                {
-                    return new JNode(NanInf.nan, pos);
-                }
-                else if (c < '0' || c > '9')
-                    return new JNode(inp, pos);
+                JNode columnsToParseAsNumberArr = jsonParser.Parse(ColumnsToParseAsNumberTextBox.Text);
+                if (jsonParser.fatal || !(columnsToParseAsNumberArr is JArray arr) || arr.Length == 0 || arr.children.Any(x => x.type != Dtype.INT))
+                    MessageBox.Show("Columns to parse as number must be a nonempty JSON array of integers", "Columns to parse as number must be int array", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                else
+                    columnsToParseAsNumber = ", " + columnsToParseAsNumberArr.ToString(false).Slice("1:-1");
             }
-            if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
+            if (ParseAsCsvCheckBox.Checked)
             {
-                ii += 2;
-                int start = ii;
-                while (ii < inp.Length)
-                {
-                    c = inp[ii];
-                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
-                        break;
-                    ii++;
-                }
-                var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
-                return new JNode(negative ? -hexnum : hexnum, pos);
+                string delim = DelimiterTextBox.Text == "\\t" ? "`\\t`" : RemesPathLexer.StringToBacktickString(DelimiterTextBox.Text);
+                string quote = RemesPathLexer.StringToBacktickString(QuoteCharTextBox.Text);
+                string newline = EOLS[NewlineComboBox.SelectedIndex];
+                char headerHandlingAbbrev = HEADER_HANDLING_ABBREVS[HeaderHandlingComboBox.SelectedIndex];
+                Main.openTreeViewer.QueryBox.Text = $"s_csv(@, {NColumnsTextBox.Text}, {delim}, {newline}, {quote}, {headerHandlingAbbrev}{columnsToParseAsNumber})";
             }
-            while (ii < inp.Length)
+            else
             {
-                c = inp[ii];
-                if (c >= '0' && c <= '9')
-                {
-                    ii++;
-                }
-                else if (c == '.')
-                {
-                    if (parsed != 1)
-                    {
-                        return new JNode(inp, pos); // too many decimal points
-                    }
-                    parsed = 3;
-                    ii++;
-                }
-                else if (c == 'e' || c == 'E')
-                {
-                    if ((parsed & 4) != 0)
-                    {
-                        return new JNode(inp, pos); // already saw scientific notation 'e'
-                    }
-                    parsed += 4;
-                    ii++;
-                    if (ii < inp.Length)
-                    {
-                        c = inp[ii];
-                        if (c == '+' || c == '-')
-                        {
-                            ii++;
-                        }
-                    }
-                    else
-                    {
-                        // Scientific notation 'e' with no number following
-                        return new JNode(inp, pos);
-                    }
-                }
-                else // not a number character, so just treat whole string as not a number
-                    return new JNode(inp, pos);
+                string ignoreCaseFlag = IgnoreCaseCheckBox.Checked ? "(?i)" : "(?-i)";
+                string regex = RemesPathLexer.StringToBacktickString(ignoreCaseFlag + RegexTextBox.Text);
+                string includeFullMatchAsFirstItem = IncludeFullMatchAsFirstItemCheckBox.Checked ? "true" : "false";
+                Main.openTreeViewer.QueryBox.Text = $"s_fa(@, {regex}, {includeFullMatchAsFirstItem}{columnsToParseAsNumber})";
             }
-            if (parsed == 1)
+            if (!Main.openTreeViewer.Visible)
+                Npp.notepad.ShowDockingForm(Main.openTreeViewer);
+            Main.openTreeViewer.SubmitQueryButton.PerformClick();
+        }
+
+        public void ParseAsCsvCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            bool showCsvButtons = ParseAsCsvCheckBox.Checked;
+            QuoteCharTextBox.Visible            = showCsvButtons;
+            QuoteCharTextBoxLabel.Visible       = showCsvButtons;
+            DelimiterTextBox.Visible            = showCsvButtons;
+            DelimiterTextBoxLabel.Visible       = showCsvButtons;
+            NewlineComboBox.Visible             = showCsvButtons;
+            NewlineComboBoxLabel.Visible        = showCsvButtons;
+            HeaderHandlingComboBox.Visible      = showCsvButtons;
+            HeaderHandlingComboBoxLabel.Visible = showCsvButtons;
+            NColumnsTextBox.Visible             = showCsvButtons;
+            NColumnsTextBoxLabel.Visible        = showCsvButtons;
+            RegexTextBox.Enabled                        = !showCsvButtons;
+            IgnoreCaseCheckBox.Enabled                  = !showCsvButtons;
+            IncludeFullMatchAsFirstItemCheckBox.Enabled = !showCsvButtons;
+        }
+
+
+        /// <summary>
+        /// settings must be an object following the JSON schema shown in the constructor for this class<br></br>
+        /// if settings does not follow that schema, return false and errorMessage = the validation problem<br></br>
+        /// if settings follows the scheam, set settings according to the object and return true
+        /// </summary>
+        /// <param name="settingsNode">a JSON object representing the settings to use</param>
+        /// <param name="wasCalledByUser">was this invoked by a user (if true, show a message box if there's an issue)</param>
+        public bool SetFieldsFromJson(JNode settingsNode, bool wasCalledByUser, out string errorMessage)
+        {
+            var vp = settingsValidator(settingsNode);
+            errorMessage = null;
+            if (vp != null)
             {
-                try
-                {
-                    return new JNode(long.Parse(inp), pos);
-                }
-                catch (OverflowException)
-                {
-                    // doubles can represent much larger numbers than 64-bit ints,
-                    // albeit with loss of precision
-                }
+                errorMessage = $"invalid settings {settingsNode.ToString()}, got validation problem {vp}";
+                if (wasCalledByUser)
+                    MessageBox.Show(errorMessage,
+                        "invalid settings",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
-            double num;
-            try
+            JObject settings = (JObject)settingsNode;
+            ParseAsCsvCheckBox.Checked = (bool)settings["csv"].value;
+            ColumnsToParseAsNumberTextBox.Text = settings.children.TryGetValue("numCols", out JNode numColNode) && numColNode is JArray numColArr
+                ? numColArr.ToString()
+                : "";
+            if (ParseAsCsvCheckBox.Checked)
             {
-                num = double.Parse(inp, JNode.DOT_DECIMAL_SEP);
+                DelimiterTextBox.Text = (string)settings["delim"].value;
+                QuoteCharTextBox.Text = (string)settings["quote"].value;
+                NColumnsTextBox.Text = settings["nColumns"].ToString();
+                HeaderHandlingComboBox.SelectedIndex = HEADER_HANDLING_ABBREV_MAP[settings["header"].ToString()];
+                NewlineComboBox.SelectedIndex = NEWLINE_MAP[settings["newline"].ToString()];
             }
-            catch
+            else
             {
-                num = NanInf.nan;
+                IgnoreCaseCheckBox.Checked = (bool)settings["ignoreCase"].value;
+                IncludeFullMatchAsFirstItemCheckBox.Checked = (bool)settings["fullMatch"].value;
+                RegexTextBox.Text = (string)settings["regex"].value;
             }
-            return new JNode(num, pos);
+            return true;
         }
     }
 }

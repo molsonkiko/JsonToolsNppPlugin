@@ -178,10 +178,8 @@ namespace JSON_Tools.JSON_Tools
         JSONL,
         /// <summary>ini files</summary>
         INI,
-        /// <summary>regex search results</summary>
+        /// <summary>regex search results (includes CSV files parsed with s_csv)</summary>
         REGEX,
-        /// <summary>csv files (differs from REGEX only in handling of quoted values)</summary>
-        CSV,
     }
 
     /// <summary>
@@ -446,6 +444,15 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
                 default: return ((object)this).ToString(); // just show the type name for it
             }
+        }
+
+        /// <summary>
+        /// return this.value if this happens to have a string value, else this.ToString()
+        /// </summary>
+        /// <returns></returns>
+        public string ValueOrToString()
+        {
+            return value is string s ? s : ToString();
         }
 
         internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
@@ -2055,6 +2062,7 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode lastStatement = null;
             indexInStatements = start;
+            ArgFunction.regexSearchResultsShouldBeCached = !mutatesInput;
             while (indexInStatements < end)
             {
                 JNode statement = statements[indexInStatements];
@@ -2074,6 +2082,7 @@ namespace JSON_Tools.JSON_Tools
                     indexInStatements++;
                 }
             }
+            ArgFunction.regexSearchResultsShouldBeCached = true;
             return lastStatement;
         }
 

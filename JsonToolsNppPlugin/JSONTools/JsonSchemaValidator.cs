@@ -133,12 +133,14 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        public delegate ValidationProblem? ValidationFunc(JNode x);
+
         private struct RegexAndValidator
         {
             public Regex regex;
-            public Func<JNode, ValidationProblem?> validator;
+            public ValidationFunc validator;
 
-            public RegexAndValidator(Regex regex, Func<JNode, ValidationProblem?> validator)
+            public RegexAndValidator(Regex regex, ValidationFunc validator)
             {
                 this.regex = regex;
                 this.validator = validator;
@@ -160,7 +162,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="schema_">a JNode representing a parsed JSON schema</param>
         /// <returns></returns>
-        public static Func<JNode, ValidationProblem?> CompileValidationFunc(JNode schema_)
+        public static ValidationFunc CompileValidationFunc(JNode schema_)
         {
             if (!(schema_ is JObject obj) || !(
                 obj.children.TryGetValue("definitions", out JNode defs)
@@ -180,7 +182,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="definitions"></param>
         /// <returns></returns>
         /// <exception cref="SchemaValidationException"></exception>
-        public static Func<JNode, ValidationProblem?> CompileValidationFuncHelper(JNode schema_, JObject definitions, int recursions)
+        public static ValidationFunc CompileValidationFuncHelper(JNode schema_, JObject definitions, int recursions)
         {
             if (recursions == RECURSION_LIMIT)
                 return (x) => new ValidationProblem(ValidationProblemType.RECURSION_LIMIT_REACHED, new Dictionary<string, object> { }, 0);
@@ -195,7 +197,7 @@ namespace JSON_Tools.JSON_Tools
                 return (x) => null; // the empty schema validates everything
             if (schema.children.TryGetValue("$ref", out JNode refnode))
             {
-                // a $ref should go to a "valid schema location path"
+                // a $ref should go to a "valid schema location path
                 // which would look something like "#/$defs/foo"
                 // or "#/definitions/bar".
                 // there's a lot of detail in the JSON schema specification
@@ -212,12 +214,36 @@ namespace JSON_Tools.JSON_Tools
                 var func = CompileValidationFuncHelper(def, definitions, recursions);
                 return func;
             }
+            if (schema.children.TryGetValue("enum", out JNode enum_) && enum_ is JArray enumarr)
+            {
+                // the "enum" keyword means that the JSON must have
+                // one of the values in the associated array.
+                // since the enumeration array implicitly defines the allowed types, we don't need to specify a "type" keyword
+                var enumMembers = enumarr.children;
+                return (json) =>
+                {
+                    foreach (JNode possible in enumMembers)
+                    {
+                        if (possible.type != json.type) continue;
+                        if (possible.Equals(json)) return null;
+                    }
+                    return new ValidationProblem(
+                        ValidationProblemType.VALUE_NOT_IN_ENUM,
+                        new Dictionary<string, object>
+                        {
+                            { "found", json },
+                            { "enum", enumarr },
+                        },
+                        json.position
+                    );
+                };
+            }
             if (!schema.children.TryGetValue("type", out JNode type))
             {
                 // an anyOf array of allowable schemas
                 if (!schema.children.TryGetValue("anyOf", out JNode anyOf))
                 {
-                    throw new SchemaValidationException("Each schema must have one of the '$ref', 'anyOf', or 'type' keywords.");
+                    throw new SchemaValidationException("Each schema must have one of the '$ref', 'anyOf', 'type', or 'enum' keywords.");
                 }
                 var subValidators = ((JArray)anyOf).children
                     .Select((subschema) => CompileValidationFuncHelper(subschema, definitions, recursions))
@@ -261,31 +287,8 @@ namespace JSON_Tools.JSON_Tools
                     );
                 };
             }
-            var dtype = JsonSchemaMaker.typeNameToDtype[(string)type.value];
             // now do any additional validation as needed
-            if (schema.children.TryGetValue("enum", out JNode enum_) && enum_ is JArray enumarr)
-            {
-                // the "enum" keyword means that the JSON must have
-                // one of the values in the associated array
-                var enumMembers = enumarr.children;
-                return (json) =>
-                {
-                    foreach (JNode possible in enumMembers)
-                    {
-                        if (possible.type != json.type) continue;
-                        if (possible.Equals(json)) return null;
-                    }
-                    return new ValidationProblem(
-                        ValidationProblemType.VALUE_NOT_IN_ENUM,
-                        new Dictionary<string, object>
-                        {
-                            { "found", json },
-                            { "enum", enumarr },
-                        },
-                        json.position
-                    );
-                };
-            }
+            var dtype = JsonSchemaMaker.typeNameToDtype[(string)type.value];
             // validation logic for arrays
             if (dtype == Dtype.ARR)
             {
@@ -429,7 +432,7 @@ namespace JSON_Tools.JSON_Tools
             // validation logic for objects
             if (dtype == Dtype.OBJ)
             {
-                var propsValidators = new Dictionary<string, Func<JNode, ValidationProblem?>>();
+                var propsValidators = new Dictionary<string, ValidationFunc>();
                 if (schema.children.TryGetValue("properties", out JNode properties))
                 {
                     // standard validation: one schema per key in "properties"

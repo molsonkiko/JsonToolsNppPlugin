@@ -262,6 +262,9 @@ Syntax error at position 3: Number with two decimal points
             }
         }
 
+        /// <summary>
+        /// RemesPath backtick string that will be parsed as string s
+        /// </summary>
         public static string StringToBacktickString(string s)
         {
             var sb = new StringBuilder();

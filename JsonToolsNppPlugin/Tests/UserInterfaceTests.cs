@@ -22,6 +22,8 @@ namespace JSON_Tools.Tests
 
         private static RemesParser remesParser = new RemesParser();
 
+        private static JsonParser jsonParser = new JsonParser();
+
         /// <summary>
         /// Run a command (see below switch statement for options) to manipulate the test file.
         /// Returns true if one of the "compare" commands (compare_text, compare_selections, compare_treeview) fails the test
@@ -39,7 +41,8 @@ namespace JSON_Tools.Tests
             {
             case "file_open":
                 int fileIdx = (int)args[0];
-                string filename = OpenUITestFile(fileIdx);
+                string ext = (args.Length > 1 && args[1] is string extension) ? extension : "json";
+                string filename = OpenUITestFile(fileIdx, ext);
                 messages.Add($"Opened file {filename}");
                 break;
             case "overwrite":
@@ -264,6 +267,17 @@ namespace JSON_Tools.Tests
                     messages.Add($"FAIL: Expected path to position {position} to be {correctPathToCurrentPosition}, but got {gotPathtoCurrentPosition}");
                 else
                     messages.Add($"Passed test of path to position {position}");
+                break;
+            case "regex_search":
+                if (Main.regexSearchForm == null)
+                    Main.RegexSearchToJson();
+                string regexSearchFormSettingsAsJObjectStr = (string)args[0];
+                JNode regexSearchFormSettings = jsonParser.Parse(regexSearchFormSettingsAsJObjectStr);
+                if (Main.regexSearchForm.SetFieldsFromJson(regexSearchFormSettings, false, out string regexSettingsErrorMsg))
+                    messages.Add($"Opened regex search form with settings {regexSearchFormSettingsAsJObjectStr}");
+                else
+                    messages.Add(regexSettingsErrorMsg);
+                Main.regexSearchForm.SearchButton.PerformClick();
                 break;
             default:
                 throw new ArgumentException($"Unrecognized command {command}");
@@ -589,6 +603,99 @@ namespace JSON_Tools.Tests
                                         "end for"
                                         }),
             ("compare_text", new object[]{"[\r\n    \"0.25 is champion!0.75 is champion!\",\r\n    \"0.75 is champion!0.25 is champion!\",\r\n    0.5\r\n]blah[\r\n    0,\r\n    \"1.25 is champion!1.25 is champion!\"\r\n][\r\n    \"boo is champion!c\",\r\n    \"aa\",\r\n    \"cboo is champion!\"\r\n]"}),
+            // TEST REGEX SEARCH FORM (REGEX MODE)
+            ("file_open", new object[]{2, "txt"}),
+            ("overwrite", new object[]{"\u200a\u202f\n foo: 1\nBA\u042f: \u00a0-3\nbaz: +85"}),
+            ("regex_search", new object[]{
+                "{\"csv\":false,\"regex\":\"^\\\\x20*([a-zЯ]+):\\\\s+(INT)\",\"ignoreCase\":true,\"fullMatch\":false,\"numCols\":[1]}"
+            }),
+            ("treenode_click", new object[]{new string[] {"0 : [2]"} }),
+            ("compare_selections", new object[]{new string[] {"7,7"} }),
+            ("treenode_click", new object[]{new string[] {"1 : [2]", "1 : -3"} }),
+            ("compare_selections", new object[]{new string[] {"23,23"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"23,25"} }),
+            ("treenode_click", new object[]{new string[] {"2 : [2]", "1 : 85"} }),
+            ("compare_selections", new object[]{new string[] {"31,31"} }),
+            ("regex_search", new object[]{
+                "{\"csv\":false,\"regex\":\"^\\\\x20*([a-zЯ]+):\\\\s+(NUMBER)\",\"ignoreCase\":false,\"fullMatch\":true}"
+            }),
+            ("treenode_click", new object[]{new string[] {"1 : [3]", "0 : \"baz: +85\""} }),
+            ("treenode_click", new object[]{new string[] {"0 : [3]", "1 : \"foo\""} }),
+            ("treenode_click", new object[]{new string[] {"0 : [3]", "2 : \"1\""} }),
+            ("tree_query", new object[]{
+                "@ = s_sub(@,\r\n" +
+                 "    g`(?i)^\\x20*([a-zЯ]+):\\s+(INT)`,\r\n" +
+                 "    ifelse(float(@[2]) < 0,\r\n" +
+                 "        str(loop()) + @[0],\r\n" +
+                 "        str(loop()) + `. ` + @[1] + ` (` + str(int(@[2])) + `)`\r\n" +
+                 "    )\r\n" +
+                 ")"}),
+            ("compare_text", new object[]{"\u200a\u202f\n1. foo (1)\n2BA\u042f: \u00a0-3\n3. baz (85)"}),
+            // TEST REGEX SEARCH FORM (CSV MODE)
+            ("overwrite", new object[]{
+                "ab\tc\t😀\tf\r\n" +
+                "'fo\nö'\t7\tbar\t-8.5\r\n" +
+                "baz\t19\t''\t-4e3\r\n" +
+                "zorq\t\tkywq\t.75"
+            }),
+            ("regex_search", new object[]
+            {
+                "{\"csv\":true,\"delim\":\"\\\\t\",\"quote\":\"'\",\"newline\":\"\\r\\n\",\"header\":\"d\",\"nColumns\":4,\"numCols\":[-1,1]}"
+            }),
+            ("treenode_click", new object[]{new string[]{"0 : {4}", "ab : \"fo\\nö\"" } }),
+            ("treenode_click", new object[]{new string[]{"1 : {4}", "c : 19"} }),
+            ("treenode_click", new object[]{new string[]{"1 : {4}", "😀 : \"\"" } }),
+            ("treenode_click", new object[]{new string[]{"2 : {4}", "f : 0.75"} }),
+            ("compare_selections", new object[]{new string[] {"60,60"} }),
+            ("regex_search", new object[]
+            {
+                "{\"csv\": true, \"delim\": \"\\\\t\", \"quote\": \"'\", \"newline\": \"\\r\\n\", \"header\": 1, \"nColumns\": 4, \"numCols\": [1]}"
+            }),
+            ("treenode_click", new object[]{new string[] {"0 : [4]", "3 : \"f\""} }),
+            ("treenode_click", new object[]{new string[] {"1 : [4]", "1 : 7"} }),
+            ("treenode_click", new object[]{new string[] {"2 : [4]", "3 : \"-4e3\""} }),
+            ("treenode_click", new object[]{new string[] {"3 : [4]", "0 : \"zorq\""} }),
+            // TEST SELECT ALL CHILDREN IN CSV FILE
+            ("tree_query", new object[]{"s_csv(@, 4, `\\t`, `\\r\\n`, `'`, h)[:][0]"}),
+            ("treenode_click", new object[]{new string[]{ } }), // click root
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"0,2", "13,20", "33,36", "49,53"} }),
+            ("treenode_click", new object[]{new string[]{ "1 : \"fo\\nö\"" } }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"13,20"} }),
+            // MUTATE CSV FILE WITH QUERY
+            ("tree_query", new object[]{
+                "var c = s_csv(@, 4, `\\t`, `\\r\\n`, `'`, h, 1);\r\n" +
+                "c[:][1][is_num(@)] = @/4;\r\n" +
+                "@ = to_csv(c,`,`, `\\n`, `\"`)"}),
+            ("compare_text", new object[]{"ab,c,😀,f\n\"fo\nö\",1.75,bar,-8.5\nbaz,4.75,,-4e3\nzorq,,kywq,.75\n"}),
+            // TEST REGEX SEARCH FORM (SINGLE-CAPTURE-GROUP CSV AND REGEX MODES)
+            ("overwrite", new object[]{" 草1\nｪ2\n◐3"}),
+            ("regex_search", new object[]{
+                "{\"csv\":false,\"regex\":\"^\\\\S\\\\d\\\\r?$\",\"ignoreCase\":true,\"fullMatch\":false}"
+            }),
+            ("treenode_click", new object[]{new string[] { "1 : \"◐3\"" } }),
+            ("compare_selections", new object[]{new string[] {"11,11"} }),
+            ("select_treenode_json", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"11,15"} }),
+            ("regex_search", new object[]{
+                "{\"csv\":false,\"regex\":\"^\\\\S(\\\\d)\\\\r?$\",\"ignoreCase\":true,\"fullMatch\":false}" // this time capture just the number after the nonspace
+            }),
+            ("treenode_click", new object[]{new string[] { "1 : \"3\"" } }),
+            ("compare_selections", new object[]{new string[] {"14,14"} }),
+            ("regex_search", new object[]
+            {
+                "{\"csv\": true, \"delim\": \",\", \"quote\": \"'\", \"newline\": \"\\n\", \"header\": 0, \"nColumns\": 1}"
+            }),
+            ("treenode_click", new object[]{new string[] { "0 : \"ｪ2\"" } }),
+            ("compare_selections", new object[]{new string[] {"6,6"} }),
+            ("regex_search", new object[]
+            {
+                "{\"csv\": true, \"delim\": \",\", \"quote\": \"'\", \"newline\": 1, \"header\": 2, \"nColumns\": 1}"
+            }),
+            ("treenode_click", new object[]{new string[] { "0 : {1}", " 草1 : \"ｪ2\"" } }),
+            ("compare_selections", new object[]{new string[] {"6,6"} }),
         };
 
         public static bool Test()
@@ -597,7 +704,7 @@ namespace JSON_Tools.Tests
             int failures = 0;
             string previouslyOpenFname = Npp.notepad.GetCurrentFilePath();
             filenamesUsed = new List<string>();
-            string UITestFileName = OpenUITestFile(0);
+            string UITestFileName = OpenUITestFile(0, "json");
 
             PrettyPrintStyle previousPrettyPrintStyle = Main.settings.pretty_print_style;
             bool previousSortKeys = Main.settings.sort_keys;
@@ -632,7 +739,7 @@ namespace JSON_Tools.Tests
                 try
                 {
                     string oneArray2000xStr = (string)remesParser.Search("@ * 2000", new JNode("[1]\r\n")).value;
-                    JArray oneArray2000x = (JArray)new JsonParser().ParseJsonLines(oneArray2000xStr);
+                    JArray oneArray2000x = (JArray)jsonParser.ParseJsonLines(oneArray2000xStr);
                     string[] oneArray2000xSelections = ((JArray)remesParser.Search("(range(2000) * 5)[:]{@, @ + 3}{s_join(`,`, str(@))}[0]", new JNode())).children
                         .Select(x => (string)x.value)
                         .ToArray();
@@ -698,13 +805,13 @@ namespace JSON_Tools.Tests
             return failures > 0;
         }
 
-        private static string UITestFilename(int ii) { return $"UI test {ii}.json"; }
+        private static string UITestFilename(int ii, string extension) { return $"UI test {ii}.{extension}"; }
 
-        private static string OpenUITestFile(int fileIdx)
+        private static string OpenUITestFile(int fileIdx, string extension)
         {
             while (fileIdx >= filenamesUsed.Count)
             {
-                string newFilename = UITestFilename(lowestFilenameNumberNotUsed);
+                string newFilename = UITestFilename(lowestFilenameNumberNotUsed, extension);
                 if (Npp.notepad.GetOpenFileNames().Contains(newFilename))
                 {
                     lowestFilenameNumberNotUsed++;

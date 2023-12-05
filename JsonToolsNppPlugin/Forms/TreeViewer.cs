@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -57,6 +58,12 @@ namespace JSON_Tools.Forms
         /// </summary>
         public bool shouldRefresh;
 
+        /// <summary>the most recently used delimiter character for s_csv in a RemesPath query</summary>
+        public char csvDelim;
+
+        /// <summary>the most recently used quote character for s_csv in a RemesPath query</summary>
+        public char csvQuote;
+
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
@@ -81,6 +88,8 @@ namespace JSON_Tools.Forms
             remesParser = new RemesParser();
             lexer = new RemesPathLexer();
             findReplaceForm = null;
+            csvDelim = '\x00';
+            csvQuote = '\x00';
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
@@ -397,6 +406,7 @@ namespace JSON_Tools.Forms
             // modified JSON after the query has been executed
             if (queryFunc.IsMutator)
             {
+                // JMutators always return the input, but a multistep query that mutates the input could return something else
                 bool isMultiStepQuery = queryFunc is JQueryContext;
                 if (usesSelections)
                 {
@@ -459,6 +469,8 @@ namespace JSON_Tools.Forms
                 }
                 else if (documentType == DocumentType.JSONL && queryFunc is JArray arr)
                     formatter = Main.ToJsonLinesFromSettings;
+                else if (documentType == DocumentType.REGEX)
+                    formatter = (JNode x) => x.ValueOrToString();
                 Dictionary<string, (string, JNode)> keyChanges = Main.ReformatFileWithJson(queryFunc, formatter, usesSelections);
                 if (isMultiStepQuery && usesSelections && treeFunc is JObject treeObj_)
                 {
@@ -517,6 +529,8 @@ namespace JSON_Tools.Forms
                 queryResult = queryFunc;
                 treeFunc = queryResult;
             }
+            csvDelim = ArgFunction.csvDelimiterInLastQuery;
+            csvQuote = ArgFunction.csvQuoteCharInLastQuery;
             JsonTreePopulate(treeFunc);
         }
 
@@ -994,10 +1008,13 @@ namespace JSON_Tools.Forms
             if (Main.activeFname != fname)
                 return;
             int nodeStartPos = 0, nodeEndPos = 0;
-            if (pathsToJNodes.TryGetValue(node.FullPath, out _))
+            if (pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
             {
                 nodeStartPos = NodePosInJsonDoc(node);
-                nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, Npp.editor.GetLength());
+                if (GetDocumentType() == DocumentType.REGEX)
+                    nodeEndPos = nodeStartPos + JsonParser.UTF8BytesInCSVRepr(jnode.ValueOrToString(), csvDelim, csvQuote);
+                else
+                    nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, Npp.editor.GetLength());
             }
             if (nodeStartPos == nodeEndPos)
                 MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
@@ -1018,6 +1035,35 @@ namespace JSON_Tools.Forms
                 MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
                     "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
             int selectionStartPos = ParentSelectionStartPos(node);
+            if (GetDocumentType() == DocumentType.REGEX)
+            {
+                bool firstSelectionSet = false;
+                IEnumerable<JNode> children = (jnode is JArray arr_) ? arr_.children : ((JObject)jnode).children.Values.AsEnumerable();
+                Npp.editor.ClearSelections();
+                foreach (JNode child in children)
+                {
+                    if (child is JArray || child is JObject)
+                    {
+                        MessageBox.Show("Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region",
+                            "Can't select object or array in non-JSON",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                    string childstr = child.ValueOrToString();
+                    int utf8Len = JsonParser.UTF8BytesInCSVRepr(childstr, csvDelim, csvQuote);
+                    int startPos = child.position;
+                    int endPos = startPos + utf8Len;
+                    if (endPos > startPos)
+                    {
+                        if (firstSelectionSet)
+                            Npp.editor.AddSelection(startPos, endPos);
+                        else
+                            Npp.editor.SetSelection(startPos, endPos);
+                        firstSelectionSet = true;
+                    }
+                }
+                return;
+            }
             IEnumerable<int> positions;
             if (jnode is JArray arr)
                 positions = arr.children.Select(x => selectionStartPos + x.position);

@@ -101,7 +101,7 @@ Error reporting can be customized with the `logger_level` setting, which has 5 l
     * Python-style '#' comments
     * Python constants `None`, *`nan`, and `inf` (starting in [5.4.0](/CHANGELOG.md#540---2023-07-04))*.
     * missing commas between array members
-    * missing ']' or '}' at the ends of arrays and objects (supported for a long time, but *JsonTools got much better at this beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*)
+    * missing ']' or '}' at the ends of arrays and objects (supported for a long time, but *JsonTools got much better at this beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), allowing proper handling of e.g. `[{"a": 1, "b": "a", {"a": 2, "b": "b"}]`*)
     * a bunch of other common syntax errors
 6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
     * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, `nan`, `inf` and `undefined`.
@@ -541,9 +541,25 @@ Finally, let's sort the whole document from largest to smallest by a query on ea
 
 Of course, there's also the default sort, which can only compare numbers to numbers and strings to strings. Any mixing of types with the default sort results in failure.
 
+## Regex search form ##
+
+*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+
+The regex search form (`Alt-P-J-X` using accelerator keys) makes the treeview usable for any document!
+
+Opening up a document in regex mode allows __querying and mutating the raw text of a document with [RemesPath](/docs/RemesPath.md).__ Clicking the `Search` button on the regex search form creates a RemesPath query in the treeview for the current document using the [`s_csv` or `s_fa` functions](/docs/RemesPath.md#vectorized-functions). See the documentation for those functions for more information on the allowed regular expression syntax, but *remember that the regular expression syntax used here is not the same as Notepad++'s find-replace form.*
+
+![](/docs/regex%20search%20form%20regex%20example.PNG)
+
+You can view CSV files (any delimiter, quote character, and newline are allowed) with the treeview, providing that they comply with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt).
+
+![Regex search form viewing a CSV file](/docs/regex%20search%20form%20csv%20example.PNG)
+
+If you want to edit your document using RemesPath, the [`s_sub` function](/docs/RemesPath.md#vectorized-functions) may prove useful for regex-replacement, and the [`to_csv` function](/docs/RemesPath.md#non-vectorized-functions) may be useful for CSV editing. 
+
 ## JSON Lines documents ##
 
-*Added in version v3.2.0*
+*Added in version [v3.2.0](/CHANGELOG.md#320---2022-09-19)*
 
 [JSON Lines](https://jsonlines.org/) documents can contain multiple valid JSON documents, provided that each is on its own line and there is exactly one line per document (with an optional empty line after the last).
 
@@ -703,6 +719,7 @@ This tool can only validate the following keywords:
 * type
 * [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
 * [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
+    * beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), the `enum` keyword can be used with mixed-type enums, and can be used without specifying the `type` keyword. 
 * [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs)
     * __Notes:__
     * support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)

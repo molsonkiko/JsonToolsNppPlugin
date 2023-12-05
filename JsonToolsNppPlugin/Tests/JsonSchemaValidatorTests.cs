@@ -273,6 +273,24 @@ namespace JSON_Tools.Tests
                     false // test string enum with non-string values
                 ),
                 new SchemaValidatesJson(
+                    "[\"one\", 1.0, \"two\", 2]",
+                    "{\"type\": \"array\", \"items\": {\"enum\": [\"one\", \"two\", 1.0, 2]}}",
+                    true // test enum with mixed types
+                ),
+                new SchemaValidatesJson(
+                    "[\"one\", 1.0, \"two\", 2]",
+                    "{\"type\": \"object\", \"items\": {\"enum\": [\"one\", \"three\", 1.0, 2]}}",
+                    false // test enum with mixed types, where a value doesn't match
+                ),
+                new SchemaValidatesJson(
+                    "[\"one\", 1, \"two\", 2]",
+                    "{\"type\": \"object\", \"items\": {\"enum\": [\"one\", \"two\", 1.0, 2]}}",
+                    false // test enum with mixed types, where a value is equal but has the wrong type
+                ),
+                /**
+                 * minItems and maxItems keywords
+                 **/
+                new SchemaValidatesJson(
                     "[1, 2, 3]",
                     "{\"type\": \"array\", \"items\": {\"type\": \"integer\"}, \"minItems\": 1}",
                     true // test minItems with valid length
@@ -302,6 +320,9 @@ namespace JSON_Tools.Tests
                     "{\"type\": \"array\", \"items\": {\"type\": \"integer\"}, \"maxItems\": 4}",
                     true // test maxItems with exactly valid length
                 ),
+                /**
+                 * misc tests
+                 **/
                 new SchemaValidatesJson(
                     "[1, 2, [3, 4.0], \"5\"]",
                     "{\"type\": \"array\", \"items\": {\"anyOf\": [{\"type\": [\"string\", \"integer\"]}, {\"type\": \"array\", \"items\": {\"type\": \"number\"}}]}}",

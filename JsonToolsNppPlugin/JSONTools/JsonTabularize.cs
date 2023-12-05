@@ -804,7 +804,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="delim"></param>
         /// <param name="quote_char"></param>
         /// <returns></returns>
-        private void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char)
+        public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char)
 		{
 			if (s.IndexOfAny(new char[] {delim, '\r', '\n', quote_char}) >= 0)
 			{

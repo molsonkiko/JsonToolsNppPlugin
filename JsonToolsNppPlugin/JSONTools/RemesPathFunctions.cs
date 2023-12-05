@@ -2336,15 +2336,45 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, result_list);
         }
 
-        //public const int MAX_DOC_SIZE_CACHE_REGEX_SEARCH = 10_000_000;
+        /// <summary>
+        /// any document smaller than this isn't worth caching results for
+        /// </summary>
+        public const int MIN_DOC_SIZE_CACHE_REGEX_SEARCH = 100_000;
 
-        // parses a single CSV value (one column in one row) according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)
+        /// <summary>
+        /// any input larger than this (5 megabytes for 32bit, 10 megabytes for 64bit) will not have s_csv or s_fa outputs cached, to avoid eating too much memory
+        /// </summary>
+        private static readonly int MAX_DOC_SIZE_CACHE_REGEX_SEARCH = IntPtr.Size *  1_250_000;
+
+        /// <summary>
+        /// do not cache for any reason. This is usually because the query involves mutation and there is some danger of mutating a value in the cache.
+        /// </summary>
+        public static bool regexSearchResultsShouldBeCached = true;
+
+        private const int regexSearchResultCacheSize = 8;
+
+        /// <summary>
+        /// caches the results of executing s_fa or s_csv with a specific set of arguments on a specific input.<br></br>
+        /// Only used if regexSearchResultsShouldBeCached and the size of the input is between MIN_DOC_SIZE_CACHE_REGEX_SEARCH and MAX_DOC_SIZE_CACHE_REGEX_SEARCH.
+        /// </summary>
+        private static LruCache<(string input, string argsAsJArrayString), JNode> regexSearchResultCache = new LruCache<(string input, string argsAsJArrayString), JNode>(regexSearchResultCacheSize);
+
+        public static char csvDelimiterInLastQuery = '\x00';
+        public static char csvQuoteCharInLastQuery = '\x00';
+
+        /// <summary>
+        /// parses a single CSV value (one column in one row) according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)
+        /// </summary>
         public const string CSV_BASE_COLUMN_REGEX = "([^{DELIM}\\r\\n{QUOTE}]*|{QUOTE}(?:[^{QUOTE}]|{QUOTE}{2})*{QUOTE})";
 
-        // captures an integer (0x<HEX> or normal decimal) with leading + or - sign
+        /// <summary>
+        /// captures an integer (0x<HEX> or normal decimal) with leading + or - sign
+        /// </summary>
         public const string CAPTURED_INT_REGEX_STR = "([+-]?(?:0x[\\da-fA-F]+|\\d+))";
 
-        // captures a floating point number. Scientific notation is allowed, as are trailing or leading decimal points 
+        /// <summary>
+        /// captures a floating point number. Scientific notation is allowed, as are trailing or leading decimal points 
+        /// </summary>
         public const string CAPTURED_FLOAT_REGEX_STR = "([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
 
         // variants of the above two, but they don't capture
@@ -2411,7 +2441,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// `csv_regex(nColumns: int, delim: string=",", newline: string="\r\n", quote_char: string="\"")`
-        /// Returns the regex that s_csv (see ReadCsv function below) uses to match a single row of a CSV file
+        /// Returns the regex that s_csv (see CsvRead function below) uses to match a single row of a CSV file
         /// with delimiter `delim`, `nColumns` columns, quote character `quote_char`, and newline `newline`.
         /// </summary>
         /// <param name="args"></param>
@@ -2567,6 +2597,47 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        private static bool UseRegexSearchResultCache(string input)
+        {
+            return regexSearchResultsShouldBeCached && input.Length >= MIN_DOC_SIZE_CACHE_REGEX_SEARCH && input.Length <= MAX_DOC_SIZE_CACHE_REGEX_SEARCH;
+        }
+
+        private static string ArgsAsJArrayString(Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber)
+        {
+            var sb = new StringBuilder("[");
+            sb.Append(JNode.StrToString(rex.ToString(), true));
+            sb.Append(",\"");
+            sb.Append(headerHandling.ToString());
+            sb.Append("\",");
+            for (int ii = 0; ii < columnsToParseAsNumber.Length; ii++)
+            {
+                sb.Append(columnsToParseAsNumber[ii]);
+                sb.Append(ii == columnsToParseAsNumber.Length - 1 ? ']' : ',');
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// if the regexSearchResultCache is usable for this input at this time, check if this combination of (input, regex, HeaderHandlingInCsv, columnsToParseAsNumber)
+        /// is in the regexSearchResultCache and return the cached value if so.
+        /// </summary>
+        private static bool TryGetCachedRegexSearchResults(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, out JNode cachedOutput)
+        {
+            cachedOutput = null;
+            if (!UseRegexSearchResultCache(input))
+                return false;
+            string argsAsJArrayString = ArgsAsJArrayString(rex, headerHandling, columnsToParseAsNumber);
+            return regexSearchResultCache.TryGetValue((input, argsAsJArrayString), out cachedOutput);
+        }
+        
+        private static void CacheResultsOfRegexSearch(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, JNode output)
+        {
+            if (!UseRegexSearchResultCache(input))
+                return;
+            string argsAsJArrayString = ArgsAsJArrayString(rex, headerHandling, columnsToParseAsNumber);
+            regexSearchResultCache[(input, argsAsJArrayString)] = output;
+        }
+
         /// <summary>
         /// return an array of strings(if rex has 0 or 1 capture group(s)) or an array of arrays of strings (if there are multiple capture groups)<br></br> 
         /// The arguments in args at index firstOptionalArgNum onward will be treated as the 0-based indices of capture groups to parse as numbers<br></br>
@@ -2605,11 +2676,12 @@ namespace JSON_Tools.JSON_Tools
                     return parsed;
                 }
                 if (csvQuoteChar > 0 && mValue.Length > 0 && mValue[0] == csvQuoteChar)
-                    return new JNode(mValue.Substring(1, mValue.Length - 2).Replace(doubleQuoteStr, quoteStr));
-                return new JNode(mValue);
+                    return new JNode(mValue.Substring(1, mValue.Length - 2).Replace(doubleQuoteStr, quoteStr), jnodePosition);
+                return new JNode(mValue, jnodePosition);
             }
             int minGroupNum = headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM ? 0 : 1;
             int nColumns = minGroupNum >= maxGroupNum ? 1 : maxGroupNum + 1 - minGroupNum;
+            JNode output;
             while (nextMatchStart < text.Length)
             {
                 Match m = rex.Match(text, nextMatchStart);
@@ -2618,7 +2690,7 @@ namespace JSON_Tools.JSON_Tools
                 int matchStart = m.Index;
                 utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchEnd, matchStart);
                 int jnodePos = matchStart + utf8ExtraBytes;
-                matchEnd = m.Index + m.Length;
+                matchEnd = matchStart + m.Length;
                 if (maxGroupNum < 0)
                 {
                     maxGroupNum = m.Groups.Count - 1;
@@ -2632,11 +2704,29 @@ namespace JSON_Tools.JSON_Tools
                     }
                     Array.Sort(columnsToParseAsNumber);
                 }
+                if (isFirstRow && TryGetCachedRegexSearchResults(text, rex, headerHandling, columnsToParseAsNumber, out output))
+                    return output;
                 bool parseMatchesAsRow = headerHandling == HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS || headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM || !isFirstRow;
                 if (nColumns == 1)
                 {
                     int nextColToParseAsNumber = columnsToParseAsNumber.Length == 0 ? -1 : columnsToParseAsNumber[0];
-                    string mValue = maxGroupNum == 1 ? m.Groups[1].Value : m.Value;
+                    string mValue;
+                    int childPos;
+                    if (maxGroupNum == 1)
+                    {
+                        Group grp1 = m.Groups[1];
+                        int grpIndex = grp1.Index;
+                        utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchStart, grpIndex);
+                        childPos = grpIndex + utf8ExtraBytes;
+                        mValue = grp1.Value;
+                        utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, grpIndex, matchEnd);
+                    }
+                    else
+                    {
+                        mValue = m.Value;
+                        childPos = jnodePos;
+                        utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchStart, matchEnd);
+                    }
                     if (isFirstRow)
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
@@ -2646,7 +2736,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if (parseMatchesAsRow)
                     {
-                        JNode nodeToAdd = matchEvaluator(mValue, nextColToParseAsNumber >= 0, jnodePos);
+                        JNode nodeToAdd = matchEvaluator(mValue, nextColToParseAsNumber >= 0, childPos);
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
                             // if we have a 1-column file and we want to map the header to rows, we will map the one value
@@ -2692,11 +2782,15 @@ namespace JSON_Tools.JSON_Tools
                             rows.Add(new JArray(jnodePos, row));
                         }
                     }
+                    else // still need to get utf8 extra bytes in the first row
+                        utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchStart, matchEnd);
                 }
                 nextMatchStart = matchEnd > matchStart ? matchEnd : matchStart + 1;
                 isFirstRow = false;
             }
-            return new JArray(0, rows);
+            output = new JArray(0, rows);
+            CacheResultsOfRegexSearch(text, rex, headerHandling, columnsToParseAsNumber, output);
+            return output;
         }
 
         /// <summary>
@@ -2721,13 +2815,94 @@ namespace JSON_Tools.JSON_Tools
                 throw new RemesPathArgumentException($"second arg (nColumns) to s_csv must be integer, not {args[1].type}", 1, FUNCTIONS["s_csv"]);
             int nColumns = Convert.ToInt32(args[1].value);
             char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
+            csvDelimiterInLastQuery = delim;
             string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
             char quote = args.Count > 4 ? ((string)args[4].value)[0] : '"';
+            csvQuoteCharInLastQuery = quote;
             string headerHandlingAbbrev = args.Count > 5 ? (string)args[5].value : "n";
             if (!HEADER_HANDLING_ABBREVIATIONS.TryGetValue(headerHandlingAbbrev, out HeaderHandlingInCsv headerHandling))
                 throw new RemesPathArgumentException("header_handling (6th argument, default 'n') must be 'n' (no header, rows as arrays), 'h' (include header, rows as arrays), or 'd' (rows as objects with header as keys)", 5, FUNCTIONS["s_csv"]);
             string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
             return (JArray)StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 6, "s_csv", nColumns, headerHandling, quote);
+        }
+
+        /// <summary>
+        /// to_csv(x: array, delimiter: string=",", newline: string="\r\n", quote_char: string="\"") -> string<br></br>
+        /// returns x formatted as a CSV (RFC 4180 rules as normal), according to the following rules:<br></br>
+        /// * if x is an array of non-iterables, each child is converted to a string on a separate line<br></br>
+        /// * if x is an array of arrays, each subarray is converted to a row<br></br>
+        /// * if x is an array of objects, the keys of the first subobject are converted to a header row, and the values of every subobject become their own row.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode ToCsv(List<JNode> args)
+        {
+            JArray arr = (JArray)args[0];
+            if (arr.Length == 0)
+                return new JNode("");
+            char delim = args[1].value is string s2 ? s2[0] : ',';
+            string newline = args[2].value is string s3 ? s3 : "\r\n";
+            char quote = args[3].value is string s4 ? s4[0] : '"';
+            var sb = new StringBuilder();
+            JNode firstRow = arr[0];
+            Func<JNode, bool> rowFormatter;
+            int nColumns = 0;
+            if (firstRow is JObject obj)
+            {
+                // treat keys as header
+                string[] keys = obj.children.Keys.ToArray();
+                nColumns = keys.Length;
+                for (int ii = 0; ii < nColumns; ii++)
+                {
+                    JsonTabularizer.ApplyQuotesIfNeeded(sb, JNode.UnescapedJsonString(keys[ii], false), delim, quote);
+                    if (ii < keys.Length - 1)
+                        sb.Append(delim);
+                }
+                sb.Append(newline);
+                rowFormatter = x =>
+                {
+                    JObject o = (JObject)x;
+                    int ii = 0;
+                    foreach (JNode ochild in o.children.Values)
+                    {
+                        JsonTabularizer.ApplyQuotesIfNeeded(sb, ochild.ValueOrToString(), delim, quote);
+                        ii++;
+                        if (ii < o.Length)
+                            sb.Append(delim);
+                    }
+                    nColumns = ii;
+                    sb.Append(newline);
+                    return true;
+                };
+            }
+            else
+            {
+                rowFormatter = x =>
+                {
+                    if (!(x is JArray a))
+                    {
+                        JsonTabularizer.ApplyQuotesIfNeeded(sb, x.ValueOrToString(), delim, quote);
+                        sb.Append(newline);
+                        nColumns = 1;    
+                        return true;
+                    }
+                    nColumns = a.children.Count;
+                    for (int ii = 0; ii < nColumns; ii++)
+                    {
+                        JsonTabularizer.ApplyQuotesIfNeeded(sb, a.children[ii].ValueOrToString(), delim, quote);
+                        if (ii < a.Length - 1)
+                            sb.Append(delim);
+                    }
+                    sb.Append(newline);
+                    return true;
+                };
+            }
+            foreach (JNode child in arr.children)
+                rowFormatter(child);
+            // include trailing newline unless it's a 1-column CSV (in which case the trailing newline would be interpreted as an empty final row)
+            if (nColumns == 1)
+                sb.Remove(sb.Length - newline.Length, newline.Length);
+            return new JNode(sb.ToString());
         }
 
         /// <summary>
@@ -2853,11 +3028,6 @@ namespace JSON_Tools.JSON_Tools
             replStr = (string)repl.value;
             string toReplaceStr = (string)toReplace.value;
             return new JNode(val.Replace(toReplaceStr, replStr));
-        }
-
-        public static JNode ToCsv(List<JNode> args)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -3139,6 +3309,7 @@ namespace JSON_Tools.JSON_Tools
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
+            ["to_csv"] = new ArgFunction(ToCsv, "to_csv", Dtype.STR, 1, 4, false, new Dtype[] {Dtype.ARR, Dtype.STR, Dtype.STR, Dtype.STR}),
             ["to_records"] = new ArgFunction(ToRecords, "to_records", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ITERABLE, Dtype.STR }),
             ["type"] = new ArgFunction(TypeOf, "type", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
             ["unique"] = new ArgFunction(Unique, "unique", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),

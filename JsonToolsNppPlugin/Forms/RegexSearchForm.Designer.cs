@@ -34,15 +34,27 @@
             this.SearchButton = new System.Windows.Forms.Button();
             this.RegexTextBoxLabel = new System.Windows.Forms.Label();
             this.Title = new System.Windows.Forms.Label();
-            this.NumGroupsTextBox = new System.Windows.Forms.TextBox();
+            this.ColumnsToParseAsNumberTextBox = new System.Windows.Forms.TextBox();
             this.NumGroupsTextBoxLabel = new System.Windows.Forms.Label();
+            this.ParseAsCsvCheckBox = new System.Windows.Forms.CheckBox();
+            this.DelimiterTextBox = new System.Windows.Forms.TextBox();
+            this.DelimiterTextBoxLabel = new System.Windows.Forms.Label();
+            this.QuoteCharTextBox = new System.Windows.Forms.TextBox();
+            this.QuoteCharTextBoxLabel = new System.Windows.Forms.Label();
+            this.NewlineComboBox = new System.Windows.Forms.ComboBox();
+            this.NewlineComboBoxLabel = new System.Windows.Forms.Label();
+            this.HeaderHandlingComboBox = new System.Windows.Forms.ComboBox();
+            this.HeaderHandlingComboBoxLabel = new System.Windows.Forms.Label();
+            this.IncludeFullMatchAsFirstItemCheckBox = new System.Windows.Forms.CheckBox();
+            this.NColumnsTextBoxLabel = new System.Windows.Forms.Label();
+            this.NColumnsTextBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // RegexTextBox
             // 
             this.RegexTextBox.Location = new System.Drawing.Point(12, 52);
             this.RegexTextBox.Name = "RegexTextBox";
-            this.RegexTextBox.Size = new System.Drawing.Size(394, 22);
+            this.RegexTextBox.Size = new System.Drawing.Size(655, 22);
             this.RegexTextBox.TabIndex = 0;
             // 
             // IgnoreCaseCheckBox
@@ -60,7 +72,7 @@
             // SearchButton
             // 
             this.SearchButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.SearchButton.Location = new System.Drawing.Point(226, 162);
+            this.SearchButton.Location = new System.Drawing.Point(354, 245);
             this.SearchButton.Name = "SearchButton";
             this.SearchButton.Size = new System.Drawing.Size(63, 23);
             this.SearchButton.TabIndex = 2;
@@ -71,7 +83,7 @@
             // RegexTextBoxLabel
             // 
             this.RegexTextBoxLabel.AutoSize = true;
-            this.RegexTextBoxLabel.Location = new System.Drawing.Point(412, 55);
+            this.RegexTextBoxLabel.Location = new System.Drawing.Point(673, 55);
             this.RegexTextBoxLabel.Name = "RegexTextBoxLabel";
             this.RegexTextBoxLabel.Size = new System.Drawing.Size(86, 16);
             this.RegexTextBoxLabel.TabIndex = 3;
@@ -81,35 +93,170 @@
             // 
             this.Title.AutoSize = true;
             this.Title.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Title.Location = new System.Drawing.Point(139, 9);
+            this.Title.Location = new System.Drawing.Point(264, 9);
             this.Title.Name = "Title";
             this.Title.Size = new System.Drawing.Size(217, 22);
             this.Title.TabIndex = 4;
             this.Title.Text = "Regex Search to JSON";
             // 
-            // NumGroupsTextBox
+            // ColumnsToParseAsNumberTextBox
             // 
-            this.NumGroupsTextBox.Location = new System.Drawing.Point(12, 127);
-            this.NumGroupsTextBox.Name = "NumGroupsTextBox";
-            this.NumGroupsTextBox.Size = new System.Drawing.Size(257, 22);
-            this.NumGroupsTextBox.TabIndex = 5;
+            this.ColumnsToParseAsNumberTextBox.Location = new System.Drawing.Point(12, 210);
+            this.ColumnsToParseAsNumberTextBox.Name = "ColumnsToParseAsNumberTextBox";
+            this.ColumnsToParseAsNumberTextBox.Size = new System.Drawing.Size(257, 22);
+            this.ColumnsToParseAsNumberTextBox.TabIndex = 5;
             // 
             // NumGroupsTextBoxLabel
             // 
             this.NumGroupsTextBoxLabel.AutoSize = true;
-            this.NumGroupsTextBoxLabel.Location = new System.Drawing.Point(271, 130);
+            this.NumGroupsTextBoxLabel.Location = new System.Drawing.Point(271, 213);
             this.NumGroupsTextBoxLabel.Name = "NumGroupsTextBoxLabel";
             this.NumGroupsTextBoxLabel.Size = new System.Drawing.Size(227, 16);
             this.NumGroupsTextBoxLabel.TabIndex = 6;
             this.NumGroupsTextBoxLabel.Text = "Groups to parse as number (int array)";
             // 
+            // ParseAsCsvCheckBox
+            // 
+            this.ParseAsCsvCheckBox.AutoSize = true;
+            this.ParseAsCsvCheckBox.Location = new System.Drawing.Point(12, 127);
+            this.ParseAsCsvCheckBox.Name = "ParseAsCsvCheckBox";
+            this.ParseAsCsvCheckBox.Size = new System.Drawing.Size(120, 20);
+            this.ParseAsCsvCheckBox.TabIndex = 7;
+            this.ParseAsCsvCheckBox.Text = "Parse as CSV?";
+            this.ParseAsCsvCheckBox.UseVisualStyleBackColor = true;
+            this.ParseAsCsvCheckBox.CheckedChanged += new System.EventHandler(this.ParseAsCsvCheckBox_CheckedChanged);
+            // 
+            // DelimiterTextBox
+            // 
+            this.DelimiterTextBox.Location = new System.Drawing.Point(205, 127);
+            this.DelimiterTextBox.Name = "DelimiterTextBox";
+            this.DelimiterTextBox.Size = new System.Drawing.Size(22, 22);
+            this.DelimiterTextBox.TabIndex = 8;
+            this.DelimiterTextBox.Text = ",";
+            this.DelimiterTextBox.Visible = false;
+            // 
+            // DelimiterTextBoxLabel
+            // 
+            this.DelimiterTextBoxLabel.AutoSize = true;
+            this.DelimiterTextBoxLabel.Location = new System.Drawing.Point(233, 131);
+            this.DelimiterTextBoxLabel.Name = "DelimiterTextBoxLabel";
+            this.DelimiterTextBoxLabel.Size = new System.Drawing.Size(60, 16);
+            this.DelimiterTextBoxLabel.TabIndex = 9;
+            this.DelimiterTextBoxLabel.Text = "Delimiter";
+            this.DelimiterTextBoxLabel.Visible = false;
+            // 
+            // QuoteCharTextBox
+            // 
+            this.QuoteCharTextBox.Location = new System.Drawing.Point(304, 127);
+            this.QuoteCharTextBox.Name = "QuoteCharTextBox";
+            this.QuoteCharTextBox.Size = new System.Drawing.Size(22, 22);
+            this.QuoteCharTextBox.TabIndex = 10;
+            this.QuoteCharTextBox.Text = "\"";
+            this.QuoteCharTextBox.Visible = false;
+            // 
+            // QuoteCharTextBoxLabel
+            // 
+            this.QuoteCharTextBoxLabel.AutoSize = true;
+            this.QuoteCharTextBoxLabel.Location = new System.Drawing.Point(332, 131);
+            this.QuoteCharTextBoxLabel.Name = "QuoteCharTextBoxLabel";
+            this.QuoteCharTextBoxLabel.Size = new System.Drawing.Size(102, 16);
+            this.QuoteCharTextBoxLabel.TabIndex = 11;
+            this.QuoteCharTextBoxLabel.Text = "Quote character";
+            this.QuoteCharTextBoxLabel.Visible = false;
+            // 
+            // NewlineComboBox
+            // 
+            this.NewlineComboBox.FormattingEnabled = true;
+            this.NewlineComboBox.Items.AddRange(new object[] {
+            "CR LF",
+            "LF",
+            "CR"});
+            this.NewlineComboBox.Location = new System.Drawing.Point(444, 127);
+            this.NewlineComboBox.Name = "NewlineComboBox";
+            this.NewlineComboBox.Size = new System.Drawing.Size(68, 24);
+            this.NewlineComboBox.TabIndex = 12;
+            this.NewlineComboBox.Visible = false;
+            // 
+            // NewlineComboBoxLabel
+            // 
+            this.NewlineComboBoxLabel.AutoSize = true;
+            this.NewlineComboBoxLabel.Location = new System.Drawing.Point(518, 131);
+            this.NewlineComboBoxLabel.Name = "NewlineComboBoxLabel";
+            this.NewlineComboBoxLabel.Size = new System.Drawing.Size(55, 16);
+            this.NewlineComboBoxLabel.TabIndex = 13;
+            this.NewlineComboBoxLabel.Text = "Newline";
+            this.NewlineComboBoxLabel.Visible = false;
+            // 
+            // HeaderHandlingComboBox
+            // 
+            this.HeaderHandlingComboBox.FormattingEnabled = true;
+            this.HeaderHandlingComboBox.Items.AddRange(new object[] {
+            "Skip header",
+            "Include header",
+            "Use header as keys"});
+            this.HeaderHandlingComboBox.Location = new System.Drawing.Point(304, 169);
+            this.HeaderHandlingComboBox.Name = "HeaderHandlingComboBox";
+            this.HeaderHandlingComboBox.Size = new System.Drawing.Size(155, 24);
+            this.HeaderHandlingComboBox.TabIndex = 14;
+            this.HeaderHandlingComboBox.Visible = false;
+            // 
+            // HeaderHandlingComboBoxLabel
+            // 
+            this.HeaderHandlingComboBoxLabel.AutoSize = true;
+            this.HeaderHandlingComboBoxLabel.Location = new System.Drawing.Point(465, 172);
+            this.HeaderHandlingComboBoxLabel.Name = "HeaderHandlingComboBoxLabel";
+            this.HeaderHandlingComboBoxLabel.Size = new System.Drawing.Size(107, 16);
+            this.HeaderHandlingComboBoxLabel.TabIndex = 15;
+            this.HeaderHandlingComboBoxLabel.Text = "Header handling";
+            this.HeaderHandlingComboBoxLabel.Visible = false;
+            // 
+            // IncludeFullMatchAsFirstItemCheckBox
+            // 
+            this.IncludeFullMatchAsFirstItemCheckBox.AutoSize = true;
+            this.IncludeFullMatchAsFirstItemCheckBox.Location = new System.Drawing.Point(138, 90);
+            this.IncludeFullMatchAsFirstItemCheckBox.Name = "IncludeFullMatchAsFirstItemCheckBox";
+            this.IncludeFullMatchAsFirstItemCheckBox.Size = new System.Drawing.Size(229, 20);
+            this.IncludeFullMatchAsFirstItemCheckBox.TabIndex = 16;
+            this.IncludeFullMatchAsFirstItemCheckBox.Text = "Include full match text as first item?";
+            this.IncludeFullMatchAsFirstItemCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // NColumnsTextBoxLabel
+            // 
+            this.NColumnsTextBoxLabel.AutoSize = true;
+            this.NColumnsTextBoxLabel.Location = new System.Drawing.Point(171, 172);
+            this.NColumnsTextBoxLabel.Name = "NColumnsTextBoxLabel";
+            this.NColumnsTextBoxLabel.Size = new System.Drawing.Size(122, 16);
+            this.NColumnsTextBoxLabel.TabIndex = 17;
+            this.NColumnsTextBoxLabel.Text = "Number of columns";
+            this.NColumnsTextBoxLabel.Visible = false;
+            // 
+            // NColumnsTextBox
+            // 
+            this.NColumnsTextBox.Location = new System.Drawing.Point(108, 169);
+            this.NColumnsTextBox.Name = "NColumnsTextBox";
+            this.NColumnsTextBox.Size = new System.Drawing.Size(57, 22);
+            this.NColumnsTextBox.TabIndex = 18;
+            this.NColumnsTextBox.Visible = false;
+            // 
             // RegexSearchForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(510, 197);
+            this.ClientSize = new System.Drawing.Size(771, 280);
+            this.Controls.Add(this.NColumnsTextBox);
+            this.Controls.Add(this.NColumnsTextBoxLabel);
+            this.Controls.Add(this.IncludeFullMatchAsFirstItemCheckBox);
+            this.Controls.Add(this.HeaderHandlingComboBoxLabel);
+            this.Controls.Add(this.HeaderHandlingComboBox);
+            this.Controls.Add(this.NewlineComboBoxLabel);
+            this.Controls.Add(this.NewlineComboBox);
+            this.Controls.Add(this.QuoteCharTextBoxLabel);
+            this.Controls.Add(this.QuoteCharTextBox);
+            this.Controls.Add(this.DelimiterTextBoxLabel);
+            this.Controls.Add(this.DelimiterTextBox);
+            this.Controls.Add(this.ParseAsCsvCheckBox);
             this.Controls.Add(this.NumGroupsTextBoxLabel);
-            this.Controls.Add(this.NumGroupsTextBox);
+            this.Controls.Add(this.ColumnsToParseAsNumberTextBox);
             this.Controls.Add(this.Title);
             this.Controls.Add(this.RegexTextBoxLabel);
             this.Controls.Add(this.SearchButton);
@@ -127,10 +274,22 @@
 
         private System.Windows.Forms.TextBox RegexTextBox;
         private System.Windows.Forms.CheckBox IgnoreCaseCheckBox;
-        private System.Windows.Forms.Button SearchButton;
         private System.Windows.Forms.Label RegexTextBoxLabel;
         private System.Windows.Forms.Label Title;
-        private System.Windows.Forms.TextBox NumGroupsTextBox;
+        private System.Windows.Forms.TextBox ColumnsToParseAsNumberTextBox;
         private System.Windows.Forms.Label NumGroupsTextBoxLabel;
+        private System.Windows.Forms.CheckBox ParseAsCsvCheckBox;
+        private System.Windows.Forms.TextBox DelimiterTextBox;
+        private System.Windows.Forms.Label DelimiterTextBoxLabel;
+        private System.Windows.Forms.TextBox QuoteCharTextBox;
+        private System.Windows.Forms.Label QuoteCharTextBoxLabel;
+        private System.Windows.Forms.ComboBox NewlineComboBox;
+        private System.Windows.Forms.Label NewlineComboBoxLabel;
+        private System.Windows.Forms.ComboBox HeaderHandlingComboBox;
+        private System.Windows.Forms.Label HeaderHandlingComboBoxLabel;
+        private System.Windows.Forms.CheckBox IncludeFullMatchAsFirstItemCheckBox;
+        private System.Windows.Forms.Label NColumnsTextBoxLabel;
+        private System.Windows.Forms.TextBox NColumnsTextBox;
+        internal System.Windows.Forms.Button SearchButton;
     }
 }

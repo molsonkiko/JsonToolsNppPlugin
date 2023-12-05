@@ -45,11 +45,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
-2. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
-3. [`bool, s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint` and `csv_regex` non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
-4. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
-5. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
-6. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
+2. New [regex search form](/docs/README.md#regex-search-form) for using treeview to see regex search results in any file
+3. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
+4. [`bool`, `s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint`, `csv_regex`, and `to_csv` non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
+5. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
+6. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
+7. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
+8. Support for [JSON Schema validation](/docs/README.md#validating-json-against-json-schema) of `enum` keyword where the `type` is missing or an array.
 
 ### Changed
 
@@ -69,6 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 7. unnecessary prompt when manually reloading [error form](/docs/README.md#error-form-and-status-bar)
 8. issue with trying to view error form when the error form was already open
 9. RemesPath backtick strings now can have a literal `\` character just before the closing backtick. Previously this was impossible because of a regex-writing bug.
+10. Eliminated plugin crash when attempting to validate with an invalid JSON schema. Now a message box will show in that situation.
 
 ## [5.8.0] - 2023-10-09
 

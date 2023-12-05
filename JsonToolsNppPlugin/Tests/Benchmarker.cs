@@ -258,7 +258,7 @@ Performance tests for RemesPath ({description})
                 watch.Reset();
                 watch.Start();
                 // validation will succeed because the tweets are generated from that schema
-                Func<JNode, JsonSchemaValidator.ValidationProblem?> validator;
+                JsonSchemaValidator.ValidationFunc validator;
                 try
                 {
                     validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema);

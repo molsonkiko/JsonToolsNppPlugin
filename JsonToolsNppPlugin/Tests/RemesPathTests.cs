@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -480,6 +481,13 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("s_fa(`a&b&c\\nfoo&#b&ar#&##`, csv_regex(@.foo[0][2] + 1, `&`, `\\n`, `#`))",
                     "[[\"a\", \"b\", \"c\"], [\"foo\", \"#b&ar#\", \"##\"]]"), // this is different from calling s_csv(3, `&`, `\n`, `#`) on the same input, because s_fa doesn't do the postprocessing of strings with quote characters
                 new Query_DesiredResult("str(csv_regex(5, , , `'`))", JNode.StrToString(JNode.StrToString(ArgFunction.CsvRowRegex(5, quote:'\''), true), true)),
+                new Query_DesiredResult("to_csv(@.foo)", "\"0,1,2\\r\\n3.0,4.0,5.0\\r\\n6.0,7.0,8.0\\r\\n\""),
+                new Query_DesiredResult("to_csv(j`[{\"a\\\\tb\": 1, \"c\": null}, {\"a\\\\tb\": -7.5, \"c\": \"bar\\\\n'baz'\"}]`, `\\t`, `\\r`, `'`)",
+                    "\"'a\\tb'\\tc\\r1\\tnull\\r-7.5\\t'bar\\n''baz'''\\r\""),
+                new Query_DesiredResult("to_csv(@.foo[:2], `.`, `\\n`, `#`)", "\"0.1.2\\n#3.0#.#4.0#.#5.0#\\n\""),
+                new Query_DesiredResult("to_csv(@.foo[1], `.`)", "\"\\\"3.0\\\"\\r\\n\\\"4.0\\\"\\r\\n\\\"5.0\\\"\""),
+                new Query_DesiredResult("to_csv(@.foo[:][0],,`\\n`)", "\"0\\n3.0\\n6.0\""),
+                new Query_DesiredResult("to_csv(@.foo[:]{a: @[1]})", "\"a\\r\\n1\\r\\n4.0\\r\\n7.0\""),
                 // ===================== s_csv CSV parser ========================
                 // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
                 new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +
@@ -807,6 +815,53 @@ namespace JSON_Tools.Tests
                     Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
+            }
+            /**
+             * Test s_csv and s_fa caching (only need to use s_csv, because s_fa uses the same caching system)
+             **/
+            string bigCsvChunk = "nums,names,cities,date,zone,subzone,contaminated\r\nnan,Bluds,BUS,,1,a,TRUE\r\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\r\n0.5,guzo,FUDG,12/13/2020 0:00,2,d,FALSE\r\n0.5,blah,FUDG,12/13/2020 0:00,2,e,FALSE\r\n1.2,qere,GOLAR,,3,f,TRUE\r\n1.2,kijg,GOLAR,,3,h,TRUE\r\n3.4,flodt,\"q,tun\",,4,q,FALSE\r\n4.6,Kjond,YUNOB,10/17/2014 0:00,5,w,TRUE\r\n4.6,Honiu,YUNOB,10/17/2014 0:00,5,z,FALSE\r\n7,Unyir,MOKJI,5/11/2017 0:00,6,i,TRUE\r\n";
+            int bigCsvChunksNeededToUseCache = ArgFunction.MIN_DOC_SIZE_CACHE_REGEX_SEARCH / bigCsvChunk.Length + 1;
+            JNode bigCsvNode = new JNode(ArgFunction.StrMulHelper(bigCsvChunk, bigCsvChunksNeededToUseCache));
+            bool hasShownBigCsvChunk = false;
+            Func<string, JNode, bool> CheckCacheTests = (string query, JNode correct) =>
+            {
+                JNode queryResult = remesparser.Search(query, bigCsvNode);
+                if (!queryResult.TryEquals(correct, out _))
+                {
+                    tests_failed++;
+                    if (!hasShownBigCsvChunk)
+                    {
+                        hasShownBigCsvChunk = true;
+                        Npp.AddLine($"s_csv and s_fa cache tests use bigCsv = ({bigCsvChunksNeededToUseCache} consecutive instances of {JNode.StrToString(bigCsvChunk, true)}) as input");
+                    }
+                    Npp.AddLine($"Expected remesparser.Search({query}, bigCsv) to return {correct.ToString()}, but instead got {queryResult.ToString()}.");
+                }
+                return true;
+            };
+            try
+            {
+                // test s_csv caching on input (not compile-time constant)
+                ii += 5;
+                string zutenQuery = "var zuten = s_csv(@, 7,,,,,0,4)[:12][is_num(@[0])]; zuten[:][2]";
+                string correctZutenQueryStr = "[\"FUDG\",\"FUDG\",\"FUDG\",\"GOLAR\",\"GOLAR\",\"q,tun\",\"YUNOB\",\"YUNOB\",\"MOKJI\"]";
+                JNode correctZutenQueryResult = jsonParser.Parse(correctZutenQueryStr);
+                // use non-mutating query to populate cache
+                CheckCacheTests(zutenQuery, correctZutenQueryResult);
+                string correctZutenMutationResultStr = "[\"SCHWEIN\",\"SCHWEIN\",\"SCHWEIN\",\"BLEBEN\",\"BLEBEN\",\"BLEBEN\",\"BLEBEN\",\"BLEBEN\",\"BLEBEN\"]";
+                JNode correctZutenMutationResult = jsonParser.Parse(correctZutenMutationResultStr);
+                string firstZutenMutationQuery = "var blah = s_csv(@, 7,null,,,,0,4)[:12][is_num(@[0])]; blah[:][2] = ifelse(s_len(@)>4, BLEBEN, SCHWEIN); blah[:][2]";
+                CheckCacheTests(firstZutenMutationQuery, correctZutenMutationResult);
+                // if the cached value can be mutated, executing s_csv twice on the same input with the same args will return different things the second time
+                string secondZutenMutationQuery = "var dude = s_csv(@, 7,`,`,,,,0,4)[:12][is_num(@[0])]; dude[:][2] = ifelse(s_len(@)>4, BLEBEN, SCHWEIN); dude[:][2]";
+                CheckCacheTests(secondZutenMutationQuery, correctZutenMutationResult);
+                // use the same mutation query again to test how s_csv caching interacts with RemesParser's own LRU cache (which kicks in now)
+                CheckCacheTests(secondZutenMutationQuery, correctZutenMutationResult);
+                // one last execution of original query to check that cache wasn't mutated
+                CheckCacheTests(zutenQuery, correctZutenQueryResult);
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"While testing caching for s_csv and s_fa, got exception {ex}");
             }
             Npp.AddLine($"Failed {tests_failed} tests.");
             Npp.AddLine($"Passed {ii - tests_failed} tests.");

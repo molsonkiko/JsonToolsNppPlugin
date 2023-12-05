@@ -564,6 +564,17 @@ This differs from `str` in that *this is not vectorized.*
 
 *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
+
+---
+`to_csv(x: array, delimiter: string=",", newline: string="\r\n", quote_char: string="\"") -> string`
+
+*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+
+Returns x formatted as a CSV (RFC 4180 rules as normal), according to the following rules:
+* if x is an array of non-iterables, each child is converted to a string on a separate line
+* if x is an array of arrays, each subarray is converted to a row
+* if x is an array of objects, the keys of the first subobject are converted to a header row, and the values of every subobject become their own row.
+
 ---
 `to_records(x: iterable, [strategy: str]) -> array[object]`
 
@@ -762,6 +773,7 @@ __Notes:__
 * Columns containing literal quote characters or the newline characters `\r` and `\n` must be wrapped in quotes.
 * When `s_csv` parses a file, quoted values are parsed without the enclosing quotes and with any internal doubled quote characters replaced with a single instance of the quote character. Thus the valid value (for `"` quote character)`"foo""bar"` would be parsed as the JSON string `"foo\"bar"`
 * You can pass in `null` for the 3rd, 4th, and 5th args. Any instance of `null` in those args will be replaced with the default value.
+* To improve performance, this function and `s_fa` use a shared cache that maps (input, function argument) pairs to the return value of the function. Up to 8 return values can be cached, only documents between 100KB and (5MB if 32bit, else 10MB) use the cache, and the cache is disabled for mutating queries (to avoid mutating values in the cache).
 
 __Example:__
 Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL''AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
@@ -834,7 +846,7 @@ __Examples:__
 4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`,false, -2, 2)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second-to-last and third columns because `-2` and `2` were passed as optional args.
 5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`,false, 1)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex.
 6. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](INT)`, true, 1)`` will return `[["a1",1],["b+2",2],["c-0xF",-15],["d+0x1a",26]]` because the third argument is `true` and there is one capture group, meaning that the matches will be represented as two-element subarrays, with the first element being the full text of the match, and the second element being the captured integer parsed as a number.
-6. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](?:INT)`, true)`` will return `["a1","b+2","c-0xF","d+0x1a"]` because the third argument is `true` but there are no capture groups, so an array of strings is returned instead of 1-element subarrays.
+7. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](?:INT)`, true)`` will return `["a1","b+2","c-0xF","d+0x1a"]` because the third argument is `true` but there are no capture groups, so an array of strings is returned instead of 1-element subarrays.
 
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
