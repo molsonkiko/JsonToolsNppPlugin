@@ -1003,6 +1003,44 @@ namespace JSON_Tools.Forms
             return JNode.FormatKey(node.Name, style);
         }
 
+        /// <summary>
+        /// how long we think the representation of a JNode is in regex mode.<br></br>
+        /// if delim is '\x00' (not in CSV mode), this is just the length of its UTF8 repr.<br></br>
+        /// Otherwise, we do some special casing.
+        /// </summary>
+        /// <param name="jnode"></param>
+        /// <param name="startpos"></param>
+        /// <param name="delim"></param>
+        /// <param name="quote"></param>
+        /// <returns></returns>
+        public static int LengthOfStringInRegexMode(JNode jnode, int startpos, char delim, char quote)
+        {
+            string s = jnode.ValueOrToString();
+            int utf8len = Encoding.UTF8.GetByteCount(s);
+            if (delim == 0)
+                return utf8len; // not a CSV document, so we assume it's the same length in the document
+            int quoteCount = 0;
+            bool delimOrNewline = false;
+            for (int ii = 0; ii < s.Length; ii++)
+            {
+                char c = s[ii];
+                if (c == delim || c == '\r' || c == '\n')
+                    delimOrNewline = true;
+                else if (c == quote)
+                    quoteCount++;
+            }
+            if (!delimOrNewline && quoteCount == 0)
+            {
+                // in general, if a string has no delimiters or quotes or newlines, it doesn't need to be wrapped in quotes.
+                // but it still *could* be wrapped in quotes, and that would be equivalent, so we need to check.
+                // note that this assumes the quote character is ASCII, which seems eminently reasonable.
+                int startByte = Npp.editor.GetCharAt(startpos);
+                return quote == startByte ? utf8len + 2 : utf8len;
+            }
+            // it must be a quoted string, in which case it's wrapped in quotes (2 extra bytes) and every literal quote inside is doubled up (quoteCount extra bytes)
+            return utf8len + quoteCount + 2;
+        }
+
         public void SelectTreeNodeJson(TreeNode node)
         {
             if (Main.activeFname != fname)
@@ -1012,7 +1050,7 @@ namespace JSON_Tools.Forms
             {
                 nodeStartPos = NodePosInJsonDoc(node);
                 if (GetDocumentType() == DocumentType.REGEX)
-                    nodeEndPos = nodeStartPos + JsonParser.UTF8BytesInCSVRepr(jnode.ValueOrToString(), csvDelim, csvQuote);
+                    nodeEndPos = nodeStartPos + LengthOfStringInRegexMode(jnode, nodeStartPos, csvDelim, csvQuote);
                 else
                     nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, Npp.editor.GetLength());
             }
@@ -1050,8 +1088,8 @@ namespace JSON_Tools.Forms
                         break;
                     }
                     string childstr = child.ValueOrToString();
-                    int utf8Len = JsonParser.UTF8BytesInCSVRepr(childstr, csvDelim, csvQuote);
-                    int startPos = child.position;
+                    int startPos = child.position + selectionStartPos;
+                    int utf8Len = LengthOfStringInRegexMode(child, startPos, csvDelim, csvQuote);
                     int endPos = startPos + utf8Len;
                     if (endPos > startPos)
                     {

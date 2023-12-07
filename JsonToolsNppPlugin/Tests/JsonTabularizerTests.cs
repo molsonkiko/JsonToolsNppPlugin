@@ -455,7 +455,7 @@ namespace JSON_Tools.Tests
 			// TEST CSV CREATION
 			JsonParser fancyParser = new JsonParser(LoggerLevel.JSON5);
 
-			var csv_testcases = new (string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol)[]
+			var csvTestcases = new (string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol)[]
 			{
 				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '"', null, false, "\r\n" ),
 				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r1,a\r2,b\r", ',', '"', null, false, "\r" ),
@@ -576,40 +576,40 @@ namespace JSON_Tools.Tests
 				',', '"', null, false, "\r\n"
 				),
 			};
-			foreach ((string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol) in csv_testcases)
+			foreach ((string inp, string desired_out, char delim, char quote, string[] header, bool boolsAsInts, string eol) in csvTestcases)
 			{
 				ii++;
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
 				string head_str = header == null ? "null" : '[' + string.Join(", ", header) + ']';
 				string escapedEol = JNode.StrToString(eol, true);
-				string message_without_desired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote_char}', {head_str}, {escapedEol})\nto return\n";
-				string base_message = $"{message_without_desired}{desired_out}\n";
-				int msg_len = Encoding.UTF8.GetByteCount(desired_out) + 1 + message_without_desired.Length;
+				string messageWithoutDesired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote}', {head_str}, {escapedEol})\nto return\n";
+				string baseMessage = $"{messageWithoutDesired}{desired_out}\n";
+				int msgLen = Encoding.UTF8.GetByteCount(desired_out) + 1 + messageWithoutDesired.Length;
 				try
 				{
-					result = tabularizer.TableToCsv((JArray)table, delim, quote_char, header, bools_as_ints, eol);
+					result = tabularizer.TableToCsv((JArray)table, delim, quote, eol, header, boolsAsInts);
 					int result_len = Encoding.UTF8.GetByteCount(result);
 					try
 					{
 						if (!desired_out.Equals(result))
 						{
 							tests_failed++;
-							Npp.editor.AppendText(msg_len + 17 + result_len + 1, $"{base_message}Instead returned\n{result}\n");
+							Npp.editor.AppendText(msgLen + 17 + result_len + 1, $"{baseMessage}Instead returned\n{result}\n");
 						}
 					}
 					catch (Exception ex)
 					{
 						tests_failed++;
 						int ex_len = ex.ToString().Length;
-						Npp.editor.AppendText(msg_len + 17 + result_len + 21 + ex_len + 1, 
-							$"{base_message}Instead returned\n{result}\nand threw exception\n{ex}\n");
+						Npp.editor.AppendText(msgLen + 17 + result_len + 21 + ex_len + 1, 
+							$"{baseMessage}Instead returned\n{result}\nand threw exception\n{ex}\n");
 					}
 				}
 				catch (Exception ex)
 				{
 					tests_failed++;
-					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 			// TEST NO_RECURSION setting

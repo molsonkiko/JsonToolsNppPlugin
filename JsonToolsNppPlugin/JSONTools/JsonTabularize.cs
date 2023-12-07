@@ -802,41 +802,69 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="s"></param>
         /// <param name="delim"></param>
-        /// <param name="quote_char"></param>
+        /// <param name="quote"></param>
         /// <returns></returns>
-        public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote_char)
+        public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote)
 		{
-			if (s.IndexOfAny(new char[] {delim, '\r', '\n', quote_char}) >= 0)
+			if (s.IndexOfAny(new char[] {delim, '\r', '\n', quote}) >= 0)
 			{
-				sb.Append(quote_char);
+				sb.Append(quote);
 				for (int ii = 0; ii < s.Length; ii++)
 				{
 					char c = s[ii];
 					sb.Append(c);
-					if (c == quote_char)
-                        sb.Append(quote_char);
+					if (c == quote)
+                        sb.Append(quote);
 				}
-				sb.Append(quote_char);
+				sb.Append(quote);
 			}
 			else sb.Append(s);
 		}
 
-		public string TableToCsv(JArray table, char delim = ',', char quote_char = '"', string[] header = null, bool bools_as_ints = false, string newline = "\n")
+		public static void CsvStringToSb(StringBuilder sb, JNode jnode, char delim, char quote, bool boolsAsInts)
+		{
+			string val;
+            switch (jnode.type)
+            {
+            case Dtype.STR:
+                val = (string)jnode.value;
+                break; // only apply quotes if internal delims, quotes, or newlines
+            case Dtype.DATE:
+                val = ((DateTime)jnode.value).ToString("yyyy-MM-dd");
+                break;
+            case Dtype.DATETIME:
+                val = ((DateTime)jnode.value).ToString("yyyy-MM-dd hh:mm:ss");
+                break;
+            case Dtype.NULL:
+                return; // nulls should be empty entries
+            case Dtype.BOOL:
+				sb.Append((bool)jnode.value
+					? (boolsAsInts ? "1" : "true")
+					: (boolsAsInts ? "0" : "false"));
+                return;
+            default:
+                val = jnode.ToString();
+                break;
+            }
+			ApplyQuotesIfNeeded(sb, val, delim, quote);
+        }
+
+		public string TableToCsv(JArray table, char delim = ',', char quote = '"', string newline = "\n", string[] header = null, bool boolsAsInts = false)
 		{
 			// allow the user to supply their own column order. If they don't, just alphabetically sort colnames
 			if (header == null)
 			{
-				HashSet<string> all_keys = new HashSet<string>();
+				HashSet<string> allKeys = new HashSet<string>();
 				foreach (JNode child in table.children)
 				{
 					foreach (string key in ((JObject)child).children.Keys)
 					{
-						all_keys.Add(key);
+						allKeys.Add(key);
 					}
 				}
-				header = new string[all_keys.Count];
+				header = new string[allKeys.Count];
 				int ii = 0;
-				foreach (string key in all_keys)
+				foreach (string key in allKeys)
 				{
 					header[ii++] = key;
 				}
@@ -846,7 +874,7 @@ namespace JSON_Tools.JSON_Tools
 			for (int ii = 0; ii < header.Length; ii++)
 			{
 				string col = header[ii];
-				ApplyQuotesIfNeeded(sb, col, delim, quote_char);
+				ApplyQuotesIfNeeded(sb, col, delim, quote);
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);
@@ -856,40 +884,14 @@ namespace JSON_Tools.JSON_Tools
 				for (int ii = 0; ii < header.Length; ii++)
 				{
 					string col = header[ii];
-					if (!orow.children.TryGetValue(col, out JNode val))
+					if (!orow.children.TryGetValue(col, out JNode jnode))
 					{
 						// sometimes the row might have a missing key.
 						// in that case, just leave an empty entry, and add a delimiter if needed.
 						if (ii < header.Length - 1) sb.Append(delim);
 						continue;
 					}
-					switch (val.type)
-					{
-						case Dtype.STR:
-							ApplyQuotesIfNeeded(sb, (string)val.value, delim, quote_char);
-							break; // only apply quotes if internal delim
-						case Dtype.DATE:
-							sb.Append(((DateTime)val.value).ToString("yyyy-MM-dd"));
-							break;
-						case Dtype.DATETIME:
-							sb.Append(((DateTime)val.value).ToString("yyyy-MM-dd hh:mm:ss"));
-							break;
-						case Dtype.NULL:
-							break; // nulls should be empty entries
-						case Dtype.BOOL:
-							if (bools_as_ints)
-							{
-								sb.Append((bool)val.value ? "1" : "0");
-							}
-							else
-							{
-								sb.Append((bool)val.value ? "true" : "false");
-							}
-							break;
-						default:
-							sb.Append(val.ToString()); // everything else gets quote chars
-							break;
-					}
+					CsvStringToSb(sb, jnode, delim, quote, boolsAsInts);
 					if (ii < header.Length - 1) sb.Append(delim);
 				}
 				sb.Append(newline);

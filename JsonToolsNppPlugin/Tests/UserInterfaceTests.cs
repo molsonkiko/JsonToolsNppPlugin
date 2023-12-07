@@ -510,7 +510,7 @@ namespace JSON_Tools.Tests
             // TEST PARSE INI FILE
             ("overwrite", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\n  bar=2\r\n  [дaz]\r\n  baz=3\r\n  ;b\r\n  baz2 = 7 \r\n[quz]\r\nquz=4\r\n;c"}),
             ("tree_open", new object[]{}),
-            ("tree_open", new object[]{DocumentType.INI}), 
+            ("tree_open", new object[]{DocumentType.INI}),
             ("tree_query", new object[]{"@..g`z`"}),
             ("treenode_click", new object[]{new string[] {"0 : {2}", "baz2 : \"7 \""} }),
             ("compare_selections", new object[]{new string[]{"63,63" } }),
@@ -637,7 +637,7 @@ namespace JSON_Tools.Tests
                 "ab\tc\t😀\tf\r\n" +
                 "'fo\nö'\t7\tbar\t-8.5\r\n" +
                 "baz\t19\t''\t-4e3\r\n" +
-                "zorq\t\tkywq\t.75"
+                "'zorq'\t\tkywq\t'.75'"
             }),
             ("regex_search", new object[]
             {
@@ -646,8 +646,8 @@ namespace JSON_Tools.Tests
             ("treenode_click", new object[]{new string[]{"0 : {4}", "ab : \"fo\\nö\"" } }),
             ("treenode_click", new object[]{new string[]{"1 : {4}", "c : 19"} }),
             ("treenode_click", new object[]{new string[]{"1 : {4}", "😀 : \"\"" } }),
-            ("treenode_click", new object[]{new string[]{"2 : {4}", "f : 0.75"} }),
-            ("compare_selections", new object[]{new string[] {"60,60"} }),
+            ("treenode_click", new object[]{new string[]{"2 : {4}", "f : \".75\""} }),
+            ("compare_selections", new object[]{new string[] {"62,62"} }),
             ("regex_search", new object[]
             {
                 "{\"csv\": true, \"delim\": \"\\\\t\", \"quote\": \"'\", \"newline\": \"\\r\\n\", \"header\": 1, \"nColumns\": 4, \"numCols\": [1]}"
@@ -660,7 +660,7 @@ namespace JSON_Tools.Tests
             ("tree_query", new object[]{"s_csv(@, 4, `\\t`, `\\r\\n`, `'`, h)[:][0]"}),
             ("treenode_click", new object[]{new string[]{ } }), // click root
             ("select_treenode_json_children", new object[]{}),
-            ("compare_selections", new object[]{new string[] {"0,2", "13,20", "33,36", "49,53"} }),
+            ("compare_selections", new object[]{new string[] {"0,2", "13,20", "33,36", "49,55"} }),
             ("treenode_click", new object[]{new string[]{ "1 : \"fo\\nö\"" } }),
             ("select_treenode_json", new object[]{}),
             ("compare_selections", new object[]{new string[] {"13,20"} }),
@@ -671,10 +671,13 @@ namespace JSON_Tools.Tests
                 "@ = to_csv(c,`,`, `\\n`, `\"`)"}),
             ("compare_text", new object[]{"ab,c,😀,f\n\"fo\nö\",1.75,bar,-8.5\nbaz,4.75,,-4e3\nzorq,,kywq,.75\n"}),
             // TEST REGEX SEARCH FORM (SINGLE-CAPTURE-GROUP CSV AND REGEX MODES)
-            ("overwrite", new object[]{" 草1\nｪ2\n◐3"}),
+            ("overwrite", new object[]{" 草1\nｪ2\n◐3\n'4"}), // last row has CSV quote char to make sure CSV delimiter is forgotten now that a non-csv search was made
             ("regex_search", new object[]{
                 "{\"csv\":false,\"regex\":\"^\\\\S\\\\d\\\\r?$\",\"ignoreCase\":true,\"fullMatch\":false}"
             }),
+            ("treenode_click", new object[]{new string[]{ } }), // click root
+            ("select_treenode_json_children", new object[]{}),
+            ("compare_selections", new object[]{new string[] {"6,10", "11,15", "16,18"} }),
             ("treenode_click", new object[]{new string[] { "1 : \"◐3\"" } }),
             ("compare_selections", new object[]{new string[] {"11,11"} }),
             ("select_treenode_json", new object[]{}),

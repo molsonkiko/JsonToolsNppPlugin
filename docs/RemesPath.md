@@ -575,6 +575,8 @@ Returns x formatted as a CSV (RFC 4180 rules as normal), according to the follow
 * if x is an array of arrays, each subarray is converted to a row
 * if x is an array of objects, the keys of the first subobject are converted to a header row, and the values of every subobject become their own row.
 
+See [json-to-csv.md](/docs/json-to-csv.md#how-json-nodes-are-represented-in-csv) for information on how JSON values are represented in CSVs.
+
 ---
 `to_records(x: iterable, [strategy: str]) -> array[object]`
 

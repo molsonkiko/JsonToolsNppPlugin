@@ -326,36 +326,6 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// number of bytes in the UTF8-encoded CSV representation of string s (with delimiter delim and quote character quote)<br></br>
-        /// e.g. "fö\n'" would be represented as 'fö\n'''  in a CSV file with '\'' as quote character, so UTF8BytesInCSVRepr("fö\n'", ',', '\'') would return 8.<br></br>
-        /// if delim is '\x00', return the UTF8 bytecount of s
-        /// </summary>
-        /// <param name="delim">CSV delimiter (or '\x00' for non-CSV file)</param>
-        /// <param name="quote">CSV quote character</param>
-        /// <returns></returns>
-        public static int UTF8BytesInCSVRepr(string s, char delim, char quote)
-        {
-            if (delim == 0)
-                return Encoding.UTF8.GetByteCount(s);
-            int quoteCount = 0;
-            bool delimOrNewline = false;
-            int byteCount = s.Length;
-            for (int ii = 0; ii < s.Length; ii++)
-            {
-                char c = s[ii];
-                if (c == '\r' || c == '\n' || c == delim)
-                    delimOrNewline = true;
-                else if (c == quote)
-                    quoteCount++;
-                else
-                    byteCount += ExtraUTF8Bytes(c);
-            }
-            if (delimOrNewline || quoteCount > 0)
-                byteCount += 2 + quoteCount; // strings containing newlines, quotes or delimiters must be wrapped in quotes, and quote chars in quoted strings must be doubled up
-            return byteCount;
-        }
-
-        /// <summary>
         /// Set the parser's state to severity, unless the state was already higher.<br></br>
         /// If the severity is above the parser's loggerLevel:<br></br>
         ///     * if throwIfLogged or (FATAL and throwIfFatal), throw a JsonParserException<br></br>

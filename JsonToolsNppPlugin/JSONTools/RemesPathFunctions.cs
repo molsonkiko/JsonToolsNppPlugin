@@ -2865,7 +2865,7 @@ namespace JSON_Tools.JSON_Tools
                     int ii = 0;
                     foreach (JNode ochild in o.children.Values)
                     {
-                        JsonTabularizer.ApplyQuotesIfNeeded(sb, ochild.ValueOrToString(), delim, quote);
+                        JsonTabularizer.CsvStringToSb(sb, ochild, delim, quote, false);
                         ii++;
                         if (ii < o.Length)
                             sb.Append(delim);
@@ -2881,15 +2881,16 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!(x is JArray a))
                     {
-                        JsonTabularizer.ApplyQuotesIfNeeded(sb, x.ValueOrToString(), delim, quote);
+                        JsonTabularizer.CsvStringToSb(sb, x, delim, quote, false);
                         sb.Append(newline);
                         nColumns = 1;    
                         return true;
                     }
-                    nColumns = a.children.Count;
+                    var children = a.children;
+                    nColumns = children.Count;
                     for (int ii = 0; ii < nColumns; ii++)
                     {
-                        JsonTabularizer.ApplyQuotesIfNeeded(sb, a.children[ii].ValueOrToString(), delim, quote);
+                        JsonTabularizer.CsvStringToSb(sb, children[ii], delim, quote, false);
                         if (ii < a.Length - 1)
                             sb.Append(delim);
                     }

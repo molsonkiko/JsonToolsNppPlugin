@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. This doesn't matter right now because RemesPath is single-threaded, but it could matter in the future.
+- __Known issues with `Select This` and `Select all children` commands in tree view (FIX THESE ASAP)__:
+	* Empty strings are ignored by `Select this`
+	* Floating point numbers may not be selected correctly (JSON string may have different length from the number representation in the CSV)
 
 ## [6.0.0] - (UNRELEASED) 2023-MM-DD
 

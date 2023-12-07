@@ -64,7 +64,7 @@ namespace JSON_Tools.Forms
                 Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(json);
                 JNode tab = tabularizer.BuildTable(json, schema, keysep);
                 string eol = Npp.GetEndOfLineString(eolComboBox.SelectedIndex);
-                csv = tabularizer.TableToCsv((JArray)tab, delim, '"', null, BoolsToIntsCheckBox.Checked, eol);
+                csv = tabularizer.TableToCsv((JArray)tab, delim, '"', eol, null, BoolsToIntsCheckBox.Checked);
             }
             catch (Exception ex)
             {

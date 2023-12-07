@@ -483,7 +483,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("str(csv_regex(5, , , `'`))", JNode.StrToString(JNode.StrToString(ArgFunction.CsvRowRegex(5, quote:'\''), true), true)),
                 new Query_DesiredResult("to_csv(@.foo)", "\"0,1,2\\r\\n3.0,4.0,5.0\\r\\n6.0,7.0,8.0\\r\\n\""),
                 new Query_DesiredResult("to_csv(j`[{\"a\\\\tb\": 1, \"c\": null}, {\"a\\\\tb\": -7.5, \"c\": \"bar\\\\n'baz'\"}]`, `\\t`, `\\r`, `'`)",
-                    "\"'a\\tb'\\tc\\r1\\tnull\\r-7.5\\t'bar\\n''baz'''\\r\""),
+                    "\"'a\\tb'\\tc\\r1\\t\\r-7.5\\t'bar\\n''baz'''\\r\""), // null values are converted to empty strings
                 new Query_DesiredResult("to_csv(@.foo[:2], `.`, `\\n`, `#`)", "\"0.1.2\\n#3.0#.#4.0#.#5.0#\\n\""),
                 new Query_DesiredResult("to_csv(@.foo[1], `.`)", "\"\\\"3.0\\\"\\r\\n\\\"4.0\\\"\\r\\n\\\"5.0\\\"\""),
                 new Query_DesiredResult("to_csv(@.foo[:][0],,`\\n`)", "\"0\\n3.0\\n6.0\""),
@@ -581,9 +581,9 @@ namespace JSON_Tools.Tests
                                                "1\\r" +
                                                ".3\\r" +
                                                "5\\r" +
-                                               "-7.2`" +
+                                               "$-7.2$`" +
                                                ", 1, `^`, `\\r`, `$`, d, 0)",
-                    "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": -7.2}]"),
+                    "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": \"-7.2\"}]"),
                 // ====================== s_fa function for parsing regex search results as string arrays or arrays of arrays of strings =========
                 // 2 capture groups (2nd optional), parse the first group as number
                 new Query_DesiredResult("s_fa(`1. foo  boo\\r\\n" +
