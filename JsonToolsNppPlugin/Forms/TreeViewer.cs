@@ -152,6 +152,29 @@ namespace JSON_Tools.Forms
                 while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
                 next.Focus();
             }
+            else if (sender is TreeView && e.Control)
+            {
+                // Ctrl+Up -> snap up to parent of current node
+                if (e.KeyCode == Keys.Up)
+                {
+                    TreeNode selected = Tree.SelectedNode;
+                    TreeNode parent = selected.Parent;
+                    if (parent is null)
+                        return;
+                    Tree.SelectedNode = parent;
+                }
+                // Ctrl+Down -> snap to last child of current node
+                else if (e.KeyCode == Keys.Down)
+                {
+                    TreeNode selected = Tree.SelectedNode;
+                    if (selected.Nodes.Count > 0)
+                    {
+                        if (!selected.IsExpanded)
+                            selected.Expand();
+                        Tree.SelectedNode = selected.Nodes[selected.GetNodeCount(false) - 1];
+                    }
+                }
+            }
         }
 
         private void QueryBox_KeyPress(object sender, KeyPressEventArgs e)

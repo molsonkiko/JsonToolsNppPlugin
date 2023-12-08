@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 6. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
 7. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
 8. Support for [JSON Schema validation](/docs/README.md#validating-json-against-json-schema) of `enum` keyword where the `type` is missing or an array.
+9. `Ctrl+Up` now snaps to parent of currently selected node in tree view. `Ctrl+Down` now snaps to the last direct child of the currently selected node.
 
 ### Changed
 

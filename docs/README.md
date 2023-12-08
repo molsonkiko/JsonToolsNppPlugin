@@ -65,6 +65,8 @@ __NOTES__
     - `Ctrl+Enter` in the query box submits the query.
     - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
     - Up and down arrow keys can also navigate the tree.
+    - `Ctrl+Up` while in the tree selects the parent of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).*
+    - `Ctrl+Down` while in the tree selects the last direct child of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).*
     - `Escape` takes focus from the tree view back to the editor.
 5. Beginning in [v4.4.0](/CHANGELOG.md#440---2022-11-23), you can have multiple tree views open.
 
