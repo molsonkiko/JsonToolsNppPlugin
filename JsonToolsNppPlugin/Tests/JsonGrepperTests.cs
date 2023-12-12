@@ -30,7 +30,7 @@ namespace JSON_Tools.Tests
                 string jsontxt = File.ReadAllText(f.FullName);
                 try
                 {
-                    all_jsons[JNode.StrToString(f.FullName, false)] = jparser.Parse(jsontxt);
+                    all_jsons[f.FullName] = jparser.Parse(jsontxt);
                 }
                 catch { }
             }
@@ -40,7 +40,7 @@ namespace JSON_Tools.Tests
                 string jsontxt = File.ReadAllText(f.FullName);
                 try
                 {
-                    all_jsons[JNode.StrToString(f.FullName, false)] = jparser.Parse(jsontxt);
+                    all_jsons[f.FullName] = jparser.Parse(jsontxt);
                 }
                 catch { }
             }
@@ -77,12 +77,12 @@ namespace JSON_Tools.Tests
 
             // test nonstandard JsonParser settings for the grepper
             grepper.json_parser = new JsonParser(LoggerLevel.JSON5, false);
-            string json_subdir_name = subdir.FullName.Replace("\\", "\\\\\\\\");
+            string json_subdir_name = subdir.FullName.Replace("\\", "\\\\");
 
             var special_testcases = new Dictionary<string, JNode>
             {
-                ["*comment*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\\\\\comment_json_as_txt.txt\", \"{json_subdir_name}\\\\\\\\comments_and_singlequotes_json.txt\"]"),
-                ["*singlequote*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\\\\\singlequote_json_as_txt.txt\", \"{json_subdir_name}\\\\\\\\comments_and_singlequotes_json.txt\"]"),
+                ["*comment*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\comment_json_as_txt.txt\", \"{json_subdir_name}\\\\comments_and_singlequotes_json.txt\"]"),
+                ["*singlequote*.txt"] = jparser.Parse($"[\"{json_subdir_name}\\\\singlequote_json_as_txt.txt\", \"{json_subdir_name}\\\\comments_and_singlequotes_json.txt\"]"),
             };
             foreach (KeyValuePair<string, JNode> kv in special_testcases)
             {

@@ -131,7 +131,7 @@ namespace JSON_Tools.JSON_Tools
                         ii++;
                     }
                 headerFinished:
-                    string header = JNode.StrToString(inp.Substring(startOfHeader, endOfHeader - startOfHeader), false);
+                    string header = inp.Substring(startOfHeader, endOfHeader - startOfHeader);
                     if (doc.ContainsKey(header))
                     {
                         throw new IniParserException($"Document has duplicate section header [{header}]", c, headerStartUtf8 - 1, lineNum);
@@ -231,7 +231,7 @@ namespace JSON_Tools.JSON_Tools
                 ii++;
             }
         exitKeyLoop:
-            string key = JNode.StrToString(inp.Substring(startOfKey, endOfKey + 1 - startOfKey), false);
+            string key = inp.Substring(startOfKey, endOfKey + 1 - startOfKey);
             int startOfValue = ii;
             int endOfValue = ii;
             while (ii < inp.Length)

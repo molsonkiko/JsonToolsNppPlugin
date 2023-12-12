@@ -101,14 +101,14 @@ namespace JSON_Tools.JSON_Tools
                 {
                     lock (fname_json_map)
                     {
-                        fname_json_map[JNode.StrToString(fname, false)] = json_parser.Parse(json_str);
+                        fname_json_map[fname] = json_parser.Parse(json_str);
                     }
                 }
                 catch (Exception ex)
                 {
                     lock (fname_exception_map)
                     {
-                        fname_exception_map[JNode.StrToString(fname, false)] = new JNode(ex.ToString(), Dtype.STR, 0);
+                        fname_exception_map[fname] = new JNode(ex.ToString(), Dtype.STR, 0);
                     }
                 }
             }
@@ -189,15 +189,14 @@ namespace JSON_Tools.JSON_Tools
 		public async Task GetJsonStringFromApiAsync(string url)
         {
             InitializeHttpClient(httpClient);
-            string formatted_url = JNode.StrToString(url, false);
             try
             {
                 Task<string> stringTask = httpClient.GetStringAsync(url);
-                fname_strings[formatted_url] = await stringTask;
+                fname_strings[url] = await stringTask;
             }
             catch (Exception ex)
             {
-                exceptions[formatted_url] = new JNode(ex.ToString(), Dtype.STR, 0);
+                exceptions[url] = new JNode(ex.ToString(), Dtype.STR, 0);
             }
         }
 

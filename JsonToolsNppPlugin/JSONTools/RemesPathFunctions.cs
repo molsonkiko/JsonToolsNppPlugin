@@ -1716,8 +1716,7 @@ namespace JSON_Tools.JSON_Tools
             var set = new Dictionary<string, JNode>();
             foreach (JNode child in arr)
             {
-                var val = child.value;
-                string key = val is string s ? JNode.StrToString(s, false) : child.ToString();
+                string key = child.ValueOrToString();
                 set[key] = new JNode();
             }
             return new JObject(0, set);
@@ -2030,7 +2029,7 @@ namespace JSON_Tools.JSON_Tools
                 JNode val = pair[1];
                 if (!(key.value is string k))
                     throw new RemesPathException("The Dict function's argument must be an array of two-item subarrays where the first item of each subarray is a string.");
-                rst[JNode.StrToString(k, false)] = val;
+                rst[k] = val;
             }
             return new JObject(0, rst);
         }
@@ -2178,7 +2177,7 @@ namespace JSON_Tools.JSON_Tools
                 if (k.type != Dtype.STR)
                     throw new RemesPathException("Even-numbered args to 'add_items' function (new keys) must be strings");
                 JNode v = args[ii++];
-                new_obj[JNode.StrToString((string)k.value, false)] = v;
+                new_obj[(string)k.value] = v;
             }
             return new JObject(0, new_obj);
         }
@@ -2210,9 +2209,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     JArray subarr = (JArray)item;
                     JNode bynode = subarr[by];
-                    string key = bynode.value is string bystr
-                        ? JNode.StrToString(bystr, false)
-                        : bynode.ToString();
+                    string key = bynode.ValueOrToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
                     ((JArray)piv[key]).children.Add(subarr[val_col]);
@@ -2235,9 +2232,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     JObject subobj = (JObject)item;
                     JNode bynode = subobj[by];
-                    string key = bynode.value is string bystr
-                        ? JNode.StrToString(bystr, false)
-                        : bynode.ToString();
+                    string key = bynode.ValueOrToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
                     ((JArray)piv[key]).children.Add(subobj[val_col]);
@@ -2770,7 +2765,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
-                            header = new List<string> { JNode.StrToString(mValue, false) };  
+                            header = new List<string> { mValue };  
                         }
                     }
                     if (parseMatchesAsRow)
@@ -2794,7 +2789,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             header = new List<string>(nColumns);
                             for (int ii = minGroupNum; ii <= maxGroupNum; ii++)
-                                header.Add(JNode.StrToString(m.Groups[ii].Value, false));
+                                header.Add(m.Groups[ii].Value);
                         }
                     }
                     if (parseMatchesAsRow)
@@ -2893,7 +2888,7 @@ namespace JSON_Tools.JSON_Tools
                 nColumns = keys.Length;
                 for (int ii = 0; ii < nColumns; ii++)
                 {
-                    JsonTabularizer.ApplyQuotesIfNeeded(sb, JNode.UnescapedJsonString(keys[ii], false), delim, quote);
+                    JsonTabularizer.ApplyQuotesIfNeeded(sb, keys[ii], delim, quote);
                     if (ii < keys.Length - 1)
                         sb.Append(delim);
                 }

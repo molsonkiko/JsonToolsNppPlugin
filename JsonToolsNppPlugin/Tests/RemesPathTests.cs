@@ -439,7 +439,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("max_by(@.foo[:]{mx: max(@), first: @[0]}, mx)", "{\"mx\": 8.0, \"first\": 6.0}"),
                 new Query_DesiredResult("@{`\t\b\x12`: 1}", "{\"\\t\\b\\u0012\": 1}"), // control characters in projection key
                 new Query_DesiredResult("@{foo: .125E3, $baz: 0x2eFb, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 0xabcdefABCDEF}", // JSON5-compliant unquoted strings
-                    "{\"foo\": 125, \"$baz\": 12027, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\\\b\\\\n\": 188900977659375}"),
+                    "{\"foo\": 125, \"$baz\": 12027, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 188900977659375}"),
                 new Query_DesiredResult("1{1, 2}", "[1, 2]"), // projections off of scalars
                 new Query_DesiredResult("baz{a: 1}", "{\"a\": 1}"),
                 new Query_DesiredResult("null{foo: 1.5->1, b: true->9.75, c: b{9}, d: 1{bar: baz}}",

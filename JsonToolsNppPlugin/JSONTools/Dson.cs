@@ -73,7 +73,7 @@ namespace JSON_Tools.JSON_Tools
                     JObject obj = (JObject)json;
                     foreach (KeyValuePair<string, JNode> kv in obj.children)
                     {
-                        sb.Append($"\"{kv.Key}\" is ");
+                        sb.Append($"{JNode.StrToString(kv.Key, true)} is ");
                         sb.Append(Dump(kv.Value));
                         sb.Append(KeyValuePairDelims[delimIdx % 4] + " ");
                         delimIdx++;

@@ -525,9 +525,7 @@ Returns an object mapping each unique string representation of an element in `x`
 
 Example: ``set(j`["a", "b", "a", 1, 2.0, null, 1, null]`)`` returns `{"a": null, "b": null, "1": null, "2.0": null, "null": null}`
 
-Issues with this function that may make the `unique` function preferable:
-* two different elements may have the same string representation for the purposes of this function (e.g., `null` and `"null"`, `2.0` and `"2.0"`)
-* strings with characters that must be escaped (e.g., `\`, `"`) have those characters escaped before they become keys in the object returned by `set`
+One issue with this function that may make the `unique` function preferable: two different elements may have the same string representation for the purposes of this function (e.g., `null` and `"null"`, `2.0` and `"2.0"`)
 
 ----
 `s_join(sep: string, x: array) -> string`

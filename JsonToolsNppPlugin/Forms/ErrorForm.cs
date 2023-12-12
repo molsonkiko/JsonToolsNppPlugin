@@ -194,7 +194,7 @@ namespace JSON_Tools.Forms
                 // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
                 bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
                 Main.settings.offer_to_show_lint = false;
-                Main.TryParseJson();
+                Main.TryParseJson(preferPreviousDocumentType:true);
                 Main.settings.offer_to_show_lint = previousOfferToShowLint;
                 if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
                     && info.lints != null)

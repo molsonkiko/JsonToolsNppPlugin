@@ -43,7 +43,7 @@ namespace JSON_Tools.Tests
                     ("indented section]key indent", 414),
                     (" dedented section ", 529),
                     ("interpolation from other sections]baz", 909),
-                    ("special\\\\_chars]non-colon, non-equals special chars in [\\\"#keys\\\"];", 1387),
+                    ("special\\_chars]non-colon, non-equals special chars in [\"#keys\"];", 1387),
                 }),
                 //(exampleIniText, exampleJsonText, true,  exampleIniReformattedText),
                 ("[blah]", "{\"blah\": {}}", "[blah]\r\n", new (string path, int utf8pos)[]{("blah", 0)}),

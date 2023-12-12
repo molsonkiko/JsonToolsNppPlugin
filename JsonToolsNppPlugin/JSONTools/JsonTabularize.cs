@@ -874,7 +874,7 @@ namespace JSON_Tools.JSON_Tools
 			for (int ii = 0; ii < header.Length; ii++)
 			{
 				string col = header[ii];
-				ApplyQuotesIfNeeded(sb, col, delim, quote);
+				ApplyQuotesIfNeeded(sb, JNode.StrToString(col, false), delim, quote);
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);

@@ -372,15 +372,16 @@ namespace JSON_Tools.Forms
 
         private static string TextForTreeNode(string key, JNode node)
         {
+            string escapedKey = JNode.StrToString(key, false);
             if (node is JArray arr)
                 return arr.children.Count == 0
-                    ? $"{key} : []"
-                    : $"{key} : [{arr.children.Count}]";
+                    ? $"{escapedKey} : []"
+                    : $"{escapedKey} : [{arr.children.Count}]";
             if (node is JObject obj)
                 return obj.children.Count == 0
-                    ? $"{key} : {{}}"
-                    : $"{key} : {{{obj.children.Count}}}";
-            return $"{key} : {JsonStringCappedLength(node)}";
+                    ? $"{escapedKey} : {{}}"
+                    : $"{escapedKey} : {{{obj.children.Count}}}";
+            return $"{escapedKey} : {JsonStringCappedLength(node)}";
         }
 
         private void SubmitQueryButton_Click(object sender, EventArgs e)

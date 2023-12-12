@@ -898,27 +898,30 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (DOT_COMPATIBLE_REGEX.IsMatch(key))
                             return $".{key}";
-                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"").Replace("`", "\\`");
+                        string escapedKey = StrToString(key, false);
+                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"").Replace("`", "\\`");
                         return $"[`{key_dubquotes_unescaped}`]";
                     }
                 case KeyStyle.JavaScript:
                     {
                         if (DOT_COMPATIBLE_REGEX.IsMatch(key))
                             return $".{key}";
+                        string escapedKey = StrToString(key, false);
                         if (key.Contains('\''))
                         {
-                            return $"[\"{key}\"]";
+                            return $"[\"{escapedKey}\"]";
                         }
-                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
+                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"");
                         return $"['{key_dubquotes_unescaped}']";
                     }
                 case KeyStyle.Python:
                     {
-                        if (key.Contains('\''))
+                        string escapedKey = StrToString(key, false);
+                        if (escapedKey.Contains('\''))
                         {
-                            return $"[\"{key}\"]";
+                            return $"[\"{escapedKey}\"]";
                         }
-                        string key_dubquotes_unescaped = key.Replace("\\\"", "\"");
+                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"");
                         return $"['{key_dubquotes_unescaped}']";
                     }
                 default: throw new ArgumentException("style argument for PathToTreeNode must be a KeyStyle member");
@@ -1098,8 +1101,12 @@ namespace JSON_Tools.JSON_Tools
             foreach (string k in keys)
             {
                 JNode v = children[k];
-                sb.Append($"\"{k}\"{key_value_sep}");
-                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
+                string escapedK = StrToString(k, false);
+                sb.Append('"');
+                sb.Append(escapedK);
+                sb.Append('"');
+                sb.Append(key_value_sep);
+                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(escapedK, 0, escapedK.Length);
                 extra_utf8_bytes = v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, extra_utf8_bytes, max_length);
                 if (sb.Length >= max_length)
                     return -1;
@@ -1144,8 +1151,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
-                    sb.Append($"{dent}\"{k}\":");
+                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, dent, k, "\":");
                     if (v is JObject || v is JArray)
                         sb.Append(NL);
                     else
@@ -1167,8 +1173,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
-                    sb.Append($"{extra_dent}\"{k}\": ");
+                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
                     extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
@@ -1188,8 +1193,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
                     JNode v = children[k];
-                    extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
-                    sb.Append($"{extra_dent}\"{k}\": ");
+                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
                     extra_utf8_bytes = v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
                     if (sb.Length >= max_length)
                         return -1;
@@ -1202,6 +1206,16 @@ namespace JSON_Tools.JSON_Tools
             default: throw new ArgumentOutOfRangeException("style");
             }
             return extra_utf8_bytes;
+        }
+
+        private static int AppendKeyAndGetUtf8Extra(StringBuilder sb, string dent, string k, string closeQuoteAndColon)
+        {
+            string escapedK = StrToString(k, false);
+            sb.Append(dent);
+            sb.Append('"');
+            sb.Append(escapedK);
+            sb.Append(closeQuoteAndColon);
+            return JsonParser.ExtraUTF8BytesBetween(escapedK, 0, escapedK.Length);
         }
 
         /// <inheritdoc/>
@@ -1260,8 +1274,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 JNode v = children[k];
                 (comment_idx, extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, extra_utf8_bytes, v.position, extra_dent);
-                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(k, 0, k.Length);
-                sb.Append($"{extra_dent}\"{k}\": ");
+                extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
                 (comment_idx, extra_utf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, depth + 1, sb, change_positions, extra_utf8_bytes, indent_char);
                 if (++ctr < children.Count)
                     sb.Append(',');
@@ -1318,9 +1331,8 @@ namespace JSON_Tools.JSON_Tools
                 }
                 // section is treated as beginning just before the open squarebrace of the header
                 (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, section.position, "", DocumentType.INI);
-                string unescapedHeader = UnescapedJsonString(header, false);
-                sb.Append($"[{unescapedHeader}]\r\n");
-                utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(unescapedHeader, 0, unescapedHeader.Length);
+                sb.Append($"[{header}]\r\n");
+                utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(header, 0, header.Length);
                 foreach (KeyValuePair<string, JNode> sectKv in section.children)
                 {
                     string key = sectKv.Key;
@@ -1329,10 +1341,9 @@ namespace JSON_Tools.JSON_Tools
                     {
                         throw new InvalidOperationException("Only objects where all children are objects with only string values can be converted to ini files");
                     }
-                    string unescapedKey = UnescapedJsonString(key, false);
                     (positionInComments, utf8ExtraBytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, positionInComments, utf8ExtraBytes, value.position, "", DocumentType.INI);
-                    sb.Append($"{unescapedKey}={valueStr}\r\n");
-                    utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(unescapedKey, 0, unescapedKey.Length);
+                    sb.Append($"{key}={valueStr}\r\n");
+                    utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(key, 0, key.Length);
                     utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(valueStr, 0, valueStr.Length);
                 }
             }

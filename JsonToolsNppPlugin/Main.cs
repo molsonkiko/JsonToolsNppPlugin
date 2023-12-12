@@ -448,9 +448,10 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="documentType">what type of document to parse the document as (JSON, JSON Lines, or INI file)</param>
         /// <param name="wasAutotriggered">was triggered by a direct action of the user (e.g., reformatting, opening tree view)</param>
+        /// <param name="preferPreviousDocumentType">attempt to re-parse the document in whatever way it was previously parsed (potentially ignoring documentType parameter)</param>
         /// <param name="isRecursion">IGNORE THIS PARAMETER, IT IS ONLY FOR RECURSIVE SELF-CALLS</param>
         /// <returns></returns>
-        public static (bool fatal, JNode node, bool usesSelections, DocumentType DocumentType) TryParseJson(DocumentType documentType = DocumentType.JSON, bool wasAutotriggered = false, bool isRecursion = false)
+        public static (bool fatal, JNode node, bool usesSelections, DocumentType DocumentType) TryParseJson(DocumentType documentType = DocumentType.JSON, bool wasAutotriggered = false, bool preferPreviousDocumentType = false, bool isRecursion = false)
         {
             string fname = Npp.notepad.GetCurrentFilePath();
             List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
@@ -510,7 +511,7 @@ namespace Kbg.NppPluginNET
                 if (wasAutotriggered && len > sizeThreshold)
                     return (false, null, false, DocumentType.NONE);
                 string text = Npp.editor.GetText(len + 1);
-                if (documentType == DocumentType.NONE) // if user didn't specify how to parse the document
+                if (documentType == DocumentType.NONE || preferPreviousDocumentType) // if user didn't specify how to parse the document
                 {
                     // 1. check if the document has a file extension with an associated DocumentType
                     string fileExtension = Npp.FileExtension().ToLower();
@@ -596,7 +597,7 @@ namespace Kbg.NppPluginNET
                 // there's a good chance (from molsonkiko's experience) that the user was just selecting some text to copy/paste
                 // If this happens, we just treat this as an empty selection and restore old selections
                 SelectionManager.SetSelectionsFromStartEnds(oldSelections);
-                return TryParseJson(documentType, wasAutotriggered, true);
+                return TryParseJson(documentType, wasAutotriggered, preferPreviousDocumentType, true);
             }
             int lintCount = lints is null ? 0 : lints.Count;
             info = AddJsonForFile(fname, json);
@@ -731,7 +732,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void PrettyPrintJson()
         {
-            (bool fatal, JNode json, bool usesSelections, DocumentType documentType) = TryParseJson(DocumentType.JSON);
+            (bool fatal, JNode json, bool usesSelections, DocumentType documentType) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
                 return;
             bool isJsonLines = info.documentType == DocumentType.JSONL;
@@ -762,7 +763,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void CompressJson()
         {
-            (bool fatal, JNode json, bool usesSelections, DocumentType _) = TryParseJson(DocumentType.JSON);
+            (bool fatal, JNode json, bool usesSelections, DocumentType _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null || !TryGetInfoForFile(activeFname, out JsonFileInfo info))
                 return;
             Func<JNode, string> formatter;
@@ -1041,7 +1042,7 @@ namespace Kbg.NppPluginNET
                             MessageBoxIcon.Warning)
                 == DialogResult.Cancel)
                 return;
-            (bool fatal, JNode json, _, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             Npp.notepad.FileNew();
             string yaml = "";
@@ -1077,7 +1078,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void DumpJsonLines()
         {
-            (bool fatal, JNode json, bool usesSelections, _) = TryParseJson();
+            (bool fatal, JNode json, bool usesSelections, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             if (!(json is JArray))
             {
@@ -1229,7 +1230,7 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// get the path to the JNode at postition pos
+        /// get the path to the JNode at position pos
         /// (or the current caret position if pos is unspecified)
         /// </summary>
         /// <param name="pos"></param>
@@ -1260,7 +1261,7 @@ namespace Kbg.NppPluginNET
             }
             if (json == null)
             {
-                (fatal, json, usesSelections, _) = TryParseJson();
+                (fatal, json, usesSelections, _) = TryParseJson(preferPreviousDocumentType:true);
                 if (fatal || json == null)
                     return "";
             }
@@ -1477,7 +1478,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void ValidateJson(string schema_path = null, bool message_on_success = true)
         {
-            (bool fatal, JNode json, _, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
             if (schema_path == null)
@@ -1521,7 +1522,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateJsonSchema()
         {
-            (bool fatal, JNode json, _, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             JNode schema;
             try
@@ -1549,7 +1550,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void GenerateRandomJson()
         {
-            (bool fatal, JNode json, _, _) = TryParseJson();
+            (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             JNode randomJson = new JNode();
             try

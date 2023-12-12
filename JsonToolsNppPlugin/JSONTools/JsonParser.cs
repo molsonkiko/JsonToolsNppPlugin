@@ -713,13 +713,12 @@ namespace JSON_Tools.JSON_Tools
                     char nextChar = inp[ii + 1];
                     if (nextChar == quoteChar)
                     {
-                        JNode.CharToSb(sb, quoteChar);
+                        sb.Append(quoteChar);
                         ii++;
                     }
-                    else if (ESCAPE_MAP.TryGetValue(nextChar, out _))
+                    else if (ESCAPE_MAP.TryGetValue(nextChar, out char escapedChar))
                     {
-                        sb.Append('\\');
-                        sb.Append(nextChar);
+                        sb.Append(escapedChar);
                         ii++;
                     }
                     else if (nextChar == 'u')
@@ -730,7 +729,7 @@ namespace JSON_Tools.JSON_Tools
                         int nextHex = ParseHexChar(inp, 4);
                         if (HandleCharErrors(nextHex, inp, ii))
                             break;
-                        JNode.CharToSb(sb, (char)nextHex);
+                        sb.Append((char)nextHex);
                     }
                     else if (nextChar == '\n' || nextChar == '\r')
                     {
@@ -747,7 +746,7 @@ namespace JSON_Tools.JSON_Tools
                         if (HandleCharErrors(nextHex, inp, ii))
                             break;
                         HandleError("\\x escapes are only allowed in JSON5", inp, ii, ParserState.JSON5);
-                        JNode.CharToSb(sb, (char)nextHex);
+                        sb.Append((char)nextHex);
                     }
                     else HandleError($"Escaped char '{nextChar}' is only valid in JSON5", inp, ii + 1, ParserState.JSON5);
                 }
@@ -757,7 +756,7 @@ namespace JSON_Tools.JSON_Tools
                         HandleError($"Object key contains newline", inp, ii, ParserState.BAD);
                     else
                         HandleError("Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification", inp, ii, ParserState.OK);
-                    JNode.CharToSb(sb, c);
+                    sb.Append(c);
                 }
                 else
                 {
@@ -807,7 +806,7 @@ namespace JSON_Tools.JSON_Tools
                     char hexval = (char)int.Parse(m.Value, NumberStyles.HexNumber);
                     if (HandleCharErrors(hexval, inp, ii))
                         return null;
-                    JNode.CharToSb(sb, hexval);
+                    sb.Append(hexval);
                     start = m.Index + 4;
                     m = m.NextMatch();
                 }

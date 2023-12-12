@@ -22,7 +22,7 @@ namespace JSON_Tools.Forms
 
         private void SortButton_Clicked(object sender, EventArgs e)
         {
-            (bool fatal, JNode json, bool usesSelections, _) = Main.TryParseJson();
+            (bool fatal, JNode json, bool usesSelections, _) = Main.TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null)
                 return;
             string pathQuery = "@" + PathTextBox.Text;

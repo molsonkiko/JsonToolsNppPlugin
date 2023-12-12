@@ -81,7 +81,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         static void Dogeify()
         {
-            (bool fatal, JNode json, _, _) = Main.TryParseJson();
+            (bool fatal, JNode json, _, _) = Main.TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
             if (Npp.nppVersionAtLeast8)
             {
