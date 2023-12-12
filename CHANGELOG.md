@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
-- `loop()` function used in `s_sub` callbacks is not thread-safe. This doesn't matter right now because RemesPath is single-threaded, but it could matter in the future.
+- `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __Known issues with `Select This` and `Select all children` commands in tree view (FIX THESE ASAP)__:
 	* Empty strings are ignored by `Select this`
 	* Floating point numbers may not be selected correctly (JSON string may have different length from the number representation in the CSV)
@@ -49,13 +49,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Option to customize which [toolbar icons](/docs/README.md#toolbar-icons) are displayed, and their order.
 2. New [regex search form](/docs/README.md#regex-search-form) for using treeview to see regex search results in any file
-3. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
-4. [`bool`, `s_csv` and `s_fa` vectorized arg functions](/docs/RemesPath.md#vectorized-functions) and [`randint`, `csv_regex`, and `to_csv` non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions) to RemesPath.
-5. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
-6. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
-7. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
-8. Support for [JSON Schema validation](/docs/README.md#validating-json-against-json-schema) of `enum` keyword where the `type` is missing or an array.
-9. `Ctrl+Up` now snaps to parent of currently selected node in tree view. `Ctrl+Down` now snaps to the last direct child of the currently selected node.
+3. New [document type list box in tree view](/docs/README.md#document-type-box-added-in-v60)
+4. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
+5. [`bool`, `s_csv` and `s_fa` RemesPath vectorized arg functions](/docs/RemesPath.md#vectorized-functions)
+6. [`randint`, `csv_regex`, `set`, and `to_csv` RemesPath non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions)
+7. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
+8. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.
+9. The parser is now much better at recovering when an object is missing its closing `'}'` or an array is missing its closing `']'`.
+10. Support for [JSON Schema validation](/docs/README.md#validating-json-against-json-schema) of `enum` keyword where the `type` is missing or an array.
+11. `Ctrl+Up` now snaps to parent of currently selected node in tree view. `Ctrl+Down` now snaps to the last direct child of the currently selected node.
 
 ### Changed
 

@@ -1084,6 +1084,21 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        /// <summary>
+        /// there are currently three mutable public global variables that are set in queries:<br></br>
+        /// regexSearchResultsShouldBeCached, csvDelimiterInLastQuery, and csvQuoteCharInLastQuery.<br></br>
+        /// These all relate to s_csv and s_fa.<br></br>
+        /// This is basically a hack, because RemesPath does not currently support deep top-down introspection of a query's AST
+        /// to determine if s_csv or s_fa has been called in a certain way.
+        /// </summary>
+        /// <param name="containsMutation"></param>
+        public static void InitializeGlobals(bool containsMutation)
+        {
+            regexSearchResultsShouldBeCached = !containsMutation;
+            csvDelimiterInLastQuery = '\x00';
+            csvQuoteCharInLastQuery = '\x00';
+        }
+
         #region NON_VECTORIZED_ARG_FUNCTIONS
 
         /// <summary>
@@ -1691,6 +1706,28 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, its);
         }
 
+        /// <summary>
+        /// set(x: array) -> object<br></br>
+        /// returns an object where the keys are all the stringified unique values in x and the values are all null.
+        /// </summary>
+        public static JNode Set(List<JNode> args)
+        {
+            List<JNode> arr = ((JArray)args[0]).children;
+            var set = new Dictionary<string, JNode>();
+            foreach (JNode child in arr)
+            {
+                var val = child.value;
+                string key = val is string s ? JNode.StrToString(s, false) : child.ToString();
+                set[key] = new JNode();
+            }
+            return new JObject(0, set);
+        }
+
+        /// <summary>
+        /// unique(x: array, is_sorted: bool=false) -> array<br></br>
+        /// returns an array of all the distinct values in x (they must all be scalars).<br></br>
+        /// If is_sorted, the returned array is sorted. Otherwise the order is random.
+        /// </summary>
         public static JNode Unique(List<JNode> args)
         {
             var itbl = (JArray)args[0];
@@ -1698,6 +1735,8 @@ namespace JSON_Tools.JSON_Tools
             var uniq = new HashSet<object>();
             foreach (JNode val in itbl.children)
             {
+                if ((val.type & Dtype.SCALAR) == 0)
+                    throw new RemesPathArgumentException("First argument to unique must be an array of all scalars.", 0, FUNCTIONS["unique"]);
                 uniq.Add(val.value);
             }
             var uniq_list = new List<JNode>();
@@ -2347,7 +2386,7 @@ namespace JSON_Tools.JSON_Tools
         private static readonly int MAX_DOC_SIZE_CACHE_REGEX_SEARCH = IntPtr.Size *  1_250_000;
 
         /// <summary>
-        /// do not cache for any reason. This is usually because the query involves mutation and there is some danger of mutating a value in the cache.
+        /// if false, do not cache for any reason. This is usually because the query involves mutation and there is some danger of mutating a value in the cache.
         /// </summary>
         public static bool regexSearchResultsShouldBeCached = true;
 
@@ -3306,6 +3345,7 @@ namespace JSON_Tools.JSON_Tools
             ["randint"] = new ArgFunction(RandomInteger, "randint", Dtype.INT, 1, 2, false, new Dtype[] {Dtype.INT, Dtype.INT}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR}),
+            ["set"] = new ArgFunction(Set, "set", Dtype.OBJ, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION, Dtype.BOOL }),
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
             ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),

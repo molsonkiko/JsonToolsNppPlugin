@@ -510,8 +510,7 @@ namespace Kbg.NppPluginNET
                 if (wasAutotriggered && len > sizeThreshold)
                     return (false, null, false, DocumentType.NONE);
                 string text = Npp.editor.GetText(len + 1);
-                if (documentType == DocumentType.JSON || documentType == DocumentType.NONE || // if user didn't specify how to parse the document
-                    (documentType == DocumentType.REGEX && (info == null || info.json == null || info.json.type == Dtype.NULL))) // or user specified REGEX and document was not already parsed
+                if (documentType == DocumentType.NONE) // if user didn't specify how to parse the document
                 {
                     // 1. check if the document has a file extension with an associated DocumentType
                     string fileExtension = Npp.FileExtension().ToLower();
@@ -520,7 +519,7 @@ namespace Kbg.NppPluginNET
                         documentType = docTypeFromExtension;
                     // 2. check if the user previously chose a document type, and use that if so.
                     //    this overrides the default for the file extension.
-                    if (previouslyChosenDocType != DocumentType.NONE && documentType != DocumentType.REGEX)
+                    if (previouslyChosenDocType != DocumentType.NONE)
                         documentType = previouslyChosenDocType;
                 }
                 if (documentType == DocumentType.INI)
@@ -574,13 +573,21 @@ namespace Kbg.NppPluginNET
                 foreach ((int start, int end) in selRanges)
                 {
                     string selRange = Npp.GetSlice(start, end);
-                    JNode subJson = documentType == DocumentType.REGEX ? new JNode(selRange, start) : jsonParser.Parse(selRange);
+                    JNode subJson;
+                    if (documentType == DocumentType.REGEX)
+                    {
+                        subJson = new JNode(selRange, 0);
+                    }
+                    else
+                    {
+                        subJson = jsonParser.Parse(selRange);
+                        lints.AddRange(jsonParser.lint);
+                        fatalErrors.Add(jsonParser.fatal);
+                        if (errorMessage == null)
+                            errorMessage = jsonParser.fatalError?.ToString();
+                    }
                     string key = $"{start},{end}";
                     obj[key] = subJson;
-                    lints.AddRange(jsonParser.lint);
-                    fatalErrors.Add(jsonParser.fatal);
-                    if (errorMessage == null)
-                        errorMessage = jsonParser.fatalError?.ToString();
                 }
             }
             if (!isRecursion && oneSelRange && SelectionManager.NoSelectionIsValidJson(json, !noTextSelected, fatalErrors))
@@ -627,7 +634,8 @@ namespace Kbg.NppPluginNET
                     Npp.notepad.SetStatusBarSection($"JSON with fatal errors - {lintCount} errors (Alt-P-J-E to view)",
                         StatusBarSection.DocType);
             }
-            else if (!(!info.usesSelections && documentType != DocumentType.JSON && documentType != DocumentType.JSONL)) // only touch status bar if whole doc is parsed as JSON or JSON Lines
+            else if (jsonParser.state < ParserState.FATAL && !(!info.usesSelections && documentType != DocumentType.JSON && documentType != DocumentType.JSONL))
+                // only touch status bar if whole doc is parsed as JSON or JSON Lines, and there are no fatal errors
             {
                 string doctypeDescription;
                 switch (jsonParser.state)
@@ -648,7 +656,12 @@ namespace Kbg.NppPluginNET
                 Npp.notepad.SetStatusBarSection(doctypeStatusBarEntry, StatusBarSection.DocType);
             }
             if (info.tv != null)
+            {
                 info.tv.json = json;
+                info.tv.documentTypeIndexChangeWasAutomatic = true;
+                info.tv.SetDocumentTypeListBoxIndex(documentType);
+                info.tv.documentTypeIndexChangeWasAutomatic = false;
+            }
             info.comments = comments;
             jsonFileInfos[activeFname] = info;
             return (fatal, json, info.usesSelections, documentType);

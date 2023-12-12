@@ -516,6 +516,19 @@ Returns an array of integers.
    * `range(3, 1, -1)` returns `[3, 2]`.
    * `range(0, 6, 3)` returns `[0, 3]`.
 
+---
+`set(x: array) -> object`
+
+*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+
+Returns an object mapping each unique string representation of an element in `x` to null. This may be preferable to `unique` because of the O(1) average-case lookup performance in an object.
+
+Example: ``set(j`["a", "b", "a", 1, 2.0, null, 1, null]`)`` returns `{"a": null, "b": null, "1": null, "2.0": null, "null": null}`
+
+Issues with this function that may make the `unique` function preferable:
+* two different elements may have the same string representation for the purposes of this function (e.g., `null` and `"null"`, `2.0` and `"2.0"`)
+* strings with characters that must be escaped (e.g., `\`, `"`) have those characters escaped before they become keys in the object returned by `set`
+
 ----
 `s_join(sep: string, x: array) -> string`
 
@@ -524,11 +537,16 @@ Every element of `x` must be a string.
 Returns x string-joined with sep (i.e., returns a string that begins with `x[0]` and has `sep` between `x[i - 1]` and `x[i]` for `1 <= i <= len(x)`)
 
 ----
-`sort_by(x: array, k: string | int, descending: bool = false)`
+`sort_by(x: array, k: string | int | function, descending: bool = false)`
 
-`x` must be an array of arrays (in which case `k` must be an int) or an array of objects (in which case `k` must be a string).
+`x` must be:
+* an array of arrays (if `k` is an integer)
+* an array of objects (if `k` is a string)
+* any array (if `k` is a function)
 
-Returns a new array of subarrays/subobjects `subitbl` such that `subitbl[k]` is sorted ascending.
+Returns:
+* a new array of subarrays/subobjects `subitbl` such that `subitbl[k]` is sorted (if `k` is an integer or string)
+* a new array of children `child` such that `k(child)` is sorted (if `k` is a function)
 
 Analogous to SQL `ORDER BY`.
 
@@ -538,8 +556,8 @@ Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices
 
 __Examples:__
 * With `[[1, 2], [2, 0], [3, -1]]` as input, `sort_by(@, 1)` returns `[[3,-1],[2,0],[1,2]]` because it sorts ascending by the second element.
-* With `[{"a": 1, "b": 3}, {"a": 2, "b": 2}, {"a": 3, "b": 1}]` as input, `sort_by(@, a, true)` returns `[{"a":3,"b":1},{"a":2,"b":2},{"a":1,"b":3}]` because it sorts ascending by key `a`.
-* With `["a", "bbb", "cc"]` as input, `sort_by(@, s_len(@))` returns `["a", "cc", "bbb"]`, because the children are ordered by string length ascending
+* With `[{"a": 1, "b": 3}, {"a": 2, "b": 2}, {"a": 3, "b": 1}]` as input, `sort_by(@, a, true)` returns `[{"a":3,"b":1},{"a":2,"b":2},{"a":1,"b":3}]` because it sorts descending by key `a`.
+* With `["a", "bbb", "cc"]` as input, `sort_by(@, s_len(@))` returns `["a", "cc", "bbb"]`, because the children are sorted ascending by string length.
 
 ----
 `sorted(x: array, descending: bool = false)`

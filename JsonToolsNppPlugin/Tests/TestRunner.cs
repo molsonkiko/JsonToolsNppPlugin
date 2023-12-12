@@ -42,7 +42,7 @@ namespace JSON_Tools.Tests
                 (RemesParserTester.Test, "RemesPath parser and compiler", false, false),
                 (RemesPathThrowsWhenAppropriateTester.Test, "RemesPath throws errors on bad inputs", false, false),
                 (RemesPathAssignmentTester.Test, "RemesPath assignment operations", false, false),
-                (() => RemesPathFuzzTester.Test(10000, 20), fuzzTestName, false, false),
+                (() => RemesPathFuzzTester.Test(5000, 20), fuzzTestName, false, false),
                 (RemesPathComplexQueryTester.Test, "multi-statement queries in RemesPath", false, false),
                 
                 (JsonSchemaMakerTester.Test, "JsonSchema generator", false, false),

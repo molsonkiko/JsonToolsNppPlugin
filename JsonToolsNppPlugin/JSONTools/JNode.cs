@@ -1977,6 +1977,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode Evaluate(JNode inp)
         {
+            ArgFunction.InitializeGlobals(mutatesInput);
             JNode lastStatement = EvaluateStatementsFromStartToEnd(inp, 0, statements.Count);
             Reset();
             return lastStatement;
@@ -2062,7 +2063,6 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode lastStatement = null;
             indexInStatements = start;
-            ArgFunction.regexSearchResultsShouldBeCached = !mutatesInput;
             while (indexInStatements < end)
             {
                 JNode statement = statements[indexInStatements];

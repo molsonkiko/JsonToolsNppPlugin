@@ -52,6 +52,11 @@ namespace JSON_Tools.Forms
         private bool isExpandingAllSubtrees;
 
         /// <summary>
+        /// avoid unnecessary parsing if a change in the selected index of the DocumentTypeComboBox was not performed manually (in which case this is true)
+        /// </summary>
+        public bool documentTypeIndexChangeWasAutomatic;
+
+        /// <summary>
         /// If the user performs an undo or redo action,
         /// this will be set to true so that the next time the user performs a RemesPath query,
         /// the treeview is reset beforehand.
@@ -90,6 +95,9 @@ namespace JSON_Tools.Forms
             findReplaceForm = null;
             csvDelim = '\x00';
             csvQuote = '\x00';
+            documentTypeIndexChangeWasAutomatic = true; // avoid parsing twice on initialization
+            SetDocumentTypeListBoxIndex(GetDocumentType());
+            documentTypeIndexChangeWasAutomatic = false;
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
 
@@ -149,7 +157,8 @@ namespace JSON_Tools.Forms
             else if (e.KeyCode == Keys.Tab)
             {
                 Control next = GetNextControl((Control)sender, !e.Shift);
-                while ((next == null) || (!next.TabStop)) next = GetNextControl(next, !e.Shift);
+                while (next is null || !next.TabStop)
+                    next = GetNextControl(next, !e.Shift);
                 next.Focus();
             }
             else if (sender is TreeView && e.Control)
@@ -158,6 +167,8 @@ namespace JSON_Tools.Forms
                 if (e.KeyCode == Keys.Up)
                 {
                     TreeNode selected = Tree.SelectedNode;
+                    if (selected is null)
+                        return;
                     TreeNode parent = selected.Parent;
                     if (parent is null)
                         return;
@@ -167,7 +178,7 @@ namespace JSON_Tools.Forms
                 else if (e.KeyCode == Keys.Down)
                 {
                     TreeNode selected = Tree.SelectedNode;
-                    if (selected.Nodes.Count > 0)
+                    if (!(selected is null) && selected.Nodes.Count > 0)
                     {
                         if (!selected.IsExpanded)
                             selected.Expand();
@@ -1149,7 +1160,7 @@ namespace JSON_Tools.Forms
         {
             shouldRefresh = false;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson();
+            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromListBox());
             if (new_json == null)
                 return;
             fname = cur_fname;
@@ -1171,6 +1182,45 @@ namespace JSON_Tools.Forms
         private void TreeViewer_DoubleClick(object sender, EventArgs e)
         {
             Npp.notepad.OpenFile(fname);
+        }
+
+        public void SetDocumentTypeListBoxIndex(DocumentType documentType)
+        {
+            switch (documentType)
+            {
+            case DocumentType.NONE:
+            case DocumentType.JSON:
+                DocumentTypeListBox.SelectedIndex = 0;
+                break;
+            case DocumentType.JSONL: DocumentTypeListBox.SelectedIndex = 1; break;
+            case DocumentType.INI: DocumentTypeListBox.SelectedIndex = 2; break;
+            case DocumentType.REGEX: DocumentTypeListBox.SelectedIndex = 3; break;
+            default: break;
+            }
+        }
+
+        public DocumentType GetDocumentTypeFromListBox()
+        {
+            switch (DocumentTypeListBox.SelectedIndex)
+            {
+            case 0: return DocumentType.JSON;
+            case 1: return DocumentType.JSONL;
+            case 2: return DocumentType.INI;
+            case 3: return DocumentType.REGEX;
+            default: return DocumentType.NONE;
+            }
+        }
+
+        private void DocumentTypeListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (documentTypeIndexChangeWasAutomatic)
+                return;
+            DocumentType newDocumentType = GetDocumentTypeFromListBox();
+            DocumentType oldDocumentType = GetDocumentType();
+            if (oldDocumentType == newDocumentType)
+                return;
+            (_, JNode newJson, _, _) =Main.TryParseJson(newDocumentType);
+            JsonTreePopulate(newJson);
         }
 
         /// <summary>

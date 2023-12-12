@@ -115,6 +115,26 @@ When you parse a document that contains syntax errors, you may be asked if you w
 
 In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors. Prior to that, errors were shown as text in a new buffer.
 
+### Document type box *(added in v6.0)* ###
+
+*Beginning in version [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd),* the tree view has a document type box just above the tree itself.
+
+This box has four options (auto):
+* `JSON mode`: parse document (or each selection) as JSON
+* `JSONL mode`: parse document (or each selection) as [JSON lines](#json-lines-documents)
+* `INI mode`: parse document (or each selection) as an [INI file](#parsing-ini-files)
+* `REGEX mode`: the document (or each selection) is converted to a JSON string containing its text, which can then be [searched and edited with regex and RemesPath](#regex-search-form).
+
+Observe the three images below to see how the selected box causes the same document to be interpreted in three different ways (`INI mode` not shown, because that's not a valid INI file).
+
+![Document type box - JSON mode example](/docs/document%20type%20box%20example%20-%20JSON%20mode.PNG)
+
+![Document type box - JSON Lines mode example](/docs/document%20type%20box%20example%20-%20JSONL%20mode.PNG)
+
+![Document type box - REGEX mode example](/docs/document%20type%20box%20example%20-%20REGEX%20mode.PNG)
+
+While this box is focused, you can scroll through these options, or navigate to a different option by typing the first key of its name.
+
 ### Working with selections ###
 
 [Starting in version v5.5](/CHANGELOG.md#550---2023-08-13), you can work with one or more selections rather than treating the entire file as JSON.

@@ -488,6 +488,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("to_csv(@.foo[1], `.`)", "\"\\\"3.0\\\"\\r\\n\\\"4.0\\\"\\r\\n\\\"5.0\\\"\""),
                 new Query_DesiredResult("to_csv(@.foo[:][0],,`\\n`)", "\"0\\n3.0\\n6.0\""),
                 new Query_DesiredResult("to_csv(@.foo[:]{a: @[1]})", "\"a\\r\\n1\\r\\n4.0\\r\\n7.0\""),
+                new Query_DesiredResult("set(concat(@.foo[0], @.foo[1][:1], j`[\"a\", \"a\"]`))", "{\"0\": null, \"1\": null, \"2\": null, \"3.0\": null, \"a\": null}"),
                 // ===================== s_csv CSV parser ========================
                 // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
                 new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +

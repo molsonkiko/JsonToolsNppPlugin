@@ -1198,8 +1198,6 @@ namespace JSON_Tools.JSON_Tools
             int pos = 0;
             int end = toks.Count;
             var context = new JQueryContext();
-            ArgFunction.csvDelimiterInLastQuery = '\x00';
-            ArgFunction.csvQuoteCharInLastQuery = '\x00';
             Dictionary<string, bool> isVarnameFunctionOfInput = DetermineWhichVariablesAreFunctionsOfInput(toks);
             while (pos < end)
             {
@@ -1243,7 +1241,7 @@ namespace JSON_Tools.JSON_Tools
                 else
                     pos = endOfStatement + 1;
             }
-            ArgFunction.regexSearchResultsShouldBeCached = !containsMutation; // any mutation could potentially mutate values inside the cache, which is very bad
+            ArgFunction.InitializeGlobals(containsMutation);
             if (containsMutation)
             {
                 // no variable is safe from the mutation, not even ones that were declared before the mutation expression
