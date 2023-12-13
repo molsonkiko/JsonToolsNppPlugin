@@ -25,6 +25,18 @@ namespace JSON_Tools.Forms
             eolComboBox.SelectedIndex = (int)Main.settings.csv_newline;
         }
 
+        /// <summary>
+        /// suppress the default response to the Tab key
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (keyData.HasFlag(Keys.Tab)) // this covers Tab with or without modifiers
+                return true;
+            return base.ProcessDialogKey(keyData);
+        }
+
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
         {
             SortForm.GenericKeyUpHandler(this, sender, e, true);

@@ -272,6 +272,18 @@ namespace JSON_Tools.Forms
             }
         }
 
+        /// <summary>
+        /// suppress the default response to the Tab key
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (keyData.HasFlag(Keys.Tab)) // this covers Tab with or without modifiers
+                return true;
+            return base.ProcessDialogKey(keyData);
+        }
+
         private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
         {
             SortForm.GenericKeyUpHandler(this, sender, e);

@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 }
 ```
 3. Add option for users to choose newline in JSON Lines.
-4. Option for users to choose whether to escape newlines in CSV files.
  
 ### To Be Changed
 
@@ -69,6 +68,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Made [`offer_to_show_lint` setting](/docs/README.md#parser-settings) (which controls whether a prompt is shown when errors are found) true by default, so that a fresh installation will show the prompt.
 4. Change RemesPath indexers to reduce the number of backslash escapes needed to get keys containing special characters like `"a\\b"` or `"\"foo\"\tbar"`. For instance, previously ``@.`\\n\\\\a\"` `` would be required to match the key `"\n\\a\""`, whereas now `` @.`\n\\a"` `` matches it.
 5. Running a RemesPath query only causes an attempted re-parsing of the document if the treeview's current file is open.
+6. Running a replace query on the [find/replace form](/docs/README.md#find-and-replace-form) now causes the tree to display only the values that were mutated.
+7. Changed the tabstop order of some forms, made it so that the find/replace form has complete tabstop coverage, and eliminated some tabstop-related issues associated with combo boxes in some forms.
+8. Benchmarks for compiling RemesPath queries now more accurately represent the effect of caching on performance.
 
 ### Fixed
 

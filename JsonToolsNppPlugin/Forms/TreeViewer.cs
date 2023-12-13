@@ -96,7 +96,7 @@ namespace JSON_Tools.Forms
             csvDelim = '\x00';
             csvQuote = '\x00';
             documentTypeIndexChangeWasAutomatic = true; // avoid parsing twice on initialization
-            SetDocumentTypeListBoxIndex(GetDocumentType());
+            SetDocumentTypeComboBoxIndex(GetDocumentType());
             documentTypeIndexChangeWasAutomatic = false;
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
@@ -156,10 +156,7 @@ namespace JSON_Tools.Forms
             // Tab -> go through controls, Shift+Tab -> go through controls backward
             else if (e.KeyCode == Keys.Tab)
             {
-                Control next = GetNextControl((Control)sender, !e.Shift);
-                while (next is null || !next.TabStop)
-                    next = GetNextControl(next, !e.Shift);
-                next.Focus();
+                SortForm.GenericTabNavigationHandler(this, sender, e);
             }
             else if (sender is TreeView && e.Control)
             {
@@ -1161,7 +1158,7 @@ namespace JSON_Tools.Forms
         {
             shouldRefresh = false;
             string cur_fname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromListBox());
+            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
             if (new_json == null)
                 return;
             fname = cur_fname;
@@ -1185,24 +1182,24 @@ namespace JSON_Tools.Forms
             Npp.notepad.OpenFile(fname);
         }
 
-        public void SetDocumentTypeListBoxIndex(DocumentType documentType)
+        public void SetDocumentTypeComboBoxIndex(DocumentType documentType)
         {
             switch (documentType)
             {
             case DocumentType.NONE:
             case DocumentType.JSON:
-                DocumentTypeListBox.SelectedIndex = 0;
+                DocumentTypeComboBox.SelectedIndex = 0;
                 break;
-            case DocumentType.JSONL: DocumentTypeListBox.SelectedIndex = 1; break;
-            case DocumentType.INI: DocumentTypeListBox.SelectedIndex = 2; break;
-            case DocumentType.REGEX: DocumentTypeListBox.SelectedIndex = 3; break;
+            case DocumentType.JSONL: DocumentTypeComboBox.SelectedIndex = 1; break;
+            case DocumentType.INI: DocumentTypeComboBox.SelectedIndex = 2; break;
+            case DocumentType.REGEX: DocumentTypeComboBox.SelectedIndex = 3; break;
             default: break;
             }
         }
 
-        public DocumentType GetDocumentTypeFromListBox()
+        public DocumentType GetDocumentTypeFromComboBox()
         {
-            switch (DocumentTypeListBox.SelectedIndex)
+            switch (DocumentTypeComboBox.SelectedIndex)
             {
             case 0: return DocumentType.JSON;
             case 1: return DocumentType.JSONL;
@@ -1212,11 +1209,11 @@ namespace JSON_Tools.Forms
             }
         }
 
-        private void DocumentTypeListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void DocumentTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (documentTypeIndexChangeWasAutomatic)
                 return;
-            DocumentType newDocumentType = GetDocumentTypeFromListBox();
+            DocumentType newDocumentType = GetDocumentTypeFromComboBox();
             DocumentType oldDocumentType = GetDocumentType();
             if (oldDocumentType == newDocumentType)
                 return;

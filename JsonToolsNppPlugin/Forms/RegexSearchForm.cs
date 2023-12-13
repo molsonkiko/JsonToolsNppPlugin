@@ -113,6 +113,38 @@ namespace JSON_Tools.Forms
             Main.openTreeViewer.SubmitQueryButton.PerformClick();
         }
 
+        /// <summary>
+        /// suppress the default response to the Tab key
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (keyData.HasFlag(Keys.Tab)) // this covers Tab with or without modifiers
+                return true;
+            return base.ProcessDialogKey(keyData);
+        }
+
+        /// <summary>
+        /// suppress annoying dings from some control keys
+        /// </summary>
+        private void RegexSearchForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape || e.KeyCode == Keys.Tab || e.KeyCode == Keys.Space)
+                e.SuppressKeyPress = true;
+        }
+
+        private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '\t')
+                e.Handled = true;
+        }
+
+        private void RegexSearchForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            SortForm.GenericKeyUpHandler(this, sender, e);
+        }
+
         public void ParseAsCsvCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             bool showCsvButtons = ParseAsCsvCheckBox.Checked;

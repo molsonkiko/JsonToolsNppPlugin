@@ -641,7 +641,7 @@ namespace Kbg.NppPluginNET
                 string doctypeDescription;
                 switch (jsonParser.state)
                 {
-                case ParserState.STRICT: doctypeDescription = "JSON"; break;
+                case ParserState.STRICT: doctypeDescription = documentType == DocumentType.JSONL ? "JSON lines" : "JSON"; break;
                 case ParserState.OK: doctypeDescription = "JSON (w/ control chars in strings)"; break;
                 case ParserState.NAN_INF: doctypeDescription = "JSON (w/ NaN and/or Infinity)"; break;
                 case ParserState.JSONC: doctypeDescription = "JSON with comments"; break;
@@ -660,7 +660,7 @@ namespace Kbg.NppPluginNET
             {
                 info.tv.json = json;
                 info.tv.documentTypeIndexChangeWasAutomatic = true;
-                info.tv.SetDocumentTypeListBoxIndex(documentType);
+                info.tv.SetDocumentTypeComboBoxIndex(documentType);
                 info.tv.documentTypeIndexChangeWasAutomatic = false;
             }
             info.comments = comments;

@@ -66,7 +66,7 @@ namespace JSON_Tools.Forms
             this.CurrentPathBox = new System.Windows.Forms.TextBox();
             this.RefreshButton = new System.Windows.Forms.Button();
             this.FindReplaceButton = new System.Windows.Forms.Button();
-            this.DocumentTypeListBox = new System.Windows.Forms.ListBox();
+            this.DocumentTypeComboBox = new System.Windows.Forms.ComboBox();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -78,7 +78,7 @@ namespace JSON_Tools.Forms
             this.Tree.Location = new System.Drawing.Point(4, 99);
             this.Tree.Name = "Tree";
             this.Tree.Size = new System.Drawing.Size(457, 331);
-            this.Tree.TabIndex = 8;
+            this.Tree.TabIndex = 7;
             this.Tree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.Tree_BeforeExpand);
             this.Tree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.Tree_AfterSelect);
             this.Tree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.Tree_NodeMouseClick);
@@ -290,29 +290,30 @@ namespace JSON_Tools.Forms
             this.FindReplaceButton.Click += new System.EventHandler(this.FindReplaceButton_Click);
             this.FindReplaceButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
-            // DocumentTypeListBox
+            // DocumentTypeComboBox
             // 
-            this.DocumentTypeListBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.DocumentTypeListBox.FormattingEnabled = true;
-            this.DocumentTypeListBox.ItemHeight = 16;
-            this.DocumentTypeListBox.Items.AddRange(new object[] {
+            this.DocumentTypeComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.DocumentTypeComboBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.DocumentTypeComboBox.FormattingEnabled = true;
+            this.DocumentTypeComboBox.Items.AddRange(new object[] {
             "JSON mode",
             "JSONL mode",
             "INI mode",
             "REGEX mode"});
-            this.DocumentTypeListBox.Location = new System.Drawing.Point(220, 69);
-            this.DocumentTypeListBox.Name = "DocumentTypeListBox";
-            this.DocumentTypeListBox.Size = new System.Drawing.Size(130, 20);
-            this.DocumentTypeListBox.TabIndex = 6;
-            this.DocumentTypeListBox.SelectedIndexChanged += new System.EventHandler(this.DocumentTypeListBox_SelectedIndexChanged);
-            this.DocumentTypeListBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
+            this.DocumentTypeComboBox.Location = new System.Drawing.Point(220, 69);
+            this.DocumentTypeComboBox.Name = "DocumentTypeComboBox";
+            this.DocumentTypeComboBox.Size = new System.Drawing.Size(130, 24);
+            this.DocumentTypeComboBox.TabIndex = 6;
+            this.DocumentTypeComboBox.SelectedIndexChanged += new System.EventHandler(this.DocumentTypeComboBox_SelectedIndexChanged);
+            this.DocumentTypeComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryBox_KeyPress);
+            this.DocumentTypeComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(471, 461);
-            this.Controls.Add(this.DocumentTypeListBox);
+            this.Controls.Add(this.DocumentTypeComboBox);
             this.Controls.Add(this.FindReplaceButton);
             this.Controls.Add(this.RefreshButton);
             this.Controls.Add(this.CurrentPathBox);
@@ -356,6 +357,6 @@ namespace JSON_Tools.Forms
         private System.Windows.Forms.ToolStripMenuItem OpenSortFormItem;
         private System.Windows.Forms.ToolStripMenuItem SelectThisItem;
         private System.Windows.Forms.ToolStripMenuItem SelectAllChildrenItem;
-        private System.Windows.Forms.ListBox DocumentTypeListBox;
+        private System.Windows.Forms.ComboBox DocumentTypeComboBox;
     }
 }

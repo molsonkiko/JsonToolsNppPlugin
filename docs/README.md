@@ -133,8 +133,6 @@ Observe the three images below to see how the selected box causes the same docum
 
 ![Document type box - REGEX mode example](/docs/document%20type%20box%20example%20-%20REGEX%20mode.PNG)
 
-While this box is focused, you can scroll through these options, or navigate to a different option by typing the first key of its name.
-
 ### Working with selections ###
 
 [Starting in version v5.5](/CHANGELOG.md#550---2023-08-13), you can work with one or more selections rather than treating the entire file as JSON.
@@ -310,6 +308,8 @@ Starting in version [4.11.0](/CHANGELOG.md#4110---2023-03-15), non-regular-expre
 ![Find/replace form non-regex search must match exactly before v4.11.0](/docs/find%20replace%20form%20nonregex%20exact.PNG)
 
 The form has limited functionality. For example, you can't perform a search on keys and a replacement on values. However, the form generates RemesPath queries in the RemesPath query box in the tree viewer, so you can use those queries as a starting point.
+
+Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), when a `Replace all` query is run, only the values that were replaced are displayed in the tree. Prior to that, the tree would show the entire JSON after a successful `Replace all` query.
 
 ## JSON to CSV ##
 

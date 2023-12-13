@@ -56,6 +56,9 @@
             this.RegexTextBox.Name = "RegexTextBox";
             this.RegexTextBox.Size = new System.Drawing.Size(655, 22);
             this.RegexTextBox.TabIndex = 0;
+            this.RegexTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.RegexTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.RegexTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // IgnoreCaseCheckBox
             // 
@@ -68,6 +71,7 @@
             this.IgnoreCaseCheckBox.TabIndex = 1;
             this.IgnoreCaseCheckBox.Text = "Ignore case?";
             this.IgnoreCaseCheckBox.UseVisualStyleBackColor = true;
+            this.IgnoreCaseCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // SearchButton
             // 
@@ -75,10 +79,11 @@
             this.SearchButton.Location = new System.Drawing.Point(354, 245);
             this.SearchButton.Name = "SearchButton";
             this.SearchButton.Size = new System.Drawing.Size(63, 23);
-            this.SearchButton.TabIndex = 2;
+            this.SearchButton.TabIndex = 16;
             this.SearchButton.Text = "Search";
             this.SearchButton.UseVisualStyleBackColor = true;
             this.SearchButton.Click += new System.EventHandler(this.SearchButton_Click);
+            this.SearchButton.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // RegexTextBoxLabel
             // 
@@ -86,7 +91,7 @@
             this.RegexTextBoxLabel.Location = new System.Drawing.Point(673, 55);
             this.RegexTextBoxLabel.Name = "RegexTextBoxLabel";
             this.RegexTextBoxLabel.Size = new System.Drawing.Size(86, 16);
-            this.RegexTextBoxLabel.TabIndex = 3;
+            this.RegexTextBoxLabel.TabIndex = 17;
             this.RegexTextBoxLabel.Text = "Enter a regex";
             // 
             // Title
@@ -96,7 +101,7 @@
             this.Title.Location = new System.Drawing.Point(264, 9);
             this.Title.Name = "Title";
             this.Title.Size = new System.Drawing.Size(217, 22);
-            this.Title.TabIndex = 4;
+            this.Title.TabIndex = 18;
             this.Title.Text = "Regex Search to JSON";
             // 
             // ColumnsToParseAsNumberTextBox
@@ -104,7 +109,10 @@
             this.ColumnsToParseAsNumberTextBox.Location = new System.Drawing.Point(12, 210);
             this.ColumnsToParseAsNumberTextBox.Name = "ColumnsToParseAsNumberTextBox";
             this.ColumnsToParseAsNumberTextBox.Size = new System.Drawing.Size(257, 22);
-            this.ColumnsToParseAsNumberTextBox.TabIndex = 5;
+            this.ColumnsToParseAsNumberTextBox.TabIndex = 14;
+            this.ColumnsToParseAsNumberTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.ColumnsToParseAsNumberTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.ColumnsToParseAsNumberTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // NumGroupsTextBoxLabel
             // 
@@ -112,7 +120,7 @@
             this.NumGroupsTextBoxLabel.Location = new System.Drawing.Point(271, 213);
             this.NumGroupsTextBoxLabel.Name = "NumGroupsTextBoxLabel";
             this.NumGroupsTextBoxLabel.Size = new System.Drawing.Size(227, 16);
-            this.NumGroupsTextBoxLabel.TabIndex = 6;
+            this.NumGroupsTextBoxLabel.TabIndex = 15;
             this.NumGroupsTextBoxLabel.Text = "Groups to parse as number (int array)";
             // 
             // ParseAsCsvCheckBox
@@ -121,19 +129,23 @@
             this.ParseAsCsvCheckBox.Location = new System.Drawing.Point(12, 127);
             this.ParseAsCsvCheckBox.Name = "ParseAsCsvCheckBox";
             this.ParseAsCsvCheckBox.Size = new System.Drawing.Size(120, 20);
-            this.ParseAsCsvCheckBox.TabIndex = 7;
+            this.ParseAsCsvCheckBox.TabIndex = 3;
             this.ParseAsCsvCheckBox.Text = "Parse as CSV?";
             this.ParseAsCsvCheckBox.UseVisualStyleBackColor = true;
             this.ParseAsCsvCheckBox.CheckedChanged += new System.EventHandler(this.ParseAsCsvCheckBox_CheckedChanged);
+            this.ParseAsCsvCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // DelimiterTextBox
             // 
             this.DelimiterTextBox.Location = new System.Drawing.Point(205, 127);
             this.DelimiterTextBox.Name = "DelimiterTextBox";
             this.DelimiterTextBox.Size = new System.Drawing.Size(22, 22);
-            this.DelimiterTextBox.TabIndex = 8;
+            this.DelimiterTextBox.TabIndex = 4;
             this.DelimiterTextBox.Text = ",";
             this.DelimiterTextBox.Visible = false;
+            this.DelimiterTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.DelimiterTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.DelimiterTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // DelimiterTextBoxLabel
             // 
@@ -141,7 +153,7 @@
             this.DelimiterTextBoxLabel.Location = new System.Drawing.Point(233, 131);
             this.DelimiterTextBoxLabel.Name = "DelimiterTextBoxLabel";
             this.DelimiterTextBoxLabel.Size = new System.Drawing.Size(60, 16);
-            this.DelimiterTextBoxLabel.TabIndex = 9;
+            this.DelimiterTextBoxLabel.TabIndex = 5;
             this.DelimiterTextBoxLabel.Text = "Delimiter";
             this.DelimiterTextBoxLabel.Visible = false;
             // 
@@ -150,9 +162,12 @@
             this.QuoteCharTextBox.Location = new System.Drawing.Point(304, 127);
             this.QuoteCharTextBox.Name = "QuoteCharTextBox";
             this.QuoteCharTextBox.Size = new System.Drawing.Size(22, 22);
-            this.QuoteCharTextBox.TabIndex = 10;
+            this.QuoteCharTextBox.TabIndex = 6;
             this.QuoteCharTextBox.Text = "\"";
             this.QuoteCharTextBox.Visible = false;
+            this.QuoteCharTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.QuoteCharTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.QuoteCharTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // QuoteCharTextBoxLabel
             // 
@@ -160,7 +175,7 @@
             this.QuoteCharTextBoxLabel.Location = new System.Drawing.Point(332, 131);
             this.QuoteCharTextBoxLabel.Name = "QuoteCharTextBoxLabel";
             this.QuoteCharTextBoxLabel.Size = new System.Drawing.Size(102, 16);
-            this.QuoteCharTextBoxLabel.TabIndex = 11;
+            this.QuoteCharTextBoxLabel.TabIndex = 7;
             this.QuoteCharTextBoxLabel.Text = "Quote character";
             this.QuoteCharTextBoxLabel.Visible = false;
             // 
@@ -174,8 +189,11 @@
             this.NewlineComboBox.Location = new System.Drawing.Point(444, 127);
             this.NewlineComboBox.Name = "NewlineComboBox";
             this.NewlineComboBox.Size = new System.Drawing.Size(68, 24);
-            this.NewlineComboBox.TabIndex = 12;
+            this.NewlineComboBox.TabIndex = 8;
             this.NewlineComboBox.Visible = false;
+            this.NewlineComboBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.NewlineComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.NewlineComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // NewlineComboBoxLabel
             // 
@@ -183,7 +201,7 @@
             this.NewlineComboBoxLabel.Location = new System.Drawing.Point(518, 131);
             this.NewlineComboBoxLabel.Name = "NewlineComboBoxLabel";
             this.NewlineComboBoxLabel.Size = new System.Drawing.Size(55, 16);
-            this.NewlineComboBoxLabel.TabIndex = 13;
+            this.NewlineComboBoxLabel.TabIndex = 9;
             this.NewlineComboBoxLabel.Text = "Newline";
             this.NewlineComboBoxLabel.Visible = false;
             // 
@@ -197,8 +215,11 @@
             this.HeaderHandlingComboBox.Location = new System.Drawing.Point(304, 169);
             this.HeaderHandlingComboBox.Name = "HeaderHandlingComboBox";
             this.HeaderHandlingComboBox.Size = new System.Drawing.Size(155, 24);
-            this.HeaderHandlingComboBox.TabIndex = 14;
+            this.HeaderHandlingComboBox.TabIndex = 12;
             this.HeaderHandlingComboBox.Visible = false;
+            this.HeaderHandlingComboBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.HeaderHandlingComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.HeaderHandlingComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // HeaderHandlingComboBoxLabel
             // 
@@ -206,7 +227,7 @@
             this.HeaderHandlingComboBoxLabel.Location = new System.Drawing.Point(465, 172);
             this.HeaderHandlingComboBoxLabel.Name = "HeaderHandlingComboBoxLabel";
             this.HeaderHandlingComboBoxLabel.Size = new System.Drawing.Size(107, 16);
-            this.HeaderHandlingComboBoxLabel.TabIndex = 15;
+            this.HeaderHandlingComboBoxLabel.TabIndex = 13;
             this.HeaderHandlingComboBoxLabel.Text = "Header handling";
             this.HeaderHandlingComboBoxLabel.Visible = false;
             // 
@@ -216,9 +237,10 @@
             this.IncludeFullMatchAsFirstItemCheckBox.Location = new System.Drawing.Point(138, 90);
             this.IncludeFullMatchAsFirstItemCheckBox.Name = "IncludeFullMatchAsFirstItemCheckBox";
             this.IncludeFullMatchAsFirstItemCheckBox.Size = new System.Drawing.Size(229, 20);
-            this.IncludeFullMatchAsFirstItemCheckBox.TabIndex = 16;
+            this.IncludeFullMatchAsFirstItemCheckBox.TabIndex = 2;
             this.IncludeFullMatchAsFirstItemCheckBox.Text = "Include full match text as first item?";
             this.IncludeFullMatchAsFirstItemCheckBox.UseVisualStyleBackColor = true;
+            this.IncludeFullMatchAsFirstItemCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // NColumnsTextBoxLabel
             // 
@@ -226,7 +248,7 @@
             this.NColumnsTextBoxLabel.Location = new System.Drawing.Point(171, 172);
             this.NColumnsTextBoxLabel.Name = "NColumnsTextBoxLabel";
             this.NColumnsTextBoxLabel.Size = new System.Drawing.Size(122, 16);
-            this.NColumnsTextBoxLabel.TabIndex = 17;
+            this.NColumnsTextBoxLabel.TabIndex = 11;
             this.NColumnsTextBoxLabel.Text = "Number of columns";
             this.NColumnsTextBoxLabel.Visible = false;
             // 
@@ -235,8 +257,11 @@
             this.NColumnsTextBox.Location = new System.Drawing.Point(108, 169);
             this.NColumnsTextBox.Name = "NColumnsTextBox";
             this.NColumnsTextBox.Size = new System.Drawing.Size(57, 22);
-            this.NColumnsTextBox.TabIndex = 18;
+            this.NColumnsTextBox.TabIndex = 10;
             this.NColumnsTextBox.Visible = false;
+            this.NColumnsTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyDown);
+            this.NColumnsTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+            this.NColumnsTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
             // RegexSearchForm
             // 

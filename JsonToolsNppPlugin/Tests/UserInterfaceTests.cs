@@ -287,11 +287,11 @@ namespace JSON_Tools.Tests
                 {
                 case "NONE":
                 case "JSON":
-                    Main.openTreeViewer.SetDocumentTypeListBoxIndex(DocumentType.JSON);
+                    Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.JSON);
                     break;
-                case "JSONL": Main.openTreeViewer.SetDocumentTypeListBoxIndex(DocumentType.JSONL); break;
-                case "INI": Main.openTreeViewer.SetDocumentTypeListBoxIndex(DocumentType.INI); break;
-                case "REGEX": Main.openTreeViewer.SetDocumentTypeListBoxIndex(DocumentType.REGEX); break;
+                case "JSONL": Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.JSONL); break;
+                case "INI": Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.INI); break;
+                case "REGEX": Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.REGEX); break;
                 }
                 messages.Add($"Set document type to {newDocumentTypeName} with the treeview's combo box");
                 break;

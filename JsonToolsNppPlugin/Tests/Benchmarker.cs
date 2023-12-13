@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -79,28 +80,21 @@ Performance tests for RemesPath ({description})
 =========================
 ");
                 JNode query_func = null;
-                long[] compile_times = new long[num_query_trials];
-                for (int ii = 0; ii < num_query_trials; ii++)
+                double compileTimeMS = -1;
+                watch.Reset();
+                watch.Start();
+                try
                 {
-                    watch.Reset();
-                    watch.Start();
-                    try
-                    {
-                        query_func = parser.Compile(query);
-                    }
-                    catch (Exception ex)
-                    {
-                        Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
-                        return true;
-                    }
-                    watch.Stop();
-                    long t = watch.Elapsed.Ticks;
-                    compile_times[ii] = t;
+                    query_func = parser.Compile(query);
                 }
-                (mean, sd)= GetMeanAndSd(compile_times);
-                double comp_mean = ConvertTicks(mean, "mus");
-                double comp_sd = ConvertTicks(sd, "mus");
-                Npp.AddLine($"Compiling query \"{query}\" into took {comp_mean} +/- {comp_sd} microseconds over {num_query_trials} trials");
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while compiling query:\n{ex}");
+                    return true;
+                }
+                watch.Stop();
+                compileTimeMS = ConvertTicks(watch.Elapsed.Ticks);
+                Npp.AddLine($"Compiling query \"{query}\" took {compileTimeMS} ms the first time (subsequent executions are effectively free due to caching)");
                 // time query execution
                 long[] query_times = new long[num_query_trials];
                 int test_equality_interval = num_query_trials / 6;

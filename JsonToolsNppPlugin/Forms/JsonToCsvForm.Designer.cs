@@ -194,6 +194,7 @@
             this.eolComboBox.Name = "eolComboBox";
             this.eolComboBox.Size = new System.Drawing.Size(75, 26);
             this.eolComboBox.TabIndex = 2;
+            this.eolComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             // 
             // JsonToCsvForm
             // 
@@ -218,7 +219,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "JsonToCsvForm";
             this.Text = "JSON to CSV";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.JsonToCsvForm_KeyUp);
             this.ResumeLayout(false);
             this.PerformLayout();
 

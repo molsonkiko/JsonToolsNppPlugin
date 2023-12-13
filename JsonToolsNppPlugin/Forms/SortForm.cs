@@ -191,12 +191,39 @@ namespace JSON_Tools.Forms
             // Tab -> go through controls, Shift+Tab -> go through controls backward
             else if (e.KeyCode == Keys.Tab)
             {
-                Control next = form.GetNextControl((Control)sender, !e.Shift);
-                while (next == null || !next.TabStop || !next.Enabled)
-                    next = form.GetNextControl(next, !e.Shift);
-                next.Focus();
-                e.Handled = true;
+                GenericTabNavigationHandler(form, sender, e);
             }
+        }
+
+        /// <summary>
+        /// suppress the default response to the Tab key
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (keyData.HasFlag(Keys.Tab)) // this covers Tab with or without modifiers
+                return true;
+            return base.ProcessDialogKey(keyData);
+        }
+
+        /// <summary>
+        /// Tab -> go through controls, Shift+Tab -> go through controls backward.<br></br>
+        /// Ignores invisible or disabled controls.
+        /// </summary>
+        /// <param name="form">the parent form</param>
+        /// <param name="sender">probably a control with a tabstop</param>
+        /// <param name="e">the key event that triggered this</param>
+        public static void GenericTabNavigationHandler(Form form, object sender, KeyEventArgs e)
+        {
+            if (sender is TextBox tb && tb.Parent is ListBox)
+                return; // ComboBoxes are secretly two controls in one (see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.combobox?view=windowsdesktop-8.0)
+                        // this event fires twice for a CombobBox because of this, so we need to suppress the extra one this way
+            Control next = form.GetNextControl((Control)sender, !e.Shift);
+            while (next == null || !next.TabStop || !next.Visible || !next.Enabled)
+                next = form.GetNextControl(next, !e.Shift);
+            next.Focus();
+            e.Handled = true;
         }
 
         private void SortForm_KeyUp(object sender, KeyEventArgs e)
