@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -79,8 +80,21 @@ namespace JSON_Tools.Tests
 Performance tests for RemesPath ({description})
 =========================
 ");
+                List<object> tokens = null;
+                watch.Reset();
+                watch.Start();
+                try
+                {
+                    tokens = parser.lexer.Tokenize(query);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Couldn't run RemesPath benchmarks because of error while lexing query:\n{ex}");
+                    return true;
+                }
+                watch.Stop();
+                double lexTimeMS = ConvertTicks(watch.Elapsed.Ticks);
                 JNode query_func = null;
-                double compileTimeMS = -1;
                 watch.Reset();
                 watch.Start();
                 try
@@ -93,8 +107,8 @@ Performance tests for RemesPath ({description})
                     return true;
                 }
                 watch.Stop();
-                compileTimeMS = ConvertTicks(watch.Elapsed.Ticks);
-                Npp.AddLine($"Compiling query \"{query}\" took {compileTimeMS} ms the first time (subsequent executions are effectively free due to caching)");
+                double compileTimeMS = ConvertTicks(watch.Elapsed.Ticks);
+                Npp.AddLine($"Compiling query \"{query}\" took {compileTimeMS} ms the first time, including approximately {lexTimeMS} ms to tokenize the query. Subsequent executions are effectively free due to caching.");
                 // time query execution
                 long[] query_times = new long[num_query_trials];
                 int test_equality_interval = num_query_trials / 6;

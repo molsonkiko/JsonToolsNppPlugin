@@ -497,7 +497,7 @@ Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGEL
 ---
 `randint(start: int, end: int=null) -> int`
 
-*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 Returns a random integer greater than or equal to `start` and less than `end`.
 If `end` is not specified, instead return a random integer greater than or equal to 0 and less than `start`.
 
@@ -519,7 +519,7 @@ Returns an array of integers.
 ---
 `set(x: array) -> object`
 
-*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 
 Returns an object mapping each unique string representation of an element in `x` to null. This may be preferable to `unique` because of the O(1) average-case lookup performance in an object.
 
@@ -584,7 +584,7 @@ This differs from `str` in that *this is not vectorized.*
 ---
 `to_csv(x: array, delimiter: string=",", newline: string="\r\n", quote_char: string="\"") -> string`
 
-*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 
 Returns x formatted as a CSV (RFC 4180 rules as normal), according to the following rules:
 * if x is an array of non-iterables, each child is converted to a string on a separate line
@@ -717,7 +717,7 @@ Returns the log base 2 of x.
 ---
 `num(x: anything) -> float`
 
-*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 
 As `float` above, but also handles hex integers preceded by "0x" (and optional `+` or `-` sign).
 
@@ -775,7 +775,7 @@ Returns the number of times substring/regex `sub` occurs in `x`.
 ---
 `s_csv(csvText: string, nColumns: int, delimiter: string=",", newline: string="\r\n", quote: string="\"", header_handling: string="n", ...: int) -> array[(array[string | number] | object[string | number])]`
 
-__[Introduced in v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
+__[Introduced in v6.0](/CHANGELOG.md#600---2023-12-13).__
 
 __Arguments:__
 * `csvText` (1st arg): the text of a CSV file encoded as a JSON string
@@ -852,7 +852,7 @@ The query ``s_csv(@, 7, `,`, `\n`, `'`, h, 0, -3)`` will correctly parse this as
 ---
 `s_fa(x: string, pat: regex | string, includeFullMatchAsFirstItem: bool = false, ...: int) -> array[string | number] | array[array[string | number]]`
 
-__Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
+__Added in [v6.0](/CHANGELOG.md#600---2023-12-13).__
 
 * If the third argument, `includeFullMatchAsFirstItem`, is set to `false` (the default):
     * If `pat` is a regex with *no capture groups or one capture group*, returns an array of the substrings of `x` that match `pat`.
@@ -881,7 +881,7 @@ __Examples:__
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
 
-__As of [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), *this function is DEPRECATED in favor of `s_fa`*.__
+__As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in favor of `s_fa`*.__
 
 Returns an array of all the substrings in `x` that match `sub`.
 
@@ -942,7 +942,7 @@ Replaces all instances of string/regex `to_replace` in `x` with `replacement`.
 * If `to_replace` is a string, replaces all instances of `to_replace` with `replacement`. *NOTE: This is a new behavior in [JsonTools 4.10.1](/CHANGELOG.md#4101---2023-03-02). Prior to that, this function treated `to_replace` as a regex no matter what.*
 * If `to_replace` is a regex:
     1. if `replacement` is a string, replaces every instance of `to_replace` with the `replacement` string according to  [C# regex substitution syntax](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference#substitutions).
-    2. If `replacement` is a function *(which must take an array as input and return a string)*, replaces every instance of `to_replace` with that function called on the array of strings captured by the regex. __New in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).__
+    2. If `replacement` is a function *(which must take an array as input and return a string)*, replaces every instance of `to_replace` with that function called on the array of strings captured by the regex. __New in [v6.0](/CHANGELOG.md#600---2023-12-13).__
         * Within the callback function, you can reference `loop()`, a no-argument function that returns 1 + the number of replacements made so far. 
 
 __Examples:__
@@ -1165,7 +1165,7 @@ because when baz is redefined, it just uses the value of baz that was previously
 
 ## For loops/Loop variables *(added in v6.0)* ##
 
-Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
+Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), you can loop over an array by assigning a variable to the array with the `for` keyword rather than the `var` keyword.
 
 When you assign a variable `x` to an array with the `for` keyword, here is what happens:
 ```
@@ -1238,9 +1238,9 @@ The query `@.*->max_by(*@)` returns `{"a": [0, 1], "b": [1, 0]}` because when wo
 __Notes:__
 * *Only the final argument to a function can be spread.* For example, ``zip(*j`[1, 2]`, j`[3, 4]`)`` is not a legal query because a non-final argument was spread.
 
-### Omitting optional function arguments before the final argument (added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)) ###
+### Omitting optional function arguments before the final argument (added in [v6.0](/CHANGELOG.md#600---2023-12-13)) ###
 
-Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), if a function has multiple optional arguments, you can leave any number of optional arguments (including the last) empty, rather than writing `null`.
+Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), if a function has multiple optional arguments, you can leave any number of optional arguments (including the last) empty, rather than writing `null`.
 For example, if the function `foo` has two optional arguments:
 * `foo(1, , 2)` would be equivalent to `foo(1, null, 2)`
 * `foo(1, 2, )` would be equivalent to `foo(1, 2, null)` or `foo(1, 2)`.

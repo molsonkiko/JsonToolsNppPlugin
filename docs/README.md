@@ -65,8 +65,8 @@ __NOTES__
     - `Ctrl+Enter` in the query box submits the query.
     - `Enter` while the tree is selected toggles the selected node between expanded/collapsed.
     - Up and down arrow keys can also navigate the tree.
-    - `Ctrl+Up` while in the tree selects the parent of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).*
-    - `Ctrl+Down` while in the tree selects the last direct child of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd).*
+    - `Ctrl+Up` while in the tree selects the parent of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---2023-12-13).*
+    - `Ctrl+Down` while in the tree selects the last direct child of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---2023-12-13).*
     - `Escape` takes focus from the tree view back to the editor.
 5. Beginning in [v4.4.0](/CHANGELOG.md#440---2022-11-23), you can have multiple tree views open.
 
@@ -103,7 +103,7 @@ Error reporting can be customized with the `logger_level` setting, which has 5 l
     * Python-style '#' comments
     * Python constants `None`, *`nan`, and `inf` (starting in [5.4.0](/CHANGELOG.md#540---2023-07-04))*.
     * missing commas between array members
-    * missing ']' or '}' at the ends of arrays and objects (supported for a long time, but *JsonTools got much better at this beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), allowing proper handling of e.g. `[{"a": 1, "b": "a", {"a": 2, "b": "b"}]`*)
+    * missing ']' or '}' at the ends of arrays and objects (supported for a long time, but *JsonTools got much better at this beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), allowing proper handling of e.g. `[{"a": 1, "b": "a", {"a": 2, "b": "b"}]`*)
     * a bunch of other common syntax errors
 6. __FATAL__: These errors always cause *immediate failure* of parsing. Examples include:
     * unquoted string literals other than `true`, `false`, `null`, `NaN`, `Infinity`, `None`, `True`, `False`, `nan`, `inf` and `undefined`.
@@ -117,7 +117,7 @@ In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors.
 
 ### Document type box *(added in v6.0)* ###
 
-*Beginning in version [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd),* the tree view has a document type box just above the tree itself.
+*Beginning in version [v6.0](/CHANGELOG.md#600---2023-12-13),* the tree view has a document type box just above the tree itself.
 
 This box has four options (auto):
 * `JSON mode`: parse document (or each selection) as JSON
@@ -188,7 +188,7 @@ Clicking on or paging to a row in the error form with the arrow keys will move t
 
 Hitting `Enter` while in the form refreshes the form with the JSON in the current document. You can also seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
 
-Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), you can right-click on this form to gain the option of exporting all errors to JSON or refreshing the form.
+Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), you can right-click on this form to gain the option of exporting all errors to JSON or refreshing the form.
 
 In addition to this form, the document type status bar section will show how many errors were logged.
 
@@ -279,7 +279,7 @@ You can submit RemesPath queries in textbox above the tree, which by default has
 Once you've submitted a query, you can use several other features of the JSON viewer.
 First, you can open a new buffer containing the query result.
 
-Prior to [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), submitting a query automatically attempted to parse whatever document was currently open, thus potentially rebinding the tree to a different document. Starting in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), submitting a query only triggers parsing of whatever document the treeview is currently associated with.
+Prior to [v6.0](/CHANGELOG.md#600---2023-12-13), submitting a query automatically attempted to parse whatever document was currently open, thus potentially rebinding the tree to a different document. Starting in [v6.0](/CHANGELOG.md#600---2023-12-13), submitting a query only triggers parsing of whatever document the treeview is currently associated with.
 
 ![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG)
 
@@ -309,7 +309,7 @@ Starting in version [4.11.0](/CHANGELOG.md#4110---2023-03-15), non-regular-expre
 
 The form has limited functionality. For example, you can't perform a search on keys and a replacement on values. However, the form generates RemesPath queries in the RemesPath query box in the tree viewer, so you can use those queries as a starting point.
 
-Beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), when a `Replace all` query is run, only the values that were replaced are displayed in the tree. Prior to that, the tree would show the entire JSON after a successful `Replace all` query.
+Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), when a `Replace all` query is run, only the values that were replaced are displayed in the tree. Prior to that, the tree would show the entire JSON after a successful `Replace all` query.
 
 ## JSON to CSV ##
 
@@ -565,7 +565,7 @@ Of course, there's also the default sort, which can only compare numbers to numb
 
 ## Regex search form ##
 
-*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+*Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 
 The regex search form (`Alt-P-J-X` using accelerator keys) makes the treeview usable for any document!
 
@@ -747,7 +747,7 @@ This tool can only validate the following keywords:
 * type
 * [anyOf](https://json-schema.org/draft/2020-12/json-schema-core.html#name-anyof)
 * [enum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum)
-    * beginning in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd), the `enum` keyword can be used with mixed-type enums, and can be used without specifying the `type` keyword. 
+    * beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), the `enum` keyword can be used with mixed-type enums, and can be used without specifying the `type` keyword. 
 * [`definitions`, `$defs`, and `$ref`](https://json-schema.org/draft/2020-12/json-schema-core.html#name-schema-re-use-with-defs)
     * __Notes:__
     * support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)

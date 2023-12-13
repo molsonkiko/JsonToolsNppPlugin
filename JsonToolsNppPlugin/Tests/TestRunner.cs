@@ -57,7 +57,7 @@ namespace JSON_Tools.Tests
                 (FormatPathTester.Test, "JNode PathToPosition method", true, false),
                 (IniFileParserTests.Test, "INI file parser", true, false),
                 
-                (UserInterfaceTester.Test, "UI tests", true, true),
+                (UserInterfaceTester.Test, "UI tests", true, false),
                 
                 //because Visual Studio runs a whole bunch of other things in the background
                 //     when I build my project, the benchmarking suite

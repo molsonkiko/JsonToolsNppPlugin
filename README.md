@@ -20,14 +20,15 @@ If you have any issues, see if [updating to the latest release](https://github.c
     * a [find/replace form](/docs/README.md#find-and-replace-form)
     * an [array sorting form](/docs/README.md#sort-form)
     * the [RemesPath](/docs/RemesPath.md) query language.
-7. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
-8. [A form for gettting JSON from APIs or many different local files](/docs/README.md#get-json-from-files-and-apis).
-9. [JSON schema validation](/docs/README.md#validating-json-against-json-schema), including [automatic validation based on filenames](/docs/README.md#automatic-validation-of-json-against-json-schema).
-10. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
-11. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
-12. [Automatic error checking after editing](/docs/README.md#automatically-check-for-errors-after-editing)
-13. [Select all JSON in a non-JSON file](/docs/README.md#selecting-all-valid-json)
-14. [Quickly convert between JSON strings and raw text](/CHANGELOG.md#550---2023-08-13)
+7. A [regex search form](/docs/README.md#regex-search-form) for viewing and editing CSV files, or doing find/replace operations that involve math. 
+8. Parse [JSON Lines](/docs/README.md#json-lines-documents) documents.
+9. [A form for gettting JSON from APIs or many different local files](/docs/README.md#get-json-from-files-and-apis).
+10. [JSON schema validation](/docs/README.md#validating-json-against-json-schema), including [automatic validation based on filenames](/docs/README.md#automatic-validation-of-json-against-json-schema).
+11. [Generation of random JSON](/docs/README.md#generating-random-json-from-a-schema)
+12. [Generation of JSON schema from JSON](/docs/README.md#generating-json-schema-from-json)
+13. [Automatic error checking after editing](/docs/README.md#automatically-check-for-errors-after-editing)
+14. [Select all JSON in a non-JSON file](/docs/README.md#selecting-all-valid-json)
+15. [Quickly convert between JSON strings and raw text](/CHANGELOG.md#550---2023-08-13)
 
 [Read the docs.](/docs/README.md)
 
