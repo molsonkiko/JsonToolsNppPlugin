@@ -331,6 +331,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("`\\\\\\` \\\\`", "\"\\\\` \\\\\""), // escapes directly before a backtick must be supported, as well as internal backticks preceded by an even number of '\\' chars
                 new Query_DesiredResult("j`{\"b\\\\\\\\e\\\"\\r\\n\\t\\`\": 1}`.`b\\\\e\"\\r\\n\\t\\``", "1"), // as above, but using a JSON literal for the same object
                 new Query_DesiredResult("float(@.foo[0])[:1]", "[0.0]"),
+                new Query_DesiredResult("num(j`[\"+0xff\" \"-0xa\", \"10\", \"-5e3\", 1, true, false, -3e4, \"0xbC\", \"+78\"]`)", "[255.0, -10.0, 10.0, -5000.0, 1.0, 1.0, 0.0, -30000.0, 188.0, 78.0]"),
                 new Query_DesiredResult("not(is_expr(values(@.bar)))", "[true, false]"),
                 new Query_DesiredResult("round(@.foo[0] * 1.66)", "[0, 2, 3]"),
                 new Query_DesiredResult("round(@.foo[0] * 1.66, 1)", "[0.0, 1.7, 3.3]"),
@@ -606,7 +607,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("s_fa(`-1 23 +7 -99 +0x1a -0xA2 0x7b`, g`(INT)`,, 0)", "[-1,23,7,-99,26,-162,123]"),
                 // capture every (word, floating point number, floating point number, two lowercase letters separated by '_') tuple inside a <p> element in HTML,
                 // and parse the values in the 2nd and 2nd-to-last columns as numbers
-                new Query_DesiredResult("s_fa(`<p>captured 2 +3 a_b \\r\\n\\r\\n failure 1 2 A_B \\r\\nalsocaptured -8\\t  5 \\tq_r</p>" +
+                new Query_DesiredResult("s_fa(`<p>captured +0xB2 +3 a_b \\r\\n\\r\\n failure 1 2 A_B \\r\\nalsocaptured -0xcC\\t  5 \\tq_r</p>" +
                                               "<p><span>anothercatch\\t +3.5 -4.2  s_t</span></p>" +
                                               "\\r\\n <div>\\r\\n <h2>nocatch -3 0.7E3</h2>\\r\\n" +
                                               "uncaught -8e5 4</div>\\r\\n" +
@@ -615,7 +616,7 @@ namespace JSON_Tools.Tests
                     "(?:(?!</p>).)*?" + // keep matching until the close </p> tag
                     "([a-zA-Z]+)\\s+(NUMBER)\\s+(NUMBER)\\s+([a-z]_[a-z])`" +
                     ", false, *j`[1, -2]`)",
-                    "[[\"captured\",2,3, \"a_b\"],[\"alsocaptured\",-8,5, \"q_r\"],[\"anothercatch\",3.5,-4.2, \"s_t\"],[\"finalcatch\",-900.0,7, \"y_z\"]]"),
+                    "[[\"captured\",178,3, \"a_b\"],[\"alsocaptured\",-204,5, \"q_r\"],[\"anothercatch\",3.5,-4.2, \"s_t\"],[\"finalcatch\",-900.0,7, \"y_z\"]]"),
                 // lines of 3 a-z chars (captured), then a not-captured (a dash and a number less than 9)
                 new Query_DesiredResult("s_fa(`abc-1\\r\\nbcd-7\\r\\ncde--19.5\\r\\ndef--9.2\\r\\nefg-10\\r\\nfgh-9\\r\\nab-1`" +
                                         ", `^([a-z]{3})-(?!9|[1-9]\\d{1,})(?:NUMBER)\\r?$`)",

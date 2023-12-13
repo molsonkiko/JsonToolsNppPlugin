@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. New [regex search form](/docs/README.md#regex-search-form) for using treeview to see regex search results in any file
 3. New [document type list box in tree view](/docs/README.md#document-type-box-added-in-v60)
 4. [For loops in RemesPath](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60)
-5. [`bool`, `s_csv` and `s_fa` RemesPath vectorized arg functions](/docs/RemesPath.md#vectorized-functions)
+5. [`bool`, `num`, `s_csv` and `s_fa` RemesPath vectorized arg functions](/docs/RemesPath.md#vectorized-functions)
 6. [`randint`, `csv_regex`, `set`, and `to_csv` RemesPath non-vectorized arg functions](/docs/RemesPath.md#non-vectorized-functions)
 7. Make second argument of [`s_split` RemesPath function](/docs/RemesPath.md#vectorized-functions) optional; 1-argument variant splits on whitespace.
 8. Right-click dropdown menu in [error form](/docs/README.md#error-form-and-status-bar), allowing export of errors to JSON or refreshing the form.

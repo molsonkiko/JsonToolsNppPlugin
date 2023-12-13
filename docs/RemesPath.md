@@ -661,7 +661,8 @@ Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator]
 ----
 `float(x: number) -> number`
 
-Returns a 64-bit floating-point number equal to x.
+* If x is a boolean, integer, or float: Returns a 64-bit floating-point number equal to x.
+* If x is a __*decimal* string representation of a floating-point number__: returns the 64-bit floating point number that is represented.
 
 ----
 `ifelse(cond: bool, if_true: anything, if_false: anything) -> anything`
@@ -673,7 +674,8 @@ Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to tr
 
 * If x is a boolean or integer: returns a 64-bit integer equal to x.
 * If x is a float: returns the closest 64-bit integer to x.
-   * Note that this is *NOT* the same as the Python `int` function.
+   * Note that this is *NOT* the same as the Python `int` function, because __if x is halfway between two integers, the nearest *even integer* is returned.__
+* If x is a __*decimal* string representation of an integer__: returns the integer that is represented. *This means hex numbers can't be parsed by this function, and you should use `num` below instead for that.*
 
 ----
 `is_expr(x: anything) -> bool`
@@ -711,6 +713,16 @@ Returns the log base `n` of `x`. If `n` is not specified, returns the natural lo
 `log2(x: number) -> number`
 
 Returns the log base 2 of x.
+
+---
+`num(x: anything) -> float`
+
+*Added in [v6.0](/CHANGELOG.md#600---unreleased-2023-mm-dd)*
+
+As `float` above, but also handles hex integers preceded by "0x" (and optional `+` or `-` sign).
+
+__EXAMPLES:__
+* With `["+0xff" "-0xa", "10", "-5e3", 1, true, false, -3e4, "0xbC"]` as input, returns `[255.0, -10.0, 10.0, -5000.0, 1.0, 1.0, 0.0, -30000.0, 188.0]`
 
 ----
 `not(x: bool) -> bool`

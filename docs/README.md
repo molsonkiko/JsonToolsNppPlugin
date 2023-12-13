@@ -577,7 +577,13 @@ You can view CSV files (any delimiter, quote character, and newline are allowed)
 
 ![Regex search form viewing a CSV file](/docs/regex%20search%20form%20csv%20example.PNG)
 
-If you want to edit your document using RemesPath, the [`s_sub` function](/docs/RemesPath.md#vectorized-functions) may prove useful for regex-replacement, and the [`to_csv` function](/docs/RemesPath.md#non-vectorized-functions) may be useful for CSV editing. 
+If you want to edit your document using RemesPath, the [`s_sub` function](/docs/RemesPath.md#vectorized-functions) may prove useful for regex-replacement, and the [`to_csv` function](/docs/RemesPath.md#non-vectorized-functions) may be useful for CSV editing.
+
+In the below example, we parse the above document as a CSV file, edit it by changing the second column (named `names`) to `CITY NAME HAS U` wherever the third column (named `cities`) contains the uppercase letter `U`, and then replace the text of the document with the edited file formatted as tab-separated variables.
+
+![Regex search form EDITING a CSV file](/docs/regex%20search%20form%20csv%20REPLACE%20example.PNG)
+
+__Remember: the Notepad++ document is not affected unless you assign something to its value__, even if the values shown in the tree are affected. For example, __`@ = s_sub(@, foo, bar)` *would edit* the Notepad++ document__ by replacing every instance of `foo` with `bar`, but __`var x = s_fa(@, foo); x = bar` *would not edit* the document__ because the search results are a separate entity from the document.
 
 ## JSON Lines documents ##
 

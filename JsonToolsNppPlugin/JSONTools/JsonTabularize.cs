@@ -800,9 +800,8 @@ namespace JSON_Tools.JSON_Tools
         /// If s contains literal quote character, it is escaped by doubling it up according to the CSV RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)<br></br>
         /// Otherwise, append s to sb unchanged
         /// </summary>
-        /// <param name="s"></param>
-        /// <param name="delim"></param>
-        /// <param name="quote"></param>
+        /// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
+        /// <param name="quote">CSV quote char ('\x00' if not specified)</param>
         /// <returns></returns>
         public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote)
 		{
@@ -821,7 +820,13 @@ namespace JSON_Tools.JSON_Tools
 			else sb.Append(s);
 		}
 
-		public static void CsvStringToSb(StringBuilder sb, JNode jnode, char delim, char quote, bool boolsAsInts)
+        /// <summary>
+        /// append the CSV (RFC 4180 adherent, using quote character = quote, delimiter = delim) representation of jnode's value to sb.
+        /// </summary>
+        /// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
+        /// <param name="quote">CSV quote char ('\x00' if not specified)</param>
+        /// <param name="boolsAsInts">if true, represent true as "1" and false as "0". If false, represent them as "true" and "false" respectively</param>
+        public static void CsvStringToSb(StringBuilder sb, JNode jnode, char delim, char quote, bool boolsAsInts)
 		{
 			string val;
             switch (jnode.type)

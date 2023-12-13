@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Security.Cryptography;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Web;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -618,27 +615,25 @@ namespace JSON_Tools.Forms
         /// associated with the key "{selection start},{selection end}"<br></br>
         /// To determine which selection a TreeNode belongs to, we recursively search the parent hierarchy of node
         /// until we find a node whose text has a key of that form,<br></br>
-        /// then we return {selection start} from the key "{selection start},{selection end}"<br></br>
-        /// For a whole-document treeview, return 0.
+        /// then we return ({selection start}, {selection end}) from the key "{selection start},{selection end}"<br></br>
+        /// For a whole-document treeview, return (0, -1)
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private int ParentSelectionStartPos(TreeNode node)
+        private (int start, int end) ParentSelectionStartEnd(TreeNode node)
         {
             if (!UsesSelections())
-                return 0;
-            int start = 0;
+                return (0, -1);
             while (node.Parent != null)
             {
-                Match mtch = Regex.Match(node.Text, @"^(\d+),\d+ : ");
+                Match mtch = Regex.Match(node.Text, @"^\d+,\d+(?= : )");
                 if (mtch.Success)
                 {
-                    start = int.Parse(mtch.Groups[1].Value);
-                    break;
+                    return SelectionManager.ParseStartEndAsTuple(mtch.Value);
                 }
                 node = node.Parent;
             }
-            return start;
+            return (0, -1);
         }
 
         /// <summary>
@@ -648,7 +643,7 @@ namespace JSON_Tools.Forms
         /// <returns></returns>
         private int NodePosInJsonDoc(TreeNode node)
         {
-            return pathsToJNodes[node.FullPath].position + ParentSelectionStartPos(node);
+            return pathsToJNodes[node.FullPath].position + ParentSelectionStartEnd(node).start;
         }
 
         private void Tree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -1036,57 +1031,100 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// how long we think the representation of a JNode is in regex mode.<br></br>
-        /// if delim is '\x00' (not in CSV mode), this is just the length of its UTF8 repr.<br></br>
-        /// Otherwise, we do some special casing.
+        /// how long we think the UTF8-encoded representations of a list of JNodes is in regex mode.<br></br>
+        /// if delim is '\x00' (not in CSV mode) and nodes are all strings, these are just the lengths of their UTF8 reprs.<br></br>
+        /// Otherwise, we do some special casing.<br></br>
+        /// returns true unless there was some error (e.g., probably b/c of nodes was a JObject or JArray)
         /// </summary>
-        /// <param name="jnode"></param>
-        /// <param name="startpos"></param>
+        /// <param name="nodes">THESE MUST BE ORDERED BY POSITION ASCENDING</param>
         /// <param name="delim"></param>
         /// <param name="quote"></param>
         /// <returns></returns>
-        public static int LengthOfStringInRegexMode(JNode jnode, int startpos, char delim, char quote)
+        public static bool LengthOfStringInRegexMode(JNode[] nodes, char delim, char quote, out int[] utf8Lengths, int selectionStart, int selectionEnd)
         {
-            string s = jnode.ValueOrToString();
-            int utf8len = Encoding.UTF8.GetByteCount(s);
-            if (delim == 0)
-                return utf8len; // not a CSV document, so we assume it's the same length in the document
-            int quoteCount = 0;
-            bool delimOrNewline = false;
-            for (int ii = 0; ii < s.Length; ii++)
+            int startIndex = 0;
+            string documentText = null;
+            utf8Lengths = new int[nodes.Length];
+            for (int ii = 0; ii < nodes.Length; ii++)
             {
-                char c = s[ii];
-                if (c == delim || c == '\r' || c == '\n')
-                    delimOrNewline = true;
-                else if (c == quote)
-                    quoteCount++;
+                JNode jnode = nodes[ii];
+                if (jnode is JArray || jnode is JObject)
+                {
+                    MessageBox.Show("Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region",
+                        "Can't select object or array in non-JSON",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                IComparable value = jnode.value;
+                if (value is long || value is double)
+                {
+                    // two equal numbers may have several valid representations
+                    // we will try to find the length of the representation used in the document,
+                    // but we will quit and use the JSON string length if our first attempt fails to find the length
+                    double d = Convert.ToDouble(value);
+                    int nodepos = jnode.position;
+                    if (documentText is null)
+                        documentText = selectionEnd < 0
+                            ? Npp.editor.GetText(Npp.editor.GetLength() + 1)
+                            : Npp.GetSlice(selectionStart, selectionEnd);
+                    int utf8Extra = 0;
+                    for (; startIndex < documentText.Length && startIndex + utf8Extra < nodepos; startIndex++)
+                        utf8Extra += JsonParser.ExtraUTF8Bytes(documentText[startIndex]);
+                    Match m = ArgFunction.NUM_REGEX.Match(documentText, startIndex);
+                    if (m.Index == startIndex)
+                    {
+                        string mval = m.Value;
+                        double parsedNum = ArgFunction.StrToNumHelper(mval);
+                        if (parsedNum == d)
+                            utf8Lengths[ii] = m.Length;
+                        else
+                            utf8Lengths[ii] = jnode.ToString().Length;
+                    }
+                    else
+                        utf8Lengths[ii] = jnode.ToString().Length; // there was not a number with that value starting at the same index. We just default to source length
+                }
+                else
+                {
+                    // not a number, so just find the length of the CSV string
+                    var sb = new StringBuilder();
+                    JsonTabularizer.CsvStringToSb(sb, jnode, delim, quote, false);
+                    string csvRepr = sb.ToString();
+                    int utf8Len = Encoding.UTF8.GetByteCount(csvRepr);
+                    if (csvRepr.Length == 0 || csvRepr[0] != quote)
+                    {
+                        // even if a string doesn't *need* to be quoted, it could be quoted anyway, in which case we need to select the quotes
+                        int nodeStart = selectionStart + jnode.position;
+                        int quoteLen = 1 + JsonParser.ExtraUTF8Bytes(quote);
+                        string firstChar = Npp.GetSlice(nodeStart, nodeStart + quoteLen);
+                        if (firstChar[0] == quote)
+                            utf8Len += 2 * quoteLen;
+                    }
+                    utf8Lengths[ii] = utf8Len;
+                }
             }
-            if (!delimOrNewline && quoteCount == 0)
-            {
-                // in general, if a string has no delimiters or quotes or newlines, it doesn't need to be wrapped in quotes.
-                // but it still *could* be wrapped in quotes, and that would be equivalent, so we need to check.
-                // note that this assumes the quote character is ASCII, which seems eminently reasonable.
-                int startByte = Npp.editor.GetCharAt(startpos);
-                return quote == startByte ? utf8len + 2 : utf8len;
-            }
-            // it must be a quoted string, in which case it's wrapped in quotes (2 extra bytes) and every literal quote inside is doubled up (quoteCount extra bytes)
-            return utf8len + quoteCount + 2;
+            return true;
         }
 
         public void SelectTreeNodeJson(TreeNode node)
         {
             if (Main.activeFname != fname)
                 return;
+            bool isRegex = GetDocumentType() == DocumentType.REGEX;
+            (int selectionStart, int selectionEnd) = ParentSelectionStartEnd(node);
             int nodeStartPos = 0, nodeEndPos = 0;
             if (pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
             {
-                nodeStartPos = NodePosInJsonDoc(node);
-                if (GetDocumentType() == DocumentType.REGEX)
-                    nodeEndPos = nodeStartPos + LengthOfStringInRegexMode(jnode, nodeStartPos, csvDelim, csvQuote);
+                nodeStartPos = selectionStart + jnode.position;
+                if (isRegex)
+                {
+                    if (!LengthOfStringInRegexMode(new JNode[] { jnode }, csvDelim, csvQuote, out int[] utf8Lengths, selectionStart, selectionEnd))
+                        return;
+                    nodeEndPos = nodeStartPos + utf8Lengths[0];
+                }
                 else
-                    nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, Npp.editor.GetLength());
+                    nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, selectionEnd < 0 ? Npp.editor.GetLength() : selectionEnd);
             }
-            if (nodeStartPos == nodeEndPos)
+            if (!isRegex && nodeStartPos == nodeEndPos) // empty selections are fine in regex mode
                 MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
                     "Couldn't select associated JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
@@ -1104,27 +1142,22 @@ namespace JSON_Tools.Forms
             if (!pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
                 MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
                     "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            int selectionStartPos = ParentSelectionStartPos(node);
+            (int selectionStartPos, int selectionEndPos) = ParentSelectionStartEnd(node);
             if (GetDocumentType() == DocumentType.REGEX)
             {
                 bool firstSelectionSet = false;
-                IEnumerable<JNode> children = (jnode is JArray arr_) ? arr_.children : ((JObject)jnode).children.Values.AsEnumerable();
-                Npp.editor.ClearSelections();
-                foreach (JNode child in children)
+                JNode[] children = ((jnode is JArray arr_) ? arr_.children : ((JObject)jnode).children.Values.AsEnumerable())
+                    .OrderBy(x => x.position)
+                    .ToArray();
+                if (LengthOfStringInRegexMode(children, csvDelim, csvQuote, out int[] utf8Lengths, selectionStartPos, selectionEndPos))
                 {
-                    if (child is JArray || child is JObject)
+                    Npp.editor.ClearSelections();
+                    for (int ii = 0; ii < utf8Lengths.Length; ii++)
                     {
-                        MessageBox.Show("Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region",
-                            "Can't select object or array in non-JSON",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    }
-                    string childstr = child.ValueOrToString();
-                    int startPos = child.position + selectionStartPos;
-                    int utf8Len = LengthOfStringInRegexMode(child, startPos, csvDelim, csvQuote);
-                    int endPos = startPos + utf8Len;
-                    if (endPos > startPos)
-                    {
+                        JNode child = children[ii];
+                        int utf8Len = utf8Lengths[ii];
+                        int startPos = child.position + selectionStartPos;
+                        int endPos = startPos + utf8Len;
                         if (firstSelectionSet)
                             Npp.editor.AddSelection(startPos, endPos);
                         else

@@ -2407,13 +2407,18 @@ namespace JSON_Tools.JSON_Tools
         public const string CAPTURED_INT_REGEX_STR = "([+-]?(?:0x[\\da-fA-F]+|\\d+))";
 
         /// <summary>
-        /// captures a floating point number. Scientific notation is allowed, as are trailing or leading decimal points 
+        /// captures a floating point number or a hex integer. If not hex, scientific notation is allowed, as are trailing or leading decimal points 
         /// </summary>
-        public const string CAPTURED_FLOAT_REGEX_STR = "([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
+        public const string CAPTURED_NUMBER_REGEX_STR = "([+-]?(?:0x[\\da-fA-F]+|\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
 
         // variants of the above two, but they don't capture
         public const string NONCAPTURING_INT_REGEX_STR = "(?:[+-]?(?:0x[\\da-fA-F]+|\\d+))";
-        public const string NONCAPTURING_FLOAT_REGEX_STR = "(?:[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
+        public const string NONCAPTURING_NUMBER_REGEX_STR = "(?:[+-]?(?:0x[\\da-fA-F]+|\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?)";
+
+        /// <summary>
+        /// matches (but does not capture) anything that NONCAPTURING_NUMBER_REGEX_STR would match. 
+        /// </summary>
+        public static readonly Regex NUM_REGEX = new Regex(NONCAPTURING_NUMBER_REGEX_STR, RegexOptions.Compiled);
 
         /// <summary>
         /// converts the delimiter to a format suitable for use in regular expressions 
@@ -2519,8 +2524,8 @@ namespace JSON_Tools.JSON_Tools
             {
                 string mtch = m.Value;
                 if (mtch[2] == ':')
-                    return mtch[3] == 'I' ? NONCAPTURING_INT_REGEX_STR : NONCAPTURING_FLOAT_REGEX_STR;
-                return mtch[1] == 'I' ? CAPTURED_INT_REGEX_STR : CAPTURED_FLOAT_REGEX_STR;
+                    return mtch[3] == 'I' ? NONCAPTURING_INT_REGEX_STR : NONCAPTURING_NUMBER_REGEX_STR;
+                return mtch[1] == 'I' ? CAPTURED_INT_REGEX_STR : CAPTURED_NUMBER_REGEX_STR;
             });
             return new JRegex(new Regex(fixedPat, RegexOptions.Compiled | RegexOptions.Multiline));
         }
@@ -3185,6 +3190,11 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(val.ToString(), Dtype.STR, 0);
         }
 
+        /// <summary>
+        /// float(x: anything) -> float<br></br>
+        /// converts all numeric JNodes to an equal double.<br></br>
+        /// Converts all decimal string representations of floating point numbers to the corresponding double.
+        /// </summary>
         public static JNode ToFloat(List<JNode> args)
         {
             JNode val = args[0];
@@ -3195,6 +3205,12 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(Convert.ToDouble(val.value));
         }
 
+        /// <summary>
+        /// int(x: anything) -> integer<br></br>
+        /// rounds floating point numbers to the nearest integer (rounding to the nearest even integer if it's halfway between)<br></br>
+        /// if x is boolean or integer, returns an equivalent int JNode<br></br>
+        /// strings must be base 10
+        /// </summary>
         public static JNode ToInt(List<JNode> args)
         {
             JNode val = args[0];
@@ -3203,6 +3219,39 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(long.Parse(s));
             }
             return new JNode(Convert.ToInt64(val.value));
+        }
+
+        /// <summary>
+        /// if s is a hex number preceded by "0x" (with optional leading sign), parses the hex part of that number and converts it to a double.<br></br>
+        /// Otherwise, expects a string representing decimal floating point number.
+        /// </summary>
+        public static double StrToNumHelper(string s)
+        {
+            char startChar = s[0];
+            bool hasLeadingSign = startChar == '-' || startChar == '+';
+            int xpos = hasLeadingSign ? 2 : 1;
+            if (s.Length > xpos + 1 && s[xpos] == 'x')
+            {
+                double d = long.Parse(s.Substring(xpos + 1), System.Globalization.NumberStyles.HexNumber);
+                return startChar == '-' ? -d : d;
+            }
+            return double.Parse(s, JNode.DOT_DECIMAL_SEP);
+        }
+
+        /// <summary>
+        /// num(x: anything) -> float<br></br>
+        /// as ToFloat above, but also handles hex integers preceded by "0x" (with optional +/- sign)<br></br>
+        /// EXAMPLES:<br></br>
+        /// * num(`+0xff`) returns 255.0<br></br>
+        /// * num(`-0xa`) returns 10.0<br></br>
+        /// * num(false) returns 0.0<br></br>
+        /// </summary>
+        public static JNode ToNum(List<JNode> args)
+        {
+            var valvalue = args[0].value;
+            if (valvalue is string s)
+                return new JNode(StrToNumHelper(s));
+            return new JNode(Convert.ToDouble(valvalue));
         }
 
         /// <summary>
@@ -3365,6 +3414,7 @@ namespace JSON_Tools.JSON_Tools
             ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["log"] = new ArgFunction(Log, "log", Dtype.FLOAT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.FLOAT_OR_INT}),
             ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
+            ["num"] = new ArgFunction(ToNum, "num", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
             ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
