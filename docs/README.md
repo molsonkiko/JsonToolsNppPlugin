@@ -368,11 +368,17 @@ In versions 3.4.0 through 3.6.1.1, you can also click on the `Current path` butt
 
 ### Select tree node's JSON (or its children) *(added in v5.7)* ###
 
-Starting in [v5.7](/CHANGELOG.md#570---2023-09-08), you can use the tree view to select any JSON element or the children of that element.
+Starting in [v5.7](/CHANGELOG.md#570---2023-09-08), __you can use the tree view to select any JSON element, or select all children of that element.__
 
-![Treeview select associated JSON children](/docs/treeview%20select%20associated%20json%20children.PNG)
+![Treeview select all children - JSON document](/docs/treeview%20select%20associated%20json%20children.PNG)
 
-In some cases this feature will fail to select JSON after entering a RemesPath query. This is expected behavior and not a bug, for reasons that are hard to articulate.
+In some cases this feature will fail to select JSON after entering a RemesPath query. This is (usually) expected behavior and not a bug, because:
+* Some queries remember position because they select nodes from the document (e.g., indexers like `@[:].b[@ < 3]`)
+* Other indexers create new nodes with position 0 that are a function of nodes in the document (e.g., `@ * 3`).
+
+This functionality can also be used to select regex search results or values from a CSV file. For example, the simple query below, followed by `Select all children` on the root, selects all elements in column 3 (index 2 b/c JSON tools uses 0-based indexing) that begin with uppercase `F` or `B` (disregarding enclosing quotes)
+
+![Treeview select all children - CSV document](/docs/tree%20select%20all%20children%20csv.PNG)
 
 ## JSON formatting ##
 
