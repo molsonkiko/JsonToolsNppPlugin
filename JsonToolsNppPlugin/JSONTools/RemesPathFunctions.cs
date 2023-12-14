@@ -2963,6 +2963,12 @@ namespace JSON_Tools.JSON_Tools
             return StrFindAllHelper(text, rex, args, 3, "s_fa", -1, headerHandling);
         }
 
+        /// <summary>
+        /// s_split(x: string, sep: string | regex = g`\s+`) -> array[string]<br></br>
+        /// split x by each match to sep (which is always treated as a regex)<br></br>
+        /// if sep is not provided, split on whitespace.<br></br>
+        /// See https://learn.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.split?view=netframework-4.8#system-text-regularexpressions-regex-split(system-string) for implementation details.
+        /// </summary>
         public static JNode StrSplit(List<JNode> args)
         {
             JNode node = args[0];
@@ -2981,21 +2987,52 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, out_nodes);
         }
 
+        /// <summary>
+        /// s_lines(x: string) -> array[string]<br></br>
+        /// splits x into an array of lines, treating '\r', '\n', and '\r\n' all as line terminators.<br></br>
+        /// Use s_split(x, `\r\n`) or s_split(x, `\r`) or s_split(x, `\n`) instead if you only want to consider one type of line terminator.
+        /// </summary>
+        public static JNode StrSplitLines(List<JNode> args)
+        {
+            string s = (string)args[0].value;
+            string[] lines = Regex.Split(s, @"\r\n?|\n");
+            var lineArr = new List<JNode>(lines.Length);
+            foreach (string line in lines)
+                lineArr.Add(new JNode(line));
+            return new JArray(0, lineArr);
+        }
+
+        /// <summary>
+        /// s_lower(x: string) -> string<br></br>
+        /// returns x converted to lowercase
+        /// </summary>
         public static JNode StrLower(List<JNode> args)
         {
             return new JNode(((string)args[0].value).ToLower());
         }
 
+        /// <summary>
+        /// s_lower(x: string) -> string<br></br>
+        /// returns x converted to uppercase
+        /// </summary>
         public static JNode StrUpper(List<JNode> args)
         {
             return new JNode(((string)args[0].value).ToUpper());
         }
 
+        /// <summary>
+        /// s_lower(x: string) -> string<br></br>
+        /// returns x with no leading or trailing whitespace
+        /// </summary>
         public static JNode StrStrip(List<JNode> args)
         {
             return new JNode(((string)args[0].value).Trim());
         }
 
+        
+        /// <summary>
+        /// See string.Slice extension method in ArrayExtensions.cs
+        /// </summary>
         public static JNode StrSlice(List<JNode> args)
         {
             string s = (string)args[0].value;
@@ -3071,7 +3108,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// returns true is x is string
+        /// returns true iff is x is a string
         /// </summary>
         public static JNode IsStr(List<JNode> args)
         {
@@ -3079,7 +3116,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// returns true is x is long, double, or bool
+        /// returns true iff x is long, double, or bool
         /// </summary>
         public static JNode IsNum(List<JNode> args)
         {
@@ -3087,7 +3124,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// returns true if x is JObject or JArray
+        /// returns true iff x is JObject or JArray
         /// </summary>
         public static JNode IsExpr(List<JNode> args)
         {
@@ -3422,6 +3459,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.BOOL | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex), (2, Dtype.NULL, x => new JNode(false)))),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["s_lines"] = new ArgFunction(StrSplitLines, "s_lines", Dtype.ARR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT }),
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),

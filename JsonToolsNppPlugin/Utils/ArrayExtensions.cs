@@ -273,6 +273,14 @@ namespace JSON_Tools.Utils
             return new string(source.ToCharArray().LazySlice(start, stop, stride).ToArray());
         }
 
+        /// <summary>
+        /// s_slice(x: string, sli: integer | slicer) -> string<br></br>
+        /// uses Python slicing syntax.<br></br>
+        /// EXAMPLES:<br></br>
+        /// * s_slice(abcde, 1:-2) returns "bc"<br></br>
+        /// * s_slice(abcde, :2) returns "ab"<br></br>
+        /// * s_slice(abcde, -2) returns "d"<br></br>
+        /// </summary>
         public static string Slice(this string source, int?[] slicer)
         {
             return new string(source.ToCharArray().LazySlice(slicer).ToArray());

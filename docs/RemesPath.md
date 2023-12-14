@@ -895,6 +895,15 @@ The length of string x.
 
 The lower-case form of x.
 
+---
+`s_lines(x: string) -> array[string]`
+
+*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+
+Returns an array of all the lines (including an empty string at the end if there's a trailing newline) in `x`.
+
+This function treats `\r`, `\n`, and `\r\n` all as valid newlines. Use `s_split` below if you want to only accept one or two of those.
+
 ----
 `s_mul(x: string, reps: int) -> string`
 
@@ -917,17 +926,15 @@ Prior to [v5.5.0](/CHANGELOG.md#550---2023-08-13), Python-style negative indices
 If `sep` is not specified (the function is called with one argument):
 * Returns `x` split by whitespace.
     * E.g., ``s_split(`a b c\n d `)`` returns `["a", "b", "c", "d", ""]` (the last empty string is because `x` ends with whitespace)
+    * The 1-argument option was added in [v6.0](/CHANGELOG.md#600---2023-12-13).
 
-If `sep` is a string:
-* Returns an array containing all the substrings of `x` that don't contain `sep`, split by the places where `sep` occurs.
-   * E.g., ``s_split(`abac`, `a`)`` returns `["", "b", "c"]`
-
-If `sep` is a regex:
+If `sep` is a string (which is treated as a regex) or regex:
 * Returns an array containing substrings of `x` where the parts that match `sep` are missing.
    * E.g., ``s_split(`a big bad man`, g`\\s+`)`` returns `["a", "big", "bad", "man"]`.
 * However, if `sep` contains any capture groups, the capture groups are included in the array.
    * ``s_split(`a big bad man`, g`(\\s+)`)`` returns `["a", " " "big", " ", "bad", " ", "man"]`.
    * ``s_split(`bob num: 111-222-3333, carol num: 123-456-7890`, g`(\\d{3})-(\\d{3}-\\d{4})`)`` returns `["bob num: ", "111", "222-3333", ", carol num: ", "123", "456-7890", ""]`
+* See [the docs for C# Regex.Split](https://learn.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.split?view=netframework-4.8#system-text-regularexpressions-regex-split(system-string)) for more info.
 
 ----
 `s_strip(x: string) -> string`

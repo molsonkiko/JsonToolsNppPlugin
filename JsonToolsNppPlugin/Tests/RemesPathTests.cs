@@ -349,6 +349,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("log2(j`[1, 4, 8]`)", $"[0, 2, 3]"),
                 new Query_DesiredResult("abs(j`[-1, 0, 1]`)", "[1, 0, 1]"),
                 new Query_DesiredResult("is_str(@.bar.b)", "[true, true]"),
+                new Query_DesiredResult("s_lines(j`[\"a\\r\\nb\\rc\\td\\ne\\n\", \"foo bar\"]`)", "[[\"a\", \"b\", \"c\\td\", \"e\", \"\"], [\"foo bar\"]]"),
                 new Query_DesiredResult("s_split(@.bar.b[0], g`[^a-z]+`)", "[\"a\", \"g\"]"),
                 new Query_DesiredResult("s_split(@.bar.b, `a`)", "[[\"\", \"`g\"], [\"b\", \"h\"]]"),
                 new Query_DesiredResult("s_split(`foo\\r\\nb\\t c \\r bar-baz\\n`, )", "[\"foo\", \"b\", \"c\", \"bar-baz\", \"\"]"), // omit optional 2nd arg; split on whitespace
