@@ -280,20 +280,32 @@ namespace JSON_Tools.JSON_Tools
 
     public class RemesPathArgumentException : RemesPathException
     {
-        /// <summary>0-based index</summary>
-        public int arg_num { get; set; }
+        /// <summary>0-based index of the bad argument</summary>
+        public int ArgNum { get; set; }
+        /// <summary>
+        /// type that was passed in for that argument
+        /// </summary>
+        public Dtype GotType;
         public ArgFunction func { get; set; }
 
-        public RemesPathArgumentException(string description, int arg_index_0_based, ArgFunction func) : base(description)
+        /// <summary></summary>
+        /// <param name="description">a description of the error. Can be null, if gotType is specified.</param>
+        /// <param name="argIndex0Based">the argument where an incorrect type was passed in</param>
+        /// <param name="func">the function that raised this error (choose one from ArgFunction.FUNCTIONS)</param>
+        /// <param name="gotType">the type that was passed in for argument argIndex0Based</param>
+        public RemesPathArgumentException(string description, int argIndex0Based, ArgFunction func, Dtype gotType = Dtype.NULL) : base(description)
         {
-            this.arg_num = arg_index_0_based;
+            GotType = gotType;
+            ArgNum = argIndex0Based;
             this.func = func;
         }
 
         public override string ToString()
         {
-            string fmt_dtype = JNode.FormatDtype(func.TypeOptions(arg_num));
-            return $"For argument {arg_num} of function {func.name}, expected {fmt_dtype}, instead {description}";
+            string validTypes = JNode.FormatDtype(func.TypeOptions(ArgNum));
+            if (description is null)
+                return $"For argument {ArgNum} of function {func.name}, expected {validTypes}, instead got type {JNode.FormatDtype(GotType)}";
+            return $"For argument {ArgNum} of function {func.name}, expected {validTypes}, instead {description}";
         }
     }
 

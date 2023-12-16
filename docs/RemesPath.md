@@ -680,34 +680,34 @@ Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to tr
 ----
 `is_expr(x: anything) -> bool`
 
-Returns true if x is an array or object.
+Returns true iff x is an array or object.
 
 ----
 `is_num(x: anything) -> bool`
 
-Returns true if x is a number.
+Returns true iff x is a number.
 
 ----
 `is_str(x: anything) -> bool`
 
-Returns true if x is a string.
+Returns true iff x is a string.
 
 ----
 `isna(x: number) -> bool`
 
-Returns true if x is the floating-point Not-A-Number (represented in some JSON by `NaN`).
+Returns true iff x is the floating-point Not-A-Number (represented in some JSON by `NaN`).
 
 Recall that `NaN` is *NOT* in the original JSON specification.
 
 ---
 `isnull(x: anything) -> bool`
 
-Returns true if x is null, else false.
+Returns true iff x is null, else false.
 
 ----
-`log(x: number, n: number = e) -> number`
+`log(x: number, base: number = e) -> number`
 
-Returns the log base `n` of `x`. If `n` is not specified, returns the natural log of `x`.
+Returns the log base `base` of `x`. If `base` is not specified, returns the [natural logarithm (base `e`)](https://en.wikipedia.org/wiki/Natural_logarithm) of `x`.
 
 ----
 `log2(x: number) -> number`
@@ -881,9 +881,9 @@ __Examples:__
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`
 
-__As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in favor of `s_fa`*.__
-
 Returns an array of all the substrings in `x` that match `sub`.
+
+__As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in favor of `s_fa`*.__ However, it can still be useful if you always want the result to be a single string rather than an array of capture groups.
 
 ----
 `s_len(x: string) -> int`

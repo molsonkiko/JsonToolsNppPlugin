@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
+- [`Select all children`](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57) on the root tree node should select all remembered selections, if in multi-selection mode.
 
 ## [6.1.0] - (UNRELEASED) YYYY-MM-DD
 

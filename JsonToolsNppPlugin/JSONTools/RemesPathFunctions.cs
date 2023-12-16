@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using JSON_Tools.Utils;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -1051,8 +1053,8 @@ namespace JSON_Tools.JSON_Tools
             Dtype typeOptions = TypeOptions(argNum);
             if (x == null || (x.type & typeOptions) == 0)
             {
-                Dtype arg_type = x == null ? Dtype.NULL : x.type;
-                throw new RemesPathArgumentException($"got type {JNode.FormatDtype(arg_type)}", argNum, this);
+                Dtype argType = x == null ? Dtype.NULL : x.type;
+                throw new RemesPathArgumentException(null, argNum, this, argType);
             }
         }
 
@@ -1115,8 +1117,6 @@ namespace JSON_Tools.JSON_Tools
         /// In("c", {"a": 1, "b": 2}) returns false.<br></br>
         /// In(1, {"a": 1, "b": 2}) will throw an error because 1 is not a string.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode In(List<JNode> args)
         {
             JNode elt = args[0];
@@ -1162,8 +1162,6 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Assuming first arg is a dictionary or list, return the number of elements it contains.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Len(List<JNode> args)
         {
             var itbl = args[0];
@@ -1177,8 +1175,6 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Assumes args has one element, a list of numbers. Returns the sum, cast to a double.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Sum(List<JNode> args)
         {
             var itbl = (JArray)args[0];
@@ -1197,8 +1193,6 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Assumes args has one element, a list of numbers. Returns the arithmetic mean of that list.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Mean(List<JNode> args)
         {
             var itbl = (JArray)args[0];
@@ -1222,8 +1216,6 @@ namespace JSON_Tools.JSON_Tools
         /// Example:<br></br>
         /// enumerate(["a", "b", "c"]) returns [[0, "a"], [1, "b"], [2, "c"]]
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Enumerate(List<JNode> args)
         {
             var arr = (JArray)args[0];
@@ -1293,8 +1285,6 @@ namespace JSON_Tools.JSON_Tools
         /// of the final occurence of elt in itbl.<br></br>
         /// If elt does not occur in itbl, throw a KeyNotFoundException.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
         public static JNode Index(List<JNode> args)
         {
@@ -1315,11 +1305,9 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Assumes args has one element, a list of numbers. Returns the largest number in the list,
-        /// cast to a double.
+        /// max(x: array[float] -> float<br></br>
+        /// Returns the largest number in x (an array of numbers) cast to a double.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Max(List<JNode> args)
         {
             var itbl = (JArray)args[0];
@@ -1338,11 +1326,9 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Assumes args has one element, a list of numbers. Returns the smallest number in the list,
-        /// cast to a double.
+        /// max(x: array[float] -> float<br></br>
+        /// Returns the smallest number in x (an array of numbers) cast to a double.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Min(List<JNode> args)
         {
             var itbl = (JArray)args[0];
@@ -1360,7 +1346,10 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(smallest);
         }
 
-
+        /// <summary>
+        /// sorted(x: array, reverse: boolean = false) -> array<br></br>
+        /// return a copy of x, sorted ascending (or descending iff `reverse` is true)
+        /// </summary>
         public static JNode Sorted(List<JNode> args)
         {
             var arr = ((JArray)args[0]).children;
@@ -1547,8 +1536,6 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Returns a random JNode with a double from 0 (inclusive) to 1 (exclusive).
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode RandomFrom0To1(List<JNode> args)
         {
             double rand = RandomJsonFromSchema.random.NextDouble();
@@ -1560,8 +1547,6 @@ namespace JSON_Tools.JSON_Tools
         /// returns a random integer from start (inclusive) to end (exclusive)<br></br>
         /// If end is not provided, returns a random integer from 0 (inclusive) to start (exclusive)
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode RandomInteger(List<JNode> args)
         {
             JNode startNode = args[0];
@@ -1598,8 +1583,6 @@ namespace JSON_Tools.JSON_Tools
         /// s_sub(`a b c` , g`[a-z]`, @[0]*loop()) returns "a bb ccc"<br></br>
         /// because there are three matches, "a", "b", and "c", and loop() returns 1 on the first match, 2 on the second, and 3 on the third 
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="RemesPathException"></exception>
         public static JNode LoopCount(List<JNode> args)
         {
@@ -1617,8 +1600,6 @@ namespace JSON_Tools.JSON_Tools
         /// Range(3, 7) -> List&lt;long&gt;({3, 4, 5, 6})<br></br>
         /// Range(10, 4, -2) -> List&lt;long&gt;({10, 8, 6})
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Range(List<JNode> args)
         {
             var start = (long?)args[0].value;
@@ -1691,8 +1672,6 @@ namespace JSON_Tools.JSON_Tools
         /// Example:
         /// Items({"a": 1, "b": 2, "c": 3}) = [["a", 1], ["b", 2], ["c", 3]]
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Items(List<JNode> args)
         {
             var its = new List<JNode>();
@@ -1759,8 +1738,6 @@ namespace JSON_Tools.JSON_Tools
         /// For example, suppose that the 60th percentile is at index 6.6, and elements 6 and 7 are 8 and 10.<br></br>
         /// Then the returned value is 0.6*10 + 0.4*8 = 9.2
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Quantile(List<JNode> args)
         {
             var sorted = new List<double>();
@@ -1807,8 +1784,6 @@ namespace JSON_Tools.JSON_Tools
         /// * ValueCounts([2, 1, "a", "a", 1]) returns [[2, 1], [1, 2], ["a", 2]]
         /// * ValueCounts(["a", "b", "c", "c", "c", "b"], true) returns [["c", 3], ["b", 2], ["a", 1]]
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode ValueCounts(List<JNode> args)
         {
             var arr = (JArray)args[0];
@@ -1875,8 +1850,6 @@ namespace JSON_Tools.JSON_Tools
         /// * GroupBy([[1, 2, 2, 0.0], [1, 2, 3, -1.0], [1, 3, 3, -2.0], [1, 3, 4, -3.0], [2, 2, 2, -4.0]], [0, 1, 2]) returns:<br></br>
         /// {"1": {"2": {"2": [[1, 2, 2, 0.0]], "3": [[1, 2, 3, -1.0]]}, "3": {"3": [[1, 3, 3, -2.0]], "4": [[1, 3, 4, -3.0]]}}, "2": {"2": {"2": [[2, 2, 2, -4.0]]}}}
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         public static JNode GroupBy(List<JNode> args)
         {
@@ -1926,8 +1899,6 @@ namespace JSON_Tools.JSON_Tools
         /// * GroupBy([[1, "a"], [2, "b"], [2, "c"], [3, "d"]], 0) returns:<br></br>
         /// {"1": [[1, "a"]], "2": [[2, "b"], [2, "c"]], "3": [[3, "d"]]}
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         private static JNode GroupBySingleKey(JArray itbl, JNode keyNode)
         {
@@ -2016,8 +1987,6 @@ namespace JSON_Tools.JSON_Tools
         /// Example:
         /// Dict([["a", 1], ["b", 2], ["c", 3]]) = {"a": 1, "b": 2, "c": 3}
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Dict(List<JNode> args)
         {
             JArray pairs = (JArray)args[0];
@@ -2047,8 +2016,6 @@ namespace JSON_Tools.JSON_Tools
         /// concat([1, 2], {"a": 2}) raises an exception because you can't concatenate arrays with objects.<br></br>
         /// concat(1, [1, 2]) raises an exception because you can't concatenate anything with non-iterables.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="RemesPathException"></exception>
         public static JNode Concat(List<JNode> args)
         {
@@ -2091,8 +2058,6 @@ namespace JSON_Tools.JSON_Tools
         /// EXAMPLES<br></br>
         /// - append([], 1, false, "a", [4]) -> [1, false, "a", [4]]
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="RemesPathException"></exception>
         public static JNode Append(List<JNode> args)
         {
@@ -2164,8 +2129,6 @@ namespace JSON_Tools.JSON_Tools
         /// EXAMPLES<br></br>
         /// - add_items({}, "a", 1, "b", 2, "c", 3, "d", 4) -> {"a": 1, "b": 2, "c": 3, "d": 4}
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode AddItems(List<JNode> args)
         {
             JObject obj = (JObject)args[0];
@@ -2252,11 +2215,10 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// all(x: array[boolean]) -> boolean<br></br>
         /// Accepts one argument, an array of all booleans.<br></br>
         /// Returns true if ALL of the booleans in the array are true.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode All(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
@@ -2269,24 +2231,24 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// all(x: array[boolean]) -> boolean<br></br>
         /// Accepts one argument, an array of all booleans.<br></br>
         /// Returns true if ANY of the values in the array are true.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Any(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
             foreach (JNode item in arr.children)
             {
                 if ((bool)item.value)
-                    return new JNode(true, Dtype.BOOL, 0);
+                    return new JNode(true);
             }
-            return new JNode(false, Dtype.BOOL, 0);
+            return new JNode(false);
         }
         #endregion
         #region VECTORIZED_ARG_FUNCTIONS
         /// <summary>
+        /// s_len(x: string) -> integer<br></br>
         /// Length of a string
         /// </summary>
         /// <param name="node">string</param>
@@ -2295,15 +2257,12 @@ namespace JSON_Tools.JSON_Tools
             JNode node = args[0];
             if (node.value is string str)
                 return new JNode(Convert.ToInt64(str.Length));
-            throw new RemesPathException("StrLen only works for strings");
+            throw new RemesPathArgumentException(null, 0, FUNCTIONS["s_len"], node.type);
         }
 
         /// <summary>
         /// returns a new string that contains n consecutive instances of s with no break between
         /// </summary>
-        /// <param name="s"></param>
-        /// <param name="n"></param>
-        /// <returns></returns>
         public static string StrMulHelper(string s, int num)
         {
             if (num <= 0)
@@ -2317,29 +2276,26 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Returns a string made by joining one string to itself n times.<br></br>
-        /// Thus StrMul("ab", 3) -> "ababab"
+        /// s_mul(x: string, n: integer | boolean) -> string<br></br>
+        /// Returns a string made by joining string x to itself n times.<br></br>
+        /// Thus StrMul("ab", 3) -> "ababab"<br></br>
+        /// THIS FUNCTION IS DEPRECATED AS OF v5.1.0, WHEN IT BECAME POSSIBLE TO USE THE * OPERATOR TO MULTIPLY A STRING BY AN INTEGER (Python style)
         /// </summary>
-        /// <param name="node">string</param>
-        /// <param name="n">number of times to repeat s</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
         public static JNode StrMul(List<JNode> args)
         {
             var arg2 = args[1];
             if ((arg2.type & Dtype.INT_OR_BOOL) == 0)
-                throw new RemesPathArgumentException("second arg (n) to s_mul must be integer", 1, FUNCTIONS["s_mul"]);
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_mul"], arg2.type);
             return new JNode(StrMulHelper((string)args[0].value, Convert.ToInt32(arg2.value)));
         }
 
         /// <summary>
-        /// Return a JNode of type = Dtype.INT with value equal to the number of ocurrences of 
-        /// pattern or substring sub in node.value.<br></br>
+        /// s_count(x: string, sub: regex | string) -> integer<br></br>
+        /// Return a JNode of type = Dtype.INT with value equal to the number of ocurrences of pattern sub (2nd arg) in node.value.<br></br>
+        /// sub is treated as a regex even if a string is passed in.<br></br>
         /// So StrCount(JNode("ababa", Dtype.STR, 0), Regex("a?ba")) -> JNode(2, Dtype.INT, 0)
         /// because "a?ba" matches "aba" starting at position 0 and "ba" starting at position 3.
         /// </summary>
-        /// <param name="node">a string in which to find pattern/substring sub</param>
-        /// <param name="sub">a substring or Regex pattern</param>
         public static JNode StrCount(List<JNode> args)
         {
             JNode node = args[0];
@@ -2352,11 +2308,11 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Get an array containing all non-overlapping occurrences of regex pattern pat in string node
+        /// s_find(x: string, pat: string | regex) -> array[string]<br></br>
+        /// Get an array containing all non-overlapping occurrences of regex pattern pat in string node<br></br>
+        /// This function is largely deprecated in favor of s_fa,
+        /// but it can still be useful if you always want the result to be a single string rather than an array of capture groups.
         /// </summary>
-        /// <param name="node">string</param>
-        /// <param name="sub">substring or Regex pattern to be found within node</param>
-        /// <returns></returns>
         public static JNode StrFind(List<JNode> args)
         {
             JNode node = args[0];
@@ -2483,8 +2439,6 @@ namespace JSON_Tools.JSON_Tools
         /// Returns the regex that s_csv (see CsvRead function below) uses to match a single row of a CSV file
         /// with delimiter `delim`, `nColumns` columns, quote character `quote_char`, and newline `newline`.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
         public static JNode CsvRegexAsJNode(List<JNode> args)
         {
@@ -2844,15 +2798,14 @@ namespace JSON_Tools.JSON_Tools
         /// if has_header, skip the first row.<br></br>
         /// See StrFindAllHelper for how the optional columns_to_parse_as_number args are handled
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
         public static JNode CsvRead(List<JNode> args)
         {
             string text = (string)args[0].value;
-            if (args[1].type != Dtype.INT)
-                throw new RemesPathArgumentException($"second arg (nColumns) to s_csv must be integer, not {args[1].type}", 1, FUNCTIONS["s_csv"]);
-            int nColumns = Convert.ToInt32(args[1].value);
+            JNode arg2 = args[1];
+            if (arg2.type != Dtype.INT)
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_csv"], arg2.type);
+            int nColumns = Convert.ToInt32(arg2.value);
             char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
             csvDelimiterInLastQuery = delim;
             string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
@@ -2872,8 +2825,6 @@ namespace JSON_Tools.JSON_Tools
         /// * if x is an array of arrays, each subarray is converted to a row<br></br>
         /// * if x is an array of objects, the keys of the first subobject are converted to a header row, and the values of every subobject become their own row.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode ToCsv(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
@@ -2952,8 +2903,6 @@ namespace JSON_Tools.JSON_Tools
         /// columns_to_parse_as_number: any number of optional int args, the 0-based indices of capture groups to parse as numbers<br></br>
         /// see StrFindAllHelper for more
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode StrFindAll(List<JNode> args)
         {
             string text = (string)args[0].value;
@@ -3012,7 +2961,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// s_lower(x: string) -> string<br></br>
+        /// s_upper(x: string) -> string<br></br>
         /// returns x converted to uppercase
         /// </summary>
         public static JNode StrUpper(List<JNode> args)
@@ -3021,7 +2970,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// s_lower(x: string) -> string<br></br>
+        /// s_strip(x: string) -> string<br></br>
         /// returns x with no leading or trailing whitespace
         /// </summary>
         public static JNode StrStrip(List<JNode> args)
@@ -3031,6 +2980,8 @@ namespace JSON_Tools.JSON_Tools
 
         
         /// <summary>
+        /// s_slice(x: string, slicer_or_int: integer | slicer) -> string<br></br>
+        /// Get a single character or slice from a string. E.g., "s_slice(abcd, -2)" returns "c", and "s_slice(abcd, :2)" returns "ab".<br></br> 
         /// See string.Slice extension method in ArrayExtensions.cs
         /// </summary>
         public static JNode StrSlice(List<JNode> args)
@@ -3108,6 +3059,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// is_str(x: anything) -> boolean<br></br>
         /// returns true iff is x is a string
         /// </summary>
         public static JNode IsStr(List<JNode> args)
@@ -3116,6 +3068,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// is_num(x: anything) -> boolean<br></br>
         /// returns true iff x is long, double, or bool
         /// </summary>
         public static JNode IsNum(List<JNode> args)
@@ -3124,6 +3077,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// is_expr(x: anything) -> boolean<br></br>
         /// returns true iff x is JObject or JArray
         /// </summary>
         public static JNode IsExpr(List<JNode> args)
@@ -3131,41 +3085,64 @@ namespace JSON_Tools.JSON_Tools
             return new JNode((args[0].type & Dtype.ARR_OR_OBJ) != 0);
         }
 
+        /// <summary>
+        /// isnull(x: anything) -> boolean<br></br>
+        /// returns true iff x is null
+        /// </summary>
         public static JNode IsNull(List<JNode> args)
         {
             return new JNode(args[0].type == Dtype.NULL);
         }
 
         /// <summary>
-        /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns first arg.
+        /// ifelse(x: anything, if_true: anything, if_false: anything) -> anything<br></br>
+        /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns third arg.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode IfElse(List<JNode> args)
         {
             return ToBoolHelper(args[0]) ? args[1] : args[2];
         }
 
+
+        /// <summary>
+        /// log(x: integer | number, base: number | null = null) -> number<br></br>
+        /// If base is null, returns the natural logarithm of x.<br></br>
+        /// Otherwise, returns the logarithm base (base) of x.
+        /// </summary>
         public static JNode Log(List<JNode> args)
         {
-            double num = Convert.ToDouble(args[0].value);
+            var arg1 = args[0];
+            if ((arg1.type & Dtype.FLOAT_OR_INT) == 0)
+                throw new RemesPathArgumentException(null, 0, FUNCTIONS["log"], arg1.type);
+            double num = Convert.ToDouble(arg1.value);
             object Base = args[1].value;
-            if (Base == null)
+            if (Base is null)
             {
                 return new JNode(Math.Log(num));
             }
             return new JNode(Math.Log(num, Convert.ToDouble(Base)));
         }
 
+        /// <summary>
+        /// log2(x: integer | number) -> number<br></br>
+        /// Returns the logarithm (base 2) of x
+        /// </summary>
         public static JNode Log2(List<JNode> args)
         {
-            return new JNode(Math.Log(Convert.ToDouble(args[0].value), 2));
+            var arg1 = args[0];
+            if ((arg1.type & Dtype.FLOAT_OR_INT) == 0)
+                throw new RemesPathArgumentException(null, 0, FUNCTIONS["log"], arg1.type);
+            return new JNode(Math.Log(Convert.ToDouble(arg1.value), 2));
         }
 
+        /// <summary>
+        /// log2(x: integer | number) -> integer | number | boolean<br></br>
+        /// Returns the absolute value of x (converts false to 0 and 1 to true)
+        /// </summary>
         public static JNode Abs(List<JNode> args)
         {
             JNode val = args[0];
-            if (val.type == Dtype.INT)
+            if ((val.type & Dtype.INT_OR_BOOL) != 0)
             {
                 return new JNode(Math.Abs(Convert.ToInt64(val.value)));
             }
@@ -3173,9 +3150,13 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(Math.Abs(Convert.ToDouble(val.value)));
             }
-            throw new ArgumentException("Abs can only be called on ints and floats");
+            throw new RemesPathArgumentException(null, 0, FUNCTIONS["abs"], val.type);
         }
 
+        /// <summary>
+        /// isnull(x: anything) -> boolean<br></br>
+        /// returns true iff x is NaN (the special "Not a Number" double)
+        /// </summary>
         public static JNode IsNa(List<JNode> args)
         {
             return new JNode(double.IsNaN(Convert.ToDouble(args[0].value)));
@@ -3210,21 +3191,18 @@ namespace JSON_Tools.JSON_Tools
         /// bool(x: anything) -> boolean<br></br>
         /// see ArgFunction.ToBoolHelper for truthiness rules (similar to Python and JavaScript)
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode ToBool(List<JNode> args)
         {
             return new JNode(ToBoolHelper(args[0]));
         }
 
+        /// <summary>
+        /// str(x: anything) -> string<br></br>
+        /// if x is a string, return a copy of x. Otherwise, return the string representation of x. 
+        /// </summary>
         public static JNode ToStr(List<JNode> args)
         {
-            JNode val = args[0];
-            if (val.type == Dtype.STR)
-            {
-                return new JNode(val.value, Dtype.STR, 0);
-            }
-            return new JNode(val.ToString(), Dtype.STR, 0);
+            return new JNode(args[0].ValueOrToString());
         }
 
         /// <summary>
@@ -3292,29 +3270,31 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// If val is an int/long, return val because rounding does nothing to an int/long.<br></br>
+        /// round(x: number | integer, sigfigs: integer | null = null) -> integer | number<br></br>
+        /// If val is an integer, return val because rounding does nothing to an integer.<br></br>
         /// If val is a double:<br></br>
-        ///     - if sigfigs is null, return val rounded to the nearest long.<br></br>
+        ///     - if sigfigs is null, return val rounded to the nearest integer.<br></br>
         ///     - else return val rounded to nearest double with sigfigs decimal places<br></br>
         /// If val's value is any other type, throw an ArgumentException
         /// </summary>
         public static JNode Round(List<JNode> args)
         {
             JNode val = args[0];
+            IComparable valval = val.value;
             JNode sigfigs = args[1];
-            if (val.value is long valInt)
+            if (valval is long valInt)
             {
                 return new JNode(valInt);
             }
-            else if (val.value is double d)
+            else if (valval is double d)
             {
-                if (sigfigs == null)
+                if (sigfigs.type == Dtype.NULL)
                 {
                     return new JNode(Convert.ToInt64(Math.Round(d)));
                 }
                 return new JNode(Math.Round(d, Convert.ToInt32(sigfigs.value)));
             }
-            throw new ArgumentException("Cannot round non-float, non-integer numbers");            
+            throw new RemesPathArgumentException(null, 0, FUNCTIONS["round"], val.type);            
         }
 
         /// <summary>
@@ -3325,47 +3305,51 @@ namespace JSON_Tools.JSON_Tools
         /// if there was a caught exception:<br></br>
         /// returns {"error": stringified exception}
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static JNode Parse(List<JNode> args)
         {
             string stringified = (string)args[0].value;
-            JObject output = new JObject();
-            try
+            var output = new Dictionary<string, JNode>();
+            var parser = new JsonParser(LoggerLevel.JSON5, false, false, false);
+            JNode result = parser.Parse(stringified);
+            if (parser.fatal)
             {
-                JNode result = new JsonParser(LoggerLevel.JSON5, false, false, true).Parse(stringified);
+                JsonLint fatalError = parser.fatalError.Value;
+                output["error"] = new JNode($"{fatalError.message} at position {fatalError.pos} (char {JsonLint.CharDisplay(fatalError.curChar)})");
+            }
+            else
                 output["result"] = result;
-            }
-            catch (Exception ex)
-            {
-                output["error"] = new JNode(RemesParser.PrettifyException(ex));
-            }
-            return output;
+            return new JObject(0, output);
         }
 
         #endregion
 
+        /// <summary>
+        /// recursively converts non-JNodes to JNodes. See the body of this function for how it's done
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static JNode ObjectsToJNode(object obj)
         {
             if (obj == null)
             {
                 return new JNode();
             }
-            if (obj is long)
+            if (obj is long l)
             {
-                return new JNode(Convert.ToInt64(obj), Dtype.INT, 0);
+                return new JNode(l);
             }
             if (obj is double d)
             {
-                return new JNode(d, Dtype.FLOAT, 0);
+                return new JNode(d);
             }
             if (obj is string s)
             {
-                return new JNode(s, Dtype.STR, 0);
+                return new JNode(s);
             }
             if (obj is bool b)
             {
-                return new JNode(b, Dtype.BOOL, 0);
+                return new JNode(b);
             }
             if (obj is Regex rex)
             {
@@ -3448,7 +3432,7 @@ namespace JSON_Tools.JSON_Tools
             ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_str"] = new ArgFunction(IsStr, "is_str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["isna"] = new ArgFunction(IsNa, "isna", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
-            ["isnull"] = new ArgFunction(IsNull, "is_null", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["isnull"] = new ArgFunction(IsNull, "isnull", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["log"] = new ArgFunction(Log, "log", Dtype.FLOAT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.FLOAT_OR_INT}),
             ["log2"] = new ArgFunction(Log2, "log2", Dtype.FLOAT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["num"] = new ArgFunction(ToNum, "num", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
