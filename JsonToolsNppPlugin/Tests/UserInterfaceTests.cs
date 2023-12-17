@@ -647,7 +647,7 @@ namespace JSON_Tools.Tests
                      "    g`(?i)^\\x20*([a-zЯ]+):\\s+(INT)`,\r\n" +
                      "    ifelse(float(@[2]) < 0,\r\n" +
                      "        str(loop()) + @[0],\r\n" +
-                     "        str(loop()) + `. ` + @[1] + ` (` + str(int(@[2])) + `)`\r\n" +
+                     "        f`{loop()}. {@[1]} ({int(@[2])})`\r\n" +
                      "    )\r\n" +
                      ")"}),
                 ("compare_text", new object[]{"\u200a\u202f\n1. foo (1)\n2BA\u042f: \u00a0-3\n3. baz (85)"}),

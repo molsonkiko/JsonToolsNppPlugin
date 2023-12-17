@@ -517,6 +517,23 @@ Returns an array of integers.
    * `range(0, 6, 3)` returns `[0, 3]`.
 
 ---
+`s_cat(x: anything, ...: anything) -> string`
+
+*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+
+Concatenates the string representation (or the value, for a string) of every argument. Arrays and objects are incorporated using the Python-style compact representation, with a single space after item-separating commas and key-value separating colons. 
+
+__Example:__
+* With input `[[1, 2], 3, {"a": 4}]`, ``s_cat(@[0], foo, ` bar `, @[1] * 3, @[2])`` will return `"[1, 2]foo bar 9{\"a\": 4}"`
+
+----
+`s_join(sep: string, x: array) -> string`
+
+Every element of `x` must be a string.
+
+Returns x string-joined with sep (i.e., returns a string that begins with `x[0]` and has `sep` between `x[i - 1]` and `x[i]` for `1 <= i <= len(x)`)
+
+---
 `set(x: array) -> object`
 
 *Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
@@ -526,13 +543,6 @@ Returns an object mapping each unique string representation of an element in `x`
 Example: ``set(j`["a", "b", "a", 1, 2.0, null, 1, null]`)`` returns `{"a": null, "b": null, "1": null, "2.0": null, "null": null}`
 
 One issue with this function that may make the `unique` function preferable: two different elements may have the same string representation for the purposes of this function (e.g., `null` and `"null"`, `2.0` and `"2.0"`)
-
-----
-`s_join(sep: string, x: array) -> string`
-
-Every element of `x` must be a string.
-
-Returns x string-joined with sep (i.e., returns a string that begins with `x[0]` and has `sep` between `x[i - 1]` and `x[i]` for `1 <= i <= len(x)`)
 
 ----
 `sort_by(x: array, k: string | int | function, descending: bool = false)`
@@ -1077,6 +1087,32 @@ Thus, still considering the JSON `[[1,2,3,4],[5,6],[7,8,9]]`, the query `@[:]->l
 ["4444","22","333"]
 ```
 
+## f-strings to easily glue together strings and non-strings *(added in v6.1)* ##
+
+Beginning in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd), RemesPath supports f-strings, quoted strings preceded by the `f` character that can contain complex expressions inside of curly braces.
+These work similarly to f-strings in Python and `$`-strings in C#.
+
+Because curly braces are used to wrap expressions in the f-string, __you need to use `}}` to get a single literal `}` character, and `{{` to get a single literal `{` character in an f-string.__
+
+For example, consider the input
+```json
+[
+    {"a": "foo", "b": -5.5},
+    {"a": "bar", "b": 7},
+    {"c": ["y", -1, null]}
+]
+```
+
+__Examples:__
+* The query `` f`first a = {@[0][a]}. Is first b less than second b? {@[0].b < @[1].b}! Show me third c: {@[2].c}` `` will return
+    ```json
+    "first a = foo. Is first b less than second b? true! Show me third c: [\"y\", -1, null]"
+    ```
+* The query `` f`sum of b's, wrapped in curlybraces = {{ {sum(@[:].b)} }}` `` will return `"sum of b's, wrapped in curlybraces = { 1.5 }"` because we needed to use double curlybraces to get literal curlybrace characters.
+
+__Notes:__
+* f-strings use the [`s_cat` function](#non-vectorized-functions) under the hood to concatenate all the parts of the f-string together. This means that it may be possible to get an error message that references the `s_cat` function in an expression that uses f-strings but does not explicitly call `s_cat`.
+
 ## Editing with assignment expressions ##
 
 *Added in version v2.0.0*
@@ -1184,7 +1220,7 @@ for each value of toLoopOver:
     execute each statement between start of loop and end of loop
 ```
 
-#### Notes ####
+### Notes on loop variables ###
 
 1. If the last statement of a query is `end for;`, or if a `for` loop is not closed, the value returned by the query (and thus the value that the tree view will be populated with) is *the array that was looped over.* For example, the return value of the query ``for x = j`[1, 2, 3]`; x = @ + 1; end for;`` is `[2, 3, 4]`, since we added 1 to every value in the array.
 2. As in Python, a loop variable persists after a for loop is finished. Thus ``for x = j`[1, 2];` end for; x`` returns `2`, since that was the last value in the array `[1, 2]` that was looped through. 
@@ -1226,7 +1262,7 @@ Here's how the query is executed:
     2. Now check if the current element of `b` is longer than `b_maxlen`. If it is, reassign `b_maxlen` to the current element of `b` (statement `var b_maxlen = ifelse(s_len(bval) > s_len(b_maxlen), bval, b_maxlen);`)
 5. Return the current value of `b_maxlen`,  which is `"bbbb"` because that's the longest string in the JSON after the transformation.
 
-### Spreading function args to fill multiple arguments (added in v5.8) ###
+## Spreading function args to fill multiple arguments (added in v5.8) ##
 
 Beginning in [v5.8](/CHANGELOG.md#580---2023-10-09), the `*` spread operator has been added that allows the user to pass in an array to stand for multiple arguments, which RemesPath will attempt to get from the elements of that array.
 
@@ -1245,7 +1281,7 @@ The query `@.*->max_by(*@)` returns `{"a": [0, 1], "b": [1, 0]}` because when wo
 __Notes:__
 * *Only the final argument to a function can be spread.* For example, ``zip(*j`[1, 2]`, j`[3, 4]`)`` is not a legal query because a non-final argument was spread.
 
-### Omitting optional function arguments before the final argument (added in [v6.0](/CHANGELOG.md#600---2023-12-13)) ###
+## Omitting optional function arguments before the final argument (added in [v6.0](/CHANGELOG.md#600---2023-12-13)) ##
 
 Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), if a function has multiple optional arguments, you can leave any number of optional arguments (including the last) empty, rather than writing `null`.
 For example, if the function `foo` has two optional arguments:

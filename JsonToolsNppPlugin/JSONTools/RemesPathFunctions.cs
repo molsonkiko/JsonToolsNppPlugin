@@ -1818,6 +1818,22 @@ namespace JSON_Tools.JSON_Tools
             return new JArray(0, uniq_arr);
         }
 
+        /// <summary>
+        /// s_cat(x: anything, ...: anything) -> string<br></br>
+        /// appends the string representations (or values, in the case of strings) of any number of JSON elements together. NOT VECTORIZED.<br></br>
+        /// EXAMPLES:<br></br>
+        /// * with input [[1, 2], {"b": "bar"}], s_cat(@[0], ` `, foo, bar, baz, @[1].b) returns "[1, 2] foobarbaz{\"b\": \"bar\"}"
+        /// </summary>
+        public static JNode StrCat(List<JNode> args)
+        {
+            var sb = new StringBuilder();
+            foreach (JNode arg in args)
+            {
+                sb.Append(arg.ValueOrToString());
+            }
+            return new JNode(sb.ToString());
+        }
+
         public static JNode StringJoin(List<JNode> args)
         {
             var itbl = (JArray)args[1];
@@ -3409,6 +3425,7 @@ namespace JSON_Tools.JSON_Tools
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
             ["randint"] = new ArgFunction(RandomInteger, "randint", Dtype.INT, 1, 2, false, new Dtype[] {Dtype.INT, Dtype.INT}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
+            ["s_cat"] = new ArgFunction(StrCat, "s_cat", Dtype.STR, 1, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR}),
             ["set"] = new ArgFunction(Set, "set", Dtype.OBJ, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION, Dtype.BOOL }),

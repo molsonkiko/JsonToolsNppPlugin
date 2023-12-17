@@ -318,6 +318,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("sorted(flatten(@.guzo, 2))", "[1, 2, 3]"),
                 new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
                 new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
+                new Query_DesiredResult("s_cat(@.bar.a, ``, 1.5, foo, 1, @.foo[0], null, @._)", "\"false1.5foo1[0, 1, 2]null{\\\"0\\\": 0}\""),
+                new Query_DesiredResult("s_cat(1e3)", "\"1000.0\""),
                 new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\\tbah\""),
                 new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
                 new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
@@ -491,6 +493,20 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("to_csv(@.foo[:][0],,`\\n`)", "\"0\\n3.0\\n6.0\""),
                 new Query_DesiredResult("to_csv(@.foo[:]{a: @[1]})", "\"a\\r\\n1\\r\\n4.0\\r\\n7.0\""),
                 new Query_DesiredResult("set(concat(@.foo[0], @.foo[1][:1], j`[\"a\", \"a\"]`))", "{\"0\": null, \"1\": null, \"2\": null, \"3.0\": null, \"a\": null}"),
+                // ===================== f-strings ===============================
+                new Query_DesiredResult("f`Foo start is {@.foo[0]}}}, (bar.b zip self) is {{{dict(zip(@.bar.b, @.bar.b))}.\\r\\n" +
+                                        "Is @.guzo[1][0][0] less than 3? {ifelse(@.guzo[1][0][0] < 3, yes_it_is, no_it_isnt)}`",
+                    "\"Foo start is [0, 1, 2]}, (bar.b zip self) is {{\\\"a`g\\\": \\\"a`g\\\", \\\"bah\\\": \\\"bah\\\"}.\\r\\nIs @.guzo[1][0][0] less than 3? yes_it_is\""),
+                new Query_DesiredResult("s_sub(j`[\"<foo> bar 4 -5 </foo>\\r\\n<foo>BAZ +7 19.25</foo>\", \"<foo>not a match</foo>\"]`,\r\n" +
+                                                "    g`<foo[^<>]*>\\s*(\\w+)\\s+(INT)\\s+(NUMBER)\\s*</foo>`,\r\n" +
+                                                "    ifelse(float(@[3]) < 0,\r\n" +
+                                                "        f`<foo>INVALID ({@[3]} &lt; 0)</foo>`,\r\n" +
+                                                "        f`<foo>VALID: {s_lower(@[1])} = {float(@[3]) * float(@[2])}</foo>`\r\n" +
+                                                "    )\r\n" +
+                                                ")",
+                    "[\"<foo>INVALID (-5 &lt; 0)</foo>\\r\\n<foo>VALID: baz = 134.75</foo>\", \"<foo>not a match</foo>\"]"),
+                new Query_DesiredResult("f`{@.foo[2]}{null}{NaN}`", "\"[6.0, 7.0, 8.0]nullNaN\""),
+                new Query_DesiredResult("bar + f`{{ {{{1}}} }}` * 2", "\"bar{ {1} }{ {1} }\""),
                 // ===================== s_csv CSV parser ========================
                 // 3-column 14 rows, ',' delimiter, CRLF newline, '"' quote character, newline before EOF
                 new Query_DesiredResult("s_csv(`nums,names,cities\\r\\n" +
@@ -682,20 +698,23 @@ namespace JSON_Tools.Tests
                 firstRandints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
                 if (!(firstRandints1arg.children.All(x => x.value is long l && l >= 0 && l < 1000) && firstRandints1arg.children.Any(x => x.value is long l && l != (long)firstRandints1arg[0].value)))
                 {
-                    Npp.AddLine($"Expected all values in result of \"{randints1argQuery}\" to be in [0, 1000), and some of them to not be equal to the first value in that array, got {firstRandints1arg}");
+                    Npp.AddLine($"Expected all values in result of \"{randints1argQuery}\" to be in [0, 1000), and some of them to not be equal to the first value in that array, got {firstRandints1arg.ToString()}");
+                    tests_failed += 1;
                 }
                 firstRandints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
                 if (!(firstRandints2args.children.All(x => x.value is long l && l >= -700 && l < 800)
                     && firstRandints2args.children.Any(x => x.value is long l && l > 0)
                     && firstRandints2args.children.Any(x => x.value is long l && l < 0)))
                 {
-                    Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args}");
+                    Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args.ToString()}");
+                    tests_failed += 1;
                 }
                 firstRandintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
                 if (!(firstRandintsIfElse.children.All(x => x.value is string s && (s == "foo" || s == "bar" || s == "baz" || s == "quz"))
                     && firstRandintsIfElse.children.Any(x => x.value is string s && s != (string)firstRandintsIfElse[0].value)))
                 {
-                    Npp.AddLine($"In the value of \"{randintsIfElseQuery}\", expected all values in (\"foo\", \"bar\", \"baz\", \"quz\") and not all values equal to first value, got {firstRandintsIfElse}");
+                    Npp.AddLine($"In the value of \"{randintsIfElseQuery}\", expected all values in (\"foo\", \"bar\", \"baz\", \"quz\") and not all values equal to first value, got {firstRandintsIfElse.ToString()}");
+                    tests_failed += 1;
                 }
 
             }
@@ -722,7 +741,7 @@ namespace JSON_Tools.Tests
                     test_failed = true;
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1 but instead threw" +
-                                      $" an exception:\n{ex}");
+                                      $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
                 // argfunction on rand()
                 try
@@ -740,7 +759,7 @@ namespace JSON_Tools.Tests
                     test_failed = true;
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\" but instead threw" +
-                                      $" an exception:\n{ex}");
+                                      $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
                 // rand() in projection (make sure not all doubles are equal)
                 try
@@ -759,7 +778,7 @@ namespace JSON_Tools.Tests
                     test_failed = true;
                     tests_failed++;
                     Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
-                                      $" an exception:\n{ex}");
+                                      $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
                 if (firstRandintsIfElse is null || firstRandints1arg is null || firstRandints2args is null)
                     continue;
@@ -768,17 +787,17 @@ namespace JSON_Tools.Tests
                     JArray randints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
                     if (randints1arg.Equals(firstRandints1arg))
                     {
-                        Npp.AddLine($"Expected running {randints1argQuery} to not return the same thing twice, but got {randints1arg} twice");
+                        Npp.AddLine($"Expected running {randints1argQuery} to not return the same thing twice, but got {randints1arg.ToString()} twice");
                     }
                     JArray randints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
                     if (randints1arg.Equals(firstRandints1arg))
                     {
-                        Npp.AddLine($"Expected running {randints2argQuery} to not return the same thing twice, but got {randints2args} twice");
+                        Npp.AddLine($"Expected running {randints2argQuery} to not return the same thing twice, but got {randints2args.ToString()} twice");
                     }
                     JArray randintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
                     if (randints1arg.Equals(firstRandints1arg))
                     {
-                        Npp.AddLine($"Expected running {randintsIfElseQuery} to not return the same thing twice, but got {randintsIfElse} twice");
+                        Npp.AddLine($"Expected running {randintsIfElseQuery} to not return the same thing twice, but got {randintsIfElse.ToString()} twice");
                     }
                 }
                 catch (Exception ex)
@@ -880,8 +899,10 @@ namespace JSON_Tools.Tests
             int tests_failed = 0;
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
-            List<string[]> testcases = new List<string[]>(new string[][]
+            List<string[]> testcases = new List<string[]>
             {
+                new [] {"", "[0]"}, // empty query
+                new [] {"  \t \r\n", "[0]"}, // query with only whitespace
                 new [] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
                 new [] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
                 new [] {"concat(@, j`{\"b\": 2}`, 1)", "{\"a\": 1}"}, // concat throws with non-iterables
@@ -915,7 +936,15 @@ namespace JSON_Tools.Tests
                 new []{"@!{@ > 3}", "[1, 2, 3, 4]"},
                 new []{"s_mul(,1)", "[]"}, // omitting a non-optional argument with the "no-token-instead-of-null" shorthand
                 new []{"`\\\\``", "[]"}, // even number of escapes before a backtick inside a string
-            });
+                //======= f-string bad stuff =====
+                new []{"f`} blah {@[0]}`", "[1]"}, // unescaped '}' without preceding unmatched '}' 
+                new []{"f`blah {@[0] bar`", "[1]"}, // unescaped '{' without matching '}'
+                new []{"f`blah {@[0] {@[1]}` + `foo}`", "[1]"}, // '{' inside interpolation
+                new []{"f`blah {@[0]} }`", "[1]"}, // unescaped '}' without preceding unmatched '}' 
+                new []{"var zuten = f`foo {@[0] = 3} bar`; @", "[1]"}, // mutation expression ('=' char) inside f-string interpolation
+                new []{"hundenheim + f`{@[0]; @[1]}` ", "[0, 1]"}, // multiple statements (';' char) inside an f-string interpolation
+                new []{"f`foo {} bar`", "[]"}, // empty interpolated section in f-string
+            };
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
             foreach (string other in invalid_others)
@@ -945,6 +974,11 @@ namespace JSON_Tools.Tests
             foreach (string[] test in testcases)
             {
                 ii++;
+                if (test.Length < 2)
+                {
+                    tests_failed++;
+                    Npp.AddLine($"Testcase with only {test.Length} elements; 2 are needed (query and input)");
+                }
                 string query = test[0];
                 string inpstr = test[1];
                 JNode inp = null;
@@ -1185,6 +1219,14 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("var blah = @{1, 3, 5};\r\n1->blah;",
                     "[1, 3, 5]"
                 ),
+                // f-strings in a multi-statement expression
+                new Query_DesiredResult("var foo = @.foo[0];\r\n" +
+                                        "var zut = range(len(foo));\r\n" +
+                                        "for ii = range(len(foo));\r\n" +
+                                        "    at(zut, ii) = f`Step {ii + 1} = {foo * at(foo, ii)};`;\r\n" +
+                                        "end for;" +
+                                        "zut",
+                    "[\"Step 1 = [0, 0, 0];\", \"Step 2 = [0, 1, 2];\", \"Step 3 = [0, 2, 4];\"]"),
             };
             int ii = 0;
             int tests_failed = 0;

@@ -45,7 +45,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. [`s_lines` RemesPath vectorized function](/docs/RemesPath.md#vectorized-functions).
+1. [Python-style f-strings in RemesPath](/docs/RemesPath.md#f-strings-to-easily-glue-together-strings-and-non-strings-added-in-v61).
+2. [`s_cat` RemesPath non-vectorized function](/docs/RemesPath.md#non-vectorized-functions).
+3. [`s_lines` RemesPath vectorized function](/docs/RemesPath.md#vectorized-functions).
 
 ## [6.0.0] - 2023-12-13
 

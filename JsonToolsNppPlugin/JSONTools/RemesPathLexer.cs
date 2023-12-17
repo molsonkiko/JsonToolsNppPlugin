@@ -35,11 +35,11 @@ namespace JSON_Tools.JSON_Tools
         {
             /* Looks like this:
 Syntax error at position 3: Number with two decimal points
-3.5.2
-   ^
+3.5>>>HERE>>>.2
              */
-            string caret = new string(' ', lexpos) + '^';
-            return $"Syntax error at position {lexpos}: {msg}{System.Environment.NewLine}{query}{System.Environment.NewLine}{caret}";
+            string firstQueryPart = query.Substring(0, lexpos);
+            string secondQueryPart = query.Substring(lexpos);
+            return $"Syntax error at position {lexpos}: {msg}\r\n{firstQueryPart}>>>HERE>>>{secondQueryPart}";
         }
     }
 
@@ -77,7 +77,7 @@ Syntax error at position 3: Number with two decimal points
             @"(->)|" + // delimiters containing characters that conflict with binops
             @"(&|\||\^|=~|[!=]=|<=?|>=?|\+|-|//?|%|\*\*?)|" + // binops
             @"([,\[\]\(\)\{\}\.:=!;])|" + // delimiters
-            @"([gj]?(?<!\\)`(?:\\\\|\\`|[^`\r\n])*`)|" + // backtick strings
+            @"([gjf]?(?<!\\)`(?:\\\\|\\`|[^`\r\n])*`)|" + // backtick strings
             $@"({JsonParser.UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{JsonParser.UNQUOTED_START})*)|" + // unquoted strings
             @"(\S+)", // anything non-whitespace non-token stuff (will cause error)
             RegexOptions.Compiled
@@ -86,7 +86,10 @@ Syntax error at position 3: Number with two decimal points
         public List<object> Tokenize(string q)
         {
             MatchCollection regtoks = TOKEN_REGEX.Matches(q);
-            var toks = new List<object>(regtoks.Count);
+            int tokCount = regtoks.Count;
+            if (tokCount == 0)
+                throw new RemesLexerException("Empty query");
+            var toks = new List<object>(tokCount);
             foreach (Match m in regtoks)
             {
                 int successfulGroup = 1;
@@ -163,10 +166,12 @@ Syntax error at position 3: Number with two decimal points
                     string enquoted = sb.ToString();
                     if (starter == 'j') // JSON literal
                         toks.Add(jsonParser.Parse(enquoted));
-                    else if (starter == 'g')
+                    else if (starter == 'g') // regex
                         toks.Add(new JRegex(new Regex(enquoted, RegexOptions.Compiled)));
+                    else if (starter == 'f') // f-string
+                        TokenizeFString(toks, enquoted, q, m.Index + 2);
                     else
-                        toks.Add(new JNode(enquoted, Dtype.STR, 0));
+                        toks.Add(new JNode(enquoted));
                     break;
                 case 11: toks.Add(ParseUnquotedString(m.Value)); break;
                 default:
@@ -242,6 +247,7 @@ Syntax error at position 3: Number with two decimal points
             int unclosedCount = 0;
             for (int ii = 0; ii < toks.Count; ii++)
             {
+                int regTokIndex = ii >= regtoks.Count ? regtoks.Count - 1 : ii;
                 object tok = toks[ii];
                 if (tok is char c)
                 {
@@ -250,10 +256,10 @@ Syntax error at position 3: Number with two decimal points
                         if (++unclosedCount >= MAX_RECURSION_DEPTH)
                             throw new RemesLexerException($"Maximum recuresion depth ({MAX_RECURSION_DEPTH}) in a RemesPath query reached");
                         else if (unclosedCount == 1)
-                            lastUnclosed = regtoks[ii].Index;
+                            lastUnclosed = regtoks[regTokIndex].Index;
                     }
                     else if (c == close && --unclosedCount < 0)
-                        throw new RemesLexerException(regtoks[ii].Index, q, $"Unmatched '{close}'");
+                        throw new RemesLexerException(regtoks[regTokIndex].Index, q, $"Unmatched '{close}'");
                 }
             }
             if (unclosedCount > 0)
@@ -284,6 +290,101 @@ Syntax error at position 3: Number with two decimal points
             }
             sb.Append('`');
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Similar to Python and C#, RemesPath supports f-strings as of JsonTools v6.1.<br></br>
+        /// For example, if the input is [1, [2, "a"], "foo"]<br></br>
+        /// f`first element is {@[0]}, second is {@[1]}. Does the final element begin with f? {ifelse(s_slice(@[2], 0) == f, YES, NO)}! {{LITERAL CURLY}}`<br></br>
+        /// returns "First element is 1, second is [2, \"a\"]. Does the final element begin with f? YES! {LITERAL CURLY}"<br></br>
+        /// Notice that if you want a literal curlybrace in an f-string, you need to double up the curlybrace, as shown above.
+        /// </summary>
+        private void TokenizeFString(List<object> tokens, string fstring, string query, int startIndex)
+        {
+            int len = fstring.Length;
+            // under the hood, we will interpret the f-string as a call to a non-vectorized function,
+            // s_cat, which takes any nonzero number of arguments
+            // and concatenates their string represenatations.
+            tokens.Add(new UnquotedString("s_cat"));
+            tokens.Add('(');
+            int lastUnmatchedOpenCurly = 0;
+            bool insideCurlyBraces = false;
+            var sb = new StringBuilder();
+            for (int ii = 0; ii < len; ii++)
+            {
+                char c = fstring[ii];
+                switch (c)
+                {
+                case '{':
+                    if (ii == len - 1)
+                    {
+                        if (!insideCurlyBraces)
+                            lastUnmatchedOpenCurly = ii;
+                        goto unmatchedOpenCurly;
+                    }
+                    if (fstring[ii + 1] == '{')
+                    {
+                        sb.Append(c); // {{ matching literal {
+                        ii++;
+                    }
+                    else
+                    {
+                        if (insideCurlyBraces)
+                            goto unmatchedOpenCurly;
+                        lastUnmatchedOpenCurly = ii;
+                        insideCurlyBraces = true;
+                        if (sb.Length > 0)
+                        {
+                            string newTok = sb.ToString();
+                            sb = new StringBuilder();
+                            tokens.Add(new JNode(newTok));
+                            tokens.Add(',');
+                        }
+                    }
+                    break;
+                case '}':
+                    if (insideCurlyBraces)
+                    {
+                        insideCurlyBraces = false;
+                        string interpolatedQuery = sb.ToString();
+                        List<object> interpolatedTokens = Tokenize(interpolatedQuery);
+                        tokens.AddRange(interpolatedTokens);
+                        sb = new StringBuilder();
+                        if (ii < len - 1)
+                            tokens.Add(',');
+                    }
+                    else if (ii < len - 1 && fstring[ii + 1] == '}')
+                    {
+                        sb.Append(c); // }} representing literal }
+                        ii++;
+                    }
+                    else
+                        throw new RemesLexerException(startIndex + ii, query,
+                            "'{' characters are not allowed in f-strings except to close an interpolated section or in the \"}}\" sequence that represents a literal '}' character.");
+                    break;
+                case '=':
+                    if (insideCurlyBraces)
+                        throw new RemesLexerException(startIndex + ii, query, "'=' tokens (signifying a mutation expression) are not allowed inside f-string interpolated sections");
+                    sb.Append(c);
+                    break;
+                case ';':
+                    if (insideCurlyBraces)
+                        throw new RemesLexerException(startIndex + ii, query, "';' tokens (signifying the end of a statement) are not allowed inside f-string interpolated sections");
+                    sb.Append(c);
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
+                }
+            }
+            if (insideCurlyBraces)
+                goto unmatchedOpenCurly;
+            if (sb.Length > 0)
+                tokens.Add(new JNode(sb.ToString()));
+            tokens.Add(')'); // close paren for the s_cat function added at the beginning
+            return;
+            unmatchedOpenCurly:
+            throw new RemesLexerException(startIndex + lastUnmatchedOpenCurly, query, "unmatched '{' in f-string");
         }
 
         public static string TokensToString(List<object> tokens)
