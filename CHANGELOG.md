@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. [`s_cat` RemesPath non-vectorized function](/docs/RemesPath.md#non-vectorized-functions).
 3. [`s_lines` RemesPath vectorized function](/docs/RemesPath.md#vectorized-functions).
 
+### Changed
+
+1. RemesPath syntax errors (anything caught by the lexer) now use `>>>HERE>>>` before the character where the error occurred, similar to how the Notepad++ find/replace form indicates the location of a regular expression syntax error.
+
 ## [6.0.0] - 2023-12-13
 
 ### Added
