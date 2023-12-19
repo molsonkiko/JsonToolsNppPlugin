@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. RemesPath syntax errors (anything caught by the lexer) now use `>>>HERE>>>` before the character where the error occurred, similar to how the Notepad++ find/replace form indicates the location of a regular expression syntax error.
 
+### Fixed
+
+1. Eliminated plugin crash when attempting to open the [regex search form](/docs/README.md#regex-search-form) after it had been closed.
+
 ## [6.0.0] - 2023-12-13
 
 ### Added

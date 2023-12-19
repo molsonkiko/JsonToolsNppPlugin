@@ -1160,7 +1160,7 @@ namespace Kbg.NppPluginNET
             }
             if (wasVisible)
                 Npp.notepad.HideDockingForm(errorForm);
-            else if (errorForm == null)
+            else if (errorForm == null && !errorForm.IsDisposed)
             {
                 errorForm = new ErrorForm(activeFname, info.lints);
                 DisplayErrorForm(errorForm);
@@ -1824,7 +1824,7 @@ namespace Kbg.NppPluginNET
             }
             else
             {
-                if (regexSearchForm == null)
+                if (regexSearchForm == null || regexSearchForm.IsDisposed)
                 {
                     regexSearchForm = new RegexSearchForm();
                     regexSearchForm.Show();
