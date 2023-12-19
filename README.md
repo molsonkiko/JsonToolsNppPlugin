@@ -2,9 +2,9 @@
 
 [![Continuous Integration](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml/badge.svg)](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml)
 
-Miscellaneous tools for working with JSON in Notepad++.
+Miscellaneous tools for working with JSON in Notepad++. Includes a general-purpose tree view with powerful search capabilities.
 
-If you have any issues, see if [updating to the latest release](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) helps, and then feel free to raise an [issue](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) on GitHub. Please be sure to include diagnostic information about your system and plugin version.
+If you have any issues, see if [updating to the latest release](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) helps, and then feel free to raise an [issue](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) on GitHub. Please be sure to include diagnostic information about your system, Notepad++ version, and plugin version (go to `?->Debug Info...` from the Notepad++ main menu).
 
 ## Features ##
 1. [Pretty-print JSON](/docs/README.md#pretty_print_style) so that it's spread out over multiple lines.
@@ -64,7 +64,7 @@ Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonTo
 
 This plugin may consume huge amounts of memory when working with really huge JSON files (say 50+ megabytes). As of version `0.3.0`, my [HugeFiles](https://github.com/molsonkiko/HugeFiles) plugin can break a JSON file up into chunks such that every chunk is syntactically valid JSON. This way you don't need to read the entire file into the text editor, and you can look at one chunk at a time. You can also use this plugin to perform simple find/replace operations on the entire file (maybe eventually allowing control over which sections of the file to edit). Finally, the plugin allows a very large JSON file to be broken up into separate syntactically valid JSON files, which may be easier to use.
 
-[JSMinNPP](https://github.com/sunjw/jstoolnpp) is a reasonable alternative, although `v5.0.0` of JsonTools has comparable performance and parsing ability.
+[JSMinNPP](https://github.com/sunjw/jstoolnpp) is a reasonable alternative, although as of `v5.0.0`, JsonTools has comparable performance and parsing ability.
 
 While not a JSON plugin per se, [PythonScript](https://github.com/bruderstein/PythonScript) enables Notepad++ users to customize the editor with Python scripts. Since Python has an excellent native JSON library, you could easily use this plugin to create custom scripts for working with JSON.
 

@@ -729,7 +729,9 @@ Returns the log base 2 of x.
 
 *Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*
 
-As `float` above, but also handles hex integers preceded by "0x" (and optional `+` or `-` sign).
+As `float` above, but also handles hex integers preceded by `0x` (and optional `+` or `-` sign).
+
+This is the only function that is guaranteed to be able to parse anything captured by the `(NUMBER)` capture group in the `s_fa` and `s_sub` functions.
 
 __EXAMPLES:__
 * With `["+0xff" "-0xa", "10", "-5e3", 1, true, false, -3e4, "0xbC"]` as input, returns `[255.0, -10.0, 10.0, -5000.0, 1.0, 1.0, 0.0, -30000.0, 188.0]`
@@ -875,8 +877,8 @@ The fourth argument and any subsequent argument must all be the number of a capt
 
 __SPECIAL NOTES FOR `s_fa`:__
 1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools `^` matches only the beginning of the string and `$` matches only the end of the string.
-2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex number preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
-3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number. A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
+2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex integer preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
+3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number or (a hex integer preceded by `0x`). A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
 4. *`s_fa` may be very slow if `pat` is a function of input,* because the above described regex transformations need to be applied every time the function is called instead of just once at compile time.
 
 __Examples:__
@@ -898,7 +900,9 @@ __As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in 
 ----
 `s_len(x: string) -> int`
 
-The length of string x.
+The length of string x, when encoded in UTF-16. In brief, this means that most characters count for 1, but some characters like 😀 count for 2 or more.
+
+Note that the character count in the Notepad++ status bar indicates the number of bytes in the UTF-8 representation of text, and this will be greater than the value returned by `s_len` for any text that contains non-ASCII characters.
 
 ----
 `s_lower(x: string) -> string`
@@ -920,6 +924,8 @@ This function treats `\r`, `\n`, and `\r\n` all as valid newlines. Use `s_split`
 A string containing `x` repeated `reps` times. E.g., ``s_mul(`abc`, 3)`` returns `"abcabcabc"`.
 
 Basically `x * reps` in Python, except that the binary operator `*` doesn't have that capability in RemesPath.
+
+*Note that as of [v5.1](/CHANGELOG.md#510---2023-06-02), this function is unnecessary because `x * reps` will return the same thing as `s_mul(x, reps)`.*
 
 ----
 `s_slice(x: string, sli: slice | int) -> string`
@@ -1144,7 +1150,7 @@ In these examples, we'll use the input
 Some examples:
 * The query `@.foo[@ < 0] = @ + 1` will yield `{"foo": [0, 2, 3], "bar": "abc", "baz": "de"}`
 * The query `@.bar = s_slice(@, :2)` will yield `{"foo": [-1, 2, 3], "bar": "ab", "baz": "de"}`
-* The query `@.g``b`` = s_len(@)` will yield `{"foo": [-1, 2, 3], "bar": 3, "baz": 2}`
+* The query ``@.g`b` = s_len(@)`` will yield `{"foo": [-1, 2, 3], "bar": 3, "baz": 2}`
 
 ## Assigning variables *(added in v5.7)* and executing multi-statement queries ##
 

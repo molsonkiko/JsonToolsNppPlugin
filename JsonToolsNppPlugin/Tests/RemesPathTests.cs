@@ -494,6 +494,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("to_csv(@.foo[:]{a: @[1]})", "\"a\\r\\n1\\r\\n4.0\\r\\n7.0\""),
                 new Query_DesiredResult("set(concat(@.foo[0], @.foo[1][:1], j`[\"a\", \"a\"]`))", "{\"0\": null, \"1\": null, \"2\": null, \"3.0\": null, \"a\": null}"),
                 // ===================== f-strings ===============================
+                new Query_DesiredResult("f`foo bar baz`", "\"foo bar baz\""), // f-string with no interpolations
                 new Query_DesiredResult("f`Foo start is {@.foo[0]}}}, (bar.b zip self) is {{{dict(zip(@.bar.b, @.bar.b))}.\\r\\n" +
                                         "Is @.guzo[1][0][0] less than 3? {ifelse(@.guzo[1][0][0] < 3, yes_it_is, no_it_isnt)}`",
                     "\"Foo start is [0, 1, 2]}, (bar.b zip self) is {{\\\"a`g\\\": \\\"a`g\\\", \\\"bah\\\": \\\"bah\\\"}.\\r\\nIs @.guzo[1][0][0] less than 3? yes_it_is\""),
