@@ -1000,8 +1000,8 @@ namespace JSON_Tools.JSON_Tools
         /// If this does not operate on input, throw NotImplementedException<br></br>
         /// Currently the JNode types that <i>can operate on input</i> (and their default operations) are:<br></br>
         /// * CurJson cj (cj.function)<br></br>
-        /// * JMutator jm (jm.Mutate)<br></br>
-        /// * JQueryContext jq (jq.Evaluate)
+        /// * JMutator jm (jm.Operate)<br></br>
+        /// * JQueryContext jq (jq.Operate)
         /// </summary>
         /// <returns>the result of operating on input</returns>
         /// <exception cref="NotImplementedException">if this has no function of JNode input</exception>
@@ -1710,6 +1710,7 @@ namespace JSON_Tools.JSON_Tools
             return $"CurJson(type = {type}, function = {function.Method.Name})";
         }
 
+        /// <summary>x -> x</summary>
         public static JNode Identity(JNode obj)
         {
             return obj;
@@ -1769,11 +1770,12 @@ namespace JSON_Tools.JSON_Tools
         /// * change {"a": 1.5, "b": -4.6} to {"a": 3.0, "b": -9.2}<br></br>
         /// * change 2 to 4
         /// </summary>
-        public JNode Mutate(JNode inp)
+        public override JNode Operate(JNode inp)
         {
+            ArgFunction.InitializeGlobals(true);
             JNode selected = selector is CurJson cjsel
                 ? cjsel.function(inp) // selector filters input
-                : selector;   // selector is a constant JNode indepenedent of input
+                : selector;   // selector is a constant JNode independent of input
             if (mutator is CurJson cjmut)
             {
                 var func = cjmut.function;
@@ -1818,12 +1820,6 @@ namespace JSON_Tools.JSON_Tools
             }
             return inp;
         }
-
-        /// <inheritdoc/>
-        public override JNode Operate(JNode inp)
-        {
-            return Mutate(inp);
-        }
     }
 
     /// <summary>
@@ -1867,10 +1863,15 @@ namespace JSON_Tools.JSON_Tools
             tokenIndicesOfVariableReferences = new Dictionary<int, string>();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Run all the statements, and return the result.
+        /// </summary>
         public override JNode Operate(JNode inp)
         {
-            return Evaluate(inp);
+            ArgFunction.InitializeGlobals(mutatesInput);
+            JNode lastStatement = EvaluateStatementsFromStartToEnd(inp, 0, statements.Count);
+            Reset();
+            return lastStatement;
         }
 
         /// <summary>
@@ -1975,23 +1976,24 @@ namespace JSON_Tools.JSON_Tools
         public JNode GetQuery()
         {
             if (IsSimpleQuery)
-                return statements[0];
+            {
+                JNode firstStatement = statements[0];
+                if (firstStatement is CurJson cj)
+                {
+                    Func<JNode, JNode> fun = cj.function;
+                    JNode outfunc(JNode x)
+                    {
+                        // need to reset globals before each evalutation
+                        ArgFunction.InitializeGlobals(false);
+                        return fun(x);
+                    }
+                    return new CurJson(cj.type, outfunc);
+                }
+                return firstStatement;
+            }
             // clear locals because it was necessary to use actual values while building for propagation
             Reset();
             return this;
-        }
-
-        /// <summary>
-        /// run all the statements
-        /// </summary>
-        /// <param name="inp"></param>
-        /// <returns></returns>
-        public JNode Evaluate(JNode inp)
-        {
-            ArgFunction.InitializeGlobals(mutatesInput);
-            JNode lastStatement = EvaluateStatementsFromStartToEnd(inp, 0, statements.Count);
-            Reset();
-            return lastStatement;
         }
 
         /// <summary>
