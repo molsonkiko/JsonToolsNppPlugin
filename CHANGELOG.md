@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. RemesPath syntax errors (anything caught by the lexer) now use `>>>HERE>>>` before the character where the error occurred, similar to how the Notepad++ find/replace form indicates the location of a regular expression syntax error.
+2. *Not part of public-facing API:* Renamed the `JQueryContext.Evaluate` method to `JQueryContext.Operate`, and renamed `JMutator.Mutate` to `JMutator.Operate`.
 
 ### Fixed
 

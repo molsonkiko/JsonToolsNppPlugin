@@ -1772,7 +1772,6 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public override JNode Operate(JNode inp)
         {
-            ArgFunction.InitializeGlobals(true);
             JNode selected = selector is CurJson cjsel
                 ? cjsel.function(inp) // selector filters input
                 : selector;   // selector is a constant JNode independent of input
@@ -1988,6 +1987,17 @@ namespace JSON_Tools.JSON_Tools
                         return fun(x);
                     }
                     return new CurJson(cj.type, outfunc);
+                }
+                else if (firstStatement is JMutator jm && jm.selector is CurJson selector)
+                {
+                    Func<JNode, JNode> selectorFunc = selector.function;
+                    JNode newSelector(JNode x)
+                    {
+                        ArgFunction.InitializeGlobals(true);
+                        return selectorFunc(x);
+                    }
+                    jm.selector = new CurJson(selector.type, newSelector);
+                    return jm;
                 }
                 return firstStatement;
             }
