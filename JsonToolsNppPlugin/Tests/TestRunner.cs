@@ -3,9 +3,7 @@ A test runner for all of this package.
 */
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
 

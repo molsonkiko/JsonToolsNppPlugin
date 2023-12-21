@@ -380,6 +380,8 @@ This functionality can also be used to select regex search results or values fro
 
 ![Treeview select all children - CSV document](/docs/tree%20select%20all%20children%20csv.PNG)
 
+Beginning in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd), using this option from the root treenode selects all remembered selections when in [multi-selection mode](#working-with-selections), and selects every JSON line in [JSON lines](#json-lines-documents) mode.
+
 ## JSON formatting ##
 
 *Added in version 3.3.0*

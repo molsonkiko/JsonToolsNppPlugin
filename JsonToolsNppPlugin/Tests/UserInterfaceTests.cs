@@ -519,6 +519,9 @@ namespace JSON_Tools.Tests
                 ("overwrite", new object[]{"[1,2,3]\r\n{\"a\": 1, \"b\": [-3,-4]}\r\n-7\r\nfalse"}),
                 ("tree_open", new object[]{}), // to close the tree so it can be reopened
                 ("tree_open", new object[]{DocumentType.JSONL}),
+                ("treenode_click", new object[]{new string[] {} }),
+                ("select_treenode_json_children", new object[]{}),
+                ("compare_selections", new object[]{new string[] {"0,7", "9,31", "33,35", "37,42"} }),
                 ("tree_query", new object[]{"@..* [abs(+@) < 3] = @ / 4"}), // divide values in open range (-3, 3) by 4; this should keep the file in JSON Lines format
                 ("compare_text", new object[]{"[0.25,0.5,3]\n{\"a\":0.25,\"b\":[-3,-4]}\n-7\n0.0"}),
                 ("tree_query", new object[]{"@"}), // re-parse document
@@ -565,6 +568,9 @@ namespace JSON_Tools.Tests
                 ("compare_text", new object[]{"[\r\n    0.25,\r\n    0.75,\r\n    0.5\r\n][0,\r\n    1.25,\r\n    1.5\r\n]\r\n[\r\n    \"boo\",\r\n    \"a\",\r\n    \"c\"\r\n]"}),
                 ("compress", new object[]{}),
                 ("compare_text", new object[]{"[0.25,0.75,0.5][0,1.25,1.5]\r\n[\"boo\",\"a\",\"c\"]"}),
+                ("treenode_click", new object[]{new string[] {} }),
+                ("select_treenode_json_children", new object[]{}),
+                ("compare_selections", new object[]{new string[] {"0,15", "15,27", "29,44"} }), // test selecting all remembered selections from tree root in JSON mode
                 // TEST INSERTION THAT BEGINS ON THE FIRST CHAR OF A SELECTION
                 ("insert_text", new object[]{15, "blah"}),
                 ("compare_text", new object[]{"[0.25,0.75,0.5]blah[0,1.25,1.5]\r\n[\"boo\",\"a\",\"c\"]"}),
@@ -742,6 +748,9 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{ new string[] { "16,27 : [2]" } }),
                 ("select_treenode_json_children", new object[]{}),
                 ("compare_selections", new object[]{new string[]{"16,20", "21,27" } }),
+                ("treenode_click", new object[]{new string[] {} }),
+                ("select_treenode_json_children", new object[]{}), // now test selecting all remembered selections from tree root in regex mode
+                ("compare_selections", new object[]{new string[] {"0,3", "4,11", "16,27", "28,33"} }),
                 // TEST REGEX EDITING ON FILE WITH MULTIPLE SELECTIONS
                 ("select", new object[]{new string[] {"0,0"} }),
                 ("tree_query", new object[]{ "@ = s_sub(@, g`(?:NUMBER)`, str(num(@[0])->ifelse(@ > 3, -@, @)))" }),

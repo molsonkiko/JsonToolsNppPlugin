@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -1137,13 +1136,18 @@ namespace JSON_Tools.Forms
 
         public void SelectTreeNodeJsonChildren(TreeNode node)
         {
-            if (Main.activeFname != fname)
+            if (Main.activeFname != fname || !Main.TryGetInfoForFile(fname, out JsonFileInfo info))
                 return;
+            if (info.usesSelections && node.Parent is null && json is JObject selections)
+            {
+                SelectionManager.SetSelectionsFromStartEnds(selections.children.Keys);
+                return;
+            }
             if (!pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
                 MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
                     "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
             (int selectionStartPos, int selectionEndPos) = ParentSelectionStartEnd(node);
-            if (GetDocumentType() == DocumentType.REGEX)
+            if (info.documentType == DocumentType.REGEX)
             {
                 bool firstSelectionSet = false;
                 JNode[] children = ((jnode is JArray arr_) ? arr_.children : ((JObject)jnode).children.Values.AsEnumerable())
@@ -1178,7 +1182,7 @@ namespace JSON_Tools.Forms
                     "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            Main.SelectAllChildren(positions);
+            Main.SelectAllChildren(positions, info.documentType == DocumentType.JSONL);
         }
 
         /// <summary>

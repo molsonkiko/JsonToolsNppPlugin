@@ -1725,11 +1725,12 @@ namespace JSON_Tools.JSON_Tools
 
     /// <summary>
     /// A JNode that is produced by compilation of an assignment expression,
-    /// e.g. "@[@ < 2] = @ + 3"
+    /// e.g. "@[@ < 2] = @ + 3"<br></br>
     /// In this example above, the Mutator produced would have
-    /// selector: CurJson(function=(function that selects all direct children with numeric values less than 2)),
-    /// mutator: CurJson(function=(function that adds 3 to the value of a numeric JNode))
-    /// The type of a Mutator is always UNKNOWN, the value is always null, and the position is always 0.
+    /// added 3 (in-place) to all the values less than 2 in an array or object.<br></br>
+    /// selector: CurJson(function=(function that selects all direct children with numeric values less than 2)),<br></br>
+    /// mutator: CurJson(function=(function that adds 3 to the value of a numeric JNode))<br></br>
+    /// The type of a JMutator is always UNKNOWN, the value is always null, and the position is always 0.
     /// </summary>
     public class JMutator : JNode
     {

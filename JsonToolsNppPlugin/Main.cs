@@ -1758,19 +1758,19 @@ namespace Kbg.NppPluginNET
 
         /// <summary>
         /// Assumes that positions is a set of start positions for non-root JNodes in the current document.<br></br>
-        /// If any of those start positions is 0, do nothing because it is not possible for any JNode
+        /// If any of those start positions is 0, do nothing (unless isJsonLines) because it is not possible for any JNode
         /// other than the root to have a position of 0 in a parsed document (it is only possible in a RemesPath query result).<br></br>
         /// Otherwise, attempts to parse the document starting at each position, and if parsing is successful,
         /// adds a new selection of the parsed child starting at that position.
         /// </summary>
-        public static void SelectAllChildren(IEnumerable<int> positions)
+        public static void SelectAllChildren(IEnumerable<int> positions, bool isJsonLines)
         {
             int[] sortedPositions = positions.Distinct().ToArray();
             if (sortedPositions.Length == 0)
                 return;
             Array.Sort(sortedPositions);
             int minPos = sortedPositions[0];
-            if (minPos == 0)
+            if (!isJsonLines && minPos == 0)
             {
                 // it's not possible for a child of a parsed JNode to have a position of 0,
                 // because only the root can be at position 0.
