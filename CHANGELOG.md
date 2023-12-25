@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
-- [`Select all children`](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57) on the root tree node should select all remembered selections, if in multi-selection mode.
 
 ## [6.1.0] - (UNRELEASED) YYYY-MM-DD
 
@@ -47,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. [Python-style f-strings in RemesPath](/docs/RemesPath.md#f-strings-to-easily-glue-together-strings-and-non-strings-added-in-v61).
 2. [`s_cat` RemesPath non-vectorized function](/docs/RemesPath.md#non-vectorized-functions).
-3. [`s_lines` RemesPath vectorized function](/docs/RemesPath.md#vectorized-functions).
+3. [`s_lines`, `s_lpad`, `s_rpad`, and `zfill` RemesPath vectorized functions](/docs/RemesPath.md#vectorized-functions).
 4. [`Select all children` treenode action](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57) now works for root treenode in JSON Lines and selection-based documents.
 
 ### Changed

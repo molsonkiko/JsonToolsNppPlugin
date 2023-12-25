@@ -266,6 +266,11 @@ namespace JSON_Tools.Tests
                 // ufunction tests
                 new Query_DesiredResult("len(@)", fooLen.ToString()),
                 new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
+                new Query_DesiredResult("s_lpad(@{ab, aba, d*7}, cd, 5)", "[\"cdcdab\", \"cdaba\", \"ddddddd\"]"),
+                new Query_DesiredResult("s_lpad(@{ab, c*4}, c, 4)", "[\"ccab\", \"cccc\"]"),
+                new Query_DesiredResult("s_rpad(@{ab, aba, d*7}, cd, 5)", "[\"abcdcd\", \"abacd\", \"ddddddd\"]"),
+                new Query_DesiredResult("s_rpad(@{ab, c*4}, c, 4)", "[\"abcc\", \"cccc\"]"),
+                new Query_DesiredResult("zfill(j`[\"a\", 60, null, false, 9302.5]`, 5)", "[\"0000a\", \"00060\", \"0null\", \"false\", \"9302.5\"]"),
                 new Query_DesiredResult("in(1, @.foo[0])", "true"),
                 new Query_DesiredResult("in(4.0, @.foo[0])", "false"),
                 new Query_DesiredResult("in(`foo`, @)", "true"),

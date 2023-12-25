@@ -3073,6 +3073,89 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// return a string that contains s padded on the left with enough repetitions of padWith
+        /// to make a composite string with length at least padToLen<br></br>
+        /// EXAMPLES:<br></br>
+        /// LeftPadHelper("foo", "0", 5) returns "00foo"<br></br>
+        /// LeftPadHelper("ab", "01", 5) returns "0101ab"
+        /// </summary>
+        public static string LeftPadHelper(string s, string padWith, long padToLen)
+        {
+            long lengthOfPad = padToLen - s.Length;
+            var sb = new StringBuilder();
+            long padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out long mod);
+            padWithCount = mod == 0 ? padWithCount : padWithCount + 1;
+            for (long ii = 0; ii < padWithCount; ii++)
+            {
+                sb.Append(padWith);
+            }
+            sb.Append(s);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// s_lpad(x: string, padWith: string, padToLen: int) -> string<br></br>
+        /// see LeftPadHelper above
+        /// </summary>
+        public static JNode StrLeftPad(List<JNode> args)
+        {
+            string s = (string)args[0].value;
+            string padWith = (string)args[1].value;
+            long padToLen = (long)args[2].value;
+            return new JNode(LeftPadHelper(s, padWith, padToLen));
+        }
+
+        /// <summary>
+        /// zfill(x: anything, padToLen: int) -> string<br></br>
+        /// returns x (or the string repr of x, if not a string) padded on the left with enough '0' chars to bring its total length to padToLen<br></br>
+        /// EXAMPLES:<br></br>
+        /// zfill(ab, 4) returns "00ab"<br></br>
+        /// zfill(-10, 5) returns "00-10"<br></br>
+        /// zfill(5.0, 4) returns "05.0"
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static JNode ZFill(List<JNode> args)
+        {
+            string s = args[0].ValueOrToString();
+            int padToLen = Convert.ToInt32((long)args[1].value);
+            return new JNode(s.PadLeft(padToLen, '0'));
+        }
+
+        /// <summary>
+        /// return a string that contains s padded on the right with enough repetitions of padWith
+        /// to make a composite string with length at least padToLen<br></br>
+        /// EXAMPLES:<br></br>
+        /// RightPadHelper("foo", "0", 5) returns "foo00"<br></br>
+        /// RightPadHelper("ab", "01", 5) returns "ab0101"
+        /// </summary>
+        public static string RightPadHelper(string s, string padWith, long padToLen)
+        {
+            long lengthOfPad = padToLen - s.Length;
+            var sb = new StringBuilder();
+            long padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out long mod);
+            padWithCount = mod == 0 ? padWithCount : padWithCount + 1;
+            sb.Append(s);
+            for (long ii = 0; ii < padWithCount; ii++)
+            {
+                sb.Append(padWith);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// s_rpad(x: string, padWith: string, padToLen: int) -> string<br></br>
+        /// see RightPadHelper above
+        /// </summary>
+        public static JNode StrRightPad(List<JNode> args)
+        {
+            string s = (string)args[0].value;
+            string padWith = (string)args[1].value;
+            long padToLen = (long)args[2].value;
+            return new JNode(RightPadHelper(s, padWith, padToLen));
+        }
+
+        /// <summary>
         /// is_str(x: anything) -> boolean<br></br>
         /// returns true iff is x is a string
         /// </summary>
@@ -3460,13 +3543,16 @@ namespace JSON_Tools.JSON_Tools
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lines"] = new ArgFunction(StrSplitLines, "s_lines", Dtype.ARR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
+            ["s_lpad"] = new ArgFunction(StrLeftPad, "s_lpad", Dtype.STR, 3, 3, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR | Dtype.ITERABLE, Dtype.INT | Dtype.ITERABLE}),
             ["s_mul"] = new ArgFunction(StrMul, "s_mul", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT }),
+            ["s_rpad"] = new ArgFunction(StrRightPad, "s_rpad", Dtype.STR, 3, 3, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR | Dtype.ITERABLE, Dtype.INT | Dtype.ITERABLE}),
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
             ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 1, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}, true, new ArgsTransform((1, Dtype.REGEX, TransformRegex))),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING})
+            ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
+            ["zfill"] = new ArgFunction(ZFill, "zfill", Dtype.STR, 2, 2, true, new Dtype[] { Dtype.ANYTHING, Dtype.INT | Dtype.ITERABLE}),
         };
     }
 

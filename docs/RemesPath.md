@@ -918,6 +918,16 @@ Returns an array of all the lines (including an empty string at the end if there
 
 This function treats `\r`, `\n`, and `\r\n` all as valid newlines. Use `s_split` below if you want to only accept one or two of those.
 
+---
+`s_lpad(x: string, padWith: string, padToLen: int) -> string`
+*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+return a string that contains `s` padded on the *left* with enough repetitions of `padWith`
+to make a composite string with length at least `padToLen`
+__EXAMPLES:__
+* `s_lpad(foo, e, 5)` returns `"eefoo"`
+* ``s_lpad(ab, `01`, 5)`` returns `"0101ab"`
+* ``s_lpad(abc, `01`, 5)`` returns `"01abc"`
+
 ----
 `s_mul(x: string, reps: int) -> string`
 
@@ -926,6 +936,16 @@ A string containing `x` repeated `reps` times. E.g., ``s_mul(`abc`, 3)`` returns
 Basically `x * reps` in Python, except that the binary operator `*` doesn't have that capability in RemesPath.
 
 *Note that as of [v5.1](/CHANGELOG.md#510---2023-06-02), this function is unnecessary because `x * reps` will return the same thing as `s_mul(x, reps)`.*
+
+---
+`s_rpad(x: string, padWith: string, padToLen: int) -> string`
+*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+return a string that contains `s` padded on the *right* with enough repetitions of `padWith`
+to make a composite string with length at least `padToLen`
+__EXAMPLES:__
+* `s_lpad(foo, e, 5)` returns `"fooee"`
+* ``s_lpad(ab, `01`, 5)`` returns `"ab0101"`
+* ``s_lpad(abc, `01`, 5)`` returns `"abc01"`
 
 ----
 `s_slice(x: string, sli: slice | int) -> string`
@@ -1007,6 +1027,15 @@ Returns the upper-case form of x.
 `str(x: anything) -> string`
 
 Returns the string representation of x.
+
+---
+`zfill(x: anything, padToLen: int) -> string`
+*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+return a string that contains `x` (or the string representation of `x`, if not a string)
+padded on the left with enough repetitions of the `0` character to make a composite string with length at least `padToLen`
+__EXAMPLES:__
+* `zfill(10, 5)` returns `"00010"`
+* `s_lpad(ab, 4)` returns `"00ab"`
 
 ## Projections ##
 
