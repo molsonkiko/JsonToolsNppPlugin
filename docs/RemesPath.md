@@ -669,18 +669,18 @@ Returns the absolute value of x.
 Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator](#unary-operators).
 
 ----
-`float(x: number) -> number`
+`float(x: number | string) -> number`
 
 * If x is a boolean, integer, or float: Returns a 64-bit floating-point number equal to x.
 * If x is a __*decimal* string representation of a floating-point number__: returns the 64-bit floating point number that is represented.
 
 ----
-`ifelse(cond: bool, if_true: anything, if_false: anything) -> anything`
+`ifelse(cond: anything, if_true: anything, if_false: anything) -> anything`
 
 Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to true), otherwise returns `if_false`.
 
 ----
-`int(x: number) -> int`
+`int(x: number | string) -> int`
 
 * If x is a boolean or integer: returns a 64-bit integer equal to x.
 * If x is a float: returns the closest 64-bit integer to x.
@@ -943,9 +943,9 @@ Basically `x * reps` in Python, except that the binary operator `*` doesn't have
 return a string that contains `s` padded on the *right* with enough repetitions of `padWith`
 to make a composite string with length at least `padToLen`
 __EXAMPLES:__
-* `s_lpad(foo, e, 5)` returns `"fooee"`
-* ``s_lpad(ab, `01`, 5)`` returns `"ab0101"`
-* ``s_lpad(abc, `01`, 5)`` returns `"abc01"`
+* `s_rpad(foo, e, 5)` returns `"fooee"`
+* ``s_rpad(ab, `01`, 5)`` returns `"ab0101"`
+* ``s_rpad(abc, `01`, 5)`` returns `"abc01"`
 
 ----
 `s_slice(x: string, sli: slice | int) -> string`
@@ -1032,10 +1032,10 @@ Returns the string representation of x.
 `zfill(x: anything, padToLen: int) -> string`
 *Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
 return a string that contains `x` (or the string representation of `x`, if not a string)
-padded on the left with enough repetitions of the `0` character to make a composite string with length at least `padToLen`
+padded on the left with enough repetitions of the `0` character to make a composite string with length `padToLen`
 __EXAMPLES:__
 * `zfill(10, 5)` returns `"00010"`
-* `s_lpad(ab, 4)` returns `"00ab"`
+* `zfill(ab, 4)` returns `"00ab"`
 
 ## Projections ##
 
