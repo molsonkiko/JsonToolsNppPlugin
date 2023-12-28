@@ -1764,8 +1764,10 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// Result is NUL-terminated.
         /// (Scintilla feature 2182)
         /// </summary>
-        public unsafe string GetText(int length)
+        public unsafe string GetText(int length = -1)
         {
+            if (length == -1)
+                length = GetLength() + 1;
             byte[] textBuffer = new byte[length];
             fixed (byte* textPtr = textBuffer)
             {

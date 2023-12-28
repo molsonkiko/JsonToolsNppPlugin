@@ -1064,7 +1064,7 @@ namespace JSON_Tools.Forms
                     int nodepos = jnode.position;
                     if (documentText is null)
                         documentText = selectionEnd < 0
-                            ? Npp.editor.GetText(Npp.editor.GetLength() + 1)
+                            ? Npp.editor.GetText()
                             : Npp.GetSlice(selectionStart, selectionEnd);
                     int utf8Extra = 0;
                     for (; startIndex < documentText.Length && startIndex + utf8Extra < nodepos; startIndex++)

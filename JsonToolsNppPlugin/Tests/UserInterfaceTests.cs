@@ -110,7 +110,7 @@ namespace JSON_Tools.Tests
                 break;
             case "compare_text":
                 var correctText = (string)args[0];
-                string gotText = Npp.editor.GetText(Npp.editor.GetLength());
+                string gotText = Npp.editor.GetText();
                 if (correctText != gotText)
                 {
                     messages.Add($"FAIL: expected text\r\n{correctText}\r\nGOT\r\n{gotText}");

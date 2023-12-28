@@ -964,7 +964,7 @@ namespace Kbg.NppPluginNET
             var selections = SelectionManager.GetSelectedRanges();
             if (SelectionManager.NoTextSelected(selections))
             {
-                string text = Npp.editor.GetText(Npp.editor.GetLength());
+                string text = Npp.editor.GetText();
                 JNode textNode = new JNode(text);
                 PrettyPrintJsonInNewFile(textNode);
             }
@@ -1020,7 +1020,7 @@ namespace Kbg.NppPluginNET
         public static string TryGetSelectedJsonStringValue(int start = -1, int end = -1)
         {
             string text = start < 0 || end < 0
-                ? Npp.editor.GetText(Npp.editor.GetLength())
+                ? Npp.editor.GetText()
                 : Npp.GetSlice(start, end);
             try
             {

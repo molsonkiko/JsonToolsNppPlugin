@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Eliminated plugin crash when attempting to open the [regex search form](/docs/README.md#regex-search-form) after it had been closed.
+2. Some UI test failures (and probably related weirdness in public API) on older NPP versions
 
 ## [6.0.0] - 2023-12-13
 
