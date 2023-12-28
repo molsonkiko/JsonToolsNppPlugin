@@ -39,6 +39,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             {
                 Win32.SendMessage(scintilla, msg, (IntPtr)length, (IntPtr)textPtr);
                 int lastNullCharPos = length - 1;
+                // this only bypasses NULL chars because no char
+                // other than NULL can have any 0-valued bytes in UTF-8.
+                // See https://en.wikipedia.org/wiki/UTF-8#Encoding
                 for (; lastNullCharPos >= 0 && textBuffer[lastNullCharPos] == '\x00'; lastNullCharPos--) { }
                 return Encoding.UTF8.GetString(textBuffer, 0, lastNullCharPos + 1);
             }
@@ -1784,7 +1787,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public unsafe string GetText(int length = -1)
         {
-            return GetNullStrippedStringFromMessageThatReturnsLength(SciMsg.SCI_GETTEXT);
+            return GetNullStrippedStringFromMessageThatReturnsLength(SciMsg.SCI_GETTEXT, length);
         }
 
         /// <summary>Retrieve the number of characters in the document. (Scintilla feature 2183)</summary>
