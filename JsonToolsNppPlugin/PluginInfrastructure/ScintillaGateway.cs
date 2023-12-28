@@ -20,6 +20,29 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 
         public static readonly int LengthZeroTerminator = "\0".Length;
 
+        /// <summary>
+        /// many scintilla methods have a length parameter and a buffer pointer and are bimodal:<br></br>
+        /// * if length is 0, return the length and have no side effects<br></br>
+        /// * if length is greater than 0, return the length and fill the buffer with length characters<br></br>
+        /// This method gets the length if the length is 0, uses the second mode to fill a buffer,<br></br>
+        /// and returns a string of the UTF8-decoded buffer with all trailing '\x00' chars stripped off.
+        /// </summary>
+        /// <param name="msg">message to send</param>
+        /// <param name="length">number of characters to retrieve (if 0, find out by sending message)</param>
+        /// <returns></returns>
+        private unsafe string GetNullStrippedStringFromMessageThatReturnsLength(SciMsg msg, int length = 0)
+        {
+            if (length < 1)
+                length = Win32.SendMessage(scintilla, msg, (IntPtr)Unused, (IntPtr)Unused).ToInt32();
+            byte[] textBuffer = new byte[length];
+            fixed (byte* textPtr = textBuffer)
+            {
+                Win32.SendMessage(scintilla, msg, (IntPtr)length, (IntPtr)textPtr);
+                int lastNullCharPos = length - 1;
+                for (; lastNullCharPos >= 0 && textBuffer[lastNullCharPos] == '\x00'; lastNullCharPos--) { }
+                return Encoding.UTF8.GetString(textBuffer, 0, lastNullCharPos + 1);
+            }
+        }
 
         public ScintillaGateway(IntPtr scintilla)
         {
@@ -1609,12 +1632,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public unsafe string GetSelText()
         {
-            byte[] textBuffer = new byte[10000];
-            fixed (byte* textPtr = textBuffer)
-            {
-                Win32.SendMessage(scintilla, SciMsg.SCI_GETSELTEXT, (IntPtr) Unused, (IntPtr) textPtr);
-                return Encoding.UTF8.GetString(textBuffer).TrimEnd('\0');
-            }
+            return GetNullStrippedStringFromMessageThatReturnsLength(SciMsg.SCI_GETSELTEXT);
         }
 
         /// <summary>
@@ -1766,14 +1784,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public unsafe string GetText(int length = -1)
         {
-            if (length == -1)
-                length = GetLength() + 1;
-            byte[] textBuffer = new byte[length];
-            fixed (byte* textPtr = textBuffer)
-            {
-                Win32.SendMessage(scintilla, SciMsg.SCI_GETTEXT, (IntPtr) length, (IntPtr) textPtr);
-                return Encoding.UTF8.GetString(textBuffer).TrimEnd('\0');
-            }
+            return GetNullStrippedStringFromMessageThatReturnsLength(SciMsg.SCI_GETTEXT);
         }
 
         /// <summary>Retrieve the number of characters in the document. (Scintilla feature 2183)</summary>
