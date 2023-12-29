@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#610---2023-12-28) to this project will be documented in this file.
+All [notable changes](#611---2023-12-28) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
