@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 
+## [6.1.1] - 2023-12-28
+
+### Fixed
+
+1. Eliminated potentially unrecoverable plugin crash when JSON parser tries to parse document with `-` or `+` not followed by numeric chars (e.g. `-a`, `+`). Now such badly formatted numbers are parsed as `NaN`.
+
 ## [6.1.0] - 2023-12-28
 
 ### Added

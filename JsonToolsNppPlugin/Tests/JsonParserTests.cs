@@ -974,6 +974,10 @@ multiline comment
                             "No comma between array members"
                     }
                 ),
+                ("-[]", "NaN", new string[]{"Number string \"-\" had bad format", "At end of valid JSON document, got [ instead of EOF"}),
+                (" +\r\nfalse", "NaN", new string[]{"Leading + signs in numbers are not allowed except in JSON5", "Number string \"+\" had bad format", "At end of valid JSON document, got f instead of EOF"}),
+                (" +", "null", new string[]{"Leading + signs in numbers are not allowed except in JSON5", "'+' sign at end of document"}),
+                ("-", "null", new string[]{"'-' sign at end of document"}),
             };
 
             int tests_failed = 0;

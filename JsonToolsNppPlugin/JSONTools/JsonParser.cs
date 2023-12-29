@@ -889,6 +889,11 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Leading + signs in numbers are not allowed except in JSON5", inp, ii, ParserState.JSON5);
                     else negative = true;
                     ii++;
+                    if (ii >= inp.Length)
+                    {
+                        HandleError($"'{c}' sign at end of document", inp, inp.Length - 1, ParserState.FATAL);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
+                    }
                 }
                 c = inp[ii];
                 if (c == 'I')
@@ -1035,9 +1040,15 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return new JNode(long.Parse(numstr), Dtype.INT, startUtf8Pos);
                 }
-                catch (OverflowException)
+                catch (Exception ex)
                 {
-                    // doubles can represent much larger numbers than 64-bit ints,
+                    if (!(ex is OverflowException))
+                    {
+                        HandleError($"Number string {JNode.StrToString(numstr, true)} had bad format", inp, startUtf8Pos, ParserState.BAD);
+                        return new JNode(NanInf.nan, startUtf8Pos);
+                    }
+                    // overflow exceptions are OK,
+                    // because doubles can represent much larger numbers than 64-bit ints,
                     // albeit with loss of precision
                 }
             }
@@ -1048,7 +1059,7 @@ namespace JSON_Tools.JSON_Tools
             }
             catch
             {
-                HandleError($"Number {numstr} had bad format", inp, startUtf8Pos, ParserState.BAD);
+                HandleError($"Number string {JNode.StrToString(numstr, true)} had bad format", inp, startUtf8Pos, ParserState.BAD);
                 num = NanInf.nan;
             }
             return new JNode(num, Dtype.FLOAT, startUtf8Pos);
