@@ -519,7 +519,7 @@ Returns an array of integers.
 ---
 `s_cat(x: anything, ...: anything) -> string`
 
-*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+*Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
 
 Concatenates the string representation (or the value, for a string) of every argument. Arrays and objects are incorporated using the Python-style compact representation, with a single space after item-separating commas and key-value separating colons. 
 
@@ -816,6 +816,7 @@ __Notes:__
 * When `s_csv` parses a file, quoted values are parsed without the enclosing quotes and with any internal doubled quote characters replaced with a single instance of the quote character. Thus the valid value (for `"` quote character)`"foo""bar"` would be parsed as the JSON string `"foo\"bar"`
 * You can pass in `null` for the 3rd, 4th, and 5th args. Any instance of `null` in those args will be replaced with the default value.
 * To improve performance, this function and `s_fa` use a shared cache that maps (input, function argument) pairs to the return value of the function. Up to 8 return values can be cached, only documents between 100KB and (5MB if 32bit, else 10MB) use the cache, and the cache is disabled for mutating queries (to avoid mutating values in the cache).
+* Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this function did not work properly if the delimiter was a regex metacharacter like `|`.
 
 __Example:__
 Suppose you have the JSON string `"nums,names,cities,date,zone,subzone,contaminated\nnan,Bluds,BUS,,1,'',TRUE\n0.5,dfsd,FUDG,12/13/2020 0:00,2,c,TRUE\n,qere,GOLAR,,3,f,\n1.2,qere,'GOL''AR',,3,h,TRUE\n'',flodt,'q,tun',,4,q,FALSE\n4.6,Kjond,,,,w,''\n4.6,'Kj\nond',YUNOB,10/17/2014 0:00,5,z,FALSE"`
@@ -912,7 +913,7 @@ The lower-case form of x.
 ---
 `s_lines(x: string) -> array[string]`
 
-*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+*Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
 
 Returns an array of all the lines (including an empty string at the end if there's a trailing newline) in `x`.
 
@@ -920,7 +921,7 @@ This function treats `\r`, `\n`, and `\r\n` all as valid newlines. Use `s_split`
 
 ---
 `s_lpad(x: string, padWith: string, padToLen: int) -> string`
-*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+*Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
 return a string that contains `s` padded on the *left* with enough repetitions of `padWith`
 to make a composite string with length at least `padToLen`
 __EXAMPLES:__
@@ -939,7 +940,7 @@ Basically `x * reps` in Python, except that the binary operator `*` doesn't have
 
 ---
 `s_rpad(x: string, padWith: string, padToLen: int) -> string`
-*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+*Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
 return a string that contains `s` padded on the *right* with enough repetitions of `padWith`
 to make a composite string with length at least `padToLen`
 __EXAMPLES:__
@@ -1030,7 +1031,7 @@ Returns the string representation of x.
 
 ---
 `zfill(x: anything, padToLen: int) -> string`
-*Added in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd)*
+*Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
 return a string that contains `x` (or the string representation of `x`, if not a string)
 padded on the left with enough repetitions of the `0` character to make a composite string with length `padToLen`
 __EXAMPLES:__
@@ -1124,7 +1125,7 @@ Thus, still considering the JSON `[[1,2,3,4],[5,6],[7,8,9]]`, the query `@[:]->l
 
 ## f-strings to easily glue together strings and non-strings *(added in v6.1)* ##
 
-Beginning in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd), RemesPath supports f-strings, quoted strings preceded by the `f` character that can contain complex expressions inside of curly braces.
+Beginning in [v6.1](/CHANGELOG.md#610---2023-12-28), RemesPath supports f-strings, quoted strings preceded by the `f` character that can contain complex expressions inside of curly braces.
 These work similarly to f-strings in Python and `$`-strings in C#.
 
 Because curly braces are used to wrap expressions in the f-string, __you need to use `}}` to get a single literal `}` character, and `{{` to get a single literal `{` character in an f-string.__

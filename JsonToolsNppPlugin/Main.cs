@@ -1160,7 +1160,7 @@ namespace Kbg.NppPluginNET
             }
             if (wasVisible)
                 Npp.notepad.HideDockingForm(errorForm);
-            else if (errorForm == null && !errorForm.IsDisposed)
+            else if (errorForm == null || errorForm.IsDisposed)
             {
                 errorForm = new ErrorForm(activeFname, info.lints);
                 DisplayErrorForm(errorForm);
@@ -1860,11 +1860,13 @@ namespace Kbg.NppPluginNET
             // and also check if the file matches a schema validation pattern
             string fname = Npp.notepad.GetCurrentFilePath();
             string ext = Npp.FileExtension(fname);
-            if (ValidateIfFilenameMatches(fname)
-                || !fileExtensionsToAutoParse.Contains(ext))
+            if (ValidateIfFilenameMatches(fname) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
+                || !fileExtensionsToAutoParse.Contains(ext) // extension is not marked for auto-parsing, so stop
+                || (TryGetInfoForFile(fname, out JsonFileInfo info)
+                    && (info.documentType == DocumentType.INI || info.documentType == DocumentType.REGEX))) // file is already being parsed as regex or ini, so stop
                 return;
-            // filename matches but it's not associated with a schema, so just parse normally
-            TryParseJson(DocumentType.JSON, true);
+            // filename matches but it's not associated with a schema or being parsed as non-JSON/JSONL, so just parse normally
+            TryParseJson(ext == "jsonl" ? DocumentType.JSONL : DocumentType.JSON, true);
         }
 
         /// <summary>

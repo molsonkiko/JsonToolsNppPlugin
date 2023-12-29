@@ -2393,9 +2393,9 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// converts the delimiter to a format suitable for use in regular expressions 
         /// </summary>
-        private static string CsvCleanDelimiter(char delim)
+        private static string CsvCleanChar(char c)
         {
-            return delim == '\t' ? "\\t" : Regex.Unescape(new string(delim, 1));
+            return c == '\t' ? "\\t" : Regex.Escape(new string(c, 1));
         }
 
         private static string CsvColumnRegex(string delimiter, string quote)
@@ -2406,16 +2406,16 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// returns a regex that matches a single row of a CSV file (formatted according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)) with:<br></br>
         /// - nColumns columns,<br></br>
-        /// - delimiter as the column separator,<br></br>
+        /// - delim as the column separator,<br></br>
         /// - newline as the line terminator (must be \r\n, \r, \n, or an escaped variant thereof)<br></br>
-        /// - and quote as the quote character (used to enclose columns that include a delimiter or a newline in their text).<br></br>
+        /// - and quote as the quote character (used to enclose columns that include a delim or a newline in their text).<br></br>
         /// Thus we might call CsvRegex(5, '\t', '\n', '\'') to match a tab-separated variables file with 5 columns, UNIX LF newline, and "'" (single quote) as the quote character)
         /// </summary>
         /// <exception cref="ArgumentException">if newline is not a valid line end</exception>
-        public static string CsvRowRegex(int nColumns, char delimiter=',', string newline="\r\n", char quote = '"')
+        public static string CsvRowRegex(int nColumns, char delim=',', string newline="\r\n", char quote = '"')
         {
-            string cleanDelim = CsvCleanDelimiter(delimiter);
-            string escapedQuote = Regex.Escape(new string(quote, 1));
+            string cleanDelim = CsvCleanChar(delim);
+            string escapedQuote = CsvCleanChar(quote);
             string escapedNewline;
             switch (newline)
             {

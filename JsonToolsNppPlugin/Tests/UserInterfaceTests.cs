@@ -731,8 +731,8 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{new string[] { "0 : {1}", " 草1 : \"ｪ2\"" } }),
                 ("compare_selections", new object[]{new string[] {"6,6"} }),
                 // TEST REGEX SEARCH ON FILE WITH MULTIPLE SELECTIONS
-                ("overwrite", new object[]{"1 2\r[3]ö+4\r\"\u00a0\r+5.5 -0xa6F\r'foo'"}),
-                ("tree_query", new object[]{"s_csv(@, 1, `,`, `\\r`, `\"`, h)"}),
+                ("overwrite", new object[]{"1 2\r[3]ö+4\r\"\u00a0\r+5.5 -0xa6F\r\"fo|\""}),
+                ("tree_query", new object[]{"s_csv(@, 1, `|`, `\\r`, `\"`, h)"}),
                 ("treenode_click", new object[]{new string[] {} }),
                 ("select_treenode_json_children", new object[]{}),
                 ("compare_selections", new object[]{new string[] {"0,3", "4,11", "16,27", "28,33"} }),
@@ -754,7 +754,7 @@ namespace JSON_Tools.Tests
                 // TEST REGEX EDITING ON FILE WITH MULTIPLE SELECTIONS
                 ("select", new object[]{new string[] {"0,0"} }),
                 ("tree_query", new object[]{ "@ = s_sub(@, g`(?:NUMBER)`, str(num(@[0])->ifelse(@ > 3, -@, @)))" }),
-                ("compare_text", new object[]{"1.0 2.0\r[3.0]ö-4.0\r\"\u00a0\r-5.5 -2671.0\r'foo'" }),
+                ("compare_text", new object[]{"1.0 2.0\r[3.0]ö-4.0\r\"\u00a0\r-5.5 -2671.0\r\"fo|\"" }),
                 ("compare_selections", new object[]{new string[] {"0,7", "8,19", "24,36", "37,42"} }),
                 // TEST DOCUMENT TYPE CHANGE BUTTON IN TREEVIEW
                 ("overwrite", new object[]{"[1, 2]\r\n{\"ö\": \"3 4\"}\r\n\"\"\r\n{\"5\": [6]}\r\n'foo'"}),

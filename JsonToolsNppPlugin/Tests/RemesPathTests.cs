@@ -607,6 +607,18 @@ namespace JSON_Tools.Tests
                                                "$-7.2$`" +
                                                ", 1, `^`, `\\r`, `$`, d, 0)",
                     "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": \"-7.2\"}]"),
+                // 2-column, map header to values, '|' delimiter, '$' quote char, '\r\n' newline, parse first col as numbers
+                new Query_DesiredResult("s_csv(`foo|bar\\r\\n" +
+                                                "1|3\\r\\n" +
+                                                "-5.5|$3|4$\\r\\n" +
+                                                "$$|`, 2, `|`, `\\r\\n`, `$`, d, 0)",
+                    "[{\"foo\":1,\"bar\":\"3\"},{\"foo\":-5.5,\"bar\":\"3|4\"},{\"foo\":\"\",\"bar\":\"\"}]"),
+                // 2-column, skip header, ']' delimiter, '\'' quote char, '\r\n' newline
+                new Query_DesiredResult("s_csv(`foo]bar\\r\\n" +
+                                                "1]3\\r\\n" +
+                                                "-5.5]'3]4'\\r\\n" +
+                                                "'']`, 2, `]`, `\\r\\n`, `'`)",
+                    "[[\"1\",\"3\"],[\"-5.5\",\"3]4\"],[\"\",\"\"]]"),
                 // ====================== s_fa function for parsing regex search results as string arrays or arrays of arrays of strings =========
                 // 2 capture groups (2nd optional), parse the first group as number
                 new Query_DesiredResult("s_fa(`1. foo  boo\\r\\n" +

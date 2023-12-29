@@ -196,6 +196,8 @@ In addition to this form, the document type status bar section will show how man
 
 For performance reasons, the error form will never have more than 5000 rows. These rows will be roughly evenly spaced throughout the document.
 
+__For pre-[v6.1](/CHANGELOG.md#610---2023-12-28) JsonTools, *do not click `Yes`* on the dialog that warns of slow reload.__ If you click `Yes`, you can expect to wait an *extremely long time.*
+
 <details><summary>Pre-v5.3.0 error reporting</summary>
 
 If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), errors can also be shown for the current document with a new plugin menu option.
@@ -234,8 +236,9 @@ The `linting` attribute in Settings enables the built-in linter for the JSON par
 
 About 2 seconds after a not-very-large file (default less than 4 megabytes, configurable in settings) is opened, and after 2 seconds of inactivity following any modification of the file or styling, the plugin can parse the document and performs [JSON Schema validation](#validating-json-against-json-schema) on the document. The user is notified of any errors when this happens, and no further notifications are sent until the user next modifies or re-styles the document.
 
-This is off by default. If desired, this feature can be turned on in the settings.
+This is off by default. If desired, this feature can be turned on in the settings. When turned on, it only applies to files with `json`, `jsonc`, `jsonl`, and `json5` extensions, or files configured for [automatic JSON schema validation](#automatic-validation-of-json-against-json-schema).
 
+Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation forced the file to be parsed as JSON. As of v6.1, the document will be parsed as [JSON Lines](#json-lines-documents) if the file extension is `jsonl` and as JSON otherwise. In addition, if the document is already in [regex mode](#regex-search-form) or [ini file mode](#parsing-ini-files), automatic validation is suspended.
 
 ## Path to current position ##
 
@@ -380,7 +383,7 @@ This functionality can also be used to select regex search results or values fro
 
 ![Treeview select all children - CSV document](/docs/tree%20select%20all%20children%20csv.PNG)
 
-Beginning in [v6.1](/CHANGELOG.md#610---unreleased-yyyy-mm-dd), using this option from the root treenode selects all remembered selections when in [multi-selection mode](#working-with-selections), and selects every JSON line in [JSON lines](#json-lines-documents) mode.
+Beginning in [v6.1](/CHANGELOG.md#610---2023-12-28), using this option from the root treenode selects all remembered selections when in [multi-selection mode](#working-with-selections), and selects every JSON line in [JSON lines](#json-lines-documents) mode.
 
 ## JSON formatting ##
 

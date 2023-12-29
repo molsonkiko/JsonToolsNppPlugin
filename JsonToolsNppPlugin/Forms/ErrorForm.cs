@@ -17,7 +17,13 @@ namespace JSON_Tools.Forms
 {
     public partial class ErrorForm : Form
     {
-        public const int SLOW_RELOAD_THRESHOLD = 300; // completely arbitrary
+        /// <summary>
+        /// if there are at least this many lints (completely arbitrary), warn the user 
+        /// </summary>
+        public const int SLOW_RELOAD_THRESHOLD = 300;
+        /// <summary>
+        /// there *cannot* be more than this many rows in the table, because otherwise it just gets insanely slow
+        /// </summary>
         public const int LINT_MAX_ROW_COUNT = 5000;
         public string fname;
         public List<JsonLint> lints;
@@ -36,15 +42,11 @@ namespace JSON_Tools.Forms
             bool wasBig = SlowReloadExpected(lints);
             if (wasBig && !onStartup)
             {
-                if (MessageBox.Show("Reloading this error form could take an extremely long time!\r\n" +
-                                    "You will get better results from closing it and reopening it from the plugin menu.\r\n" +
-                                    "Do you still want to reload?",
-                                    "Very slow error form reload expected",
-                                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning
-                    ) == DialogResult.No)
-                    return;
+                // for reasons beyond my comprehension, deleting the form and starting over is faster than refreshing when there are a lot of rows
                 Npp.notepad.HideDockingForm(this);
-                Hide();
+                Close();
+                Main.OpenErrorForm(fname, false);
+                return;
             }
             this.fname = fname;
             this.lints = lints;

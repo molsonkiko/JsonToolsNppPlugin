@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#600---2023-12-13) to this project will be documented in this file.
+All [notable changes](#610---2023-12-28) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 
-## [6.1.0] - (UNRELEASED) YYYY-MM-DD
+## [6.1.0] - 2023-12-28
 
 ### Added
 
@@ -53,11 +53,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. RemesPath syntax errors (anything caught by the lexer) now use `>>>HERE>>>` before the character where the error occurred, similar to how the Notepad++ find/replace form indicates the location of a regular expression syntax error.
 2. *Not part of public-facing API:* Renamed the `JQueryContext.Evaluate` method to `JQueryContext.Operate`, and renamed `JMutator.Mutate` to `JMutator.Operate`.
+3. Make it so [automatic validation](/docs/README.md#automatically-check-for-errors-after-editing) does not require the document to be re-parsed as JSON, and is suppressed when in regex or ini mode.
 
 ### Fixed
 
 1. Eliminated plugin crash when attempting to open the [regex search form](/docs/README.md#regex-search-form) after it had been closed.
-2. Some UI test failures (and probably related weirdness in public API) on older NPP versions
+2. Greatly improved [error form](/docs/README.md#error-form-and-status-bar) reloading performance. 
+3. Some UI test failures (and probably related weirdness in public API) on older NPP versions
+4. Fix bug where [`s_csv` RemesPath function](/docs/RemesPath.md#vectorized-functions) did not properly handle delimiters that were regex metacharacters like `|`
 
 ## [6.0.0] - 2023-12-13
 
