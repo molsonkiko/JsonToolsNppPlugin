@@ -679,6 +679,12 @@ Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator]
 
 Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to true), otherwise returns `if_false`.
 
+__Note:__
+* Beginning in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), this function's execution is conditional, meaning that *only the chosen branch is executed*. 
+* For example, consider the input `["foo", 1, "a", null]`.
+* Prior to v6.2, the query `@[:]->ifelse(is_str(@), s_len(@), -1)` would raise an error on that input, because it would call `s_len` on non-strings (illegal arguments).
+* As of v6.2, the expected `[3, -1, 1, -1]` would be returned, because the `s_len` function would only be called when `is_str` returned true (i.e., on strings).
+
 ----
 `int(x: number | string) -> int`
 

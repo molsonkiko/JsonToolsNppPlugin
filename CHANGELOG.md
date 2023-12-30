@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 
+## [6.2.0] - (UNRELEASED) YYYY-MM-DD
+
+### Changed
+
+1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
+
 ## [6.1.1] - 2023-12-28
 
 ### Fixed

@@ -980,6 +980,15 @@ namespace JSON_Tools.JSON_Tools
         /// unless the function has arbitrarily many arguments (indicated by max_args = int.MaxValue),
         /// in which case the last value of Input_types is the type that all optional arguments must have.
         /// </summary>
+        /// <param name="function">the function associated with this argFunction</param>
+        /// <param name="name">the name used in RemesPath to call it</param>
+        /// <param name="type">the type(s) returned by the function</param>
+        /// <param name="minArgs">the minimum number of args</param>
+        /// <param name="maxArgs">the maximum number of args</param>
+        /// <param name="isVectorized">if true, the function is applied to each value in an object or each child of an array, rather than to the object/array itself</param>
+        /// <param name="inputTypes">must have maxArgs values (the i^th value indicates the acceptable types for the i^th arg), or minArgs + 1 values if maxArgs is int.MaxValue</param>
+        /// <param name="isDeterministic">if false, the function outputs a random value</param>
+        /// <param name="argsTransform">transformations that are applied to any number of arguments at compile time</param>
         public ArgFunction(Func<List<JNode>, JNode> function,
             string name,
             Dtype type,
@@ -3193,11 +3202,18 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// ifelse(x: anything, if_true: anything, if_false: anything) -> anything<br></br>
-        /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns third arg.
+        /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns third arg.<br></br>
+        /// Beginning in JsonTools v6.2.0 (6.1.1.1 to be exact), this function uses conditional execution.<br></br>
+        /// Prior to that version, something like ifelse(is_str(@), s_len(@), -1) would raise an error for non-string inputs,
+        /// because it would always evaluate both branches regardless of the condition's value.
         /// </summary>
         public static JNode IfElse(List<JNode> args)
         {
-            return ToBoolHelper(args[0]) ? args[1] : args[2];
+            JNode val = ToBoolHelper(args[0]) ? args[1] : args[2];
+            return val is CurJson cj
+                ? cj.function(args[3]) // the optional 4th arg is secret, and exists only to provide a CurJson(function: Identity)
+                                       // so that the chosen branch can be called on the current JSON
+                : val;
         }
 
 
@@ -3524,7 +3540,7 @@ namespace JSON_Tools.JSON_Tools
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["bool"] = new ArgFunction(ToBool, "bool", Dtype.BOOL, 1, 1, true, new Dtype[] { Dtype.ANYTHING }),
             ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
-            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING, Dtype.ANYTHING}),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 4, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING}, argsTransform: new ArgsTransform((3, Dtype.ANYTHING, _ => new CurJson()))),
             ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),

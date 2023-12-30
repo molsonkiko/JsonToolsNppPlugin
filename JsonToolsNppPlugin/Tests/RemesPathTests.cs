@@ -347,6 +347,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("ifelse(@.foo[0] > quantile(@.foo[0], 0.5), `big`, `small`)", "[\"small\", \"small\", \"big\"]"),
                 new Query_DesiredResult("ifelse(is_num(j`[1, \"a\", 2.0]`), isnum, notnum)", "[\"isnum\", \"notnum\", \"isnum\"]"),
                 new Query_DesiredResult("ifelse(j`[\"\", 3, [], {\"a\": 1}]`, y, n)", "[\"n\", \"y\", \"n\", \"y\"]"), // truthiness with ifelse
+                new Query_DesiredResult("@{foo, 1, zz, null}[:]->ifelse(is_str(@), s_len(@), -1)", "[3, -1, 2, -1]"), // ifelse that relies on conditional execution to not raise an error
+                new Query_DesiredResult("@{bar, 2, b, null}[:]->ifelse(is_str(@), s_len(@), ifelse(is_num(@), -@, NaN))",  "[3, -2, 1, NaN]"), // nested ifelse that relies on conditional execution to not raise an error
                 new Query_DesiredResult("s_upper(j`[\"hello\", \"world\"]`)", "[\"HELLO\", \"WORLD\"]"),
                 new Query_DesiredResult("s_strip(` a dog!\t`)", "\"a dog!\""),
                 new Query_DesiredResult("log(2.718281828459045 ** @.foo[0])", $"[0.0, 1.0, 2.0]"),
