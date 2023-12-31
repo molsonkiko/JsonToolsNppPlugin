@@ -266,6 +266,7 @@ namespace JSON_Tools.Tests
                 // ufunction tests
                 new Query_DesiredResult("len(@)", fooLen.ToString()),
                 new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
+                new Query_DesiredResult("s_mul(@.bar.b{foo: s_slice(@[0], 2), bar: s_slice(@[1], :2), baz: a}, len(@.foo))", "{\"foo\": \"ggg\", \"bar\": \"bababa\", \"baz\": \"aaa\"}"), // vectorized arg functions on objects where second and subsequent args are functions of input
                 new Query_DesiredResult("s_lpad(@{ab, aba, d*7}, cd, 5)", "[\"cdcdab\", \"cdaba\", \"ddddddd\"]"),
                 new Query_DesiredResult("s_lpad(@{ab, c*4}, c, 4)", "[\"ccab\", \"cccc\"]"),
                 new Query_DesiredResult("s_rpad(@{ab, aba, d*7}, cd, 5)", "[\"abcdcd\", \"abacd\", \"ddddddd\"]"),

@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
 
+### Fixed
+
+1. Fixed issue where [vectorized functions in RemesPath](/docs/RemesPath.md#vectorized-functions) were not vectorized across objects if the first argument was a function of input and at least one of the non-first arguments was also a function of input.
+
 ## [6.1.1] - 2023-12-28
 
 ### Fixed

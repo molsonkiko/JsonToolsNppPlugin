@@ -956,6 +956,7 @@ namespace JSON_Tools.JSON_Tools
                                 var dic = new Dictionary<string, JNode>(otbl.Length);
                                 foreach (KeyValuePair<string, JNode> okv in otbl.children)
                                 {
+                                    all_args[0] = okv.Value;
                                     dic[okv.Key] = func.function.Call(all_args);
                                 }
                                 return new JObject(0, dic);

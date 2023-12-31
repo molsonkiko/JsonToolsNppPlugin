@@ -654,7 +654,20 @@ __Example:__
 
 ### Vectorized functions ###
 
-All of these functions are applied separately to each element in an array or value in an object.
+__All of these functions are vectorized across their first argument,__ meaning that when one of these functions is called on an array or object, *any functions in the second and subsequent arguments reference the entire array/object, but the first argument is set to one element at a time.*
+
+For example, consider the vectorized function `s_mul(s: string, n: int) -> string`. This function concatenates `n` instances of string `s`.
+* With __array__ input `["a", "cd", "b"]`, `s_mul(@, len(@))` returns `["aaa", "cdcdcd", "bbb"]`
+    * The *first argument* references each element of the array separately.
+    * The *second argument `len(@)` references the entire array*, and is thus `3`, because the array has three elements.
+    * Because the *first element of the first argument* is `"a"`, the *first element of the output* is `s_mul(a, 3)`, or `"aaa"`
+    * Because the *second element of the first argument* is `"cd"`, the *second element of the output* is `s_mul(cd, 3)`, or `"cdcdcd"`
+* With __object__ input `{"foo": "a", "bar": "cd"}`, `s_mul(@, len(@))` returns `{"foo": "aa", "bar": "cdcd"}` (__NOTE__: this example will fail on JsonTools earlier than [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd))
+    * The *first argument* references each element of the object separately.
+    * The *second argument `len(@)` references the entire object*, and is thus `2`, because the object has two children.
+    * Because the *child of key `foo` of the first argument* is `"a"`, the *child of key `foo` of the output* is `s_mul(a, 2)`, or `"aa"`
+    * Because the *child of key `bar` of the first argument* is `"cd"`, the *child of key `bar` of the output* is `s_mul(cd, 2)`, or `"cdcd"`
+
 
 All the vectorized string functions have names beginning with `s_`.
 
