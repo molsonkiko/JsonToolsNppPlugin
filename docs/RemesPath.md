@@ -103,13 +103,15 @@ In general, binary operators *should* raise an exception when two objects of une
 
 Starting in [v5.4.0](/CHANGELOG.md#540---2023-07-04), all arithmetic operations can accept a boolean as one or both of the arguments. For example, prior to 5.4.0, `true * 3 - (false / 2.5)` was a type error, but since then it is valid. 
 
-*Beginning in [v5.1.0](/CHANGELOG.md#510---2023-06-02), the `*` operator in supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` will return `["a", "bb", "ccc"]`. Starting in [5.4.0](/CHANGELOG.md), multiplication of a string by a boolean or a negative integer is valid.
+Beginning in [v5.1.0](/CHANGELOG.md#510---2023-06-02), the `*` operator in supports multiplication of strings by integers (but not integers by strings). For example, `["a", "b", "c"] * [1,2,3]` will return `["a", "bb", "ccc"]`. Starting in [5.4.0](/CHANGELOG.md), multiplication of a string by a boolean or a negative integer is valid.
 
 If you find that a binary operator can operate on a number and a non-number without raising an exception, *this is a bug in my implementation.*
 
 ### Unary operators ###
 
-As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentiation. Starting in [5.4.0](/CHANGELOG.md#540---2023-07-04), the unary `+` operator has the same precedence as the unary minus operator. Unary `+` is a no-op on floats and ints, but it converts `true` and `false` to `1` and `0` respectively.
+As in normal math, the unary minus operator (e.g., `-5`) has lower precedence than exponentiation and higher precedence than everything else.
+
+Starting in [5.4.0](/CHANGELOG.md#540---2023-07-04), the unary `+` operator has the same precedence as the unary minus operator. Unary `+` is a no-op on floats and ints, but it converts `true` and `false` to `1` and `0` respectively.
 
 The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-07-04) (which replaced [the older function of the same name](#vectorized-functions)) is very similar to the Python operator of the same name:
 * `not true = false`, `not false = true`
@@ -1183,7 +1185,7 @@ If the RHS is a function and the LHS is an iterable, the RHS is applied separate
 ### Limitations ###
 1. Until further notice, you __cannot__ mutate an object or array, other than to change its scalar elements
     * For example, the query `@ = len(@)` on JSON `[[1, 2, 3]]` will fail, because this ends up trying to mutate the subarray `[1, 2, 3]`.
-2. You also cannot mutate a non-array or non-object into an array or object. For example, the query ``@[0] = j`[1]` ``on the input `[0]` will fail because you're trying to convert a scalar (the integer `1`) to an array (`[1]`).
+2. You also cannot mutate a non-array or non-object into an array or object. For example, the query ``@[0] = j`[1]` ``on the input `[0]` will fail because you're trying to convert a scalar (the integer `0`) to an array (`[1]`).
 
 An assignment expression mutates the input and then returns the input.
 

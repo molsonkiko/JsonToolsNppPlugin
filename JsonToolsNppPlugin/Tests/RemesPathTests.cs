@@ -265,8 +265,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("j`[{\"a\": 0,\"b\":-1}, {\"c\":1}, {\"a\":1}, {\"a\":3,\"b\":-4}, 4]`[:3]!.a", "[{\"b\": -1},{\"c\":1}]"),
                 // ufunction tests
                 new Query_DesiredResult("len(@)", fooLen.ToString()),
-                new Query_DesiredResult("s_mul(@.bar.b, 2)", "[\"a`ga`g\", \"bahbah\"]"),
-                new Query_DesiredResult("s_mul(@.bar.b{foo: s_slice(@[0], 2), bar: s_slice(@[1], :2), baz: a}, len(@.foo))", "{\"foo\": \"ggg\", \"bar\": \"bababa\", \"baz\": \"aaa\"}"), // vectorized arg functions on objects where second and subsequent args are functions of input
+                new Query_DesiredResult("s_mul(@.bar.b, len(@.foo) - 1)", "[\"a`ga`g\", \"bahbah\"]"), // vectorized arg function on *arrays* at least one non-first arg is a function of input
+                new Query_DesiredResult("s_mul(@.bar.b{foo: s_slice(@[0], 2), bar: s_slice(@[1], :2), baz: a}, len(@.foo))", "{\"foo\": \"ggg\", \"bar\": \"bababa\", \"baz\": \"aaa\"}"), // vectorized arg function on *objects* where at least one non-first arg is a function of input
                 new Query_DesiredResult("s_lpad(@{ab, aba, d*7}, cd, 5)", "[\"cdcdab\", \"cdaba\", \"ddddddd\"]"),
                 new Query_DesiredResult("s_lpad(@{ab, c*4}, c, 4)", "[\"ccab\", \"cccc\"]"),
                 new Query_DesiredResult("s_rpad(@{ab, aba, d*7}, cd, 5)", "[\"abcdcd\", \"abacd\", \"ddddddd\"]"),
@@ -706,7 +706,7 @@ namespace JSON_Tools.Tests
                 }
             }
             // the rand() and randint() functions require a special test because their outputs are nondeterministic
-            ii += 6;
+            ii += 7;
             bool test_failed = false;
             string randints1argQuery = "flatten(@.foo)[:]->randint(1000)";
             string randints2argQuery = "range(9)[:]->randint(-700, 800)";
@@ -799,6 +799,26 @@ namespace JSON_Tools.Tests
                     Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
+                // make sure that if an array has every value is equal to a variable referencing rand(),
+                //     all values in the array are the same (because they all reference the same variable)
+                string q = "var foo = range(3); var bar = rand(); foo = bar; foo";
+                try
+                {
+                    result = remesparser.Search(q, foo);
+                    if (!(result is JArray arr && arr[0].value is double d1 && d1 >= 0 && d1 <= 1 && arr.children.All(x => x.value is double xd && xd == d1)))
+                    {
+                        test_failed = true;
+                        tests_failed++;
+                        Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got result {result.ToString()}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    test_failed = true;
+                    tests_failed++;
+                    Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got exception {RemesParser.PrettifyException(ex)}");
+                }
+                // randint tests
                 if (firstRandintsIfElse is null || firstRandints1arg is null || firstRandints2args is null)
                     continue;
                 try
