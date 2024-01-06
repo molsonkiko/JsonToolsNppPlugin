@@ -973,6 +973,12 @@ namespace JSON_Tools.JSON_Tools
         /// transforms arguments at compile time
         /// </summary>
         public ArgsTransform argsTransform;
+        /// <summary>
+        /// iff true, one or more of this function's arguments is evaluated after the function is called, not before<br></br>
+        /// This allows for things like the ifelse function imitating the ternary operator<br></br>
+        /// and the and() and or() functions short-circuiting the same way as the corresponding binops in Python.
+        /// </summary>
+        public bool conditionalExecution { get; private set; }
 
         /// <summary>
         /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
@@ -989,6 +995,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="inputTypes">must have maxArgs values (the i^th value indicates the acceptable types for the i^th arg), or minArgs + 1 values if maxArgs is int.MaxValue</param>
         /// <param name="isDeterministic">if false, the function outputs a random value</param>
         /// <param name="argsTransform">transformations that are applied to any number of arguments at compile time</param>
+        /// <param name="conditionalExecution">whether the function's excution of one or more arguments is conditional on something</param>
         public ArgFunction(Func<List<JNode>, JNode> function,
             string name,
             Dtype type,
@@ -997,7 +1004,8 @@ namespace JSON_Tools.JSON_Tools
             bool isVectorized,
             Dtype[] inputTypes,
             bool isDeterministic = true,
-            ArgsTransform argsTransform = null)
+            ArgsTransform argsTransform = null,
+            bool conditionalExecution = false)
         {
             Function = function;
             this.name = name;
@@ -1008,6 +1016,7 @@ namespace JSON_Tools.JSON_Tools
             this.inputTypes = inputTypes;
             this.isDeterministic = isDeterministic;
             this.argsTransform = argsTransform;
+            this.conditionalExecution = conditionalExecution;
         }
 
         /// <summary>
@@ -3540,7 +3549,7 @@ namespace JSON_Tools.JSON_Tools
             ["abs"] = new ArgFunction(Abs, "abs", Dtype.FLOAT_OR_INT, 1, 1, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE}),
             ["bool"] = new ArgFunction(ToBool, "bool", Dtype.BOOL, 1, 1, true, new Dtype[] { Dtype.ANYTHING }),
             ["float"] = new ArgFunction(ToFloat, "float", Dtype.FLOAT, 1, 1, true, new Dtype[] { Dtype.ANYTHING}),
-            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 4, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING}, argsTransform: new ArgsTransform((3, Dtype.ANYTHING, _ => new CurJson()))),
+            ["ifelse"] = new ArgFunction(IfElse, "ifelse", Dtype.UNKNOWN, 3, 3, true, new Dtype[] {Dtype.ANYTHING, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}, conditionalExecution: true),
             ["int"] = new ArgFunction(ToInt, "int", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_expr"] = new ArgFunction(IsExpr, "is_expr", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["is_num"] = new ArgFunction(IsNum, "is_num", Dtype.BOOL, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),

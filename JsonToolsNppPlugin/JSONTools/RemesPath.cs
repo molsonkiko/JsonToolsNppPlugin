@@ -912,6 +912,13 @@ namespace JSON_Tools.JSON_Tools
         #region APPLY_ARG_FUNCTION
         private JNode ApplyArgFunction(ArgFunctionWithArgs func)
         {
+            if (func.function.conditionalExecution)
+            {
+                // need to add a CurJson after all the normal args
+                // so that the function will have a pointer to the current json,
+                // and all instances of the @ symbol can be resolved
+                func.args.Add(new CurJson());
+            }
             if (func.function.maxArgs == 0)
             {
                 // paramterless function like rand()
@@ -929,7 +936,9 @@ namespace JSON_Tools.JSON_Tools
             {
                 JNode arg = func.args[ii + 1];
                 if (arg is CurJson) { other_callables = true; }
-                argsCanBeFunctions[ii] = (func.function.TypeOptions(ii + 1) & Dtype.FUNCTION) != 0;
+                argsCanBeFunctions[ii] = ((func.function.TypeOptions(ii + 1) & Dtype.FUNCTION) != 0)
+                    && !(func.function.conditionalExecution && ii == func.args.Count - 2); // if conditional execution, last arg is CurJson
+                                                                                           // that must be called before argfunction is evaluated
                 other_args.Add(arg);
             }
             Dtype out_type = func.function.OutputType(x);
