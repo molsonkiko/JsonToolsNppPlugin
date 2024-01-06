@@ -113,11 +113,19 @@ As in normal math, the unary minus operator (e.g., `-5`) has lower precedence th
 
 Starting in [5.4.0](/CHANGELOG.md#540---2023-07-04), the unary `+` operator has the same precedence as the unary minus operator. Unary `+` is a no-op on floats and ints, but it converts `true` and `false` to `1` and `0` respectively.
 
-The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-07-04) (which replaced [the older function of the same name](#vectorized-functions)) is very similar to the Python operator of the same name:
-* `not true = false`, `not false = true`
-* `not 0.0 = not 0 = true`. `not <any nonzero number> = false`
-* `not <empty string> = true`, `not <non-empty string> = false`
-* `not [] = not {} = true`. `not <non-empty array or object> = false`
+The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-07-04) (which replaced [the older function of the same name](#vectorized-functions)) is very similar to the Python operator of the same name, in that `not x` returns `False` if x is ["truthy" (see below)](#truthiness), and `True` if x is "falsy".
+
+### Truthiness ###
+
+Similar to in JavaScript and Python, RemesPath has the concept of "truthiness" (and its opposite, "falsiness"), where in some cases a non-boolean is treated as a boolean.
+
+The rules are as follows:
+* `true` is "truthy", `false` is "falsy".
+* `0` and `0.0` are "falsy", and any nonzero numbers are "truthy".
+* `""` (the empty string) is "falsy", and any non-empty strings are "truthy".
+* `[]` and `{}` (empty arrays and objects) are "falsy", and non-empty arrays and objects are "truthy"
+* `null` is "falsy".
+* Anything that is not covered by the above cases is "falsy". In practice this should never happen.
 
 ## Regular expressions and JSON literals ##
 
@@ -228,6 +236,17 @@ __EXAMPLES__
 `all(x: array[bool]) -> bool`
 
 Returns true if *all* of the values in `x` (which *must* contain all booleans) are `true`, else `false`.
+
+---
+`and(x: anything, y: anything, ...: anything) -> bool`
+
+[*Added in v6.2*](/CHANGELOG.md#620---unreleased-yyyy-mm-dd)
+
+Returns `true` if and only if *all* of the arguments are ["truthy"](#truthiness).
+
+Unlike the [`&` binary operator](#binary-operators-unary-operators-and-arithmetic) above, __this function uses conditional execution.__
+
+This means that for example, if the input is `"abc"`, `and(is_num(@), @ < 3)` will return `false`, because *`@ < 3` will only be evaluated if `is_num(@)` evaluates to `true`.*
 
 -----
 `any(x: array[bool]) -> bool`
@@ -429,6 +448,17 @@ Returns a floating-point number equal to the minimum value in an array.
 See `max_by`, but minimizing instead of maximizing.
 
 ---
+`or(x: anything, y: anything, ...: anything) -> bool`
+
+[*Added in v6.2*](/CHANGELOG.md#620---unreleased-yyyy-mm-dd)
+
+Returns `true` if and only if *any* of the arguments are ["truthy"](#truthiness).
+
+Unlike the [`|` binary operator](#binary-operators-unary-operators-and-arithmetic) above, __this function uses conditional execution.__
+
+This means that for example, if the input is `3`, `or(is_num(@), s_len(@) < 3)` will return `true`, because *`s_len(@) < 3` will only be evaluated if `is_num(@)` evaluates to `false`.*
+
+---
 `pivot(x: array[object | array], by: str | int, val_col: str | int, ...: str | int) -> object[str, array]`
 
 There must be at least 3 arguments to this function.
@@ -584,7 +614,7 @@ Returns the sum of the elements in x.
 x must contain only numbers. Booleans are fine.
 
 ---
-`stringify(x: anything) -> str`
+`stringify(elt: anything, print_style: string=m, sort_keys: bool=true, indent: int | str=4) -> str`
 
 Returns the string representation (compressed, minimal whitespace, sort keys) of x.
 
@@ -592,6 +622,17 @@ This differs from `str` in that *this is not vectorized.*
 
 *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
+__The optional arguments did not exist before [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd).__ In that version, they work as follows:
+
+If the third argument (`sort_keys`, default true) is false, object keys are not sorted.
+
+If the fourth argument (`indent`, default 4) is an integer, the indent for pretty-print options is that integer. If it is `` `\t` `` (the tab character), tabs are used for indentation.
+
+* if `print_style` (the second argument) is `m` (the default), return the [minimal-whitespace compact representation](/docs/README.md#minimal_whitespace_compression).
+* if `print_style` is `c`, return the Python-style compact representation (one space after ',' or ':')
+* if `print_style` is `g`, return the Google-style [pretty-printed representation](/docs/README.md#pretty_print_style)
+* if `print_style` is `w`, return the Whitesmith-style pretty-printed representation
+* if `print_style` is `p`, return the PPrint-style pretty-printed representation
 
 ---
 `to_csv(x: array, delimiter: string=",", newline: string="\r\n", quote_char: string="\"") -> string`
@@ -681,7 +722,7 @@ Returns the absolute value of x.
 ---
 `bool(x: anything) -> bool`
 
-Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator](#unary-operators).
+True if [`x` is "truthy"](#truthiness).
 
 ----
 `float(x: number | string) -> number`
@@ -692,7 +733,7 @@ Equivalent to [`not not x`, using the "truthiness" rules for the `not` operator]
 ----
 `ifelse(cond: anything, if_true: anything, if_false: anything) -> anything`
 
-Returns `if_true` if `cond` is "truthy" (i.e., if `not not cond` evaluates to true), otherwise returns `if_false`.
+Returns `if_true` if `cond` is ["truthy"](#truthiness), otherwise returns `if_false`.
 
 __Note:__
 * Beginning in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), this function's execution is conditional, meaning that *only the chosen branch is executed*. 

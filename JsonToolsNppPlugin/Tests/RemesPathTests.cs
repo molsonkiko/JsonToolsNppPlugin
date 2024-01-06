@@ -416,13 +416,34 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("all(j`[true, true]`)", "true"),
                 new Query_DesiredResult("any(j`[true, true, false]`)", "true"),
                 new Query_DesiredResult("any(j`[true, true]`)", "true"),
+                new Query_DesiredResult("@.bar.a->or(not is_str(@), s_len(@) < 3)", "true"), // make sure conditional execution works for or() function
+                new Query_DesiredResult("@.foo[0]->or(len(@) > 3, len(@) < 2)", "false"), // make sure conditional execution works for or() function
+                new Query_DesiredResult("@.foo[0]->or(@[0], false, ``, @)", "true"), // make sure or() function works with one truthy arg
+                new Query_DesiredResult("@.foo[1]->or(@[1] * 0, null, j`[]`)", "false"), // make sure or() function works with all falsy args
+                new Query_DesiredResult("@.foo[0][0]->or(not is_num(@), @ <= 0, log(@) > 1)", "true"), // make sure conditional execution works for or() function with more than two args
+                new Query_DesiredResult("@.foo[0]->or(len(@) > 3, len(@) < 2, @[0] == 4, @[0] == 7)", "false"), // make sure conditional execution works for or() function with more than two args
+                new Query_DesiredResult("@.bar.a->and(is_str(@), s_len(@) < 3)", "false"), // make sure conditional execution works for and() function
+                new Query_DesiredResult("@.foo[0][0]->and(is_num(@), @ < 3)", "true"), // make sure conditional execution works for and() function
+                new Query_DesiredResult("@.foo[0][1]->and(is_num(@), @)", "true"), // make sure conditional execution works for and() function (with truthy arg)
+                new Query_DesiredResult("@.foo[0][1]->and(is_num(@), @ > 0, log(@) > 1)", "false"), // make sure conditional execution works for and() function with more than two args
+                new Query_DesiredResult("@.foo[1]->and(@, @[0], true, abc)", "true"), // make sure and() function works with all truthy args
+                new Query_DesiredResult("@.foo[2]->and(@[1] - 6, `abc`, j`[1]`, null)", "false"), // make sure and() function works with one falsy arg
                 new Query_DesiredResult("all(j`[false, false]`)", "false"),
                 new Query_DesiredResult("enumerate(j`[\"a\", \"b\", \"c\"]`)", "[[0, \"a\"], [1, \"b\"], [2, \"c\"]]"),
                 new Query_DesiredResult("iterable(j`[1,2,3]`)", "true"),
                 new Query_DesiredResult("iterable(a)", "false"),
                 new Query_DesiredResult("iterable(j`{\"a\": 1}`)", "true"),
                 new Query_DesiredResult("parse(j`[\"[1,2,NaN,null,\\\"\\\"]\", \"{\\\"foo\\\": false}\", \"u\"]`)", "[{\"result\": [1,2,NaN,null,\"\"]}, {\"result\": {\"foo\": false}}, {\"error\": \"No valid literal possible at position 0 (char 'u')\"}]"),
-                new Query_DesiredResult("stringify(j`[1,2,\"foo\"]`)", "\"[1,2,\\\"foo\\\"]\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, m)", "\"{\\\"bar\\\":\\\"abc\\\",\\\"baz\\\":null,\\\"foo\\\":[1,2.5]}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, m, false)", "\"{\\\"foo\\\":[1,2.5],\\\"bar\\\":\\\"abc\\\",\\\"baz\\\":null}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, c)", "\"{\\\"bar\\\": \\\"abc\\\", \\\"baz\\\": null, \\\"foo\\\": [1, 2.5]}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, p)", "\"{\\r\\n    \\\"bar\\\": \\\"abc\\\",\\r\\n    \\\"baz\\\": null,\\r\\n    \\\"foo\\\": [1, 2.5]\\r\\n}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, w, true, 2)", "\"{\\r\\n\\\"bar\\\": \\\"abc\\\",\\r\\n\\\"baz\\\": null,\\r\\n\\\"foo\\\":\\r\\n  [\\r\\n  1,\\r\\n  2.5\\r\\n  ]\\r\\n}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, g, false, 3)", "\"{\\r\\n   \\\"foo\\\": [\\r\\n      1,\\r\\n      2.5\\r\\n   ],\\r\\n   \\\"bar\\\": \\\"abc\\\",\\r\\n   \\\"baz\\\": null\\r\\n}\"\r\n"),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, p, true, `\\t`)", "\"{\\r\\n\\t\\\"bar\\\": \\\"abc\\\",\\r\\n\\t\\\"baz\\\": null,\\r\\n\\t\\\"foo\\\": [1, 2.5]\\r\\n}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, w, true, `\\t`)", "\"{\\r\\n\\\"bar\\\": \\\"abc\\\",\\r\\n\\\"baz\\\": null,\\r\\n\\\"foo\\\":\\r\\n\\t[\\r\\n\\t1,\\r\\n\\t2.5\\r\\n\\t]\\r\\n}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, g, true, `\\t`)", "\"{\\r\\n\\t\\\"bar\\\": \\\"abc\\\",\\r\\n\\t\\\"baz\\\": null,\\r\\n\\t\\\"foo\\\": [\\r\\n\\t\\t1,\\r\\n\\t\\t2.5\\r\\n\\t]\\r\\n}\""),
+                new Query_DesiredResult("stringify(j`{\"foo\": [1, 2.5], \"bar\": \"abc\", \"baz\": null}`, p, false, `\\t`)", "\"{\\r\\n\\t\\\"foo\\\": [1, 2.5],\\r\\n\\t\\\"bar\\\": \\\"abc\\\",\\r\\n\\t\\\"baz\\\": null\\r\\n}\""),
                 new Query_DesiredResult("j`[true,null,1,NaN,{},[], \"\"]`[:]{type(@)}[0]", "[\"boolean\", \"null\", \"integer\", \"number\", \"object\", \"array\", \"string\"]"),
                 new Query_DesiredResult("at(@.foo[1], -@.foo[0] - 1)", "[5.0, 4.0, 3.0]"),
                 new Query_DesiredResult("at(@.foo[1], @.foo[0][2])", "5.0"),

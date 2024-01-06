@@ -991,7 +991,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="type">the type(s) returned by the function</param>
         /// <param name="minArgs">the minimum number of args</param>
         /// <param name="maxArgs">the maximum number of args</param>
-        /// <param name="isVectorized">if true, the function is applied to each value in an object or each child of an array, rather than to the object/array itself</param>
+        /// <param name="isVectorized">if true, the function is applied to each value in an object or each child of an array, rather than to the object/array itself (this applies only to the first arg)</param>
         /// <param name="inputTypes">must have maxArgs values (the i^th value indicates the acceptable types for the i^th arg), or minArgs + 1 values if maxArgs is int.MaxValue</param>
         /// <param name="isDeterministic">if false, the function outputs a random value</param>
         /// <param name="argsTransform">transformations that are applied to any number of arguments at compile time</param>
@@ -1120,6 +1120,48 @@ namespace JSON_Tools.JSON_Tools
         #region NON_VECTORIZED_ARG_FUNCTIONS
 
         /// <summary>
+        /// and(x: anything, y: anything, ...: anything) -> bool<br></br>
+        /// requires at least two arguments.<br></br>
+        /// If any of the arguments are not "truthy", returns false. Else returns true.<br></br>
+        /// This function employs conditional execution, so for instance<br></br>
+        /// and(is_str(@), s_len(@) &lt; 4) will work, because "s_len(@) &lt; 4" is only called if "is_str(@)" returns true (meaning the current json must be a string in that branch)
+        /// </summary>
+        public static JNode And(List<JNode> args)
+        {
+            int lastIdx = args.Count - 1;
+            JNode curjson = args[lastIdx];
+            for (int ii = 0; ii < lastIdx; ii++)
+            {
+                JNode val = args[ii];
+                JNode resolvedVal = val is CurJson cj ? cj.function(curjson) : val;
+                if (!ToBoolHelper(resolvedVal))
+                    return new JNode(false);
+            }
+            return new JNode(true);
+        }
+
+        /// <summary>
+        /// or(x: anything, y: anything, ...: anything) -> bool<br></br>
+        /// requires at least two arguments.<br></br>
+        /// If any of the arguments are "truthy", returns true. Else returns false.<br></br>
+        /// This function employs conditional execution, so for instance<br></br>
+        /// or(not is_str(@), s_len(@) &lt; 4) will work, because "s_len(@) &lt; 4" is not called if "not is_str(@)" returns true.
+        /// </summary>
+        public static JNode Or(List<JNode> args)
+        {
+            int lastIdx = args.Count - 1;
+            JNode curjson = args[lastIdx];
+            for (int ii = 0; ii < lastIdx; ii++)
+            {
+                JNode val = args[ii];
+                JNode resolvedVal = val is CurJson cj ? cj.function(curjson) : val;
+                if (ToBoolHelper(resolvedVal))
+                    return new JNode(true);
+            }
+            return new JNode(false);
+        }
+
+        /// <summary>
         /// First arg is any JNode.<br></br>
         /// Second arg is a JObject or JArray.<br></br>
         /// Returns:<br></br>
@@ -1157,13 +1199,39 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// stringify(elt: anything) -> str<br></br>
-        /// returns the compact (minimal whitespace, keys sorted) string representation of args[0]
+        /// stringify(elt: anything, print_style: string=m, sort_keys: bool=true, indent: int | str=4) -> str<br></br>
+        /// For the pretty-printed forms, spaces are used to indent unless '\t' is passed as the indent argument.<br></br>
+        /// returns the string representation of elt according to the following rules:<br></br>
+        /// * if print_style is 'm', return the minimal-whitespace compact representation<br></br>
+        /// * if print_style is 'c', return the Python-style compact representation (one space after ',' or ':')<br></br>
+        /// * if print_style is 'g', return the Google-style pretty-printed representation<br></br>
+        /// * if print_style is 'w', return the Whitesmith-style pretty-printed representation<br></br>
+        /// * if print_style is 'p', return the PPrint-style pretty-printed representation<br></br>
         /// </summary>
         public static JNode Stringify(List<JNode> args)
         {
             JNode elt = args[0];
-            return new JNode(elt.ToString(true, ":", ","));
+            char printStyle = args[1].type == Dtype.NULL ? 'm' : ((string)args[1].value)[0];
+            bool sortKeys = args[2].type == Dtype.NULL || (bool)args[2].value;
+            int indent = 4;
+            char indentChar = ' ';
+            IComparable arg3val = args[3].value;
+            if (arg3val is long l)
+                indent = Convert.ToInt32(l);
+            else if (arg3val is string s && s[0] is char c && c == '\t')
+            {
+                indent = 1;
+                indentChar = c;
+            }
+            switch (printStyle)
+            {
+            case 'm': return new JNode(elt.ToString(sortKeys, ":", ","));
+            case 'c': return new JNode(elt.ToString(sortKeys));
+            case 'g': return new JNode(elt.PrettyPrint(indent, sortKeys, PrettyPrintStyle.Google, int.MaxValue, indentChar));
+            case 'w': return new JNode(elt.PrettyPrint(indent, sortKeys, PrettyPrintStyle.Whitesmith, int.MaxValue, indentChar));
+            case 'p': return new JNode(elt.PrettyPrint(indent, sortKeys, PrettyPrintStyle.PPrint, int.MaxValue, indentChar));
+            default: throw new RemesPathArgumentException($"print_style (2nd arg of stringify) must be one of \"mcgwp\", got {JsonLint.CharDisplay(printStyle)}", 1, FUNCTIONS["stringify"]);
+            }
         }
 
         /// <summary>
@@ -3504,6 +3572,7 @@ namespace JSON_Tools.JSON_Tools
             // non-vectorized functions
             ["add_items"] = new ArgFunction(AddItems, "add_items", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.OBJ, Dtype.STR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
             ["all"] = new ArgFunction(All, "all", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR }),
+            ["and"] = new ArgFunction(And, "and", Dtype.BOOL, 2, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}, conditionalExecution: true),
             ["any"] = new ArgFunction(Any, "any", Dtype.BOOL, 1, 1, false, new Dtype[] { Dtype.ARR }),
             ["append"] = new ArgFunction(Append, "append", Dtype.ARR, 2, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING }),
             ["at"] = new ArgFunction(At, "at", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR_OR_OBJ, Dtype.ARR | Dtype.INT | Dtype.STR}),
@@ -3526,6 +3595,7 @@ namespace JSON_Tools.JSON_Tools
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
+            ["or"] = new ArgFunction(Or, "or", Dtype.BOOL, 2, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}, conditionalExecution: true),
             ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
@@ -3536,7 +3606,7 @@ namespace JSON_Tools.JSON_Tools
             ["set"] = new ArgFunction(Set, "set", Dtype.OBJ, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["sort_by"] = new ArgFunction(SortBy, "sort_by", Dtype.ARR, 2, 3, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION, Dtype.BOOL }),
             ["sorted"] = new ArgFunction(Sorted, "sorted", Dtype.ARR, 1, 2, false, new Dtype[] {Dtype.ARR, Dtype.BOOL}),
-            ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 1, false, new Dtype[] { Dtype.ANYTHING }),
+            ["stringify"] = new ArgFunction(Stringify, "stringify", Dtype.STR, 1, 4, false, new Dtype[] { Dtype.ANYTHING, Dtype.NULL | Dtype.STR, Dtype.BOOL | Dtype.STR, Dtype.INT | Dtype.STR | Dtype.NULL }),
             ["sum"] = new ArgFunction(Sum, "sum", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["to_csv"] = new ArgFunction(ToCsv, "to_csv", Dtype.STR, 1, 4, false, new Dtype[] {Dtype.ARR, Dtype.STR, Dtype.STR, Dtype.STR}),
             ["to_records"] = new ArgFunction(ToRecords, "to_records", Dtype.ARR, 1, 2, false, new Dtype[] { Dtype.ITERABLE, Dtype.STR }),

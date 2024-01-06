@@ -469,15 +469,13 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Pretty-prints the JSON with each array value and object key-value pair on a separate line,
         /// and indentation proportional to nesting depth.<br></br>
-        /// For JNodes that are not JArrays or JObjects, the indent and depth arguments do nothing.<br></br>
+        /// For JNodes that are not JArrays or JObjects, the inden argument does nothing.<br></br>
         /// The indent argument sets the number of spaces per level of depth.<br></br>
         /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// The style argument controls various stylistic details of pretty-printing.
-        /// See the documentation for the PrettyPrintStyle enum and its members.<br></br>
-        /// <b>The depth argument should never be used</b> - it is incremented when PrettyPrint recursively calls itself.
+        /// See the documentation for the PrettyPrintStyle enum and its members.
         /// </summary>
         /// <param name="indent">the number of spaces per level of nesting.</param>
-        /// <param name="depth">the current depth of nesting.</param>
         /// <returns>a pretty-printed JSON string</returns>
         public virtual string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
         {
