@@ -179,6 +179,8 @@ namespace JSON_Tools.Forms
                     }
                 }
             }
+            else
+                SortForm.PasteIfCtrlV(sender, e);
         }
 
         private void QueryBox_KeyPress(object sender, KeyPressEventArgs e)

@@ -75,7 +75,7 @@ namespace JSON_Tools.Forms
 
         private static readonly string[] EOLS = new[] { "`\\r\\n`", "`\\n`", "`\\r`" };
 
-        private const string HEADER_HANDLING_ABBREVS = "nhd";
+        private static readonly char[] HEADER_HANDLING_ABBREVS = new char[] { 'n', 'h', 'd' };
 
         private static readonly Dictionary<string, int> HEADER_HANDLING_ABBREV_MAP = new Dictionary<string, int> { ["\"h\""] = 1, ["\"n\""] = 0, ["\"d\""] = 2, ["1"] = 1, ["2"] = 2, ["0"] = 0 };
 
@@ -97,8 +97,8 @@ namespace JSON_Tools.Forms
             {
                 string delim = DelimiterTextBox.Text == "\\t" ? "`\\t`" : RemesPathLexer.StringToBacktickString(DelimiterTextBox.Text);
                 string quote = RemesPathLexer.StringToBacktickString(QuoteCharTextBox.Text);
-                string newline = EOLS[NewlineComboBox.SelectedIndex];
-                char headerHandlingAbbrev = HEADER_HANDLING_ABBREVS[HeaderHandlingComboBox.SelectedIndex];
+                string newline = EOLS.FirstIfOutOfBounds(NewlineComboBox.SelectedIndex);
+                char headerHandlingAbbrev = HEADER_HANDLING_ABBREVS.FirstIfOutOfBounds(HeaderHandlingComboBox.SelectedIndex);
                 Main.openTreeViewer.QueryBox.Text = $"s_csv(@, {NColumnsTextBox.Text}, {delim}, {newline}, {quote}, {headerHandlingAbbrev}{columnsToParseAsNumber})";
             }
             else

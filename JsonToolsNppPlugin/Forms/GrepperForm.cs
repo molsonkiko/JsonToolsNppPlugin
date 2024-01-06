@@ -142,7 +142,14 @@ namespace JSON_Tools.Forms
                     if (root_dir.Length * 7 > DirectoriesVisitedBox.DropDownWidth)
                         DirectoriesVisitedBox.DropDownWidth = root_dir.Length * 7;
                 }
-                else root_dir = DirectoriesVisitedBox.Items[DirectoriesVisitedBox.SelectedIndex].ToString();
+                else
+                {
+                    // avoid IndexError in case of weird stuff pasted into box
+                    int selectedIndex = DirectoriesVisitedBox.SelectedIndex >= DirectoriesVisitedBox.Items.Count || DirectoriesVisitedBox.SelectedIndex < 0
+                        ? 0
+                        : DirectoriesVisitedBox.SelectedIndex;
+                    root_dir = DirectoriesVisitedBox.Items[selectedIndex].ToString();
+                }
                 if (Directory.Exists(root_dir))
                 {
                     foreach (string search_pattern in search_patterns)

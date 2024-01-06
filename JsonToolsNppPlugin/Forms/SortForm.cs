@@ -162,10 +162,11 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// Enter presses button,
-        /// escape focuses editor (or closes if closeOnEscape),
-        /// tab goes through controls,
-        /// shift-tab -> go through controls backward
+        /// Enter presses button,<br></br>
+        /// escape focuses editor (or closes if closeOnEscape),<br></br>
+        /// tab goes through controls,<br></br>
+        /// shift-tab -> go through controls backward<br></br>
+        /// Ctrl+V pastes text into text boxes and combo boxes
         /// </summary>
         /// <param name="form"></param>
         public static void GenericKeyUpHandler(Form form, object sender, KeyEventArgs e, bool closeOnEscape = false)
@@ -193,6 +194,8 @@ namespace JSON_Tools.Forms
             {
                 GenericTabNavigationHandler(form, sender, e);
             }
+            else
+                PasteIfCtrlV(sender, e);
         }
 
         /// <summary>
@@ -224,6 +227,23 @@ namespace JSON_Tools.Forms
                 next = form.GetNextControl(next, !e.Shift);
             next.Focus();
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// fix issue where Ctrl+V doesn't paste text into textboxes on Notepad++ 8.6.1<br></br>
+        /// this is a no-op for versions of Notepad++ before 8.6.1
+        /// </summary>
+        /// <param name="e"></param>
+        public static void PasteIfCtrlV(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.V && Npp.nppVersionAtLeast8p6p1 && Clipboard.ContainsText())
+            {
+                string pastedText = Clipboard.GetText();
+                if (sender is TextBox tb)
+                    tb.SelectedText = pastedText;
+                else if (sender is ComboBox cb)
+                    cb.SelectedText = pastedText;
+            }
         }
 
         private void SortForm_KeyUp(object sender, KeyEventArgs e)

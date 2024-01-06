@@ -387,5 +387,14 @@ namespace JSON_Tools.Utils
             atIdx = source.Substring(idx, 1);
             return true;
         }
+
+        /// <summary>
+        /// Return the first element of list if idx is not a valid index for this IList.<br></br>
+        /// Otherwise return list[idx]
+        /// </summary>
+        public static T FirstIfOutOfBounds<T>(this IList<T> list, int idx)
+        {
+            return list[idx >= list.Count || idx < 0 ? 0 : idx];
+        }
     }
 }
