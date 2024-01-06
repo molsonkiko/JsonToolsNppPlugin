@@ -618,7 +618,10 @@ x must contain only numbers. Booleans are fine.
 
 Returns the string representation (compressed, minimal whitespace, sort keys) of x.
 
-This differs from `str` in that *this is not vectorized.*
+When called with one argument, `stringify` differs from `str` in two regards:
+1. `stringify` is not vectorized.
+2. If `x` is a string, `str` returns a copy of `x`, but `stringify` returns the string representation of `x`.
+    * For example, `str(abc)` returns `"abc"`, but `stringify(abc)` returns `"\"abc\""`.
 
 *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
@@ -1089,7 +1092,7 @@ Returns the upper-case form of x.
 ----
 `str(x: anything) -> string`
 
-Returns the string representation of x.
+Returns the string representation of `x`, unless `x` is a string, in which case it returns a copy of `x`.
 
 ---
 `zfill(x: anything, padToLen: int) -> string`
