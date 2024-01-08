@@ -121,37 +121,37 @@
   <data name="json_compress_toolbar" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json compress toolbar.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="json_compress_toolbar1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\json compress toolbar1.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="json_compress_toolbar_bmp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json compress toolbar bmp.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="json_compress_toolbar_darkmode" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json compress toolbar darkmode.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="json_path_to_position_toolbar" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json path to position toolbar.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="json_path_to_position_toolbar1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\json path to position toolbar1.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="json_path_to_position_toolbar_bmp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json path to position toolbar bmp.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="json_path_to_position_toolbar_darkmode" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json path to position toolbar darkmode.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="json_pretty_print_toolbar" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json pretty print toolbar.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="json_pretty_print_toolbar1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\json pretty print toolbar1.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="json_pretty_print_toolbar_bmp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json pretty print toolbar bmp.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="json_pretty_print_toolbar_darkmode" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json pretty print toolbar darkmode.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="json_tree_toolbar" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json tree toolbar.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="json_tree_toolbar1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\json tree toolbar1.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="json_tree_toolbar_bmp" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\json tree toolbar bmp.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="json_tree_toolbar_darkmode" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\json tree toolbar darkmode.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

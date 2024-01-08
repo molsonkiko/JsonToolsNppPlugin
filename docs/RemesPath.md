@@ -625,7 +625,7 @@ When called with one argument, `stringify` differs from `str` in two regards:
 
 *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
-__The optional arguments did not exist before [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd).__ In that version, they work as follows:
+__The optional arguments did not exist before [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd).__ Since that version, they work as follows:
 
 If the third argument (`sort_keys`, default true) is false, object keys are not sorted.
 

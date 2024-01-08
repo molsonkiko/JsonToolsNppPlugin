@@ -83,9 +83,9 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_compress_toolbar1 {
+        public static System.Drawing.Icon json_compress_toolbar_darkmode {
             get {
-                object obj = ResourceManager.GetObject("json_compress_toolbar1", resourceCulture);
+                object obj = ResourceManager.GetObject("json_compress_toolbar_darkmode", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -113,9 +113,9 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_path_to_position_toolbar1 {
+        public static System.Drawing.Icon json_path_to_position_toolbar_darkmode {
             get {
-                object obj = ResourceManager.GetObject("json_path_to_position_toolbar1", resourceCulture);
+                object obj = ResourceManager.GetObject("json_path_to_position_toolbar_darkmode", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -143,9 +143,9 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_pretty_print_toolbar1 {
+        public static System.Drawing.Icon json_pretty_print_toolbar_darkmode {
             get {
-                object obj = ResourceManager.GetObject("json_pretty_print_toolbar1", resourceCulture);
+                object obj = ResourceManager.GetObject("json_pretty_print_toolbar_darkmode", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -173,9 +173,9 @@ namespace NppPluginNET.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon json_tree_toolbar1 {
+        public static System.Drawing.Icon json_tree_toolbar_darkmode {
             get {
-                object obj = ResourceManager.GetObject("json_tree_toolbar1", resourceCulture);
+                object obj = ResourceManager.GetObject("json_tree_toolbar_darkmode", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }

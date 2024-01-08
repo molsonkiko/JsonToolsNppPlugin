@@ -20,7 +20,7 @@ magick "json path to position icon.png" -resize 20x20 "json path to position too
 magick "json tree icon.png" -resize 20x20 "json tree toolbar.ico"
 
 : add darkmode icons
-magick "json pretty print icon.png" -resize 20x20 "json pretty print toolbar1.ico"
-magick "json compress icon.png" -resize 20x20 "json compress toolbar1.ico"
-magick "json path to position icon.png" -resize 20x20 "json path to position toolbar1.ico"
-magick "json tree icon.png" -resize 20x20 "json tree toolbar1.ico"
+magick "json pretty print icon darkmode.png" -resize 20x20 "json pretty print toolbar darkmode.ico"
+magick "json compress icon darkmode.png" -resize 20x20 "json compress toolbar darkmode.ico"
+magick "json path to position icon darkmode.png" -resize 20x20 "json path to position toolbar darkmode.ico"
+magick "json tree toolbar darkmode.png" -resize 20x20 "json tree toolbar darkmode.ico"

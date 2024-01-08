@@ -145,10 +145,10 @@ namespace Kbg.NppPluginNET
             string iconsToUseChars = settings.toolbar_icons.ToLower();
             var iconInfo = new (Bitmap bmp, Icon icon, Icon iconDarkMode, int id, char representingChar)[]
             {
-                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, PluginNetResources.json_tree_toolbar1,jsonTreeId, 't'),
-                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, PluginNetResources.json_compress_toolbar1, compressId, 'c'),
-                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, PluginNetResources.json_pretty_print_toolbar1, prettyPrintId, 'p'),
-                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar1, pathToPositionId, 'o'),
+                (PluginNetResources.json_tree_toolbar_bmp, PluginNetResources.json_tree_toolbar, PluginNetResources.json_tree_toolbar_darkmode,jsonTreeId, 't'),
+                (PluginNetResources.json_compress_toolbar_bmp, PluginNetResources.json_compress_toolbar, PluginNetResources.json_compress_toolbar_darkmode, compressId, 'c'),
+                (PluginNetResources.json_pretty_print_toolbar_bmp, PluginNetResources.json_pretty_print_toolbar, PluginNetResources.json_pretty_print_toolbar_darkmode, prettyPrintId, 'p'),
+                (PluginNetResources.json_path_to_position_toolbar_bmp, PluginNetResources.json_path_to_position_toolbar, PluginNetResources.json_path_to_position_toolbar_darkmode, pathToPositionId, 'o'),
             }
                 .Where(x => iconsToUseChars.IndexOf(x.representingChar) >= 0)
                 .OrderBy(x => iconsToUseChars.IndexOf(x.representingChar));

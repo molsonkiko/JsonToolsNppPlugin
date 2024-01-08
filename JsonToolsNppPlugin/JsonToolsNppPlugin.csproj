@@ -275,6 +275,11 @@
   <ItemGroup>
     <!-- icons and such -->
     <Content Include="Properties\star_bmp.bmp" />
+    <None Include="Resources\json tree toolbar darkmode.ico" />
+    <None Include="Resources\json pretty print toolbar darkmode.ico" />
+    <None Include="Resources\json path to position toolbar darkmode.ico" />
+    <None Include="Resources\json compress toolbar darkmode.ico" />
+    <None Include="Resources\json_compress_toolbar_darkmode.ico" />
     <None Include="Resources\json tree toolbar1.ico" />
     <None Include="Resources\json pretty print toolbar1.ico" />
     <None Include="Resources\json path to position toolbar1.ico" />
