@@ -127,19 +127,28 @@ __Case-*sensitive* sorters:__
 * [`sorted` and `sort_by` RemesPath functions](/docs/RemesPath.md#non-vectorized-functions)
 * [sort form](/docs/README.md#sort-form) using `Sort method` = `Default`.
 * anything else in RemesPath that sorts things, unless specifically noted otherwise.
+
 __Case-*insensitive* sorters:__
 * sorting of object keys when the [`sort_keys`](/docs/README.md#sort_keys) global setting is true
 * sorting of object keys when the `sort_keys` argument to the [`stringify` RemesPath function](/docs/RemesPath.md#non-vectorized-functions)
 * [sort form](/docs/README.md#sort-form) using `Sort method` = `As strings (ignoring case)`
 
 Consider this input: `["1","-2","3","o","P","ö","p"]`
+
 __JsonTools case-*sensitive* order:__
+
 `["1","-2","3","o","ö","p","P"]`
+
 __JsonTools case-*insensitive* order:__
+
 `["1","-2","3","o","ö","P","p"]`
+
 __Notepad++ case-*sensitive* order:__
+
 `["-2","1","3","P","o","p","ö"]`
+
 __Notepad++ case-*insensitive* order:__
+
 `["-2","1","3","o","P","p","ö"]`
 
 A summary of some major differences between Notepad++ and JsonTools in string sorting:
