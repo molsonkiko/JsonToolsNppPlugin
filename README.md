@@ -128,6 +128,7 @@ __Case-*sensitive* sorters:__
 * [sort form](/docs/README.md#sort-form) using `Sort method` = `Default`.
 * anything else in RemesPath that sorts things, unless specifically noted otherwise.
 
+
 __Case-*insensitive* sorters:__
 * sorting of object keys when the [`sort_keys`](/docs/README.md#sort_keys) global setting is true
 * sorting of object keys when the `sort_keys` argument to the [`stringify` RemesPath function](/docs/RemesPath.md#non-vectorized-functions)
