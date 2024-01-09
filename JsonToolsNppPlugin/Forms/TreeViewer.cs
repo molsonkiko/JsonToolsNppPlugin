@@ -81,6 +81,7 @@ namespace JSON_Tools.Forms
         public TreeViewer(JNode json)
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             isExpandingAllSubtrees = false;
             pathsToJNodes = new Dictionary<string, JNode>();
             fname = Npp.notepad.GetCurrentFilePath();
@@ -152,7 +153,7 @@ namespace JSON_Tools.Forms
             // Tab -> go through controls, Shift+Tab -> go through controls backward
             else if (e.KeyCode == Keys.Tab)
             {
-                SortForm.GenericTabNavigationHandler(this, sender, e);
+                NppFormHelper.GenericTabNavigationHandler(this, sender, e);
             }
             else if (sender is TreeView && e.Control)
             {
@@ -179,8 +180,6 @@ namespace JSON_Tools.Forms
                     }
                 }
             }
-            else
-                SortForm.PasteIfCtrlV(sender, e);
         }
 
         private void QueryBox_KeyPress(object sender, KeyPressEventArgs e)

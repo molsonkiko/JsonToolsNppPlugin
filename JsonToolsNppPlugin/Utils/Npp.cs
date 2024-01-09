@@ -38,9 +38,6 @@ namespace JSON_Tools.Utils
         /// <summary>may matter for some UI tests</summary>
         public static readonly bool nppVersionAtLeast8p5p5 = nppVersionStr.CompareTo("8.5.5") >= 0;
 
-        /// <summary>first known issue with Ctrl+V pasting into textboxes</summary>
-        public static readonly bool nppVersionAtLeast8p6p1 = nppVersionStr.CompareTo("8.6.1") >= 0;
-
         /// <summary>
         /// append text to current doc, then append newline and move cursor
         /// </summary>

@@ -70,9 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Fixed issue where [vectorized functions in RemesPath](/docs/RemesPath.md#vectorized-functions) were not vectorized across objects if the first argument was a function of input and at least one of the non-first arguments was also a function of input.
-2. Fixed [issue where Ctrl+V did not paste text into textboxes in Notepad++ 8.6.1](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/54).
-    * However, due to inherent limitations that I still don't fully understand, __in Notepad++ 8.6.1, Ctrl+V pastes text on key-up, *not on key-down*.__
-3. Fixed issue where entering invalid text into comboboxes in the [regex search form](/docs/README.md#regex-search-form) and [grepper form](/docs/README.md#get-json-from-files-and-apis) could cause a (mostly harmless) plugin crash.
+2. Fixed issue where entering invalid text into comboboxes in the [regex search form](/docs/README.md#regex-search-form) and [grepper form](/docs/README.md#get-json-from-files-and-apis) could cause a (mostly harmless) plugin crash.
 
 ## [6.1.1] - 2023-12-28
 

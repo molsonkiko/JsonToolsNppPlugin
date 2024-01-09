@@ -15,6 +15,7 @@
         {
             if (disposing && (components != null))
             {
+                NppFormHelper.RegisterFormIfModeless(this, false);
                 components.Dispose();
             }
             base.Dispose(disposing);

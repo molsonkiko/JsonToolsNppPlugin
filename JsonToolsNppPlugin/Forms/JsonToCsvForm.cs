@@ -17,6 +17,7 @@ namespace JSON_Tools.Forms
         public JsonToCsvForm(JNode json)
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, true);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             tabularizer = new JsonTabularizer();
             this.json = json;
@@ -39,7 +40,7 @@ namespace JSON_Tools.Forms
 
         private void JsonToCsvForm_KeyUp(object sender, KeyEventArgs e)
         {
-            SortForm.GenericKeyUpHandler(this, sender, e, true);
+            NppFormHelper.GenericKeyUpHandler(this, sender, e, true);
         }
 
         private void GenerateCSVButton_Click(object sender, EventArgs e)

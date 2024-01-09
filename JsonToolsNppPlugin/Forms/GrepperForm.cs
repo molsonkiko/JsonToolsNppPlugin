@@ -23,6 +23,7 @@ namespace JSON_Tools.Forms
         public GrepperForm()
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             grepper = new JsonGrepper(Main.jsonParser.Copy(),
                 Main.settings.max_threads_parsing
@@ -293,7 +294,7 @@ namespace JSON_Tools.Forms
 
         private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
         {
-            SortForm.GenericKeyUpHandler(this, sender, e);
+            NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
             //if (e.Alt)
             //{
             //    switch (e.KeyCode)

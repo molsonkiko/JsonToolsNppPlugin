@@ -14,6 +14,7 @@ namespace JSON_Tools.Forms
         public SortForm()
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             SortMethodBox.SelectedIndex = 0;
             remesParser = new RemesParser();
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
@@ -162,43 +163,6 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// Enter presses button,<br></br>
-        /// escape focuses editor (or closes if closeOnEscape),<br></br>
-        /// tab goes through controls,<br></br>
-        /// shift-tab -> go through controls backward<br></br>
-        /// Ctrl+V pastes text into text boxes and combo boxes
-        /// </summary>
-        /// <param name="form"></param>
-        public static void GenericKeyUpHandler(Form form, object sender, KeyEventArgs e, bool closeOnEscape = false)
-        {
-            // enter presses button
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                if (sender is Button btn)
-                {
-                    // Enter has the same effect as clicking a selected button
-                    btn.PerformClick();
-                }
-            }
-            // Escape -> go to editor or close
-            else if (e.KeyData == Keys.Escape)
-            {
-                if (closeOnEscape)
-                    form.Close();
-                else
-                    Npp.editor.GrabFocus();
-            }
-            // Tab -> go through controls, Shift+Tab -> go through controls backward
-            else if (e.KeyCode == Keys.Tab)
-            {
-                GenericTabNavigationHandler(form, sender, e);
-            }
-            else
-                PasteIfCtrlV(sender, e);
-        }
-
-        /// <summary>
         /// suppress the default response to the Tab key
         /// </summary>
         /// <param name="keyData"></param>
@@ -210,45 +174,9 @@ namespace JSON_Tools.Forms
             return base.ProcessDialogKey(keyData);
         }
 
-        /// <summary>
-        /// Tab -> go through controls, Shift+Tab -> go through controls backward.<br></br>
-        /// Ignores invisible or disabled controls.
-        /// </summary>
-        /// <param name="form">the parent form</param>
-        /// <param name="sender">probably a control with a tabstop</param>
-        /// <param name="e">the key event that triggered this</param>
-        public static void GenericTabNavigationHandler(Form form, object sender, KeyEventArgs e)
-        {
-            if (sender is TextBox tb && tb.Parent is ListBox)
-                return; // ComboBoxes are secretly two controls in one (see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.combobox?view=windowsdesktop-8.0)
-                        // this event fires twice for a CombobBox because of this, so we need to suppress the extra one this way
-            Control next = form.GetNextControl((Control)sender, !e.Shift);
-            while (next == null || !next.TabStop || !next.Visible || !next.Enabled)
-                next = form.GetNextControl(next, !e.Shift);
-            next.Focus();
-            e.Handled = true;
-        }
-
-        /// <summary>
-        /// fix issue where Ctrl+V doesn't paste text into textboxes on Notepad++ 8.6.1<br></br>
-        /// this is a no-op for versions of Notepad++ before 8.6.1
-        /// </summary>
-        /// <param name="e"></param>
-        public static void PasteIfCtrlV(object sender, KeyEventArgs e)
-        {
-            if (e.Control && e.KeyCode == Keys.V && Npp.nppVersionAtLeast8p6p1 && Clipboard.ContainsText())
-            {
-                string pastedText = Clipboard.GetText();
-                if (sender is TextBox tb)
-                    tb.SelectedText = pastedText;
-                else if (sender is ComboBox cb)
-                    cb.SelectedText = pastedText;
-            }
-        }
-
         private void SortForm_KeyUp(object sender, KeyEventArgs e)
         {
-            GenericKeyUpHandler(this, sender, e);
+            NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
             //if (e.Alt)
             //{
             //    if (e.KeyCode == Keys.S)

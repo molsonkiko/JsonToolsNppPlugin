@@ -1,17 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
 using System.Windows.Forms;
 using Kbg.NppPluginNET;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
-using System.Runtime;
 
 namespace JSON_Tools.Forms
 {
@@ -31,6 +23,7 @@ namespace JSON_Tools.Forms
         public ErrorForm(string fname, List<JsonLint> lints)
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             Reload(fname, lints, true);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
         }
@@ -183,13 +176,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         private void ErrorForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Escape)
-            {
-                e.Handled = true;
-                Npp.editor.GrabFocus();
-                return;
-            }
-            else if (e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
             {
                 // refresh error form based on current contents of current file
                 e.Handled = true;

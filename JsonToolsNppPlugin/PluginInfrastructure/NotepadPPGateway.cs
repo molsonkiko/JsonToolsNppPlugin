@@ -29,6 +29,19 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		string[] GetOpenFileNames();
 		void SetCurrentBufferInternalName(string newName);
 		void SetStatusBarSection(string message, StatusBarSection section);
+		/// <summary>
+		/// Register a modeless form (i.e., a form that doesn't block the parent application until closed)<br></br>
+		/// with Notepad++ using NPPM_MODELESSDIALOG<br></br>
+		/// If you don't do this, Notepad++ may intercept some keystrokes in unintended ways.
+		/// </summary>
+		/// <param name="formHandle">the Handle attribute of a Windows form</param>
+		void AddModelessDialog(IntPtr formHandle);
+		/// <summary>
+		/// unregister a modelesss form that was registered with AddModelessDialog.<br></br>
+		/// This MUST be called in the Dispose method of the form, BEFORE the components of the form are disposed.
+		/// </summary>
+		/// <param name="formHandle">the Handle attribute of a Windows form</param>
+		void RemoveModelessDialog(IntPtr formHandle);
 
     }
 
@@ -206,6 +219,16 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
                     return cStrArray.ManagedStringsUnicode.ToArray();
             }
             return null;
+        }
+
+		public void AddModelessDialog(IntPtr formHandle)
+		{
+			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MODELESSDIALOG, IntPtr.Zero, formHandle);
+		}
+
+        public void RemoveModelessDialog(IntPtr formHandle)
+        {
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_MODELESSDIALOG, new IntPtr(1), formHandle);
         }
 
         /// <summary>

@@ -97,6 +97,7 @@
     <Compile Include="Forms\JsonToCsvForm.Designer.cs">
       <DependentUpon>JsonToCsvForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\NppFormHelper.cs" />
     <Compile Include="Forms\RegexSearchForm.cs">
       <SubType>Form</SubType>
     </Compile>

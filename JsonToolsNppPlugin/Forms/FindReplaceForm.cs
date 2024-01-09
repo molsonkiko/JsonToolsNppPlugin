@@ -21,6 +21,7 @@ namespace JSON_Tools.Forms
         public FindReplaceForm(TreeViewer treeViewer)
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             this.treeViewer = treeViewer;
             // if the user is querying a subset of the JSON, the find/replace is done on that subset
@@ -70,7 +71,7 @@ namespace JSON_Tools.Forms
 
         private void FindReplaceForm_KeyUp(object sender, KeyEventArgs e)
         {
-            SortForm.GenericKeyUpHandler(this, sender, e);
+            NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
             //if (e.Alt)
             //{
             //    switch (e.KeyCode)

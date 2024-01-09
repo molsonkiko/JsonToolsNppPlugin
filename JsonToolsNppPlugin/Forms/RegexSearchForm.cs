@@ -16,6 +16,7 @@ namespace JSON_Tools.Forms
         public RegexSearchForm()
         {
             InitializeComponent();
+            NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             HeaderHandlingComboBox.SelectedIndex = 0;
             NewlineComboBox.SelectedIndex = 0;
@@ -142,7 +143,7 @@ namespace JSON_Tools.Forms
 
         private void RegexSearchForm_KeyUp(object sender, KeyEventArgs e)
         {
-            SortForm.GenericKeyUpHandler(this, sender, e);
+            NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
         }
 
         public void ParseAsCsvCheckBox_CheckedChanged(object sender, EventArgs e)

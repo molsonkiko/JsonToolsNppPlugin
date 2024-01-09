@@ -1,6 +1,4 @@
-﻿using JSON_Tools.JSON_Tools;
-
-namespace JSON_Tools.Forms
+﻿namespace JSON_Tools.Forms
 {
     partial class TreeViewer
     {
@@ -28,6 +26,7 @@ namespace JSON_Tools.Forms
             }
             if (disposing && (components != null))
             {
+                NppFormHelper.UnregisterFormIfModeless(this, false);
                 components.Dispose();
             }
             base.Dispose(disposing);
