@@ -484,6 +484,8 @@ If this is true, keys are sorted alphabetically like so:
 ```
 As you can see, the sort is *unstable* when comparing two keys that differ only in case. You can't rely on the lower-case key being before the upper-case key or vice versa.
 
+See the [general notes on string sorting](/README.md#note-on-how-jsontools-sorts-strings) for more notes on how strings are sorted.
+
 ### remember_comments ###
 *Added in version [5.6.0](/CHANGELOG.md#560---2023-08-18).*
 
@@ -573,6 +575,8 @@ Finally, let's sort the whole document from largest to smallest by a query on ea
 ![Sort form; sort by query on each element](/docs/sort%20form%20sort%20by%20query%20on%20each%20element.PNG)
 
 Of course, there's also the default sort, which can only compare numbers to numbers and strings to strings. Any mixing of types with the default sort results in failure.
+
+See the [general notes on string sorting](/README.md#note-on-how-jsontools-sorts-strings) for more notes on how strings are sorted.
 
 ## Regex search form ##
 
