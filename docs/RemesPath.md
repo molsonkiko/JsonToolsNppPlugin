@@ -586,7 +586,6 @@ One issue with this function that may make the `unique` function preferable: two
 
 Returns:
 * a new array of subarrays/subobjects `subitbl` such that `subitbl[k]` is sorted (if `k` is an integer or string)
-    * See the [general notes on string sorting](/README.md#note-on-how-jsontools-sorts-strings) for notes on how strings are sorted.
 * a new array of children `child` such that `k(child)` is sorted (if `k` is a function)
 
 Analogous to SQL `ORDER BY`.

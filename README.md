@@ -130,8 +130,8 @@ __Case-*sensitive* sorters:__
 
 
 __Case-*insensitive* sorters:__
-* sorting of object keys when the [`sort_keys`](/docs/README.md#sort_keys) global setting is true
-* sorting of object keys when the `sort_keys` argument to the [`stringify` RemesPath function](/docs/RemesPath.md#non-vectorized-functions)
+* sorting of object keys when the [`sort_keys`](/docs/README.md#sort_keys) global setting is `true`
+* sorting of object keys when the `sort_keys` argument to the [`stringify` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) is `true`
 * [sort form](/docs/README.md#sort-form) using `Sort method` = `As strings (ignoring case)`
 
 Consider this input: `["1","-2","3","o","P","ö","p"]`
@@ -142,7 +142,7 @@ __JsonTools case-*sensitive* order:__
 
 __JsonTools case-*insensitive* order:__
 
-`["1","-2","3","o","ö","P","p"]`
+`["1","-2","3","o","ö","P","p"]` (the order of the `P` and the `p` is unstable)
 
 __Notepad++ case-*sensitive* order:__
 
@@ -150,12 +150,12 @@ __Notepad++ case-*sensitive* order:__
 
 __Notepad++ case-*insensitive* order:__
 
-`["-2","1","3","o","P","p","ö"]`
+`["-2","1","3","o","P","p","ö"]` (the order of the `P` and the `p` is unstable)
 
 A summary of some major differences between Notepad++ and JsonTools in string sorting:
 1. The sort form ignores the leading minus sign when ordering the numbers; Notepad++ does not.
 2. The sort form orders `ö` between `o` and `p` (because culturally that makes sense), but Notepad++ puts `ö` last, because it compares the strings by Unicode code points, and non-ASCII characters like `ö` come after all ASCII characters.
-3. In case-*sensitive* sorts, JsonTools puts upper-case letters *before* lower-case letters, but Notepad++ does the opposite.
+3. In case-*sensitive* sorts, JsonTools puts *upper-case letters after lower-case letters*, but Notepad++ does the opposite.
 4. In all sorts, JsonTools respects alphabetical order (e.g., `P` comes after `o` whether case-sensitive or not), but Notepad++ puts *all* upper-case letters before *all* lower-case letters when in case-sensitive mode.
 
 There are *many, many rules for string comparison* (and I know very few of them), and I cannot possibly cover them all here. But hopefully this warning will help you not get caught off guard.
