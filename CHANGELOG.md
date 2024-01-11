@@ -21,17 +21,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 }
 ```
 3. Add option for users to choose newline in JSON Lines.
-4. Add new arguments to `stringify` RemesPath function to allow pretty-printing or customization of other formatting settings
-5. Make it so find/replace form can emit Python code that is equivalent to the generated RemesPath query
-6. Make RemesPath error messages less confusing
-7. Implement a less thread-unsafe way to have ArgFunctions use context:
+4. Make it so find/replace form can emit Python code that is equivalent to the generated RemesPath query
+5. Make RemesPath error messages less confusing
+6. Implement a less thread-unsafe way to have ArgFunctions use context:
     * Add `uses_context` field to ArgFunction instances, so that they have JQueryContext appended to their arguments, and they can reference fields of that JQueryContext.
 	* This way we don't have to have these methods mutating and referencing a global static variable.
 	* Additionally, the presence of a function with `uses_context=true` would serve as a flag that the query cannot be executed in parallel, because doing so would cause race conditions associated with the shared JQueryContext fields.
-8. Add `conditional_execution` as a field for ArgFunctions.
-    * The first function with this set to true would be `ifelse`, but we could also add `and` and `or` non-vectorized functions that work the same as the corresponding functions in Python.
-	* This would be implemented by adding a vanilla CurJson (with identity function) after the final argument. This CurJson would always be evaluated before the function was evaluated, and would thus provide a reference to input, to allow for conditional evaluation of other arguments.
-9. Make it so the regex search form makes a very basic effort to determine the quote character, delimiter, and number of columns in CSV files.
+7. Make it so the regex search form makes a very basic effort to determine the quote character, delimiter, and number of columns in CSV files.
     * maybe only try to do this for files with the `.csv` and `.tsv` extensions
 	* only test the `,` and `\t` delimiters, and only the `"` or `'` quote characters
 	* test only the first 10KB of the file, or first 25 lines, whichever comes first.
@@ -52,20 +48,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
-- Make it so Ctrl+V pastes text on keydown rather than keyup in Notepad++ 8.6.1.
 
 ## [6.2.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 
 1. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
+2. Add [`and` and `or` non-vectorized functions in RemesPath](/docs/RemesPath.md#non-vectorized-functions), which both use conditional excution.
 
 ### Changed
 
 1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
-2. Add [`and` and `or` non-vectorized functions in RemesPath](/docs/RemesPath.md#non-vectorized-functions), which both use conditional excution.
-3. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
-4. Make dark mode icons darker.
+2. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
+3. Make dark mode icons darker.
 
 ### Fixed
 
