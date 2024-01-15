@@ -14,11 +14,11 @@ namespace JSON_Tools.Tests
     {
         public const string NL = JNode.NL;
 
-        public static JNode TryParse(string input, JsonParser parser, bool is_json_lines = false)
+        public static JNode TryParse(string input, JsonParser parser, bool isJsonLines = false)
         {
             try
             {
-                if (is_json_lines)
+                if (isJsonLines)
                     return parser.ParseJsonLines(input);
                 return parser.Parse(input);
             }
@@ -32,7 +32,7 @@ namespace JSON_Tools.Tests
         public static bool TestJNodeCopy()
         {
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
             string[] tests = new string[]
             {
@@ -56,13 +56,13 @@ namespace JSON_Tools.Tests
                 JNode node = TryParse(test, parser);
                 if (node == null)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     continue;
                 }
                 JNode cp = node.Copy();
                 if (!node.TryEquals(cp, out _))
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Expected Copy({node.ToString()}) to return\n{node.ToString()}\nInstead got {cp.ToString()}");
                     continue;
                 }
@@ -86,22 +86,22 @@ namespace JSON_Tools.Tests
                     node.Equals(cp);
                     if (!(node is JObject || node is JArray || node.type == Dtype.INT))
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Expected mutating {node.ToString()}\nto not mutate Copy({node.ToString()})\nbut it did.");
                         continue;
                     }
                     if (node.Equals(cp))
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Expected mutating {node.ToString()}\nto not mutate Copy({node.ToString()})\nbut it did.");
                         continue;
                     }
                 }
                 catch { }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool Test()
@@ -122,11 +122,11 @@ namespace JSON_Tools.Tests
             string example = "{\"a\":[-1, true, {\"b\" :  0.5, \"c\": \"\\uae77\"},null],\n"
                     + "\"a\\u10ff\":[true, false, NaN, Infinity,-Infinity, {},\t\"\\u043ea\", []], "
                     + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]} ";
-            string norm_example = "{"
+            string normExample = "{"
                 + "\"a\u10ff\": [true, false, NaN, Infinity, -Infinity, {}, \"\u043ea\", []], "
                 + "\"a\": [-1, true, {\"b\": 0.5, \"c\": \"\uae77\"}, null], "
                 + "\"back'slas\\\"h\": [\"\\\"'\\f\\n\\b\\t/\", -0.5, 23, \"\"]}";
-            string pprint_example = "{" +
+            string pprintExample = "{" +
                                     NL + "\"a\u10ff\":" +
                                     NL + "    [" +
                                     NL + "    true," +
@@ -160,7 +160,7 @@ namespace JSON_Tools.Tests
                                     NL + "}";
             var testcases = new (string, string, string, string)[]
             {
-                (example, norm_example, pprint_example, "general parsing"),
+                (example, normExample, pprintExample, "general parsing"),
                 ("[[]]", "[[]]", "[" + NL + "    [" + NL + "    ]" + NL + "]", "empty lists" ),
                 ("\"abc\"", "\"abc\"", "\"abc\"", "scalar string" ),
                 ("1", "1", "1", "scalar int" ),
@@ -209,76 +209,76 @@ namespace JSON_Tools.Tests
                     "floating point numbers using 'E' notation that can exactly represent integers"
                 ),
             };
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
-            foreach ((string input, string norm_input, string pprint_desired, string msg_) in testcases)
+            foreach ((string input, string normInput, string pprintDesired, string msg_) in testcases)
             {
                 string msg = msg_;
                 JNode json = TryParse(input, parser);
                 if (json == null)
                 {
                     ii += 4;
-                    tests_failed += 4;
+                    testsFailed += 4;
                     continue;
                 }
-                string norm_str_out = json.ToString();
-                if (norm_str_out != norm_input)
+                string normStrOut = json.ToString();
+                if (normStrOut != normInput)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     string fullMsg = string.Format(@"Test {0} ({1}) failed:
 Expected
 {2}
 Got
 {3}
-", ii + 1, msg, norm_input, norm_str_out);
+", ii + 1, msg, normInput, normStrOut);
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(fullMsg), fullMsg);
                 }
                 ii++;
-                JNode json_from_norm_str_out = parser.Parse(norm_str_out);
-                if (!json_from_norm_str_out.TryEquals(json, out _)
+                JNode jsonFromNormStrOut = parser.Parse(normStrOut);
+                if (!jsonFromNormStrOut.TryEquals(json, out _)
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
-                    tests_failed++;
+                    testsFailed++;
                     msg = string.Format(@"Test {0} (parsing ToString result returns original) failed:
 Expected Parse(Parse({1}).toString()) to return
 {1}
 Got
 {2}
-", ii + 1, norm_str_out, json_from_norm_str_out.ToString());
+", ii + 1, normStrOut, jsonFromNormStrOut.ToString());
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
                 ii++;
-                string pprint_out = json.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
-                if (pprint_out != pprint_desired)
+                string pprintOut = json.PrettyPrint(4, true, PrettyPrintStyle.Whitesmith);
+                if (pprintOut != pprintDesired)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     msg = string.Format(@"Test {0} (pretty-print {1}) failed:
 Expected
 {2}
 Got
 {3}
-", ii + 1, msg, pprint_desired, pprint_out);
+", ii + 1, msg, pprintDesired, pprintOut);
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
                 ii++;
-                JNode json_from_pprint_out = parser.Parse(pprint_out);
-                if (!json_from_pprint_out.TryEquals(json, out _)
+                JNode jsonFromPprintOut = parser.Parse(pprintOut);
+                if (!jsonFromPprintOut.TryEquals(json, out _)
                     && input != "111111111111111111111111111111") // skip b/c floating-point imprecision
                 {
-                    tests_failed++;
+                    testsFailed++;
                     msg = string.Format(@"Test {0} (parsing PrettyPrint result returns original) failed:
 Expected Parse(Parse({1}).PrettyPrint()) to return
 {1}
 Got
 {2}
-", ii + 1, norm_str_out, json_from_pprint_out.ToString());
+", ii + 1, normStrOut, jsonFromPprintOut.ToString());
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
                 ii++;
             }
             #endregion
             #region OtherPrintStyleTests
-            var minimal_whitespace_testcases = new string[][]
+            var minimalWhitespaceTestcases = new string[][]
             {
                 new string[]
                 {
@@ -286,30 +286,30 @@ Got
                     "[1,{\"a\":2,\"b\":3},[4,5]]"
                 },
             };
-            foreach (string[] test in minimal_whitespace_testcases)
+            foreach (string[] test in minimalWhitespaceTestcases)
             {
                 string inp = test[0];
-                string compact_desired = test[1];
+                string compactDesired = test[1];
                 JNode json = TryParse(inp, parser);
                 if (json == null)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     continue;
                 }
-                string compact_true = json.ToString(true, ":", ",");
-                if (compact_true != compact_desired)
+                string compactTrue = json.ToString(true, ":", ",");
+                if (compactTrue != compactDesired)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} (minimal whitespace printing) failed:
 Expected
 {1}
 Got
 {2} ",
-                                     ii + 1, compact_desired, compact_true));
+                                     ii + 1, compactDesired, compactTrue));
                 }
                 ii++;
             }
-            var dont_sort_keys_testcases = new string[][]
+            var dontSortKeysTestcases = new string[][]
             {
                 new string[]
                 {
@@ -317,27 +317,27 @@ Got
                     "{\"a\": 2, \"c\": 4, \"b\": [{\"e\": 1, \"d\": 2}]}"
                 },
             };
-            foreach (string[] test in dont_sort_keys_testcases)
+            foreach (string[] test in dontSortKeysTestcases)
             {
                 string inp = test[0];
-                string unsorted_desired = test[1];
+                string unsortedDesired = test[1];
                 JNode json = TryParse(inp, parser);
                 ii++;
                 if (json == null)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     continue;
                 }
-                string unsorted_true = json.ToString(false);
-                if (unsorted_true != unsorted_desired)
+                string unsortedTrue = json.ToString(false);
+                if (unsortedTrue != unsortedDesired)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} (minimal whitespace printing) failed:
 Expected
 {1}
 Got
 {2} ",
-                                     ii + 1, unsorted_desired, unsorted_true));
+                                     ii + 1, unsortedDesired, unsortedTrue));
                 }
             }
             #endregion
@@ -381,66 +381,66 @@ Got
             if (onode != null && onode is JObject obj)
             {
                 Npp.AddLine($"obj =\r\n{objstr}\r\n");
-                string correct_pprint_objstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ],\r\n    \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n    \"e\": false,\r\n    \"f\": null\r\n}";
+                string correctPprintObjstr = "{\r\n    \"a\": [1, 2, 3],\r\n    \"b\": {},\r\n    \"Я草\": [],\r\n    \"😀\": [\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n        [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            [113, 114]\r\n        ]\r\n    ],\r\n    \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n    \"e\": false,\r\n    \"f\": null\r\n}";
                 ii++;
-                string actual_pprint_objstr = obj.PrettyPrint(4, false, PrettyPrintStyle.PPrint);
-                if (actual_pprint_objstr != correct_pprint_objstr)
+                string actualPprintObjstr = obj.PrettyPrint(4, false, PrettyPrintStyle.PPrint);
+                if (actualPprintObjstr != correctPprintObjstr)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
     Expected PPrint-style PrettyPrintAndChangePositions(obj) to return
     {1}
     instead got
     {2}",
-                        ii + 1, correct_pprint_objstr, actual_pprint_objstr));
+                        ii + 1, correctPprintObjstr, actualPprintObjstr));
                 }
                 ii++;
                 // the formatting with '\t' indent is actually significantly different
                 // because having only 1 char of indent makes it so all the sub-children fit on a single line 
-                string correct_pprint_objstr_tab_indent = "{\r\n\t\"a\": [1, 2, 3],\r\n\t\"b\": {},\r\n\t\"Я草\": [],\r\n\t\"😀\": [\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]\r\n\t],\r\n\t\"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n\t\"e\": false,\r\n\t\"f\": null\r\n}";
-                string actual_pprint_objstr_tab_indent = obj.PrettyPrint(1, false, PrettyPrintStyle.PPrint, int.MaxValue, '\t');
-                if (actual_pprint_objstr_tab_indent != correct_pprint_objstr_tab_indent)
+                string correctPprintObjstrTabIndent = "{\r\n\t\"a\": [1, 2, 3],\r\n\t\"b\": {},\r\n\t\"Я草\": [],\r\n\t\"😀\": [\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],\r\n\t\t[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]\r\n\t],\r\n\t\"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"],\r\n\t\"e\": false,\r\n\t\"f\": null\r\n}";
+                string actualPprintObjstrTabIndent = obj.PrettyPrint(1, false, PrettyPrintStyle.PPrint, int.MaxValue, '\t');
+                if (actualPprintObjstrTabIndent != correctPprintObjstrTabIndent)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
     Expected PPrint-style PrettyPrintAndChangePositions(obj) with tab indentation to return
     {1}
     instead got
     {2}",
-                        ii + 1, correct_pprint_objstr_tab_indent, actual_pprint_objstr_tab_indent));
+                        ii + 1, correctPprintObjstrTabIndent, actualPprintObjstrTabIndent));
                 }
                 ii++;
-                string correct_tostring_withcomments_objstr = "/*foo*/\r\n//bar\r\n//😀\r\n/*cömment*/\r\n//python \r\n//cömment\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n{\"a\": [1, 2, 3], \"b\": {}, \"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]], \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"], \"e\": false, \"f\": null}";
-                string actual_tostring_withcomments_objstr = obj.ToStringWithComments(parser.comments, false);
-                if (correct_tostring_withcomments_objstr != actual_tostring_withcomments_objstr)
+                string correctTostringWithcommentsObjstr = "/*foo*/\r\n//bar\r\n//😀\r\n/*cömment*/\r\n//python \r\n//cömment\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n{\"a\": [1, 2, 3], \"b\": {}, \"Я草\": [], \"😀\": [[100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113], [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, [113, 114]]], \"d\": [{\"o\": \"öyster\"}, \"cät\", \"dog\"], \"e\": false, \"f\": null}";
+                string actualTostringWithcommentsObjstr = obj.ToStringWithComments(parser.comments, false);
+                if (correctTostringWithcommentsObjstr != actualTostringWithcommentsObjstr)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
     Expected ToStringWithComments(obj) to return
     {1}
     instead got
     {2}",
-                        ii + 1, correct_tostring_withcomments_objstr,
-                        actual_tostring_withcomments_objstr));
+                        ii + 1, correctTostringWithcommentsObjstr,
+                        actualTostringWithcommentsObjstr));
                 }
                 ii++;
-                string correct_prettyprint_withcomments_objstr = "/*foo*/\r\n//bar\r\n{\r\n    \"a\": [\r\n        1,\r\n        2,\r\n        3\r\n    ],\r\n    \"b\": {\r\n    },\r\n    \"Я草\": [\r\n    ],\r\n    \"😀\": [\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            113\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            //😀\r\n            [\r\n                113,\r\n                114\r\n            ]\r\n        ]\r\n    ],\r\n    /*cömment*/\r\n    \"d\": [\r\n        {\r\n            \"o\": \"öyster\"\r\n        },\r\n        \"cät\",\r\n        //python \r\n        \"dog\"\r\n    ],\r\n    \"e\": false,\r\n    //cömment\r\n    \"f\": null\r\n}\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n";
-                string actual_prettyprint_withcomments_objstr = obj.PrettyPrintWithComments(parser.comments, 4, false, ' ');
-                if (correct_prettyprint_withcomments_objstr != actual_prettyprint_withcomments_objstr)
+                string correctPrettyprintWithcommentsObjstr = "/*foo*/\r\n//bar\r\n{\r\n    \"a\": [\r\n        1,\r\n        2,\r\n        3\r\n    ],\r\n    \"b\": {\r\n    },\r\n    \"Я草\": [\r\n    ],\r\n    \"😀\": [\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            113\r\n        ],\r\n        [\r\n            100,\r\n            101,\r\n            102,\r\n            103,\r\n            104,\r\n            105,\r\n            106,\r\n            107,\r\n            108,\r\n            109,\r\n            110,\r\n            111,\r\n            112,\r\n            //😀\r\n            [\r\n                113,\r\n                114\r\n            ]\r\n        ]\r\n    ],\r\n    /*cömment*/\r\n    \"d\": [\r\n        {\r\n            \"o\": \"öyster\"\r\n        },\r\n        \"cät\",\r\n        //python \r\n        \"dog\"\r\n    ],\r\n    \"e\": false,\r\n    //cömment\r\n    \"f\": null\r\n}\r\n//baz \r\n// more python\r\n/*quz\r\nzuq*/\r\n";
+                string actualPrettyprintWithcommentsObjstr = obj.PrettyPrintWithComments(parser.comments, 4, false, ' ');
+                if (correctPrettyprintWithcommentsObjstr != actualPrettyprintWithcommentsObjstr)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
     Expected PrettyPrintWithComments(obj) to return
     {1}
     instead got
     {2}",
-                        ii + 1, correct_prettyprint_withcomments_objstr,
-                        actual_prettyprint_withcomments_objstr));
+                        ii + 1, correctPrettyprintWithcommentsObjstr,
+                        actualPrettyprintWithcommentsObjstr));
                 }
                 var keylines = new (string key,
-                    int original_pos, int whitesmith_pos, int google_pos,
-                    int tostring_miniwhite_pos, int tostring_pos, int pprint_pos,
-                    int tostring_withcomments_pos, int prettyprint_with_comments_pos)[]
+                    int originalPos, int whitesmithPos, int googlePos,
+                    int tostringMiniwhitePos, int tostringPos, int pprintPos,
+                    int tostringWithcommentsPos, int prettyprintWithCommentsPos)[]
                 {
                     ("a", 24, 13, 12, 5, 6, 12, 105, 28),
                     ("b", 42, 57, 67, 17, 22, 33, 121, 83),
@@ -450,111 +450,111 @@ Got
                     ("e", 358, 905, 1096, 255, 312, 570, 411, 1169),
                     ("f", 380, 918, 1113, 265, 324, 587, 423, 1202),
                 };
-                foreach ((string key, int original_position, _, _, _, _, _, _, _) in keylines)
+                foreach ((string key, int originalPosition, _, _, _, _, _, _, _) in keylines)
                 {
                     ii++;
-                    int got_pos = obj[key].position;
-                    if (got_pos != original_position)
+                    int gotPos = obj[key].position;
+                    if (gotPos != originalPosition)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After parsing of obj, expected the position of child {key} to be {original_position}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After parsing of obj, expected the position of child {key} to be {originalPosition}, got {gotPos}.");
                     }
                 }
                 foreach (PrettyPrintStyle style in new[] {PrettyPrintStyle.Whitesmith, PrettyPrintStyle.Google, PrettyPrintStyle.PPrint })
                 {
                     string pp = obj.PrettyPrint(4, false, style);
-                    string pp_ch_line = obj.PrettyPrintAndChangePositions(4, false, style);
-                    if (pp != pp_ch_line)
+                    string ppChLine = obj.PrettyPrintAndChangePositions(4, false, style);
+                    if (pp != ppChLine)
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine(string.Format(@"Test {0} failed:
     Expected {1}-style PrettyPrintAndChangePositions(obj) to return
     {2}
     instead got
     {3}",
-                                                        ii + 1, style, pp, pp_ch_line));
+                                                        ii + 1, style, pp, ppChLine));
                     }
                     ii++;
                 }
 
-                foreach ((string key, _, int whitesmith_pos, int google_pos, int tostring_miniwhite_pos, int tostring_pos, int pprint_pos, int tostring_withcomments_pos, int prettyprint_withcomments_pos) in keylines)
+                foreach ((string key, _, int whitesmithPos, int googlePos, int tostringMiniwhitePos, int tostringPos, int pprintPos, int tostringWithcommentsPos, int prettyprintWithcommentsPos) in keylines)
                 {
                     obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.Whitesmith);
-                    int got_pos = obj[key].position;
-                    if (got_pos != whitesmith_pos)
+                    int gotPos = obj[key].position;
+                    if (gotPos != whitesmithPos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {whitesmith_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After Whitesmith-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {whitesmithPos}, got {gotPos}.");
                     }
                     ii++;
                     obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.Google);
-                    got_pos = obj[key].position;
-                    if (got_pos != google_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != googlePos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {google_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After Google-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {googlePos}, got {gotPos}.");
                     }
                     ii++;
                     obj.ToStringAndChangePositions(false);
-                    got_pos = obj[key].position;
-                    if (got_pos != tostring_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != tostringPos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After ToStringAndChangePositions(obj), expected the position of child {key} to be {tostringPos}, got {gotPos}.");
                     }
                     ii++;
                     obj.ToStringAndChangePositions(false, ":", ",");
-                    got_pos = obj[key].position;
-                    if (got_pos != tostring_miniwhite_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != tostringMiniwhitePos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions(obj), expected the position of child {key} to be {tostring_miniwhite_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After minimal-whitespace ToStringAndChangePositions(obj), expected the position of child {key} to be {tostringMiniwhitePos}, got {gotPos}.");
                     }
                     ii++;
                     obj.PrettyPrintAndChangePositions(4, false, PrettyPrintStyle.PPrint);
-                    got_pos = obj[key].position;
-                    if (got_pos != pprint_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != pprintPos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After PPrint-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {pprint_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After PPrint-style PrettyPrintAndChangePositions(obj), expected the position of child {key} to be {pprintPos}, got {gotPos}.");
                     }
                     ii++;
                     obj = (JObject)parser.Parse(objstr); // the WithComments methods only work if the JSON is parsed immediately before calling them
                     obj.ToStringWithCommentsAndChangePositions(parser.comments, false);
-                    got_pos = obj[key].position;
-                    if (got_pos != tostring_withcomments_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != tostringWithcommentsPos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After ToStringWithCommentsAndChangePositions(obj), expected the position of child {key} to be {tostring_withcomments_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After ToStringWithCommentsAndChangePositions(obj), expected the position of child {key} to be {tostringWithcommentsPos}, got {gotPos}.");
                     }
                     ii++;
                     obj = (JObject)parser.Parse(objstr);
                     obj.PrettyPrintWithCommentsAndChangePositions(parser.comments, 4, false, ' ');
-                    got_pos = obj[key].position;
-                    if (got_pos != prettyprint_withcomments_pos)
+                    gotPos = obj[key].position;
+                    if (gotPos != prettyprintWithcommentsPos)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"After PrettyPrintWithCommentsAndChangePositions(obj), expected the position of child {key} to be {prettyprint_withcomments_pos}, got {got_pos}.");
+                        testsFailed++;
+                        Npp.AddLine($"After PrettyPrintWithCommentsAndChangePositions(obj), expected the position of child {key} to be {prettyprintWithcommentsPos}, got {gotPos}.");
                     }
                     ii++;
                 }
                 string tostr = obj.ToString(false);
-                string tostr_ch_line = obj.ToStringAndChangePositions(false);
+                string tostrChLine = obj.ToStringAndChangePositions(false);
                 ii++;
-                if (tostr != tostr_ch_line)
+                if (tostr != tostrChLine)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
     Expected ToStringAndChangePositions({1}) to return
     {2}
     instead got
     {3}",
-                                                    ii + 1, objstr, tostr, tostr_ch_line));
+                                                    ii + 1, objstr, tostr, tostrChLine));
                 }
             }
             #endregion
             #region EqualityTests
-            var equality_testcases = new object[][]
+            var equalityTestcases = new object[][]
             {
                 new object[] { "1", "2", false },
                 new object[] { "1", "1", true },
@@ -571,19 +571,19 @@ Got
                 new object[] { "[]", "[1, 2]", false },
                 new object[] { "1" + new string('0', 400), "NaN", true }, // really really big int representations
             };
-            foreach (object[] test in equality_testcases)
+            foreach (object[] test in equalityTestcases)
             {
                 string astr = (string)test[0];
                 string bstr = (string)test[1];
-                bool a_equals_b = (bool)test[2];
+                bool aEqualsB = (bool)test[2];
                 ii++;
                 JNode a = parser.Parse(astr);
                 JNode b = parser.Parse(bstr);
                 bool result = a.TryEquals(b, out _);
-                if (result != a_equals_b)
+                if (result != aEqualsB)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected {a.ToString()} == {b.ToString()} to be {a_equals_b}, but it was called {result}");
+                    testsFailed++;
+                    Npp.AddLine($"Expected {a.ToString()} == {b.ToString()} to be {aEqualsB}, but it was called {result}");
                 }
             }
             parser.throwIfLogged = oldThrowIfLogged;
@@ -603,24 +603,24 @@ Got
             }
             catch (Exception ex)
             {
-                tests_failed++;
+                testsFailed++;
                 Npp.AddLine($"While trying to get the string representation of JRegex array {correctJRegexArrayRepr}\r\ngot error\r\n{ex}");
             }
             if (gotRepr != correctJRegexArrayRepr)
             {
-                tests_failed++;
+                testsFailed++;
                 Npp.AddLine($"JRegex ToString() should return a string that would reproduce the original regex.\r\nExpected\r\n{correctJRegexArrayRepr}\r\nGot\r\n{gotRepr}");
             }
             #endregion
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestThrowsWhenAppropriate()
         {
-            int ii = 0, tests_failed = 0;
+            int ii = 0, testsFailed = 0;
             JsonParser parser = new JsonParser();
             string[] testcases = new string[]
             {
@@ -637,22 +637,22 @@ Got
                 try
                 {
                     JNode json = parser.Parse(test);
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Expected default settings JSON parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
                 }
                 catch { }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
-            var testcases = new (string inp, JNode desired_out)[]
+            var testcases = new (string inp, JNode desiredOut)[]
             {
                 ("{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}")),
                 (@"[1,
@@ -717,45 +717,45 @@ multiline comment
                  ("[1,\r\n  2,\r\n  3\r\n]\r\n//", TryParse("[1,2,3]", simpleparser)), // empty javascript comment with no trailing EOL
                  ("[1,\r\n  2,\r\n  3\r\n]\r\n#", TryParse("[1,2,3]", simpleparser)), // empty Python comment with no trailing EOL
             };
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
-            foreach ((string inp, JNode desired_out) in testcases)
+            foreach ((string inp, JNode desiredOut) in testcases)
             {
-                if (desired_out == null)
+                if (desiredOut == null)
                 {
                     ii += 1;
-                    tests_failed += 1;
+                    testsFailed += 1;
                     continue;
                 }
                 ii++;
                 JNode result = new JNode();
-                string base_message = $"Expected JsonParser(ParserState.JSON5).Parse({inp})\nto return\n{desired_out.ToString()}\n";
+                string baseMessage = $"Expected JsonParser(ParserState.JSON5).Parse({inp})\nto return\n{desiredOut.ToString()}\n";
                 try
                 {
                     result = parser.Parse(inp);
-                    if (!desired_out.TryEquals(result, out _))
+                    if (!desiredOut.TryEquals(result, out _))
                     {
-                        tests_failed++;
-                        Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
+                        testsFailed++;
+                        Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+                    testsFailed++;
+                    Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
                 }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.STRICT, true, false, false);
-            var testcases = new (string inp, string desired_out, string[] desired_lint)[]
+            var testcases = new (string inp, string desiredOut, string[] desiredLint)[]
             {
                 ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON
                 ("[1 2]", "[1, 2]", new string[]{"No comma between array members" }),
@@ -981,55 +981,55 @@ multiline comment
                 ("[5e, -0.2e]", "[NaN, NaN]", new string[]{"Number string \"5e\" had bad format", "Number string \"-0.2e\" had bad format"}),
             };
 
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
-            foreach ((string inp, string desired_out, string[] expected_lint) in testcases)
+            foreach ((string inp, string desiredOut, string[] expectedLint) in testcases)
             {
                 ii++;
-                JNode jdesired = TryParse(desired_out, simpleparser);
+                JNode jdesired = TryParse(desiredOut, simpleparser);
                 if (jdesired == null)
                 {
                     ii += 1;
-                    tests_failed += 1;
+                    testsFailed += 1;
                     continue;
                 }
                 JNode result = new JNode();
-                string expected_lint_str = "[" + string.Join(", ", expected_lint.Select(x => JNode.StrToString(x, true))) + "]";
-                string base_message = $"Expected JsonParser(LoggerLevel.STRICT).Parse({inp})\nto return\n{desired_out} and have lint {expected_lint_str}\n";
+                string expectedLintStr = "[" + string.Join(", ", expectedLint.Select(x => JNode.StrToString(x, true))) + "]";
+                string baseMessage = $"Expected JsonParser(LoggerLevel.STRICT).Parse({inp})\nto return\n{desiredOut} and have lint {expectedLintStr}\n";
                 try
                 {
                     result = parser.Parse(inp);
-                    if (parser.lint.Count == 0 && expected_lint.Length != 0)
+                    if (parser.lint.Count == 0 && expectedLint.Length != 0)
                     {
-                        tests_failed++;
-                        Npp.AddLine(base_message + "Parser had no lint");
+                        testsFailed++;
+                        Npp.AddLine(baseMessage + "Parser had no lint");
                         continue;
                     }
-                    StringBuilder lint_sb = new StringBuilder();
-                    lint_sb.Append('[');
+                    StringBuilder lintSb = new StringBuilder();
+                    lintSb.Append('[');
                     for (int jj = 0; jj < parser.lint.Count; jj++)
                     {
-                        lint_sb.Append(JNode.StrToString(parser.lint[jj].message, true));
-                        if (jj < parser.lint.Count - 1) lint_sb.Append(", ");
+                        lintSb.Append(JNode.StrToString(parser.lint[jj].message, true));
+                        if (jj < parser.lint.Count - 1) lintSb.Append(", ");
                     }
-                    lint_sb.Append("]");
-                    string lint_str = lint_sb.ToString();
-                    if (!jdesired.TryEquals(result, out _) || lint_str != expected_lint_str)
+                    lintSb.Append("]");
+                    string lintStr = lintSb.ToString();
+                    if (!jdesired.TryEquals(result, out _) || lintStr != expectedLintStr)
                     {
-                        tests_failed++;
-                        Npp.AddLine($"{base_message}Instead returned\n{result.ToString()} and had lint {lint_str}");
+                        testsFailed++;
+                        Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()} and had lint {lintStr}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+                    testsFailed++;
+                    Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
                 }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestJsonLines()
@@ -1056,22 +1056,22 @@ multiline comment
                     "[{\"a\": [1, 2], \"b\": -7.8}]"
                 },
             };
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
             foreach (string[] test in testcases)
             {
                 string input = test[0];
-                JNode desired_output = TryParse(test[1], parser);
+                JNode desiredOutput = TryParse(test[1], parser);
                 JNode json = TryParse(input, parser, true);
                 if (json == null)
                 {
                     ii++;
-                    tests_failed++;
+                    testsFailed++;
                     continue;
                 }
-                if (!json.TryEquals(desired_output, out _))
+                if (!json.TryEquals(desiredOutput, out _))
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(string.Format(@"Test {0} failed:
 Expected
 {1}
@@ -1081,7 +1081,7 @@ Got
                 }
             }
 
-            string[] should_throw_testcases = new string[]
+            string[] shouldThrowTestcases = new string[]
             {
                 "[1,\n2]\n[3, 4]", // one doc covers multiple lines
                 "[1, 2]\n\n3", // two lines between docs
@@ -1093,27 +1093,27 @@ Got
                 "[1, 2]\n\n", // multiple newlines after last doc
             };
 
-            foreach (string test in should_throw_testcases)
+            foreach (string test in shouldThrowTestcases)
             {
                 ii++;
                 try
                 {
                     JNode json = parser.ParseJsonLines(test);
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Expected JSON Lines parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
                 }
                 catch { }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestCultureIssues()
         {
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             // change current culture to German because they use a comma decimal sep (see https://github.com/molsonkiko/JsonToolsNppPlugin/issues/17)
             ii++;
             CultureInfo currentCulture = CultureInfo.CurrentCulture;
@@ -1122,14 +1122,14 @@ Got
             string jsonFloat2str = jsonFloat2.ToString();
             if (jsonFloat2str != "2.0")
             {
-                tests_failed++;
+                testsFailed++;
                 Npp.AddLine("Expected parsing of 2.0 to return 2.0 even when the current culture is German, " +
                     $"but instead got {jsonFloat2str} when the culture is German");
             }
             CultureInfo.CurrentCulture = currentCulture;
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         public static bool TestTryParseNumber()
@@ -1176,20 +1176,20 @@ Got
                 ("ab,+Infinity,b", 3, 13, "\"+Infinity,\""),
                 ("ab,-Infinity,b", 3, 13, "\"-Infinity,\""),
             };
-            int tests_failed = 0;
+            int testsFailed = 0;
             foreach ((string inp, int start, int end, string correctJNodeStr) in testcases)
             {
                 JNode tryParseResult = JsonParser.TryParseNumber(inp, start, end, 0);
                 string tryParseStr = tryParseResult.ToString();
                 if (tryParseStr != correctJNodeStr)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Expected TryParseNumber(\"{inp}\", {start}, {end}) to return {correctJNodeStr}, got {tryParseStr}");
                 }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {testcases.Length - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {testcases.Length - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 }

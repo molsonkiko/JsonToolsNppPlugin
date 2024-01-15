@@ -10,7 +10,7 @@ namespace JSON_Tools.Utils
     {
         public int capacity;
         public Dictionary<K, V> cache;
-        public LinkedList<K> use_order;
+        public LinkedList<K> useOrder;
         public bool isFull { get { return cache.Count == capacity; } }
         public int Count { get { return cache.Count; } }
 
@@ -18,7 +18,7 @@ namespace JSON_Tools.Utils
         {
             cache = new Dictionary<K, V>();
             this.capacity = capacity;
-            this.use_order = new LinkedList<K>();
+            this.useOrder = new LinkedList<K>();
         }
 
         /// <summary>
@@ -29,11 +29,11 @@ namespace JSON_Tools.Utils
         /// <param name="query"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public bool TryGetValue(K key, out V existing_value)
+        public bool TryGetValue(K key, out V existingValue)
         {
-            if (cache.TryGetValue(key, out existing_value))
+            if (cache.TryGetValue(key, out existingValue))
                 return true;
-            existing_value = default(V);
+            existingValue = default(V);
             return false;
         }
 
@@ -67,29 +67,29 @@ namespace JSON_Tools.Utils
             /// </summary>
             set
             {
-                if (use_order.Count == capacity)
+                if (useOrder.Count == capacity)
                 {
-                    K oldest_query = use_order.First();
-                    use_order.RemoveFirst();
-                    cache.Remove(oldest_query);
+                    K oldestQuery = useOrder.First();
+                    useOrder.RemoveFirst();
+                    cache.Remove(oldestQuery);
                 }
-                use_order.AddLast(key);
+                useOrder.AddLast(key);
                 cache[key] = value;
             }
         }
 
         public K OldestKey()
         {
-            if (use_order.Count == 0)
+            if (useOrder.Count == 0)
                 return default(K);
-            return use_order.First();
+            return useOrder.First();
         }
 
         public K NewestKey()
         {
-            if (use_order.Count == 0)
+            if (useOrder.Count == 0)
                 return default(K);
-            return use_order.Last();
+            return useOrder.Last();
         }
 
         /// <summary>
@@ -99,12 +99,12 @@ namespace JSON_Tools.Utils
         /// <returns></returns>
         public V PopNewest()
         {
-            if (use_order.Count == 0)
+            if (useOrder.Count == 0)
                 return default(V);
-            K lastKey = use_order.Last();
+            K lastKey = useOrder.Last();
             V lastVal = cache[lastKey];
             cache.Remove(lastKey);
-            use_order.RemoveLast();
+            useOrder.RemoveLast();
             return lastVal;
         }
     }

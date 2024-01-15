@@ -13,7 +13,7 @@ namespace JSON_Tools.Utils
             3 * SystemColors.Control.B / 4 + SystemColors.ControlDark.B / 4
         );
 
-        
+
         /// <summary>
         /// Changes the background and text color of the form
         /// and any child forms to match the editor window.<br></br>
@@ -21,20 +21,20 @@ namespace JSON_Tools.Utils
         /// and also whenever the style is changed.<br></br>
         /// Heavily based on CsvQuery (https://github.com/jokedst/CsvQuery)
         /// </summary>
-        public static void ApplyStyle(Control ctrl, bool use_npp_style, bool darkMode = false)
+        public static void ApplyStyle(Control ctrl, bool useNppStyle, bool darkMode = false)
         {
             if (ctrl == null || ctrl.IsDisposed) return;
             if (!Npp.nppVersionAtLeast8)
-                use_npp_style = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
+                useNppStyle = false; // trying to follow editor style looks weird for Notepad++ 7.3.3
             if (ctrl is Form form)
             {
                 foreach (Form childForm in form.OwnedForms)
                 {
-                    ApplyStyle(childForm, use_npp_style, darkMode);
+                    ApplyStyle(childForm, useNppStyle, darkMode);
                 }
             }
             Color backColor = Npp.notepad.GetDefaultBackgroundColor();
-            if (!use_npp_style || (
+            if (!useNppStyle || (
                 backColor.R > 240 &&
                 backColor.G > 240 &&
                 backColor.B > 240))
@@ -47,18 +47,12 @@ namespace JSON_Tools.Utils
                 foreach (Control child in ctrl.Controls)
                 {
                     if (child is GroupBox)
-                        ApplyStyle(child, use_npp_style, darkMode);
+                        ApplyStyle(child, useNppStyle, darkMode);
                     // controls containing text
                     else if (child is TextBox || child is ListBox || child is ComboBox || child is TreeView)
                     {
                         child.BackColor = SystemColors.Window; // white background
                         child.ForeColor = SystemColors.WindowText;
-                    }
-                    else if (child is LinkLabel llbl)
-                    {
-                        llbl.LinkColor = Color.Blue;
-                        llbl.ActiveLinkColor = Color.Red;
-                        llbl.VisitedLinkColor = Color.Purple;
                     }
                     else if (child is DataGridView dgv)
                     {
@@ -74,6 +68,12 @@ namespace JSON_Tools.Utils
                         // buttons should be a bit darker but everything else is the same color as the background
                         child.BackColor = (child is Button) ? SlightlyDarkControl : SystemColors.Control;
                         child.ForeColor = SystemColors.ControlText;
+                        if (child is LinkLabel llbl)
+                        {
+                            llbl.LinkColor = Color.Blue;
+                            llbl.ActiveLinkColor = Color.Red;
+                            llbl.VisitedLinkColor = Color.Purple;
+                        }
                     }
                 }
                 return;
@@ -90,7 +90,7 @@ namespace JSON_Tools.Utils
                 child.BackColor = backColor;
                 child.ForeColor = foreColor;
                 if (child is GroupBox)
-                    ApplyStyle(child, use_npp_style, darkMode);
+                    ApplyStyle(child, useNppStyle, darkMode);
                 if (child is LinkLabel llbl)
                 {
                     llbl.LinkColor = foreColor;

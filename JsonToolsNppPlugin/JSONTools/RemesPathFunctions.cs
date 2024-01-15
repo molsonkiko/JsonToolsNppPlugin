@@ -24,14 +24,14 @@ namespace JSON_Tools.JSON_Tools
         /// a op (b op c) (right associative) or<br></br>
         /// (a op b) op c (left associative, default)
         /// </summary>
-        public bool is_right_associative;
+        public bool isRightAssociative;
 
-        public Binop(Func<JNode, JNode, JNode> function, float precedence, string name, bool is_right_associative = false)
+        public Binop(Func<JNode, JNode, JNode> function, float precedence, string name, bool isRightAssociative = false)
         {
             Function = function;
             this.precedence = precedence;
             this.name = name;
-            this.is_right_associative = is_right_associative;
+            this.isRightAssociative = isRightAssociative;
         }
 
         public override string ToString()
@@ -45,13 +45,13 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="right"></param>
         /// <returns></returns>
-        public bool PrecedesLeft(float left_precedence)
+        public bool PrecedesLeft(float leftPrecedence)
         {
-            if (left_precedence > this.precedence)
+            if (leftPrecedence > this.precedence)
                 return false;
-            if (left_precedence < this.precedence)
+            if (leftPrecedence < this.precedence)
                 return true;
-            return is_right_associative;
+            return isRightAssociative;
         }
 
         public JNode Call(JNode left, JNode right)
@@ -518,12 +518,12 @@ namespace JSON_Tools.JSON_Tools
                 }
                 foreach (KeyValuePair<string, JNode> rkv in robj.children)
                 {
-                    bool left_has_key = lobj.children.TryGetValue(rkv.Key, out JNode left_val);
-                    if (!left_has_key)
+                    bool leftHasKey = lobj.children.TryGetValue(rkv.Key, out JNode leftVal);
+                    if (!leftHasKey)
                     {
                         throw new VectorizedArithmeticException("Tried to apply a binop to two dicts with different sets of keys");
                     }
-                    dic[rkv.Key] = Call(left_val, rkv.Value);
+                    dic[rkv.Key] = Call(leftVal, rkv.Value);
                 }
                 return new JObject(0, dic);
             }
@@ -653,73 +653,73 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JNode Resolve(JNode left, JNode right)
         {
-            bool left_itbl = (left.type & Dtype.ITERABLE) != 0;
-            bool right_itbl = (right.type & Dtype.ITERABLE) != 0;
-            Dtype out_type = BinopOutType(left.type, right.type);
+            bool leftItbl = (left.type & Dtype.ITERABLE) != 0;
+            bool rightItbl = (right.type & Dtype.ITERABLE) != 0;
+            Dtype outType = BinopOutType(left.type, right.type);
             if (left is CurJson lcur)
             {
                 if (right is CurJson rcur_)
                 {
-                    if (left_itbl)
+                    if (leftItbl)
                     {
-                        if (right_itbl)
+                        if (rightItbl)
                         {
                             // they're both iterables or unknown type
-                            return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
+                            return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
                         }
                         // only left is an iterable and unknown type
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
+                        return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
                     }
-                    if (right_itbl)
+                    if (rightItbl)
                     {
                         // right is iterable or unknown, but left is not iterable
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
+                        return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), rcur_.function(x)));
                     }
                     // they're both scalars
-                    return new CurJson(out_type, (JNode x) => Call(lcur.function(x), rcur_.function(x)));
+                    return new CurJson(outType, (JNode x) => Call(lcur.function(x), rcur_.function(x)));
                 }
                 // right is not a function of the current JSON, but left is
-                if (left_itbl)
+                if (leftItbl)
                 {
-                    if (right_itbl)
+                    if (rightItbl)
                     {
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), right));
+                        return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), right));
                     }
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), right));
+                    return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), right));
                 }
-                if (right_itbl)
+                if (rightItbl)
                 {
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(lcur.function(x), right));
+                    return new CurJson(outType, (JNode x) => BinopTwoJsons(lcur.function(x), right));
                 }
-                return new CurJson(out_type, (JNode x) => Call(lcur.function(x), right));
+                return new CurJson(outType, (JNode x) => Call(lcur.function(x), right));
             }
             if (right is CurJson rcur)
             {
                 // left is not a function of the current JSON, but right is
-                if (left_itbl)
+                if (leftItbl)
                 {
-                    if (right_itbl)
+                    if (rightItbl)
                     {
-                        return new CurJson(out_type, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
+                        return new CurJson(outType, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
                     }
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
+                    return new CurJson(outType, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
                 }
-                if (right_itbl)
+                if (rightItbl)
                 {
-                    return new CurJson(out_type, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
+                    return new CurJson(outType, (JNode x) => BinopTwoJsons(left, rcur.function(x)));
                 }
-                return new CurJson(out_type, (JNode x) => Call(left, rcur.function(x)));
+                return new CurJson(outType, (JNode x) => Call(left, rcur.function(x)));
             }
             // neither is a function of the current JSON
-            if (left_itbl)
+            if (leftItbl)
             {
-                if (right_itbl)
+                if (rightItbl)
                 {
                     return BinopTwoJsons(left, right);
                 }
                 return BinopJsonScalar(left, right);
             }
-            if (right_itbl)
+            if (rightItbl)
             {
                 return BinopScalarJson(left, right);
             }
@@ -812,8 +812,8 @@ namespace JSON_Tools.JSON_Tools
                 return ResolveStack(bwaStack, argStack);
             }
             BinopWithArgs leftBwa = bwaStack[bwaStack.Count - 2];
-            float left_precedence = leftBwa.binop.precedence;
-            if (bop.PrecedesLeft(left_precedence))
+            float leftPrecedence = leftBwa.binop.precedence;
+            if (bop.PrecedesLeft(leftPrecedence))
             {
                 bwa.left = lastArg;
                 return bwa;
@@ -982,7 +982,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
-        /// Input_types[ii] is the type that the i^th argument to a function must have,
+        /// inputTypes[ii] is the type that the i^th argument to a function must have,
         /// unless the function has arbitrarily many arguments (indicated by max_args = int.MaxValue),
         /// in which case the last value of Input_types is the type that all optional arguments must have.
         /// </summary>
@@ -1082,9 +1082,9 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="RemesPathException"></exception>
         public void ThrowWrongArgCount(int count)
         {
-            char correct_char_after_arg = count == maxArgs ? ')' : ',';
-            string num_args_description = (minArgs == maxArgs) ? $"({maxArgs} args)" : $"({minArgs} - {maxArgs} args)";
-            throw new RemesPathException($"Expected '{correct_char_after_arg}' after argument {count} of function {name} {num_args_description}");
+            char correctCharAfterArg = count == maxArgs ? ')' : ',';
+            string numArgsDescription = (minArgs == maxArgs) ? $"({maxArgs} args)" : $"({minArgs} - {maxArgs} args)";
+            throw new RemesPathException($"Expected '{correctCharAfterArg}' after argument {count} of function {name} {numArgsDescription}");
         }
 
         /// <summary>
@@ -1194,8 +1194,8 @@ namespace JSON_Tools.JSON_Tools
             {
                 throw new RemesPathException("'in' function first argument must be string if second argument is an object.");
             }
-            bool itbl_has_key = ((JObject)itbl).children.ContainsKey(k);
-            return new JNode(itbl_has_key);
+            bool itblHasKey = ((JObject)itbl).children.ContainsKey(k);
+            return new JNode(itblHasKey);
         }
 
         /// <summary>
@@ -1793,7 +1793,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Unique(List<JNode> args)
         {
             var itbl = (JArray)args[0];
-            var is_sorted = args[1].value;
+            var isSorted = args[1].value;
             var uniq = new HashSet<object>();
             foreach (JNode val in itbl.children)
             {
@@ -1801,16 +1801,16 @@ namespace JSON_Tools.JSON_Tools
                     throw new RemesPathArgumentException("First argument to unique must be an array of all scalars.", 0, FUNCTIONS["unique"]);
                 uniq.Add(val.value);
             }
-            var uniq_list = new List<JNode>();
+            var uniqList = new List<JNode>();
             foreach (object val in uniq)
             {
-                uniq_list.Add(ObjectsToJNode(val));
+                uniqList.Add(ObjectsToJNode(val));
             }
-            if (is_sorted != null && (bool)is_sorted)
+            if (isSorted != null && (bool)isSorted)
             {
-                uniq_list.Sort();
+                uniqList.Sort();
             }
-            return new JArray(0, uniq_list);
+            return new JArray(0, uniqList);
         }
 
         /// <summary>
@@ -1844,20 +1844,20 @@ namespace JSON_Tools.JSON_Tools
                 return new JNode(sorted[0], Dtype.FLOAT, 0);
             }
             double ind = quantile * (sorted.Count - 1);
-            int lower_ind = Convert.ToInt32(Math.Floor(ind));
-            double weighted_avg;
-            double lower_val = sorted[lower_ind];
-            if (ind != lower_ind)
+            int lowerInd = Convert.ToInt32(Math.Floor(ind));
+            double weightedAvg;
+            double lowerVal = sorted[lowerInd];
+            if (ind != lowerInd)
             {
-                double upper_val = sorted[lower_ind + 1];
-                double frac_upper = ind - lower_ind;
-                weighted_avg = upper_val * frac_upper + lower_val * (1 - frac_upper);
+                double upperVal = sorted[lowerInd + 1];
+                double fracUpper = ind - lowerInd;
+                weightedAvg = upperVal * fracUpper + lowerVal * (1 - fracUpper);
             }
             else
             {
-                weighted_avg = lower_val;
+                weightedAvg = lowerVal;
             }
-            return new JNode(weighted_avg, Dtype.FLOAT, 0);
+            return new JNode(weightedAvg, Dtype.FLOAT, 0);
         }
 
         /// <summary>
@@ -1871,7 +1871,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode ValueCounts(List<JNode> args)
         {
             var arr = (JArray)args[0];
-            var sort_by_count = args.Count > 1 && (args[1].value is bool sbc)
+            var sortByCount = args.Count > 1 && (args[1].value is bool sbc)
                 && sbc;
             var uniqs = new Dictionary<object, long>();
             foreach (JNode child in arr.children)
@@ -1885,21 +1885,21 @@ namespace JSON_Tools.JSON_Tools
                     uniqs[val] = 0L;
                 uniqs[val]++;
             }
-            var uniq_arr = uniqs.Keys
+            var uniqArr = uniqs.Keys
                 .Select(k => (JNode)new JArray(0, new List<JNode>
                 {
                         ObjectsToJNode(k),
                         new JNode(uniqs[k], Dtype.INT, 0)
                 }))
                 .ToList();
-            if (sort_by_count)
+            if (sortByCount)
             {
-                uniq_arr.Sort(
+                uniqArr.Sort(
                     (a, b) => (((JArray)a)[1]).CompareTo(((JArray)b)[1])
                 );
-                uniq_arr.Reverse();
+                uniqArr.Reverse();
             }
-            return new JArray(0, uniq_arr);
+            return new JArray(0, uniqArr);
         }
 
         /// <summary>
@@ -2119,21 +2119,21 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="RemesPathException"></exception>
         public static JNode Concat(List<JNode> args)
         {
-            JNode first_itbl = args[0];
-            if (first_itbl is JArray first_arr)
+            JNode firstItbl = args[0];
+            if (firstItbl is JArray firstArr)
             {
-                List<JNode> new_arr = new List<JNode>(first_arr.children);
+                List<JNode> newArr = new List<JNode>(firstArr.children);
                 for (int ii = 1; ii < args.Count; ii++)
                 {
                     if (!(args[ii] is JArray arr))
                         throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
-                    new_arr.AddRange(arr.children);
+                    newArr.AddRange(arr.children);
                 }
-                return new JArray(0, new_arr);
+                return new JArray(0, newArr);
             }
-            else if (first_itbl is JObject first_obj)
+            else if (firstItbl is JObject firstObj)
             {
-                Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(first_obj.children);
+                Dictionary<string, JNode> newObj = new Dictionary<string, JNode>(firstObj.children);
                 for (int ii = 1; ii < args.Count; ii++)
                 {
                     if (!(args[ii] is JObject obj))
@@ -2142,10 +2142,10 @@ namespace JSON_Tools.JSON_Tools
                     {
                         // this can overwrite the same key in any earlier arg.
                         // TODO: maybe consider raising if multiple iterables have same key?
-                        new_obj[kv.Key] = kv.Value;
+                        newObj[kv.Key] = kv.Value;
                     }
                 }
-                return new JObject(0, new_obj);
+                return new JObject(0, newObj);
             }
             throw new RemesPathException("All arguments to the 'concat' function must the same type - either arrays or objects");
         }
@@ -2162,13 +2162,13 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Append(List<JNode> args)
         {
             JArray arr = (JArray)args[0];
-            List<JNode> new_arr = new List<JNode>(arr.children);
+            List<JNode> newArr = new List<JNode>(arr.children);
             for (int ii = 1; ii < args.Count; ii++)
             {
                 JNode arg = args[ii];
-                new_arr.Add(arg);
+                newArr.Add(arg);
             }
-            return new JArray(0, new_arr);
+            return new JArray(0, newArr);
         }
 
         /// <summary>
@@ -2232,7 +2232,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode AddItems(List<JNode> args)
         {
             JObject obj = (JObject)args[0];
-            Dictionary<string, JNode> new_obj = new Dictionary<string, JNode>(obj.children);
+            Dictionary<string, JNode> newObj = new Dictionary<string, JNode>(obj.children);
             int ii = 1;
             while (ii < args.Count - 1)
             {
@@ -2240,9 +2240,9 @@ namespace JSON_Tools.JSON_Tools
                 if (k.type != Dtype.STR)
                     throw new RemesPathException("Even-numbered args to 'add_items' function (new keys) must be strings");
                 JNode v = args[ii++];
-                new_obj[(string)k.value] = v;
+                newObj[(string)k.value] = v;
             }
-            return new JObject(0, new_obj);
+            return new JObject(0, newObj);
         }
 
         public static JNode ToRecords(List<JNode> args)
@@ -2267,7 +2267,7 @@ namespace JSON_Tools.JSON_Tools
             if (arr[0] is JArray)
             {
                 int by = Convert.ToInt32(args[1].value);
-                int val_col = Convert.ToInt32(args[2].value);
+                int valCol = Convert.ToInt32(args[2].value);
                 foreach (JNode item in arr.children)
                 {
                     JArray subarr = (JArray)item;
@@ -2275,22 +2275,22 @@ namespace JSON_Tools.JSON_Tools
                     string key = bynode.ValueOrToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
-                    ((JArray)piv[key]).children.Add(subarr[val_col]);
+                    ((JArray)piv[key]).children.Add(subarr[valCol]);
                 }
-                int uniq_ct = piv.Count;
+                int uniqCt = piv.Count;
                 for (int ii = 3; ii < args.Count; ii++)
                 {
-                    int idx_col = Convert.ToInt32(args[ii].value);
-                    var new_subarr = new List<JNode>();
-                    for (int jj = 0; jj < arr.children.Count; jj += uniq_ct)
-                        new_subarr.Add(((JArray)arr[jj])[idx_col]);
-                    piv[idx_col.ToString()] = new JArray(0, new_subarr);
+                    int idxCol = Convert.ToInt32(args[ii].value);
+                    var newSubarr = new List<JNode>();
+                    for (int jj = 0; jj < arr.children.Count; jj += uniqCt)
+                        newSubarr.Add(((JArray)arr[jj])[idxCol]);
+                    piv[idxCol.ToString()] = new JArray(0, newSubarr);
                 }
             }
             else if (arr[0] is JObject)
             {
                 string by = (string)args[1].value;
-                string val_col = (string)args[2].value;
+                string valCol = (string)args[2].value;
                 foreach (JNode item in arr.children)
                 {
                     JObject subobj = (JObject)item;
@@ -2298,16 +2298,16 @@ namespace JSON_Tools.JSON_Tools
                     string key = bynode.ValueOrToString();
                     if (!piv.ContainsKey(key))
                         piv[key] = new JArray();
-                    ((JArray)piv[key]).children.Add(subobj[val_col]);
+                    ((JArray)piv[key]).children.Add(subobj[valCol]);
                 }
-                int uniq_ct = piv.Count;
+                int uniqCt = piv.Count;
                 for (int ii = 3; ii < args.Count; ii++)
                 {
-                    string idx_col = (string)args[ii].value;
-                    var new_subarr = new List<JNode>();
-                    for (int jj = 0; jj < arr.children.Count; jj += uniq_ct)
-                        new_subarr.Add(((JObject)arr[jj])[idx_col]);
-                    piv[idx_col] = new JArray(0, new_subarr);
+                    string idxCol = (string)args[ii].value;
+                    var newSubarr = new List<JNode>();
+                    for (int jj = 0; jj < arr.children.Count; jj += uniqCt)
+                        newSubarr.Add(((JObject)arr[jj])[idxCol]);
+                    piv[idxCol] = new JArray(0, newSubarr);
                 }
             }
             else throw new RemesPathException("First argument to Pivot must be an array of arrays or an array of objects");
@@ -2418,12 +2418,12 @@ namespace JSON_Tools.JSON_Tools
             JNode node = args[0];
             Regex rex = (args[1] as JRegex).regex;
             MatchCollection results = rex.Matches((string)node.value);
-            var result_list = new List<JNode>();
+            var resultList = new List<JNode>();
             foreach (Match match in results)
             {
-                result_list.Add(new JNode(match.Value, Dtype.STR, 0));
+                resultList.Add(new JNode(match.Value, Dtype.STR, 0));
             }
-            return new JArray(0, result_list);
+            return new JArray(0, resultList);
         }
 
         /// <summary>
@@ -2589,7 +2589,7 @@ namespace JSON_Tools.JSON_Tools
         /// returns all the integers from firstOptionalArgNum on, wrapped using Python-style negative indexing if needed
         /// </summary>
         /// <param name="firstOptionalArgNum">first arg to use</param>
-        /// <param name="nColumns">number of columns in each row of a CSV (for s_csv only)</param>
+        /// <param name="nColumns">number of columns in each row of a CSV (for sCsv only)</param>
         /// <param name="funcName">just for showing if a RemesPathArgumentException is thrown</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
@@ -2734,7 +2734,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// return an array of strings(if rex has 0 or 1 capture group(s)) or an array of arrays of strings (if there are multiple capture groups)<br></br> 
         /// The arguments in args at index firstOptionalArgNum onward will be treated as the 0-based indices of capture groups to parse as numbers<br></br>
-        /// A negative number can be used for a columns_to_parse_as_number arg, and it can be wrapped according to standard Python negative indexing rules.<br></br>
+        /// A negative number can be used for a columnsToParseAsNumber arg, and it can be wrapped according to standard Python negative indexing rules.<br></br>
         /// A failed attempt to parse a capture group as a number will return the string value of the capture group, or "" if that capture group was failed.
         /// </summary>
         /// <param name="text">text to search in</param>
@@ -2742,9 +2742,9 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args">the args originally passed to the function calling this</param>
         /// <param name="firstOptionalArgNum">every arg from here onwards is the 0-based index of a capture group to parse as a number</param>
         /// <param name="funcName">name of invoking function</param>
-        /// <param name="maxGroupNum">highest capture group number (number of columns in s_csv)</param>
-        /// <param name="headerHandling">how headers are used, see the HeaderHandlingInCsv enum (only for s_csv)</param>
-        /// <param name="csvQuoteChar">the quote character (only used in s_csv)</param>
+        /// <param name="maxGroupNum">highest capture group number (number of columns in sCsv)</param>
+        /// <param name="headerHandling">how headers are used, see the HeaderHandlingInCsv enum (only for sCsv)</param>
+        /// <param name="csvQuoteChar">the quote character (only used in sCsv)</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
         public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int maxGroupNum=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS, char csvQuoteChar = '\x00')
@@ -3028,12 +3028,12 @@ namespace JSON_Tools.JSON_Tools
             string[] parts = (sepNode.value is string sep)
                 ? Regex.Split(s, sep)
                 : ((JRegex)sepNode).regex.Split(s);
-            var out_nodes = new List<JNode>(parts.Length);
+            var outNodes = new List<JNode>(parts.Length);
             foreach (string part in parts)
             {
-                out_nodes.Add(new JNode(part));
+                outNodes.Add(new JNode(part));
             }
-            return new JArray(0, out_nodes);
+            return new JArray(0, outNodes);
         }
 
         /// <summary>
@@ -3087,12 +3087,12 @@ namespace JSON_Tools.JSON_Tools
         public static JNode StrSlice(List<JNode> args)
         {
             string s = (string)args[0].value;
-            JNode slicer_or_int = args[1];
-            if (slicer_or_int is JSlicer jslicer)
+            JNode slicerOrInt = args[1];
+            if (slicerOrInt is JSlicer jslicer)
             {
                 return new JNode(s.Slice(jslicer.slicer));
             }
-            int index = Convert.ToInt32(slicer_or_int.value);
+            int index = Convert.ToInt32(slicerOrInt.value);
             // allow negative indices for consistency with slicing syntax
             if (!s.WrappedIndex(index, out string result))
                 throw new RemesPathIndexOutOfRangeException(index, args[0]);

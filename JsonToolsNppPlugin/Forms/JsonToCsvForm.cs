@@ -89,18 +89,18 @@ namespace JSON_Tools.Forms
                 return;
             }
             Npp.notepad.FileNew();
-            int out_len = Encoding.UTF8.GetByteCount(csv);
-            Npp.editor.AppendText(out_len, csv);
+            int outLen = Encoding.UTF8.GetByteCount(csv);
+            Npp.editor.AppendText(outLen, csv);
             Npp.RemoveTrailingSOH();
             Close();
         }
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            string help_url = "https://github.com/molsonkiko/JSONToolsNppPlugin/tree/main/docs/json-to-csv.md";
+            string helpUrl = "https://github.com/molsonkiko/JSONToolsNppPlugin/tree/main/docs/json-to-csv.md";
             try
             {
-                var ps = new ProcessStartInfo(help_url)
+                var ps = new ProcessStartInfo(helpUrl)
                 {
                     UseShellExecute = true,
                     Verb = "open"

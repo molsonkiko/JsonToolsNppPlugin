@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using JSON_Tools.Utils;
@@ -13,68 +12,71 @@ namespace JSON_Tools.JSON_Tools
 {
 	/// <summary>
 	/// Reads JSON files based on search patterns, and also fetches JSON from APIS.
-	/// Combines all JSON into a map, fname_jsons, from filenames/urls to JSON.
+	/// Combines all JSON into a map, fnameJsons, from filenames/urls to JSON.
 	/// </summary>
 	public class JsonGrepper
 	{
 		/// <summary>
 		/// maps filenames and urls to parsed JSON
 		/// </summary>
-		public JObject fname_jsons;
+		public JObject fnameJsons;
         public JObject exceptions;
-        public Dictionary<string, string> fname_strings;
-		public JsonParser json_parser;
+        public Dictionary<string, string> fnameStrings;
+		public JsonParser jsonParser;
         private static readonly HttpClient httpClient = new HttpClient();
-        public int max_threads_parsing;
+        public int maxThreadsParsing;
 
-		public JsonGrepper(JsonParser json_parser = null, 
-            int max_threads = 4)
+		public JsonGrepper(JsonParser jsonParser = null, 
+            int maxThreads = 4)
 		{
-            this.max_threads_parsing = max_threads;
-            fname_strings = new Dictionary<string, string>();
-			fname_jsons = new JObject();
+            this.maxThreadsParsing = maxThreads;
+            fnameStrings = new Dictionary<string, string>();
+			fnameJsons = new JObject();
             exceptions = new JObject();
-			if (json_parser == null)
+			if (jsonParser == null)
             {
-				this.json_parser = new JsonParser(LoggerLevel.JSON5, true);
+				this.jsonParser = new JsonParser(LoggerLevel.JSON5, true);
 			}
             else
             {
-				this.json_parser = json_parser;
+				this.jsonParser = jsonParser;
             }
-            this.json_parser.throwIfFatal = true;
-            this.json_parser.throwIfLogged = true;
+            this.jsonParser.throwIfFatal = true;
+            this.jsonParser.throwIfLogged = true;
             // security protocol addresses issue: https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
 
         /// <summary>
-        /// Finds files that match the search_pattern (typically just ".json" files) in the directory root_dir
+        /// Finds files that match the searchPattern (typically just ".json" files) in the directory rootDir
         /// and creates a dictionary mapping each found filename to that file's text.
         /// If recursive is true, this will recursively search all subdirectories for JSON files, not just the root.
         /// </summary>
-        /// <param name="root_dir"></param>
+        /// <param name="rootDir"></param>
         /// <param name="recursive"></param>
-        /// <param name="search_pattern"></param>
-        private void ReadJsonFiles(string root_dir, bool recursive, string search_pattern)
+        /// <param name="searchPattern"></param>
+        private void ReadJsonFiles(string rootDir, bool recursive, string searchPattern)
 		{
-            DirectoryInfo dir_info;
+            DirectoryInfo dirInfo;
             try
             {
-                dir_info = new DirectoryInfo(root_dir);
+                dirInfo = new DirectoryInfo(rootDir);
             }
             catch { return; }
-			foreach (FileInfo file_info in dir_info.EnumerateFiles(search_pattern))
+			foreach (FileInfo fileInfo in dirInfo.EnumerateFiles(searchPattern))
 			{
-				string fname = file_info.FullName;
-                fname_strings[fname] = file_info.OpenText().ReadToEnd();
+				string fname = fileInfo.FullName;
+                using (var fp = fileInfo.OpenText())
+                {
+                    fnameStrings[fname] = fp.ReadToEnd();
+                }
 			}
 			if (recursive)
             {
 				// recursively search subdirectories for files that match the search pattern
-				foreach (DirectoryInfo subdir_info in dir_info.EnumerateDirectories())
+				foreach (DirectoryInfo subdirInfo in dirInfo.EnumerateDirectories())
                 {
-					ReadJsonFiles(subdir_info.FullName, recursive, search_pattern);
+					ReadJsonFiles(subdirInfo.FullName, recursive, searchPattern);
                 }
             }
 		}
@@ -83,32 +85,32 @@ namespace JSON_Tools.JSON_Tools
 		/// the task of a single thread in ParseJsonStringsThreaded:<br></br>
 		/// Loop through a subset of filenames/urls and tries to parse the JSON associated with each filename.
 		/// </summary>
-		/// <param name="fname_strings"></param>
+		/// <param name="fnameStrings"></param>
 		/// <param name="results"></param>
-		private static void ParseJsonStrings_Task(object[] assigned_fnames, 
-                                                  Dictionary<string, string> fname_strings, 
-                                                  Dictionary<string, JNode> fname_json_map,
-                                                  Dictionary<string, JNode> fname_exception_map,
-                                                  JsonParser json_parser)
+		private static void ParseJsonStrings_Task(object[] assignedFnames, 
+                                                  Dictionary<string, string> fnameStrings, 
+                                                  Dictionary<string, JNode> fnameJsonMap,
+                                                  Dictionary<string, JNode> fnameExceptionMap,
+                                                  JsonParser jsonParser)
         {
-			foreach (object fnameobj in assigned_fnames)
+			foreach (object fnameobj in assignedFnames)
             {
                 string fname = (string)fnameobj;
-                string json_str = fname_strings[fname];
+                string jsonStr = fnameStrings[fname];
                 // need to make sure the key is formatted properly and doesn't contain any unescaped special chars
                 // by default Windows paths have '\\' as path sep so those need to be escaped
                 try
                 {
-                    lock (fname_json_map)
+                    lock (fnameJsonMap)
                     {
-                        fname_json_map[fname] = json_parser.Parse(json_str);
+                        fnameJsonMap[fname] = jsonParser.Parse(jsonStr);
                     }
                 }
                 catch (Exception ex)
                 {
-                    lock (fname_exception_map)
+                    lock (fnameExceptionMap)
                     {
-                        fname_exception_map[fname] = new JNode(ex.ToString(), Dtype.STR, 0);
+                        fnameExceptionMap[fname] = new JNode(ex.ToString(), Dtype.STR, 0);
                     }
                 }
             }
@@ -116,49 +118,49 @@ namespace JSON_Tools.JSON_Tools
 
 		/// <summary>
 		/// Takes a map of filenames/urls to strings,
-		/// and attempts to parse each string and add the fname-JNode pair to fname_jsons.<br></br>
-		/// Divides up the filenames between at most max_threads threads.
+		/// and attempts to parse each string and add the fname-JNode pair to fnameJsons.<br></br>
+		/// Divides up the filenames between at most maxThreads threads.
 		/// </summary>
 		private void ParseJsonStringsThreaded()
         {
 			List<Thread> threads = new List<Thread>();
-			string[] fnames = fname_strings.Keys.ToArray();
+			string[] fnames = fnameStrings.Keys.ToArray();
 			Array.Sort(fnames);
-            foreach (object[] assigned_fnames in DivideObjectsBetweenThreads(fnames, max_threads_parsing))
+            foreach (object[] assignedFnames in DivideObjectsBetweenThreads(fnames, maxThreadsParsing))
             {
-                // JsonParsers store position in the parsed string (ii) and line_num as instance variables.
-                // that means that if multiple threads share a JsonParser, you have race conditions associated with ii and line_num.
+                // JsonParsers store position in the parsed string (ii) and lineNum as instance variables.
+                // that means that if multiple threads share a JsonParser, you have race conditions associated with ii and lineNum.
                 // For this reason, we need to give each thread a separate JsonParser.
-                Thread thread = new Thread(() => ParseJsonStrings_Task(assigned_fnames, fname_strings, fname_jsons.children, exceptions.children, json_parser.Copy()));
+                Thread thread = new Thread(() => ParseJsonStrings_Task(assignedFnames, fnameStrings, fnameJsons.children, exceptions.children, jsonParser.Copy()));
 				threads.Add(thread);
 				thread.Start();
             }
 			foreach (Thread thread in threads)
 				thread.Join();
-            fname_strings.Clear(); // don't need the strings anymore, only the JSON
+            fnameStrings.Clear(); // don't need the strings anymore, only the JSON
         }
 
         /// <summary>
-        /// for each file that matches search_pattern in root_dir
-        /// (and all subdirectories of root_dir if recursive is true)<br></br>
+        /// for each file that matches searchPattern in rootDir
+        /// (and all subdirectories of rootDir if recursive is true)<br></br>
         /// attempt to parse that file as JSON using this JsonGrepper's JsonParser.<br></br>
         /// For each file that contains valid JSON (according to the parser)
-        /// map that filename to the JNode produced by the parser in fname_jsons.
+        /// map that filename to the JNode produced by the parser in fnameJsons.
         /// </summary>
-        /// <param name="root_dir"></param>
+        /// <param name="rootDir"></param>
         /// <param name="recursive"></param>
-        /// <param name="search_pattern"></param>
-        /// <param name="max_threads"></param>
-        public void Grep(string root_dir, bool recursive = false, string search_pattern = "*.json")
+        /// <param name="searchPattern"></param>
+        /// <param name="maxThreads"></param>
+        public void Grep(string rootDir, bool recursive = false, string searchPattern = "*.json")
         {
-            ReadJsonFiles(root_dir, recursive, search_pattern);
+            ReadJsonFiles(rootDir, recursive, searchPattern);
             ParseJsonStringsThreaded();
         }
 
         /// <summary>
         /// Asynchronously send API requests to several URLs
         /// For each URL where the request succeeds, try to parse the JSON returned.
-        /// If the JSON returned is valid, add the JSON to fname_jsons.
+        /// If the JSON returned is valid, add the JSON to fnameJsons.
         /// Populate a HashSet of all URLs for which the request succeeded
         /// and a dict mapping urls to exception strings
         /// </summary>
@@ -166,22 +168,22 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public async Task GetJsonFromApis(string[] urls)
         {
-            var json_tasks = new Task[urls.Length];
+            var jsonTasks = new Task[urls.Length];
             for (int ii = 0; ii < urls.Length; ii++)
             {
-                // if (!fname_jsons.children.ContainsKey(url))
+                // if (!fnameJsons.children.ContainsKey(url))
                 // it is probably better to allow duplication of labor,
                 // so that the user can get new JSON if something changed
-                json_tasks[ii] = GetJsonStringFromApiAsync(urls[ii]);
+                jsonTasks[ii] = GetJsonStringFromApiAsync(urls[ii]);
             }
-            await Task.WhenAll(json_tasks);
+            await Task.WhenAll(jsonTasks);
             // now parse all the JSON strings that were downloaded
             ParseJsonStringsThreaded();
         }
 
         /// <summary>
 		/// Send an asynchronous request for JSON to an API.
-		/// If the request succeeds, add the JSON string to fname_strings
+		/// If the request succeeds, add the JSON string to fnameStrings
 		/// If the request raises an exception, add the exception string to exceptions
 		/// </summary>
 		/// <param name="url"></param>
@@ -192,7 +194,7 @@ namespace JSON_Tools.JSON_Tools
             try
             {
                 Task<string> stringTask = httpClient.GetStringAsync(url);
-                fname_strings[url] = await stringTask;
+                fnameStrings[url] = await stringTask;
             }
             catch (Exception ex)
             {
@@ -216,30 +218,30 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public void Reset()
         {
-            fname_strings.Clear();
-			fname_jsons.children.Clear();
+            fnameStrings.Clear();
+			fnameJsons.children.Clear();
             exceptions.children.Clear();
-			//fname_lints.Clear();
+			//fnameLints.Clear();
         }
 
         /// <summary>
-        /// figure out how to divide up task_count tasks equally among num_threads threads
+        /// figure out how to divide up taskCount tasks equally among numThreads threads
         /// </summary>
-        /// <param name="task_count"></param>
-        /// <param name="num_threads"></param>
+        /// <param name="taskCount"></param>
+        /// <param name="numThreads"></param>
         /// <returns></returns>
-        private static IEnumerable<int> TaskCountPerThread(int task_count, int num_threads)
+        private static IEnumerable<int> TaskCountPerThread(int taskCount, int numThreads)
         {
             int start = 0;
-            int things_per_thread = task_count / num_threads;
-            if (things_per_thread == 0)
-                things_per_thread = 1;
-            for (int count = 0; count < num_threads; count++)
+            int thingsPerThread = taskCount / numThreads;
+            if (thingsPerThread == 0)
+                thingsPerThread = 1;
+            for (int count = 0; count < numThreads; count++)
             {
-                int end = start + things_per_thread;
-                if (end > task_count // give fewer tasks to the final thread
-                    || count == num_threads - 1) // give all the remaining tasks to the final thread
-                    end = task_count;
+                int end = start + thingsPerThread;
+                if (end > taskCount // give fewer tasks to the final thread
+                    || count == numThreads - 1) // give all the remaining tasks to the final thread
+                    end = taskCount;
                 if (start == end)
                     break;
                 yield return end - start;
@@ -252,18 +254,18 @@ namespace JSON_Tools.JSON_Tools
         /// that were assigned to that thread
         /// </summary>
         /// <param name="objs"></param>
-        /// <param name="num_threads"></param>
+        /// <param name="numThreads"></param>
         /// <returns></returns>
-        private static IEnumerable<object[]> DivideObjectsBetweenThreads(object[] objs, int num_threads)
+        private static IEnumerable<object[]> DivideObjectsBetweenThreads(object[] objs, int numThreads)
         {
             int start = 0;
-            foreach (int count in TaskCountPerThread(objs.Length, num_threads))
+            foreach (int count in TaskCountPerThread(objs.Length, numThreads))
             {
-                object[] objs_this_thread = new object[count];
+                object[] objsThisThread = new object[count];
                 for (int jj = 0; jj < count; jj++)
-                    objs_this_thread[jj] = objs[jj + start];
+                    objsThisThread[jj] = objs[jj + start];
                 start += count;
-                yield return objs_this_thread;
+                yield return objsThisThread;
             }
         }
     }

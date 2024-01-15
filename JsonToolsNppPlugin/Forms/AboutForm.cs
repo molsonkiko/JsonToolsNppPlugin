@@ -27,10 +27,10 @@ namespace JSON_Tools.Forms
         /// </summary>
         private void GitHubLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin";
+            string helpUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
             try
             {
-                var ps = new ProcessStartInfo(help_url)
+                var ps = new ProcessStartInfo(helpUrl)
                 {
                     UseShellExecute = true,
                     Verb = "open"

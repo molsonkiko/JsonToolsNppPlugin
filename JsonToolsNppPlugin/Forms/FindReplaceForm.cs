@@ -148,15 +148,15 @@ namespace JSON_Tools.Forms
                 findQuery = $"({root}).*[is_num(@)][@ {FindTextBox.Text}]";
                 return;
             }
-            string keys_find_text;
-            string values_find_text;
+            string keysFindText;
+            string valuesFindText;
             if (RegexBox.Checked)
             {
                 if (IgnoreCaseCheckBox.Checked)
-                    keys_find_text = "g`(?i)" + FindTextBox.Text.Replace("`", "\\`") + '`';
+                    keysFindText = "g`(?i)" + FindTextBox.Text.Replace("`", "\\`") + '`';
                 else
-                    keys_find_text = "g`" + FindTextBox.Text.Replace("`", "\\`") + '`';
-                values_find_text = $"[str(@) =~ {keys_find_text}]";
+                    keysFindText = "g`" + FindTextBox.Text.Replace("`", "\\`") + '`';
+                valuesFindText = $"[str(@) =~ {keysFindText}]";
             }
             else if (MatchExactlyBox.Checked)
             {
@@ -165,14 +165,14 @@ namespace JSON_Tools.Forms
                     // exact matching is equivalent to regex matching
                     // with all special metacharacters escaped and anchors at the beginning and end
                     // add the (?i) flag for case-insensitive matching
-                    keys_find_text = "g`(?i)^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
-                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                    keysFindText = "g`(?i)^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
+                    valuesFindText = $"[str(@) =~ {keysFindText}]";
                 }
                 else
                 {
                     // simplest case; do normal hash map key search, or check if string equals find text exactly
-                    keys_find_text = "`" + FindTextBox.Text.Replace("`", "\\`") + "`";
-                    values_find_text = $"[str(@) == {keys_find_text}]";
+                    keysFindText = "`" + FindTextBox.Text.Replace("`", "\\`") + "`";
+                    valuesFindText = $"[str(@) == {keysFindText}]";
                 }
             }
             else
@@ -182,30 +182,30 @@ namespace JSON_Tools.Forms
                 if (IgnoreCaseCheckBox.Checked)
                 {
                     // add the (?i) flag for case-insensitive matching
-                    keys_find_text = "g`(?i)" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
-                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                    keysFindText = "g`(?i)" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
+                    valuesFindText = $"[str(@) =~ {keysFindText}]";
                 }
                 else
                 {
-                    keys_find_text = "g`" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
-                    values_find_text = $"[str(@) =~ {keys_find_text}]";
+                    keysFindText = "g`" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "`";
+                    valuesFindText = $"[str(@) =~ {keysFindText}]";
                 }
             }
-            replaceQuery = $"s_sub(@, {keys_find_text}, `" + ReplaceTextBox.Text.Replace("`", "\\`") + "`)";
+            replaceQuery = $"s_sub(@, {keysFindText}, `" + ReplaceTextBox.Text.Replace("`", "\\`") + "`)";
             if (RecursiveSearchBox.Checked)
             {
                 switch (KeysValsBothBox.SelectedIndex)
                 {
                     case 0: // keys
-                        findQuery = $"({root})..{keys_find_text}";
+                        findQuery = $"({root})..{keysFindText}";
                         break;
                     case 1: // values
-                        findQuery = $"({root})..*{values_find_text}";
+                        findQuery = $"({root})..*{valuesFindText}";
                         break;
                     default: // both keys and values
                         findQuery = "concat(\r\n" +
-                                    $"    ({root})..{keys_find_text},\r\n" +
-                                    $"    ({root})..*{values_find_text}\r\n" +
+                                    $"    ({root})..{keysFindText},\r\n" +
+                                    $"    ({root})..*{valuesFindText}\r\n" +
                                     $")";
                         break;
                 }
@@ -214,15 +214,15 @@ namespace JSON_Tools.Forms
             switch (KeysValsBothBox.SelectedIndex)
             {
                 case 0: // keys
-                    findQuery = $"({root}).{keys_find_text}";
+                    findQuery = $"({root}).{keysFindText}";
                     break;
                 case 1: // values
-                    findQuery = $"{root}{values_find_text}";
+                    findQuery = $"{root}{valuesFindText}";
                     break;
                 default: // both keys and values
                     findQuery = "concat(\r\n" +
-                                $"    ({root}).{keys_find_text},\r\n" +
-                                $"    {root}{values_find_text}\r\n" +
+                                $"    ({root}).{keysFindText},\r\n" +
+                                $"    {root}{valuesFindText}\r\n" +
                                 $")";
                     break;
             }
@@ -239,7 +239,7 @@ namespace JSON_Tools.Forms
 
         private void ReplaceButton_Click(object sender, EventArgs e)
         {
-            int keysvals_index = KeysValsBothBox.SelectedIndex;
+            int keysvalsIndex = KeysValsBothBox.SelectedIndex;
             KeysValsBothBox.SelectedIndex = 1;
             AssignFindReplaceQueries();
             string root = (RecursiveSearchBox.Checked) ? $"(@{RootTextBox.Text})..*" : $"@{RootTextBox.Text}";
@@ -255,7 +255,7 @@ namespace JSON_Tools.Forms
             // and (2) it displays exactly the values that were mutated rather than forcing the user to find them
             treeViewer.SubmitQueryButton.PerformClick();
             treeViewer.Tree.Nodes[0].Expand();
-            KeysValsBothBox.SelectedIndex = keysvals_index;
+            KeysValsBothBox.SelectedIndex = keysvalsIndex;
         }
 
         private void SwapFindReplaceButton_Click(object sender, EventArgs e)

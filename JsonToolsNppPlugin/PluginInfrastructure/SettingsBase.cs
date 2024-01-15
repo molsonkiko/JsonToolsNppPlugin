@@ -158,14 +158,14 @@ namespace CsvQuery.PluginInfrastructure
             var copy = (Settings)MemberwiseClone();
 
             //// check the current settings
-            //var settings_sb = new StringBuilder();
+            //var settingsSb = new StringBuilder();
             //foreach (System.Reflection.PropertyInfo p in GetType().GetProperties())
             //{
-            //    settings_sb.Append(p.ToString());
-            //    settings_sb.Append($": {p.GetValue(this)}");
-            //    settings_sb.Append(", ");
+            //    settingsSb.Append(p.ToString());
+            //    settingsSb.Append($": {p.GetValue(this)}");
+            //    settingsSb.Append(", ");
             //}
-            //MessageBox.Show(settings_sb.ToString());
+            //MessageBox.Show(settingsSb.ToString());
 
             var dialog = new Form
             {

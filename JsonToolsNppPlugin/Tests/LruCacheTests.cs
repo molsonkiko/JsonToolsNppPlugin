@@ -15,40 +15,40 @@ namespace JSON_Tools.Tests
             {
                 int failures = 0;
                 int ii = 0;
-                int test_count = size * 3;
+                int testCount = size * 3;
                 LruCache<char, char> cache = new LruCache<char, char>(size);
-                StringBuilder keys_used = new StringBuilder();
-                for (; ii < test_count && failures < 10; ii++)
+                StringBuilder keysUsed = new StringBuilder();
+                for (; ii < testCount && failures < 10; ii++)
                 {
                     char key = RemesPathFuzzTester.RandomChoice(keys);
-                    keys_used.Append(key);
-                    bool was_at_cap = cache.isFull;
+                    keysUsed.Append(key);
+                    bool wasAtCap = cache.isFull;
                     char oldest = cache.OldestKey();
-                    bool key_already_in = cache.ContainsKey(key);
+                    bool keyAlreadyIn = cache.ContainsKey(key);
                     cache.SetDefault(key, key);
-                    if (cache.cache.Count != cache.use_order.Count)
+                    if (cache.cache.Count != cache.useOrder.Count)
                     {
                         failures++;
-                        Npp.AddLine($"LruCache linked list size ({cache.use_order.Count}) != dictionary size ({cache.cache.Count})");
+                        Npp.AddLine($"LruCache linked list size ({cache.useOrder.Count}) != dictionary size ({cache.cache.Count})");
                     }
                     if (cache.cache.Count > cache.capacity)
                     {
                         failures++;
                         Npp.AddLine($"LruCache exceeded capacity {size}");
                     }
-                    if (!cache.ContainsKey(key) || !cache.use_order.Contains(key))
+                    if (!cache.ContainsKey(key) || !cache.useOrder.Contains(key))
                     {
                         failures++;
                         Npp.AddLine($"LruCache did not contain key '{key}' after adding key '{key}'");
                     }
                     // verify that the oldest was evicted if cache was at capacity and a key not already present was added
-                    if (was_at_cap && !key_already_in && (key != oldest) && (cache.ContainsKey(oldest) || cache.use_order.Contains(oldest)))
+                    if (wasAtCap && !keyAlreadyIn && (key != oldest) && (cache.ContainsKey(oldest) || cache.useOrder.Contains(oldest)))
                     {
                         failures++;
                         Npp.AddLine($"After reaching capacity {size}, LruCache did not evict oldest key '{oldest}' after adding key '{key}'");
                     }
                 }
-                Npp.AddLine($"Ran {test_count} tests for LruCache with size {size} and failed {failures}");
+                Npp.AddLine($"Ran {testCount} tests for LruCache with size {size} and failed {failures}");
                 failed |= failures > 0;
             }
             return failed;

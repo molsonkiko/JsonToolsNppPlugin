@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
 2. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
 3. Make dark mode icons darker.
+4. __This change only affects the code base, not the public API:__ changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
 
 ### Fixed
 

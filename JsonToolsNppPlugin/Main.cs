@@ -364,12 +364,12 @@ namespace Kbg.NppPluginNET
             {
                 if (activeFname == bufferOldName)
                     activeFname = bufferNewName;
-                if (TryGetInfoForFile(bufferOldName, out JsonFileInfo old_info))
+                if (TryGetInfoForFile(bufferOldName, out JsonFileInfo oldInfo))
                 {
                     jsonFilesRenamed.Remove(bufferRenamedId);
-                    old_info.tv?.Rename(bufferNewName);
+                    oldInfo.tv?.Rename(bufferNewName);
                     jsonFileInfos.Remove(bufferOldName);
-                    jsonFileInfos[bufferNewName] = old_info;
+                    jsonFileInfos[bufferNewName] = oldInfo;
                 }
             }
             if (shouldRenameGrepperForm)
@@ -419,10 +419,10 @@ namespace Kbg.NppPluginNET
         #region " Menu functions "
         public static void docs()
         {
-            string help_url = "https://github.com/molsonkiko/JsonToolsNppPlugin";
+            string helpUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
             try
             {
-                var ps = new ProcessStartInfo(help_url)
+                var ps = new ProcessStartInfo(helpUrl)
                 {
                     UseShellExecute = true,
                     Verb = "open"
@@ -439,11 +439,11 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// Try to parse the current document as JSON (or JSON Lines if is_json_lines or the file extension is ".jsonl").<br></br>
+        /// Try to parse the current document as JSON (or JSON Lines if isJsonLines or the file extension is ".jsonl").<br></br>
         /// If parsing fails, throw up a message box telling the user what happened.<br></br>
         /// If linting is active and the linter catches anything, throw up a message box
         /// asking the user if they want to view the caught errors in a new buffer.<br></br>
-        /// Finally, associate the parsed JSON with the current filename in fname_jsons
+        /// Finally, associate the parsed JSON with the current filename in fnameJsons
         /// and return the JSON.
         /// </summary>
         /// <param name="documentType">what type of document to parse the document as (JSON, JSON Lines, or INI file)</param>
@@ -706,11 +706,11 @@ namespace Kbg.NppPluginNET
 
         public static string PrettyPrintFromSettings(JNode json)
         {
-            char indent_char = settings.tab_indent_pretty_print ? '\t' : ' ';
+            char indentChar = settings.tab_indent_pretty_print ? '\t' : ' ';
             int indent = settings.tab_indent_pretty_print
                 ? 1
                 : settings.indent_pretty_print;
-            return json.PrettyPrintAndChangePositions(indent, settings.sort_keys, settings.pretty_print_style, int.MaxValue, indent_char);
+            return json.PrettyPrintAndChangePositions(indent, settings.sort_keys, settings.pretty_print_style, int.MaxValue, indentChar);
         }
 
         /// <summary>
@@ -1103,8 +1103,8 @@ namespace Kbg.NppPluginNET
             // make sure grepperForm gets these new settings as well
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
-                grepperForm.grepper.json_parser = jsonParser.Copy();
-                grepperForm.grepper.max_threads_parsing = settings.max_threads_parsing;
+                grepperForm.grepper.jsonParser = jsonParser.Copy();
+                grepperForm.grepper.maxThreadsParsing = settings.max_threads_parsing;
             }
             RestyleEverything();
         }
@@ -1254,7 +1254,7 @@ namespace Kbg.NppPluginNET
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
                     && grepperForm.tv.fname == fname)
                 {
-                    json = grepperForm.grepper.fname_jsons;
+                    json = grepperForm.grepper.fnameJsons;
                 }
                 else
                     json = null;
@@ -1375,8 +1375,8 @@ namespace Kbg.NppPluginNET
                 // if the grepper form is open, this should just toggle it.
                 // it's counterintuitive to the user that the plugin command would toggle
                 // a tree view other than the one they're currently looking at
-                bool was_visible = info.tv.Visible;
-                if (!was_visible
+                bool wasVisible = info.tv.Visible;
+                if (!wasVisible
                     && grepperForm != null
                     && grepperForm.tv != null && !grepperForm.tv.IsDisposed
                     && Npp.notepad.GetCurrentFilePath() == grepperForm.tv.fname)
@@ -1388,7 +1388,7 @@ namespace Kbg.NppPluginNET
                 }
                 Npp.notepad.HideDockingForm(info.tv);
                 info.tv.Close();
-                if (was_visible)
+                if (wasVisible)
                     return;
                 if (openTreeViewer != null && info.tv == openTreeViewer)
                 {
@@ -1476,12 +1476,12 @@ namespace Kbg.NppPluginNET
         /// Send the user a message telling the user if validation succeeded,
         /// or if it failed, where the first error was.
         /// </summary>
-        static void ValidateJson(string schema_path = null, bool message_on_success = true)
+        static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true)
         {
             (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
             if (fatal || json == null) return;
-            string cur_fname = Npp.notepad.GetCurrentFilePath();
-            if (schema_path == null)
+            string curFname = Npp.notepad.GetCurrentFilePath();
+            if (schemaPath == null)
             {
                 FileDialog openFileDialog = new OpenFileDialog();
                 openFileDialog.Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*";
@@ -1489,10 +1489,10 @@ namespace Kbg.NppPluginNET
                 openFileDialog.Title = "Select JSON schema file to validate against";
                 if (openFileDialog.ShowDialog() != DialogResult.OK || !openFileDialog.CheckFileExists)
                     return;
-                schema_path = openFileDialog.FileName;
+                schemaPath = openFileDialog.FileName;
             }
             JsonSchemaValidator.ValidationFunc validator;
-            if (!schemaCache.Get(schema_path, out validator) && !schemaCache.TryAdd(schema_path, out validator))
+            if (!schemaCache.Get(schemaPath, out validator) && !schemaCache.TryAdd(schemaPath, out validator))
                 return;
             JsonSchemaValidator.ValidationProblem? problem;
             try
@@ -1501,19 +1501,19 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception e)
             {
-                MessageBox.Show($"While validating JSON against the schema at path {schema_path}, the following error occurred:\r\n{e}",
+                MessageBox.Show($"While validating JSON against the schema at path {schemaPath}, the following error occurred:\r\n{e}",
                     "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (problem != null)
             {
-                MessageBox.Show($"The JSON in file {cur_fname} DOES NOT validate against the schema at path {schema_path}. Problem description:\n{problem}",
+                MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem description:\n{problem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 Npp.editor.GotoPos((int)problem?.position);
                 return;
             }
-            if (!message_on_success) return;
-            MessageBox.Show($"The JSON in file {cur_fname} validates against the schema at path {schema_path}.",
+            if (!messageOnSuccess) return;
+            MessageBox.Show($"The JSON in file {curFname} validates against the schema at path {schemaPath}.",
                 "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -1702,19 +1702,19 @@ namespace Kbg.NppPluginNET
         /// if the filename doesn't match, return false.
         /// </summary>
         /// <param name="fname"></param>
-        static bool ValidateIfFilenameMatches(string fname, bool was_autotriggered = false)
+        static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false)
         {
-            if (was_autotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
+            if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
                 return false;
-            foreach (string schema_fname in schemasToFnamePatterns.children.Keys)
+            foreach (string schemaFname in schemasToFnamePatterns.children.Keys)
             {
-                JArray fname_patterns = (JArray)schemasToFnamePatterns[schema_fname];
-                foreach (JNode pat in fname_patterns.children)
+                JArray fnamePatterns = (JArray)schemasToFnamePatterns[schemaFname];
+                foreach (JNode pat in fnamePatterns.children)
                 {
                     var regex = ((JRegex)pat).regex;
                     if (!regex.IsMatch(fname)) continue;
                     // the filename matches a pattern for this schema, so we'll try to validate it.
-                    ValidateJson(schema_fname, false);
+                    ValidateJson(schemaFname, false);
                     return true;
                 }
             }
@@ -1733,7 +1733,7 @@ namespace Kbg.NppPluginNET
             sortForm.Focus();
         }
         #endregion
-        #region more_helper_functions
+        #region moreHelperFunctions
         /// <summary>
         /// Assumes that startUtf8Pos is the start of a JNode in the current document.<br></br>
         /// Returns the position in that document of the end of that JNode.
@@ -1836,9 +1836,9 @@ namespace Kbg.NppPluginNET
                 OpenJsonTree(DocumentType.REGEX);
             }
         }
-        #endregion // more_helper_functions
+        #endregion // moreHelperFunctions
 
-        #region timer_stuff
+        #region timerStuff
         /// <summary>
         /// This callback fires once every second.<br></br>
         /// It checks if the last edit was more than 2 seconds ago.<br></br>
@@ -1919,12 +1919,12 @@ namespace Kbg.NppPluginNET
         /// <param name="fname"></param>
         public bool TryAdd(string fname, out JsonSchemaValidator.ValidationFunc validator)
         {
-            string schema_text = File.ReadAllText(fname);
+            string schemaText = File.ReadAllText(fname);
             validator = null;
             JNode schema;
             try
             {
-                schema = Main.jsonParser.Parse(schema_text);
+                schema = Main.jsonParser.Parse(schemaText);
             }
             catch (Exception ex)
             {

@@ -101,20 +101,20 @@ namespace JSON_Tools.Utils
 
         /// <summary>
         /// If num is negative, use Python-style negative indices (e.g., -1 is the last element, -len is the first elememnt)
-        /// Otherwise, restrict num to between 0 and len (inclusive unless is_start_idx)
+        /// Otherwise, restrict num to between 0 and len (inclusive unless isStartIdx)
         /// </summary>
         /// <param name="len"></param>
         /// <param name="num"></param>
         /// <returns></returns>
-        public static int ClampWithinLen(int len, int num, bool is_start_idx)
+        public static int ClampWithinLen(int len, int num, bool isStartIdx)
         {
             if (num >= len)
-                return is_start_idx ? len - 1: len;
+                return isStartIdx ? len - 1: len;
             if (num < 0)
             {
                 num += len;
                 if (num < 0)
-                    return is_start_idx ? 0 : -1;
+                    return isStartIdx ? 0 : -1;
                 return num;
             }
             return num;

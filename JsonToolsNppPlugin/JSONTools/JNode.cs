@@ -405,12 +405,12 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// Compactly prints the JSON.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
-        /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
-        /// item_sep (default ", ") is the separator between key-value pairs in an object or items in an array. Use "," instead if you want minimal whitespace.
+        /// If sortKeys is true, the keys of objects are printed in alphabetical order.<br></br>
+        /// keyValueSep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
+        /// itemSep (default ", ") is the separator between key-value pairs in an object or items in an array. Use "," instead if you want minimal whitespace.
         /// </summary>
         /// <returns>The compressed form of the JSON.</returns>
-        public virtual string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public virtual string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             switch (type)
             {
@@ -455,15 +455,15 @@ namespace JSON_Tools.JSON_Tools
             return value is string s ? s : ToString();
         }
 
-        internal virtual int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal virtual int ToStringHelper(bool sortKeys, string keyValueSep, string itemSep, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength)
         {
-            if (change_positions)
-                position = sb.Length + extra_utf8_bytes;
+            if (changePositions)
+                position = sb.Length + extraUtf8_bytes;
             var str = ToString();
             sb.Append(str);
             if (type == Dtype.STR)
-                return extra_utf8_bytes + JsonParser.ExtraUTF8BytesBetween(str, 1, str.Length - 1);
-            return extra_utf8_bytes; // only ASCII characters in non-strings
+                return extraUtf8_bytes + JsonParser.ExtraUTF8BytesBetween(str, 1, str.Length - 1);
+            return extraUtf8_bytes; // only ASCII characters in non-strings
         }
 
         /// <summary>
@@ -471,13 +471,13 @@ namespace JSON_Tools.JSON_Tools
         /// and indentation proportional to nesting depth.<br></br>
         /// For JNodes that are not JArrays or JObjects, the inden argument does nothing.<br></br>
         /// The indent argument sets the number of spaces per level of depth.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
+        /// If sortKeys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// The style argument controls various stylistic details of pretty-printing.
         /// See the documentation for the PrettyPrintStyle enum and its members.
         /// </summary>
         /// <param name="indent">the number of spaces per level of nesting.</param>
         /// <returns>a pretty-printed JSON string</returns>
-        public virtual string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public virtual string PrettyPrint(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             return ToString();
         }
@@ -487,27 +487,27 @@ namespace JSON_Tools.JSON_Tools
         /// Returns the number of the final line in this node's string representation and this JNode's PrettyPrint() string.<br></br>
         /// The style argument controls various stylistic details of pretty-printing.
         /// See the documentation for the PrettyPrintStyle enum and its members.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in alphabetical order.<br></br>
-        /// max_length is the maximum length of the string representation
+        /// If sortKeys is true, the keys of objects are printed in alphabetical order.<br></br>
+        /// maxLength is the maximum length of the string representation
         /// </summary>
         /// <param name="indent"></param>
         /// <param name="depth"></param>
-        /// <param name="extra_utf8_bytes"></param>
+        /// <param name="extraUtf8_bytes"></param>
         /// <returns></returns>
-        internal virtual int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
+        internal virtual int PrettyPrintHelper(int indent, bool sortKeys, PrettyPrintStyle style, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength, char indentChar)
         {
-            return ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_length);
+            return ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, maxLength);
         }
 
         /// <summary>
         /// Compactly prints the JNode - see the documentation for ToString.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in alphabetical order.
-        /// key_value_sep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
-        /// item_sep (default ", ") is the separator between key-value pairs in an object or items in an array. Use "," instead if you want minimal whitespace.<br></br>
-        /// max_length is the maximum length that this string representation can have.
+        /// If sortKeys is true, the keys of objects are printed in alphabetical order.
+        /// keyValueSep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
+        /// itemSep (default ", ") is the separator between key-value pairs in an object or items in an array. Use "," instead if you want minimal whitespace.<br></br>
+        /// maxLength is the maximum length that this string representation can have.
         /// </summary>
         /// <returns></returns>
-        public virtual string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public virtual string ToStringAndChangePositions(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             position = 0;
             return ToString();
@@ -516,23 +516,23 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// Pretty-prints the JNode - see documentation for PrettyPrint.<br></br>
         /// Also changes the line numbers of all the JNodes that are pretty-printed.<br></br>
-        /// If sort_keys is true, the keys of objects are printed in ASCIIbetical order.<br></br>
+        /// If sortKeys is true, the keys of objects are printed in ASCIIbetical order.<br></br>
         /// The style argument controls various stylistic details of pretty-printing.
         /// See the documentation for the PrettyPrintStyle enum and its members.<br></br>
-        /// max_length is the maximum length that this string representation can have.
+        /// maxLength is the maximum length that this string representation can have.
         /// EXAMPLE: TODO<br></br>
         /// </summary>
         /// <param name="indent"></param>
         /// <returns></returns>
-        public virtual string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public virtual string PrettyPrintAndChangePositions(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             position = 0;
             return ToString();
         }
 
-        public virtual int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
+        public virtual int PPrintHelper(int indent, int depth, bool sortKeys, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLineEnd, int maxLength, char indentChar)
         {
-            return ToStringHelper(sort_keys, ":", ",", sb, change_positions, extra_utf8_bytes, int.MaxValue);
+            return ToStringHelper(sortKeys, ":", ",", sb, changePositions, extraUtf8_bytes, int.MaxValue);
         }
 
         /// <summary>
@@ -540,25 +540,25 @@ namespace JSON_Tools.JSON_Tools
         /// All comments come before all the JSON, and the JSON is compactly printed with non-minimal whitespace
         /// (i.e., one space after colons in objects and one space after commas in iterables)
         /// </summary>
-        public string ToStringWithComments(List<Comment> comments, bool sort_keys = true)
+        public string ToStringWithComments(List<Comment> comments, bool sortKeys = true)
         {
             comments.Sort((x, y) => x.position.CompareTo(y.position));
             var sb = new StringBuilder();
             Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, int.MaxValue, "");
-            ToStringHelper(sort_keys, ": ", ", ", sb, false, 0, int.MaxValue);
+            ToStringHelper(sortKeys, ": ", ", ", sb, false, 0, int.MaxValue);
             return sb.ToString();
         }
 
         /// <summary>
         /// As ToStringWithComments, but changes each JSON element's position to reflect where it is in the UTF-8 encoded form of the generated string.
         /// </summary>
-        public string ToStringWithCommentsAndChangePositions(List<Comment> comments, bool sort_keys = true)
+        public string ToStringWithCommentsAndChangePositions(List<Comment> comments, bool sortKeys = true)
         {
             comments.Sort((x, y) => x.position.CompareTo(y.position));
             var sb = new StringBuilder();
-            (_, int extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, int.MaxValue, "");
-            position = extra_utf8_bytes;
-            ToStringHelper(sort_keys, ": ", ", ", sb, true, extra_utf8_bytes, int.MaxValue);
+            (_, int extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, int.MaxValue, "");
+            position = extraUtf8_bytes;
+            ToStringHelper(sortKeys, ": ", ", ", sb, true, extraUtf8_bytes, int.MaxValue);
             return sb.ToString();
         }
 
@@ -568,27 +568,27 @@ namespace JSON_Tools.JSON_Tools
         /// with each comment having the same position relative to each JSON element and each other comment 
         /// that those comments did when the JSON was parsed.
         /// </summary>
-        public string PrettyPrintWithComments(List<Comment> comments, int indent = 4, bool sort_keys = true, char indent_char = ' ')
+        public string PrettyPrintWithComments(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ')
         {
-            return PrettyPrintWithComentsStarter(comments, false, indent, sort_keys, indent_char);
+            return PrettyPrintWithComentsStarter(comments, false, indent, sortKeys, indentChar);
         }
 
         /// <summary>
         /// As PrettyPrintWithComments, but changes the position of each JNode to wherever it is in the UTF-8 encoded form of the returned string
         /// </summary>
-        public string PrettyPrintWithCommentsAndChangePositions(List<Comment> comments, int indent = 4, bool sort_keys = true, char indent_char = ' ')
+        public string PrettyPrintWithCommentsAndChangePositions(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ')
         {
-            return PrettyPrintWithComentsStarter(comments, true, indent, sort_keys, indent_char);
+            return PrettyPrintWithComentsStarter(comments, true, indent, sortKeys, indentChar);
         }
 
-        private string PrettyPrintWithComentsStarter(List<Comment> comments, bool change_positions, int indent, bool sort_keys, char indent_char)
+        private string PrettyPrintWithComentsStarter(List<Comment> comments, bool changePositions, int indent, bool sortKeys, char indentChar)
         {
             comments.Sort((x, y) => x.position.CompareTo(y.position));
             var sb = new StringBuilder();
-            (int comment_idx, int extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, position, "");
-            (comment_idx, _) = PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, 0, sb, change_positions, extra_utf8_bytes, indent_char);
+            (int commentIdx, int extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, position, "");
+            (commentIdx, _) = PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, 0, sb, changePositions, extraUtf8_bytes, indentChar);
             sb.Append(NL);
-            Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, 0, int.MaxValue, ""); // add all comments after the last JNode
+            Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, 0, int.MaxValue, ""); // add all comments after the last JNode
             return sb.ToString();
         }
 
@@ -617,9 +617,9 @@ namespace JSON_Tools.JSON_Tools
         /// // comment at the end
         ///</code>
         ///</summary>
-        public virtual (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        public virtual (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
         {
-            return (comment_idx, ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, int.MaxValue));
+            return (commentIdx, ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, int.MaxValue));
         }
         #endregion
         ///<summary>
@@ -812,7 +812,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="node"></param>
         /// <param name="pos"></param>
         /// <param name="style"></param>
-        /// <param name="keys_so_far"></param>
+        /// <param name="keysSoFar"></param>
         /// <returns></returns>
         public string PathToPosition(int pos, KeyStyle style = KeyStyle.Python)
         {
@@ -897,8 +897,8 @@ namespace JSON_Tools.JSON_Tools
                         if (DOT_COMPATIBLE_REGEX.IsMatch(key))
                             return $".{key}";
                         string escapedKey = StrToString(key, false);
-                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"").Replace("`", "\\`");
-                        return $"[`{key_dubquotes_unescaped}`]";
+                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"").Replace("`", "\\`");
+                        return $"[`{keyDubquotesUnescaped}`]";
                     }
                 case KeyStyle.JavaScript:
                     {
@@ -909,8 +909,8 @@ namespace JSON_Tools.JSON_Tools
                         {
                             return $"[\"{escapedKey}\"]";
                         }
-                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"");
-                        return $"['{key_dubquotes_unescaped}']";
+                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
+                        return $"['{keyDubquotesUnescaped}']";
                     }
                 case KeyStyle.Python:
                     {
@@ -919,8 +919,8 @@ namespace JSON_Tools.JSON_Tools
                         {
                             return $"[\"{escapedKey}\"]";
                         }
-                        string key_dubquotes_unescaped = escapedKey.Replace("\\\"", "\"");
-                        return $"['{key_dubquotes_unescaped}']";
+                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
+                        return $"['{keyDubquotesUnescaped}']";
                     }
                 default: throw new ArgumentException("style argument for PathToTreeNode must be a KeyStyle member");
             }
@@ -1041,7 +1041,7 @@ namespace JSON_Tools.JSON_Tools
     /// <summary>
     /// A class representing JSON objects.
     /// </summary>
-    [System.Diagnostics.DebuggerDisplay("JObject({ToString(max_length: 200)})")]
+    [System.Diagnostics.DebuggerDisplay("JObject({ToString(maxLength: 200)})")]
     public class JObject : JNode
     {
         public Dictionary<string, JNode> children;
@@ -1073,24 +1073,24 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             var sb = new StringBuilder(7 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false, position, max_length);
-            if (sb.Length >= max_length)
+            ToStringHelper(sortKeys, keyValueSep, itemSep, sb, false, position, maxLength);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
-        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal override int ToStringHelper(bool sortKeys, string keyValueSep, string itemSep, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength)
         {
-            if (sb.Length >= max_length)
+            if (sb.Length >= maxLength)
                 return -1;
-            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            if (changePositions) position = sb.Length + extraUtf8_bytes;
             sb.Append('{');
             int ctr = 0;
             IEnumerable<string> keys;
-            if (sort_keys)
+            if (sortKeys)
             {
                 keys = children.Keys.ToArray();
                 Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
@@ -1103,37 +1103,37 @@ namespace JSON_Tools.JSON_Tools
                 sb.Append('"');
                 sb.Append(escapedK);
                 sb.Append('"');
-                sb.Append(key_value_sep);
-                extra_utf8_bytes += JsonParser.ExtraUTF8BytesBetween(escapedK, 0, escapedK.Length);
-                extra_utf8_bytes = v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, extra_utf8_bytes, max_length);
-                if (sb.Length >= max_length)
+                sb.Append(keyValueSep);
+                extraUtf8_bytes += JsonParser.ExtraUTF8BytesBetween(escapedK, 0, escapedK.Length);
+                extraUtf8_bytes = v.ToStringHelper(sortKeys, keyValueSep, itemSep, sb, changePositions, extraUtf8_bytes, maxLength);
+                if (sb.Length >= maxLength)
                     return -1;
                 if (++ctr < children.Count)
-                    sb.Append(item_sep);
+                    sb.Append(itemSep);
             }
             sb.Append('}');
-            return extra_utf8_bytes;
+            return extraUtf8_bytes;
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public override string PrettyPrint(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             var sb = new StringBuilder(8 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, position, max_length, indent_char);
-            if (sb.Length >= max_length)
+            PrettyPrintHelper(indent, sortKeys, style, 0, sb, false, position, maxLength, indentChar);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
+        internal override int PrettyPrintHelper(int indent, bool sortKeys, PrettyPrintStyle style, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength, char indentChar)
         {
-            if (sb.Length >= max_length)
+            if (sb.Length >= maxLength)
                 return -1;
-            string dent = new string(indent_char, indent * depth);
+            string dent = new string(indentChar, indent * depth);
             int ctr = 0;
             IEnumerable<string> keys;
-            if (sort_keys)
+            if (sortKeys)
             {
                 keys = children.Keys.ToArray();
                 Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
@@ -1143,19 +1143,19 @@ namespace JSON_Tools.JSON_Tools
             {
             case PrettyPrintStyle.Whitesmith:
                 sb.Append(dent);
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
                 sb.Append('{');
                 sb.Append(NL);
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, dent, k, "\":");
+                    extraUtf8_bytes += AppendKeyAndGetUtf8Extra(sb, dent, k, "\":");
                     if (v is JObject || v is JArray)
                         sb.Append(NL);
                     else
                         sb.Append(' ');
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    extraUtf8_bytes = v.PrettyPrintHelper(indent, sortKeys, style, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1164,16 +1164,16 @@ namespace JSON_Tools.JSON_Tools
                 sb.Append($"{dent}}}");
                 break;
             case PrettyPrintStyle.Google:
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
                 sb.Append('{');
                 sb.Append(NL);
-                string extra_dent = new string(indent_char, (depth + 1) * indent);
+                string extraDent = new string(indentChar, (depth + 1) * indent);
                 foreach (string k in keys)
                 {
                     JNode v = children[k];
-                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    extraUtf8_bytes += AppendKeyAndGetUtf8Extra(sb, extraDent, k, "\": ");
+                    extraUtf8_bytes = v.PrettyPrintHelper(indent, sortKeys, style, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1182,18 +1182,18 @@ namespace JSON_Tools.JSON_Tools
                 sb.Append($"{dent}}}");
                 break;
             case PrettyPrintStyle.PPrint:
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
-                int child_dent_len = (depth + 1) * indent;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
+                int childDentLen = (depth + 1) * indent;
                 sb.Append('{');
                 sb.Append(NL);
-                extra_dent = new string(indent_char, child_dent_len);
+                extraDent = new string(indentChar, childDentLen);
                 foreach (string k in keys)
                 {
-                    int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
+                    int maxLineEnd = sb.Length + PPRINT_LINE_LENGTH;
                     JNode v = children[k];
-                    extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
-                    extra_utf8_bytes = v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    extraUtf8_bytes += AppendKeyAndGetUtf8Extra(sb, extraDent, k, "\": ");
+                    extraUtf8_bytes = v.PPrintHelper(indent, depth, sortKeys, sb, changePositions, extraUtf8_bytes, maxLineEnd, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1203,7 +1203,7 @@ namespace JSON_Tools.JSON_Tools
                 break;
             default: throw new ArgumentOutOfRangeException("style");
             }
-            return extra_utf8_bytes;
+            return extraUtf8_bytes;
         }
 
         private static int AppendKeyAndGetUtf8Extra(StringBuilder sb, string dent, string k, string closeQuoteAndColon)
@@ -1217,48 +1217,48 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToStringAndChangePositions(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             var sb = new StringBuilder(7 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, 0, max_length);
-            if (sb.Length >= max_length)
+            ToStringHelper(sortKeys, keyValueSep, itemSep, sb, true, 0, maxLength);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public override string PrettyPrintAndChangePositions(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             var sb = new StringBuilder(8 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, 0, max_length, indent_char);
-            if (sb.Length >= max_length)
+            PrettyPrintHelper(indent, sortKeys, style, 0, sb, true, 0, maxLength, indentChar);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
-        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
+        public override int PPrintHelper(int indent, int depth, bool sortKeys, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLineEnd, int maxLength, char indentChar)
         {
             if (Length > PPRINT_LINE_LENGTH / 8) // an non-minimal-whitespace-compressed object has at least 8 chars per element ("\"a\": 1, ")
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-            int og_sb_len = sb.Length;
-            int child_utf8_extra = ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_line_end);
-            if (child_utf8_extra == -1)
+                return PrettyPrintHelper(indent, sortKeys, PrettyPrintStyle.PPrint, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+            int ogSbLen = sb.Length;
+            int childUtf8_extra = ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, maxLineEnd);
+            if (childUtf8_extra == -1)
             {
                 // child is too long, so we do PPrint-style printing of it
-                sb.Length = og_sb_len;
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
+                sb.Length = ogSbLen;
+                return PrettyPrintHelper(indent, sortKeys, PrettyPrintStyle.PPrint, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
             }
             // child is small enough when compact, so use compact repr
-            return child_utf8_extra;
+            return childUtf8_extra;
         }
 
         /// <inheritdoc/>
-        public override (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
         {
-            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            if (changePositions) position = sb.Length + extraUtf8_bytes;
             int ctr = 0;
             IEnumerable<string> keys;
-            if (sort_keys)
+            if (sortKeys)
             {
                 keys = children.Keys.ToArray();
                 Array.Sort((string[])keys, StringComparer.CurrentCultureIgnoreCase);
@@ -1266,20 +1266,20 @@ namespace JSON_Tools.JSON_Tools
             else keys = children.Keys;
             sb.Append('{');
             sb.Append(NL);
-            string dent = new string(indent_char, indent * depth);
-            string extra_dent = new string(indent_char, (depth + 1) * indent);
+            string dent = new string(indentChar, indent * depth);
+            string extraDent = new string(indentChar, (depth + 1) * indent);
             foreach (string k in keys)
             {
                 JNode v = children[k];
-                (comment_idx, extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, extra_utf8_bytes, v.position, extra_dent);
-                extra_utf8_bytes += AppendKeyAndGetUtf8Extra(sb, extra_dent, k, "\": ");
-                (comment_idx, extra_utf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, depth + 1, sb, change_positions, extra_utf8_bytes, indent_char);
+                (commentIdx, extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, extraUtf8_bytes, v.position, extraDent);
+                extraUtf8_bytes += AppendKeyAndGetUtf8Extra(sb, extraDent, k, "\": ");
+                (commentIdx, extraUtf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar);
                 if (++ctr < children.Count)
                     sb.Append(',');
                 sb.Append(NL);
             }
             sb.Append($"{dent}}}");
-            return (comment_idx, extra_utf8_bytes);
+            return (commentIdx, extraUtf8_bytes);
         }
 
         /// <summary>
@@ -1368,8 +1368,8 @@ namespace JSON_Tools.JSON_Tools
             }
             foreach (KeyValuePair<string, JNode> kv in children)
             {
-                bool other_haskey = othobj.children.TryGetValue(kv.Key, out JNode valobj);
-                if (!other_haskey || !kv.Value.Equals(valobj))
+                bool otherHaskey = othobj.children.TryGetValue(kv.Key, out JNode valobj);
+                if (!otherHaskey || !kv.Value.Equals(valobj))
                 {
                     return false;
                 }
@@ -1389,7 +1389,7 @@ namespace JSON_Tools.JSON_Tools
         }
     }
 
-    [System.Diagnostics.DebuggerDisplay("JArray({ToString(max_length: 200)})")]
+    [System.Diagnostics.DebuggerDisplay("JArray({ToString(maxLength: 200)})")]
     public class JArray : JNode
     {
         public List<JNode> children;
@@ -1421,75 +1421,75 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             var sb = new StringBuilder(4 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, false, 0, max_length);
-            if (sb.Length >= max_length)
+            ToStringHelper(sortKeys, keyValueSep, itemSep, sb, false, 0, maxLength);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrint(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public override string PrettyPrint(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             var sb = new StringBuilder(6 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, false, 0, max_length, indent_char);
-            if (sb.Length >= max_length)
+            PrettyPrintHelper(indent, sortKeys, style, 0, sb, false, 0, maxLength, indentChar);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
-        internal override int ToStringHelper(bool sort_keys, string key_value_sep, string item_sep, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length)
+        internal override int ToStringHelper(bool sortKeys, string keyValueSep, string itemSep, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength)
         {
-            if (sb.Length >= max_length)
+            if (sb.Length >= maxLength)
                 return -1;
-            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            if (changePositions) position = sb.Length + extraUtf8_bytes;
             sb.Append('[');
             int ctr = 0;
             foreach (JNode v in children)
             {
-                extra_utf8_bytes = v.ToStringHelper(sort_keys, key_value_sep, item_sep, sb, change_positions, extra_utf8_bytes, max_length);
-                if (sb.Length >= max_length)
+                extraUtf8_bytes = v.ToStringHelper(sortKeys, keyValueSep, itemSep, sb, changePositions, extraUtf8_bytes, maxLength);
+                if (sb.Length >= maxLength)
                     return -1;
                 if (++ctr < children.Count)
-                    sb.Append(item_sep);
+                    sb.Append(itemSep);
             }
             sb.Append(']');
-            return extra_utf8_bytes;
+            return extraUtf8_bytes;
         }
 
         /// <inheritdoc/>
-        public override string ToStringAndChangePositions(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToStringAndChangePositions(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             var sb = new StringBuilder(4 * Length);
-            ToStringHelper(sort_keys, key_value_sep, item_sep, sb, true, 0, max_length);
-            if (sb.Length >= max_length)
+            ToStringHelper(sortKeys, keyValueSep, itemSep, sb, true, 0, maxLength);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        public override string PrettyPrintAndChangePositions(int indent = 4, bool sort_keys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int max_length = int.MaxValue, char indent_char = ' ')
+        public override string PrettyPrintAndChangePositions(int indent = 4, bool sortKeys = true, PrettyPrintStyle style = PrettyPrintStyle.Google, int maxLength = int.MaxValue, char indentChar = ' ')
         {
             var sb = new StringBuilder(6 * Length);
-            PrettyPrintHelper(indent, sort_keys, style, 0, sb, true, 0, max_length, indent_char);
-            if (sb.Length >= max_length)
+            PrettyPrintHelper(indent, sortKeys, style, 0, sb, true, 0, maxLength, indentChar);
+            if (sb.Length >= maxLength)
                 sb.Append("...");
             return sb.ToString();
         }
 
         /// <inheritdoc/>
-        internal override int PrettyPrintHelper(int indent, bool sort_keys, PrettyPrintStyle style, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_length, char indent_char)
+        internal override int PrettyPrintHelper(int indent, bool sortKeys, PrettyPrintStyle style, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLength, char indentChar)
         {
-            if (sb.Length >= max_length)
+            if (sb.Length >= maxLength)
                 return -1;
-            string dent = new string(indent_char, indent * depth);
+            string dent = new string(indentChar, indent * depth);
             switch (style)
             {
             case PrettyPrintStyle.Whitesmith:
                 sb.Append(dent);
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
                 sb.Append('[');
                 sb.Append(NL);
                 int ctr = 0;
@@ -1497,8 +1497,8 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!(v is JObject || v is JArray))
                         sb.Append(dent);
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    extraUtf8_bytes = v.PrettyPrintHelper(indent, sortKeys, style, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1507,16 +1507,16 @@ namespace JSON_Tools.JSON_Tools
                 sb.Append($"{dent}]");
                 break;
             case PrettyPrintStyle.Google:
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
                 sb.Append('[');
                 sb.Append(NL);
-                string extra_dent = new string(indent_char, (depth + 1) * indent);
+                string extraDent = new string(indentChar, (depth + 1) * indent);
                 ctr = 0;
                 foreach (JNode v in children)
                 {
-                    sb.Append(extra_dent);
-                    extra_utf8_bytes = v.PrettyPrintHelper(indent, sort_keys, style, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    sb.Append(extraDent);
+                    extraUtf8_bytes = v.PrettyPrintHelper(indent, sortKeys, style, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1525,18 +1525,18 @@ namespace JSON_Tools.JSON_Tools
                 sb.Append($"{dent}]");
                 break;
             case PrettyPrintStyle.PPrint:
-                if (change_positions) position = sb.Length + extra_utf8_bytes;
-                int child_dent_len = (depth + 1) * indent;
+                if (changePositions) position = sb.Length + extraUtf8_bytes;
+                int childDentLen = (depth + 1) * indent;
                 sb.Append('[');
                 sb.Append(NL);
-                extra_dent = new string(indent_char, child_dent_len);
+                extraDent = new string(indentChar, childDentLen);
                 ctr = 0;
                 foreach (JNode v in children)
                 {
-                    int max_line_end = sb.Length + PPRINT_LINE_LENGTH;
-                    sb.Append(extra_dent);
-                    extra_utf8_bytes = v.PPrintHelper(indent, depth, sort_keys, sb, change_positions, extra_utf8_bytes, max_line_end, max_length, indent_char);
-                    if (sb.Length >= max_length)
+                    int maxLineEnd = sb.Length + PPRINT_LINE_LENGTH;
+                    sb.Append(extraDent);
+                    extraUtf8_bytes = v.PPrintHelper(indent, depth, sortKeys, sb, changePositions, extraUtf8_bytes, maxLineEnd, maxLength, indentChar);
+                    if (sb.Length >= maxLength)
                         return -1;
                     if (++ctr < children.Count)
                         sb.Append(',');
@@ -1546,44 +1546,44 @@ namespace JSON_Tools.JSON_Tools
                 break;
             default: throw new ArgumentOutOfRangeException("style");
             }
-            return extra_utf8_bytes;
+            return extraUtf8_bytes;
         }
 
-        public override int PPrintHelper(int indent, int depth, bool sort_keys, StringBuilder sb, bool change_positions, int extra_utf8_bytes, int max_line_end, int max_length, char indent_char)
+        public override int PPrintHelper(int indent, int depth, bool sortKeys, StringBuilder sb, bool changePositions, int extraUtf8_bytes, int maxLineEnd, int maxLength, char indentChar)
         {
             if (Length > PPRINT_LINE_LENGTH / 3) // an non-minimal-whitespace-compressed array has at least 3 chars per element ("1, ")
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
-            int og_sb_len = sb.Length;
-            int child_utf8_extra = ToStringHelper(sort_keys, ": ", ", ", sb, change_positions, extra_utf8_bytes, max_line_end);
-            if (child_utf8_extra == -1)
+                return PrettyPrintHelper(indent, sortKeys, PrettyPrintStyle.PPrint, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
+            int ogSbLen = sb.Length;
+            int childUtf8_extra = ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, maxLineEnd);
+            if (childUtf8_extra == -1)
             {
                 // child is too long, so we do PPrint-style printing of it
-                sb.Length = og_sb_len;
-                return PrettyPrintHelper(indent, sort_keys, PrettyPrintStyle.PPrint, depth + 1, sb, change_positions, extra_utf8_bytes, max_length, indent_char);
+                sb.Length = ogSbLen;
+                return PrettyPrintHelper(indent, sortKeys, PrettyPrintStyle.PPrint, depth + 1, sb, changePositions, extraUtf8_bytes, maxLength, indentChar);
             }
             // child is small enough when compact, so use compact repr
-            return child_utf8_extra;
+            return childUtf8_extra;
         }
 
-        public override (int comment_idx, int extra_utf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int comment_idx, int indent, bool sort_keys, int depth, StringBuilder sb, bool change_positions, int extra_utf8_bytes, char indent_char)
+        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
         {
-            if (change_positions) position = sb.Length + extra_utf8_bytes;
+            if (changePositions) position = sb.Length + extraUtf8_bytes;
             sb.Append('[');
             sb.Append(NL);
-            string dent = new string(indent_char, indent * depth);
-            string extra_dent = new string(indent_char, (depth + 1) * indent);
+            string dent = new string(indentChar, indent * depth);
+            string extraDent = new string(indentChar, (depth + 1) * indent);
             int ctr = 0;
             foreach (JNode v in children)
             {
-                (comment_idx, extra_utf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, comment_idx, extra_utf8_bytes, v.position, extra_dent);
-                sb.Append(extra_dent);
-                (comment_idx, extra_utf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, comment_idx, indent, sort_keys, depth + 1, sb, change_positions, extra_utf8_bytes, indent_char);
+                (commentIdx, extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, extraUtf8_bytes, v.position, extraDent);
+                sb.Append(extraDent);
+                (commentIdx, extraUtf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar);
                 if (++ctr < children.Count)
                     sb.Append(',');
                 sb.Append(NL);
             }
             sb.Append($"{dent}]");
-            return (comment_idx, extra_utf8_bytes);
+            return (commentIdx, extraUtf8_bytes);
         }
 
         /// <summary>
@@ -1632,12 +1632,12 @@ namespace JSON_Tools.JSON_Tools
         /// where the i^th line has the i^th element in this JArray.
         /// </summary>
         /// <returns></returns>
-        public string ToJsonLines(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ")
+        public string ToJsonLines(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ")
         {
             StringBuilder sb = new StringBuilder();
             for (int ii = 0; ii < children.Count; ii++)
             {
-                sb.Append(children[ii].ToString(sort_keys, key_value_sep, item_sep));
+                sb.Append(children[ii].ToString(sortKeys, keyValueSep, itemSep));
                 if (ii < children.Count - 1)
                     sb.Append('\n');
             }
@@ -1703,7 +1703,7 @@ namespace JSON_Tools.JSON_Tools
             function = Identity;
         }
 
-        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             return $"CurJson(type = {type}, function = {function.Method.Name})";
         }
@@ -1755,7 +1755,7 @@ namespace JSON_Tools.JSON_Tools
             this.mutator = mutator;
         }
 
-        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             return $"JMutator(selector = {selector.ToString()}, mutator = {mutator.ToString()})";
         }
@@ -2195,7 +2195,7 @@ namespace JSON_Tools.JSON_Tools
     {
         public LoopEnd() : base() { }
 
-        public override string ToString(bool sort_keys = true, string key_value_sep = ": ", string item_sep = ", ", int max_length = int.MaxValue)
+        public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {
             return "LoopEnd()";
         }
@@ -2244,22 +2244,22 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// assumes that comments are sorted by comment.position ascending<br></br>
         /// Keeps appending the JSON comment representations of the comments (as discussed in ToStringHelper above), each on a separate line preceded by dent<br></br>
-        /// to sb while comment_idx is less than comments.Count
-        /// and comments[comment_idx].position &lt; position
+        /// to sb while commentIdx is less than comments.Count
+        /// and comments[commentIdx].position &lt; position
         /// </summary>
-        public static (int comment_idx, int extra_utf8_bytes) AppendAllCommentsBeforePosition(StringBuilder sb, List<Comment> comments, int comment_idx, int extra_utf8_bytes, int position, string dent, DocumentType commentType = DocumentType.JSON)
+        public static (int commentIdx, int extraUtf8_bytes) AppendAllCommentsBeforePosition(StringBuilder sb, List<Comment> comments, int commentIdx, int extraUtf8_bytes, int position, string dent, DocumentType commentType = DocumentType.JSON)
         {
             if (!singleLineCommentStarts.TryGetValue(commentType, out string singleLineCommentStart))
                 throw new ArgumentException($"{commentType} is not a valid comment type");
-            for (; comment_idx < comments.Count; comment_idx++)
+            for (; commentIdx < comments.Count; commentIdx++)
             {
-                Comment comment = comments[comment_idx];
+                Comment comment = comments[commentIdx];
                 if (comment.position > position)
                     break;
                 sb.Append(dent);
-                extra_utf8_bytes += ToStringHelper(sb, comment, singleLineCommentStart);
+                extraUtf8_bytes += ToStringHelper(sb, comment, singleLineCommentStart);
             }
-            return (comment_idx, extra_utf8_bytes);
+            return (commentIdx, extraUtf8_bytes);
         }
     }
 

@@ -12,12 +12,12 @@ namespace JSON_Tools.Tests
         public struct Query_DesiredResult
         {
             public string query;
-            public string desired_result;
+            public string desiredResult;
 
-            public Query_DesiredResult(string query, string desired_result)
+            public Query_DesiredResult(string query, string desiredResult)
             {
                 this.query = query;
-                this.desired_result = desired_result;
+                this.desiredResult = desiredResult;
             }
         }
 
@@ -693,19 +693,19 @@ namespace JSON_Tools.Tests
                         "[[\"foo: 1  bagel\\r\", 1, \"bagel\"], [\"xyz: 9314 quiches\", 9314, \"quiche\"]]"),
             };
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JNode result;
             foreach (Query_DesiredResult qd in testcases)
             {
                 ii++;
-                JNode jdesired_result;
+                JNode jdesiredResult;
                 try
                 {
-                    jdesired_result = jsonParser.Parse(qd.desired_result);
+                    jdesiredResult = jsonParser.Parse(qd.desiredResult);
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"Got an error while parsing {qd.desired_result}:\n{ex}");
+                    Npp.AddLine($"Got an error while parsing {qd.desiredResult}:\n{ex}");
                     continue;
                 }
                 try
@@ -714,21 +714,21 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, but instead threw" +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesiredResult.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!result.TryEquals(jdesired_result, out _))
+                if (!result.TryEquals(jdesiredResult, out _))
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesiredResult.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }
             // the rand() and randint() functions require a special test because their outputs are nondeterministic
             ii += 7;
-            bool test_failed = false;
+            bool testFailed = false;
             string randints1argQuery = "flatten(@.foo)[:]->randint(1000)";
             string randints2argQuery = "range(9)[:]->randint(-700, 800)";
             string randintsIfElseQuery = "var stuff = j`[\"foo\", \"bar\", \"baz\", \"quz\"]`; range(17)[:]->at(stuff, abs(randint(-20, 20) % 4))";
@@ -739,7 +739,7 @@ namespace JSON_Tools.Tests
                 if (!(firstRandints1arg.children.All(x => x.value is long l && l >= 0 && l < 1000) && firstRandints1arg.children.Any(x => x.value is long l && l != (long)firstRandints1arg[0].value)))
                 {
                     Npp.AddLine($"Expected all values in result of \"{randints1argQuery}\" to be in [0, 1000), and some of them to not be equal to the first value in that array, got {firstRandints1arg.ToString()}");
-                    tests_failed += 1;
+                    testsFailed += 1;
                 }
                 firstRandints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
                 if (!(firstRandints2args.children.All(x => x.value is long l && l >= -700 && l < 800)
@@ -747,23 +747,23 @@ namespace JSON_Tools.Tests
                     && firstRandints2args.children.Any(x => x.value is long l && l < 0)))
                 {
                     Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args.ToString()}");
-                    tests_failed += 1;
+                    testsFailed += 1;
                 }
                 firstRandintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
                 if (!(firstRandintsIfElse.children.All(x => x.value is string s && (s == "foo" || s == "bar" || s == "baz" || s == "quz"))
                     && firstRandintsIfElse.children.Any(x => x.value is string s && s != (string)firstRandintsIfElse[0].value)))
                 {
                     Npp.AddLine($"In the value of \"{randintsIfElseQuery}\", expected all values in (\"foo\", \"bar\", \"baz\", \"quz\") and not all values equal to first value, got {firstRandintsIfElse.ToString()}");
-                    tests_failed += 1;
+                    testsFailed += 1;
                 }
 
             }
             catch (Exception ex)
             {
-                tests_failed += 3;
+                testsFailed += 3;
                 Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
             }
-            for (int randNum = 0; randNum < 28 && !test_failed; randNum++)
+            for (int randNum = 0; randNum < 28 && !testFailed; randNum++)
             {
                 // rand()
                 try
@@ -771,15 +771,15 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("rand()", foo);
                     if (!(result.value is double d && d >= 0d && d < 1d))
                     {
-                        test_failed = true;
-                        tests_failed++;
+                        testFailed = true;
+                        testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1, but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    test_failed = true;
-                    tests_failed++;
+                    testFailed = true;
+                    testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1 but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
@@ -789,15 +789,15 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("ifelse(rand() < 0.5, a, b)", foo);
                     if (!(result.value is string s && (s == "a" || s == "b")))
                     {
-                        test_failed = true;
-                        tests_failed++;
+                        testFailed = true;
+                        testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\", but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    test_failed = true;
-                    tests_failed++;
+                    testFailed = true;
+                    testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\" but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
@@ -807,16 +807,16 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("j`[1,2,3]`[:]{rand()}[0]", foo);
                     if (!(result is JArray arr) || arr.children.All(x => x == arr[0]))
                     {
-                        test_failed = true;
-                        tests_failed++;
+                        testFailed = true;
+                        testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0], foo) to return array of doubles that aren't all equal" +
                             $", but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    test_failed = true;
-                    tests_failed++;
+                    testFailed = true;
+                    testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
@@ -828,15 +828,15 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search(q, foo);
                     if (!(result is JArray arr && arr[0].value is double d1 && d1 >= 0 && d1 <= 1 && arr.children.All(x => x.value is double xd && xd == d1)))
                     {
-                        test_failed = true;
-                        tests_failed++;
+                        testFailed = true;
+                        testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got result {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    test_failed = true;
-                    tests_failed++;
+                    testFailed = true;
+                    testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got exception {RemesParser.PrettifyException(ex)}");
                 }
                 // randint tests
@@ -862,13 +862,13 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed += 3;
+                    testsFailed += 3;
                     Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
                 }
             }
-            string onetofive_str = "[1,2,3,4,5]";
-            JNode onetofive = jsonParser.Parse(onetofive_str);
-            (string query, JArray desired_result)[] slice_testcases = SliceTester.str_testcases
+            string onetofiveStr = "[1,2,3,4,5]";
+            JNode onetofive = jsonParser.Parse(onetofiveStr);
+            (string query, JArray desiredResult)[] sliceTestcases = SliceTester.strTestcases
                 .Select(testcase => ( // convert int[] into JArray of JNode with long value and Dtype.INT
                     $"@[{testcase.slicer}]",
                     new JArray(0,
@@ -877,7 +877,7 @@ namespace JSON_Tools.Tests
                         .ToList())
                 ))
                 .ToArray();
-            foreach ((string query, JArray desired_result) in slice_testcases)
+            foreach ((string query, JArray desiredResult) in sliceTestcases)
             {
                 ii++;
                 try
@@ -886,15 +886,15 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, but instead threw" +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofiveStr}) to return {desiredResult.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!result.TryEquals(desired_result, out _))
+                if (!result.TryEquals(desiredResult, out _))
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofive_str}) to return {desired_result.ToString()}, " +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({query}, {onetofiveStr}) to return {desiredResult.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }
@@ -910,7 +910,7 @@ namespace JSON_Tools.Tests
                 JNode queryResult = remesparser.Search(query, bigCsvNode);
                 if (!queryResult.TryEquals(correct, out _))
                 {
-                    tests_failed++;
+                    testsFailed++;
                     if (!hasShownBigCsvChunk)
                     {
                         hasShownBigCsvChunk = true;
@@ -945,9 +945,9 @@ namespace JSON_Tools.Tests
             {
                 Npp.AddLine($"While testing caching for s_csv and s_fa, got exception {ex}");
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 
@@ -956,7 +956,7 @@ namespace JSON_Tools.Tests
         public static bool Test()
         {
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
             List<string[]> testcases = new List<string[]>
@@ -1006,8 +1006,8 @@ namespace JSON_Tools.Tests
                 new []{"f`foo {} bar`", "[]"}, // empty interpolated section in f-string
             };
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
-            string[] invalid_others = new string[] { "{}", "[]", "\"1\"" };
-            foreach (string other in invalid_others)
+            string[] invalidOthers = new string[] { "{}", "[]", "\"1\"" };
+            foreach (string other in invalidOthers)
             {
                 foreach (string bop in Binop.BINOPS.Keys)
                 {
@@ -1036,7 +1036,7 @@ namespace JSON_Tools.Tests
                 ii++;
                 if (test.Length < 2)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Testcase with only {test.Length} elements; 2 are needed (query and input)");
                 }
                 string query = test[0];
@@ -1048,22 +1048,22 @@ namespace JSON_Tools.Tests
                 }
                 catch
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Got error while trying to parse input {inpstr}");
                     continue;
                 }
                 try
                 {
-                    JNode bad_result = remesParser.Search(query, inp);
-                    tests_failed++;
-                    Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {bad_result.ToString()}");
+                    JNode badResult = remesParser.Search(query, inp);
+                    testsFailed++;
+                    Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {badResult.ToString()}");
                 }
                 catch { }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 
@@ -1074,7 +1074,7 @@ namespace JSON_Tools.Tests
             JsonParser jsonParser = new JsonParser();
             RemesParser remesParser = new RemesParser();
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JNode result;
             string foostr = "{\"foo\": [-1, 2, 3], \"bar\": \"abc\", \"baz\": \"de\"}";
             string[][] testcases = new string[][] // input, query, input after mutation
@@ -1100,8 +1100,8 @@ namespace JSON_Tools.Tests
                 string inpstr = test[0];
                 JNode inp = JsonParserTester.TryParse(test[0], jsonParser);
                 string query = test[1];
-                JNode jdesired_result = JsonParserTester.TryParse(test[2], jsonParser);
-                if (inp is null || jdesired_result is null)
+                JNode jdesiredResult = JsonParserTester.TryParse(test[2], jsonParser);
+                if (inp is null || jdesiredResult is null)
                     continue;
                 ii += 2;
                 try
@@ -1110,28 +1110,28 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed += 2;
-                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to mutate {inpstr} into {jdesired_result.ToString()}, but instead threw" +
+                    testsFailed += 2;
+                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to mutate {inpstr} into {jdesiredResult.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!inp.TryEquals(jdesired_result, out _))
+                if (!inp.TryEquals(jdesiredResult, out _))
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to mutate {inpstr} into {jdesired_result.ToString()}, " +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to mutate {inpstr} into {jdesiredResult.ToString()}, " +
                                       $"but instead got {inp.ToString()}.");
                 }
-                if (!result.TryEquals(jdesired_result, out _))
+                if (!result.TryEquals(jdesiredResult, out _))
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to return {jdesired_result.ToString()}, " +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({query}, {inpstr}) to return {jdesiredResult.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }
 
             // test throws errors when expected
             foostr = "{\"foo\": [1], \"bar\": {\"a\": 1}}";
-            string[][] fail_cases = new string[][]
+            string[][] failCases = new string[][]
             {
                 new string[]{"@.foo = len(@)", foostr},
                 new string[]{"@.foo = @{a: len(@)}", foostr},
@@ -1141,7 +1141,7 @@ namespace JSON_Tools.Tests
                 new string[]{"@.bar.a = j`[1]`", foostr},
             };
 
-            foreach (string[] test in fail_cases)
+            foreach (string[] test in failCases)
             {
                 ii++;
                 try
@@ -1149,16 +1149,16 @@ namespace JSON_Tools.Tests
                     string query = test[0];
                     string inpstr = test[1];
                     JNode inp = jsonParser.Parse(inpstr);
-                    JNode bad_result = remesParser.Search(query, inp);
-                    tests_failed++;
-                    Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {bad_result.ToString()}");
+                    JNode badResult = remesParser.Search(query, inp);
+                    testsFailed++;
+                    Npp.AddLine($"Expected Search({query}, {inpstr}) to raise exception, but instead returned {badResult.ToString()}");
                 }
                 catch { }
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 
@@ -1289,20 +1289,20 @@ namespace JSON_Tools.Tests
                     "[\"Step 1 = [0, 0, 0];\", \"Step 2 = [0, 1, 2];\", \"Step 3 = [0, 2, 4];\"]"),
             };
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JNode result;
             foreach (Query_DesiredResult qd in testcases)
             {
                 ii++;
-                JNode jdesired_result;
+                JNode jdesiredResult;
                 JNode foo = RemesParserTester.foo.Copy(); // need a fresh copy each time b/c queries could mutate it
                 try
                 {
-                    jdesired_result = jsonParser.Parse(qd.desired_result);
+                    jdesiredResult = jsonParser.Parse(qd.desiredResult);
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"Got an error while parsing {qd.desired_result}:\n{ex}");
+                    Npp.AddLine($"Got an error while parsing {qd.desiredResult}:\n{ex}");
                     continue;
                 }
                 try
@@ -1311,22 +1311,22 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, but instead threw" +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesiredResult.ToString()}, but instead threw" +
                                       $" an exception:\n{ex}");
                     continue;
                 }
-                if (!result.TryEquals(jdesired_result, out _))
+                if (!result.TryEquals(jdesiredResult, out _))
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesired_result.ToString()}, " +
+                    testsFailed++;
+                    Npp.AddLine($"Expected remesparser.Search({qd.query}, foo) to return {jdesiredResult.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
                 }
             }
             ii = testcases.Length;
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 
@@ -1364,9 +1364,9 @@ namespace JSON_Tools.Tests
             //("s", Dtype.NUM), // if this is uncommented, it should cause fuzz tests to fail; use this to verify you haven't broken the tests
         };
         public static readonly string[] unops = new string[] { "not", "-", "+", "" };
-        public static readonly string[] num_funcs = new string[] { "int", "float" };
-        public static readonly string[] arr_funcs = new string[] { "len", "iterable", "is_num" };
-        public static readonly string[] str_funcs = new string[] { "s_len", "s_count" };
+        public static readonly string[] numFuncs = new string[] { "int", "float" };
+        public static readonly string[] arrFuncs = new string[] { "len", "iterable", "is_num" };
+        public static readonly string[] strFuncs = new string[] { "s_len", "s_count" };
         public static readonly string[] binops = new string[] { "-", "+", "*", "/", "//", "**", ">", "<", "==", "!=", ">=", "<=", "%" };
         public static Random random = RandomJsonFromSchema.random;
 
@@ -1393,38 +1393,38 @@ namespace JSON_Tools.Tests
         {
             (string tok, Dtype type) = RandomChoice(operands);
             string unop = RandomChoice(unops);
-            bool apply_argfunc = CoinFlip();
-            bool is_str = (type & Dtype.STR) != 0;
-            bool is_arr = (type & Dtype.ARR) != 0;
-            bool apply_unop = unop != "" && (!is_str || unop == "not");
-            bool unop_on_tok = CoinFlip();
-            if (apply_unop && unop_on_tok)
+            bool applyArgfunc = CoinFlip();
+            bool isStr = (type & Dtype.STR) != 0;
+            bool isArr = (type & Dtype.ARR) != 0;
+            bool applyUnop = unop != "" && (!isStr || unop == "not");
+            bool unopOnTok = CoinFlip();
+            if (applyUnop && unopOnTok)
             {
-                if (is_str)
+                if (isStr)
                     tok = $"({unop} {tok})";
                 else
                     tok = $"{unop} {tok}";
-                is_str = false; // if tok was string, the unop was not, and the output was bool
+                isStr = false; // if tok was string, the unop was not, and the output was bool
             }
             string operand;
-            if (is_str)
+            if (isStr)
             {
-                string func = (is_arr && apply_argfunc)
-                    ? ChooseFunc(str_funcs, arr_funcs)
-                    : ChooseFunc(str_funcs);
+                string func = (isArr && applyArgfunc)
+                    ? ChooseFunc(strFuncs, arrFuncs)
+                    : ChooseFunc(strFuncs);
                 operand = (func == "s_count")
                     ? $"s_count({tok}, a)"
                     : $"{func}({tok})";
-                if (apply_unop && !unop_on_tok)
+                if (applyUnop && !unopOnTok)
                     operand = $"{unop} {operand}";
             }
-            else if (apply_argfunc)
+            else if (applyArgfunc)
             {
-                string func = (is_arr)
-                    ? ChooseFunc(arr_funcs, num_funcs)
-                    : ChooseFunc(num_funcs);
+                string func = (isArr)
+                    ? ChooseFunc(arrFuncs, numFuncs)
+                    : ChooseFunc(numFuncs);
                 operand = $"{func}({tok})";
-                if (apply_unop && !unop_on_tok)
+                if (applyUnop && !unopOnTok)
                     operand = $"{unop} {operand}";
             }
             else
@@ -1439,9 +1439,9 @@ namespace JSON_Tools.Tests
         /// 1. There will be no error (each test input is syntactically valid and should not cause runtime errors)<br></br>
         /// 2. The output will be either a number or an array of numbers
         /// </summary>
-        /// <param name="n_tests"></param>
-        /// <param name="max_failures"></param>
-        public static bool Test(int n_tests, int max_failures)
+        /// <param name="nTests"></param>
+        /// <param name="maxFailures"></param>
+        public static bool Test(int nTests, int maxFailures)
         {
             JNode targetNode;
             try
@@ -1457,7 +1457,7 @@ namespace JSON_Tools.Tests
             RemesParser parser = new RemesParser();
             int failures = 0;
             int ii = 0;
-            for (; ii < n_tests && failures < max_failures; ii++)
+            for (; ii < nTests && failures < maxFailures; ii++)
             {
                 string v1 = GenerateOperand();
                 string binop1 = RandomChoice(binops);

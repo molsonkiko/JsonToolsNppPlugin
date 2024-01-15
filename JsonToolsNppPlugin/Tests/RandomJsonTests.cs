@@ -11,7 +11,7 @@ namespace JSON_Tools.Tests
         public static bool TestRandomJson()
         {
             int ii = 0;
-            int tests_failed = 0;
+            int testsFailed = 0;
             JsonParser parser = new JsonParser();
             var tests = new string[]
             {
@@ -56,14 +56,14 @@ namespace JSON_Tools.Tests
                     ii += 3;
                     try
                     {
-                        JArray required_arr = (JArray)schema["required"];
-                        required_arr.children.RemoveAt(0);
-                        schema["required"] = required_arr;
+                        JArray requiredArr = (JArray)schema["required"];
+                        requiredArr.children.RemoveAt(0);
+                        schema["required"] = requiredArr;
                         foreach (string possibleKey in ((JObject)schema["properties"]).children.Keys)
                         {
                             allKeys.Add(possibleKey);
                         }
-                        foreach (JNode keynode in required_arr.children)
+                        foreach (JNode keynode in requiredArr.children)
                         {
                             required.Add((string)keynode.value);
                         }
@@ -79,7 +79,7 @@ namespace JSON_Tools.Tests
                 var rands = new List<JNode>();
                 ii++;
                 // make some random JSON without extended ASCII
-                for (int rand_num = 0; rand_num < 50; rand_num++)
+                for (int randNum = 0; randNum < 50; randNum++)
                 {
                     try
                     {
@@ -87,14 +87,14 @@ namespace JSON_Tools.Tests
                     }
                     catch (Exception ex3)
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Couldn't generate random JSON from schema of {test}, got error:\n{ex3}");
                         break;
                     }
                 }
                 ii++;
                 // also test with extended ASCII allowed
-                for (int rand_num = 0; rand_num < 50; rand_num++)
+                for (int randNum = 0; randNum < 50; randNum++)
                 {
                     try
                     {
@@ -102,7 +102,7 @@ namespace JSON_Tools.Tests
                     }
                     catch (Exception ex3)
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Couldn't generate random JSON from schema of {test} with extended ASCII allowed, got error:\n{ex3}");
                         break;
                     }
@@ -115,14 +115,14 @@ namespace JSON_Tools.Tests
                     var vp = JsonSchemaValidator.Validates(rand, schema);
                     if (vp != null)
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema.ToString()}\nGot validation problem:\n{vp.ToString()}");
                         break;
                     }
                     // test that the minArrayLength and maxArrayLength args to RandomJson do what they're supposed to
                     if (rand is JArray arr && (arr.Length > 4 || arr.Length < 1))
                     {
-                        tests_failed++;
+                        testsFailed++;
                         Npp.AddLine($"Random JSON\n{rand.ToString()}\nshould have had length betweeen 1 and 4, had length {arr.Length}");
                         break;
                     }
@@ -137,7 +137,7 @@ namespace JSON_Tools.Tests
                             randKeys.Add(key);
                             if (!allKeys.Contains(key))
                             {
-                                tests_failed++;
+                                testsFailed++;
                                 Npp.AddLine($"Random JSON\n{rand.ToString()}\ncontained key \"{key}\" not in schema:\n{schema.ToString()}");
                                 failure = true;
                                 break;
@@ -147,7 +147,7 @@ namespace JSON_Tools.Tests
                             break;
                         if (!randKeys.IsSupersetOf(required))
                         {
-                            tests_failed++;
+                            testsFailed++;
                             Npp.AddLine($"Random JSON\n{rand.ToString()}\ndid not contain all required keys in {allRequiredKeyString}");
                             break;
                         }
@@ -162,14 +162,14 @@ namespace JSON_Tools.Tests
                         Npp.AddLine($"For schema\n{schema.ToString()}\nall random objects had more than the required number of keys ({required.Count}), " +
                                     "but statistically at least some should have had only the required keys\n" +
                                     $"Required keys: {allRequiredKeyString}\nAll keys: {allKeyString}");
-                        tests_failed++;
+                        testsFailed++;
                     }
                     if (!keycounts.Any((count) => count < allKeys.Count))
                     {
                         Npp.AddLine($"For schema\n{schema.ToString()}\nall random objects had fewer than the maximum number of keys ({allKeys.Count}), " +
                                     "but statistically at least some should have had all of the possible keys\n" +
                                     $"All keys: {allKeyString}");
-                        tests_failed++;
+                        testsFailed++;
                     }
                 }
             }
@@ -186,7 +186,7 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
@@ -197,20 +197,20 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
                 if (vp != null)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem\r\n{vp}");
                     break;
                 }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 }

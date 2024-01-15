@@ -19,7 +19,7 @@ namespace JSON_Tools.Tests
             string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()} on Notepad++ {Npp.nppVersionStr}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
             Npp.AddLine(header);
 
-            string big_random_fname = @"plugins\JsonTools\testfiles\big_random.json";
+            string bigRandomFname = @"plugins\JsonTools\testfiles\big_random.json";
             var tests = new (Func<bool> tester, string name, bool onlyIfNpp8Plus, bool onlyIfNpp8p5p5Plus)[]
             {
                 (JsonParserTester.TestJNodeCopy, "JNode Copy method", false, false),
@@ -101,12 +101,12 @@ namespace JSON_Tools.Tests
                                     "end for;",
                             "mutations with a for loop"}
                     },
-                    big_random_fname, 32, 40
+                    bigRandomFname, 32, 40
                     ), 
                     "JsonParser performance",
                     true, false
                 ),
-                (() => Benchmarker.BenchmarkJNodeToString(64, big_random_fname),
+                (() => Benchmarker.BenchmarkJNodeToString(64, bigRandomFname),
                     "performance of JSON compression and pretty-printing",
                     true, false
                 ),

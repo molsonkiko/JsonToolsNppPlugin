@@ -422,40 +422,40 @@ namespace JSON_Tools.Tests
 			};
 			JsonParser jsonParser = new JsonParser();
 			JsonTabularizer tabularizer = new JsonTabularizer();
-			int tests_failed = 0;
+			int testsFailed = 0;
 			int ii = 0;
 			foreach (string[] test in testcases)
 			{
 				string inp = test[0];
-				string desired_out = test[1];
-				string key_sep = test[2];
+				string desiredOut = test[1];
+				string keySep = test[2];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
-				JNode jdesired_out = jsonParser.Parse(desired_out);
+				JNode jdesiredOut = jsonParser.Parse(desiredOut);
 				JNode result = new JNode();
-				string base_message = $"Expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
+				string baseMessage = $"Expected BuildTable({jinp.ToString()})\nto return\n{jdesiredOut.ToString()}\n";
 				try
 				{
-					result = tabularizer.BuildTable(jinp, schema, key_sep);
-					if (!jdesired_out.TryEquals(result, out _))
+					result = tabularizer.BuildTable(jinp, schema, keySep);
+					if (!jdesiredOut.TryEquals(result, out _))
 					{
-						tests_failed++;
-						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
+						testsFailed++;
+						Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()}");
 					}
 				}
 				catch (Exception ex)
 				{
-					tests_failed++;
-					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+					testsFailed++;
+					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 
 			// TEST CSV CREATION
 			JsonParser fancyParser = new JsonParser(LoggerLevel.JSON5);
 
-			var csvTestcases = new (string inp, string desired_out, char delim, char quote_char, string[] header, bool bools_as_ints, string eol)[]
+			var csvTestcases = new (string inp, string desiredOut, char delim, char quoteChar, string[] header, bool boolsAsInts, string eol)[]
 			{
 				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r\n1,a\r\n2,b\r\n", ',', '"', null, false, "\r\n" ),
 				( "[{\"a\": 1, \"b\": \"a\"}, {\"a\": 2, \"b\": \"b\"}]", "a,b\r1,a\r2,b\r", ',', '"', null, false, "\r" ),
@@ -539,12 +539,12 @@ namespace JSON_Tools.Tests
                 ',', '\'', null, false, "\r\n"
                 ),
                 (
-				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints false
+				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with boolsAsInts false
 				"a,b\r\ntrue,foo\r\nfalse,bar\r\n",
 				',', '"', null, false, "\r\n"
 				),
 				(
-				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with bools_as_ints true
+				"[{\"a\": true, \"b\": \"foo\"}, {\"a\": false, \"b\": \"bar\"}]", // boolean values with boolsAsInts true
 				"a,b\r\n1,foo\r\n0,bar\r\n",
 				',', '"', null, true, "\r\n"
 				),
@@ -576,45 +576,45 @@ namespace JSON_Tools.Tests
 				',', '"', null, false, "\r\n"
 				),
 			};
-			foreach ((string inp, string desired_out, char delim, char quote, string[] header, bool boolsAsInts, string eol) in csvTestcases)
+			foreach ((string inp, string desiredOut, char delim, char quote, string[] header, bool boolsAsInts, string eol) in csvTestcases)
 			{
 				ii++;
 				JNode table = fancyParser.Parse(inp);
 				string result = "";
-				string head_str = header == null ? "null" : '[' + string.Join(", ", header) + ']';
+				string headStr = header == null ? "null" : '[' + string.Join(", ", header) + ']';
 				string escapedEol = JNode.StrToString(eol, true);
-				string messageWithoutDesired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote}', {head_str}, {escapedEol})\nto return\n";
-				string baseMessage = $"{messageWithoutDesired}{desired_out}\n";
-				int msgLen = Encoding.UTF8.GetByteCount(desired_out) + 1 + messageWithoutDesired.Length;
+				string messageWithoutDesired = $"With default strategy, expected TableToCsv({inp}, '{delim}', '{quote}', {headStr}, {escapedEol})\nto return\n";
+				string baseMessage = $"{messageWithoutDesired}{desiredOut}\n";
+				int msgLen = Encoding.UTF8.GetByteCount(desiredOut) + 1 + messageWithoutDesired.Length;
 				try
 				{
 					result = tabularizer.TableToCsv((JArray)table, delim, quote, eol, header, boolsAsInts);
-					int result_len = Encoding.UTF8.GetByteCount(result);
+					int resultLen = Encoding.UTF8.GetByteCount(result);
 					try
 					{
-						if (!desired_out.Equals(result))
+						if (!desiredOut.Equals(result))
 						{
-							tests_failed++;
-							Npp.editor.AppendText(msgLen + 17 + result_len + 1, $"{baseMessage}Instead returned\n{result}\n");
+							testsFailed++;
+							Npp.editor.AppendText(msgLen + 17 + resultLen + 1, $"{baseMessage}Instead returned\n{result}\n");
 						}
 					}
 					catch (Exception ex)
 					{
-						tests_failed++;
-						int ex_len = ex.ToString().Length;
-						Npp.editor.AppendText(msgLen + 17 + result_len + 21 + ex_len + 1, 
+						testsFailed++;
+						int exLen = ex.ToString().Length;
+						Npp.editor.AppendText(msgLen + 17 + resultLen + 21 + exLen + 1, 
 							$"{baseMessage}Instead returned\n{result}\nand threw exception\n{ex}\n");
 					}
 				}
 				catch (Exception ex)
 				{
-					tests_failed++;
+					testsFailed++;
 					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 			// TEST NO_RECURSION setting
-			var no_recursion_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.NO_RECURSION);
-			var no_recursion_testcases = new string[][]
+			var noRecursionTabularizer = new JsonTabularizer(JsonTabularizerStrategy.NO_RECURSION);
+			var noRecursionTestcases = new string[][]
 			{
 				new string[]{
 				"[" +
@@ -661,36 +661,36 @@ namespace JSON_Tools.Tests
 				},
 			};
 
-			foreach (string[] test in no_recursion_testcases)
+			foreach (string[] test in noRecursionTestcases)
 			{
 				string inp = test[0];
-				string desired_out = test[1];
+				string desiredOut = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
-				JNode jdesired_out = jsonParser.Parse(desired_out);
+				JNode jdesiredOut = jsonParser.Parse(desiredOut);
 				JNode result = new JNode();
-				string base_message = $"With recursive search turned off, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
+				string baseMessage = $"With recursive search turned off, expected BuildTable({jinp.ToString()})\nto return\n{jdesiredOut.ToString()}\n";
 				try
 				{
-					result = no_recursion_tabularizer.BuildTable(jinp, schema);
-					if (!jdesired_out.TryEquals(result, out _))
+					result = noRecursionTabularizer.BuildTable(jinp, schema);
+					if (!jdesiredOut.TryEquals(result, out _))
 					{
-						tests_failed++;
-						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
+						testsFailed++;
+						Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()}");
 					}
 				}
 				catch (Exception ex)
 				{
-					tests_failed++;
-					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+					testsFailed++;
+					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 
 			// TEST FULL_RECURSIVE setting
-			var full_recursive_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.FULL_RECURSIVE);
-			var full_recursive_testcases = new string[][]
+			var fullRecursiveTabularizer = new JsonTabularizer(JsonTabularizerStrategy.FULL_RECURSIVE);
+			var fullRecursiveTestcases = new string[][]
 			{
 				new string[]{
 				"[" +
@@ -713,36 +713,36 @@ namespace JSON_Tools.Tests
 				"]"
 				},
 			};
-			foreach (string[] test in full_recursive_testcases)
+			foreach (string[] test in fullRecursiveTestcases)
 			{
 				string inp = test[0];
-				string desired_out = test[1];
+				string desiredOut = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
-				JNode jdesired_out = jsonParser.Parse(desired_out);
+				JNode jdesiredOut = jsonParser.Parse(desiredOut);
 				JNode result = new JNode();
-				string base_message = $"With full recursive strategy, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
+				string baseMessage = $"With full recursive strategy, expected BuildTable({jinp.ToString()})\nto return\n{jdesiredOut.ToString()}\n";
 				try
 				{
-					result = full_recursive_tabularizer.BuildTable(jinp, schema);
-					if (!jdesired_out.TryEquals(result, out _))
+					result = fullRecursiveTabularizer.BuildTable(jinp, schema);
+					if (!jdesiredOut.TryEquals(result, out _))
 					{
-						tests_failed++;
-						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
+						testsFailed++;
+						Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()}");
 					}
 				}
 				catch (Exception ex)
 				{
-					tests_failed++;
-					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+					testsFailed++;
+					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 
 			// TEST STRINGIFY_ITERABLES setting
-			var stringify_iterables_tabularizer = new JsonTabularizer(JsonTabularizerStrategy.STRINGIFY_ITERABLES);
-			var stringify_iterables_testcases = new string[][]
+			var stringifyIterablesTabularizer = new JsonTabularizer(JsonTabularizerStrategy.STRINGIFY_ITERABLES);
+			var stringifyIterablesTestcases = new string[][]
 			{
 				new string[]{
 				"[" +
@@ -817,36 +817,36 @@ namespace JSON_Tools.Tests
                 },
         };
 
-			foreach (string[] test in stringify_iterables_testcases)
+			foreach (string[] test in stringifyIterablesTestcases)
 			{
 				string inp = test[0];
-				string desired_out = test[1];
+				string desiredOut = test[1];
 				ii++;
 				JNode jinp = jsonParser.Parse(inp);
 				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
-				JNode jdesired_out = jsonParser.Parse(desired_out);
+				JNode jdesiredOut = jsonParser.Parse(desiredOut);
 				JNode result = new JNode();
-				string base_message = $"With stringified iterables, expected BuildTable({jinp.ToString()})\nto return\n{jdesired_out.ToString()}\n";
+				string baseMessage = $"With stringified iterables, expected BuildTable({jinp.ToString()})\nto return\n{jdesiredOut.ToString()}\n";
 				try
 				{
-					result = stringify_iterables_tabularizer.BuildTable(jinp, schema);
-					if (!jdesired_out.TryEquals(result, out _))
+					result = stringifyIterablesTabularizer.BuildTable(jinp, schema);
+					if (!jdesiredOut.TryEquals(result, out _))
 					{
-						tests_failed++;
-						Npp.AddLine($"{base_message}Instead returned\n{result.ToString()}");
+						testsFailed++;
+						Npp.AddLine($"{baseMessage}Instead returned\n{result.ToString()}");
 					}
 				}
 				catch (Exception ex)
 				{
-					tests_failed++;
-					Npp.AddLine($"{base_message}Instead threw exception\n{ex}");
+					testsFailed++;
+					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
 			
-			Npp.AddLine($"Failed {tests_failed} tests.");
-			Npp.AddLine($"Passed {ii - tests_failed} tests.");
-			return tests_failed > 0;
+			Npp.AddLine($"Failed {testsFailed} tests.");
+			Npp.AddLine($"Passed {ii - testsFailed} tests.");
+			return testsFailed > 0;
 		}
 	}
 }

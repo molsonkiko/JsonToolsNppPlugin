@@ -121,29 +121,29 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         private static List<object> CompactAnyOf(List<object> anyOf)
         {
-            var object_anyof = new Dictionary<string, object>();
-            var array_anyof = new Dictionary<string, object>();
+            var objectAnyof = new Dictionary<string, object>();
+            var arrayAnyof = new Dictionary<string, object>();
             var scaltypes = Dtype.TYPELESS;
-            foreach (object subschema_obj in anyOf)
+            foreach (object subschemaObj in anyOf)
             {
-                var subschema = (Dictionary<string, object>)subschema_obj;
-                if (!subschema.TryGetValue("type", out object subtipe_obj))
+                var subschema = (Dictionary<string, object>)subschemaObj;
+                if (!subschema.TryGetValue("type", out object subtipeObj))
                     continue;
-                Dtype subtipe = (Dtype)subtipe_obj;
+                Dtype subtipe = (Dtype)subtipeObj;
                 if ((subtipe & Dtype.SCALAR) != 0)
                     scaltypes = DtypeUnion(scaltypes, subtipe);
                 else if (subtipe == Dtype.ARR)
-                    array_anyof = MergeSchemas(array_anyof, subschema);
+                    arrayAnyof = MergeSchemas(arrayAnyof, subschema);
                 else if (subtipe == Dtype.OBJ)
-                    object_anyof = MergeSchemas(object_anyof, subschema);
+                    objectAnyof = MergeSchemas(objectAnyof, subschema);
             }
             List<object> result = new List<object>();
             if (scaltypes != Dtype.TYPELESS)
                 result.Add(new Dictionary<string, object> { { "type", scaltypes } });
-            if (array_anyof.Count > 0)
-                result.Add(array_anyof);
-            if (object_anyof.Count > 0)
-                result.Add(object_anyof);
+            if (arrayAnyof.Count > 0)
+                result.Add(arrayAnyof);
+            if (objectAnyof.Count > 0)
+                result.Add(objectAnyof);
             return result;
         }
 
@@ -166,10 +166,10 @@ namespace JSON_Tools.JSON_Tools
             List<object> anyof = new List<object>();
             var scaltypes = Dtype.TYPELESS;
             // A schema must have either the "anyOf" or the "type" keyword
-            bool s1_anyOf = !s1.TryGetValue("type", out object s1type_obj);
-            bool s2_anyOf = !s2.TryGetValue("type", out object s2type_obj);
-            Dtype s1type = s1_anyOf ? Dtype.TYPELESS : (Dtype)s1type_obj;
-            Dtype s2type = s2_anyOf ? Dtype.TYPELESS : (Dtype)s2type_obj;
+            bool s1_anyOf = !s1.TryGetValue("type", out object s1typeObj);
+            bool s2_anyOf = !s2.TryGetValue("type", out object s2typeObj);
+            Dtype s1type = s1_anyOf ? Dtype.TYPELESS : (Dtype)s1typeObj;
+            Dtype s2type = s2_anyOf ? Dtype.TYPELESS : (Dtype)s2typeObj;
             bool s1_typeless = s1type == Dtype.TYPELESS;
             bool s2_typeless = s2type == Dtype.TYPELESS;
             if (s1_anyOf)
@@ -178,11 +178,11 @@ namespace JSON_Tools.JSON_Tools
                 {
                     // get all scalar types from s1 and combine them into a list
                     if (v is Dictionary<string, object> vobj
-                        && vobj.TryGetValue("type", out object v_type)
-                        && v_type is Dtype v_dtype
-                        && (v_dtype & Dtype.SCALAR) != 0)
+                        && vobj.TryGetValue("type", out object vType)
+                        && vType is Dtype vDtype
+                        && (vDtype & Dtype.SCALAR) != 0)
                     {
-                        scaltypes = DtypeUnion(scaltypes, v_dtype);
+                        scaltypes = DtypeUnion(scaltypes, vDtype);
                     }
                     else anyof.Add(v);
                 }
@@ -191,11 +191,11 @@ namespace JSON_Tools.JSON_Tools
                     foreach (object v in (List<object>)s2["anyOf"])
                     {
                         if (v is Dictionary<string, object> vobj
-                            && vobj.TryGetValue("type", out object v_type)
-                            && v_type is Dtype v_dtype
-                            && (v_dtype & Dtype.SCALAR) != 0)
+                            && vobj.TryGetValue("type", out object vType)
+                            && vType is Dtype vDtype
+                            && (vDtype & Dtype.SCALAR) != 0)
                         {
-                            scaltypes = DtypeUnion(scaltypes, v_dtype);
+                            scaltypes = DtypeUnion(scaltypes, vDtype);
                         }
                         else anyof.Add(v);
                     }
@@ -223,11 +223,11 @@ namespace JSON_Tools.JSON_Tools
                 {
                     // get all scalar types from s2 and combine them into a list
                     if (v is Dictionary<string, object> vobj
-                        && vobj.TryGetValue("type", out object v_type)
-                        && v_type is Dtype v_dtype
-                        && (v_dtype & Dtype.SCALAR) != 0)
+                        && vobj.TryGetValue("type", out object vType)
+                        && vType is Dtype vDtype
+                        && (vDtype & Dtype.SCALAR) != 0)
                     {
-                        scaltypes = DtypeUnion(scaltypes, v_dtype);
+                        scaltypes = DtypeUnion(scaltypes, vDtype);
                     }
                     else anyof.Add(v);
                 }
@@ -278,42 +278,42 @@ namespace JSON_Tools.JSON_Tools
             // by merging their "items" attributes
             if (s1type == Dtype.ARR && s2type == Dtype.ARR)
             {
-                Dictionary<string, object> combined_items;
-                bool s1_has_items = s1.TryGetValue("items", out object s1_items);
-                bool s2_has_items = s2.TryGetValue("items", out object s2_items);
-                if (!s1_has_items)
+                Dictionary<string, object> combinedItems;
+                bool s1_hasItems = s1.TryGetValue("items", out object s1_items);
+                bool s2_hasItems = s2.TryGetValue("items", out object s2_items);
+                if (!s1_hasItems)
                 {
-                    if (!s2_has_items)
+                    if (!s2_hasItems)
                     {
                         // both are arrays with no items, so create schema
                         // with no items
                         return new Dictionary<string, object> { { "type", Dtype.ARR } };
                     }
-                    combined_items = (Dictionary<string, object>)s2_items;
+                    combinedItems = (Dictionary<string, object>)s2_items;
                 }
-                else if (!s2_has_items)
+                else if (!s2_hasItems)
                 {
-                    combined_items = (Dictionary<string, object>)s1_items;
+                    combinedItems = (Dictionary<string, object>)s1_items;
                 }
                 else
                 {
-                    combined_items = MergeSchemas(
+                    combinedItems = MergeSchemas(
                         (Dictionary<string, object>)s1_items,
                         (Dictionary<string, object>)s2_items);
                 }
-                return new Dictionary<string, object> { { "type", Dtype.ARR }, { "items", combined_items } };
+                return new Dictionary<string, object> { { "type", Dtype.ARR }, { "items", combinedItems } };
             }
             // both are objects, so create a new object schema by merging
             // their "properties" attributes and reducing their "required"
             // keys if necessary
             if (s1type == Dtype.OBJ && s2type == Dtype.OBJ)
             {
-                object s2_props_obj;
+                object s2_propsObj;
                 Dictionary<string, object> s1props;
                 Dictionary<string, object> s2props;
-                if (!s1.TryGetValue("properties", out object s1_props_obj))
+                if (!s1.TryGetValue("properties", out object s1_propsObj))
                 {
-                    if (!s2.TryGetValue("properties", out s2_props_obj))
+                    if (!s2.TryGetValue("properties", out s2_propsObj))
                     {
                         // both have no properties, so return empty object schema
                         return new Dictionary<string, object>
@@ -327,46 +327,46 @@ namespace JSON_Tools.JSON_Tools
                     return new Dictionary<string, object>
                     {
                         { "type", Dtype.OBJ },
-                        { "properties", s2_props_obj },
+                        { "properties", s2_propsObj },
                         { "required", new List<string>() }
                     };
                 }
-                if (!s2.TryGetValue("properties", out s2_props_obj))
+                if (!s2.TryGetValue("properties", out s2_propsObj))
                 {
                     // s1 has properties, but s2 doesn't
                     return new Dictionary<string, object>
                     {
                         { "type", Dtype.OBJ },
-                        { "properties", s1_props_obj },
+                        { "properties", s1_propsObj },
                         { "required", new List<string>() }
                     };
                 }
                 var props = new Dictionary<string, object>();
                 var result = new Dictionary<string, object> { { "type", Dtype.OBJ }, { "properties", props } };
-                s1props = (Dictionary<string, object>)s1_props_obj;
-                s2props = (Dictionary<string, object>)s2_props_obj;
+                s1props = (Dictionary<string, object>)s1_propsObj;
+                s2props = (Dictionary<string, object>)s2_propsObj;
                 var s1_keyset = new HashSet<string>(s1props.Keys);
                 var s2_keyset = new HashSet<string>(s2props.Keys);
                 // get all keys that are shared, but not necessarily required
                 // we want to merge those schemas
-                var shared_keys = new HashSet<string>(s1_keyset.Intersect(s2_keyset));
-                s1_keyset.ExceptWith(shared_keys);
-                s2_keyset.ExceptWith(shared_keys);
+                var sharedKeys = new HashSet<string>(s1_keyset.Intersect(s2_keyset));
+                s1_keyset.ExceptWith(sharedKeys);
+                s2_keyset.ExceptWith(sharedKeys);
                 // the existing "required" attribute should be used if possible
                 // but make sure to remove keys that aren't in the new dict
-                if (!(s1.TryGetValue("required", out object s1_req_obj)
-                    && s1_req_obj is HashSet<string> s1_req))
+                if (!(s1.TryGetValue("required", out object s1_reqObj)
+                    && s1_reqObj is HashSet<string> s1_req))
                 {
                     s1_req = s1_keyset;
                 }
-                if (!(s2.TryGetValue("required", out object s2_req_obj)
-                    && s2_req_obj is HashSet<string> s2_req))
+                if (!(s2.TryGetValue("required", out object s2_reqObj)
+                    && s2_reqObj is HashSet<string> s2_req))
                 {
                     s2_req = s2_keyset;
                 }
                 result["required"] = new HashSet<string>(s1_req.Intersect(s2_req));
                 // merge schemas for any keys that both have (even if not required)
-                foreach (string k in shared_keys)
+                foreach (string k in sharedKeys)
                 {
                     props[k] = MergeSchemas((Dictionary<string, object>)s1props[k], (Dictionary<string, object>)s2props[k]);
                 }
@@ -399,20 +399,20 @@ namespace JSON_Tools.JSON_Tools
             if (tipe == Dtype.ARR)
             {
                 var items = new Dictionary<string, object> { };
-                Dtype scalar_types = Dtype.TYPELESS;
+                Dtype scalarTypes = Dtype.TYPELESS;
                 foreach (JNode elt in ((JArray)json).children)
                 {
                     if ((elt.type & Dtype.SCALAR) != 0)
                     {
-                        scalar_types = DtypeUnion(scalar_types, elt.type);
+                        scalarTypes = DtypeUnion(scalarTypes, elt.type);
                     }
                     else
                     {
                         items = MergeSchemas(items, BuildSchema(elt));
                     }
                 }
-                if (scalar_types != 0)
-                    items = MergeSchemas(new Dictionary<string, object> { { "type", scalar_types } }, items);
+                if (scalarTypes != 0)
+                    items = MergeSchemas(new Dictionary<string, object> { { "type", scalarTypes } }, items);
                 if (items.Count > 0)
                     schema["items"] = items;
             }
@@ -463,22 +463,22 @@ namespace JSON_Tools.JSON_Tools
                 // y is an iterable, and those come after scalars
                 return -1;
             }
-            string xtype_str = (string)xtype.value;
-            string ytype_str = (string)ytype.value;
-            if (xtype_str == "array")
+            string xtypeStr = (string)xtype.value;
+            string ytypeStr = (string)ytype.value;
+            if (xtypeStr == "array")
             {
-                if (ytype_str == "array")
+                if (ytypeStr == "array")
                     return 0;
-                if (ytype_str == "object")
+                if (ytypeStr == "object")
                     return -1;
                 return 1;
             }
-            if (xtype_str == "object")
+            if (xtypeStr == "object")
             {
-                if (ytype_str == "object") { return 0; }
+                if (ytypeStr == "object") { return 0; }
                 return 1;
             }
-            if (ytype_str == "object") { return -1; }
+            if (ytypeStr == "object") { return -1; }
             return x.ToString().CompareTo(y.ToString());
         }
 

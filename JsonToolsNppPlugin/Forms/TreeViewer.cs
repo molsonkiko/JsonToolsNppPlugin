@@ -292,16 +292,16 @@ namespace JSON_Tools.Forms
                     for (int ii = 0; ii < jar.Count; ii += interval)
                     {
                         JNode child = jar[ii];
-                        TreeNode child_node = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
+                        TreeNode childNode = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
                         if ((child is JArray childarr && childarr.Length > 0)
                             || (child is JObject childobj && childobj.Length > 0))
                         {
                             // add a sentinel node so that this node can later be expanded
-                            child_node.Nodes.Add("");
+                            childNode.Nodes.Add("");
                         }
                         if (Main.settings.tree_node_images)
-                            SetImageOfTreeNode(child_node, child);
-                        pathsToJNodes[child_node.FullPath] = child;
+                            SetImageOfTreeNode(childNode, child);
+                        pathsToJNodes[childNode.FullPath] = child;
                     }
                 }
                 else if (json is JObject obj)
@@ -314,15 +314,15 @@ namespace JSON_Tools.Forms
                         if (count++ % interval != 0)
                             continue;
                         JNode child = jobj[key];
-                        TreeNode child_node = root.Nodes.Add(key, TextForTreeNode(key, child));
+                        TreeNode childNode = root.Nodes.Add(key, TextForTreeNode(key, child));
                         if ((child is JArray childarr && childarr.Length > 0)
                             || (child is JObject childobj && childobj.Length > 0))
                         {
-                            child_node.Nodes.Add("");
+                            childNode.Nodes.Add("");
                         }
                         if (Main.settings.tree_node_images)
-                            SetImageOfTreeNode(child_node, child);
-                        pathsToJNodes[child_node.FullPath] = child;
+                            SetImageOfTreeNode(childNode, child);
+                        pathsToJNodes[childNode.FullPath] = child;
                     }
                 }
             }
@@ -387,7 +387,7 @@ namespace JSON_Tools.Forms
             string query = QueryBox.Text;
             JNode queryFunc;
             // complex queries may mutate the input JSON but return only a subset of the JSON.
-            // in this case, we want the tree to be populated by the subset returned by query_func.Operate (because the point of the tree is to provide a view into subsets of the input)
+            // in this case, we want the tree to be populated by the subset returned by queryFunc.Operate (because the point of the tree is to provide a view into subsets of the input)
             // but we want the document to be repopulated with the original JSON (after its mutation by the complex query)
             JNode treeFunc;
             try
@@ -448,14 +448,14 @@ namespace JSON_Tools.Forms
                     {
                         try
                         {
-                            var subquery_func = queryFunc.Operate(kv.Value);
+                            var subqueryFunc = queryFunc.Operate(kv.Value);
                             if (isMultiStepQuery)
                             {
-                                treeObj[kv.Key] = subquery_func;
+                                treeObj[kv.Key] = subqueryFunc;
                                 queryObj[kv.Key] = kv.Value;
                             }
                             else
-                                queryObj[kv.Key] = subquery_func;
+                                queryObj[kv.Key] = subqueryFunc;
                         }
                         catch (Exception ex)
                         {
@@ -528,8 +528,8 @@ namespace JSON_Tools.Forms
                     {
                         try
                         {
-                            JNode subquery_result = queryFunc.Operate(kv.Value);
-                            queryObj[kv.Key] = subquery_result;
+                            JNode subqueryResult = queryFunc.Operate(kv.Value);
+                            queryObj[kv.Key] = subqueryResult;
                         }
                         catch (Exception ex)
                         {
@@ -554,7 +554,7 @@ namespace JSON_Tools.Forms
             }
             else
             {
-                // query_func is a constant, so just set the query to that
+                // queryFunc is a constant, so just set the query to that
                 queryResult = queryFunc;
                 treeFunc = queryResult;
             }
@@ -711,10 +711,10 @@ namespace JSON_Tools.Forms
                         for (int ii = 0; ii < jar.Count; ii += interval)
                         {
                             JNode child = jar[ii];
-                            TreeNode child_node = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
+                            TreeNode childNode = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
                             if (Main.settings.tree_node_images)
-                                SetImageOfTreeNode(child_node, child);
-                            pathsToJNodes[child_node.FullPath] = child;
+                                SetImageOfTreeNode(childNode, child);
+                            pathsToJNodes[childNode.FullPath] = child;
                         }
                     }
                     else if (json is JObject obj_)
@@ -727,10 +727,10 @@ namespace JSON_Tools.Forms
                             if (count++ % interval != 0)
                                 continue;
                             JNode child = jobj[key];
-                            TreeNode child_node = root.Nodes.Add(key, TextForTreeNode(key, child));
+                            TreeNode childNode = root.Nodes.Add(key, TextForTreeNode(key, child));
                             if (Main.settings.tree_node_images)
-                                SetImageOfTreeNode(child_node, child);
-                            pathsToJNodes[child_node.FullPath] = child;
+                                SetImageOfTreeNode(childNode, child);
+                            pathsToJNodes[childNode.FullPath] = child;
                         }
                     }
                 }
@@ -749,12 +749,12 @@ namespace JSON_Tools.Forms
                 List<JNode> jar = arr.children;
                 for (int ii = 0; ii < root.Nodes.Count; ii++)
                 {
-                    TreeNode child_node = root.Nodes[ii];
+                    TreeNode childNode = root.Nodes[ii];
                     JNode child = jar[ii * interval];
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes, false);
+                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false);
                     }
                 }
             }
@@ -763,13 +763,13 @@ namespace JSON_Tools.Forms
                 Dictionary<string, JNode> jobj = obj.children;
                 for (int ii = 0; ii < root.Nodes.Count; ii++)
                 {
-                    TreeNode child_node = root.Nodes[ii];
-                    string key = child_node.Name;
+                    TreeNode childNode = root.Nodes[ii];
+                    string key = childNode.Name;
                     JNode child = jobj[key];
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, child_node, child, pathsToJNodes, false);
+                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false);
                     }
                 }
             }
@@ -813,12 +813,12 @@ namespace JSON_Tools.Forms
                 valToClipboard.MouseUp += valToClipboardHandler;
                 // things that get the key of the current node to clipboard
                 var keyToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[1];
-                var keyToClipboard_javascript = keyToClipboard.DropDownItems[0];
+                var keyToClipboardJavascript = keyToClipboard.DropDownItems[0];
                 if (keyToClipboardHandler_Javascript != null)
                 {
                     try
                     {
-                        keyToClipboard_javascript.MouseUp -= keyToClipboardHandler_Javascript;
+                        keyToClipboardJavascript.MouseUp -= keyToClipboardHandler_Javascript;
                     }
                     catch { }
                 }
@@ -828,7 +828,7 @@ namespace JSON_Tools.Forms
                         Npp.TryCopyToClipboard(KeyOfTreeNode(node, KeyStyle.JavaScript));
                     }
                 );
-                keyToClipboard_javascript.MouseUp += keyToClipboardHandler_Javascript;
+                keyToClipboardJavascript.MouseUp += keyToClipboardHandler_Javascript;
                 var keyToClipboard_Python = keyToClipboard.DropDownItems[1];
                 if (keyToClipboardHandler_Python != null)
                 {
@@ -863,12 +863,12 @@ namespace JSON_Tools.Forms
                 keyToClipboard_RemesPath.MouseUp += keyToClipboardHandler_Remespath;
                 // drop down menu for getting path to clipboard
                 var pathToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[2];
-                var pathToClipboard_javascript = pathToClipboard.DropDownItems[0];
+                var pathToClipboard_Javascript = pathToClipboard.DropDownItems[0];
                 if (pathToClipboardHandler_Javascript != null)
                 {
                     try
                     {
-                        pathToClipboard_javascript.MouseUp -= pathToClipboardHandler_Javascript;
+                        pathToClipboard_Javascript.MouseUp -= pathToClipboardHandler_Javascript;
                     }
                     catch { }
                 }
@@ -878,7 +878,7 @@ namespace JSON_Tools.Forms
                         Npp.TryCopyToClipboard(PathToTreeNode(node, KeyStyle.JavaScript));
                     }
                 );
-                pathToClipboard_javascript.MouseUp += pathToClipboardHandler_Javascript;
+                pathToClipboard_Javascript.MouseUp += pathToClipboardHandler_Javascript;
                 var pathToClipboard_Python = pathToClipboard.DropDownItems[1];
                 if (pathToClipboardHandler_Python != null)
                 {
@@ -1195,12 +1195,12 @@ namespace JSON_Tools.Forms
         private void RefreshButton_Click(object sender, EventArgs e)
         {
             shouldRefresh = false;
-            string cur_fname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode new_json, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
-            if (new_json == null)
+            string curFname = Npp.notepad.GetCurrentFilePath();
+            (bool _, JNode newJson, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
+            if (newJson == null)
                 return;
-            fname = cur_fname;
-            json = new_json;
+            fname = curFname;
+            json = newJson;
             queryResult = json;
             JsonTreePopulate(json);
         }
@@ -1266,8 +1266,8 @@ namespace JSON_Tools.Forms
         public string RelativeFilename(string fname = null)
         {
             if (fname == null) fname = this.fname;
-            string[] fname_split = fname.Split('\\');
-            return fname_split[fname_split.Length - 1];
+            string[] fnameSplit = fname.Split('\\');
+            return fnameSplit[fnameSplit.Length - 1];
         }
 
         /// <summary>
@@ -1275,10 +1275,10 @@ namespace JSON_Tools.Forms
         /// We would like to be able to change the title of the UI element as well,
         /// but it seems pretty hard to do from C#.
         /// </summary>
-        /// <param name="new_fname"></param>
-        public void Rename(string new_fname)
+        /// <param name="newFname"></param>
+        public void Rename(string newFname)
         {
-            fname = new_fname;
+            fname = newFname;
         }
     }
 }

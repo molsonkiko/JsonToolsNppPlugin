@@ -192,39 +192,39 @@ namespace JSON_Tools.Tests
                 },
             };
             int ii = 0;
-            int tests_failed = 0;
-            JObject base_schema_j = (JObject)JsonSchemaMaker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
+            int testsFailed = 0;
+            JObject baseSchemaJ = (JObject)JsonSchemaMaker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
             foreach (string[] test in testcases)
             {
                 string inp = test[0];
-                string desired_out = test[1];
+                string desiredOut = test[1];
                 ii++;
                 JNode jinp = jsonParser.Parse(inp);
-                JObject desired_schema = (JObject)jsonParser.Parse(desired_out);
-                foreach (KeyValuePair<string, JNode> kv in base_schema_j.children)
+                JObject desiredSchema = (JObject)jsonParser.Parse(desiredOut);
+                foreach (KeyValuePair<string, JNode> kv in baseSchemaJ.children)
                 {
-                    desired_schema[kv.Key] = kv.Value;
+                    desiredSchema[kv.Key] = kv.Value;
                 }
-                string desired_sch_str = desired_schema.ToString();
+                string desiredSchStr = desiredSchema.ToString();
                 JNode schema = new JNode();
                 try
                 {
                     schema = JsonSchemaMaker.GetSchema(jinp);
-                    if (!schema.TryEquals(desired_schema, out _))
+                    if (!schema.TryEquals(desiredSchema, out _))
                     {
-                        tests_failed++;
-                        Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead got\n{schema.ToString()}");
+                        testsFailed++;
+                        Npp.AddLine($"Expected the schema for {inp} to be\n{desiredSchStr}\nInstead got\n{schema.ToString()}");
                     }
                 }
                 catch (Exception e)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Expected the schema for {inp} to be\n{desired_sch_str}\nInstead raised exception {e}");
+                    testsFailed++;
+                    Npp.AddLine($"Expected the schema for {inp} to be\n{desiredSchStr}\nInstead raised exception {e}");
                 }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 }

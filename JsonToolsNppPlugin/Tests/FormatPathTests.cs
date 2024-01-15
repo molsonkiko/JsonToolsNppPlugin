@@ -10,7 +10,7 @@ namespace JSON_Tools.Tests
         {
             JsonParser parser = new JsonParser();
             JNode json = parser.Parse("{\"a\":1,\"b \":\"f\",\"cu\":[false,true,[{\"\":{\"bufrear\":null}}]],\"d'\":-1.5,\"b\\\\e\\\"\\r\\n\\t`\":[NaN,Infinity,-Infinity]}");
-            var testcases = new (int pos, KeyStyle style, string correct_path)[]
+            var testcases = new (int pos, KeyStyle style, string correctPath)[]
             {
                 (6, KeyStyle.JavaScript, ".a"),
                 (6, KeyStyle.RemesPath, ".a"),
@@ -38,8 +38,8 @@ namespace JSON_Tools.Tests
                 (93, KeyStyle.Python, "['b\\\\e\"\\r\\n\\t`'][1]"),
             };
             int ii = 0;
-            int tests_failed = 0;
-            foreach ((int pos, KeyStyle style, string correct_path) in testcases)
+            int testsFailed = 0;
+            foreach ((int pos, KeyStyle style, string correctPath) in testcases)
             {
                 ii++;
                 string path;
@@ -49,19 +49,19 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine($"While trying to get the path to position {pos} ({style} style), threw exception\r\n{ex}");
                     continue;
                 }
-                if (path != correct_path)
+                if (path != correctPath)
                 {
-                    tests_failed++;
-                    Npp.AddLine($"Got the path to position {pos} ({style} style) as {path}, but it should be {correct_path}");
+                    testsFailed++;
+                    Npp.AddLine($"Got the path to position {pos} ({style} style) as {path}, but it should be {correctPath}");
                 }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
 
         //public void TestPathToTreeNode()

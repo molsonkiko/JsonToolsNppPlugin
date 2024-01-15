@@ -62,40 +62,40 @@ namespace JSON_Tools.JSON_Tools
                 switch (problemType)
                 {
                     case ValidationProblemType.TYPE_MISMATCH:
-                        var found_type = JsonSchemaMaker.TypeName((Dtype)keywords["found"]);
+                        var foundType = JsonSchemaMaker.TypeName((Dtype)keywords["found"]);
                         object required = keywords["required"];
-                        if (required is JArray req_arr)
+                        if (required is JArray reqArr)
                         {
-                            return msg + $"found type {found_type}, expected one of the types {req_arr.ToString()}.";
+                            return msg + $"found type {foundType}, expected one of the types {reqArr.ToString()}.";
                         }
-                        return msg + $"found type {found_type}, expected type {JsonSchemaMaker.TypeName((Dtype)required)}.";
+                        return msg + $"found type {foundType}, expected type {JsonSchemaMaker.TypeName((Dtype)required)}.";
                     case ValidationProblemType.VALUE_NOT_IN_ENUM:
                         var enum_ = (JArray)keywords["enum"];
-                        var found_node = (JNode)keywords["found"];
-                        return msg + $"found value {found_node.ToString()}, but the only allowed values are {enum_.ToString()}.";
+                        var foundNode = (JNode)keywords["found"];
+                        return msg + $"found value {foundNode.ToString()}, but the only allowed values are {enum_.ToString()}.";
                     case ValidationProblemType.ARRAY_TOO_SHORT:
-                        int found_length = (int)keywords["found"];
+                        int foundLength = (int)keywords["found"];
                         keywords.TryGetValue("minItems", out object minItemsObj);
                         int minItems = 0;
                         if (minItemsObj != null) minItems = (int)minItemsObj;
-                        return msg + $"array required to have at least {minItems} items, but it has {found_length} items.";
+                        return msg + $"array required to have at least {minItems} items, but it has {foundLength} items.";
                     case ValidationProblemType.ARRAY_TOO_LONG:
-                        found_length = (int)keywords["found"];
+                        foundLength = (int)keywords["found"];
                         keywords.TryGetValue("maxItems", out object maxItemsObj);
                         int maxItems = 0;
                         if (maxItemsObj != null) maxItems = (int)maxItemsObj;
-                        return msg + $"array required to have no more than {maxItems} items, but it has {found_length} items.";
+                        return msg + $"array required to have no more than {maxItems} items, but it has {foundLength} items.";
                     case ValidationProblemType.CONTAINS_KEYWORD_VIOLATION:
-                        var contains_schema = (JNode)keywords["contains"];
+                        var containsSchema = (JNode)keywords["contains"];
                         var minContains = (int)keywords["minContains"];
                         var maxContains = (int)keywords["maxContains"];
                         var quantifier = maxContains == int.MaxValue
                             ? $"at least {minContains}"
                             : $"between {minContains} and {maxContains}";
-                        return msg + $"Array must have {quantifier} items that match \"contains\" schema {contains_schema}";
+                        return msg + $"Array must have {quantifier} items that match \"contains\" schema {containsSchema}";
                     case ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY:
-                        string key_missing = (string)keywords["required"];
-                        return msg + $"object missing required key {key_missing}";
+                        string keyMissing = (string)keywords["required"];
+                        return msg + $"object missing required key {keyMissing}";
                     case ValidationProblemType.FALSE_SCHEMA:
                         return msg + "the schema is `false`, so nothing will validate.";
                     case ValidationProblemType.STRING_DOESNT_MATCH_PATTERN:
@@ -149,11 +149,11 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// checks if the types are equal,
-        /// OR if json_type is integer and schema_type is number
+        /// OR if jsonType is integer and schemaType is number
         /// </summary>
-        public static bool TypeValidates(Dtype json_type, Dtype schema_type)
+        public static bool TypeValidates(Dtype jsonType, Dtype schemaType)
         {
-            return json_type == schema_type || json_type == Dtype.INT && schema_type == Dtype.FLOAT;
+            return jsonType == schemaType || jsonType == Dtype.INT && schemaType == Dtype.FLOAT;
         }
 
         /// <summary>
@@ -494,15 +494,15 @@ namespace JSON_Tools.JSON_Tools
                         );
                     }
                     // check if object has all required keys
-                    foreach (string required_key in required)
+                    foreach (string requiredKey in required)
                     {
-                        if (!obj.children.ContainsKey(required_key))
+                        if (!obj.children.ContainsKey(requiredKey))
                         {
                             return new ValidationProblem(
                                 ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY,
                                 new Dictionary<string, object>
                                 {
-                                    { "required", required_key },
+                                    { "required", requiredKey },
                                 },
                                 obj.position
                             );
@@ -525,14 +525,14 @@ namespace JSON_Tools.JSON_Tools
             }
             if (dtype == Dtype.STR)
             {
-                bool has_special_string_keywords = false;
+                bool hasSpecialStringKeywords = false;
                 // validation to test if string matches regex
                 Func<string, int, ValidationProblem?> regexValidator;
                 if (schema.children.TryGetValue("pattern", out JNode pattern))
                 {
-                    has_special_string_keywords = true;
+                    hasSpecialStringKeywords = true;
                     Regex regex = new Regex((string)pattern.value, RegexOptions.Compiled);
-                    regexValidator = (str, line_num) =>
+                    regexValidator = (str, lineNum) =>
                     {
                         if (!regex.IsMatch(str))
                         {
@@ -543,7 +543,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "string", str },
                                     { "regex", regex }
                                 },
-                                line_num
+                                lineNum
                             );
                         }
                         return null;
@@ -564,8 +564,8 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    has_special_string_keywords = true;
-                    lengthValidator = (string s, int line_num) =>
+                    hasSpecialStringKeywords = true;
+                    lengthValidator = (string s, int lineNum) =>
                     {
                         if (s.Length < minLength)
                         {
@@ -576,7 +576,7 @@ namespace JSON_Tools.JSON_Tools
                                     { "string", s },
                                     { "minLength", minLength }
                                 },
-                                line_num
+                                lineNum
                             );
                         }
                         if (s.Length > maxLength)
@@ -588,13 +588,13 @@ namespace JSON_Tools.JSON_Tools
                                     { "string", s },
                                     { "maxLength", maxLength }
                                 },
-                                line_num
+                                lineNum
                             );
                         }
                         return null;
                     };
                 }
-                if (has_special_string_keywords)
+                if (hasSpecialStringKeywords)
                 {
                     return (json) =>
                     {

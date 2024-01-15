@@ -26,7 +26,7 @@ namespace JSON_Tools.Tests
                     "\"c\" is such \"d\" is 1.15 wow! \"d\" is 62? \"e\" is 0.114, \"f\" is empty wow"),
                 ("[-9223372036854775808, 9223372036854775807]", "so 1000000000000000000000 and 777777777777777777777 many"),
             };
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
             JsonParser parser = new JsonParser();
             foreach ((string input, string correctOut) in testcases)
@@ -41,21 +41,21 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     string msg = $"Tried to parse json\r\n{input}\r\nas dson\r\n{correctOut}\r\nbut got error:\r\n{ex.ToString()}\r\n";
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                     continue;
                 }
                 if (dson != correctOut)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     string msg = $"Expected json\r\n{input}\r\nto be emitted\r\nas dson\r\n{correctOut}\r\nbut instead got \r\n{dson}\r\n";
                     Npp.editor.AppendText(Encoding.UTF8.GetByteCount(msg), msg);
                 }
             }
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 }

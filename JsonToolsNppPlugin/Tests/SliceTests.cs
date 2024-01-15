@@ -16,7 +16,7 @@ namespace JSON_Tools.Tests
         //     e.g., 3:-1 becomes +1:-2 because -1 becomes 4 and 3 < 4
         //     but -3:4 becomes -2:+1 because -3 becomes 2 and 2 < 4
         //     and 2:4 becomes +1:+2 because 2 < 4
-        public static readonly (string slicer, int[] desired)[] str_testcases = new (string slicer, int[] desired)[]
+        public static readonly (string slicer, int[] desired)[] strTestcases = new (string slicer, int[] desired)[]
         {
             (":", onetofive),                       // : 
             ("2:", new int[]{3, 4, 5}),             // +:
@@ -81,7 +81,7 @@ namespace JSON_Tools.Tests
 
         public static bool Test()
         {
-            string input_str = onetofive.ArrayToString();
+            string inputStr = onetofive.ArrayToString();
             var testcases = new (int?[] slicer, int[] output)[]
             {
                 (new int?[]{null, null, null}, onetofive),
@@ -107,12 +107,12 @@ namespace JSON_Tools.Tests
                 (new int?[]{2, 1, null}, new int[]{ }),
             };
 
-            int tests_failed = 0;
+            int testsFailed = 0;
             int ii = 0;
             foreach ((int?[] slicer, int[] desired) in testcases)
             {
                 int[] input = onetofive;
-                string str_desired = desired.ArrayToString();
+                string strDesired = desired.ArrayToString();
                 int[] output;
                 ii++;
                 try
@@ -121,27 +121,27 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(String.Format("Test {0} ({1}.Slice({2})) failed:\n" +
                                                     "Expected\n{3}\nGot exception\n{6}",
-                                                    ii + 1, input_str, slicer.ArrayToString(), str_desired, ex));
+                                                    ii + 1, inputStr, slicer.ArrayToString(), strDesired, ex));
                     continue;
                 }
-                string str_output = output.ArrayToString();
-                if (str_output != str_desired)
+                string strOutput = output.ArrayToString();
+                if (strOutput != strDesired)
                 {
 
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(String.Format("Test {0} ({1}.Slice({2})) failed:\n" +
                                                     "Expected\n{3}\nGot\n{6}",
-                                                    ii + 1, input_str, slicer.ArrayToString(), str_desired, str_output));
+                                                    ii + 1, inputStr, slicer.ArrayToString(), strDesired, strOutput));
                 }
             }
             // test string slicer
-            foreach ((string slicer, int[] desired) in str_testcases)
+            foreach ((string slicer, int[] desired) in strTestcases)
             {
                 int[] inp = onetofive;
-                string str_desired = desired.ArrayToString();
+                string strDesired = desired.ArrayToString();
                 int[] output;
                 try
                 {
@@ -149,27 +149,27 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(String.Format("Test {0} ({1}.Slice(\"{2}\")) failed:\n" +
                                                     "Expected\n{3}\nGot exception\n{4}",
-                                                    ii + 1, input_str, slicer, str_desired, ex));
+                                                    ii + 1, inputStr, slicer, strDesired, ex));
                     continue;
                 }
-                string str_output = output.ArrayToString();
-                if (str_output != str_desired)
+                string strOutput = output.ArrayToString();
+                if (strOutput != strDesired)
                 {
 
-                    tests_failed++;
+                    testsFailed++;
                     Npp.AddLine(String.Format("Test {0} ({1}.Slice(\"{2}\")) failed:\n" +
                                                     "Expected\n{3}\nGot\n{4}",
-                                                    ii + 1, input_str, slicer, str_desired, str_output));
+                                                    ii + 1, inputStr, slicer, strDesired, strOutput));
                 }
                 ii++;
             }
 
-            Npp.AddLine($"Failed {tests_failed} tests.");
-            Npp.AddLine($"Passed {ii - tests_failed} tests.");
-            return tests_failed > 0;
+            Npp.AddLine($"Failed {testsFailed} tests.");
+            Npp.AddLine($"Passed {ii - testsFailed} tests.");
+            return testsFailed > 0;
         }
     }
 }
