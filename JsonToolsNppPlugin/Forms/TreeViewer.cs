@@ -813,12 +813,12 @@ namespace JSON_Tools.Forms
                 valToClipboard.MouseUp += valToClipboardHandler;
                 // things that get the key of the current node to clipboard
                 var keyToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[1];
-                var keyToClipboardJavascript = keyToClipboard.DropDownItems[0];
+                var keyToClipboard_Javascript = keyToClipboard.DropDownItems[0];
                 if (keyToClipboardHandler_Javascript != null)
                 {
                     try
                     {
-                        keyToClipboardJavascript.MouseUp -= keyToClipboardHandler_Javascript;
+                        keyToClipboard_Javascript.MouseUp -= keyToClipboardHandler_Javascript;
                     }
                     catch { }
                 }
@@ -828,7 +828,7 @@ namespace JSON_Tools.Forms
                         Npp.TryCopyToClipboard(KeyOfTreeNode(node, KeyStyle.JavaScript));
                     }
                 );
-                keyToClipboardJavascript.MouseUp += keyToClipboardHandler_Javascript;
+                keyToClipboard_Javascript.MouseUp += keyToClipboardHandler_Javascript;
                 var keyToClipboard_Python = keyToClipboard.DropDownItems[1];
                 if (keyToClipboardHandler_Python != null)
                 {

@@ -2589,7 +2589,7 @@ namespace JSON_Tools.JSON_Tools
         /// returns all the integers from firstOptionalArgNum on, wrapped using Python-style negative indexing if needed
         /// </summary>
         /// <param name="firstOptionalArgNum">first arg to use</param>
-        /// <param name="nColumns">number of columns in each row of a CSV (for sCsv only)</param>
+        /// <param name="nColumns">number of columns in each row of a CSV (for s_csv only)</param>
         /// <param name="funcName">just for showing if a RemesPathArgumentException is thrown</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
@@ -2742,9 +2742,9 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="args">the args originally passed to the function calling this</param>
         /// <param name="firstOptionalArgNum">every arg from here onwards is the 0-based index of a capture group to parse as a number</param>
         /// <param name="funcName">name of invoking function</param>
-        /// <param name="maxGroupNum">highest capture group number (number of columns in sCsv)</param>
-        /// <param name="headerHandling">how headers are used, see the HeaderHandlingInCsv enum (only for sCsv)</param>
-        /// <param name="csvQuoteChar">the quote character (only used in sCsv)</param>
+        /// <param name="maxGroupNum">highest capture group number (number of columns in s_csv)</param>
+        /// <param name="headerHandling">how headers are used, see the HeaderHandlingInCsv enum (only for s_csv)</param>
+        /// <param name="csvQuoteChar">the quote character (only used in s_csv)</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
         public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int maxGroupNum=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS, char csvQuoteChar = '\x00')
