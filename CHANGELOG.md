@@ -62,11 +62,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
 3. Make dark mode icons darker.
 4. __This change only affects the code base, not the public API:__ changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
+5. All [regular expressions](/docs/RemesPath.md#regular-expressions) are now multiline, meaning that `^` and `$` now match the start and end of *lines* respectively, rather than the start and end of the *document.*
 
 ### Fixed
 
 1. Fixed issue where [vectorized functions in RemesPath](/docs/RemesPath.md#vectorized-functions) were not vectorized across objects if the first argument was a function of input and at least one of the non-first arguments was also a function of input.
 2. Fixed issue where entering invalid text into comboboxes in the [regex search form](/docs/README.md#regex-search-form) and [grepper form](/docs/README.md#get-json-from-files-and-apis) could cause a (mostly harmless) plugin crash.
+3. Improved refresh and loading speed for tree viewer on very large files in [regex mode](/docs/README.md#regex-search-form).
 
 ## [6.1.1] - 2023-12-28
 

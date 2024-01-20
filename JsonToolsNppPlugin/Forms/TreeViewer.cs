@@ -250,7 +250,15 @@ namespace JSON_Tools.Forms
             else
             {
                 // just show the value for the scalar
-                root.Text = JsonStringCappedLength(json);
+                if (json.value is string s && s.Length > MAX_TREENODE_JSON_LENGTH)
+                {
+                    // we don't special-case this everywhere, but special-casing this here
+                    // should speed up loading of the tree for very long regex-based files
+                    root.Text = JNode.StrToString(s.Substring(0, MAX_TREENODE_JSON_LENGTH), true)
+                        .Substring(0, MAX_TREENODE_JSON_LENGTH) + "...";
+                }
+                else
+                    root.Text = JsonStringCappedLength(json);
             }
             tree.Nodes.Add(root);
             pathsToJNodes[root.FullPath] = json;

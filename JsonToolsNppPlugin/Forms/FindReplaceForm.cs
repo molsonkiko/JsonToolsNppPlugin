@@ -165,7 +165,7 @@ namespace JSON_Tools.Forms
                     // exact matching is equivalent to regex matching
                     // with all special metacharacters escaped and anchors at the beginning and end
                     // add the (?i) flag for case-insensitive matching
-                    keysFindText = "g`(?i)^" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "$`";
+                    keysFindText = "g`(?i)\\A" + Regex.Escape(FindTextBox.Text).Replace("\\", "\\\\").Replace("`", "\\`") + "\\z`";
                     valuesFindText = $"[str(@) =~ {keysFindText}]";
                 }
                 else

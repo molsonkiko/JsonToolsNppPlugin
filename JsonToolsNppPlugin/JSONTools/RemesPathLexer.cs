@@ -167,7 +167,7 @@ Syntax error at position 3: Number with two decimal points
                     if (starter == 'j') // JSON literal
                         toks.Add(jsonParser.Parse(enquoted));
                     else if (starter == 'g') // regex
-                        toks.Add(new JRegex(new Regex(enquoted, RegexOptions.Compiled)));
+                        toks.Add(new JRegex(new Regex(enquoted, RegexOptions.Compiled | RegexOptions.Multiline)));
                     else if (starter == 'f') // f-string
                         TokenizeFString(toks, enquoted, q, m.Index + 2);
                     else

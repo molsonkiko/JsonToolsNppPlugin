@@ -127,9 +127,19 @@ The rules are as follows:
 * `null` is "falsy".
 * Anything that is not covered by the above cases is "falsy". In practice this should never happen.
 
-## Regular expressions and JSON literals ##
+### Regular expressions ###
 
 A regular expression can be created in a RemesPath expression by prefixing a \`\` string with the character "g". So ``g`\\s+` ``is the regular expression "\\s+", i.e., at least one whitespace character.
+
+JsonTools uses [.NET regular expressions](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) instead of the Boost library used by the Notepad++ find/replace form.
+
+There are numerous differences between JsonTools regular expressions and Notepad++ find/replace form regexes, but the main differences are as follows:
+- Prior to [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), `^` and `$` would only match at the beginning and end of the string, respectively (except as noted below for `s_sub` and `s_fa`)
+    - Note that `\A` can still be used to match the start of the string, and `\z` can be used to match the end of the string.
+- Even after v6.2, `^` and `$` only treat `\n` as as the end of the line. That means that `\r` is not matched at all, and `\r\n` is matched, but regexes must use `\r?$` instead of `$` to handle `\r\n` correctly.
+- Matching is case-sensitive by default, whereas Notepad++ is case-insensitive by default. The `(?i)` flag can be added at the beginning of any regex to make it case-insensitive.
+
+### Json literals ###
 
 A JSON literal can be created inside a RemesPath expression by prefixing a \`\` string with the character "j". So ``j`[1, 2, 3]` ``creates the JSON array `[1, 2, 3]`.
 
@@ -944,7 +954,7 @@ __Added in [v6.0](/CHANGELOG.md#600---2023-12-13).__
 The fourth argument and any subsequent argument must all be the number of a capture group to attempt to parse as a number (`0` matches the match value if there were no capture groups). [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. If a capture group cannot be parsed as a number, the capture group is returned. As with `s_csv` above, you can use a negative number to parse the nth-to-last column as a number instead of the nth column as a numer.
 
 __SPECIAL NOTES FOR `s_fa`:__
-1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools `^` matches only the beginning of the string and `$` matches only the end of the string.
+1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools (prior to [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd)) `^` matches only the beginning of the string and `$` matches only the end of the string.
 2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex integer preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
 3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number or (a hex integer preceded by `0x`). A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
 4. *`s_fa` may be very slow if `pat` is a function of input,* because the above described regex transformations need to be applied every time the function is called instead of just once at compile time.
@@ -1083,7 +1093,7 @@ Let's unpack how that worked:
 
 __Notes on regular expressions in `s_sub`:__
 
-1. *Like the function `s_fa`, `s_sub` uses `^` and `$` to match the start and end of lines*, rather than the start and end of a string. Elsewhere in RemesPath, `^` and `$` match only at the start and end of a string.
+1. *Like the function `s_fa`, `s_sub` uses `^` and `$` to match the start and end of lines*, rather than the start and end of a string. Before [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), elsewhere in RemesPath, `^` and `$` would match only at the start and end of a string.
 2. *`(INT)` and `(NUMBER)` match integers and floating point decimals, respectively, just as in `s_fa` above.* `(?:INT)` and `(?:NUMBER)` are non-capturing versions of the same regular expressions.
 
 ----
