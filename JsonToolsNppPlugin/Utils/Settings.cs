@@ -82,7 +82,7 @@ namespace JSON_Tools.Utils
         public bool minimal_whitespace_compression { get; set; }
 
         [Description("Sort the keys of objects alphabetically when pretty-printing or compressing"),
-            Category("JSON formatting"), DefaultValue(true)]
+            Category("JSON formatting"), DefaultValue(false)]
         public bool sort_keys { get; set; }
 
         [Description("How JSON is pretty printed.\r\n" +

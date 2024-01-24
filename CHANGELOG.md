@@ -55,14 +55,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
 2. Add [`and` and `or` non-vectorized functions in RemesPath](/docs/RemesPath.md#non-vectorized-functions), which both use conditional excution.
+3. [PPrint-style pretty-printing that remembers comments](/docs/README.md#remember_comments)
 
 ### Changed
 
 1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
-2. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
-3. Make dark mode icons darker.
-4. __This change only affects the code base, not the public API:__ changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
-5. All [regular expressions](/docs/RemesPath.md#regular-expressions) are now multiline, meaning that `^` and `$` now match the start and end of *lines* respectively, rather than the start and end of the *document.*
+2. Default value for [`sort_keys` setting](/docs/README.md#sort_keys) is now `false`, meaning keys are left in their original order by default. This will not change existing settings. 
+3. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
+4. Make dark mode icons darker.
+5. *This change only affects the code base, not the public API:* changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
+6. __All [RemesPath regular expressions](/docs/RemesPath.md#regular-expressions) are now multiline__, meaning that `^` and `$` now match the start and end of *lines* respectively, rather than the start and end of the *document.*
 
 ### Fixed
 

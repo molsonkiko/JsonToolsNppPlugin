@@ -749,7 +749,7 @@ namespace Kbg.NppPluginNET
             int indent = settings.tab_indent_pretty_print ? 1 : settings.indent_pretty_print; 
             Func<JNode, string> formatter;
             if (UseComments(info))
-                formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, indent, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ');
+                formatter = x => x.PrettyPrintWithCommentsAndChangePositions(info.comments, indent, settings.sort_keys, settings.tab_indent_pretty_print ? '\t' : ' ', settings.pretty_print_style);
             else
                 formatter = PrettyPrintFromSettings;
             if (isJsonLines)

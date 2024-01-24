@@ -552,6 +552,60 @@ Got
                                                     ii + 1, objstr, tostr, tostrChLine));
                 }
             }
+            // test PrettyPrintWithComments using the PPrint style
+            string pprintWithCommentsInitial = "# comment at start\r\n[\r\n    /* multiline comment at start */\r\n    [\"short\", {\"iterables\": \"get\", \"printed\": \"on\", \"one\": \"line\"}],\r\n    {\r\n        \"but\": [\r\n            \"this\",\r\n            /* has a comment in it */\r\n            \"and gets more lines\"\r\n        ]\r\n    },\r\n    [\"array\", \"would be short enough\", /* but has */ 1, \"comment\", true],\r\n    [\r\n        \"and this array is too long\",\r\n        \"so it goes Google-style\",\r\n        \"even though it has\", [0.0, \"comments\"] # comment at end\r\n    ]\r\n    /* multiline comment at end */\r\n]";
+            JNode parsedPPrintWithComments = TryParse(pprintWithCommentsInitial, parser);
+            if (parsedPPrintWithComments == null || !(parsedPPrintWithComments is JArray) || parser.comments.Count != 6)
+            {
+                Npp.AddLine($"Expected to parse\r\n{parsedPPrintWithComments}\r\nas an array with 6 comments, but parsed {parser.comments.Count} comments and " +  parsedPPrintWithComments == null ? "failed to parse" : $"got type {parsedPPrintWithComments.type}");
+                testsFailed += 5;
+                ii += 5;
+            }
+            else
+            {
+                var pprintWithCommentsTestCases = new (bool sortKeys, bool tabIndent, int indent, string correctOut)[]
+                {
+                    (false, false, 4, "// comment at start\r\n[\r\n    /* multiline comment at start */\r\n    [\"short\", {\"iterables\": \"get\", \"printed\": \"on\", \"one\": \"line\"}],\r\n    {\r\n        \"but\": [\r\n            \"this\",\r\n            /* has a comment in it */\r\n            \"and gets more lines\"\r\n        ]\r\n    },\r\n    [\r\n        \"array\",\r\n        \"would be short enough\",\r\n        /* but has */\r\n        1,\r\n        \"comment\",\r\n        true\r\n    ],\r\n    [\r\n        \"and this array is too long\",\r\n        \"so it goes Google-style\",\r\n        \"even though it has\",\r\n        [0.0, \"comments\"]\r\n    ]\r\n]\r\n// comment at end\r\n/* multiline comment at end */\r\n"
+                    ),
+                    (true, false, 2, "// comment at start\r\n[\r\n  /* multiline comment at start */\r\n  [\"short\", {\"iterables\": \"get\", \"one\": \"line\", \"printed\": \"on\"}],\r\n  {\r\n    \"but\": [\r\n      \"this\",\r\n      /* has a comment in it */\r\n      \"and gets more lines\"\r\n    ]\r\n  },\r\n  [\r\n    \"array\",\r\n    \"would be short enough\",\r\n    /* but has */\r\n    1,\r\n    \"comment\",\r\n    true\r\n  ],\r\n  [\r\n    \"and this array is too long\",\r\n    \"so it goes Google-style\",\r\n    \"even though it has\",\r\n    [0.0, \"comments\"]\r\n  ]\r\n]\r\n// comment at end\r\n/* multiline comment at end */\r\n"
+                    ),
+                    (true, true, 4, "// comment at start\r\n[\r\n\t/* multiline comment at start */\r\n\t[\"short\", {\"iterables\": \"get\", \"one\": \"line\", \"printed\": \"on\"}],\r\n\t{\r\n\t\t\"but\": [\r\n\t\t\t\"this\",\r\n\t\t\t/* has a comment in it */\r\n\t\t\t\"and gets more lines\"\r\n\t\t]\r\n\t},\r\n\t[\r\n\t\t\"array\",\r\n\t\t\"would be short enough\",\r\n\t\t/* but has */\r\n\t\t1,\r\n\t\t\"comment\",\r\n\t\ttrue\r\n\t],\r\n\t[\r\n\t\t\"and this array is too long\",\r\n\t\t\"so it goes Google-style\",\r\n\t\t\"even though it has\",\r\n\t\t[0.0, \"comments\"]\r\n\t]\r\n]\r\n// comment at end\r\n/* multiline comment at end */\r\n"
+                    ),
+                    (false, true, 4, "// comment at start\r\n[\r\n\t/* multiline comment at start */\r\n\t[\"short\", {\"iterables\": \"get\", \"printed\": \"on\", \"one\": \"line\"}],\r\n\t{\r\n\t\t\"but\": [\r\n\t\t\t\"this\",\r\n\t\t\t/* has a comment in it */\r\n\t\t\t\"and gets more lines\"\r\n\t\t]\r\n\t},\r\n\t[\r\n\t\t\"array\",\r\n\t\t\"would be short enough\",\r\n\t\t/* but has */\r\n\t\t1,\r\n\t\t\"comment\",\r\n\t\ttrue\r\n\t],\r\n\t[\r\n\t\t\"and this array is too long\",\r\n\t\t\"so it goes Google-style\",\r\n\t\t\"even though it has\",\r\n\t\t[0.0, \"comments\"]\r\n\t]\r\n]\r\n// comment at end\r\n/* multiline comment at end */\r\n"
+                    ),
+                    (false, false, 1, "// comment at start\r\n[\r\n /* multiline comment at start */\r\n [\"short\", {\"iterables\": \"get\", \"printed\": \"on\", \"one\": \"line\"}],\r\n {\r\n  \"but\": [\r\n   \"this\",\r\n   /* has a comment in it */\r\n   \"and gets more lines\"\r\n  ]\r\n },\r\n [\r\n  \"array\",\r\n  \"would be short enough\",\r\n  /* but has */\r\n  1,\r\n  \"comment\",\r\n  true\r\n ],\r\n [\r\n  \"and this array is too long\",\r\n  \"so it goes Google-style\",\r\n  \"even though it has\",\r\n  [0.0, \"comments\"]\r\n ]\r\n]\r\n// comment at end\r\n/* multiline comment at end */\r\n"
+                    ),
+                };
+                bool hasShownPPrintInput = false;
+                foreach ((bool sortKeys, bool tabIndent, int indent, string correctOut) in pprintWithCommentsTestCases)
+                {
+                    ii++;
+                    try
+                    {
+                        string gotOut = parsedPPrintWithComments.PrettyPrintWithComments(parser.comments, tabIndent ? 1 : indent, sortKeys, tabIndent ? '\t' : ' ', PrettyPrintStyle.PPrint);
+                        if (gotOut != correctOut)
+                        {
+                            testsFailed++;
+                            if (!hasShownPPrintInput)
+                            {
+                                hasShownPPrintInput = true;
+                                Npp.AddLine($"In PPrint-style pretty-printing with comments testcases, input was\r\n{pprintWithCommentsInitial}");
+                            }
+                            Npp.AddLine($"While trying to PPrint-style pretty print with sortKeys={sortKeys}, tabIndent={tabIndent}, indent={indent}, expected\r\n{correctOut}\r\ngot\r\n{gotOut}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        testsFailed++;
+                        if (!hasShownPPrintInput)
+                        {
+                            hasShownPPrintInput = true;
+                            Npp.AddLine($"In PPrint-style pretty-printing with comments testcases, input was\r\n{pprintWithCommentsInitial}");
+                        }
+                        Npp.AddLine($"While trying to PPrint-style pretty print with sortKeys={sortKeys}, tabIndent={tabIndent}, indent={indent}, expected\r\n{correctOut}\r\ngot exception\r\n{ex}");
+                    }
+                }
+            }
             #endregion
             #region EqualityTests
             var equalityTestcases = new object[][]

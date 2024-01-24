@@ -78,18 +78,25 @@ namespace JSON_Tools.Tests
                 bool rememberComments = args.Length >= 2 && args[1] is bool && (bool)args[1];
                 bool previousTabIndent = Main.settings.tab_indent_pretty_print;
                 bool previousRememberComments = Main.settings.remember_comments;
+                PrettyPrintStyle previousPrettyPrintStyle = Main.settings.pretty_print_style;
+                if (args.Length >= 3 && args[2] is PrettyPrintStyle pps)
+                {
+                    Main.settings.pretty_print_style = pps;
+                }
                 if (tabIndent)
                     Main.settings.tab_indent_pretty_print = tabIndent;
                 if (rememberComments)
                     Main.settings.remember_comments = rememberComments;
                 Main.PrettyPrintJson();
-                messages.Add(tabIndent
+                messages.Add($"{Main.settings.pretty_print_style}-style" + (tabIndent
                     ?  rememberComments ? "pretty-print with tabs and comments" : "pretty-print with tabs"
-                    : rememberComments ? "pretty-print with comments" : "pretty-print");
+                    : rememberComments ? "pretty-print with comments" : "pretty-print"));
                 if (tabIndent)
                     Main.settings.tab_indent_pretty_print = previousTabIndent;
                 if (rememberComments)
                     Main.settings.remember_comments = previousRememberComments;
+                if (Main.settings.pretty_print_style != previousPrettyPrintStyle)
+                    Main.settings.pretty_print_style = previousPrettyPrintStyle;
                 break;
             case "compress":
                 Main.CompressJson();
@@ -418,10 +425,10 @@ namespace JSON_Tools.Tests
                 ("file_open", new object[]{1}),
                 ("overwrite", new object[]{"[\r\n    [\"Я\", 1, \"a\"], // foo\r\n    [\"◐\", 2, \"b\"], // bar\r\n    [\"ồ\", 3, \"c\"], // baz\r\n    [\"ｪ\", 4, \"d\"],\r\n    [\"草\", 5, \"e\"],\r\n    [\"😀\", 6, \"f\"]\r\n]//a"}),
                 // TEST PRETTY-PRINT WITH COMMENTS AND TABS
-                ("pretty_print", new object[]{true, true}),
+                ("pretty_print", new object[]{true, true, PrettyPrintStyle.Google}),
                 ("compare_text", new object[]{"[\r\n\t[\r\n\t\t\"Я\",\r\n\t\t1,\r\n\t\t\"a\"\r\n\t],\r\n\t// foo\r\n\t[\r\n\t\t\"◐\",\r\n\t\t2,\r\n\t\t\"b\"\r\n\t],\r\n\t// bar\r\n\t[\r\n\t\t\"ồ\",\r\n\t\t3,\r\n\t\t\"c\"\r\n\t],\r\n\t// baz\r\n\t[\r\n\t\t\"ｪ\",\r\n\t\t4,\r\n\t\t\"d\"\r\n\t],\r\n\t[\r\n\t\t\"草\",\r\n\t\t5,\r\n\t\t\"e\"\r\n\t],\r\n\t[\r\n\t\t\"😀\",\r\n\t\t6,\r\n\t\t\"f\"\r\n\t]\r\n]\r\n//a\r\n"}),
                 // TEST PRETTY-PRINT WITH COMMENTS ONLY
-                ("pretty_print", new object[]{false, true}),
+                ("pretty_print", new object[]{false, true, PrettyPrintStyle.Whitesmith}),
                 ("compare_text", new object[]{"[\r\n    [\r\n        \"Я\",\r\n        1,\r\n        \"a\"\r\n    ],\r\n    // foo\r\n    [\r\n        \"◐\",\r\n        2,\r\n        \"b\"\r\n    ],\r\n    // bar\r\n    [\r\n        \"ồ\",\r\n        3,\r\n        \"c\"\r\n    ],\r\n    // baz\r\n    [\r\n        \"ｪ\",\r\n        4,\r\n        \"d\"\r\n    ],\r\n    [\r\n        \"草\",\r\n        5,\r\n        \"e\"\r\n    ],\r\n    [\r\n        \"😀\",\r\n        6,\r\n        \"f\"\r\n    ]\r\n]\r\n//a\r\n"
     }),
                 // TEST PRETTY-PRINT WITH TABS ONLY

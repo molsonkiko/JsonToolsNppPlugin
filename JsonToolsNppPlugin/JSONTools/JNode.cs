@@ -564,29 +564,31 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// for non-iterables, pretty-printing with comments is the same as compactly printing with comments.<br></br>
-        /// For iterables, pretty-printing with comments means Google-style pretty-printing,<br></br>
+        /// For iterables, pretty-printing with comments means Google-style pretty-printing (<i>unless prettyPrintStyle is PPrint</i>),<br></br>
         /// with each comment having the same position relative to each JSON element and each other comment 
-        /// that those comments did when the JSON was parsed.
+        /// that those comments did when the JSON was parsed.<br></br>
+        /// If prettyPrintStyle is PPrint, the algorith works as illustrated in PrettyPrintWithCommentsHelper below.
         /// </summary>
-        public string PrettyPrintWithComments(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ')
+        public string PrettyPrintWithComments(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ', PrettyPrintStyle prettyPrintStyle=PrettyPrintStyle.Google)
         {
-            return PrettyPrintWithComentsStarter(comments, false, indent, sortKeys, indentChar);
+            return PrettyPrintWithComentsStarter(comments, false, indent, sortKeys, indentChar, prettyPrintStyle);
         }
 
         /// <summary>
         /// As PrettyPrintWithComments, but changes the position of each JNode to wherever it is in the UTF-8 encoded form of the returned string
         /// </summary>
-        public string PrettyPrintWithCommentsAndChangePositions(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ')
+        public string PrettyPrintWithCommentsAndChangePositions(List<Comment> comments, int indent = 4, bool sortKeys = true, char indentChar = ' ', PrettyPrintStyle prettyPrintStyle=PrettyPrintStyle.Google)
         {
-            return PrettyPrintWithComentsStarter(comments, true, indent, sortKeys, indentChar);
+            return PrettyPrintWithComentsStarter(comments, true, indent, sortKeys, indentChar, prettyPrintStyle);
         }
 
-        private string PrettyPrintWithComentsStarter(List<Comment> comments, bool changePositions, int indent, bool sortKeys, char indentChar)
+        private string PrettyPrintWithComentsStarter(List<Comment> comments, bool changePositions, int indent, bool sortKeys, char indentChar, PrettyPrintStyle prettyPrintStyle)
         {
             comments.Sort((x, y) => x.position.CompareTo(y.position));
+            bool pprint = prettyPrintStyle == PrettyPrintStyle.PPrint;
             var sb = new StringBuilder();
             (int commentIdx, int extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, 0, 0, position, "");
-            (commentIdx, _) = PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, 0, sb, changePositions, extraUtf8_bytes, indentChar);
+            (commentIdx, _) = PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, 0, sb, changePositions, extraUtf8_bytes, indentChar, pprint);
             sb.Append(NL);
             Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, 0, int.MaxValue, ""); // add all comments after the last JNode
             return sb.ToString();
@@ -616,10 +618,48 @@ namespace JSON_Tools.JSON_Tools
         ///}
         /// // comment at the end
         ///</code>
+        /// If pprint, the algorithm instead works like this:<br></br>
+        /// // comment at start<br></br>
+        /// [<br></br>
+        ///     // comment before first element<br></br>
+        ///     ["short", {"iterables": "get", "printed on": 1.0}, "line"],<br></br>
+        ///     {<br></br>
+        ///         "but": [<br></br>
+        ///             "this",<br></br>
+        ///             /* has a comment in it */<br></br>
+        ///             "and gets more lines",<br></br>
+        ///             true<br></br>
+        ///         ]<br></br>
+        ///     },<br></br>
+        ///     [<br></br>
+        ///         "and this array is too long",<br></br>
+        ///         "so it goes Google-style",<br></br>
+        ///         "even though it has",<br></br>
+        ///         [0.0, "comments"]<br></br>
+        ///     ]<br></br>
+        /// ]<br></br>
         ///</summary>
-        public virtual (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
+        public virtual (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, bool pprint)
         {
             return (commentIdx, ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, int.MaxValue));
+        }
+
+        public virtual (int commentIdx, int extraUtf8_bytes) PPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, int maxLineEnd)
+        {
+            return (commentIdx, ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, int.MaxValue));
+        }
+
+        /// <summary>
+        /// return -1 if and only if either of the following is true:<br></br>
+        /// * compressing this JSON (non-minimal whitespace) would JSON would push sbLength over maxSbLen<br></br>
+        /// * this JNode has a position greater than maxInitialPosition<br></br>
+        /// If neither is true, return sbLength plus the length of this JSON's compressed string repr (non-minimal whitespace)
+        /// </summary>
+        public virtual int CompressedLengthAndPositionsWithinThresholds(int sbLength, int maxInitialPosition, int maxSbLen)
+        {
+            if (position >= maxInitialPosition || sbLength >= maxSbLen)
+                return -1;
+            return sbLength + ToString().Length;
         }
         #endregion
         ///<summary>
@@ -1253,7 +1293,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <inheritdoc/>
-        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
+        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, bool pprint)
         {
             if (changePositions) position = sb.Length + extraUtf8_bytes;
             int ctr = 0;
@@ -1272,14 +1312,54 @@ namespace JSON_Tools.JSON_Tools
             {
                 JNode v = children[k];
                 (commentIdx, extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, extraUtf8_bytes, v.position, extraDent);
+                int pprintLineEnd = sb.Length + PPRINT_LINE_LENGTH;
                 extraUtf8_bytes += AppendKeyAndGetUtf8Extra(sb, extraDent, k, "\": ");
-                (commentIdx, extraUtf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar);
+                (commentIdx, extraUtf8_bytes) = pprint
+                    ? v.PPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar, pprintLineEnd)
+                    : v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar, false);
                 if (++ctr < children.Count)
                     sb.Append(',');
                 sb.Append(NL);
             }
             sb.Append($"{dent}}}");
             return (commentIdx, extraUtf8_bytes);
+        }
+
+        public override (int commentIdx, int extraUtf8_bytes) PPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, int maxSbLen)
+        {
+            if (Length > PPRINT_LINE_LENGTH / 8) // an non-minimal-whitespace-compressed object has at least 8 chars per element ("\"a\": 1, ")
+                goto printOnMultipleLines;
+            int ogSbLen = sb.Length;
+            int nextCommentPos = commentIdx >= comments.Count ? int.MaxValue : comments[commentIdx].position;
+            if (CompressedLengthAndPositionsWithinThresholds(ogSbLen, nextCommentPos, maxSbLen) == -1)
+            {
+                // child is too long or has a comment inside; need to print on multiple lines
+                goto printOnMultipleLines;
+            }
+            // child is small enough when compact and has no comments inside, so use compact repr
+            return (commentIdx, ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, int.MaxValue));
+        printOnMultipleLines:
+            return PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth, sb, changePositions, extraUtf8_bytes, indentChar, true);
+        }
+
+        /// <inheritdoc/>
+        public override int CompressedLengthAndPositionsWithinThresholds(int sbLength, int maxInitialPosition, int maxSbLen)
+        {
+            if (position >= maxInitialPosition || sbLength >= maxSbLen)
+                return -1;
+            int ctr = 0;
+            sbLength += 1; // opening '{'
+            foreach (string key in children.Keys)
+            {
+                JNode child = children[key];
+                sbLength += StrToString(key, true).Length + 2; // json-encoded key, then ": "
+                sbLength = child.CompressedLengthAndPositionsWithinThresholds(sbLength, maxInitialPosition, maxSbLen);
+                if (sbLength == -1)
+                    return -1;
+                if (ctr < children.Count - 1)
+                    sbLength += 2; // ", "
+            }
+            return sbLength;
         }
 
         /// <summary>
@@ -1565,7 +1645,7 @@ namespace JSON_Tools.JSON_Tools
             return childUtf8_extra;
         }
 
-        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar)
+        public override (int commentIdx, int extraUtf8_bytes) PrettyPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, bool pprint)
         {
             if (changePositions) position = sb.Length + extraUtf8_bytes;
             sb.Append('[');
@@ -1576,14 +1656,52 @@ namespace JSON_Tools.JSON_Tools
             foreach (JNode v in children)
             {
                 (commentIdx, extraUtf8_bytes) = Comment.AppendAllCommentsBeforePosition(sb, comments, commentIdx, extraUtf8_bytes, v.position, extraDent);
+                int maxLineEnd = sb.Length + PPRINT_LINE_LENGTH;
                 sb.Append(extraDent);
-                (commentIdx, extraUtf8_bytes) = v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar);
+                (commentIdx, extraUtf8_bytes) = pprint
+                    ? v.PPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar, maxLineEnd)
+                    : v.PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth + 1, sb, changePositions, extraUtf8_bytes, indentChar, false);
                 if (++ctr < children.Count)
                     sb.Append(',');
                 sb.Append(NL);
             }
             sb.Append($"{dent}]");
             return (commentIdx, extraUtf8_bytes);
+        }
+
+        public override (int commentIdx, int extraUtf8_bytes) PPrintWithCommentsHelper(List<Comment> comments, int commentIdx, int indent, bool sortKeys, int depth, StringBuilder sb, bool changePositions, int extraUtf8_bytes, char indentChar, int maxSbLen)
+        {
+            if (Length > PPRINT_LINE_LENGTH / 3) // an non-minimal-whitespace-compressed array has at least 3 chars per element ("1, ")
+                goto printOnMultipleLines;
+            int ogSbLen = sb.Length;
+            int nextCommentPos = commentIdx >= comments.Count ? int.MaxValue : comments[commentIdx].position;
+            if (CompressedLengthAndPositionsWithinThresholds(ogSbLen, nextCommentPos, maxSbLen) == -1)
+            {
+                // child is too long or has a comment inside; need to print on multiple lines
+                goto printOnMultipleLines;
+            }
+            // child is small enough when compact and has no comments inside, so use compact repr
+            return (commentIdx, ToStringHelper(sortKeys, ": ", ", ", sb, changePositions, extraUtf8_bytes, int.MaxValue));
+        printOnMultipleLines:
+            return PrettyPrintWithCommentsHelper(comments, commentIdx, indent, sortKeys, depth, sb, changePositions, extraUtf8_bytes, indentChar, true);
+        }
+
+        /// <inheritdoc />
+        public override int CompressedLengthAndPositionsWithinThresholds(int sbLength, int maxInitialPosition, int maxSbLen)
+        {
+            if (position >= maxInitialPosition || sbLength >= maxSbLen)
+                return -1;
+            sbLength += 1; // opening '['
+            for (int ii = 0; ii < children.Count; ii++)
+            {
+                JNode child = children[ii];
+                sbLength = child.CompressedLengthAndPositionsWithinThresholds(sbLength, maxInitialPosition, maxSbLen);
+                if (sbLength == -1)
+                    return -1;
+                if (ii < children.Count - 1)
+                    sbLength += 2; // ", "
+            }
+            return sbLength;
         }
 
         /// <summary>
