@@ -79,6 +79,7 @@ Syntax error at position 3: Number with two decimal points
             @"([,\[\]\(\)\{\}\.:=!;])|" + // delimiters
             @"([gjf]?(?<!\\)`(?:\\\\|\\`|[^`\r\n])*`)|" + // backtick strings
             $@"({JsonParser.UNQUOTED_START}(?:[\p{{Mn}}\p{{Mc}}\p{{Nd}}\p{{Pc}}\u200c\u200d]|{JsonParser.UNQUOTED_START})*)|" + // unquoted strings
+            @"\#([^\n]*)(?:\n|\z)|" + // comments (Python-style, single-line)
             @"(\S+)", // anything non-whitespace non-token stuff (will cause error)
             RegexOptions.Compiled
         );
@@ -174,8 +175,9 @@ Syntax error at position 3: Number with two decimal points
                         toks.Add(new JNode(enquoted));
                     break;
                 case 11: toks.Add(ParseUnquotedString(m.Value)); break;
+                case 12: /* toks.Add(new Comment(m.Value, false, m.Index)); */ break; // comments; currently we won't add them to the tokens, but maybe later?
                 default:
-                    throw new RemesLexerException($"Invalid token \"{m.Value}\" at position {m.Index}");
+                    throw new RemesLexerException(m.Index, q, $"Invalid token \"{m.Value}\"");
                 }
             }
             BraceMatchCheck(q, regtoks, toks, '(', ')');
@@ -254,7 +256,7 @@ Syntax error at position 3: Number with two decimal points
                     if (c == open)
                     {
                         if (++unclosedCount >= MAX_RECURSION_DEPTH)
-                            throw new RemesLexerException($"Maximum recuresion depth ({MAX_RECURSION_DEPTH}) in a RemesPath query reached");
+                            throw new RemesLexerException(regtoks[regTokIndex].Index, q, $"Maximum recursion depth ({MAX_RECURSION_DEPTH}) in a RemesPath query reached");
                         else if (unclosedCount == 1)
                             lastUnclosed = regtoks[regTokIndex].Index;
                     }

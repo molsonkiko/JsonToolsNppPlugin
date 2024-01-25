@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     * maybe only try to do this for files with the `.csv` and `.tsv` extensions
 	* only test the `,` and `\t` delimiters, and only the `"` or `'` quote characters
 	* test only the first 10KB of the file, or first 25 lines, whichever comes first.
+8. Unit tests that randomly generate text with JSON chars to make sure JSON parser never throws for any reason, since errors aren't caught.
 
 ### To Be Changed
 
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
 	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
@@ -56,6 +58,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
 2. Add [`and` and `or` non-vectorized functions in RemesPath](/docs/RemesPath.md#non-vectorized-functions), which both use conditional excution.
 3. [PPrint-style pretty-printing that remembers comments](/docs/README.md#remember_comments)
+4. [Python-style single-line comments in RemesPath](/docs/RemesPath.md#comments-added-in-v62)
 
 ### Changed
 

@@ -1400,3 +1400,16 @@ Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), if a function has multiple 
 For example, if the function `foo` has two optional arguments:
 * `foo(1, , 2)` would be equivalent to `foo(1, null, 2)`
 * `foo(1, 2, )` would be equivalent to `foo(1, 2, null)` or `foo(1, 2)`.
+
+## Comments (added in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd)) ##
+
+Beginning in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), queries can include any number of Python-style single-line comments.
+
+Thus the query
+```
+foo # comment1
++ #comment2
+# comment3
+bar #comment4
+```
+would simply be parsed as `foo + bar`

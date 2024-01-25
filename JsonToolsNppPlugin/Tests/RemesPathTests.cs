@@ -457,8 +457,15 @@ namespace JSON_Tools.Tests
                 // parens tests
                 new Query_DesiredResult("(@.foo[:2])", "[[0, 1, 2], [3.0, 4.0, 5.0]]"),
                 new Query_DesiredResult("(@.foo)[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("(@.foo # comment\n)[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("(@.foo)[0] # comment at end", "[0, 1, 2]"),
+                new Query_DesiredResult("(@.foo)[0] # comment at end\n", "[0, 1, 2]"),
+                new Query_DesiredResult("(@.foo)[0] #", "[0, 1, 2]"), // empty comment at end
+                new Query_DesiredResult("# comment at start\n(@.foo)[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("# #s in comment #\r\n(@.foo)[0]", "[0, 1, 2]"),
+                new Query_DesiredResult("# comment at start\r\n# another comment\n(@.foo)[0]# moar comments!\n\n#yeah!!", "[0, 1, 2]"),
                 // projection tests
-                new Query_DesiredResult("@{@.jub, @.quz}", "[[], {}]"),
+                new Query_DesiredResult("@    #\r\n{@.jub, @.quz}", "[[], {}]"), // comment is ignored
                 new Query_DesiredResult("@.foo{foo: @[0], bar: @[1][:2]}", "{\"foo\": [0, 1, 2], \"bar\": [3.0, 4.0]}"),
                 new Query_DesiredResult("sorted(flatten(@.guzo, 2)){`min`: @[0], `max`: @[-1], `tot`: sum(@)}", "{\"min\": 1, \"max\": 3, \"tot\": 6}"),
                 new Query_DesiredResult("(@.foo[:]{`max`: max(@), `min`: min(@)})[0]", "{\"max\": 2.0, \"min\": 0.0}"),
@@ -496,7 +503,7 @@ namespace JSON_Tools.Tests
                 // making sure various escapes work in backtickstrings
                 new Query_DesiredResult("`\\t\\r\\n`", "\"\t\\r\\n\""),
                 // "->" (map) operator
-                new Query_DesiredResult("@ -> len(@)", fooLen.ToString()),
+                new Query_DesiredResult("@ -> #cmnt\n len(@)", fooLen.ToString()),
                 new Query_DesiredResult("@.foo[:] -> stringify(@)", "[\"[0,1,2]\", \"[3.0,4.0,5.0]\", \"[6.0,7.0,8.0]\"]"),
                 new Query_DesiredResult("@.* -> 3", "{\"foo\": 3, \"bar\": 3, \"baz\": 3, \"quz\": 3, \"jub\": 3, \"guzo\": 3, \"7\": 3, \"_\": 3}"),
                 new Query_DesiredResult("@.bar.* -> type(@)", "{\"a\": \"boolean\", \"b\": \"array\"}"),
@@ -1004,6 +1011,8 @@ namespace JSON_Tools.Tests
                 new []{"var zuten = f`foo {@[0] = 3} bar`; @", "[1]"}, // mutation expression ('=' char) inside f-string interpolation
                 new []{"hundenheim + f`{@[0]; @[1]}` ", "[0, 1]"}, // multiple statements (';' char) inside an f-string interpolation
                 new []{"f`foo {} bar`", "[]"}, // empty interpolated section in f-string
+                new []{"# commment and nothing else", "[]" },
+                new []{"# commment and nothing else\r\n# and another comment", "[]"},
             };
             // test issue where sometimes a binop does not raise an error when it operates on two invalid types
             string[] invalidOthers = new string[] { "{}", "[]", "\"1\"" };
@@ -1175,10 +1184,10 @@ namespace JSON_Tools.Tests
             var testcases = new Query_DesiredResult[]
             {
                 new Query_DesiredResult("var a = 1; " +
-                                        "var b = @.foo[0]; " +
+                                        "var b = @.foo # comment\r\n[0]; " +
                                         "var c = a + 2; " +
                                         "b = @ * c; " + // not reassigning b (use "var b = @ * c" for that), but rather mutating it
-                                        "@.foo[:][1]",
+                                        "@ #another comment\n.foo[:][ # more comments\n1]",
                     "[3, 4.0, 7.0]"),
                 new Query_DesiredResult("var two = @.foo[1]; " + // [3.0, 4.0, 5.0]
                                         "var one = @.foo[0]; " + // [0, 1, 2]
@@ -1187,6 +1196,7 @@ namespace JSON_Tools.Tests
                                         "two",
                     "[8.0, 9.0, 10.0]"),
                 new Query_DesiredResult("var two = @.foo[1]; " + // [3.0, 4.0, 5.0]
+                                        "  # a comment;\r\n" +
                                         "var one = @.foo[0]; " + // [0, 1, 2]
                                         "var mintwo = min(two); " + // 3.0
                                         "var z = one[:]{@, @ - mintwo};", // [[0, -3.0], [1, -2.0], [2, -1.0]]
