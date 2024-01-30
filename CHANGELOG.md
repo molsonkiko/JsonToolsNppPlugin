@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Fixed issue where [vectorized functions in RemesPath](/docs/RemesPath.md#vectorized-functions) were not vectorized across objects if the first argument was a function of input and at least one of the non-first arguments was also a function of input.
 2. Fixed issue where entering invalid text into comboboxes in the [regex search form](/docs/README.md#regex-search-form) and [grepper form](/docs/README.md#get-json-from-files-and-apis) could cause a (mostly harmless) plugin crash.
 3. Improved refresh and loading speed for tree viewer on very large files in [regex mode](/docs/README.md#regex-search-form).
+4. Fix issue where tree view tracking of capture groups in [regex search mode](/docs/README.md#regex-search-form) was wrong in some cases involving non-ASCII characters.
 
 ## [6.1.1] - 2023-12-28
 

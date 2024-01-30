@@ -2853,6 +2853,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     if (parseMatchesAsRow)
                     {
+                        int lastGroupIndex = m.Groups[maxGroupNum].Index;
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
                             var rowObj = new Dictionary<string, JNode>(nColumns);
@@ -2861,7 +2862,7 @@ namespace JSON_Tools.JSON_Tools
                             {
                                 rowObj[header[ii++]] = val;
                             }
-                            utf8ExtraBytes = rowObj[header[header.Count - 1]].position - m.Groups[maxGroupNum].Index;
+                            utf8ExtraBytes = rowObj[header[header.Count - 1]].position - lastGroupIndex;
                             rows.Add(new JObject(jnodePos, rowObj));
                         }
                         else
@@ -2871,9 +2872,10 @@ namespace JSON_Tools.JSON_Tools
                             {
                                 row.Add(val);
                             }
-                            utf8ExtraBytes = row[row.Count - 1].position - m.Groups[maxGroupNum].Index;
+                            utf8ExtraBytes = row[row.Count - 1].position - lastGroupIndex;
                             rows.Add(new JArray(jnodePos, row));
                         }
+                        utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, lastGroupIndex, matchEnd);
                     }
                     else // still need to get utf8 extra bytes in the first row
                         utf8ExtraBytes += JsonParser.ExtraUTF8BytesBetween(text, matchStart, matchEnd);

@@ -635,20 +635,20 @@ namespace JSON_Tools.Tests
                 ("compare_text", new object[]{"[\r\n    \"0.25 is champion!0.75 is champion!\",\r\n    \"0.75 is champion!0.25 is champion!\",\r\n    0.5\r\n]blah[\r\n    0,\r\n    \"1.25 is champion!1.25 is champion!\"\r\n][\r\n    \"boo is champion!c\",\r\n    \"aa\",\r\n    \"cboo is champion!\"\r\n]"}),
                 // TEST REGEX SEARCH FORM (REGEX MODE)
                 ("file_open", new object[]{2, "txt"}),
-                ("overwrite", new object[]{"\u200a\u202f\n foo: 1\nBA\u042f: \u00a0-3\nbaz: +85"}),
+                ("overwrite", new object[]{"\u200a\u202f\n foo: 1ö\nBA\u042f: \u00a0-3\nbaz: +85"}),
                 ("regex_search", new object[]{
-                    "{\"csv\":false,\"regex\":\"^\\\\x20*([a-zЯ]+):\\\\s+(INT)\",\"ignoreCase\":true,\"fullMatch\":false,\"numCols\":[1]}"
+                    "{\"csv\":false,\"regex\":\"^\\\\x20*([a-zЯ]+):\\\\s+(INT)ö?\",\"ignoreCase\":true,\"fullMatch\":false,\"numCols\":[1]}"
                 }),
                 ("treenode_click", new object[]{new string[] {"0 : [2]"} }),
                 ("compare_selections", new object[]{new string[] {"7,7"} }),
                 ("treenode_click", new object[]{new string[] {"1 : [2]", "1 : -3"} }),
-                ("compare_selections", new object[]{new string[] {"23,23"} }),
+                ("compare_selections", new object[]{new string[] {"25,25"} }),
                 ("select_treenode_json", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"23,25"} }),
+                ("compare_selections", new object[]{new string[] {"25,27"} }),
                 ("treenode_click", new object[]{new string[] {"2 : [2]", "1 : 85"} }),
-                ("compare_selections", new object[]{new string[] {"31,31"} }),
+                ("compare_selections", new object[]{new string[] {"33,33"} }),
                 ("select_treenode_json", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"31,34"} }),
+                ("compare_selections", new object[]{new string[] {"33,36"} }),
                 ("regex_search", new object[]{
                     "{\"csv\":false,\"regex\":\"^\\\\x20*([a-zЯ]+):\\\\s+(NUMBER)\",\"ignoreCase\":false,\"fullMatch\":true}"
                 }),
@@ -657,7 +657,7 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{new string[] {"0 : [3]", "2 : \"1\""} }),
                 ("tree_query", new object[]{
                     "@ = s_sub(@,\r\n" +
-                     "    g`(?i)^\\x20*([a-zЯ]+):\\s+(INT)`,\r\n" +
+                     "    g`(?i)^\\x20*([a-zЯ]+):\\s+(INT)ö?`,\r\n" +
                      "    ifelse(float(@[2]) < 0,\r\n" +
                      "        str(loop()) + @[0],\r\n" +
                      "        f`{loop()}. {@[1]} ({int(@[2])})`\r\n" +
@@ -666,7 +666,7 @@ namespace JSON_Tools.Tests
                 ("compare_text", new object[]{"\u200a\u202f\n1. foo (1)\n2BA\u042f: \u00a0-3\n3. baz (85)"}),
                 // TEST REGEX SEARCH FORM (CSV MODE)
                 ("overwrite", new object[]{
-                    "ab\tc\t😀\tf\r\n" +
+                    "ab\tc\t😀\tö\r\n" +
                     "'fo\nö'\t7\tbar\t-8.5\r\n" +
                     "baz\t19\t''\t-4e3\r\n" +
                     "'zorq'\t\tkywq\t'.75'\r\n" +
@@ -680,34 +680,34 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{new string[]{"1 : {4}", "c : 19"} }),
                 ("treenode_click", new object[]{new string[]{"1 : {4}", "😀 : \"\"" } }),
                 ("select_treenode_json", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"40,42"} }),
-                ("treenode_click", new object[]{new string[]{"2 : {4}", "f : \".75\""} }),
-                ("compare_selections", new object[]{new string[] {"62,62"} }),
+                ("compare_selections", new object[]{new string[] {"41,43"} }),
+                ("treenode_click", new object[]{new string[]{"2 : {4}", "ö : \".75\"" } }),
+                ("compare_selections", new object[]{new string[] {"63,63"} }),
                 ("regex_search", new object[]
                 {
                     "{\"csv\": true, \"delim\": \"\\\\t\", \"quote\": \"'\", \"newline\": \"\\r\\n\", \"header\": 1, \"nColumns\": 4, \"numCols\": [1]}"
                 }),
-                ("treenode_click", new object[]{new string[] {"0 : [4]", "3 : \"f\""} }),
+                ("treenode_click", new object[]{new string[] {"0 : [4]", "3 : \"ö\"" } }),
                 ("treenode_click", new object[]{new string[] {"1 : [4]", "1 : 7"} }),
                 ("treenode_click", new object[]{new string[] {"2 : [4]", "3 : \"-4e3\""} }),
                 ("treenode_click", new object[]{new string[] {"3 : [4]", "0 : \"zorq\""} }),
                 ("treenode_click", new object[]{new string[] {"4 : [4]", "2 : \"\""} }),
                 ("select_treenode_json", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"71,71"} }),
+                ("compare_selections", new object[]{new string[] {"72,72"} }),
                 // TEST SELECT ALL CHILDREN IN CSV FILE
                 ("tree_query", new object[]{"s_csv(@, 4, `\\t`, `\\r\\n`, `'`, h)[:][0]"}),
                 ("treenode_click", new object[]{new string[]{ } }), // click root
                 ("select_treenode_json_children", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"0,2", "13,20", "33,36", "49,55", "69,69"} }),
+                ("compare_selections", new object[]{new string[] {"0,2", "14,21", "34,37", "50,56", "70,70"} }),
                 ("treenode_click", new object[]{new string[]{ "1 : \"fo\\nö\"" } }),
                 ("select_treenode_json", new object[]{}),
-                ("compare_selections", new object[]{new string[] {"13,20"} }),
+                ("compare_selections", new object[]{new string[] {"14,21"} }),
                 // MUTATE CSV FILE WITH QUERY
                 ("tree_query", new object[]{
                     "var c = s_csv(@, 4, `\\t`, `\\r\\n`, `'`, h, 1);\r\n" +
                     "c[:][1][is_num(@)] = @/4;\r\n" +
                     "@ = to_csv(c,`,`, `\\n`, `\"`)"}),
-                ("compare_text", new object[]{"ab,c,😀,f\n\"fo\nö\",1.75,bar,-8.5\nbaz,4.75,,-4e3\nzorq,,kywq,.75\n,,,\n"}),
+                ("compare_text", new object[]{"ab,c,😀,ö\n\"fo\nö\",1.75,bar,-8.5\nbaz,4.75,,-4e3\nzorq,,kywq,.75\n,,,\n"}),
                 // TEST REGEX SEARCH FORM (SINGLE-CAPTURE-GROUP CSV AND REGEX MODES)
                 ("overwrite", new object[]{" 草1\nｪ2\n◐3\n'4"}), // last row has CSV quote char to make sure CSV delimiter is forgotten now that a non-csv search was made
                 ("regex_search", new object[]{
