@@ -55,10 +55,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
+1. [PPrint-style pretty-printing that remembers comments](/docs/README.md#remember_comments)
 2. Add [`and` and `or` non-vectorized functions in RemesPath](/docs/RemesPath.md#non-vectorized-functions), which both use conditional excution.
-3. [PPrint-style pretty-printing that remembers comments](/docs/README.md#remember_comments)
+3. Add [`s_format` vectorized RemesPath function](/docs/RemesPath.md#vectorized-functions), for easy reformatting of JSON strings.
 4. [Python-style single-line comments in RemesPath](/docs/RemesPath.md#comments-added-in-v62)
+5. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
 
 ### Changed
 

@@ -975,6 +975,30 @@ Returns an array of all the substrings in `x` that match `sub`.
 
 __As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in favor of `s_fa`*.__ However, it can still be useful if you always want the result to be a single string rather than an array of capture groups.
 
+---
+`s_format(s: str, print_style: string=m, sort_keys: bool=true, indent: int | str=4, remember_comments: bool=false) -> str`
+
+If `s` is not valid JSON (according to the most permissive parsing rules, same as used by the parse() function),
+return a copy of `s`.
+
+Otherwise, let `elt` be the JSON returned by parsing `s`.
+
+If the third argument (`sort_keys`, default true) is false, object keys are not sorted.
+
+If the fourth argument (`indent`, default 4) is an integer, the indent for pretty-print options is that integer. If it is `` `\t` `` (the tab character), tabs are used for indentation.
+
+*If __not__ `remember_comments` (the fifth argument)*, return `elt` formatted as follows:
+* if `print_style` (the second argument) is `m` (the default), return the [minimal-whitespace compact representation](/docs/README.md#minimal_whitespace_compression).
+* if `print_style` is `c`, return the Python-style compact representation (one space after ',' or ':')
+* if `print_style` is `g`, return the Google-style [pretty-printed representation](/docs/README.md#pretty_print_style)
+* if `print_style` is `w`, return the Whitesmith-style pretty-printed representation
+* if `print_style` is `p`, return the PPrint-style pretty-printed representation
+
+*If `remember_comments`*, any comments in `s` will be remembered as described in [the `remember_comments` setting](/docs/README.md#remember_comments), and return `elt` formatted as follows:
+* if `print_style` is `m` or `c` (the default), compressed.
+* if `print_style` is `g` or `w`, pretty-printed Google-style.
+* if `print_style` is `p`, pretty-printed PPrint-style.
+
 ----
 `s_len(x: string) -> int`
 

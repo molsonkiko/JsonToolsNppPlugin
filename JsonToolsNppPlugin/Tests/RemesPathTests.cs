@@ -698,6 +698,30 @@ namespace JSON_Tools.Tests
                                               "xyz: 9314 quiches`" +
                                        ", `^[a-z]{3}:\\x20+(\\d+)\\x20+(\\w+?)s?\\r?$`, true, 1)",
                         "[[\"foo: 1  bagel\\r\", 1, \"bagel\"], [\"xyz: 9314 quiches\", 9314, \"quiche\"]]"),
+                // ====================== s_format function for reformatting JSON strings ======================
+                // s_format(s: str, print_style: string=m, sort_keys: bool=true, indent: int | str=4, remember_comments: bool=false) -> str
+                new Query_DesiredResult("s_format(`foo \"bar`)",
+                    "\"foo \\\"bar\""),
+                new Query_DesiredResult("s_format(j`[\"foo\", \"[false, 1]\", \"-.25E+01\"]`, m)",
+                    "[\"foo\", \"[false,1]\", \"-2.5\"]"),
+                new Query_DesiredResult("s_format(j`[\"foo\", \"[false, 1]\", \"-.25E+01\"]`, g, true, `\\t`)",
+                    "[\"foo\", \"[\\r\\n\\tfalse,\\r\\n\\t1\\r\\n]\", \"-2.5\"]"),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`)",
+                    "\"[1,{\\\"b\\\":2,\\\"c\\\":[true,null,-5.5]},3.25]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, c, false)",
+                    "\"[1, {\\\"c\\\": [true, null, -5.5], \\\"b\\\": 2}, 3.25]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, w, true, 2)",
+                    "\"[\\r\\n1,\\r\\n  {\\r\\n  \\\"b\\\": 2,\\r\\n  \\\"c\\\":\\r\\n    [\\r\\n    true,\\r\\n    null,\\r\\n    -5.5\\r\\n    ]\\r\\n  },\\r\\n3.25\\r\\n]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, g, false, `\\t`)",
+                    "\"[\\r\\n\\t1,\\r\\n\\t{\\r\\n\\t\\t\\\"c\\\": [\\r\\n\\t\\t\\ttrue,\\r\\n\\t\\t\\tnull,\\r\\n\\t\\t\\t-5.5\\r\\n\\t\\t],\\r\\n\\t\\t\\\"b\\\": 2\\r\\n\\t},\\r\\n\\t3.25\\r\\n]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, m, false, 4, true)",
+                    "\"//c1\\r\\n//c2\\r\\n[1, {\\\"c\\\": [true, null, -5.5], \\\"b\\\": 2}, 3.25]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, c, true, 4, true)",
+                    "\"//c1\\r\\n//c2\\r\\n[1, {\\\"b\\\": 2, \\\"c\\\": [true, null, -5.5]}, 3.25]\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, g, true, 4, true)",
+                    "\"[\\r\\n    1,\\r\\n    {\\r\\n        //c1\\r\\n        \\\"b\\\": 2,\\r\\n        \\\"c\\\": [\\r\\n            true,\\r\\n            null,\\r\\n            -5.5\\r\\n        ]\\r\\n    },\\r\\n    //c2\\r\\n    3.25\\r\\n]\\r\\n\""),
+                new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, p, true, `\\t`, true)",
+                    "\"[\\r\\n\\t1,\\r\\n\\t{\\r\\n\\t\\t//c1\\r\\n\\t\\t\\\"b\\\": 2,\\r\\n\\t\\t\\\"c\\\": [true, null, -5.5]\\r\\n\\t},\\r\\n\\t//c2\\r\\n\\t3.25\\r\\n]\\r\\n\""),
             };
             int ii = 0;
             int testsFailed = 0;
@@ -1011,6 +1035,7 @@ namespace JSON_Tools.Tests
                 new []{"var zuten = f`foo {@[0] = 3} bar`; @", "[1]"}, // mutation expression ('=' char) inside f-string interpolation
                 new []{"hundenheim + f`{@[0]; @[1]}` ", "[0, 1]"}, // multiple statements (';' char) inside an f-string interpolation
                 new []{"f`foo {} bar`", "[]"}, // empty interpolated section in f-string
+                // comment bad stuff
                 new []{"# commment and nothing else", "[]" },
                 new []{"# commment and nothing else\r\n# and another comment", "[]"},
             };

@@ -1198,17 +1198,7 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(itblHasKey);
         }
 
-        /// <summary>
-        /// stringify(elt: anything, print_style: string=m, sort_keys: bool=true, indent: int | str=4) -> str<br></br>
-        /// For the pretty-printed forms, spaces are used to indent unless '\t' is passed as the indent argument.<br></br>
-        /// returns the string representation of elt according to the following rules:<br></br>
-        /// * if print_style is 'm', return the minimal-whitespace compact representation<br></br>
-        /// * if print_style is 'c', return the Python-style compact representation (one space after ',' or ':')<br></br>
-        /// * if print_style is 'g', return the Google-style pretty-printed representation<br></br>
-        /// * if print_style is 'w', return the Whitesmith-style pretty-printed representation<br></br>
-        /// * if print_style is 'p', return the PPrint-style pretty-printed representation<br></br>
-        /// </summary>
-        public static JNode Stringify(List<JNode> args)
+        private static (JNode elt, char printStyle, bool sortKeys, int indent, char indentChar) HandleStringifyArgs(List<JNode> args)
         {
             JNode elt = args[0];
             char printStyle = args[1].type == Dtype.NULL ? 'm' : ((string)args[1].value)[0];
@@ -1223,6 +1213,22 @@ namespace JSON_Tools.JSON_Tools
                 indent = 1;
                 indentChar = c;
             }
+            return (elt, printStyle, sortKeys, indent, indentChar);
+        }
+
+        /// <summary>
+        /// stringify(elt: anything, print_style: string=m, sort_keys: bool=true, indent: int | str=4) -> str<br></br>
+        /// For the pretty-printed forms, spaces are used to indent unless '\t' is passed as the indent argument.<br></br>
+        /// returns the string representation of elt according to the following rules:<br></br>
+        /// * if print_style is 'm', return the minimal-whitespace compact representation<br></br>
+        /// * if print_style is 'c', return the Python-style compact representation (one space after ',' or ':')<br></br>
+        /// * if print_style is 'g', return the Google-style pretty-printed representation<br></br>
+        /// * if print_style is 'w', return the Whitesmith-style pretty-printed representation<br></br>
+        /// * if print_style is 'p', return the PPrint-style pretty-printed representation<br></br>
+        /// </summary>
+        public static JNode Stringify(List<JNode> args)
+        {
+            (JNode elt, char printStyle, bool sortKeys, int indent, char indentChar) = HandleStringifyArgs(args);
             switch (printStyle)
             {
             case 'm': return new JNode(elt.ToString(sortKeys, ":", ","));
@@ -3244,6 +3250,60 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// s_format(s: str, print_style: string=m, sort_keys: bool=true, indent: int | str=4, remember_comments: bool=false) -> str<br></br>
+        /// If s is <i>not</i> valid JSON (according to the most permissive parsing rules, same as used by the parse() function),
+        /// return a copy of s.<br></br>
+        /// Otherwise, let <strong>elt</strong> be the JSON returned by parsing <strong>s</strong>.<br></br>
+        /// For the pretty-printed forms, spaces are used to indent unless '\t' is passed as the indent argument.<br></br>
+        /// <i>If remember comments</i>, use the following rules (see the docs/README.md#remember_comments in the GitHub repo):<br></br>
+        /// * if print_style is 'm' or 'c', return the comment-remembering compact representation<br></br>
+        /// * if print_style is 'g' or 'w', return the comment-remembering Google-style pretty-printed representation<br></br>
+        /// * if print_style is 'p', return the comment-remembering PPrint-style pretty-printed representation<br></br>
+        /// <i>If not remember_comments:</i><br></br>
+        /// returns the string representation of elt according to the following rules:<br></br>
+        /// * if print_style is 'm', return the minimal-whitespace compact representation<br></br>
+        /// * if print_style is 'c', return the Python-style compact representation (one space after ',' or ':')<br></br>
+        /// * if print_style is 'g', return the Google-style pretty-printed representation<br></br>
+        /// * if print_style is 'w', return the Whitesmith-style pretty-printed representation<br></br>
+        /// * if print_style is 'p', return the PPrint-style pretty-printed representation<br></br>
+        /// </summary>
+        public static JNode StrFormat(List<JNode> args)
+        {
+            (JNode elt, char printStyle, bool sortKeys, int indent, char indentChar) = HandleStringifyArgs(args);
+            if (!(elt.value is string s))
+                throw new RemesPathArgumentException(null, 0, FUNCTIONS["s_format"], elt.type);
+            bool rememberComments = args[4].type != Dtype.NULL && (bool)args[4].value;
+            var parser = new JsonParser(LoggerLevel.JSON5, false, false, false, rememberComments);
+            JNode result = parser.Parse(s);
+            if (parser.fatal)
+                return new JNode(s);
+            if (rememberComments)
+            {
+                switch (printStyle)
+                {
+                case 'm':
+                case 'c':
+                    return new JNode(result.ToStringWithComments(parser.comments, sortKeys));
+                case 'g':
+                case 'w':
+                    return new JNode(result.PrettyPrintWithComments(parser.comments, indent, sortKeys, indentChar, PrettyPrintStyle.Google));
+                case 'p':
+                    return new JNode(result.PrettyPrintWithComments(parser.comments, indent, sortKeys, indentChar, PrettyPrintStyle.PPrint));
+                default: throw new RemesPathArgumentException($"print_style (2nd arg of s_format) must be one of \"mcgwp\", got {JsonLint.CharDisplay(printStyle)}", 1, FUNCTIONS["s_format"]);
+                }
+            }
+            switch (printStyle)
+            {
+            case 'm': return new JNode(result.ToString(sortKeys, ":", ","));
+            case 'c': return new JNode(result.ToString(sortKeys));
+            case 'g': return new JNode(result.PrettyPrint(indent, sortKeys, PrettyPrintStyle.Google, int.MaxValue, indentChar));
+            case 'w': return new JNode(result.PrettyPrint(indent, sortKeys, PrettyPrintStyle.Whitesmith, int.MaxValue, indentChar));
+            case 'p': return new JNode(result.PrettyPrint(indent, sortKeys, PrettyPrintStyle.PPrint, int.MaxValue, indentChar));
+            default: throw new RemesPathArgumentException($"print_style (2nd arg of s_format) must be one of \"mcgwp\", got {JsonLint.CharDisplay(printStyle)}", 1, FUNCTIONS["s_format"]);
+            }
+        }
+
+        /// <summary>
         /// is_str(x: anything) -> boolean<br></br>
         /// returns true iff is x is a string
         /// </summary>
@@ -3637,6 +3697,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((2, Dtype.NULL, x => new JNode(",")), (3, Dtype.NULL, x => new JNode("\r\n")), (4, Dtype.NULL, x => new JNode("\"")), (5, Dtype.NULL, x => new JNode("n")))),
             ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.BOOL | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex), (2, Dtype.NULL, x => new JNode(false)))),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
+            ["s_format"] = new ArgFunction(StrFormat, "s_format", Dtype.STR, 1, 5, true, new Dtype[] { Dtype.ANYTHING, Dtype.NULL | Dtype.STR, Dtype.BOOL | Dtype.STR, Dtype.INT | Dtype.STR | Dtype.NULL, Dtype.BOOL | Dtype.NULL }),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lines"] = new ArgFunction(StrSplitLines, "s_lines", Dtype.ARR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["s_lower"] = new ArgFunction(StrLower, "s_lower", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
