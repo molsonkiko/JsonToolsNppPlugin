@@ -818,6 +818,26 @@ multiline comment
                 ("[1 2,]", "[1, 2]", new string[]{"No comma between array members", "Comma after last element of array"}),
                 ("{\"a\" 1}", "{\"a\": 1}", new string[]{"No ':' between key 0 and value 0 of object"}),
                 ("{\"a\": 1 \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object" }),
+                ("{\"a\": 1: \"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[]{ "No comma after key-value pair 0 in object", "':' found instead of comma after key-value pair" }),
+                ("{\"a\": 1, \"b\": \"q\" : //foo\n \"c\": 7}", "{\"a\": 1, \"b\": \"q\", \"c\": 7}", new string[] {
+                    "No comma after key-value pair 1 in object",
+                    "':' found instead of comma after key-value pair" ,
+                    "JavaScript comments are not part of the original JSON specification" }),
+                ("{\"a\": -1.5 :", "{\"a\": -1.5}", new string[]{
+                    "No comma after key-value pair 0 in object",
+                    "No valid unquoted key beginning at 11",
+                    "At end of valid JSON document, got : instead of EOF" }),
+                ("{\"a\":false: /* baz */", "{\"a\": false}", new string[]{
+                    "No comma after key-value pair 0 in object",
+                    "':' found instead of comma after key-value pair",
+                    "JavaScript comments are not part of the original JSON specification",
+                    "Unterminated object"
+                }),
+                ("{\"a\":true\n:\r\n\t ", "{\"a\": true}", new string[]{
+                    "No comma after key-value pair 0 in object",
+                    "':' found instead of comma after key-value pair",
+                    "Unterminated object"
+                }),
                 ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal contains newline"}),
                 ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
                     new string[]{ "NaN is not part of the original JSON specification",

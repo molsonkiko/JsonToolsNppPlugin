@@ -3342,7 +3342,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// ifelse(x: anything, if_true: anything, if_false: anything) -> anything<br></br>
         /// if first arg is "truthy" (see ToBoolHelper for truthiness rules), returns second arg. Else returns third arg.<br></br>
-        /// Beginning in JsonTools v6.2.0 (6.1.1.1 to be exact), this function uses conditional execution.<br></br>
+        /// Beginning in JsonTools v7.0.0 (6.1.1.1 to be exact), this function uses conditional execution.<br></br>
         /// Prior to that version, something like ifelse(is_str(@), s_len(@), -1) would raise an error for non-string inputs,
         /// because it would always evaluate both branches regardless of the condition's value.
         /// </summary>

@@ -172,6 +172,7 @@ namespace JSON_Tools.Forms
 
         /// <summary>
         /// hitting enter refreshes<br></br>
+        /// Hitting escape moves focus to the Notepad++ editor<br></br>
         /// hitting the first letter of any error description goes to that error description
         /// </summary>
         private void ErrorForm_KeyDown(object sender, KeyEventArgs e)
@@ -189,6 +190,10 @@ namespace JSON_Tools.Forms
                     && info.lints != null)
                     Reload(Main.activeFname, info.lints);
                 return;
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                Npp.editor.GrabFocus();
             }
             var selRowIndex = ErrorGrid.SelectedCells[0].RowIndex;
             if (!IsValidRowIndex(selRowIndex))

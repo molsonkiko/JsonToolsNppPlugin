@@ -167,7 +167,11 @@ namespace JSON_Tools.JSON_Tools
         /// * recursion depth hits the recursion limit
         /// * empty input
         /// </summary>
-        FATAL
+        FATAL,
+        /// <summary>
+        /// reserved for JSON Schema validation errors
+        /// </summary>
+        SCHEMA
     }
 
     /// <summary>
@@ -1243,10 +1247,18 @@ namespace JSON_Tools.JSON_Tools
                 else // expecting a key
                 {
                     int childCount = children.Count;
-                    if (childCount > 0 && !alreadySeenComma
-                        && HandleError($"No comma after key-value pair {childCount - 1} in object", inp, ii, ParserState.BAD))
+                    if (childCount > 0 && !alreadySeenComma)
                     {
-                        return obj;
+                        if (HandleError($"No comma after key-value pair {childCount - 1} in object", inp, ii, ParserState.BAD))
+                            return obj;
+                        if (ii < inp.Length - 1 && curC == ':')
+                        {
+                            HandleError("':' found instead of comma after key-value pair", inp, ii, ParserState.BAD);
+                            ii++;
+                            ConsumeInsignificantChars(inp);
+                            if (ii >= inp.Length)
+                                break;
+                        }
                     }
                     // a new key-value pair
                     int iiBeforeKey = ii;

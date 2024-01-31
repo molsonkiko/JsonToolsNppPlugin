@@ -508,7 +508,7 @@ Suppose you start with this document:
  } // gets moved to the very end of the doc when pretty-printing
 ]
 ```
-__Pretty-printing while remembering comments produces this__ (although note that beginning in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), this is only true if your [pretty_print_style](#pretty_print_style) is `Whitesmith` or `Google`):
+__Pretty-printing while remembering comments produces this__ (although note that beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), this is only true if your [pretty_print_style](#pretty_print_style) is `Whitesmith` or `Google`):
 ```json
 // python comments become JavaScript single-line
 [
@@ -539,7 +539,7 @@ __Compressing while remembering comments produces this:__
 [1, 2, 3, {"a": [1, [1.5]]}]
 ```
 
-Beginning in [v6.2](/CHANGELOG.md#620---unreleased-yyyy-mm-dd), choosing the `PPrint` setting for [pretty_print_style](#pretty_print_style) causes comments to be remembered as follows:
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), choosing the `PPrint` setting for [pretty_print_style](#pretty_print_style) causes comments to be remembered as follows:
 ```json
 [
     ["short", {"iterables": "get", "printed": "on", "one": "line"}],

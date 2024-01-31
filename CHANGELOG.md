@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 
-## [6.2.0] - (UNRELEASED) YYYY-MM-DD
+## [7.0.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 
@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Add [`s_format` vectorized RemesPath function](/docs/RemesPath.md#vectorized-functions), for easy reformatting of JSON strings.
 4. [Python-style single-line comments in RemesPath](/docs/RemesPath.md#comments-added-in-v62)
 5. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
+6. A `:` character between two key-value pairs in an object no longer causes a fatal error that makes the parser quit.
 
 ### Changed
 
@@ -76,6 +77,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Fixed issue where entering invalid text into comboboxes in the [regex search form](/docs/README.md#regex-search-form) and [grepper form](/docs/README.md#get-json-from-files-and-apis) could cause a (mostly harmless) plugin crash.
 3. Improved refresh and loading speed for tree viewer on very large files in [regex mode](/docs/README.md#regex-search-form).
 4. Fix issue where tree view tracking of capture groups in [regex search mode](/docs/README.md#regex-search-form) was wrong in some cases involving non-ASCII characters.
+5. Hitting `Escape` in the error form moves focus to the editor component.
 
 ## [6.1.1] - 2023-12-28
 
