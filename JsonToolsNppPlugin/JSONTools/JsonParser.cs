@@ -39,10 +39,23 @@ namespace JSON_Tools.JSON_Tools
     public struct JsonLint
     {
         public string message;
+        /// <summary>
+        /// the position of the error in the UTF-8 encoding of the document
+        /// </summary>
         public int pos;
+        /// <summary>
+        /// the UTF-16 character where the error began
+        /// </summary>
         public char curChar;
         public ParserState severity;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="pos">the position of the error in the UTF8 encoding of the JSON document</param>
+        /// <param name="curChar">the UTF-16 character where the error began</param>
+        /// <param name="severity"></param>
         public JsonLint(string message, int pos, char curChar, ParserState severity)
         {
             this.message = message;

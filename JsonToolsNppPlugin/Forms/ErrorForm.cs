@@ -171,7 +171,7 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// hitting enter refreshes<br></br>
+        /// hitting enter re-parses the current file (and re-validates using JSON schema if it had been validated) refreshes<br></br>
         /// Hitting escape moves focus to the Notepad++ editor<br></br>
         /// hitting the first letter of any error description goes to that error description
         /// </summary>
@@ -181,6 +181,8 @@ namespace JSON_Tools.Forms
             {
                 // refresh error form based on current contents of current file
                 e.Handled = true;
+                if (Main.parseTimerIsWorking)
+                    return; // avoid race conditions
                 // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
                 bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
                 Main.settings.offer_to_show_lint = false;
@@ -188,7 +190,12 @@ namespace JSON_Tools.Forms
                 Main.settings.offer_to_show_lint = previousOfferToShowLint;
                 if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
                     && info.lints != null)
-                    Reload(Main.activeFname, info.lints);
+                {
+                    if (info.filenameOfMostRecentValidatingSchema is null)
+                        Reload(Main.activeFname, info.lints);
+                    else
+                        Main.ValidateJson(info.filenameOfMostRecentValidatingSchema, false);
+                }
                 return;
             }
             else if (e.KeyCode == Keys.Escape)

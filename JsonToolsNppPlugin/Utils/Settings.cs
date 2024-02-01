@@ -176,5 +176,11 @@ namespace JSON_Tools.Utils
             Category("Random JSON"), DefaultValue(false)]
         public bool extended_ascii_strings { get; set; }
         #endregion
+
+        #region JSON_SCHEMA_SETTINGS
+        [Description("Maximum number of JSON Schema validation problems to log before the validator stops"),
+            Category("JSON Schema"), DefaultValue(64)]
+        public int max_schema_validation_problems { get; set; }
+        #endregion // JSON_SCHEMA_SETTINGS
     }
 }

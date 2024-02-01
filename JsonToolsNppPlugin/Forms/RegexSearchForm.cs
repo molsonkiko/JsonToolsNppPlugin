@@ -50,8 +50,8 @@ namespace JSON_Tools.Forms
                  "\t\t\t}\r\n" +
                  "\t\t}\r\n" +
                  "\t]\r\n" +
-                 "}")
-            );
+                 "}"),
+            0);
         }
 
         public void GrabFocus()
@@ -174,11 +174,11 @@ namespace JSON_Tools.Forms
         /// <param name="wasCalledByUser">was this invoked by a user (if true, show a message box if there's an issue)</param>
         public bool SetFieldsFromJson(JNode settingsNode, bool wasCalledByUser, out string errorMessage)
         {
-            var vp = settingsValidator(settingsNode);
+            bool validates = settingsValidator(settingsNode, out List<JsonLint> lints);
             errorMessage = null;
-            if (vp != null)
+            if (!validates)
             {
-                errorMessage = $"invalid settings {settingsNode.ToString()}, got validation problem {vp}";
+                errorMessage = $"invalid settings {settingsNode.ToString()}, got validation problem(s) {JsonSchemaValidator.LintsAsJArrayString(lints)}";
                 if (wasCalledByUser)
                     MessageBox.Show(errorMessage,
                         "invalid settings",

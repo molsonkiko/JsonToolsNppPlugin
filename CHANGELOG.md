@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### To Be Added
 
-1. Show multiple schema validation problems.
 2. Add configurable startup actions for grepper form. Might look like
 ```json
 // grepperFormStartupActions.json
@@ -40,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
+- It seems like there may be a bug (haven't been able to reproduce it recently) where under some conditions, [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) causes an endless loop where the document is re-validated over and over again for no apparent reason.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
@@ -64,12 +65,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-1. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
-2. Default value for [`sort_keys` setting](/docs/README.md#sort_keys) is now `false`, meaning keys are left in their original order by default. This will not change existing settings. 
-3. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
-4. Make dark mode icons darker.
-5. *This change only affects the code base, not the public API:* changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
-6. __All [RemesPath regular expressions](/docs/RemesPath.md#regular-expressions) are now multiline__, meaning that `^` and `$` now match the start and end of *lines* respectively, rather than the start and end of the *document.*
+1. __Support for multiple [JSON schema validation problems](/docs/README.md#validating-json-against-json-schema)__
+2. __All [RemesPath regular expressions](/docs/RemesPath.md#regular-expressions) are now multiline__, meaning that `^` and `$` now match the start and end of *lines* respectively, rather than the start and end of the *document.*
+3. The [`ifelse` vectorized function in RemesPath](/docs/RemesPath.md#vectorized-functions) now uses conditional execution.
+4. Default value for [`sort_keys` setting](/docs/README.md#sort_keys) is now `false`, meaning keys are left in their original order by default. This will not change existing settings. 
+5. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
+5. Make dark mode icons darker.
+6. *This change only affects the code base, not the public API:* changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
 
 ### Fixed
 

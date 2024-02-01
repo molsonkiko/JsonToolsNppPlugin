@@ -269,7 +269,7 @@ Performance tests for RemesPath ({description})
                 JsonSchemaValidator.ValidationFunc validator;
                 try
                 {
-                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema);
+                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema, 0);
                 }
                 catch (Exception ex)
                 {
@@ -282,10 +282,11 @@ Performance tests for RemesPath ({description})
                 watch.Start();
                 try
                 {
-                    var vp = validator(randomTweets);
-                    if (vp != null)
+                    bool validates = validator(randomTweets, out List<JsonLint> lints);
+                    if (!validates)
                     {
-                        Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n" + vp?.ToString());
+                        Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n"
+                            + JsonSchemaValidator.LintsAsJArrayString(lints));
                         break;
                     }
                 }

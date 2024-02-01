@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -43,17 +44,17 @@ namespace JSON_Tools.Tests
             {
                 JNode basicJson = jsonParser.Parse(basicJsonStr);
                 ii += 2;
-                var vp = JsonSchemaValidator.Validates(basicJson, new JObject());
-                if (vp != null)
+                bool validates = JsonSchemaValidator.Validates(basicJson, new JObject(), 0, out List<JsonLint> lints);
+                if (!validates && lints.Count > 0)
                 {
                     testsFailed++;
-                    Npp.AddLine($"Expected {basicJsonStr} to validate under empty schema {{}}, but instead got validation problem {vp}");
+                    Npp.AddLine($"Expected {basicJsonStr} to validate under empty schema {{}}, but instead got validation problem {lints[0]}");
                 }
-                vp = JsonSchemaValidator.Validates(basicJson, new JNode(true, Dtype.BOOL, 0));
-                if (vp != null)
+                validates = JsonSchemaValidator.Validates(basicJson, new JNode(true, Dtype.BOOL, 0), 0, out lints);
+                if (!validates && lints.Count > 0)
                 {
                     testsFailed++;
-                    Npp.AddLine($"Expected {basicJsonStr} to validate under the trivial schema `true`, but instead got validation problem {vp}");
+                    Npp.AddLine($"Expected {basicJsonStr} to validate under the trivial schema `true`, but instead got validation problem {lints[0]}");
                 }
                 foreach (string basicSchema in basicTypeSchemas)
                 {
@@ -63,13 +64,13 @@ namespace JSON_Tools.Tests
                     bool shouldValidate = JsonSchemaValidator.TypeValidates(
                         basicJson.type, schemaType
                     );
-                    vp = JsonSchemaValidator.Validates(basicJson, schema);
-                    if (shouldValidate && (vp != null))
+                    validates = JsonSchemaValidator.Validates(basicJson, schema, 0, out lints);
+                    if (shouldValidate && (!validates && lints.Count > 0))
                     {
                         testsFailed++;
-                        Npp.AddLine($"Expected {basicJsonStr} validation under schema {basicSchema} to validate, but it returned {vp}");
+                        Npp.AddLine($"Expected {basicJsonStr} validation under schema {basicSchema} to validate, but it returned {lints[0]}");
                     }
-                    else if (!shouldValidate && (vp == null))
+                    else if (!shouldValidate && (validates && lints.Count == 0))
                     {
                         testsFailed++;
                         Npp.AddLine($"Expected {basicJsonStr} validation under schema {basicSchema} to NOT validate, but it did validate");
@@ -857,30 +858,34 @@ namespace JSON_Tools.Tests
                 ii++;
                 try
                 {
-                    var vp = JsonSchemaValidator.Validates(json, schema);
-                    if (vp != null)
+                    bool validates = JsonSchemaValidator.Validates(json, schema, int.MaxValue, out List<JsonLint> lints);
+                    if (!validates)
                     {
                         ii++;
-                        try
+                        for (int jj = 0; jj < lints.Count; jj++)
                         {
-                            vp.ToString();
-                        }
-                        catch (Exception ex_ToString)
-                        {
-                            testsFailed++;
-                            Npp.AddLine($"Validation of {test.json} failed under schema {test.schema}, but calling the ToString() method of its ValidationProblem's raised exception {ex_ToString}");
+                            try
+                            {
+                                JsonLint lint = lints[jj];
+                                lint.ToString();
+                            }
+                            catch (Exception ex_ToString)
+                            {
+                                testsFailed++;
+                                Npp.AddLine($"Validation of {test.json} failed under schema {test.schema}, but calling the ToString method of lint {ii} in its returned List<JsonLint> raised exception {ex_ToString}");
+                            }
                         }
                     }
                     // vp should be null if and only if test.shouldValidate is true
-                    if (test.shouldValidate && (vp != null))
+                    if (test.shouldValidate && !validates)
                     {
                         testsFailed++;
-                        Npp.AddLine($"Expected {test.json} validation under {test.schema} to return null, but instead gave ValidationProblem\n{vp}");
+                        Npp.AddLine($"Expected {test.json} validation under {test.schema} to return null, but instead gave validation problem(s)\r\n{JsonSchemaValidator.LintsAsJArrayString(lints)}");
                     }
-                    else if (!test.shouldValidate && (vp == null))
+                    else if (!test.shouldValidate && validates)
                     {
                         testsFailed++;
-                        Npp.AddLine($"Expected {test.json} validation under schema {test.schema} to return {test.shouldValidate}, but instead gave no validation problem.");
+                        Npp.AddLine($"Expected {test.json} validation under schema {test.schema} to return {test.shouldValidate}, but instead gave no validation problem(s).");
                     }
                 }
                 catch (Exception e)

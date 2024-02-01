@@ -64,13 +64,13 @@ namespace Kbg.NppPluginNET
             "\"patternProperties\":{" +
                 "\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"}," + // nonzero-length keys must be mapped to non-empty string arrays
                 "\"^$\":false" + // zero-length keys are not allowed
-            "}}"));
+            "}}"), 0);
         // stuff for periodically parsing and possibly validating a file
+        public static bool parseTimerIsWorking = false;
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
         private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl", "json5" };
-        private static bool currentFileTooBigToAutoParse = true;
         private static bool bufferFinishedOpening = false;
         // toolbar icons
         static Icon dockingFormIcon = null;
@@ -196,7 +196,6 @@ namespace Kbg.NppPluginNET
                 break;
             case (uint)NppMsg.NPPN_BUFFERACTIVATED:
                 bufferFinishedOpening = true;
-                IsCurrentFileBig();
                 // When a new buffer is activated, we need to reset the connector to the Scintilla editing component.
                 // This is usually unnecessary, but if there are multiple instances or multiple views,
                 // we need to track which of the currently visible buffers are actually being edited.
@@ -626,6 +625,27 @@ namespace Kbg.NppPluginNET
                                 $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
+            }
+            SetStatusBarSection(fname, info, documentType, lintCount);
+            if (info.tv != null)
+            {
+                info.tv.Invoke(new Action(() =>
+                {
+                    info.tv.json = json;
+                    info.tv.documentTypeIndexChangeWasAutomatic = true;
+                    info.tv.SetDocumentTypeComboBoxIndex(documentType);
+                    info.tv.documentTypeIndexChangeWasAutomatic = false;
+                }));
+            }
+            info.comments = comments;
+            jsonFileInfos[activeFname] = info;
+            return (fatal, json, info.usesSelections, documentType);
+        }
+
+        public static void SetStatusBarSection(string fname, JsonFileInfo info, DocumentType documentType, int lintCount)
+        {
+            if (jsonParser.state == ParserState.FATAL)
+            {
                 string ext = Npp.FileExtension(fname);
                 // if there is a fatal error, don't hijack the doctype status bar section
                 // unless it's a normal JSON document type.
@@ -656,16 +676,6 @@ namespace Kbg.NppPluginNET
                 info.statusBarSection = doctypeStatusBarEntry;
                 Npp.notepad.SetStatusBarSection(doctypeStatusBarEntry, StatusBarSection.DocType);
             }
-            if (info.tv != null)
-            {
-                info.tv.json = json;
-                info.tv.documentTypeIndexChangeWasAutomatic = true;
-                info.tv.SetDocumentTypeComboBoxIndex(documentType);
-                info.tv.documentTypeIndexChangeWasAutomatic = false;
-            }
-            info.comments = comments;
-            jsonFileInfos[activeFname] = info;
-            return (fatal, json, info.usesSelections, documentType);
         }
 
         public static JsonFileInfo AddJsonForFile(string fname, JNode json)
@@ -843,7 +853,6 @@ namespace Kbg.NppPluginNET
                 Npp.SetLangBasedOnDocType(false, false, info.documentType);
             Npp.RemoveTrailingSOH();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
-            IsCurrentFileBig();
             return keyChanges;
         }
 
@@ -982,7 +991,6 @@ namespace Kbg.NppPluginNET
                 Npp.editor.SetText(sb.ToString());
                 Npp.SetLangJson();
                 Npp.RemoveTrailingSOH();
-                IsCurrentFileBig();
             }
         }
 
@@ -1476,10 +1484,11 @@ namespace Kbg.NppPluginNET
         /// Send the user a message telling the user if validation succeeded,
         /// or if it failed, where the first error was.
         /// </summary>
-        static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true)
+        public static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true)
         {
-            (bool fatal, JNode json, _, _) = TryParseJson(preferPreviousDocumentType:true);
-            if (fatal || json == null) return;
+            (bool fatal, JNode json, _, DocumentType documentType) = TryParseJson(preferPreviousDocumentType:true);
+            if (fatal || json == null)
+                return;
             string curFname = Npp.notepad.GetCurrentFilePath();
             if (schemaPath == null)
             {
@@ -1491,13 +1500,14 @@ namespace Kbg.NppPluginNET
                     return;
                 schemaPath = openFileDialog.FileName;
             }
-            JsonSchemaValidator.ValidationFunc validator;
-            if (!schemaCache.Get(schemaPath, out validator) && !schemaCache.TryAdd(schemaPath, out validator))
+            if (!schemaCache.Get(schemaPath, out JsonSchemaValidator.ValidationFunc validator)
+                && !schemaCache.TryAdd(schemaPath, out validator))
                 return;
-            JsonSchemaValidator.ValidationProblem? problem;
+            List<JsonLint> problems;
+            bool validates;
             try
             {
-                problem = validator(json);
+                validates = validator(json, out problems);
             }
             catch (Exception e)
             {
@@ -1505,16 +1515,25 @@ namespace Kbg.NppPluginNET
                     "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (problem != null)
+            if (!TryGetInfoForFile(curFname, out JsonFileInfo info))
+                info = AddJsonForFile(curFname, json);
+            info.filenameOfMostRecentValidatingSchema = schemaPath;
+            info.lints = info.lints is null ? problems : info.lints.Concat(problems).ToList();
+            int lintCount = info.lints.Count;
+            if (errorForm != null && !errorForm.IsDisposed)
+                errorForm.Invoke(new Action(() => errorForm.Reload(curFname, info.lints)));
+            SetStatusBarSection(curFname, info, documentType, lintCount);
+            if (!validates && problems.Count > 0)
             {
-                MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem description:\n{problem}",
+                JsonLint firstProblem = problems[0];
+                MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem 1 of {problems.Count}:\n{firstProblem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                Npp.editor.GotoPos((int)problem?.position);
+                Npp.editor.GotoPos(firstProblem.pos);
                 return;
             }
-            if (!messageOnSuccess) return;
-            MessageBox.Show($"The JSON in file {curFname} validates against the schema at path {schemaPath}.",
-                "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (messageOnSuccess)
+                MessageBox.Show($"The JSON in file {curFname} validates against the schema at path {schemaPath}.",
+                    "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         /// <summary>
@@ -1621,10 +1640,11 @@ namespace Kbg.NppPluginNET
             }
             // now validate schemasToFnamePatterns
             // (it must be an object, the keys must not be empty strings, and the children must be non-empty arrays of strings)
-            var vp = schemasToFnamePatterns_SCHEMA(schemasToFnamePatterns);
-            if (vp != null)
+            bool validates = schemasToFnamePatterns_SCHEMA(schemasToFnamePatterns, out List<JsonLint> lints);
+            if (!validates && lints.Count > 0)
             {
-                MessageBox.Show($"Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere was the following validation problem:\r\n{vp?.ToString()}",
+                MessageBox.Show("Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n"
+                        + JsonSchemaValidator.LintsAsJArrayString(lints),
                     "schemas to fnames patterns JSON badly formatted",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 schemasToFnamePatterns = new JObject();
@@ -1702,8 +1722,10 @@ namespace Kbg.NppPluginNET
         /// if the filename doesn't match, return false.
         /// </summary>
         /// <param name="fname"></param>
-        static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false)
+        static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false, bool wasTriggeredByParseTimer = false)
         {
+            if (!wasTriggeredByParseTimer && parseTimerIsWorking)
+                return false; // avoid race conditions
             if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
                 return false;
             foreach (string schemaFname in schemasToFnamePatterns.children.Keys)
@@ -1851,7 +1873,7 @@ namespace Kbg.NppPluginNET
             DateTime now = DateTime.UtcNow;
             if (!settings.auto_validate
                 || !bufferFinishedOpening
-                || currentFileTooBigToAutoParse
+                || Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6 // current file too big
                 || lastEditedTime == DateTime.MaxValue // set when we don't want to edit it
                 || lastEditedTime.AddMilliseconds(millisecondsAfterLastEditToParse) > now)
                 return;
@@ -1860,21 +1882,18 @@ namespace Kbg.NppPluginNET
             // and also check if the file matches a schema validation pattern
             string fname = Npp.notepad.GetCurrentFilePath();
             string ext = Npp.FileExtension(fname);
-            if (ValidateIfFilenameMatches(fname) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
+            parseTimerIsWorking = true;
+            if (ValidateIfFilenameMatches(fname, wasTriggeredByParseTimer: true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
                 || !fileExtensionsToAutoParse.Contains(ext) // extension is not marked for auto-parsing, so stop
                 || (TryGetInfoForFile(fname, out JsonFileInfo info)
                     && (info.documentType == DocumentType.INI || info.documentType == DocumentType.REGEX))) // file is already being parsed as regex or ini, so stop
+            {
+                parseTimerIsWorking = false;
                 return;
+            }
             // filename matches but it's not associated with a schema or being parsed as non-JSON/JSONL, so just parse normally
             TryParseJson(ext == "jsonl" ? DocumentType.JSONL : DocumentType.JSON, true);
-        }
-
-        /// <summary>
-        /// sets currentFileTooBigToAutoParse to (Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6)
-        /// </summary>
-        public static void IsCurrentFileBig()
-        {
-            currentFileTooBigToAutoParse = Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6;
+            parseTimerIsWorking = false;
         }
         #endregion
     }
@@ -1942,7 +1961,7 @@ namespace Kbg.NppPluginNET
             }
             try
             {
-                validator = JsonSchemaValidator.CompileValidationFunc(schema);
+                validator = JsonSchemaValidator.CompileValidationFunc(schema, Main.settings.max_schema_validation_problems);
                 lastRetrieved[fname] = DateTime.Now;
                 cache[fname] = validator;
                 return true;
@@ -1954,11 +1973,6 @@ namespace Kbg.NppPluginNET
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
-        }
-
-        public JsonSchemaValidator.ValidationFunc this[string fname]
-        {
-            get { return cache[fname]; }
         }
     }
 
@@ -1987,6 +2001,10 @@ namespace Kbg.NppPluginNET
         public bool usesSelections;
         public List<Comment> comments;
         public DocumentType documentType;
+        /// <summary>
+        /// the name of the last JSON schema file used to validate this JsonFileInfo's json
+        /// </summary>
+        public string filenameOfMostRecentValidatingSchema = null;
 
         public bool IsDisposed { get; private set; }
 

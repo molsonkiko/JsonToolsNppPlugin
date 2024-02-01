@@ -112,11 +112,12 @@ namespace JSON_Tools.Tests
                 foreach (JNode rand in rands)
                 {
                     // make sure all random JSON validates under the schema
-                    var vp = JsonSchemaValidator.Validates(rand, schema);
-                    if (vp != null)
+                    bool validates = JsonSchemaValidator.Validates(rand, schema, 0, out List<JsonLint> lints);
+                    if (!validates)
                     {
                         testsFailed++;
-                        Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema.ToString()}\nGot validation problem:\n{vp.ToString()}");
+                        Npp.AddLine($"Random JSON\n{rand.ToString()}\ncould not be validated by schema\n{schema.ToString()}\nGot validation problem:\n"
+                            + JsonSchemaValidator.LintsAsJArrayString(lints));
                         break;
                     }
                     // test that the minArrayLength and maxArrayLength args to RandomJson do what they're supposed to
@@ -190,10 +191,11 @@ namespace JSON_Tools.Tests
                     Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
-                JsonSchemaValidator.ValidationProblem? vp;
+                bool validates;
+                List<JsonLint> lints;
                 try
                 {
-                    vp = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema);
+                    validates = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema, 0, out lints);
                 }
                 catch (Exception ex)
                 {
@@ -201,10 +203,11 @@ namespace JSON_Tools.Tests
                     Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
                     break;
                 }
-                if (vp != null)
+                if (!validates)
                 {
                     testsFailed++;
-                    Npp.AddLine($"Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem\r\n{vp}");
+                    Npp.AddLine($"Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem(s)\r\n"
+                        + JsonSchemaValidator.LintsAsJArrayString(lints));
                     break;
                 }
             }

@@ -198,6 +198,10 @@ For performance reasons, the error form will never have more than 5000 rows. The
 
 __For pre-[v6.1](/CHANGELOG.md#610---2023-12-28) JsonTools, *do not click `Yes`* on the dialog that warns of slow reload.__ If you click `Yes`, you can expect to wait an *extremely long time.*
 
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), the error form also reports JSON schema validation errors. They are indicated by `SCHEMA` in the `Severity` column as shown below. In addition, if a file was previously validated, hitting `Enter` to refresh the error form re-validates the file using whatever schema was most recently used for that file.
+
+![Error form reporting schema validation errors](/docs/error%20form%20with%20SCHEMA%20errors.PNG)
+
 <details><summary>Pre-v5.3.0 error reporting</summary>
 
 If you click "Yes", a new file will open in a separate tab containing details on all the syntax errors that were caught. Starting in [v5.1.0](/CHANGELOG.md#510---2023-06-02), errors can also be shown for the current document with a new plugin menu option.
@@ -782,6 +786,8 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 ## Validating JSON against JSON schema ##
 
 As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
+
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are.
 
 As of version [4.11.2](/CHANGELOG.md#4112---2023-03-21), the recursion limit for validation is currently 64. Deeper JSON than that can't be validated, period. Very deep or recursive schemas will still compile.
 
