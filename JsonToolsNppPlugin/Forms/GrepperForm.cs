@@ -25,7 +25,7 @@ namespace JSON_Tools.Forms
             InitializeComponent();
             NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
-            grepper = new JsonGrepper(Main.jsonParser.Copy(),
+            grepper = new JsonGrepper(Main.JsonParserFromSettings(),
                 Main.settings.max_threads_parsing
             );
             tv = null;
@@ -231,7 +231,7 @@ namespace JSON_Tools.Forms
             }
             tv = new TreeViewer(grepper.fnameJsons);
             AddOwnedForm(tv);
-            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false, DocumentType.JSON);
+            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false, DocumentType.JSON, false);
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                 Npp.notepad.HideDockingForm(Main.openTreeViewer);
         }

@@ -52,25 +52,30 @@ namespace JSON_Tools.Forms
                  "\t]\r\n" +
                  "}"),
             0);
+            GetTreeViewInRegexMode();
         }
 
         public void GrabFocus()
         {
             Show();
+            GetTreeViewInRegexMode();
             RegexTextBox.Focus();
         }
 
         /// <summary>
-        /// if a treeview is open for the current document, do nothing<br></br>
-        /// Otherwise, show a message box warning of no tree view (unless that message box has already been shown)
-        /// then open a treeview for the current document
+        /// if a treeview is open for the current document, change it to REGEX mode (if not already in that mode)<br></br>
+        /// Otherwise, open a treeview for the current document in REGEX mode
         /// </summary>
         /// <returns></returns>
-        private void WarnIfNoTreeView()
+        private void GetTreeViewInRegexMode()
         {
-            if (Main.openTreeViewer is null || Main.openTreeViewer.IsDisposed || Main.openTreeViewer.fname != Npp.notepad.GetCurrentFilePath())
+            if (Main.openTreeViewer is null || Main.openTreeViewer.IsDisposed || Main.openTreeViewer.fname != Main.activeFname)
             {
                 Main.OpenJsonTree(DocumentType.REGEX);
+            }
+            else
+            {
+                Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.REGEX);
             }
         }
 
@@ -84,7 +89,7 @@ namespace JSON_Tools.Forms
         
         public void SearchButton_Click(object sender, EventArgs e)
         {
-            WarnIfNoTreeView();
+            GetTreeViewInRegexMode();
             string columnsToParseAsNumber = "";
             if (ColumnsToParseAsNumberTextBox.Text.Length > 0)
             {

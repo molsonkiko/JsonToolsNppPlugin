@@ -170,6 +170,8 @@ We can perform RemesPath queries on the selections. __RemesPath queries (includi
 
 ![RemesPath query on file with selections](/docs/multi%20selections%20Remespath%20query.PNG)
 
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), [automatic linting after editing](#automatically-check-for-errors-after-editing) is disabled while in selection-based mode, to avoid unexpectedly changing the user's selections when the document is automatically parsed.
+
 ### Selecting all valid JSON ###
 
 Sometimes it's nearly impossible to select every JSON element in the file. Fortunately, [v5.5 introduced](/CHANGELOG.md#550---2023-08-13) a new method for parsing every valid JSON in the file, `Select every valid JSON` (Alt-P-J-I using accelerator keys).
@@ -243,6 +245,8 @@ About 2 seconds after a not-very-large file (default less than 4 megabytes, conf
 This is off by default. If desired, this feature can be turned on in the settings. When turned on, it only applies to files with `json`, `jsonc`, `jsonl`, and `json5` extensions, or files configured for [automatic JSON schema validation](#automatic-validation-of-json-against-json-schema).
 
 Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation forced the file to be parsed as JSON. As of v6.1, the document will be parsed as [JSON Lines](#json-lines-documents) if the file extension is `jsonl` and as JSON otherwise. In addition, if the document is already in [regex mode](#regex-search-form) or [ini file mode](#parsing-ini-files), automatic validation is suspended.
+
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), this automatic validation will only ever attempt to parse the entire document, not [a selection](#working-with-selections), and automatic validation is always disabled in selection-based mode. Prior to v7.0, automatic validation could change the user's selections unexpectedly.
 
 ## Path to current position ##
 

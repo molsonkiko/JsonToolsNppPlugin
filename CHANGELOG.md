@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### To Be Fixed
 
 - Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
+    - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - It seems like there may be a bug (haven't been able to reproduce it recently) where under some conditions, [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) causes an endless loop where the document is re-validated over and over again for no apparent reason.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
@@ -72,6 +73,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. Add optional arguments [to `stringify` non-vectorized function in RemesPath](/docs/RemesPath.md#non-vectorized-functions), so that users can control the format of the output.
 5. Make dark mode icons darker.
 6. *This change only affects the code base, not the public API:* changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
+7. [Automatic linting after edits](/docs/README.md#automatically-check-for-errors-after-editing) is now disabled while in [selection-based mode](/docs/README.md#working-with-selections).
+8. [Automatic linting after edits](/docs/README.md#automatic-validation-of-json-against-json-schema) will always attempt to parse the entire document, even if the user has made a selection that could be parsed as JSON.
 
 ### Fixed
 
@@ -80,6 +83,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Improved refresh and loading speed for tree viewer on very large files in [regex mode](/docs/README.md#regex-search-form).
 4. Fix issue where tree view tracking of capture groups in [regex search mode](/docs/README.md#regex-search-form) was wrong in some cases involving non-ASCII characters.
 5. Hitting `Escape` in the error form moves focus to the editor component.
+6. When logging errors in [selection-based mode](/docs/README.md#working-with-selections), the [error form](/docs/README.md#error-form-and-status-bar) now navigates to the location of the error in the overall document. Previously it navigated to the location of the error relative to the start of the selection.
+7. The regex search form no longer closes the currently active tree viewer when you focus or open it.
 
 ## [6.1.1] - 2023-12-28
 

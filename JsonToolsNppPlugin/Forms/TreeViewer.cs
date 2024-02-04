@@ -1204,7 +1204,7 @@ namespace JSON_Tools.Forms
         {
             shouldRefresh = false;
             string curFname = Npp.notepad.GetCurrentFilePath();
-            (bool _, JNode newJson, bool _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
+            (_, JNode newJson, _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
             if (newJson == null)
                 return;
             fname = curFname;

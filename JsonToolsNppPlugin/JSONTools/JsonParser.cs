@@ -177,7 +177,7 @@ namespace JSON_Tools.JSON_Tools
         BAD,
         /// <summary>
         /// errors that are always fatal, such as:<br></br>
-        /// * recursion depth hits the recursion limit
+        /// * recursion depth hits the recursion limit<br></br>
         /// * empty input
         /// </summary>
         FATAL,
