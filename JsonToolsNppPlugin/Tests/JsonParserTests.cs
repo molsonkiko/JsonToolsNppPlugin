@@ -1053,6 +1053,15 @@ multiline comment
                 (" +", "null", new string[]{"Leading + signs in numbers are not allowed except in JSON5", "'+' sign at end of document"}),
                 ("-", "null", new string[]{"'-' sign at end of document"}),
                 ("[5e, -0.2e]", "[NaN, NaN]", new string[]{"Number string \"5e\" had bad format", "Number string \"-0.2e\" had bad format"}),
+                ("[-5., 03, 2.e2, +05.0, -00]", "[-5.0, 3, 200.0, 5.0, 0]", new string[]
+                {
+                    "Numbers with a trailing decimal point are only part of JSON5",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
+                    "Numbers with a trailing decimal point are only part of JSON5",
+                    "Leading + signs in numbers are not allowed except in JSON5",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
+                }),
             };
 
             int testsFailed = 0;

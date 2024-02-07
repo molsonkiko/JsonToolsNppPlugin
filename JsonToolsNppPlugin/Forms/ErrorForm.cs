@@ -175,7 +175,7 @@ namespace JSON_Tools.Forms
         /// Hitting escape moves focus to the Notepad++ editor<br></br>
         /// hitting the first letter of any error description goes to that error description
         /// </summary>
-        private void ErrorForm_KeyDown(object sender, KeyEventArgs e)
+        private void ErrorForm_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
@@ -201,8 +201,12 @@ namespace JSON_Tools.Forms
             else if (e.KeyCode == Keys.Escape)
             {
                 Npp.editor.GrabFocus();
+                return;
             }
-            var selRowIndex = ErrorGrid.SelectedCells[0].RowIndex;
+            var cells = ErrorGrid.SelectedCells;
+            if (cells.Count < 1)
+                return;
+            var selRowIndex = cells[0].RowIndex;
             if (!IsValidRowIndex(selRowIndex))
                 return;
             if (e.KeyCode == Keys.Up && selRowIndex > 0) // move up
@@ -213,8 +217,6 @@ namespace JSON_Tools.Forms
             // whose description start with that key's char
             else if (e.KeyValue >= ' ' && e.KeyValue <= 126)
             {
-                if (ErrorGrid.SelectedCells.Count == 0)
-                    return;
                 char startChar = (char)e.KeyValue;
                 if (!SearchForErrorStartingWithChar(startChar, selRowIndex + 1, ErrorGrid.RowCount, selRowIndex))
                 {

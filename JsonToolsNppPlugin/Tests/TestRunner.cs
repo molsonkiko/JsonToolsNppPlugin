@@ -48,7 +48,7 @@ namespace JSON_Tools.Tests
                 
                 (JsonTabularizerTester.Test, "JSON tabularizer", false, false),
                 
-                // tests that require reading files (skip on v8+)
+                // tests that require reading files (skip on Notepad++ earlier than v8)
                 (JsonGrepperTester.TestFnames, "JSON grepper's file reading ability", true, false),
                 (RandomJsonTests.TestRandomJson, "generation of random JSON from schema", true, false),
                 (DsonTester.TestDump, "conversion of JSON to DSON (see https://dogeon.xyz/)", true, false),
@@ -137,8 +137,6 @@ namespace JSON_Tools.Tests
                 }
                 else if (onlyIfNpp8p5p5Plus && !Npp.nppVersionAtLeast8p5p5)
                 {
-                    // the UI tests consistently cause NPP to hang on anything older than 8.5.5
-                    // and I really don't feel like trying to learn why
                     if (!hasExplainedSkipLessThanNppV8p5p5)
                     {
                         hasExplainedSkipLessThanNppV8p5p5 = true;

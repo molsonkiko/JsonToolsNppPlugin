@@ -420,7 +420,7 @@ namespace JSON_Tools.Tests
 					"."
 				}
 			};
-			JsonParser jsonParser = new JsonParser();
+			JsonParser jsonParser = new JsonParser(LoggerLevel.JSON5);
 			JsonTabularizer tabularizer = new JsonTabularizer();
 			int testsFailed = 0;
 			int ii = 0;
@@ -429,8 +429,18 @@ namespace JSON_Tools.Tests
 				string inp = test[0];
 				string desiredOut = test[1];
 				string keySep = test[2];
+				JNode jinp;
 				ii++;
-				JNode jinp = jsonParser.Parse(inp);
+				try
+				{
+					jinp = jsonParser.Parse(inp);
+				}
+				catch (Exception ex)
+				{
+					testsFailed++;
+					Npp.AddLine($"While trying to parse {inp}, got exception {RemesParser.PrettifyException(ex)}");
+					continue;
+				}
 				Dictionary<string, object> schema = JsonSchemaMaker.BuildSchema(jinp);
 				//Npp.AddText($"schema for {inp}:\n{JsonSchemaMaker.SchemaToJNode(schema).ToString()}");
 				JNode jdesiredOut = jsonParser.Parse(desiredOut);

@@ -216,13 +216,13 @@
             // 
             // AdvancedGroupBox
             // 
-            this.AdvancedGroupBox.Controls.Add(this.MatchExactlyBox);
-            this.AdvancedGroupBox.Controls.Add(this.IgnoreCaseCheckBox);
+            this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBox);
             this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBoxLabel);
             this.AdvancedGroupBox.Controls.Add(this.RegexBox);
-            this.AdvancedGroupBox.Controls.Add(this.RecursiveSearchBox);
-            this.AdvancedGroupBox.Controls.Add(this.KeysValsBothBox);
             this.AdvancedGroupBox.Controls.Add(this.MathBox);
+            this.AdvancedGroupBox.Controls.Add(this.RecursiveSearchBox);
+            this.AdvancedGroupBox.Controls.Add(this.IgnoreCaseCheckBox);
+            this.AdvancedGroupBox.Controls.Add(this.MatchExactlyBox);
             this.AdvancedGroupBox.Location = new System.Drawing.Point(24, 180);
             this.AdvancedGroupBox.Name = "AdvancedGroupBox";
             this.AdvancedGroupBox.Size = new System.Drawing.Size(337, 163);
@@ -281,17 +281,17 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(373, 394);
-            this.Controls.Add(this.ShowAdvancedOptionsCheckBox);
-            this.Controls.Add(this.SwapFindReplaceButton);
-            this.Controls.Add(this.AdvancedGroupBox);
-            this.Controls.Add(this.RootTextBoxLabel);
-            this.Controls.Add(this.RootTextBox);
-            this.Controls.Add(this.ReplaceTextBoxLabel);
-            this.Controls.Add(this.ReplaceTextBox);
             this.Controls.Add(this.FindTextBoxLabel);
             this.Controls.Add(this.FindTextBox);
-            this.Controls.Add(this.ReplaceButton);
+            this.Controls.Add(this.SwapFindReplaceButton);
+            this.Controls.Add(this.ReplaceTextBox);
+            this.Controls.Add(this.ReplaceTextBoxLabel);
+            this.Controls.Add(this.RootTextBoxLabel);
+            this.Controls.Add(this.RootTextBox);
+            this.Controls.Add(this.ShowAdvancedOptionsCheckBox);
+            this.Controls.Add(this.AdvancedGroupBox);
             this.Controls.Add(this.FindButton);
+            this.Controls.Add(this.ReplaceButton);
             this.Controls.Add(this.FindReplaceFormTitle);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FindReplaceForm";

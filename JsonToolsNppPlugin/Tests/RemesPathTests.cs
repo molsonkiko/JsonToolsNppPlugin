@@ -1203,7 +1203,7 @@ namespace JSON_Tools.Tests
     {
         public static bool Test()
         {
-            JsonParser jsonParser = new JsonParser();
+            JsonParser jsonParser = new JsonParser(LoggerLevel.JSON5);
             RemesParser remesparser = new RemesParser();
             Npp.AddLine($"The queried JSON in the RemesParser complex query tests is named foo:{fooStr}");
             var testcases = new Query_DesiredResult[]
@@ -1367,7 +1367,7 @@ namespace JSON_Tools.Tests
 
     public class RemesPathFuzzTester
     {
-        public static readonly string target = "{\"a\": [-4, -3., -2., -1, 0, 1, 2., 3., 4], " +
+        public static readonly string target = "{\"a\": [-4, -3.0, -2.0, -1, 0, 1, 2.0, 3.0, 4], " +
                                                 "\"bc\": NaN," +
                                                 "\"c`d\": \"df\", " +
                                                 "\"q\": [\"\", \"a\", \"jk\", \"ian\", \"\", \"32\", \"u\", \"aa\", \"moun\"]," +
@@ -1541,10 +1541,11 @@ namespace JSON_Tools.Tests
                 }
                 else
                 {
-                    if (!(result.value is bool || result.value is long || result.value is double))
+                    if (result is null || !(result.value is bool || result.value is long || result.value is double))
                     {
                         failures++;
-                        Npp.AddLine($"If result is a scalar, expected result to be integer, float, or bool, instead got {result}");
+                        string resultStr = result is null ? "null" : result.ToString();
+                        Npp.AddLine($"If result is a scalar, expected result to be integer, float, or bool, instead got {resultStr}");
                     }
                 }
             }

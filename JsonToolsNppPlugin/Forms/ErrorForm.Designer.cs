@@ -60,7 +60,7 @@
             this.ErrorGrid.TabIndex = 0;
             this.ErrorGrid.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.ErrorGrid_CellEnter);
             this.ErrorGrid.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.ErrorGrid_CellEnter);
-            this.ErrorGrid.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyDown);
+            this.ErrorGrid.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyUp);
             this.ErrorGrid.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ErrorForm_RightClick);
             this.ErrorGrid.Resize += new System.EventHandler(this.ErrorGrid_Resize);
             // 
@@ -120,7 +120,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ErrorForm";
             this.Text = "Syntax errors in JSON";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyDown);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ErrorForm_KeyUp);
             ((System.ComponentModel.ISupportInitialize)(this.ErrorGrid)).EndInit();
             this.errorGridRightClickStrip.ResumeLayout(false);
             this.ResumeLayout(false);

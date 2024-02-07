@@ -75,6 +75,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 6. *This change only affects the code base, not the public API:* changed almost all snake_case variable names to camelCase. [RemesPath functions still use snake_case](/JsonToolsNppPlugin/JSONTools/RemesPathFunctions.cs) (e.g., `s_mul` and `group_by` still have those names), and all the settings in [Settings.cs](/JsonToolsNppPlugin/Utils/Settings.cs) (e.g., `use_npp_styling`) that were previously snake_case are still snake_case.
 7. [Automatic linting after edits](/docs/README.md#automatically-check-for-errors-after-editing) is now disabled while in [selection-based mode](/docs/README.md#working-with-selections).
 8. [Automatic linting after edits](/docs/README.md#automatic-validation-of-json-against-json-schema) will always attempt to parse the entire document, even if the user has made a selection that could be parsed as JSON.
+9. Numbers with unnecessary leading 0's (like `01` or `002.5`) are now [logged at the `BAD` level](/docs/README.md#parser-settings), and numbers with trailing decimal points are now logged at the `JSON5` level.
+10. [Error form](/docs/README.md#error-form-and-status-bar) keypress triggers now execute when the key is released, rather than when it is depressed.
 
 ### Fixed
 
@@ -85,6 +87,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. Hitting `Escape` in the error form moves focus to the editor component.
 6. When logging errors in [selection-based mode](/docs/README.md#working-with-selections), the [error form](/docs/README.md#error-form-and-status-bar) now navigates to the location of the error in the overall document. Previously it navigated to the location of the error relative to the start of the selection.
 7. The regex search form no longer closes the currently active tree viewer when you focus or open it.
+8. Register forms (other than the modal AboutForm and JSON-to-CSV form) with Notepad++ using [NPPM_MODELESSDIALOG](https://npp-user-manual.org/docs/plugin-communication/#2036-nppm-modelessdialog). This permanently fixes [the regression in Notepad++ 8.6.1](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/54) where Ctrl+X and Ctrl+C stopped working in textboxes.
 
 ## [6.1.1] - 2023-12-28
 

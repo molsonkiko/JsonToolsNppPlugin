@@ -613,10 +613,8 @@ namespace JSON_Tools.JSON_Tools
         {
             int startUtf8Pos = ii + utf8ExtraBytes;
             char quoteChar = inp[ii++];
-            if (quoteChar == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
-            {
-                return new JNode("", Dtype.STR, utf8Pos);
-            }
+            if (quoteChar == '\'')
+                HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5);
             StringBuilder sb = new StringBuilder();
             while (true)
             {
@@ -698,10 +696,8 @@ namespace JSON_Tools.JSON_Tools
         public string ParseKey(string inp)
         {
             char quoteChar = inp[ii];
-            if (quoteChar == '\'' && HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5))
-            {
-                return null;
-            }
+            if (quoteChar == '\'')
+                HandleError("Singlequoted strings are only allowed in JSON5", inp, ii, ParserState.JSON5);
             if (quoteChar != '\'' && quoteChar != '"')
             {
                 return ParseUnquotedKey(inp);
@@ -958,28 +954,34 @@ namespace JSON_Tools.JSON_Tools
                     return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
             }
-            if (c == '0' && ii < inp.Length - 1 && inp[ii + 1] == 'x')
+            if (c == '0' && ii < inp.Length  - 1)
             {
-                HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5);
-                ii += 2;
-                start = ii;
-                while (ii < inp.Length)
+                char nextChar = inp[ii + 1];
+                if (nextChar == 'x')
                 {
-                    c = inp[ii];
-                    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
-                        break;
-                    ii++;
+                    HandleError("Hexadecimal numbers are only part of JSON5", inp, ii, ParserState.JSON5);
+                    ii += 2;
+                    start = ii;
+                    while (ii < inp.Length)
+                    {
+                        c = inp[ii];
+                        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                            break;
+                        ii++;
+                    }
+                    try
+                    {
+                        var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
+                        return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
+                    }
+                    catch
+                    {
+                        HandleError("Hex number too large for a 64-bit signed integer type", inp, start, ParserState.FATAL);
+                        return new JNode(null, Dtype.NULL, startUtf8Pos);
+                    }
                 }
-                try
-                {
-                    var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
-                    return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
-                }
-                catch
-                {
-                    HandleError("Hex number too large for a 64-bit signed integer type", inp, start, ParserState.FATAL);
-                    return new JNode(null, Dtype.NULL, startUtf8Pos);
-                }
+                else if (nextChar >= '0' && nextChar <= '9')
+                    HandleError("Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification", inp, ii, ParserState.BAD);
             }
             while (ii < inp.Length)
             {
@@ -995,10 +997,8 @@ namespace JSON_Tools.JSON_Tools
                         HandleError("Number with a decimal point in the wrong place", inp, ii, ParserState.FATAL);
                         break;
                     }
-                    if (ii == start && HandleError("Numbers with a leading decimal point are only part of JSON5", inp, startUtf8Pos, ParserState.JSON5))
-                    {
-                        return new JNode(null, Dtype.NULL, startUtf8Pos);
-                    }
+                    if (ii == start)
+                        HandleError("Numbers with a leading decimal point are only part of JSON5", inp, startUtf8Pos, ParserState.JSON5);
                     parsed = 3;
                     ii++;
                 }
@@ -1008,6 +1008,8 @@ namespace JSON_Tools.JSON_Tools
                     {
                         break;
                     }
+                    if (ii >= 1 && inp[ii - 1] == '.')
+                        HandleError("Numbers with a trailing decimal point are only part of JSON5", inp, startUtf8Pos, ParserState.JSON5);
                     parsed += 4;
                     ii++;
                     if (ii < inp.Length)
@@ -1079,6 +1081,8 @@ namespace JSON_Tools.JSON_Tools
                 HandleError($"Number string {JNode.StrToString(numstr, true)} had bad format", inp, startUtf8Pos, ParserState.BAD);
                 num = NanInf.nan;
             }
+            if (numstr[numstr.Length - 1] == '.')
+                HandleError("Numbers with a trailing decimal point are only part of JSON5", inp, startUtf8Pos, ParserState.JSON5);
             return new JNode(num, Dtype.FLOAT, startUtf8Pos);
         }
 
@@ -1121,17 +1125,11 @@ namespace JSON_Tools.JSON_Tools
                 curC = inp[ii];
                 if (curC == ',')
                 {
-                    if (alreadySeenComma
-                        && HandleError($"Two consecutive commas after element {children.Count - 1} of array", inp, ii, ParserState.BAD))
-                    {
-                        return arr;
-                    }
+                    if (alreadySeenComma)
+                        HandleError($"Two consecutive commas after element {children.Count - 1} of array", inp, ii, ParserState.BAD);
                     alreadySeenComma = true;
-                    if (children.Count == 0
-                        && HandleError("Comma before first value in array", inp, ii, ParserState.BAD))
-                    {
-                        return arr;
-                    }
+                    if (children.Count == 0)
+                        HandleError("Comma before first value in array", inp, ii, ParserState.BAD);
                     ii++;
                     continue;
                 }
@@ -1156,11 +1154,8 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else
                 {
-                    if (children.Count > 0 && !alreadySeenComma
-                        && HandleError("No comma between array members", inp, ii, ParserState.BAD))
-                    {
-                        return arr;
-                    }
+                    if (children.Count > 0 && !alreadySeenComma)
+                        HandleError("No comma between array members", inp, ii, ParserState.BAD);
                     // a new array member of some sort
                     alreadySeenComma = false;
                     JNode newObj;
@@ -1228,17 +1223,11 @@ namespace JSON_Tools.JSON_Tools
                 curC = inp[ii];
                 if (curC == ',')
                 {
-                    if (alreadySeenComma
-                        && HandleError($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii, ParserState.BAD))
-                    {
-                        return obj;
-                    }
+                    if (alreadySeenComma)
+                        HandleError($"Two consecutive commas after key-value pair {children.Count - 1} of object", inp, ii, ParserState.BAD);
                     alreadySeenComma = true;
-                    if (children.Count == 0
-                        && HandleError("Comma before first value in object", inp, ii, ParserState.BAD))
-                    {
-                        return obj;
-                    }
+                    if (children.Count == 0)
+                        HandleError("Comma before first value in object", inp, ii, ParserState.BAD);
                     ii++;
                     continue;
                 }
@@ -1262,8 +1251,7 @@ namespace JSON_Tools.JSON_Tools
                     int childCount = children.Count;
                     if (childCount > 0 && !alreadySeenComma)
                     {
-                        if (HandleError($"No comma after key-value pair {childCount - 1} in object", inp, ii, ParserState.BAD))
-                            return obj;
+                        HandleError($"No comma after key-value pair {childCount - 1} in object", inp, ii, ParserState.BAD);
                         if (ii < inp.Length - 1 && curC == ':')
                         {
                             HandleError("':' found instead of comma after key-value pair", inp, ii, ParserState.BAD);

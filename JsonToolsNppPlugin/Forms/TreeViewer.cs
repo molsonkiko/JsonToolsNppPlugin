@@ -150,11 +150,6 @@ namespace JSON_Tools.Forms
             {
                 Npp.editor.GrabFocus();
             }
-            // Tab -> go through controls, Shift+Tab -> go through controls backward
-            else if (e.KeyCode == Keys.Tab)
-            {
-                NppFormHelper.GenericTabNavigationHandler(this, sender, e);
-            }
             else if (sender is TreeView && e.Control)
             {
                 // Ctrl+Up -> snap up to parent of current node

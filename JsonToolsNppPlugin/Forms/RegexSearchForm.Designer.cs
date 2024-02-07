@@ -36,7 +36,7 @@
             this.RegexTextBoxLabel = new System.Windows.Forms.Label();
             this.Title = new System.Windows.Forms.Label();
             this.ColumnsToParseAsNumberTextBox = new System.Windows.Forms.TextBox();
-            this.NumGroupsTextBoxLabel = new System.Windows.Forms.Label();
+            this.ColumnsToParseAsNumberTextBoxLabel = new System.Windows.Forms.Label();
             this.ParseAsCsvCheckBox = new System.Windows.Forms.CheckBox();
             this.DelimiterTextBox = new System.Windows.Forms.TextBox();
             this.DelimiterTextBoxLabel = new System.Windows.Forms.Label();
@@ -115,14 +115,14 @@
             this.ColumnsToParseAsNumberTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
             this.ColumnsToParseAsNumberTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.RegexSearchForm_KeyUp);
             // 
-            // NumGroupsTextBoxLabel
+            // ColumnsToParseAsNumberTextBoxLabel
             // 
-            this.NumGroupsTextBoxLabel.AutoSize = true;
-            this.NumGroupsTextBoxLabel.Location = new System.Drawing.Point(271, 213);
-            this.NumGroupsTextBoxLabel.Name = "NumGroupsTextBoxLabel";
-            this.NumGroupsTextBoxLabel.Size = new System.Drawing.Size(227, 16);
-            this.NumGroupsTextBoxLabel.TabIndex = 15;
-            this.NumGroupsTextBoxLabel.Text = "Groups to parse as number (int array)";
+            this.ColumnsToParseAsNumberTextBoxLabel.AutoSize = true;
+            this.ColumnsToParseAsNumberTextBoxLabel.Location = new System.Drawing.Point(271, 213);
+            this.ColumnsToParseAsNumberTextBoxLabel.Name = "ColumnsToParseAsNumberTextBoxLabel";
+            this.ColumnsToParseAsNumberTextBoxLabel.Size = new System.Drawing.Size(227, 16);
+            this.ColumnsToParseAsNumberTextBoxLabel.TabIndex = 15;
+            this.ColumnsToParseAsNumberTextBoxLabel.Text = "Groups to parse as number (int array)";
             // 
             // ParseAsCsvCheckBox
             // 
@@ -269,25 +269,25 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(771, 280);
-            this.Controls.Add(this.NColumnsTextBox);
-            this.Controls.Add(this.NColumnsTextBoxLabel);
+            this.Controls.Add(this.RegexTextBox);
+            this.Controls.Add(this.IgnoreCaseCheckBox);
             this.Controls.Add(this.IncludeFullMatchAsFirstItemCheckBox);
-            this.Controls.Add(this.HeaderHandlingComboBoxLabel);
-            this.Controls.Add(this.HeaderHandlingComboBox);
-            this.Controls.Add(this.NewlineComboBoxLabel);
-            this.Controls.Add(this.NewlineComboBox);
-            this.Controls.Add(this.QuoteCharTextBoxLabel);
-            this.Controls.Add(this.QuoteCharTextBox);
+            this.Controls.Add(this.ParseAsCsvCheckBox);
             this.Controls.Add(this.DelimiterTextBoxLabel);
             this.Controls.Add(this.DelimiterTextBox);
-            this.Controls.Add(this.ParseAsCsvCheckBox);
-            this.Controls.Add(this.NumGroupsTextBoxLabel);
+            this.Controls.Add(this.QuoteCharTextBoxLabel);
+            this.Controls.Add(this.QuoteCharTextBox);
+            this.Controls.Add(this.NewlineComboBoxLabel);
+            this.Controls.Add(this.NewlineComboBox);
+            this.Controls.Add(this.NColumnsTextBoxLabel);
+            this.Controls.Add(this.NColumnsTextBox);
+            this.Controls.Add(this.HeaderHandlingComboBoxLabel);
+            this.Controls.Add(this.HeaderHandlingComboBox);
+            this.Controls.Add(this.ColumnsToParseAsNumberTextBoxLabel);
             this.Controls.Add(this.ColumnsToParseAsNumberTextBox);
+            this.Controls.Add(this.SearchButton);
             this.Controls.Add(this.Title);
             this.Controls.Add(this.RegexTextBoxLabel);
-            this.Controls.Add(this.SearchButton);
-            this.Controls.Add(this.IgnoreCaseCheckBox);
-            this.Controls.Add(this.RegexTextBox);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "RegexSearchForm";
             this.Text = "Regex search to JSON";
@@ -303,7 +303,7 @@
         private System.Windows.Forms.Label RegexTextBoxLabel;
         private System.Windows.Forms.Label Title;
         private System.Windows.Forms.TextBox ColumnsToParseAsNumberTextBox;
-        private System.Windows.Forms.Label NumGroupsTextBoxLabel;
+        private System.Windows.Forms.Label ColumnsToParseAsNumberTextBoxLabel;
         private System.Windows.Forms.CheckBox ParseAsCsvCheckBox;
         private System.Windows.Forms.TextBox DelimiterTextBox;
         private System.Windows.Forms.Label DelimiterTextBoxLabel;
