@@ -144,6 +144,8 @@ namespace JSON_Tools.Forms
                         selected.Collapse(true); // don't collapse the children as well
                     else selected.Expand();
                 }
+                else if (QueryBox.Focused)
+                    NppFormHelper.PressEnterInTextBoxHandler(QueryBox, false);
             }
             // Escape -> go to editor
             else if (e.KeyData == Keys.Escape)

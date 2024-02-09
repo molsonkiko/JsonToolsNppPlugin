@@ -627,6 +627,8 @@ Opening up a document in regex mode allows __querying and mutating the raw text 
 
 You can view CSV files (any delimiter, quote character, and newline are allowed) with the treeview, providing that they comply with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt).
 
+Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), if the new `auto_try_guess_csv_delim_newline` global setting is set to `true`, whenever the regex search form is opened, or the `Parse as CSV?` button is toggled on, the regex search form will check the first 1600 characters of the current document to detect if it is a CSV or TSV file. This makes the regex search form load more slowly, but it makes it easier to parse CSV files.
+
 ![Regex search form viewing a CSV file](/docs/regex%20search%20form%20csv%20example.PNG)
 
 If you want to edit your document using RemesPath, the [`s_sub` function](/docs/RemesPath.md#vectorized-functions) may prove useful for regex-replacement, and the [`to_csv` function](/docs/RemesPath.md#non-vectorized-functions) may be useful for CSV editing.

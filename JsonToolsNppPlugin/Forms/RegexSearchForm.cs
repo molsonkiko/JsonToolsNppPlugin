@@ -5,6 +5,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.JSON_Tools;
 using System.Linq;
 using System.Collections.Generic;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Forms
 {
@@ -53,6 +54,10 @@ namespace JSON_Tools.Forms
                  "}"),
             0);
             GetTreeViewInRegexMode();
+            // check it, see if we have a CSV
+            ParseAsCsvCheckBox.Checked = true;
+            if (NColumnsTextBox.Text.Length == 0)
+                ParseAsCsvCheckBox.Checked = false;
         }
 
         public void GrabFocus()
@@ -86,7 +91,7 @@ namespace JSON_Tools.Forms
         private static readonly Dictionary<string, int> HEADER_HANDLING_ABBREV_MAP = new Dictionary<string, int> { ["\"h\""] = 1, ["\"n\""] = 0, ["\"d\""] = 2, ["1"] = 1, ["2"] = 2, ["0"] = 0 };
 
         private static readonly Dictionary<string, int> NEWLINE_MAP = new Dictionary<string, int> { ["\"\\r\\n\""] = 0, ["\"\\n\""] = 1, ["\"\\r\""] = 2, ["0"] = 0, ["1"] = 1, ["2"] = 2 };
-        
+
         public void SearchButton_Click(object sender, EventArgs e)
         {
             GetTreeViewInRegexMode();
@@ -151,22 +156,68 @@ namespace JSON_Tools.Forms
             NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
         }
 
+        /// <summary>
+        /// <strong>Checking</strong>the ParseAsCsvCheckBox does the following:<br></br>
+        /// - reveals all the CSV-related controls<br></br>
+        /// - disables the regex-related controls<br></br>
+        /// - sniffs the first 16 KB of the document (or 16 lines, whichever comes first)
+        ///    using every combo of (',', '\t') delimiters and ('\r\n', '\n', '\r') newlines
+        ///    and sets the CSV controls appropriately if a match is found<br></br>
+        /// <strong>Unchecking</strong>the ParseAsCsvCheckBox does the following:<br></br>
+        /// - hides the CSV related controls<br></br>
+        /// - enables the regex-related controls
+        /// </summary>
         public void ParseAsCsvCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             bool showCsvButtons = ParseAsCsvCheckBox.Checked;
-            QuoteCharTextBox.Visible            = showCsvButtons;
-            QuoteCharTextBoxLabel.Visible       = showCsvButtons;
-            DelimiterTextBox.Visible            = showCsvButtons;
-            DelimiterTextBoxLabel.Visible       = showCsvButtons;
-            NewlineComboBox.Visible             = showCsvButtons;
-            NewlineComboBoxLabel.Visible        = showCsvButtons;
-            HeaderHandlingComboBox.Visible      = showCsvButtons;
+            // thanks to the magical mysteries of registering this form with NPPM_MODELESSDIALOG,
+            // the order in which I make controls visible defines their tab order.
+            DelimiterTextBox.Visible = showCsvButtons;
+            DelimiterTextBoxLabel.Visible = showCsvButtons;
+            QuoteCharTextBox.Visible = showCsvButtons;
+            QuoteCharTextBoxLabel.Visible = showCsvButtons;
+            NewlineComboBox.Visible = showCsvButtons;
+            NewlineComboBoxLabel.Visible = showCsvButtons;
+            NColumnsTextBox.Visible = showCsvButtons;
+            NColumnsTextBoxLabel.Visible = showCsvButtons;
+            HeaderHandlingComboBox.Visible = showCsvButtons;
             HeaderHandlingComboBoxLabel.Visible = showCsvButtons;
-            NColumnsTextBox.Visible             = showCsvButtons;
-            NColumnsTextBoxLabel.Visible        = showCsvButtons;
-            RegexTextBox.Enabled                        = !showCsvButtons;
-            IgnoreCaseCheckBox.Enabled                  = !showCsvButtons;
+            RegexTextBox.Enabled = !showCsvButtons;
+            IgnoreCaseCheckBox.Enabled = !showCsvButtons;
             IncludeFullMatchAsFirstItemCheckBox.Enabled = !showCsvButtons;
+            if (showCsvButtons && Main.settings.auto_try_guess_csv_delim_newline)
+            {
+                if (TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns))
+                {
+                    // we found possible NColumns, delimiter, and Newline values
+                    NColumnsTextBox.Text = nColumns.ToString();
+                    DelimiterTextBox.Text = ArgFunction.CsvCleanChar(delim);
+                    QuoteCharTextBox.Text = "\"";
+                    NewlineComboBox.SelectedIndex = eol == EndOfLine.CRLF ? 0 : eol == EndOfLine.LF ? 1 : 2;
+                }
+            }
+        }
+
+        private static bool TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns)
+        {
+            eol = EndOfLine.CRLF;
+            delim = '\x00';
+            nColumns = -1;
+            string text = Npp.editor.GetText(CsvSniffer.DEFAULT_MAX_CHARS_TO_SNIFF * 3 / 2);
+            foreach (EndOfLine maybeEol in new EndOfLine[]{EndOfLine.CRLF, EndOfLine.LF, EndOfLine.CR})
+            {
+                foreach (char maybeDelim in ",\t")
+                {
+                    nColumns = CsvSniffer.Sniff(text, maybeEol, maybeDelim, '"');
+                    if (nColumns >= 2)
+                    {
+                        delim = maybeDelim;
+                        eol = maybeEol;
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
 

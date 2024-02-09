@@ -2485,12 +2485,12 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// converts the delimiter to a format suitable for use in regular expressions 
         /// </summary>
-        private static string CsvCleanChar(char c)
+        public static string CsvCleanChar(char c)
         {
             return c == '\t' ? "\\t" : Regex.Escape(new string(c, 1));
         }
 
-        private static string CsvColumnRegex(string delimiter, string quote)
+        public static string CsvColumnRegex(string delimiter, string quote)
         {
             return CSV_BASE_COLUMN_REGEX.Replace("{QUOTE}", quote).Replace("{DELIM}", delimiter);
         }

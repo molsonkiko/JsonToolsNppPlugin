@@ -47,6 +47,8 @@ namespace JSON_Tools.Tests
                 (JsonSchemaValidatorTester.Test, "JsonSchema validator", false, false),
                 
                 (JsonTabularizerTester.Test, "JSON tabularizer", false, false),
+
+                (CsvSnifferTests.Test, "CSV sniffer", false, false),
                 
                 // tests that require reading files (skip on Notepad++ earlier than v8)
                 (JsonGrepperTester.TestFnames, "JSON grepper's file reading ability", true, false),

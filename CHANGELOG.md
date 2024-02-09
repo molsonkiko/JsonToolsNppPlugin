@@ -26,11 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     * Add `uses_context` field to ArgFunction instances, so that they have JQueryContext appended to their arguments, and they can reference fields of that JQueryContext.
 	* This way we don't have to have these methods mutating and referencing a global static variable.
 	* Additionally, the presence of a function with `uses_context=true` would serve as a flag that the query cannot be executed in parallel, because doing so would cause race conditions associated with the shared JQueryContext fields.
-7. Make it so the regex search form makes a very basic effort to determine the quote character, delimiter, and number of columns in CSV files.
-    * maybe only try to do this for files with the `.csv` and `.tsv` extensions
-	* only test the `,` and `\t` delimiters, and only the `"` or `'` quote characters
-	* test only the first 10KB of the file, or first 25 lines, whichever comes first.
-8. Unit tests that randomly generate text with JSON chars to make sure JSON parser never throws for any reason, since errors aren't caught.
+7. Unit tests that randomly generate text with JSON chars to make sure JSON parser never throws for any reason, since errors aren't caught.
 
 ### To Be Changed
 
@@ -52,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
+- Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 
 ## [7.0.0] - (UNRELEASED) YYYY-MM-DD
 
@@ -63,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 4. [Python-style single-line comments in RemesPath](/docs/RemesPath.md#comments-added-in-v62)
 5. A [RemesPath user-defined language (UDL) file](/RemesPath%20UDL.xml), providing some very basic syntax highlighting. It is buggy, but that is because the UDL system is inherently buggy, not because I did anything wrong (as far as I know).
 6. A `:` character between two key-value pairs in an object no longer causes a fatal error that makes the parser quit.
+7. Add new `auto_try_guess_csv_delim_newline` setting. If this is true (default false), [Regex search form](/docs/README.md#regex-search-form) now makes a very basic attempt to "sniff" if the current file is CSV whenever it is opened, or when the `Parse as CSV?` button is toggled on.
 
 ### Changed
 

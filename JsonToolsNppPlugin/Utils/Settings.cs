@@ -149,6 +149,13 @@ namespace JSON_Tools.Utils
                     "If you want there to be NO toolbar icons, enter a character that does not represent an icon; do NOT leave this field empty."),
             Category("Miscellaneous"), DefaultValue("tcpo")]
         public string toolbar_icons { get; set; }
+
+        [Description("If this setting is true,\r\n" +
+            "when the regex search form is opened, or when the \"Parse as CSV?\" checkbox in that form is toggled on,\r\n" +
+            "JsonTools will attempt to guess whether the current document is a CSV or TSV file, and how many columns and what newline it has.\r\n" +
+            "The regex search form will take slightly longer to open if this is true."),
+            Category("Miscellaneous"), DefaultValue(false)]
+        public bool auto_try_guess_csv_delim_newline { get; set; }
         #endregion
 
         #region GREP_API_SETTINGS

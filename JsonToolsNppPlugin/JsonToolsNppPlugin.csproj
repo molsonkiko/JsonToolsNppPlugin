@@ -116,6 +116,7 @@
     <Compile Include="Forms\TreeViewer.Designer.cs">
       <DependentUpon>TreeViewer.cs</DependentUpon>
     </Compile>
+    <Compile Include="JSONTools\CsvSniffer.cs" />
     <Compile Include="JSONTools\Dson.cs" />
     <Compile Include="PluginInfrastructure\ClikeStringArray.cs" />
     <Compile Include="PluginInfrastructure\DllExport\DllExportAttribute.cs" />
@@ -206,6 +207,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Tests\Benchmarker.cs" />
+    <Compile Include="Tests\CsvSnifferTests.cs" />
     <Compile Include="Tests\IniFileParserTests.cs" />
     <Compile Include="Tests\JsonGrepperTests.cs" />
     <Compile Include="Tests\JsonParserTests.cs" />
