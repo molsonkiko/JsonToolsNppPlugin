@@ -444,6 +444,7 @@ namespace Kbg.NppPluginNET
         /// <param name="wasAutotriggered">was triggered by a direct action of the user (e.g., reformatting, opening tree view)</param>
         /// <param name="preferPreviousDocumentType">attempt to re-parse the document in whatever way it was previously parsed (potentially ignoring documentType parameter)</param>
         /// <param name="isRecursion">IGNORE THIS PARAMETER, IT IS ONLY FOR RECURSIVE SELF-CALLS</param>
+        /// <param name="ignoreSelections">If true, always parse the entire file even the selected text is valid JSON.</param>
         /// <returns></returns>
         public static (ParserState parserState, JNode node, bool usesSelections, DocumentType DocumentType) TryParseJson(DocumentType documentType = DocumentType.JSON, bool wasAutotriggered = false, bool preferPreviousDocumentType = false, bool isRecursion = false, bool ignoreSelections = false)
         {
@@ -1494,11 +1495,12 @@ namespace Kbg.NppPluginNET
         /// parse the JSON schema,<br></br>
         /// and try to validate the currently open file against the schema.<br></br>
         /// Send the user a message telling the user if validation succeeded,
-        /// or if it failed, where the first error was.
+        /// or if it failed, where the first error was.<br></br>
+        /// If ignoreSelections, always validate the entire file even the selected text is valid JSON.
         /// </summary>
-        public static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true)
+        public static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true, bool ignoreSelections = false)
         {
-            (ParserState parserState, JNode json, _, DocumentType documentType) = TryParseJson(preferPreviousDocumentType:true);
+            (ParserState parserState, JNode json, _, DocumentType documentType) = TryParseJson(preferPreviousDocumentType:true, ignoreSelections: ignoreSelections);
             if (parserState == ParserState.FATAL || json == null)
                 return;
             string curFname = Npp.notepad.GetCurrentFilePath();
@@ -1748,7 +1750,7 @@ namespace Kbg.NppPluginNET
                     var regex = ((JRegex)pat).regex;
                     if (!regex.IsMatch(fname)) continue;
                     // the filename matches a pattern for this schema, so we'll try to validate it.
-                    ValidateJson(schemaFname, false);
+                    ValidateJson(schemaFname, false, true);
                     return true;
                 }
             }
@@ -1866,6 +1868,11 @@ namespace Kbg.NppPluginNET
                 if (!regexSearchForm.Focused)
                 {
                     regexSearchForm.GrabFocus();
+                    if (settings.auto_try_guess_csv_delim_newline)
+                    {
+                        bool csvBoxShouldBeChecked = RegexSearchForm.TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns);
+                        regexSearchForm.SetCsvSettingsFromEolNColumnsDelim(csvBoxShouldBeChecked, eol, delim, nColumns);
+                    }
                 }
             }
         }

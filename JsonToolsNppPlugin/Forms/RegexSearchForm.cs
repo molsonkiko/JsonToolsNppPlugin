@@ -13,6 +13,7 @@ namespace JSON_Tools.Forms
     {
         private JsonParser jsonParser;
         private JsonSchemaValidator.ValidationFunc settingsValidator;
+        public static bool csvCheckChangeIsAutoTriggered = false;
 
         public RegexSearchForm()
         {
@@ -54,10 +55,12 @@ namespace JSON_Tools.Forms
                  "}"),
             0);
             GetTreeViewInRegexMode();
-            // check it, see if we have a CSV
-            ParseAsCsvCheckBox.Checked = true;
-            if (NColumnsTextBox.Text.Length == 0)
-                ParseAsCsvCheckBox.Checked = false;
+            // check if we have a CSV file
+            if (Main.settings.auto_try_guess_csv_delim_newline
+                && TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns))
+            {
+                SetCsvSettingsFromEolNColumnsDelim(true, eol, delim, nColumns);
+            }
         }
 
         public void GrabFocus()
@@ -185,36 +188,69 @@ namespace JSON_Tools.Forms
             RegexTextBox.Enabled = !showCsvButtons;
             IgnoreCaseCheckBox.Enabled = !showCsvButtons;
             IncludeFullMatchAsFirstItemCheckBox.Enabled = !showCsvButtons;
-            if (showCsvButtons && Main.settings.auto_try_guess_csv_delim_newline)
+            if (!csvCheckChangeIsAutoTriggered && showCsvButtons && Main.settings.auto_try_guess_csv_delim_newline
+                && TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns))
             {
-                if (TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns))
-                {
-                    // we found possible NColumns, delimiter, and Newline values
-                    NColumnsTextBox.Text = nColumns.ToString();
-                    DelimiterTextBox.Text = ArgFunction.CsvCleanChar(delim);
-                    QuoteCharTextBox.Text = "\"";
-                    NewlineComboBox.SelectedIndex = eol == EndOfLine.CRLF ? 0 : eol == EndOfLine.LF ? 1 : 2;
-                }
+                SetCsvSettingsFromEolNColumnsDelim(true, eol, delim, nColumns);
             }
         }
 
-        private static bool TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns)
+        public void SetCsvSettingsFromEolNColumnsDelim(bool csvBoxShouldBeChecked, EndOfLine eol, char delim, int nColumns)
+        {
+            if (ParseAsCsvCheckBox.Checked != csvBoxShouldBeChecked)
+            {
+                csvCheckChangeIsAutoTriggered = true;
+                ParseAsCsvCheckBox.Checked = csvBoxShouldBeChecked;
+                csvCheckChangeIsAutoTriggered = false;
+            }
+            if (csvBoxShouldBeChecked)
+            {
+                NColumnsTextBox.Text = nColumns.ToString();
+                DelimiterTextBox.Text = ArgFunction.CsvCleanChar(delim);
+                QuoteCharTextBox.Text = "\"";
+                NewlineComboBox.SelectedIndex = eol == EndOfLine.CRLF ? 0 : eol == EndOfLine.LF ? 1 : 2;
+            }
+        }
+
+        public static bool TrySniffCommonDelimsAndEols(out EndOfLine eol, out char delim, out int nColumns)
         {
             eol = EndOfLine.CRLF;
             delim = '\x00';
             nColumns = -1;
-            string text = Npp.editor.GetText(CsvSniffer.DEFAULT_MAX_CHARS_TO_SNIFF * 3 / 2);
-            foreach (EndOfLine maybeEol in new EndOfLine[]{EndOfLine.CRLF, EndOfLine.LF, EndOfLine.CR})
+            string text = Npp.editor.GetText(CsvSniffer.DEFAULT_MAX_CHARS_TO_SNIFF * 12 / 10);
+            int crlfCount = 0;
+            int crCount = 0;
+            int lfCount = 0;
+            int ii = 0;
+            while (ii < text.Length)
             {
-                foreach (char maybeDelim in ",\t")
+                char c = text[ii++];
+                if (c == '\r')
                 {
-                    nColumns = CsvSniffer.Sniff(text, maybeEol, maybeDelim, '"');
-                    if (nColumns >= 2)
+                    if (ii < text.Length && text[ii] == '\n')
                     {
-                        delim = maybeDelim;
-                        eol = maybeEol;
-                        return true;
+                        crlfCount++;
+                        ii++;
                     }
+                    else
+                        crCount++;
+                }
+                else if (c == '\n')
+                    lfCount++;
+            }
+            EndOfLine maybeEol = EndOfLine.CRLF;
+            if (crCount > crlfCount && crCount > lfCount)
+                maybeEol = EndOfLine.CR;
+            else if (lfCount > crCount && lfCount > crlfCount)
+                maybeEol = EndOfLine.LF;
+            foreach (char maybeDelim in ",\t")
+            {
+                nColumns = CsvSniffer.Sniff(text, maybeEol, maybeDelim, '"');
+                if (nColumns >= 2)
+                {
+                    delim = maybeDelim;
+                    eol = maybeEol;
+                    return true;
                 }
             }
             return false;

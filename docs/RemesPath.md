@@ -134,7 +134,7 @@ A regular expression can be created in a RemesPath expression by prefixing a \`\
 JsonTools uses [.NET regular expressions](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) instead of the Boost library used by the Notepad++ find/replace form.
 
 There are numerous differences between JsonTools regular expressions and Notepad++ find/replace form regexes, but the main differences are as follows:
-- Prior to [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), `^` and `$` would only match at the beginning and end of the string, respectively (except as noted below for `s_sub` and `s_fa`)
+- Prior to [v7.0](/CHANGELOG.md#700---2024-02-09), `^` and `$` would only match at the beginning and end of the string, respectively (except as noted below for `s_sub` and `s_fa`)
     - Note that `\A` can still be used to match the start of the string, and `\z` can be used to match the end of the string.
 - Even after v7.0, `^` and `$` only treat `\n` as as the end of the line. That means that `\r` is not matched at all, and `\r\n` is matched, but regexes must use `\r?$` instead of `$` to handle `\r\n` correctly.
 - Matching is case-sensitive by default, whereas Notepad++ is case-insensitive by default. The `(?i)` flag can be added at the beginning of any regex to make it case-insensitive.
@@ -250,7 +250,7 @@ Returns true if *all* of the values in `x` (which *must* contain all booleans) a
 ---
 `and(x: anything, y: anything, ...: anything) -> bool`
 
-[*Added in v7.0*](/CHANGELOG.md#700---unreleased-yyyy-mm-dd)
+[*Added in v7.0*](/CHANGELOG.md#700---2024-02-09)
 
 Returns `true` if and only if *all* of the arguments are ["truthy"](#truthiness).
 
@@ -460,7 +460,7 @@ See `max_by`, but minimizing instead of maximizing.
 ---
 `or(x: anything, y: anything, ...: anything) -> bool`
 
-[*Added in v7.0*](/CHANGELOG.md#700---unreleased-yyyy-mm-dd)
+[*Added in v7.0*](/CHANGELOG.md#700---2024-02-09)
 
 Returns `true` if and only if *any* of the arguments are ["truthy"](#truthiness).
 
@@ -637,7 +637,7 @@ When called with one argument, `stringify` differs from `str` in two regards:
 
 *Added in [v5.5.0](/CHANGELOG.md#550---2023-08-13).*
 
-__The optional arguments did not exist before [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd).__ Since that version, they work as follows:
+__The optional arguments did not exist before [v7.0](/CHANGELOG.md#700---2024-02-09).__ Since that version, they work as follows:
 
 If the third argument (`sort_keys`, default true) is false, object keys are not sorted.
 
@@ -720,7 +720,7 @@ For example, consider the vectorized function `s_mul(s: string, n: int) -> strin
     * The *second argument `len(@)` references the entire array*, and is thus `3`, because the array has three elements.
     * Because the *first element of the first argument* is `"a"`, the *first element of the output* is `s_mul(a, 3)`, or `"aaa"`
     * Because the *second element of the first argument* is `"cd"`, the *second element of the output* is `s_mul(cd, 3)`, or `"cdcdcd"`
-* With __object__ input `{"foo": "a", "bar": "cd"}`, `s_mul(@, len(@))` returns `{"foo": "aa", "bar": "cdcd"}` (__NOTE__: this example will fail on JsonTools earlier than [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd))
+* With __object__ input `{"foo": "a", "bar": "cd"}`, `s_mul(@, len(@))` returns `{"foo": "aa", "bar": "cdcd"}` (__NOTE__: this example will fail on JsonTools earlier than [v7.0](/CHANGELOG.md#700---2024-02-09))
     * The *first argument* references each element of the object separately.
     * The *second argument `len(@)` references the entire object*, and is thus `2`, because the object has two children.
     * Because the *child of key `foo` of the first argument* is `"a"`, the *child of key `foo` of the output* is `s_mul(a, 2)`, or `"aa"`
@@ -751,7 +751,7 @@ True if [`x` is "truthy"](#truthiness).
 Returns `if_true` if `cond` is ["truthy"](#truthiness), otherwise returns `if_false`.
 
 __Note:__
-* Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), this function's execution is conditional, meaning that *only the chosen branch is executed*. 
+* Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this function's execution is conditional, meaning that *only the chosen branch is executed*. 
 * For example, consider the input `["foo", 1, "a", null]`.
 * Prior to v7.0, the query `@[:]->ifelse(is_str(@), s_len(@), -1)` would raise an error on that input, because it would call `s_len` on non-strings (illegal arguments).
 * As of v7.0, the expected `[3, -1, 1, -1]` would be returned, because the `s_len` function would only be called when `is_str` returned true (i.e., on strings).
@@ -954,7 +954,7 @@ __Added in [v6.0](/CHANGELOG.md#600---2023-12-13).__
 The fourth argument and any subsequent argument must all be the number of a capture group to attempt to parse as a number (`0` matches the match value if there were no capture groups). [Any valid number within the JSON5 specification](https://spec.json5.org/#numbers) can be parsed. If a capture group cannot be parsed as a number, the capture group is returned. As with `s_csv` above, you can use a negative number to parse the nth-to-last column as a number instead of the nth column as a numer.
 
 __SPECIAL NOTES FOR `s_fa`:__
-1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools (prior to [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd)) `^` matches only the beginning of the string and `$` matches only the end of the string.
+1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools (prior to [v7.0](/CHANGELOG.md#700---2024-02-09)) `^` matches only the beginning of the string and `$` matches only the end of the string.
 2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex integer preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
 3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number or (a hex integer preceded by `0x`). A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
 4. *`s_fa` may be very slow if `pat` is a function of input,* because the above described regex transformations need to be applied every time the function is called instead of just once at compile time.
@@ -978,7 +978,7 @@ __As of [v6.0](/CHANGELOG.md#600---2023-12-13), *this function is DEPRECATED in 
 ---
 `s_format(s: str, print_style: string=m, sort_keys: bool=true, indent: int | str=4, remember_comments: bool=false) -> str`
 
-[*Added in v7.0*](/CHANGELOG.md#700---unreleased-yyyy-mm-dd)
+[*Added in v7.0*](/CHANGELOG.md#700---2024-02-09)
 
 If `s` is not valid JSON (according to the most permissive parsing rules, same as used by the parse() function),
 return a copy of `s`.
@@ -1119,7 +1119,7 @@ Let's unpack how that worked:
 
 __Notes on regular expressions in `s_sub`:__
 
-1. *Like the function `s_fa`, `s_sub` uses `^` and `$` to match the start and end of lines*, rather than the start and end of a string. Before [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), elsewhere in RemesPath, `^` and `$` would match only at the start and end of a string.
+1. *Like the function `s_fa`, `s_sub` uses `^` and `$` to match the start and end of lines*, rather than the start and end of a string. Before [v7.0](/CHANGELOG.md#700---2024-02-09), elsewhere in RemesPath, `^` and `$` would match only at the start and end of a string.
 2. *`(INT)` and `(NUMBER)` match integers and floating point decimals, respectively, just as in `s_fa` above.* `(?:INT)` and `(?:NUMBER)` are non-capturing versions of the same regular expressions.
 
 ----
@@ -1427,9 +1427,9 @@ For example, if the function `foo` has two optional arguments:
 * `foo(1, , 2)` would be equivalent to `foo(1, null, 2)`
 * `foo(1, 2, )` would be equivalent to `foo(1, 2, null)` or `foo(1, 2)`.
 
-## Comments (added in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd)) ##
+## Comments (added in [v7.0](/CHANGELOG.md#700---2024-02-09)) ##
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), queries can include any number of Python-style single-line comments.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), queries can include any number of Python-style single-line comments.
 
 Thus the query
 ```

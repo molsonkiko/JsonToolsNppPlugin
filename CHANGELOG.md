@@ -49,8 +49,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
+- Maybe refresh error form automatically when doing the automatic parse (but not schema validation) after editing?
 
-## [7.0.0] - (UNRELEASED) YYYY-MM-DD
+## [7.0.0] - 2024-02-09
 
 ### Added
 
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 8. [Automatic linting after edits](/docs/README.md#automatic-validation-of-json-against-json-schema) will always attempt to parse the entire document, even if the user has made a selection that could be parsed as JSON.
 9. Numbers with unnecessary leading 0's (like `01` or `002.5`) are now [logged at the `BAD` level](/docs/README.md#parser-settings), and numbers with trailing decimal points are now logged at the `JSON5` level.
 10. [Error form](/docs/README.md#error-form-and-status-bar) keypress triggers now execute when the key is released, rather than when it is depressed.
+11. [Automatic JSON schema validation](/docs/README.md#automatic-validation-of-json-against-json-schema) now ignores the user's selections and always validates the entire document.
 
 ### Fixed
 

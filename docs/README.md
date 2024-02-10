@@ -170,7 +170,7 @@ We can perform RemesPath queries on the selections. __RemesPath queries (includi
 
 ![RemesPath query on file with selections](/docs/multi%20selections%20Remespath%20query.PNG)
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), [automatic linting after editing](#automatically-check-for-errors-after-editing) is disabled while in selection-based mode, to avoid unexpectedly changing the user's selections when the document is automatically parsed.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), [automatic linting after editing](#automatically-check-for-errors-after-editing) is disabled while in selection-based mode, to avoid unexpectedly changing the user's selections when the document is automatically parsed.
 
 ### Selecting all valid JSON ###
 
@@ -200,7 +200,7 @@ For performance reasons, the error form will never have more than 5000 rows. The
 
 __For pre-[v6.1](/CHANGELOG.md#610---2023-12-28) JsonTools, *do not click `Yes`* on the dialog that warns of slow reload.__ If you click `Yes`, you can expect to wait an *extremely long time.*
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), the error form also reports JSON schema validation errors. They are indicated by `SCHEMA` in the `Severity` column as shown below. In addition, if a file was previously validated, hitting `Enter` to refresh the error form re-validates the file using whatever schema was most recently used for that file.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), the error form also reports JSON schema validation errors. They are indicated by `SCHEMA` in the `Severity` column as shown below. In addition, if a file was previously validated, hitting `Enter` to refresh the error form re-validates the file using whatever schema was most recently used for that file.
 
 ![Error form reporting schema validation errors](/docs/error%20form%20with%20SCHEMA%20errors.PNG)
 
@@ -246,7 +246,7 @@ This is off by default. If desired, this feature can be turned on in the setting
 
 Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation forced the file to be parsed as JSON. As of v6.1, the document will be parsed as [JSON Lines](#json-lines-documents) if the file extension is `jsonl` and as JSON otherwise. In addition, if the document is already in [regex mode](#regex-search-form) or [ini file mode](#parsing-ini-files), automatic validation is suspended.
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), this automatic validation will only ever attempt to parse the entire document, not [a selection](#working-with-selections), and automatic validation is always disabled in selection-based mode. Prior to v7.0, automatic validation could change the user's selections unexpectedly.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this automatic validation will only ever attempt to parse the entire document, not [a selection](#working-with-selections), and automatic validation is always disabled in selection-based mode. Prior to v7.0, automatic validation could change the user's selections unexpectedly.
 
 ## Path to current position ##
 
@@ -516,7 +516,7 @@ Suppose you start with this document:
  } // gets moved to the very end of the doc when pretty-printing
 ]
 ```
-__Pretty-printing while remembering comments produces this__ (although note that beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), this is only true if your [pretty_print_style](#pretty_print_style) is `Whitesmith` or `Google`):
+__Pretty-printing while remembering comments produces this__ (although note that beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this is only true if your [pretty_print_style](#pretty_print_style) is `Whitesmith` or `Google`):
 ```json
 // python comments become JavaScript single-line
 [
@@ -547,7 +547,7 @@ __Compressing while remembering comments produces this:__
 [1, 2, 3, {"a": [1, [1.5]]}]
 ```
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), choosing the `PPrint` setting for [pretty_print_style](#pretty_print_style) causes comments to be remembered as follows:
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), choosing the `PPrint` setting for [pretty_print_style](#pretty_print_style) causes comments to be remembered as follows:
 ```json
 [
     ["short", {"iterables": "get", "printed": "on", "one": "line"}],
@@ -627,7 +627,7 @@ Opening up a document in regex mode allows __querying and mutating the raw text 
 
 You can view CSV files (any delimiter, quote character, and newline are allowed) with the treeview, providing that they comply with [RFC 4180](https://www.ietf.org/rfc/rfc4180.txt).
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), if the new `auto_try_guess_csv_delim_newline` global setting is set to `true`, whenever the regex search form is opened, or the `Parse as CSV?` button is toggled on, the regex search form will check the first 1600 characters of the current document to detect if it is a CSV or TSV file. This makes the regex search form load more slowly, but it makes it easier to parse CSV files.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), if the new `auto_try_guess_csv_delim_newline` global setting is set to `true`, whenever the regex search form is opened, or the `Parse as CSV?` button is toggled on, the regex search form will check the first 1600 characters of the current document to detect if it is a CSV or TSV file. This makes the regex search form load more slowly, but it makes it easier to parse CSV files.
 
 ![Regex search form viewing a CSV file](/docs/regex%20search%20form%20csv%20example.PNG)
 
@@ -793,7 +793,7 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
 
-Beginning in [v7.0](/CHANGELOG.md#700---unreleased-yyyy-mm-dd), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are.
 
 As of version [4.11.2](/CHANGELOG.md#4112---2023-03-21), the recursion limit for validation is currently 64. Deeper JSON than that can't be validated, period. Very deep or recursive schemas will still compile.
 
