@@ -867,6 +867,10 @@ The following keywords are supported for random JSON generation:
 ### Keywords for numbers
 * [minimum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minimum) and [maximum](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maximum) (*Both added in version [4.12.0](/CHANGELOG.md#4120---2023-03-28)*)
 
+### Keywords for strings ###
+
+* [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) and [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [7.1](/CHANGELOG.md#710---unreleased-yyyy-mm-dd)*)
+
 ## Generating JSON schema from JSON ##
 
 You can also generate a [JSON schema](https://json-schema.org/) from a JSON document.

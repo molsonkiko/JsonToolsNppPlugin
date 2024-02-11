@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#611---2023-12-28) to this project will be documented in this file.
+All [notable changes](#700---2024-02-09) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -50,6 +50,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe refresh error form automatically when doing the automatic parse (but not schema validation) after editing?
+
+## [7.1.0] - (UNRELEASED) YYYY-MM-DD
+
+### Added
+
+1. `minLength` and `maxLength` keywords are now considered when making [random JSON from schema](/docs/README.md#generating-random-json-from-a-schema)
 
 ## [7.0.0] - 2024-02-09
 

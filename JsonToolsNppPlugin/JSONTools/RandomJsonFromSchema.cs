@@ -91,7 +91,16 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private static JNode RandomString(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings)
         {
-            int length = random.Next(11);
+            int minLength = 0;
+            int exclusiveMaxLength = 11;
+            if (schema is JObject obj)
+            {
+                if (obj.children.TryGetValue("minLength", out JNode minLengthNode) && minLengthNode.value is long minLengthVal)
+                    minLength = (int)minLengthVal;
+                if (obj.children.TryGetValue("maxLength", out JNode maxLengthNode) && maxLengthNode.value is long maxLengthVal)
+                    exclusiveMaxLength = (int)maxLengthVal + 1;
+            }
+            int length = random.Next(minLength, exclusiveMaxLength);
             StringBuilder sb = new StringBuilder(length);
             if (extendedAsciiStrings)
             {
