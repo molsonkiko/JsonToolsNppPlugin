@@ -320,6 +320,15 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             Win32.SendMessage(scintilla, SciMsg.SCI_GOTOPOS, (IntPtr) caret, (IntPtr) Unused);
         }
 
+        public void GoToLegalPos(int caret)
+        {
+            int gotoPos = caret >= 1 && caret < GetLength()
+                && GetCharAt(caret - 1) == '\r' && GetCharAt(caret) == '\n'
+                ? caret - 1 // in middle of "\r\n", so go before '\r'
+                : caret; // already in legal position
+            GotoPos(gotoPos);
+        }
+
         /// <summary>
         /// Set the selection anchor to a position. The anchor is the opposite
         /// end of the selection from the caret.

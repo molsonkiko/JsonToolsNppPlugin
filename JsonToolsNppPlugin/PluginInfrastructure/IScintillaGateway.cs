@@ -145,6 +145,11 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         void GotoPos(int caret);
 
         /// <summary>
+        /// same as GotoPos, except that if caret is in the middle of a "\r\n", it goes before the '\r' 
+        /// </summary>
+        void GoToLegalPos(int caret);
+
+        /// <summary>
         /// Set the selection anchor to a position. The anchor is the opposite
         /// end of the selection from the caret.
         /// (Scintilla feature 2026)

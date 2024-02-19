@@ -100,7 +100,7 @@ namespace JSON_Tools.Forms
         {
             if (!(row.Cells[2].Value is int pos))
                 return;
-            Npp.editor.GotoPos(pos);
+            Npp.editor.GoToLegalPos(pos);
             this.Focus();
         }
 

@@ -292,24 +292,19 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(987, 461);
-            
             this.Controls.Add(this.UrlsBoxLabel);
             this.Controls.Add(this.UrlsBox);
             this.Controls.Add(this.SendRequestsButton);
-            
             this.Controls.Add(this.RecursiveSearchCheckBox);
             this.Controls.Add(this.SearchPatternsBoxLabel);
             this.Controls.Add(this.SearchPatternsBox);
             this.Controls.Add(this.ChooseDirectoriesButton);
             this.Controls.Add(this.DirectoriesVisitedBox);
-
             this.Controls.Add(this.FilesFoundBox);
             this.Controls.Add(this.RemoveSelectedFilesButton);
-            
             this.Controls.Add(this.DocsButton);
             this.Controls.Add(this.ViewErrorsButton);
             this.Controls.Add(this.ViewResultsButton);
-            
             this.Controls.Add(this.TopBottomDivider);
             this.Controls.Add(this.CenterRightDivider);
             this.Controls.Add(this.LeftCenterDivider);
@@ -317,7 +312,6 @@
             this.Controls.Add(this.GetJsonFromFilesTitle);
             this.Controls.Add(this.GetJsonFromApisTitle);
             this.Controls.Add(this.GrepperFormTitle);
-            
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "GrepperForm";
             this.Text = "JSON from files and APIs";

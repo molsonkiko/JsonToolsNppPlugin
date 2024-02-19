@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. `minLength` and `maxLength` keywords are now considered when making [random JSON from schema](/docs/README.md#generating-random-json-from-a-schema)
+2. JsonTools now automatically navigates to the location of the fatal error when it fails to parse a document, unless the attempted parse was auto-triggered (say, by the [automatic parse after editing](/docs/README.md#automatically-check-for-errors-after-editing))
+
+### Changed 
+
+1. If the location of an error is between the `CR` and the `LF` of a `CR LF` newline, JsonTools will now always move before the `CR`, rather than placing the caret in between them, which could cause confusion.
 
 ## [7.0.0] - 2024-02-09
 

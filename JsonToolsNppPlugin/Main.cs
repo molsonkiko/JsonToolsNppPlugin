@@ -619,6 +619,9 @@ namespace Kbg.NppPluginNET
             }
             if (fatal)
             {
+                // jump to the position of the fatal error (if in whole document mode and not auto-triggered)
+                if (lintCount > 0 && noTextSelected && !wasAutotriggered)
+                    Npp.editor.GoToLegalPos(lints[lintCount - 1].pos);
                 // unacceptable error, show message box
                 MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
                                 $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
@@ -1540,9 +1543,9 @@ namespace Kbg.NppPluginNET
             if (!validates && problems.Count > 0)
             {
                 JsonLint firstProblem = problems[0];
+                Npp.editor.GoToLegalPos(firstProblem.pos);
                 MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem 1 of {problems.Count}:\n{firstProblem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                Npp.editor.GotoPos(firstProblem.pos);
                 return;
             }
             if (messageOnSuccess)

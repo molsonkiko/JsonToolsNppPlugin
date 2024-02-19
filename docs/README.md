@@ -115,6 +115,8 @@ When you parse a document that contains syntax errors, you may be asked if you w
 
 In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors. Prior to that, errors were shown as text in a new buffer.
 
+Beginning in [v7.1](/CHANGELOG.md#710---unreleased-yyyy-mm-dd), if there is a fatal error such that JsonTools cannot parse a document, the caret is moved to the location of the fatal error.
+
 ### Document type box *(added in v6.0)* ###
 
 *Beginning in version [v6.0](/CHANGELOG.md#600---2023-12-13),* the tree view has a document type box just above the tree itself.
