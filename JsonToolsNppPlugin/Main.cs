@@ -350,10 +350,19 @@ namespace Kbg.NppPluginNET
             // if the user did nothing for a while (default 1 second) after editing,
             // re-parse the file and also perform validation if that's enabled.
             case (uint)SciMsg.SCN_MODIFIED:
-                // only turn on the flag if the user performed the modification
                 lastEditedTime = System.DateTime.UtcNow;
                 if (openTreeViewer != null)
                     openTreeViewer.shouldRefresh = true;
+                break;
+            // a find/replace action was performed.
+            // Tag the treeview of the modified file as needing to refresh, and indicate that the document was edited.
+            case (uint)NppMsg.NPPN_GLOBALMODIFIED:
+                IntPtr bufferModifiedId = notification.Header.hwndFrom;
+                string bufferModified = Npp.notepad.GetFilePath(bufferModifiedId);
+                if (bufferModified == activeFname)
+                    lastEditedTime = System.DateTime.UtcNow;
+                if (TryGetInfoForFile(bufferModified, out info) && !(info.tv is null) && !info.tv.IsDisposed)
+                    info.tv.shouldRefresh = true;
                 break;
                 //if (code > int.MaxValue) // windows messages
                 //{

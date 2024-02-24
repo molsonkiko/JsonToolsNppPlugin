@@ -53,7 +53,7 @@ namespace JSON_Tools.Forms
         public bool documentTypeIndexChangeWasAutomatic;
 
         /// <summary>
-        /// If the user performs an undo or redo action,
+        /// If the user modifies the buffer belonging to this treeview,
         /// this will be set to true so that the next time the user performs a RemesPath query,
         /// the treeview is reset beforehand.
         /// </summary>
