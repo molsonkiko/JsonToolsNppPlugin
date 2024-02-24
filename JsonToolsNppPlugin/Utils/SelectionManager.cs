@@ -23,6 +23,37 @@ namespace JSON_Tools.Utils
             return (startEndNums[0], startEndNums[1]);
         }
 
+        public static List<string> GetRegionsWithIndicator(int indicator1, int indicator2)
+        {
+            var selList = new List<string>();
+            int indEnd = -1;
+            int indicator = indicator1;
+            while (indEnd < Npp.editor.GetLength())
+            {
+                int indStart = Npp.editor.IndicatorStart(indicator, indEnd);
+                indEnd = Npp.editor.IndicatorEnd(indicator, indStart);
+                if (Npp.editor.IndicatorValueAt(indicator, indStart) == 1)
+                {
+                    selList.Add($"{indStart},{indEnd}");
+                    indicator = indicator == indicator1 ? indicator2 : indicator1;
+                }
+                if (indEnd == 0 && indStart == 0)
+                    break;
+            }
+            return selList;
+        }
+
+        public static (int start, int end) GetEnclosingRememberedSelection(int pos, int indicator1, int indicator2)
+        {
+            if (Npp.editor.IndicatorValueAt(indicator1, pos) == 0)
+            {
+                if (Npp.editor.IndicatorValueAt(indicator2, pos) == 0)
+                    return (-1, -1);
+                return (Npp.editor.IndicatorStart(indicator2, pos), Npp.editor.IndicatorEnd(indicator2, pos));
+            }
+            return (Npp.editor.IndicatorStart(indicator1, pos), Npp.editor.IndicatorEnd(indicator1, pos));
+        }
+
         public static List<(int start, int end)> GetSelectedRanges()
         {
             var selList = new List<(int start, int end)>();

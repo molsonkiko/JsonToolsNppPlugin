@@ -790,7 +790,6 @@ namespace JSON_Tools.Tests
             bool previousTabIndentPrettyPrint = Main.settings.tab_indent_pretty_print;
             int previousIndentPrettyPrint = Main.settings.indent_pretty_print;
             bool previousMinimalWhiteSpaceCompression = Main.settings.minimal_whitespace_compression;
-            int previousMaxTrackedJsonSelections = Main.settings.max_tracked_json_selections;
             bool previousRememberComments = Main.settings.remember_comments;
             bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
             bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
@@ -803,7 +802,6 @@ namespace JSON_Tools.Tests
             Main.settings.tab_indent_pretty_print = false;
             Main.settings.indent_pretty_print = 4;
             Main.settings.minimal_whitespace_compression = true;
-            Main.settings.max_tracked_json_selections = 1000;
             Main.settings.remember_comments = false;
             Main.settings.offer_to_show_lint = false;
             // if this is false, a message-box will pop up at some point.
@@ -846,7 +844,7 @@ namespace JSON_Tools.Tests
                 catch (Exception ex)
                 {
                     failures++;
-                    messages.Add("While running command " + command + " with args [" + string.Join(", ", args) + "], got exception\r\n" + ex);
+                    messages.Add("FAIL: While running command " + command + " with args [" + string.Join(", ", args) + "], got exception\r\n" + ex);
                     lastFailureIndex = messages.Count;
                 }
             }
@@ -866,7 +864,6 @@ namespace JSON_Tools.Tests
             Main.settings.indent_pretty_print = previousIndentPrettyPrint;
             Main.settings.tab_indent_pretty_print = previousTabIndentPrettyPrint;
             Main.settings.minimal_whitespace_compression = previousMinimalWhiteSpaceCompression;
-            Main.settings.max_tracked_json_selections = previousMaxTrackedJsonSelections;
             Main.settings.remember_comments = previousRememberComments;
             Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
             Main.settings.offer_to_show_lint = previousOfferToShowLint;

@@ -69,6 +69,15 @@ namespace Kbg.NppPluginNET
         private static bool bufferFinishedOpening = false;
         // toolbar icons
         static Icon dockingFormIcon = null;
+        // indicators (used for selection remembering)
+        // we need two so that we can have two touching selections remembered separately
+        // because Scintilla merges touching regions with the same indicator
+        // the below values appear to be safe defaults, based on looking at some other plugins
+        private static int selectionRememberingIndicator1 = 12;
+        private static int selectionRememberingIndicator2 = 13;
+        // when the indicators are used, need to notify the user if there could be a collision
+        private static bool selectionRememberingIndicatorsMayCollide = true;
+        private static bool hasWarnedSelectionRememberingIndicatorsMayCollide = false;
         // fields related to forms
         static internal int jsonTreeId = -1;
         static internal int grepperFormId = -1;
@@ -104,7 +113,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(5, "---", null);
             PluginBase.SetCommand(6, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 6;
             PluginBase.SetCommand(7, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 7;
-            PluginBase.SetCommand(8, "Sort arra&ys", OpenSortForm); sortFormId = 8; 
+            PluginBase.SetCommand(8, "Sort arra&ys", OpenSortForm); sortFormId = 8;
             PluginBase.SetCommand(9, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(10, "---", null);
             PluginBase.SetCommand(11, "&Validate JSON against JSON schema", () => ValidateJson());
@@ -133,6 +142,27 @@ namespace Kbg.NppPluginNET
             if (!schemasToFnamePatternsFile.Exists || schemasToFnamePatternsFile.Length == 0)
                 WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
             ParseSchemasToFnamePatternsFile();
+
+            // JsonTools uses two indicators (see https://www.scintilla.org/ScintillaDoc.html#Indicators for more about the API)
+            // to indicate where remembered selections are.
+            if (Npp.nppVersionAtLeast8p5p6 && Npp.notepad.AllocateIndicators(2, out int[] indicators) && indicators.Length >= 2)
+            {
+                selectionRememberingIndicatorsMayCollide = false;
+                selectionRememberingIndicator1 = indicators[0];
+                selectionRememberingIndicator2 = indicators[1];
+            }
+            HideSelectionRememberingIndicators();
+        }
+        
+        /// <summary>
+        /// selection-remembering indicators should be hidden
+        /// </summary>
+        static internal void HideSelectionRememberingIndicators()
+        {
+            if (selectionRememberingIndicator1 >= 0)
+                Npp.editor.IndicSetStyle(selectionRememberingIndicator1, IndicatorStyle.HIDDEN);
+            if (selectionRememberingIndicator2 >= 0)
+                Npp.editor.IndicSetStyle(selectionRememberingIndicator2, IndicatorStyle.HIDDEN);
         }
 
         static internal void SetToolBarIcons()
@@ -322,7 +352,6 @@ namespace Kbg.NppPluginNET
             case (uint)SciMsg.SCN_MODIFIED:
                 // only turn on the flag if the user performed the modification
                 lastEditedTime = System.DateTime.UtcNow;
-                ChangeJsonSelectionsBasedOnEdit(notification);
                 if (openTreeViewer != null)
                     openTreeViewer.shouldRefresh = true;
                 break;
@@ -463,19 +492,16 @@ namespace Kbg.NppPluginNET
             bool stopUsingSelections = false;
             int len = Npp.editor.GetLength();
             double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
-            JObject oldJson = null;
-            JsonFileInfo info = null;
             bool hasOldSelections = false;
             DocumentType previouslyChosenDocType = DocumentType.NONE;
-            if (TryGetInfoForFile(fname, out info))
+            if (TryGetInfoForFile(fname, out JsonFileInfo info))
             {
-                hasOldSelections = info.usesSelections && info.json is JObject;
                 previouslyChosenDocType = info.documentType;
-            }
-            if (hasOldSelections)
-            {
-                oldJson = (JObject)info.json;
-                oldSelections.AddRange(oldJson.children.Keys);
+                if (info.usesSelections)
+                {
+                    oldSelections = SelectionManager.GetRegionsWithIndicator(selectionRememberingIndicator1, selectionRememberingIndicator2);
+                    hasOldSelections = oldSelections.Count > 0;
+                }
             }
             if (noTextSelected)
             {
@@ -483,21 +509,14 @@ namespace Kbg.NppPluginNET
                 {
                     // if the user doesn't have any text selected, and they already had one or more selections saved,
                     // preserve the existing selections
-                    selRanges = SelectionManager.SetSelectionsFromStartEnds(oldJson.children.Keys);
-                    if (selRanges.Count > 0)
-                        noTextSelected = false;
-                    else
-                    {
-                        noTextSelected = true;
-                        stopUsingSelections = true;
-                    }
+                    selRanges = SelectionManager.SetSelectionsFromStartEnds(oldSelections);
+                    noTextSelected = selRanges.Count == 1 && selRanges[0].end - selRanges[0].start == 0;
                 }
             }
             else if (oneSelRange && firstSelLen == len)
             {
                 // user can revert to no-selection mode by selecting entire doc
                 noTextSelected = true;
-                stopUsingSelections = true;
             }
             JNode json = new JNode();
             List<JsonLint> lints;
@@ -508,6 +527,7 @@ namespace Kbg.NppPluginNET
             {
                 if (wasAutotriggered && len > sizeThreshold)
                     return (ParserState.OK, null, false, DocumentType.NONE);
+                stopUsingSelections = true;
                 string text = Npp.editor.GetText(len + 1);
                 if (documentType == DocumentType.NONE || preferPreviousDocumentType) // if user didn't specify how to parse the document
                 {
@@ -560,7 +580,11 @@ namespace Kbg.NppPluginNET
             }
             else
             {
+                int previouslySelectedIndicator = Npp.editor.GetIndicatorCurrent();
                 // it's a selection-based document, so for regex documents, each selection is just a string JNode, and otherwise we parse each selection as JSON
+                // we do not have support for selection-based INI file parsing
+                int currentIndicator = selectionRememberingIndicator1;
+                ClearPreviouslyRememberedSelections(len, selRanges.Count);
                 json = new JObject();
                 JObject obj = (JObject)json;
                 lints = new List<JsonLint>();
@@ -569,6 +593,7 @@ namespace Kbg.NppPluginNET
                     combinedLength += end - start;
                 if (wasAutotriggered && combinedLength > sizeThreshold)
                     return (ParserState.OK, null, false, DocumentType.NONE);
+                stopUsingSelections = false;
                 foreach ((int start, int end) in selRanges)
                 {
                     string selRange = Npp.GetSlice(start, end);
@@ -582,12 +607,17 @@ namespace Kbg.NppPluginNET
                         subJson = jsonParser.Parse(selRange);
                         lints.AddRange(jsonParser.lint.Select(x => new JsonLint(x.message, x.pos + start, x.curChar, x.severity)));
                         fatalErrors.Add(jsonParser.fatal);
-                        if (errorMessage == null)
-                            errorMessage = jsonParser.fatalError?.ToString();
+                        if (jsonParser.fatal)
+                        {
+                            if (errorMessage == null)
+                                errorMessage = jsonParser.fatalError?.ToString();
+                        }
                     }
+                    currentIndicator = ApplyAndSwapIndicator(currentIndicator, start, end - start);
                     string key = $"{start},{end}";
                     obj[key] = subJson;
                 }
+                Npp.editor.SetIndicatorCurrent(previouslySelectedIndicator);
             }
             if (!isRecursion && oneSelRange && SelectionManager.NoSelectionIsValidJson(json, !noTextSelected, fatalErrors))
             {
@@ -643,6 +673,34 @@ namespace Kbg.NppPluginNET
             info.comments = comments;
             jsonFileInfos[activeFname] = info;
             return (parserStateToSet, json, info.usesSelections, documentType);
+        }
+
+        private static int ApplyAndSwapIndicator(int currentIndicator, int start, int length)
+        {
+            Npp.editor.SetIndicatorCurrent(currentIndicator);
+            Npp.editor.IndicatorFillRange(start, length);
+            return currentIndicator == selectionRememberingIndicator1 ? selectionRememberingIndicator2 : selectionRememberingIndicator1;
+        }
+
+        private static void ClearPreviouslyRememberedSelections(int len, int numSelections)
+        {
+            if (selectionRememberingIndicatorsMayCollide && !hasWarnedSelectionRememberingIndicatorsMayCollide)
+            {
+                hasWarnedSelectionRememberingIndicatorsMayCollide = true;
+                string warning = $"JsonTools is using the indicators {selectionRememberingIndicator1} and {selectionRememberingIndicator2} to remember selections, " +
+                                "but one or both of those may collide with another plugin.\r\n" +
+                                "If you see this message and then you notice Notepad++ or a plugin start to behave oddly, " +
+                                "please consider creating an issue describing what happened in the JsonTools GitHub repository.";
+                MessageBox.Show(warning, "Possible issue with remembering selections", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            Npp.editor.SetIndicatorCurrent(selectionRememberingIndicator1);
+            Npp.editor.IndicatorClearRange(0, len);
+            if (numSelections > 1)
+            {
+                Npp.editor.SetIndicatorCurrent(selectionRememberingIndicator2);
+                Npp.editor.IndicatorClearRange(0, len);
+                Npp.editor.SetIndicatorCurrent(selectionRememberingIndicator1);
+            }
         }
 
         public static void SetStatusBarSection(ParserState parserState, string fname, JsonFileInfo info, DocumentType documentType, int lintCount)
@@ -804,13 +862,16 @@ namespace Kbg.NppPluginNET
         {
             var keyChanges = new Dictionary<string, (string newKey, JNode child)>();
             JsonFileInfo info;
+            Npp.editor.BeginUndoAction();
             if (usesSelections)
             {
                 var obj = (JObject)json;
                 int delta = 0;
                 pluginIsEditing = true;
-                Npp.editor.BeginUndoAction();
+                int previouslySelectedIndicator = Npp.editor.GetIndicatorCurrent();
                 var keyvalues = obj.children.ToArray();
+                ClearPreviouslyRememberedSelections(Npp.editor.GetLength(), keyvalues.Length);
+                int currentIndicator = selectionRememberingIndicator1;
                 Array.Sort(keyvalues, (kv1, kv2) => SelectionManager.StartEndCompareByStart(kv1.Key, kv2.Key));
                 foreach (KeyValuePair<string, JNode> kv in keyvalues)
                 {
@@ -822,6 +883,7 @@ namespace Kbg.NppPluginNET
                     int newCount = Encoding.UTF8.GetByteCount(printed);
                     Npp.editor.DeleteRange(newStart, oldLen);
                     Npp.editor.InsertText(newStart, printed);
+                    currentIndicator = ApplyAndSwapIndicator(currentIndicator, newStart, newCount);
                     int newEnd = newStart + newCount;
                     delta = newEnd - end;
                     keyChanges[kv.Key] = ($"{newStart},{newEnd}", kv.Value);
@@ -829,7 +891,7 @@ namespace Kbg.NppPluginNET
                 pluginIsEditing = false;
                 RenameAll(keyChanges, obj);
                 SelectionManager.SetSelectionsFromStartEnds(obj.children.Keys);
-                Npp.editor.EndUndoAction();
+                Npp.editor.SetIndicatorCurrent(previouslySelectedIndicator);
                 json = obj;
             }
             else if (TryGetInfoForFile(activeFname, out info) && info.documentType == DocumentType.INI && json is JObject obj)
@@ -852,10 +914,11 @@ namespace Kbg.NppPluginNET
                 Npp.editor.SetText(newText);
             }
             info = AddJsonForFile(activeFname, json);
+            Npp.RemoveTrailingSOH();
+            Npp.editor.EndUndoAction();
+            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             if (!usesSelections)
                 Npp.SetLangBasedOnDocType(false, false, info.documentType);
-            Npp.RemoveTrailingSOH();
-            lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             return keyChanges;
         }
 
@@ -872,99 +935,6 @@ namespace Kbg.NppPluginNET
                     obj[newKey] = child;
             }
             return obj;
-        }
-
-        static void ChangeJsonSelectionsBasedOnEdit(ScNotification notif)
-        {
-            int modType = notif.ModificationType;
-            if (pluginIsEditing
-                || notif.Length == IntPtr.Zero
-                || ((modType & 3) == 0) // is not a text change modification
-                || !TryGetInfoForFile(activeFname, out JsonFileInfo info)
-                || !info.usesSelections
-                || !(info.json is JObject obj))
-                return;
-#if DEBUG
-            //var modTypeFlagsSet = Npp.GetModificationTypeFlagsSet(modType);
-#endif // DEBUG
-            // just normal deletion/insertion of text (number of chars = notif.Length)
-            // for each saved selection, if its start is after notif.Position, increment start by notif.Length
-            // do the save for the end of each selection
-            int length = notif.Length.ToInt32();
-            int start = (int)notif.Position.Value;
-            int end = start + length;
-            if ((modType & 2) != 0) // text is being deleted, treat length as negative
-                length = -length;
-            bool isDeletion = length < 0;
-            if ((isDeletion && Npp.editor.GetLength() == 0)
-                // entire document is being erased, which invalidates all remembered selections
-                // we'll just clear them all and revert to whole-document mode
-                || obj.Length > settings.max_tracked_json_selections) // too many selections to track changes
-            {
-                if (!hasWarnedSelectionsForgotten)
-                {
-                    hasWarnedSelectionsForgotten = true;
-                    // use a separate thread to show the messagebox, to avoid weird side effects from
-                    // interrupting the main thread with a messagebox in the middle of overwriting the file
-                    new System.Threading.Thread(() => MessageBox.Show("JsonTools has forgotten all remembered selections.\r\n" +
-                                    "This happens when:\r\n" +
-                                    "* the entire document is erased or overwritten by something other than JsonTools OR\r\n" +
-                                    $"* you have more than {settings.max_tracked_json_selections} active selections (max_tracked_json_selections in settings)\r\n" +
-                                    "You will only receive this reminder the first time this happens.",
-                                    "JsonTools forgot all remembered selections.",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                    ).Start();
-                }
-                obj.children.Clear();
-                info.usesSelections = false;
-                jsonFileInfos[activeFname] = info;
-                return;
-            }
-            var keyChanges = new Dictionary<string, (string, JNode)>();
-            foreach (KeyValuePair<string, JNode> kv in obj.children)
-            {
-                int[] startEnd = SelectionManager.ParseStartEnd(kv.Key);
-                int selStart = startEnd[0], selEnd = startEnd[1];
-                bool endAfterSelEnd = end >= selEnd;
-                if (isDeletion && endAfterSelEnd && start <= selStart)
-                {
-                    // the entire selection has been deleted, so just remove it
-                    keyChanges[kv.Key] = (null, null);
-                }
-                else if (start < selEnd)
-                {
-                    if (isDeletion)
-                    {
-                        if (start < selStart)
-                        {
-                            if (end > selStart)
-                                // text was deleted from a point within the selection to a point before the selection
-                                // so the selection now starts where the deletion started
-                                selStart = start;
-                            else
-                                selStart += length; // the deletion was entirely before the selection
-                        }
-                    }
-                    else
-                    {
-                        if (start <= selStart)
-                            selStart += length; // text was inserted before the selection
-                        // TODO: this behavior can have some potentially undesirable consequences that I might want to fix
-                        // For example, if you have an array selected, and you delete the opening square brace
-                        // and then re-insert it in the same place, the re-inserted square brace is treated as text BEFORE
-                        // the selection rather than part of it.
-                        // However, I'd rather optimize for the (presumably) more common scenario
-                        // where you are inserting some text right before a JSON element and that text should be separate.
-                    }
-                    selEnd = end > selEnd && isDeletion
-                        ? start // we deleted a range from after the end of the JSON to some point inside it,
-                                // so the selection is truncated to the start of the deletion
-                        : selEnd + length; // the inserted/deleted text is wholly within the selection
-                    keyChanges[kv.Key] = ($"{selStart},{selEnd}", kv.Value);
-                }
-            }
-            info.json = RenameAll(keyChanges, obj);
-            jsonFileInfos[activeFname] = info;
         }
 
         /// <summary>
@@ -1290,20 +1260,20 @@ namespace Kbg.NppPluginNET
             }
             if (usesSelections)
             {
-                var obj = (JObject)json;
-                foreach (KeyValuePair<string, JNode> kv in obj.children)
-                {
-                    int[] startEnd = SelectionManager.ParseStartEnd(kv.Key);
-                    int start = startEnd[0], end = startEnd[1];
-                    if (pos >= start && pos <= end)
-                    {
-                        // each sub-json treats the start of its selection as position 0
-                        // this means we need to translate the position in the document into a position within that sub-json
-                        string formattedKey = JNode.FormatKey(kv.Key, style);    
-                        return formattedKey + kv.Value.PathToPosition(pos - start, style);
-                    }
-                }
-                return "";
+                // check if pos is inside a selection
+                // re-parse this remembered selection
+                // (we can't rely on the position-json mapping of the selection-remembering object being in sync with the document)
+                (int start, int end) = SelectionManager.GetEnclosingRememberedSelection(pos, selectionRememberingIndicator1, selectionRememberingIndicator2);
+                if (start < 0)
+                    return "";
+                string selText = Npp.GetSlice(start, end);
+                var parser = JsonParserFromSettings();
+                JNode selJson = parser.Parse(selText);
+                if (parser.fatal)
+                    return "";
+                // this remembered selection still contains JSON, so find the path to this position in it
+                string formattedKey = JNode.FormatKey($"{start},{end}", style);
+                return formattedKey + selJson.PathToPosition(pos - start, style);
             }
             else
                 return json.PathToPosition(pos, style);
@@ -1892,7 +1862,8 @@ namespace Kbg.NppPluginNET
         private static void DelayedParseAfterEditing(object s)
         {
             DateTime now = DateTime.UtcNow;
-            if (!settings.auto_validate
+            if (parseTimerIsWorking
+                || !settings.auto_validate
                 || !bufferFinishedOpening
                 || Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6 // current file too big
                 || lastEditedTime == DateTime.MaxValue // set when we don't want to edit it
@@ -1904,11 +1875,11 @@ namespace Kbg.NppPluginNET
             string fname = Npp.notepad.GetCurrentFilePath();
             string ext = Npp.FileExtension(fname);
             parseTimerIsWorking = true;
-            if (ValidateIfFilenameMatches(fname, wasTriggeredByParseTimer: true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
-                || !fileExtensionsToAutoParse.Contains(ext) // extension is not marked for auto-parsing, so stop
-                || (TryGetInfoForFile(fname, out JsonFileInfo info)
+            if ((TryGetInfoForFile(fname, out JsonFileInfo info)
                     && (info.documentType == DocumentType.INI || info.documentType == DocumentType.REGEX // file is already being parsed as regex or ini, so stop
-                        || info.usesSelections))) // file uses selections, so stop (because that could change the user's selections unexpectedly)
+                        || info.usesSelections)) // file uses selections, so stop (because that could change the user's selections unexpectedly)
+                || ValidateIfFilenameMatches(fname, wasTriggeredByParseTimer: true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
+                || !fileExtensionsToAutoParse.Contains(ext)) // extension is not marked for auto-parsing, so stop
             {
                 parseTimerIsWorking = false;
                 return;

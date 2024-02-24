@@ -57,10 +57,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. `minLength` and `maxLength` keywords are now considered when making [random JSON from schema](/docs/README.md#generating-random-json-from-a-schema)
 2. JsonTools now automatically navigates to the location of the fatal error when it fails to parse a document, unless the attempted parse was auto-triggered (say, by the [automatic parse after editing](/docs/README.md#automatically-check-for-errors-after-editing))
+3. [Selection-based mode](/docs/README.md#working-with-selections) now supports any number of remembered selections, and undo and redo actions usually do not cause selections to be forgotten.
 
 ### Changed 
 
 1. If the location of an error is between the `CR` and the `LF` of a `CR LF` newline, JsonTools will now always move before the `CR`, rather than placing the caret in between them, which could cause confusion.
+2. [Automatic JSON schema validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) does not happen when the document is in `REGEX` mode.
+3. Removed the `max_tracked_json_selections` setting, as it is no longer necessary.
+
+### Fixed
+
+1. Using the [Notepad++ find/replace form](https://npp-user-manual.org/docs/searching/#dialog-based-searching) in Notepad++ versions 8.6.3 and 8.6.4 now appropriately shifts remembered selections when in [selection-based mode](/docs/README.md#working-with-selections).
 
 ## [7.0.0] - 2024-02-09
 

@@ -573,6 +573,22 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         NPPM_ADDTOOLBARICON_FORDARKMODE = Constants.NPPMSG + 101,
 
+        // BOOL NPPM_ALLOCATEINDICATOR(int numberRequested, int* startNumber)
+        // Allocates an indicator number to a plugin: if a plugin needs to add an indicator,
+        // it has to use this message to get the indicator number, in order to prevent a conflict with the other plugins.
+        // wParam[in]: numberRequested is the number of ID you request for the reservation
+        // lParam[out]: startNumber will be set to the initial command ID if successful
+        // Return TRUE if successful, FALSE otherwise. startNumber will also be set to 0 if unsuccessful
+        //
+        // Example: If a plugin needs 1 indicator ID, the following code can be used :
+        //
+        //    int idBegin;
+        //    BOOL isAllocatedSuccessful = ::SendMessage(nppData._nppHandle, NPPM_ALLOCATEINDICATOR, 1, &idBegin);
+        //
+        // if isAllocatedSuccessful is TRUE, and value of idBegin is 7
+        // then indicator ID 7 is preserved by Notepad++, and it is safe to be used by the plugin.
+        NPPM_ALLOCATEINDICATOR = Constants.NPPMSG + 113,
+
         RUNCOMMAND_USER = Constants.WM_USER + 3000,
         NPPM_GETFULLCURRENTPATH = RUNCOMMAND_USER + FULL_CURRENT_PATH,
         NPPM_GETCURRENTDIRECTORY = RUNCOMMAND_USER + CURRENT_DIRECTORY,

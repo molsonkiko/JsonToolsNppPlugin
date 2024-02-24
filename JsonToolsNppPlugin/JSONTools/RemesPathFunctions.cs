@@ -954,7 +954,10 @@ namespace JSON_Tools.JSON_Tools
     /// </summary>
     public class ArgFunction
     {
-        private Func<List<JNode>, JNode> Function { get; }
+        /// <summary>
+        /// the function associated with this ArgFunction
+        /// </summary>
+        public Func<List<JNode>, JNode> Call { get; private set; }
         private Dtype[] inputTypes;
         public string name;
         public Dtype type;
@@ -1007,7 +1010,7 @@ namespace JSON_Tools.JSON_Tools
             ArgsTransform argsTransform = null,
             bool conditionalExecution = false)
         {
-            Function = function;
+            Call = function;
             this.name = name;
             this.type = type;
             this.maxArgs = maxArgs;
@@ -1030,11 +1033,6 @@ namespace JSON_Tools.JSON_Tools
                 ? inputTypes[inputTypes.Length - 1] // last type in inputTypes applies to all optional args for funcs with arbitrary numbers of args
                 : inputTypes[argNum])
                 | Dtype.UNKNOWN; // UNKNOWN is always a valid argument type.
-        }
-
-        public JNode Call(List<JNode> args)
-        {
-            return Function(args);
         }
         
         public override string ToString()

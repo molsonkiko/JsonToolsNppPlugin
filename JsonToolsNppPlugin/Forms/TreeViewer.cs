@@ -1260,7 +1260,7 @@ namespace JSON_Tools.Forms
             DocumentType oldDocumentType = GetDocumentType();
             if (oldDocumentType == newDocumentType)
                 return;
-            (_, JNode newJson, _, _) =Main.TryParseJson(newDocumentType);
+            (_, JNode newJson, _, _) = Main.TryParseJson(newDocumentType);
             JsonTreePopulate(newJson);
         }
 

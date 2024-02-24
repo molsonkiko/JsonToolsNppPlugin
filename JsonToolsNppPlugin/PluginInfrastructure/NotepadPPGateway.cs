@@ -43,6 +43,18 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		/// <param name="formHandle">the Handle attribute of a Windows form</param>
 		void RemoveModelessDialog(IntPtr formHandle);
 
+        /// <summary>
+        /// Introduced in Notepad++ 8.5.6.<br></br>
+        /// NPPM_ALLOCATEINDICATOR: allocate one or more unused indicator IDs,
+        /// which can then be assigned styles and used to style regions of text.<br></br>
+        /// returns false and sets indicators to null if numberOfIndicators is less than 1, or if the requested number of indicators could not be allocated.<br></br>
+        /// Otherwise, returns true, and sets indicators to an array of numberOfIndicators indicator IDs.<br></br>
+        /// See https://www.scintilla.org/ScintillaDoc.html#Indicators for more info on the indicator API.
+        /// </summary>
+        /// <param name="numberOfIndicators">number of consecutive indicator IDs to allocate</param>
+        /// <returns></returns>
+        bool AllocateIndicators(int numberOfIndicators, out int[] indicators);
+
     }
 
 	/// <summary>
@@ -256,7 +268,22 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		{
 			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETSTATUSBAR, (int)section, message);
 		}
-	}
+
+        public unsafe bool AllocateIndicators(int numberOfIndicators, out int[] indicators)
+        {
+            indicators = null;
+            if (numberOfIndicators < 1)
+                return false;
+            indicators = new int[numberOfIndicators];
+            fixed (int* indicatorsPtr = indicators)
+            {
+                IntPtr success = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_ALLOCATEINDICATOR, (IntPtr)numberOfIndicators, (IntPtr)indicatorsPtr);
+                for (int ii = 1; ii < numberOfIndicators; ii++)
+                    indicators[ii] = indicators[ii - 1] + 1;
+                return success != IntPtr.Zero;
+            }
+        }
+    }
 
 	/// <summary>
 	/// This class holds helpers for sending messages defined in the Resource_h.cs file. It is at the moment

@@ -159,6 +159,10 @@ __Note that your JSON selections (or lack thereof) are only remembered until you
     - *NOTE: starting in [v5.7](/CHANGELOG.md#570---2023-09-08), only multi-character selections that begin with a parse-able JSON document will cause the previous selections/lack thereof to be forgotten.*
     - For example, if you had the text `foo` selected, any version since 5.7 would ignore that selection because it does not begin with a valid JSON document.
     - However, the selection `[ blah` *would override old selections even though it's not valid JSON* because the JSON parser will parse it as an unterminated empty array.
+* For JsonTools *earlier than [v7.1](/CHANGELOG.md#710---unreleased-yyyy-mm-dd)*:
+    - doing a Notepad++ undo/redo action (Ctrl+Z or Ctrl+Y with default keybindings)
+    - performing any edit to the document when the number of remembered selections is greater than `max_tracked_json_selections`
+* For JsonTools *[v7.1](/CHANGELOG.md#710---unreleased-yyyy-mm-dd) or later*, undoing or redoing a plugin action will still cause remembered selections to be forgotten.
 
 You can move the cursor around, insert and delete characters, and the plugin will move or change the JSON selections accordingly.
 

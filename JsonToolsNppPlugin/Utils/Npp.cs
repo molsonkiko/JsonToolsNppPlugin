@@ -35,8 +35,8 @@ namespace JSON_Tools.Utils
 
         public static readonly bool nppVersionAtLeast8 = nppVersion[0] >= 8;
 
-        /// <summary>may matter for some UI tests</summary>
-        public static readonly bool nppVersionAtLeast8p5p5 = nppVersionStr.CompareTo("8.5.5") >= 0;
+        /// <summary>this is when NPPM_ALLOCATEINDICATORS was introduced</summary>
+        public static readonly bool nppVersionAtLeast8p5p6 = nppVersionStr.CompareTo("8.5.6") >= 0;
 
         /// <summary>
         /// append text to current doc, then append newline and move cursor

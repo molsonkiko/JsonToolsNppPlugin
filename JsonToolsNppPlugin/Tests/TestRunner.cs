@@ -121,7 +121,6 @@ namespace JSON_Tools.Tests
             var failures = new List<string>();
             var skipped = new List<string>();
             bool hasExplainedSkipLessThanNppV8 = false;
-            bool hasExplainedSkipLessThanNppV8p5p5 = false;
 
             foreach ((Func<bool> tester, string name, bool onlyIfNpp8Plus, bool onlyIfNpp8p5p5Plus) in tests)
             {
@@ -134,15 +133,6 @@ namespace JSON_Tools.Tests
                     {
                         hasExplainedSkipLessThanNppV8 = true;
                         Npp.AddLine("Skipping UI tests and all tests that would involve reading a file, because they would cause Notepad++ versions older than v8 to crash");
-                    }
-                    skipped.Add(name);
-                }
-                else if (onlyIfNpp8p5p5Plus && !Npp.nppVersionAtLeast8p5p5)
-                {
-                    if (!hasExplainedSkipLessThanNppV8p5p5)
-                    {
-                        hasExplainedSkipLessThanNppV8p5p5 = true;
-                        Npp.AddLine("Skipping UI tests because they are very slow for Notepad++ versions older than v8.5.5");
                     }
                     skipped.Add(name);
                 }

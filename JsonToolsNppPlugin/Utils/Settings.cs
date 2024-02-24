@@ -43,11 +43,6 @@ namespace JSON_Tools.Utils
             Category("Performance"), DefaultValue(4d)]
         public double max_file_size_MB_slow_actions { get; set; }
 
-        [Description("Maximum number of separate JSON selections to track changes for.\r\n" +
-                     "Files with more JSON selections can be handled, but changes outside of JSON tools will cause all selections to be forgotten"),
-            Category("Performance"), DefaultValue(1000)]
-        public int max_tracked_json_selections { get; set; }
-
         [Description("Automatically validate .json, .jsonc, and .jsonl files every 2 seconds, except very large files"),
             Category("Performance"), DefaultValue(false)]
         public bool auto_validate { get; set; }
