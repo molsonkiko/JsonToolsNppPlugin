@@ -181,8 +181,6 @@ namespace JSON_Tools.Forms
             {
                 // refresh error form based on current contents of current file
                 e.Handled = true;
-                if (Main.parseTimerIsWorking)
-                    return; // avoid race conditions
                 // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
                 bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
                 Main.settings.offer_to_show_lint = false;

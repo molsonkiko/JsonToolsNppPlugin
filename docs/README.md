@@ -799,7 +799,7 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
 
-Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are. To avoid very slow performance on files that do not match the schema, the validator will exit after it encounters 64 problems (configurable by the `max_schema_validation_problem` setting). Note that changes to the `max_schema_validation_problem` setting only take effect the next time you start Notepad++.
 
 As of version [4.11.2](/CHANGELOG.md#4112---2023-03-21), the recursion limit for validation is currently 64. Deeper JSON than that can't be validated, period. Very deep or recursive schemas will still compile.
 

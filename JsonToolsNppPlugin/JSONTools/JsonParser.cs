@@ -1525,7 +1525,8 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return arr;
                 }
-                for (; lastII < ii; lastII++)
+                int maxLastII = ii > inp.Length ? inp.Length : ii; 
+                for (; lastII < maxLastII; lastII++)
                 {
                     if (inp[lastII] == '\n')
                         lineNum++;

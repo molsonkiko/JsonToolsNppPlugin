@@ -61,7 +61,6 @@ namespace Kbg.NppPluginNET
                 "\"^$\":false" + // zero-length keys are not allowed
             "}}"), 0);
         // stuff for periodically parsing and possibly validating a file
-        public static bool parseTimerIsWorking = false;
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
@@ -576,13 +575,21 @@ namespace Kbg.NppPluginNET
                 }
                 else
                 {
-                    if (documentType == DocumentType.JSONL)
-                        json = jsonParser.ParseJsonLines(text);
-                    else
-                        json = jsonParser.Parse(text);
-                    fatalErrors.Add(jsonParser.fatal);
-                    errorMessage = jsonParser.fatalError?.ToString();
-                    lints = jsonParser.lint.ToList();
+                    try
+                    {
+                        if (documentType == DocumentType.JSONL)
+                            json = jsonParser.ParseJsonLines(text);
+                        else
+                            json = jsonParser.Parse(text);
+                        lints = jsonParser.lint.ToList();
+                        fatalErrors.Add(jsonParser.fatal);
+                        errorMessage = jsonParser.fatalError?.ToString();
+                    }
+                    catch (Exception ex)
+                    {
+                        lints = jsonParser.lint.ToList();
+                        errorMessage = HandleJsonParserError(text, fatalErrors, lints, jsonParser, ex);
+                    }
                     if (settings.remember_comments && jsonParser.comments != null)
                         comments = jsonParser.comments.ToList();
                 }
@@ -613,13 +620,21 @@ namespace Kbg.NppPluginNET
                     }
                     else
                     {
-                        subJson = jsonParser.Parse(selRange);
-                        lints.AddRange(jsonParser.lint.Select(x => new JsonLint(x.message, x.pos + start, x.curChar, x.severity)));
-                        fatalErrors.Add(jsonParser.fatal);
-                        if (jsonParser.fatal)
+                        try
                         {
-                            if (errorMessage == null)
-                                errorMessage = jsonParser.fatalError?.ToString();
+                            subJson = jsonParser.Parse(selRange);
+                            lints.AddRange(jsonParser.lint.Select(x => new JsonLint(x.message, x.pos + start, x.curChar, x.severity)));
+                            fatalErrors.Add(jsonParser.fatal);
+                            if (jsonParser.fatal)
+                            {
+                                if (errorMessage == null)
+                                    errorMessage = jsonParser.fatalError?.ToString();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            subJson = new JNode();
+                            errorMessage = HandleJsonParserError(selRange, fatalErrors, lints, jsonParser, ex);
                         }
                     }
                     currentIndicator = ApplyAndSwapIndicator(currentIndicator, start, end - start);
@@ -682,6 +697,26 @@ namespace Kbg.NppPluginNET
             info.comments = comments;
             jsonFileInfos[activeFname] = info;
             return (parserStateToSet, json, info.usesSelections, documentType);
+        }
+
+        private static string HandleJsonParserError(string text, List<bool> fatalErrors, List<JsonLint> lints, JsonParser jsonParser, Exception ex)
+        {
+            fatalErrors.Add(true);
+            char errorChar;
+            int errorPos;
+            if (jsonParser.ii >= text.Length)
+            {
+                errorChar = '\x00';
+                errorPos = text.Length;
+            }
+            else
+            {
+                errorPos = jsonParser.ii;
+                errorChar = text[errorPos];
+            }
+            string errorMessage = RemesParser.PrettifyException(ex);
+            lints.Add(new JsonLint(errorMessage, errorPos, errorChar, ParserState.FATAL));
+            return errorMessage;
         }
 
         private static int ApplyAndSwapIndicator(int currentIndicator, int start, int length)
@@ -1720,8 +1755,6 @@ namespace Kbg.NppPluginNET
         /// <param name="fname"></param>
         static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false, bool wasTriggeredByParseTimer = false)
         {
-            if (!wasTriggeredByParseTimer && parseTimerIsWorking)
-                return false; // avoid race conditions
             if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
                 return false;
             foreach (string schemaFname in schemasToFnamePatterns.children.Keys)
@@ -1871,8 +1904,7 @@ namespace Kbg.NppPluginNET
         private static void DelayedParseAfterEditing(object s)
         {
             DateTime now = DateTime.UtcNow;
-            if (parseTimerIsWorking
-                || !settings.auto_validate
+            if (!settings.auto_validate
                 || !bufferFinishedOpening
                 || Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6 // current file too big
                 || lastEditedTime == DateTime.MaxValue // set when we don't want to edit it
@@ -1883,19 +1915,14 @@ namespace Kbg.NppPluginNET
             // and also check if the file matches a schema validation pattern
             string fname = Npp.notepad.GetCurrentFilePath();
             string ext = Npp.FileExtension(fname);
-            parseTimerIsWorking = true;
             if ((TryGetInfoForFile(fname, out JsonFileInfo info)
                     && (info.documentType == DocumentType.INI || info.documentType == DocumentType.REGEX // file is already being parsed as regex or ini, so stop
                         || info.usesSelections)) // file uses selections, so stop (because that could change the user's selections unexpectedly)
                 || ValidateIfFilenameMatches(fname, wasTriggeredByParseTimer: true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
                 || !fileExtensionsToAutoParse.Contains(ext)) // extension is not marked for auto-parsing, so stop
-            {
-                parseTimerIsWorking = false;
                 return;
-            }
             // filename matches but it's not associated with a schema or being parsed as non-JSON/JSONL, so just parse normally
             TryParseJson(ext == "jsonl" ? DocumentType.JSONL : DocumentType.JSON, true, ignoreSelections:true);
-            parseTimerIsWorking = false;
         }
         #endregion
     }

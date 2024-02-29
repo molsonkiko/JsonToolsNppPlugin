@@ -144,7 +144,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         private void RegexSearchForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape || e.KeyCode == Keys.Tab || e.KeyCode == Keys.Space)
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Escape || e.KeyCode == Keys.Tab)
                 e.SuppressKeyPress = true;
         }
 

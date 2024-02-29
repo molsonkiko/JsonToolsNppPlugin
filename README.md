@@ -52,11 +52,22 @@ Alternatively, you can follow these [installation instructions](https://npp-user
 
 ## System Requirements ##
 
-Every version of the plugin works on Notepad++ 8.4.1 onward.
+Every version of the plugin works on Notepad++ 8.4.1 onward, although [some versions of Notepad++ have problems](#problematic-notepad-versions).
 
 Versions of the plugin from [4.10.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/e2ffde3a5e529d94f018930dc5ba5e0b077e793c) onward are compatible with older Notepad++ (tested for [7.3.3](https://notepad-plus-plus.org/downloads/v7.3.3/), may be compatible with even older).
 
 Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#3721---2022-10-20) should work natively on Windows 8 or later (note: this is untested), or you must install [.NET Framework 4.0](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40). Every version beginning with [4.0.0](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#400---2022-10-24) works on [Windows 10 May 2019 update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) or later, or you must install [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48).
+
+### Problematic Notepad++ versions ###
+
+This is *not* a complete list of known issues with JsonTools. For that, see the [issue tracker](https://github.com/molsonkiko/JsonToolsNppPlugin/issues) and the [Changelog](/CHANGELOG.md). This is a list of issues that emerged in recent versions of Notepad++.
+
+* Ctrl+C and Ctrl+X do not work inside of forms for all versions of JsonTools earlier than [v7.0.0](/CHANGELOG.md#700---2024-02-09) on the following Notepad++ versions:
+    * Notepad++ 8.6 and 8.6.1
+    * Notepad++ 8.6.2 onward, when [the new Notepad++ setting `Enable Copy/Cut Line without selection`](https://npp-user-manual.org/docs/editing/#context-awareness) is turned *off*.
+* Using the [Notepad++ find/replace form](https://npp-user-manual.org/docs/searching/#dialog-based-searching) can cause problems with [remembered selections](/docs/README.md#working-with-selections), and may cause issues with [RemesPath queries](/docs/README.md#remespath),*under the following circumstances:*
+    * Notepad++ 8.6.3 and 8.6.4, for all versions of JsonTools.
+    * Notepad++ 8.6.5, for JsonTools earlier than [v7.1.0](/CHANGELOG.md#710---unreleased-yyyy-mm-dd).
 
 ## Alternative tools ##
 

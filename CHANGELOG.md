@@ -30,14 +30,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Changed
 
-- If there's a validation error inside of an `anyOf` list of schemas (i.e. JSON doesn't validate under *any* of the schemas), the error message is rather uninformative, and says only "the JSON didn't validate under any of the schemas", but not *why* it didn't validate.
 - *(Note to future devs)*: Resist the temptation to fool around with the StringBuilder initial capacity for the ToString method of `Dtype.STR` JNodes. I tried, and it doesn't help performance.
 
 ### To Be Fixed
 
 - Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
-- It seems like there may be a bug (haven't been able to reproduce it recently) where under some conditions, [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) causes an endless loop where the document is re-validated over and over again for no apparent reason.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
 - When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
@@ -50,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe refresh error form automatically when doing the automatic parse (but not schema validation) after editing?
+- Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
 ## [7.1.0] - (UNRELEASED) YYYY-MM-DD
 
@@ -57,7 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. `minLength` and `maxLength` keywords are now considered when making [random JSON from schema](/docs/README.md#generating-random-json-from-a-schema)
 2. JsonTools now automatically navigates to the location of the fatal error when it fails to parse a document, unless the attempted parse was auto-triggered (say, by the [automatic parse after editing](/docs/README.md#automatically-check-for-errors-after-editing))
-3. [Selection-based mode](/docs/README.md#working-with-selections) now supports any number of remembered selections, and undo and redo actions usually do not cause selections to be forgotten.
+3. [Selection-based mode](/docs/README.md#working-with-selections) now supports any number of remembered selections, and undo and redo actions usually do not cause selections to be forgotten. Performance also appears to be better.
 
 ### Changed 
 
@@ -68,6 +67,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Using the [Notepad++ find/replace form](https://npp-user-manual.org/docs/searching/#dialog-based-searching) in Notepad++ versions 8.6.3 and 8.6.4 now appropriately shifts remembered selections when in [selection-based mode](/docs/README.md#working-with-selections).
+2. Bug where the space key did not work on the [regex search form](/docs/README.md#regex-search-form).
+3. Bug where [automatic JSON schema validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) sometimes caused a deadlock that disabled some functionalities until Notepad++ closed.
+4. Possible plugin crash due to index-out-of-bounds error during parsing of [JSON Lines](/docs/README.md#json-lines-documents).
 
 ## [7.0.0] - 2024-02-09
 
