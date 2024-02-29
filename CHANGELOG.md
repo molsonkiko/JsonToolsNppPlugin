@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#700---2024-02-09) to this project will be documented in this file.
+All [notable changes](#710---2024-02-28) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Maybe refresh error form automatically when doing the automatic parse (but not schema validation) after editing?
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [7.1.0] - (UNRELEASED) YYYY-MM-DD
+## [7.1.0] - 2024-02-28
 
 ### Added
 

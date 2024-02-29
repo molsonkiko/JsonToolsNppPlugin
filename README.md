@@ -67,7 +67,7 @@ This is *not* a complete list of known issues with JsonTools. For that, see the 
     * Notepad++ 8.6.2 onward, when [the new Notepad++ setting `Enable Copy/Cut Line without selection`](https://npp-user-manual.org/docs/editing/#context-awareness) is turned *off*.
 * Using the [Notepad++ find/replace form](https://npp-user-manual.org/docs/searching/#dialog-based-searching) can cause problems with [remembered selections](/docs/README.md#working-with-selections), and may cause issues with [RemesPath queries](/docs/README.md#remespath),*under the following circumstances:*
     * Notepad++ 8.6.3 and 8.6.4, for all versions of JsonTools.
-    * Notepad++ 8.6.5, for JsonTools earlier than [v7.1.0](/CHANGELOG.md#710---unreleased-yyyy-mm-dd).
+    * Notepad++ 8.6.5, for JsonTools earlier than [v7.1.0](/CHANGELOG.md#710---2024-02-28).
 
 ## Alternative tools ##
 
