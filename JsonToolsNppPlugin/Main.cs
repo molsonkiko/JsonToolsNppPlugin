@@ -15,7 +15,7 @@ using JSON_Tools.Utils;
 using JSON_Tools.Forms;
 using JSON_Tools.Tests;
 using System.Linq;
-using PluginNetResources = NppPluginNET.Properties.Resources;
+using PluginNetResources = JSON_Tools.Properties.Resources;
 
 namespace Kbg.NppPluginNET
 {
@@ -2052,7 +2052,7 @@ namespace Kbg.NppPluginNET
 
         public void Dispose()
         {
-            if (tv != null)
+            if (tv != null && !tv.IsDisposed)
             {
                 Npp.notepad.HideDockingForm(tv);
                 tv.Close();

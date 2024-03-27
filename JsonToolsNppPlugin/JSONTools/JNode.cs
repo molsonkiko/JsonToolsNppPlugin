@@ -1354,10 +1354,11 @@ namespace JSON_Tools.JSON_Tools
                 JNode child = children[key];
                 sbLength += StrToString(key, true).Length + 2; // json-encoded key, then ": "
                 sbLength = child.CompressedLengthAndPositionsWithinThresholds(sbLength, maxInitialPosition, maxSbLen);
-                if (sbLength == -1)
+                if (sbLength == -1 || sbLength >= maxSbLen)
                     return -1;
-                if (ctr < children.Count - 1)
-                    sbLength += 2; // ", "
+                sbLength += ctr < children.Count - 1
+                    ? 2 // ", " between key-value pairs
+                    : 1; // closing "}"
             }
             return sbLength;
         }
@@ -1696,10 +1697,11 @@ namespace JSON_Tools.JSON_Tools
             {
                 JNode child = children[ii];
                 sbLength = child.CompressedLengthAndPositionsWithinThresholds(sbLength, maxInitialPosition, maxSbLen);
-                if (sbLength == -1)
+                if (sbLength == -1 || sbLength >= maxSbLen)
                     return -1;
-                if (ii < children.Count - 1)
-                    sbLength += 2; // ", "
+                sbLength += ii < children.Count - 1
+                    ? 2 // ", " between elements
+                    : 1; // closing "]"
             }
             return sbLength;
         }
