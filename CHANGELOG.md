@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Minor bug in [PPrint remembering comments](/docs/README.md#remember_comments) algorithm implementation that caused some arrays and objects to be compressed when they should have been pretty-printed.
+2. Fix bug where tests could crash under some circumstances due to filesystem weirdness making it impossible to find test files.
 
 ## [7.1.0] - 2024-02-28
 

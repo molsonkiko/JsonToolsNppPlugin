@@ -3,6 +3,7 @@ A test runner for all of this package.
 */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
@@ -19,7 +20,7 @@ namespace JSON_Tools.Tests
             string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()} on Notepad++ {Npp.nppVersionStr}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
             Npp.AddLine(header);
 
-            string bigRandomFname = @"plugins\JsonTools\testfiles\big_random.json";
+            string bigRandomFname = Path.Combine(Npp.pluginDllDirectory, "testfiles", "big_random.json");
             var tests = new (Func<bool> tester, string name, bool onlyIfNpp8Plus, bool onlyIfNpp8p5p5Plus)[]
             {
                 (JsonParserTester.TestJNodeCopy, "JNode Copy method", false, false),

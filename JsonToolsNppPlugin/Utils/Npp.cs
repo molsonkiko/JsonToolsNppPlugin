@@ -39,6 +39,14 @@ namespace JSON_Tools.Utils
         public static readonly bool nppVersionAtLeast8p5p6 = nppVersionStr.CompareTo("8.5.6") >= 0;
 
         /// <summary>
+        /// the directory containing of the plugin DLL (i.e., the DLL that this code compiles into)<br></br>
+        /// usually Path.Combine(notepad.GetNppPath(), "plugins", Main.PluginName) would work just as well,<br></br>
+        /// but under some weird circumstances (see this GitHub issue comment: https://github.com/molsonkiko/NppCSharpPluginPack/issues/5#issuecomment-1982167513)<br></br>
+        /// it can fail.
+        /// </summary>
+        public static readonly string pluginDllDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+        /// <summary>
         /// append text to current doc, then append newline and move cursor
         /// </summary>
         /// <param name="inp"></param>

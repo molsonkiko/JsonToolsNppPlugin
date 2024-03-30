@@ -11,9 +11,10 @@ namespace JSON_Tools.Tests
         {
             int ii = 0;
             int testsFailed = 0;
-            var exampleIniFname = @"plugins\JsonTools\testfiles\small\example_ini.ini";
-            var exampleIniReformattedFname = @"plugins\JsonTools\testfiles\small\example_ini_reformatted.ini";
-            var exampleJsonFname = @"plugins\JsonTools\testfiles\small\example_ini.json";
+            var smalldir = Path.Combine(Npp.pluginDllDirectory, "testfiles", "small");
+            var exampleIniFname = Path.Combine(smalldir, "example_ini.ini");
+            var exampleIniReformattedFname = Path.Combine(smalldir, "example_ini_reformatted.ini");
+            var exampleJsonFname = Path.Combine(smalldir, "example_ini.json");
             string exampleJsonText = null;
             string exampleIniText = null;
             string exampleIniReformattedText = null;

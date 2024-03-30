@@ -781,7 +781,7 @@ namespace JSON_Tools.Tests
                 ),
             };
             string randomTweetText = null, tweetSchemaText = null, badRandomTweetText = null;
-            string testfilesPath = @"plugins\JsonTools\testfiles\";
+            string testfilesPath = Path.Combine(Npp.pluginDllDirectory, "testfiles") + "\\";
             JNode badRandomTweet = null;
             try
             {

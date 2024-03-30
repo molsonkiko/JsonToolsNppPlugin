@@ -238,7 +238,7 @@ Performance tests for RemesPath ({description})
         public static bool BenchmarkRandomJsonAndSchemaValidation(int numTrials)
         {
             var parser = new JsonParser();
-            var tweetSchema = (JObject)parser.Parse(File.ReadAllText(@"plugins\JsonTools\testfiles\tweet_schema.json"));
+            var tweetSchema = (JObject)parser.Parse(File.ReadAllText(Path.Combine(Npp.pluginDllDirectory, "testfiles", "tweet_schema.json")));
             // restrict to exactly 15 tweets for consistency and 3 items per other array for consistency 
             int numTweets = 15;
             tweetSchema["minItems"] = new JNode((long)numTweets, Dtype.INT, 0);

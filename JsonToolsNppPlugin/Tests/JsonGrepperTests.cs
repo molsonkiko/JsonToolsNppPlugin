@@ -17,7 +17,7 @@ namespace JSON_Tools.Tests
             DirectoryInfo smalldir;
             try
             {
-                smalldir = new DirectoryInfo(@"plugins\JsonTools\testfiles\small");
+                smalldir = new DirectoryInfo(Path.Combine(Npp.pluginDllDirectory, "testfiles", "small"));
             }
             catch
             {

@@ -93,12 +93,7 @@ namespace JSON_Tools.Forms
                     "userDefineLangs"));
                 if (userDefinedLangPath.Exists)
                 {
-                    FileInfo dsonUDLPath = new FileInfo(Path.Combine(
-                        Npp.notepad.GetNppPath(),
-                        "plugins",
-                        "JsonTools",
-                        "DSON UDL.xml"
-                    ));
+                    FileInfo dsonUDLPath = new FileInfo(Path.Combine(Npp.pluginDllDirectory, "DSON UDL.xml"));
                     string targetPath = Path.Combine(userDefinedLangPath.FullName, "dson.xml");
                     if (dsonUDLPath.Exists && !File.Exists(targetPath))
                     {
