@@ -76,6 +76,11 @@ namespace Kbg.NppPluginNET
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
         private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl", "json5" };
         private static bool bufferFinishedOpening = false;
+        ///// <summary>
+        ///// this form is always created on the main thread, so mainThreadForm.Invoke(X) could be a way to call X on the main thread.<br></br>
+        ///// I am not using this approach at present because it appears to have a noticeable (and annoying) impact on Notepad++ startup.
+        ///// </summary>
+        //public static Form mainThreadForm;
         // toolbar icons
         static Icon dockingFormIcon = null;
         // indicators (used for selection remembering)
@@ -682,6 +687,7 @@ namespace Kbg.NppPluginNET
                     if (errorForm != null)
                         Npp.notepad.HideDockingForm(errorForm);
                     OpenErrorForm(activeFname, true);
+                    //mainThreadForm.Invoke(new Action(() => OpenErrorForm(activeFname, true)));
                 }
             }
             if (fatal)
@@ -1592,7 +1598,8 @@ namespace Kbg.NppPluginNET
             if (!validates && problems.Count > 0)
             {
                 JsonLint firstProblem = problems[0];
-                Npp.editor.GoToLegalPos(firstProblem.pos);
+                if (!wasAutotriggered)
+                    Npp.editor.GoToLegalPos(firstProblem.pos);
                 MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem 1 of {problems.Count}:\n{firstProblem}",
                     "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;

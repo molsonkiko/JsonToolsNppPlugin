@@ -59,12 +59,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. Made it so that reloading the [error form](/docs/README.md#error-form-and-status-bar) by pressing `Enter` would not cause certain message boxes to appear, to eliminate a potential "infinite" loop where the user would hit `Enter` to close the message box, and that moved focus back to the error form, which then repeated the cycle when they lifted the `Enter` key.
+2. [Automatic validation](/docs/README.md#automatically-check-for-errors-after-editing) when `auto_validate` is true no longer opens the prompt asking if user wants to open the error form (if [`offer_to_show_lint`](/docs/README.md#parser-settings) is true), because that could cause Notepad++ to crash or hang forever (see [issue 60](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/60#issuecomment-2065419075)).
+3. Made it so that automatic JSON schema validation (that is, any validation not manually invoked by the plugin menu command) no longer causes the caret to move to the location of the first schema validation error.
 
 ### Fixed
 
-1. Bug where opening error form could sometimes cause Notepad++ to crash if the [`auto_validate` setting](/docs/README.md#automatically-check-for-errors-after-editing) was true.
-2. Minor bug in [PPrint remembering comments](/docs/README.md#remember_comments) algorithm implementation that caused some arrays and objects to be compressed when they should have been pretty-printed.
-3. Fix bug where tests could crash under some circumstances due to filesystem weirdness making it impossible to find test files.
+1. Minor bug in [PPrint remembering comments](/docs/README.md#remember_comments) algorithm implementation that caused some arrays and objects to be compressed when they should have been pretty-printed.
+2. Fix bug where tests could crash under some circumstances due to filesystem weirdness making it impossible to find test files.
 
 ## [7.1.0] - 2024-02-28
 

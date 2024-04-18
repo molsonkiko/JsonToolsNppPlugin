@@ -19,6 +19,7 @@ namespace JSON_Tools.Forms
         public const int LINT_MAX_ROW_COUNT = 5000;
         public string fname;
         public List<JsonLint> lints;
+        private bool isRepopulatingErrorGrid;
 
         public ErrorForm(string fname, List<JsonLint> lints)
         {
@@ -41,6 +42,7 @@ namespace JSON_Tools.Forms
                 Main.OpenErrorForm(fname, false);
                 return;
             }
+            isRepopulatingErrorGrid = true;
             this.fname = fname;
             this.lints = lints;
             Text = "JSON errors in current file";
@@ -78,12 +80,15 @@ namespace JSON_Tools.Forms
                     cycler++;
                 }
             }
+            isRepopulatingErrorGrid = false;
             if (wasBig)
                 Npp.notepad.ShowDockingForm(this);
         }
 
         private void ErrorGrid_CellEnter(object sender, DataGridViewCellEventArgs e)
         {
+            if (isRepopulatingErrorGrid)
+                return;
             int rowIndex = e.RowIndex;
             if (!IsValidRowIndex(rowIndex))
                 return;
