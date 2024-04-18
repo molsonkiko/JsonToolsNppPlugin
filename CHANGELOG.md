@@ -52,10 +52,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [7.2.0] - (UNRELEASED) YYYY-MM-DD
 
+### Added
+
+1. [`Check JSON syntax now` command](/docs/README.md#check-json-syntax-now).
+
+### Changed
+
+1. Made it so that reloading the [error form](/docs/README.md#error-form-and-status-bar) by pressing `Enter` would not cause certain message boxes to appear, to eliminate a potential "infinite" loop where the user would hit `Enter` to close the message box, and that moved focus back to the error form, which then repeated the cycle when they lifted the `Enter` key.
+
 ### Fixed
 
-1. Minor bug in [PPrint remembering comments](/docs/README.md#remember_comments) algorithm implementation that caused some arrays and objects to be compressed when they should have been pretty-printed.
-2. Fix bug where tests could crash under some circumstances due to filesystem weirdness making it impossible to find test files.
+1. Bug where opening error form could sometimes cause Notepad++ to crash if the [`auto_validate` setting](/docs/README.md#automatically-check-for-errors-after-editing) was true.
+2. Minor bug in [PPrint remembering comments](/docs/README.md#remember_comments) algorithm implementation that caused some arrays and objects to be compressed when they should have been pretty-printed.
+3. Fix bug where tests could crash under some circumstances due to filesystem weirdness making it impossible to find test files.
 
 ## [7.1.0] - 2024-02-28
 

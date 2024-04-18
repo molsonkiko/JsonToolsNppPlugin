@@ -181,19 +181,25 @@ namespace JSON_Tools.Forms
             {
                 // refresh error form based on current contents of current file
                 e.Handled = true;
+                Main.errorFormTriggeredParse = true;
                 // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
                 bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
                 Main.settings.offer_to_show_lint = false;
                 Main.TryParseJson(preferPreviousDocumentType:true);
-                Main.settings.offer_to_show_lint = previousOfferToShowLint;
                 if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
                     && info.lints != null)
                 {
                     if (info.filenameOfMostRecentValidatingSchema is null)
                         Reload(Main.activeFname, info.lints);
                     else
+                    {
                         Main.ValidateJson(info.filenameOfMostRecentValidatingSchema, false);
+                        if (Main.TryGetInfoForFile(Main.activeFname, out info) && info.lints != null && info.statusBarSection != null && info.statusBarSection.Contains("fatal errors"))
+                            Reload(Main.activeFname, info.lints);
+                    }
                 }
+                Main.settings.offer_to_show_lint = previousOfferToShowLint;
+                Main.errorFormTriggeredParse = false;
                 return;
             }
             else if (e.KeyCode == Keys.Escape)

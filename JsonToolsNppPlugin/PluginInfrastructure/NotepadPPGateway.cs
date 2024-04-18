@@ -170,16 +170,16 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 
 		public void HideDockingForm(System.Windows.Forms.Form form)
 		{
-			Win32.SendMessage(PluginBase.nppData._nppHandle,
+			form.Invoke(new Action(() => Win32.SendMessage(PluginBase.nppData._nppHandle,
 					(uint)(NppMsg.NPPM_DMMHIDE),
-					0, form.Handle);
+					0, form.Handle)));
 		}
 
 		public void ShowDockingForm(System.Windows.Forms.Form form)
 		{
-			Win32.SendMessage(PluginBase.nppData._nppHandle,
+			form.Invoke(new Action(() => Win32.SendMessage(PluginBase.nppData._nppHandle,
 					(uint)(NppMsg.NPPM_DMMSHOW),
-					0, form.Handle);
+					0, form.Handle)));
 		}
 
 		public Color GetDefaultForegroundColor()

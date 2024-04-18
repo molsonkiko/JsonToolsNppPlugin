@@ -48,6 +48,16 @@ namespace Kbg.NppPluginNET
         public static SortForm sortForm = null;
         // error form stuff
         public static ErrorForm errorForm = null;
+        /// <summary>
+        /// we need this boolean to avoid "infinite" loops as follows:<br></br>
+        /// 1. The user presses Enter in the error form to parse the document.<br></br>
+        /// 2. the parse fails<br></br>
+        /// 3. the user is shown a dialog box warning them that the parse failed.<br></br>
+        /// 4. the user presses Enter to close the dialog box<br></br>
+        /// 5. focus returns to the error form<br></br>
+        /// 6. the user releases the Enter key, triggering the ErrorForm_KeyUp event again and returning to step 1.
+        /// </summary>
+        public static bool errorFormTriggeredParse = false;
         // regex search to json stuff
         public static RegexSearchForm regexSearchForm = null;
         // schema auto-validation stuff
@@ -108,32 +118,33 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C)); compressId = 2;
             PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
             PluginBase.SetCommand(4, "Select every val&id JSON in selection", SelectEveryValidJson);
+            PluginBase.SetCommand(5, "Chec&k JSON syntax now", CheckJsonSyntaxNow);
             // Here you insert a separator
-            PluginBase.SetCommand(5, "---", null);
-            PluginBase.SetCommand(6, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 6;
-            PluginBase.SetCommand(7, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 7;
-            PluginBase.SetCommand(8, "Sort arra&ys", OpenSortForm); sortFormId = 8;
-            PluginBase.SetCommand(9, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
-            PluginBase.SetCommand(10, "---", null);
-            PluginBase.SetCommand(11, "&Validate JSON against JSON schema", () => ValidateJson());
-            PluginBase.SetCommand(12, "Choose schemas to automatically validate &filename patterns", MapSchemasToFnamePatterns);
-            PluginBase.SetCommand(13, "Generate sc&hema from JSON", GenerateJsonSchema);
-            PluginBase.SetCommand(14, "Generate &random JSON from schema", GenerateRandomJson);
-            PluginBase.SetCommand(15, "---", null);
-            PluginBase.SetCommand(16, "Run &tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(17, "A&bout", ShowAboutForm); AboutFormId = 17;
-            PluginBase.SetCommand(18, "See most recent syntax &errors in this file", () => OpenErrorForm(activeFname, false)); errorFormId = 18;
-            PluginBase.SetCommand(19, "JSON to YAML", DumpYaml);
-            PluginBase.SetCommand(20, "---", null);
-            PluginBase.SetCommand(21, "Parse JSON Li&nes document", () => OpenJsonTree(DocumentType.JSONL));
-            PluginBase.SetCommand(22, "&Array to JSON Lines", DumpJsonLines);
-            PluginBase.SetCommand(23, "---", null);
-            PluginBase.SetCommand(24, "D&ump selected text as JSON string(s)", DumpSelectedTextAsJsonString);
-            PluginBase.SetCommand(25, "Dump JSON string(s) as ra&w text", DumpSelectedJsonStringsAsText);
-            PluginBase.SetCommand(26, "---", null);
-            PluginBase.SetCommand(27, "Open tree for &INI file", () => OpenJsonTree(DocumentType.INI));
-            PluginBase.SetCommand(28, "---", null);
-            PluginBase.SetCommand(29, "Rege&x search to JSON", RegexSearchToJson);
+            PluginBase.SetCommand(6, "---", null);
+            PluginBase.SetCommand(7, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 7;
+            PluginBase.SetCommand(8, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 8;
+            PluginBase.SetCommand(9, "Sort arra&ys", OpenSortForm); sortFormId = 9;
+            PluginBase.SetCommand(10, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(11, "---", null);
+            PluginBase.SetCommand(12, "&Validate JSON against JSON schema", () => ValidateJson());
+            PluginBase.SetCommand(13, "Choose schemas to automatically validate &filename patterns", MapSchemasToFnamePatterns);
+            PluginBase.SetCommand(14, "Generate sc&hema from JSON", GenerateJsonSchema);
+            PluginBase.SetCommand(15, "Generate &random JSON from schema", GenerateRandomJson);
+            PluginBase.SetCommand(16, "---", null);
+            PluginBase.SetCommand(17, "Run &tests", async () => await TestRunner.RunAll());
+            PluginBase.SetCommand(18, "A&bout", ShowAboutForm); AboutFormId = 18;
+            PluginBase.SetCommand(19, "See most recent syntax &errors in this file", () => OpenErrorForm(activeFname, false)); errorFormId = 19;
+            PluginBase.SetCommand(20, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(21, "---", null);
+            PluginBase.SetCommand(22, "Parse JSON Li&nes document", () => OpenJsonTree(DocumentType.JSONL));
+            PluginBase.SetCommand(23, "&Array to JSON Lines", DumpJsonLines);
+            PluginBase.SetCommand(24, "---", null);
+            PluginBase.SetCommand(25, "D&ump selected text as JSON string(s)", DumpSelectedTextAsJsonString);
+            PluginBase.SetCommand(26, "Dump JSON string(s) as ra&w text", DumpSelectedJsonStringsAsText);
+            PluginBase.SetCommand(27, "---", null);
+            PluginBase.SetCommand(28, "Open tree for &INI file", () => OpenJsonTree(DocumentType.INI));
+            PluginBase.SetCommand(29, "---", null);
+            PluginBase.SetCommand(30, "Rege&x search to JSON", RegexSearchToJson);
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -660,7 +671,9 @@ namespace Kbg.NppPluginNET
             else
                 info.usesSelections |= !noTextSelected;
             info.lints = lints;
-            if (lintCount > 0 && settings.offer_to_show_lint)
+            ParserState parserStateToSet = fatal ? ParserState.FATAL : jsonParser.state;
+            SetStatusBarSection(parserStateToSet, fname, info, documentType, lintCount);
+            if (lintCount > 0 && settings.offer_to_show_lint && !wasAutotriggered)
             {
                 string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))";
                 if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
@@ -677,13 +690,12 @@ namespace Kbg.NppPluginNET
                 if (lintCount > 0 && noTextSelected && !wasAutotriggered)
                     Npp.editor.GoToLegalPos(lints[lintCount - 1].pos);
                 // unacceptable error, show message box
-                MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
-                                $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                if (!errorFormTriggeredParse)
+                    MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
+                                    $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
             }
-            ParserState parserStateToSet = fatal ? ParserState.FATAL : jsonParser.state;
-            SetStatusBarSection(parserStateToSet, fname, info, documentType, lintCount);
             if (info.tv != null)
             {
                 info.tv.Invoke(new Action(() =>
@@ -981,6 +993,14 @@ namespace Kbg.NppPluginNET
             return obj;
         }
 
+        public static void CheckJsonSyntaxNow()
+        {
+            string curFname = Npp.notepad.GetCurrentFilePath();
+            (ParserState parserState, _, _, _) = TryParseJson(Npp.FileExtension(curFname) == "jsonl" ? DocumentType.JSONL : DocumentType.JSON);
+            if (parserState == ParserState.FATAL)
+                RefreshErrorFormInOwnThread(curFname);
+        }
+
         /// <summary>
         /// if there are one or more selections, dump each selection as a JSON string on a separate line.<br></br>
         /// Otherwise just dump the whole document on the same line.
@@ -1251,6 +1271,19 @@ namespace Kbg.NppPluginNET
             Npp.notepad.ShowDockingForm(form);
         }
 
+        private static void RefreshErrorFormInOwnThread(string fname)
+        {
+            if (errorForm == null)
+                return;
+            errorForm.Invoke(new Action(() =>
+            {
+                if (errorForm.IsDisposed || !TryGetInfoForFile(fname, out JsonFileInfo info) || info.lints == null)
+                    return;
+                errorForm.Reload(fname, info.lints);
+                Npp.editor.GrabFocus();
+            }));
+        }
+
         public static void CopyPathToCurrentPosition()
         {
             int pos = Npp.editor.GetCurrentPos();
@@ -1515,12 +1548,15 @@ namespace Kbg.NppPluginNET
         /// or if it failed, where the first error was.<br></br>
         /// If ignoreSelections, always validate the entire file even the selected text is valid JSON.
         /// </summary>
-        public static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true, bool ignoreSelections = false)
+        public static void ValidateJson(string schemaPath = null, bool messageOnSuccess = true, bool ignoreSelections = false, bool wasAutotriggered = false)
         {
-            (ParserState parserState, JNode json, _, DocumentType documentType) = TryParseJson(preferPreviousDocumentType:true, ignoreSelections: ignoreSelections);
-            if (parserState == ParserState.FATAL || json == null)
-                return;
+            (ParserState parserState, JNode json, _, DocumentType documentType) = TryParseJson(wasAutotriggered: wasAutotriggered, preferPreviousDocumentType:true, ignoreSelections: ignoreSelections);
             string curFname = Npp.notepad.GetCurrentFilePath();
+            if (parserState == ParserState.FATAL || json == null)
+            {
+                RefreshErrorFormInOwnThread(curFname);
+                return;
+            }
             if (schemaPath == null)
             {
                 FileDialog openFileDialog = new OpenFileDialog();
@@ -1551,8 +1587,7 @@ namespace Kbg.NppPluginNET
             info.filenameOfMostRecentValidatingSchema = schemaPath;
             info.lints = info.lints is null ? problems : info.lints.Concat(problems).ToList();
             int lintCount = info.lints.Count;
-            if (errorForm != null && !errorForm.IsDisposed)
-                errorForm.Invoke(new Action(() => errorForm.Reload(curFname, info.lints)));
+            RefreshErrorFormInOwnThread(curFname);
             SetStatusBarSection(parserState, curFname, info, documentType, lintCount);
             if (!validates && problems.Count > 0)
             {
@@ -1753,7 +1788,7 @@ namespace Kbg.NppPluginNET
         /// if the filename doesn't match, return false.
         /// </summary>
         /// <param name="fname"></param>
-        static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false, bool wasTriggeredByParseTimer = false)
+        static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false)
         {
             if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
                 return false;
@@ -1765,7 +1800,7 @@ namespace Kbg.NppPluginNET
                     var regex = ((JRegex)pat).regex;
                     if (!regex.IsMatch(fname)) continue;
                     // the filename matches a pattern for this schema, so we'll try to validate it.
-                    ValidateJson(schemaFname, false, true);
+                    ValidateJson(schemaFname, false, true, wasAutotriggered);
                     return true;
                 }
             }
@@ -1918,11 +1953,12 @@ namespace Kbg.NppPluginNET
             if ((TryGetInfoForFile(fname, out JsonFileInfo info)
                     && (info.documentType == DocumentType.INI || info.documentType == DocumentType.REGEX // file is already being parsed as regex or ini, so stop
                         || info.usesSelections)) // file uses selections, so stop (because that could change the user's selections unexpectedly)
-                || ValidateIfFilenameMatches(fname, wasTriggeredByParseTimer: true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
+                || ValidateIfFilenameMatches(fname, true) // if filename is associated with a schema, it will be parsed during the schema validation, so stop
                 || !fileExtensionsToAutoParse.Contains(ext)) // extension is not marked for auto-parsing, so stop
                 return;
             // filename matches but it's not associated with a schema or being parsed as non-JSON/JSONL, so just parse normally
             TryParseJson(ext == "jsonl" ? DocumentType.JSONL : DocumentType.JSON, true, ignoreSelections:true);
+            RefreshErrorFormInOwnThread(fname);
         }
         #endregion
     }

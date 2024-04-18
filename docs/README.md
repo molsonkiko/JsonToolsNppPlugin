@@ -248,7 +248,7 @@ The `linting` attribute in Settings enables the built-in linter for the JSON par
 
 About 2 seconds after a not-very-large file (default less than 4 megabytes, configurable in settings) is opened, and after 2 seconds of inactivity following any modification of the file or styling, the plugin can parse the document and performs [JSON Schema validation](#validating-json-against-json-schema) on the document. The user is notified of any errors when this happens, and no further notifications are sent until the user next modifies or re-styles the document.
 
-This is off by default. If desired, this feature can be turned on in the settings. When turned on, it only applies to files with `json`, `jsonc`, `jsonl`, and `json5` extensions, or files configured for [automatic JSON schema validation](#automatic-validation-of-json-against-json-schema).
+This is off by default. If desired, this feature can be turned on in the settings (`auto_validate` setting). When turned on, it only applies to files with `json`, `jsonc`, `jsonl`, and `json5` extensions, or files configured for [automatic JSON schema validation](#automatic-validation-of-json-against-json-schema).
 
 Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation forced the file to be parsed as JSON. As of v6.1, the document will be parsed as [JSON Lines](#json-lines-documents) if the file extension is `jsonl` and as JSON otherwise. In addition, if the document is already in [regex mode](#regex-search-form) or [ini file mode](#parsing-ini-files), automatic validation is suspended.
 
@@ -926,6 +926,14 @@ Starting in [v5.7](/CHANGELOG.md#570---2023-09-08), JsonTools has toolbar icons 
 The `toolbar_icons` option in settings lets you customize which toolbar icons show up, and their order, according to the case-insensitive mapping `{'t': 'tree view', 'c': 'compress', 'p': 'pretty-print', 'o': 'path to current position'}`.
 
 Thus, `cot` would give the icon sequence `(compress, path to current position, tree view)`, `P` would give only the pretty-print icon, and `A` would give no icons at all.
+
+## Check JSON syntax now ##
+
+*Added in version [7.2](/CHANGELOG.md#720---unreleased-yyyy-mm-dd).*
+
+This command checks JSON syntax and updates the [error form and status bar](/docs/README.md#error-form-and-status-bar). It *will not* validate using JSON schema. If there are any [remembered selections](#working-with-selections), it will only parse those selections.
+
+This command will *always* attempt to parse the document as JSON, unless the file extension is `.jsonl`, in which case it will attempt to parse the document as [JSON Lines](#json-lines-documents). This will override [regex mode](#regex-search-form) and [INI mode](#parsing-ini-files).
 
 ## DSON ##
 
