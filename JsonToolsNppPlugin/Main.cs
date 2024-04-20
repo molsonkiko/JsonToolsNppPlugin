@@ -1286,7 +1286,6 @@ namespace Kbg.NppPluginNET
                 if (errorForm.IsDisposed || !TryGetInfoForFile(fname, out JsonFileInfo info) || info.lints == null)
                     return;
                 errorForm.Reload(fname, info.lints);
-                Npp.editor.GrabFocus();
             }));
         }
 

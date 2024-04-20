@@ -929,7 +929,7 @@ Thus, `cot` would give the icon sequence `(compress, path to current position, t
 
 ## Check JSON syntax now ##
 
-*Added in version [7.2](/CHANGELOG.md#720---unreleased-yyyy-mm-dd).*
+*Added in version [7.2](/CHANGELOG.md#720---2024-04-19).*
 
 This command checks JSON syntax and updates the [error form and status bar](/docs/README.md#error-form-and-status-bar). It *will not* validate using JSON schema. If there are any [remembered selections](#working-with-selections), it will only parse those selections.
 

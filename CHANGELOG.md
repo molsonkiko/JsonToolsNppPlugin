@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#710---2024-02-28) to this project will be documented in this file.
+All [notable changes](#720---2024-04-19) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -47,10 +47,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
-- Maybe refresh error form automatically when doing the automatic parse (but not schema validation) after editing?
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [7.2.0] - (UNRELEASED) YYYY-MM-DD
+## [7.2.0] - 2024-04-19
 
 ### Added
 
@@ -61,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Made it so that reloading the [error form](/docs/README.md#error-form-and-status-bar) by pressing `Enter` would not cause certain message boxes to appear, to eliminate a potential "infinite" loop where the user would hit `Enter` to close the message box, and that moved focus back to the error form, which then repeated the cycle when they lifted the `Enter` key.
 2. [Automatic validation](/docs/README.md#automatically-check-for-errors-after-editing) when `auto_validate` is true no longer opens the prompt asking if user wants to open the error form (if [`offer_to_show_lint`](/docs/README.md#parser-settings) is true), because that could cause Notepad++ to crash or hang forever (see [issue 60](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/60#issuecomment-2065419075)).
 3. Made it so that automatic JSON schema validation (that is, any validation not manually invoked by the plugin menu command) no longer causes the caret to move to the location of the first schema validation error.
+4. Automatic validation (including non-schema validation) now refreshes the error form.
 
 ### Fixed
 
