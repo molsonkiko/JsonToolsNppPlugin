@@ -1952,6 +1952,8 @@ namespace JSON_Tools.JSON_Tools
         /// Will the query mutate input?
         /// </summary>
         private bool mutatesInput = false;
+        public Dictionary<string, object> Globals;
+        public bool UsesGlobals { get; private set; } = false;
         public override bool CanOperate => true;
         public override bool IsMutator => mutatesInput;
         private List<JNode> statements;
@@ -1975,10 +1977,17 @@ namespace JSON_Tools.JSON_Tools
         public JQueryContext() : base(null, Dtype.UNKNOWN, 0)
         {
             statements = new List<JNode>();
+            Globals = new Dictionary<string, object>();
             locals = new Dictionary<string, JNode>();
             cachedLocals = new Dictionary<string, JNode>();
             loopVariableAssignmentStack = new List<VarAssign>();
             tokenIndicesOfVariableReferences = new Dictionary<int, string>();
+        }
+
+        private void InitializeGlobals()
+        {
+            if (UsesGlobals)
+                Globals = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -1986,14 +1995,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public override JNode Operate(JNode inp)
         {
-            ArgFunction.InitializeGlobals(mutatesInput);
+            InitializeGlobals();
             JNode lastStatement = EvaluateStatementsFromStartToEnd(inp, 0, statements.Count);
             Reset();
             return lastStatement;
         }
 
         /// <summary>
-        /// a "simple query" is a query with one statement and no variable assignments.<br></br>
+        /// a "simple query" is a query with one statement and no variable assignments and no mutation of this object's <see cref="Globals"/> value<br></br>
         /// This definition is useful because up until JsonTools 5.7 it was the only kind of query possible.<br></br>
         /// If true, you can keep the first statement and discard the context.
         /// </summary>
@@ -2001,7 +2010,7 @@ namespace JSON_Tools.JSON_Tools
         {
             get
             {
-                if (statements.Count > 1)
+                if (statements.Count > 1 || UsesGlobals)
                     return false;
                 JNode firstStatement = statements[0];
                 return !(firstStatement is VarAssign);
@@ -2095,30 +2104,7 @@ namespace JSON_Tools.JSON_Tools
         {
             if (IsSimpleQuery)
             {
-                JNode firstStatement = statements[0];
-                if (firstStatement is CurJson cj)
-                {
-                    Func<JNode, JNode> fun = cj.function;
-                    JNode outfunc(JNode x)
-                    {
-                        // need to reset globals before each evalutation
-                        ArgFunction.InitializeGlobals(false);
-                        return fun(x);
-                    }
-                    return new CurJson(cj.type, outfunc);
-                }
-                else if (firstStatement is JMutator jm && jm.selector is CurJson selector)
-                {
-                    Func<JNode, JNode> selectorFunc = selector.function;
-                    JNode newSelector(JNode x)
-                    {
-                        ArgFunction.InitializeGlobals(true);
-                        return selectorFunc(x);
-                    }
-                    jm.selector = new CurJson(selector.type, newSelector);
-                    return jm;
-                }
-                return firstStatement;
+                return statements[0];
             }
             // clear locals because it was necessary to use actual values while building for propagation
             Reset();
@@ -2224,7 +2210,6 @@ namespace JSON_Tools.JSON_Tools
                     indexInStatements++;
                 }
             }
-            ArgFunction.regexSearchResultsShouldBeCached = true;
             return lastStatement;
         }
 
@@ -2233,6 +2218,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private void Reset()
         {
+            Globals = new Dictionary<string, object>();
             foreach (string varname in Varnames())
                 locals[varname] = null;
             cachedLocals.Clear();

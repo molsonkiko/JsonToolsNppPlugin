@@ -982,6 +982,10 @@ namespace JSON_Tools.JSON_Tools
         /// and the and() and or() functions short-circuiting the same way as the corresponding binops in Python.
         /// </summary>
         public bool conditionalExecution { get; private set; }
+        /// <summary>
+        /// Does this function access the Globals attribute of a JQueryContext?
+        /// </summary>
+        public bool usesGlobals { get; private set; }
 
         /// <summary>
         /// A function whose arguments must be given in parentheses (e.g., len(x), concat(x, y), s_mul(abc, 3).<br></br>
@@ -999,6 +1003,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="isDeterministic">if false, the function outputs a random value</param>
         /// <param name="argsTransform">transformations that are applied to any number of arguments at compile time</param>
         /// <param name="conditionalExecution">whether the function's excution of one or more arguments is conditional on something</param>
+        /// <param name="usesGlobals">Does this function access the Globals attribute of a JQueryContext?</param>
         public ArgFunction(Func<List<JNode>, JNode> function,
             string name,
             Dtype type,
@@ -1008,7 +1013,8 @@ namespace JSON_Tools.JSON_Tools
             Dtype[] inputTypes,
             bool isDeterministic = true,
             ArgsTransform argsTransform = null,
-            bool conditionalExecution = false)
+            bool conditionalExecution = false,
+            bool usesGlobals = false)
         {
             Call = function;
             this.name = name;
@@ -1020,6 +1026,7 @@ namespace JSON_Tools.JSON_Tools
             this.isDeterministic = isDeterministic;
             this.argsTransform = argsTransform;
             this.conditionalExecution = conditionalExecution;
+            this.usesGlobals = usesGlobals;
         }
 
         /// <summary>
@@ -1100,20 +1107,20 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        /// <summary>
-        /// there are currently three mutable public global variables that are set in queries:<br></br>
-        /// regexSearchResultsShouldBeCached, csvDelimiterInLastQuery, and csvQuoteCharInLastQuery.<br></br>
-        /// These all relate to s_csv and s_fa.<br></br>
-        /// This is basically a hack, because RemesPath does not currently support deep top-down introspection of a query's AST
-        /// to determine if s_csv or s_fa has been called in a certain way.
-        /// </summary>
-        /// <param name="containsMutation"></param>
-        public static void InitializeGlobals(bool containsMutation)
-        {
-            regexSearchResultsShouldBeCached = !containsMutation;
-            csvDelimiterInLastQuery = '\x00';
-            csvQuoteCharInLastQuery = '\x00';
-        }
+        ///// <summary>
+        ///// there are currently three mutable public global variables that are set in queries:<br></br>
+        ///// <see cref="regexSearchResultsShouldBeCached"/>, <see cref="csvDelimiterInLastQuery"/>, and <see cref="csvQuoteCharInLastQuery"/>.<br></br>
+        ///// These all relate to s_csv and s_fa.<br></br>
+        ///// This is basically a hack, because RemesPath does not currently support deep top-down introspection of a query's AST
+        ///// to determine if s_csv or s_fa has been called in a certain way.
+        ///// </summary>
+        ///// <param name="containsMutation"></param>
+        //public static void InitializeGlobals(bool containsMutation)
+        //{
+        //    regexSearchResultsShouldBeCached = !containsMutation;
+        //    csvDelimiterInLastQuery = '\x00';
+        //    csvQuoteCharInLastQuery = '\x00';
+        //}
 
         #region NON_VECTORIZED_ARG_FUNCTIONS
 
@@ -1660,7 +1667,8 @@ namespace JSON_Tools.JSON_Tools
         /// loopCountValue = loopCountBeforeCall + 1; // this ensures that the next time curjson.function(inp) is called,
         /// it sees loopCountValue = 1 + the last value it saw</b>
         /// </summary>
-        private static long loopCountValue = -1;
+        //private static long loopCountValue = -1;
+        private const string LOOP_COUNT_VARNAME = "loop";
 
         /// <summary>
         /// loop() -> int<br></br>
@@ -1674,7 +1682,7 @@ namespace JSON_Tools.JSON_Tools
         /// <exception cref="RemesPathException"></exception>
         public static JNode LoopCount(List<JNode> args)
         {
-            return new JNode(loopCountValue);
+            return new JNode((long)((JQueryContext)args[0]).Globals[LOOP_COUNT_VARNAME]);
         }
 
         /// <summary>
@@ -2440,10 +2448,10 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private static readonly int MAX_DOC_SIZE_CACHE_REGEX_SEARCH = IntPtr.Size *  1_250_000;
 
-        /// <summary>
-        /// if false, do not cache for any reason. This is usually because the query involves mutation and there is some danger of mutating a value in the cache.
-        /// </summary>
-        public static bool regexSearchResultsShouldBeCached = true;
+        ///// <summary>
+        ///// if false, do not cache for any reason. This is usually because the query involves mutation and there is some danger of mutating a value in the cache.
+        ///// </summary>
+        //public static bool regexSearchResultsShouldBeCached = true;
 
         private const int regexSearchResultCacheSize = 8;
 
@@ -2453,8 +2461,10 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private static LruCache<(string input, string argsAsJArrayString), JNode> regexSearchResultCache = new LruCache<(string input, string argsAsJArrayString), JNode>(regexSearchResultCacheSize);
 
-        public static char csvDelimiterInLastQuery = '\x00';
-        public static char csvQuoteCharInLastQuery = '\x00';
+        //public static char csvDelimiterInLastQuery = '\x00';
+        public const string CSV_DELIM_VARNAME = "csvDelim";
+        //public static char csvQuoteCharInLastQuery = '\x00';
+        public const string CSV_QUOTE_VARNAME = "csvQuoteChar";
 
         /// <summary>
         /// parses a single CSV value (one column in one row) according to RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)
@@ -2694,9 +2704,9 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        private static bool UseRegexSearchResultCache(string input)
+        private static bool UseRegexSearchResultCache(string input, JQueryContext context)
         {
-            return regexSearchResultsShouldBeCached && input.Length >= MIN_DOC_SIZE_CACHE_REGEX_SEARCH && input.Length <= MAX_DOC_SIZE_CACHE_REGEX_SEARCH;
+            return !context.IsMutator && input.Length >= MIN_DOC_SIZE_CACHE_REGEX_SEARCH && input.Length <= MAX_DOC_SIZE_CACHE_REGEX_SEARCH;
         }
 
         private static string ArgsAsJArrayString(Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber)
@@ -2718,18 +2728,18 @@ namespace JSON_Tools.JSON_Tools
         /// if the regexSearchResultCache is usable for this input at this time, check if this combination of (input, regex, HeaderHandlingInCsv, columnsToParseAsNumber)
         /// is in the regexSearchResultCache and return the cached value if so.
         /// </summary>
-        private static bool TryGetCachedRegexSearchResults(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, out JNode cachedOutput)
+        private static bool TryGetCachedRegexSearchResults(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, JQueryContext context, out JNode cachedOutput)
         {
             cachedOutput = null;
-            if (!UseRegexSearchResultCache(input))
+            if (!UseRegexSearchResultCache(input, context))
                 return false;
             string argsAsJArrayString = ArgsAsJArrayString(rex, headerHandling, columnsToParseAsNumber);
             return regexSearchResultCache.TryGetValue((input, argsAsJArrayString), out cachedOutput);
         }
         
-        private static void CacheResultsOfRegexSearch(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, JNode output)
+        private static void CacheResultsOfRegexSearch(string input, Regex rex, HeaderHandlingInCsv headerHandling, int[] columnsToParseAsNumber, JNode output, JQueryContext context)
         {
-            if (!UseRegexSearchResultCache(input))
+            if (!UseRegexSearchResultCache(input, context))
                 return;
             string argsAsJArrayString = ArgsAsJArrayString(rex, headerHandling, columnsToParseAsNumber);
             regexSearchResultCache[(input, argsAsJArrayString)] = output;
@@ -2751,7 +2761,7 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="csvQuoteChar">the quote character (only used in s_csv)</param>
         /// <returns></returns>
         /// <exception cref="RemesPathArgumentException"></exception>
-        public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, int maxGroupNum=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS, char csvQuoteChar = '\x00')
+        public static JNode StrFindAllHelper(string text, Regex rex, List<JNode> args, int firstOptionalArgNum, string funcName, JQueryContext context, int maxGroupNum=-1, HeaderHandlingInCsv headerHandling = HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS, char csvQuoteChar = '\x00')
         {
             int[] columnsToParseAsNumber = ColumnNumbersToParseAsNumber(args, firstOptionalArgNum, maxGroupNum, funcName);
             Array.Sort(columnsToParseAsNumber);
@@ -2801,7 +2811,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     Array.Sort(columnsToParseAsNumber);
                 }
-                if (isFirstRow && TryGetCachedRegexSearchResults(text, rex, headerHandling, columnsToParseAsNumber, out output))
+                if (isFirstRow && TryGetCachedRegexSearchResults(text, rex, headerHandling, columnsToParseAsNumber, context, out output))
                     return output;
                 bool parseMatchesAsRow = headerHandling == HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS || headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM || !isFirstRow;
                 if (nColumns == 1)
@@ -2888,7 +2898,7 @@ namespace JSON_Tools.JSON_Tools
                 isFirstRow = false;
             }
             output = new JArray(0, rows);
-            CacheResultsOfRegexSearch(text, rex, headerHandling, columnsToParseAsNumber, output);
+            CacheResultsOfRegexSearch(text, rex, headerHandling, columnsToParseAsNumber, output, context);
             return output;
         }
 
@@ -2912,16 +2922,17 @@ namespace JSON_Tools.JSON_Tools
             if (arg2.type != Dtype.INT)
                 throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_csv"], arg2.type);
             int nColumns = Convert.ToInt32(arg2.value);
+            var context = (JQueryContext)args[3];
             char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
-            csvDelimiterInLastQuery = delim;
+            context.Globals[CSV_DELIM_VARNAME] = delim;
             string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
             char quote = args.Count > 4 ? ((string)args[4].value)[0] : '"';
-            csvQuoteCharInLastQuery = quote;
+            context.Globals[CSV_QUOTE_VARNAME] = quote;
             string headerHandlingAbbrev = args.Count > 5 ? (string)args[5].value : "n";
             if (!HEADER_HANDLING_ABBREVIATIONS.TryGetValue(headerHandlingAbbrev, out HeaderHandlingInCsv headerHandling))
                 throw new RemesPathArgumentException("header_handling (6th argument, default 'n') must be 'n' (no header, rows as arrays), 'h' (include header, rows as arrays), or 'd' (rows as objects with header as keys)", 5, FUNCTIONS["s_csv"]);
             string rexPat = CsvRowRegex(nColumns, delim, newline, quote);
-            return (JArray)StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 6, "s_csv", nColumns, headerHandling, quote);
+            return (JArray)StrFindAllHelper(text, new Regex(rexPat, RegexOptions.Compiled), args, 6, "s_csv", context, nColumns, headerHandling, quote);
         }
 
         /// <summary>
@@ -3015,7 +3026,7 @@ namespace JSON_Tools.JSON_Tools
             Regex rex = ((JRegex)args[1]).regex;
             bool includeFullMatchAsFirstItem = args.Count > 2 && (bool)args[2].value;
             HeaderHandlingInCsv headerHandling = includeFullMatchAsFirstItem ? HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM : HeaderHandlingInCsv.INCLUDE_HEADER_ROWS_AS_ARRAYS;
-            return StrFindAllHelper(text, rex, args, 3, "s_fa", -1, headerHandling);
+            return StrFindAllHelper(text, rex, args, 3, "s_fa", context, -1, headerHandling);
         }
 
         /// <summary>
@@ -3133,8 +3144,10 @@ namespace JSON_Tools.JSON_Tools
                 if (repl is CurJson cj)
                 {
                     Func<JNode, JNode> fun = cj.function;
-                    long previousLoopCountValue = loopCountValue;
-                    loopCountValue = 0;
+                    var globals = ((JQueryContext)args[3]).Globals;
+                    if (!(globals.TryGetValue(LOOP_COUNT_VARNAME, out object previousLoopCountNode) && previousLoopCountNode is long previousLoopCount))
+                        previousLoopCount = -1;
+                    globals[LOOP_COUNT_VARNAME] = 0;
                     string replacementFunction(Match m)
                     {
                         int groupCount = m.Groups.Count;
@@ -3143,14 +3156,13 @@ namespace JSON_Tools.JSON_Tools
                         {
                             matchArrChildren.Add(new JNode(m.Groups[ii].Value));
                         }
-                        long loopCountBeforeCall = loopCountValue;
+                        var loopCountBeforeCall = (long)globals[LOOP_COUNT_VARNAME];
                         var matchArr = new JArray(0, matchArrChildren);
-                        loopCountValue = loopCountBeforeCall + 1;
+                        globals[LOOP_COUNT_VARNAME] = loopCountBeforeCall + 1;
                         return (string)fun(matchArr).value;
                     }
                     JNode resultNode = new JNode(regex.Replace(val, replacementFunction));
-                    // reset to 0 so that it can't be used anywhere else
-                    loopCountValue = previousLoopCountValue;
+                    globals[LOOP_COUNT_VARNAME] = previousLoopCount;
                     return resultNode;
                 }
                 else
@@ -3649,7 +3661,7 @@ namespace JSON_Tools.JSON_Tools
             ["iterable"] = new ArgFunction(IsExpr, "iterable", Dtype.BOOL, 1, 1, false, new Dtype[] {Dtype.ANYTHING}),
             ["keys"] = new ArgFunction(Keys, "keys", Dtype.ARR, 1, 1, false, new Dtype[] {Dtype.OBJ}),
             ["len"] = new ArgFunction(Len, "len", Dtype.INT, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
-            ["loop"] = new ArgFunction(LoopCount, "loop", Dtype.INT, 0, 0, false, new Dtype[] {}, false),
+            ["loop"] = new ArgFunction(LoopCount, "loop", Dtype.INT, 0, 0, false, new Dtype[] {}, false, usesGlobals: true),
             ["max"] = new ArgFunction(Max, "max", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["max_by"] = new ArgFunction(MaxBy, "max_by", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["mean"] = new ArgFunction(Mean, "mean", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
@@ -3692,8 +3704,8 @@ namespace JSON_Tools.JSON_Tools
             ["parse"] = new ArgFunction(Parse, "parse", Dtype.OBJ, 1, 1, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE }),
             ["round"] = new ArgFunction(Round, "round", Dtype.FLOAT_OR_INT, 1, 2, true, new Dtype[] {Dtype.FLOAT_OR_INT | Dtype.ITERABLE, Dtype.INT}),
             ["s_count"] = new ArgFunction(StrCount, "s_count", Dtype.INT, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
-            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((2, Dtype.NULL, x => new JNode(",")), (3, Dtype.NULL, x => new JNode("\r\n")), (4, Dtype.NULL, x => new JNode("\"")), (5, Dtype.NULL, x => new JNode("n")))),
-            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.BOOL | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex), (2, Dtype.NULL, x => new JNode(false)))),
+            ["s_csv"] = new ArgFunction(CsvRead, "s_csv", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.STR | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((2, Dtype.NULL, x => new JNode(",")), (3, Dtype.NULL, x => new JNode("\r\n")), (4, Dtype.NULL, x => new JNode("\"")), (5, Dtype.NULL, x => new JNode("n"))), usesGlobals: true),
+            ["s_fa"] = new ArgFunction(StrFindAll, "s_fa", Dtype.ARR, 2, int.MaxValue, true, new Dtype[] { Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.BOOL | Dtype.NULL, Dtype.INT}, true, new ArgsTransform((1, Dtype.STR_OR_REGEX, TransformRegex), (2, Dtype.NULL, x => new JNode(false))), usesGlobals: true),
             ["s_find"] = new ArgFunction(StrFind, "s_find", Dtype.ARR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.REGEX}),
             ["s_format"] = new ArgFunction(StrFormat, "s_format", Dtype.STR, 1, 5, true, new Dtype[] { Dtype.ANYTHING, Dtype.NULL | Dtype.STR, Dtype.BOOL | Dtype.STR, Dtype.INT | Dtype.STR | Dtype.NULL, Dtype.BOOL | Dtype.NULL }),
             ["s_len"] = new ArgFunction(StrLen, "s_len", Dtype.INT, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
@@ -3705,7 +3717,7 @@ namespace JSON_Tools.JSON_Tools
             ["s_slice"] = new ArgFunction(StrSlice, "s_slice", Dtype.STR, 2, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.INT_OR_SLICE}),
             ["s_split"] = new ArgFunction(StrSplit, "s_split", Dtype.ARR, 1, 2, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX}),
             ["s_strip"] = new ArgFunction(StrStrip, "s_strip", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
-            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}, true, new ArgsTransform((1, Dtype.REGEX, TransformRegex))),
+            ["s_sub"] = new ArgFunction(StrSub, "s_sub", Dtype.STR, 3, 3, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE, Dtype.STR_OR_REGEX, Dtype.STR | Dtype.FUNCTION}, true, new ArgsTransform((1, Dtype.REGEX, TransformRegex)), usesGlobals: true),
             ["s_upper"] = new ArgFunction(StrUpper, "s_upper", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.STR | Dtype.ITERABLE}),
             ["str"] = new ArgFunction(ToStr, "str", Dtype.STR, 1, 1, true, new Dtype[] {Dtype.ANYTHING}),
             ["zfill"] = new ArgFunction(ZFill, "zfill", Dtype.STR, 2, 2, true, new Dtype[] { Dtype.ANYTHING, Dtype.INT | Dtype.ITERABLE}),
