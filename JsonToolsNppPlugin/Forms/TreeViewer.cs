@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -96,6 +97,30 @@ namespace JSON_Tools.Forms
             SetDocumentTypeComboBoxIndex(GetDocumentType());
             documentTypeIndexChangeWasAutomatic = false;
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
+            ChangeTreeViewFont();
+        }
+
+        /// <summary>
+        /// Sets the font size of the tree view, and redraws it if the font size changed.
+        /// </summary>
+        /// <param name="newFontSize">defaults to <see cref="Settings.tree_view_font_size"/></param>
+        public void ChangeTreeViewFont(float newFontSize = -1)
+        {
+            if (newFontSize <= 0)
+                newFontSize = Main.settings.tree_view_font_size;
+            if (Tree.Font.SizeInPoints != newFontSize)
+            {
+                Tree.Font = new Font(
+                    Tree.Font.FontFamily,
+                    newFontSize,
+                    Tree.Font.Style,
+                    Tree.Font.Unit,
+                    Tree.Font.GdiCharSet,
+                    Tree.Font.GdiVerticalFont
+                );
+                if (Visible)
+                    Tree.Refresh();
+            }
         }
 
         public bool UsesSelections()

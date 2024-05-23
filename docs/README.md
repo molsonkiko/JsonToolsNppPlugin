@@ -935,6 +935,22 @@ This command checks JSON syntax and updates the [error form and status bar](/doc
 
 This command will *always* attempt to parse the document as JSON, unless the file extension is `.jsonl`, in which case it will attempt to parse the document as [JSON Lines](#json-lines-documents). This will override [regex mode](#regex-search-form) and [INI mode](#parsing-ini-files).
 
+## Styling of forms ##
+
+By default, the forms in JsonTools attempt to use the same color scheme as Notepad++. If you would prefer to have the forms always use the system defaults and ignore Notepad++, you can set the `use_npp_styling` setting to `False`.
+
+For example, the image below shows what forms look like by default with the MossyLawn theme:
+
+![Forms appearance use_npp_styling TRUE](/docs/use_npp_styling%20TRUE%20example.PNG)
+
+And below is what the forms look like with `use_npp_styling` set to `False`:
+
+![Forms appearance use_npp_styling FALSE](/docs/use_npp_styling%20FALSE%20example.PNG)
+
+Beginning in [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd), the font size for nodes in the tree view is also configurable with the `tree_view_font_size` setting. Below is a side-by-side comparison showing the effect of this setting.
+
+![Side-by-side comparison demonstrating tree_view_font_size setting](/docs/tree_view_font_size%20side-by-side%20comparison.PNG)
+
 ## DSON ##
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.

@@ -1147,6 +1147,8 @@ namespace Kbg.NppPluginNET
 
         static void OpenSettings()
         {
+            bool oldUseNppStyling = settings.use_npp_styling;
+            float oldTreeViewFontSize = settings.tree_view_font_size;
             settings.ShowDialog();
             millisecondsAfterLastEditToParse = (settings.inactivity_seconds_before_parse < 1)
                     ? 1000
@@ -1157,7 +1159,8 @@ namespace Kbg.NppPluginNET
                 grepperForm.grepper.jsonParser = JsonParserFromSettings();
                 grepperForm.grepper.maxThreadsParsing = settings.max_threads_parsing;
             }
-            RestyleEverything();
+            if (settings.tree_view_font_size != oldTreeViewFontSize || settings.use_npp_styling != oldUseNppStyling)
+                RestyleEverything();
         }
 
         /// <summary>
@@ -1195,7 +1198,10 @@ namespace Kbg.NppPluginNET
                 if (info == null || info.IsDisposed)
                     keysToRemove.Add(fname);
                 else if (info.tv != null && !info.tv.IsDisposed)
+                {
                     FormStyle.ApplyStyle(info.tv, settings.use_npp_styling);
+                    info.tv.ChangeTreeViewFont();
+                }
             }
             foreach (string fname in keysToRemove)
                 jsonFileInfos.Remove(fname);

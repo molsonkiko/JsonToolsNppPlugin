@@ -160,9 +160,13 @@ namespace JSON_Tools.Utils
         #endregion
 
         #region STYLING
-        [Description("Use the same colors as the editor window for the tree viewer?"),
+        [Description("Use the same colors as the editor window for the tree viewer and other JsonTools forms?"),
             Category("Styling"), DefaultValue(true)]
         public bool use_npp_styling { get; set; }
+
+        [Description("The font size (in points) for the tree viewer. For reference, the default value is 7.8."),
+            Category("Styling"), DefaultValue(7.8f)]
+        public float tree_view_font_size { get; set; }
         #endregion
 
         #region RANDOM_JSON_SETTINGS
