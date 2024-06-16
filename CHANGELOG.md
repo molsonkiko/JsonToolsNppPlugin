@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Made the tree view font size configurable with the [`tree_view_font_size` setting](/docs/README.md#styling-of-forms). Fixes [issue 66](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66).
+2. Added dark mode tree view icons (addresses [this GH issue comment](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66#issuecomment-2169216078)).
 
 ### Fixed
 

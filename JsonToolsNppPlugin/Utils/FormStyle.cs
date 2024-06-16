@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kbg.NppPluginNET;
+using System;
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
@@ -34,6 +35,12 @@ namespace JSON_Tools.Utils
                 }
             }
             Color backColor = Npp.notepad.GetDefaultBackgroundColor();
+            if (ctrl is Forms.TreeViewer trev)
+            {
+                // determine whether to use dark mode icons (use if NPP background is very dark)
+                bool newIsDarkMode = useNppStyle && backColor.R <= 66 && backColor.G <= 66 && backColor.B <= 66;
+                trev.ToggleIconDarkMode(newIsDarkMode);
+            }
             if (!useNppStyle || (
                 backColor.R > 240 &&
                 backColor.G > 240 &&

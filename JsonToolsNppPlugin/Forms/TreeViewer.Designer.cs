@@ -96,6 +96,13 @@
             this.TypeIconList.Images.SetKeyName(5, "object type icon.PNG");
             this.TypeIconList.Images.SetKeyName(6, "string type icon.PNG");
             this.TypeIconList.Images.SetKeyName(7, "null type icon.PNG");
+            this.TypeIconList.Images.SetKeyName(8, "array type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(9, "bool type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(10, "date type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(11, "float type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(12, "int type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(13, "object type icon darkmode.PNG");
+            this.TypeIconList.Images.SetKeyName(14, "string type icon darkmode.PNG");
             // 
             // QueryBox
             // 

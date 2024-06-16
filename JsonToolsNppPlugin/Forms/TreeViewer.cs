@@ -66,6 +66,11 @@ namespace JSON_Tools.Forms
         /// <summary>the most recently used quote character for s_csv in a RemesPath query</summary>
         public char csvQuote;
 
+        /// <summary>
+        /// whether to use dark mode type icons
+        /// </summary>
+        public bool isDarkMode = false;
+
         // event handlers for the node mouseclick drop down menu
         private static MouseEventHandler valToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
@@ -211,20 +216,23 @@ namespace JSON_Tools.Forms
             // TODO: maybe add some way to highlight unclosed braces?
         }
 
-        public static void SetImageOfTreeNode(TreeNode root, JNode json)
+        public static void SetImageOfTreeNode(TreeNode root, JNode json, bool isDarkMode)
         {
+            int imageIndex = isDarkMode ? 8 : 0;
             switch (json.type)
             {
-                case Dtype.ARR: root.ImageIndex = 0; root.SelectedImageIndex = 0; break;
-                case Dtype.BOOL: root.ImageIndex = 1; root.SelectedImageIndex = 1; break;
+                case Dtype.ARR:      imageIndex += 0; break;
+                case Dtype.BOOL:     imageIndex += 1; break;
                 case Dtype.DATE:
-                case Dtype.DATETIME: root.ImageIndex = 2; root.SelectedImageIndex = 2; break;
-                case Dtype.FLOAT: root.ImageIndex = 3; root.SelectedImageIndex = 3; break;
-                case Dtype.INT: root.ImageIndex = 4; root.SelectedImageIndex = 4; break;
-                case Dtype.OBJ: root.ImageIndex = 5; root.SelectedImageIndex = 5; break;
-                case Dtype.STR: root.ImageIndex = 6; root.SelectedImageIndex = 6; break;
-                default: root.ImageIndex = 7; root.SelectedImageIndex = 7; break;
+                case Dtype.DATETIME: imageIndex += 2; break;
+                case Dtype.FLOAT:    imageIndex += 3; break;
+                case Dtype.INT:      imageIndex += 4; break;
+                case Dtype.OBJ:      imageIndex += 5; break;
+                case Dtype.STR:      imageIndex += 6; break;
+                default:             imageIndex = 7; break; // null type icon is same for light and dark mode
             }
+            root.ImageIndex = imageIndex;
+            root.SelectedImageIndex = imageIndex;
         }
 
         public void JsonTreePopulate(JNode json, TreeView tree = null)
@@ -256,7 +264,7 @@ namespace JSON_Tools.Forms
             pathsToJNodes.Clear();
             TreeNode root = new TreeNode();
             if (Main.settings.tree_node_images)
-                SetImageOfTreeNode(root, json);
+                SetImageOfTreeNode(root, json, isDarkMode);
             if (json is JArray arr)
             {
                 root.Text = TextForTreeNode("JSON", json);
@@ -286,6 +294,29 @@ namespace JSON_Tools.Forms
             pathsToJNodes[root.FullPath] = json;
         }
 
+        public void ToggleIconDarkMode(bool newIsDarkMode)
+        {
+            if (newIsDarkMode == isDarkMode)
+                return;
+            Tree.BeginUpdate();
+            isDarkMode = newIsDarkMode;
+            if (Tree.Nodes.Count > 0)
+                ToggleIconDarkModeHelper(Tree.Nodes[0], isDarkMode);
+            Tree.EndUpdate();
+        }
+
+        private static void ToggleIconDarkModeHelper(TreeNode node, bool isDarkMode)
+        {
+            if (node.ImageIndex != 7) // null type icon is same for dark and light mode
+            {
+                int imageIndexChange = isDarkMode ? +8 : -8;
+                node.ImageIndex += imageIndexChange;
+                node.SelectedImageIndex += imageIndexChange;
+            }
+            foreach (TreeNode child in node.Nodes)
+                ToggleIconDarkModeHelper(child, isDarkMode);
+        }
+
         public static int IntervalBetweenJNodesWithTreeNodes(JNode json)
         {
             int interval = 0;
@@ -310,7 +341,8 @@ namespace JSON_Tools.Forms
                                                                   TreeNode root,
                                                                   JNode json,
                                                                   Dictionary<string, JNode> pathsToJNodes,
-                                                                  bool usesSelections)
+                                                                  bool usesSelections,
+                                                                  bool isDarkMode)
         {
             tree.BeginUpdate();
             try
@@ -330,7 +362,7 @@ namespace JSON_Tools.Forms
                             childNode.Nodes.Add("");
                         }
                         if (Main.settings.tree_node_images)
-                            SetImageOfTreeNode(childNode, child);
+                            SetImageOfTreeNode(childNode, child, isDarkMode);
                         pathsToJNodes[childNode.FullPath] = child;
                     }
                 }
@@ -351,7 +383,7 @@ namespace JSON_Tools.Forms
                             childNode.Nodes.Add("");
                         }
                         if (Main.settings.tree_node_images)
-                            SetImageOfTreeNode(childNode, child);
+                            SetImageOfTreeNode(childNode, child, isDarkMode);
                         pathsToJNodes[childNode.FullPath] = child;
                     }
                 }
@@ -706,7 +738,7 @@ namespace JSON_Tools.Forms
             {
                 nodes.RemoveAt(0);
                 JNode jnode = pathsToJNodes[node.FullPath];
-                JsonTreePopulateHelper_DirectChildren(tree, node, jnode, pathsToJNodes, UsesSelections());
+                JsonTreePopulateHelper_DirectChildren(tree, node, jnode, pathsToJNodes, UsesSelections(), isDarkMode);
             }
         }
 
@@ -725,7 +757,8 @@ namespace JSON_Tools.Forms
                                                            TreeNode root,
                                                            JNode json,
                                                            Dictionary<string, JNode> pathsToJNodes,
-                                                           bool usesSelections)
+                                                           bool usesSelections,
+                                                           bool isDarkMode)
         {
             int interval = IntervalBetweenJNodesWithTreeNodes(json);
             if (HasSentinelChild(root))
@@ -743,7 +776,7 @@ namespace JSON_Tools.Forms
                             JNode child = jar[ii];
                             TreeNode childNode = root.Nodes.Add(TextForTreeNode(ii.ToString(), child));
                             if (Main.settings.tree_node_images)
-                                SetImageOfTreeNode(childNode, child);
+                                SetImageOfTreeNode(childNode, child, isDarkMode);
                             pathsToJNodes[childNode.FullPath] = child;
                         }
                     }
@@ -759,7 +792,7 @@ namespace JSON_Tools.Forms
                             JNode child = jobj[key];
                             TreeNode childNode = root.Nodes.Add(key, TextForTreeNode(key, child));
                             if (Main.settings.tree_node_images)
-                                SetImageOfTreeNode(childNode, child);
+                                SetImageOfTreeNode(childNode, child, isDarkMode);
                             pathsToJNodes[childNode.FullPath] = child;
                         }
                     }
@@ -784,7 +817,7 @@ namespace JSON_Tools.Forms
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false);
+                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false, isDarkMode);
                     }
                 }
             }
@@ -799,7 +832,7 @@ namespace JSON_Tools.Forms
                     if ((child is JArray childarr && childarr.Length > 0)
                         || (child is JObject childobj && childobj.Length > 0))
                     {
-                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false);
+                        JsonTreePopulate_FullRecursive(tree, childNode, child, pathsToJNodes, false, isDarkMode);
                     }
                 }
             }
@@ -961,7 +994,7 @@ namespace JSON_Tools.Forms
                                 // node.ExpandAll() is VERY VERY SLOW if we don't do it this way
                                 Tree.BeginUpdate();
                                 isExpandingAllSubtrees = true;
-                                JsonTreePopulate_FullRecursive(Tree, node, nodeJson, pathsToJNodes, UsesSelections());
+                                JsonTreePopulate_FullRecursive(Tree, node, nodeJson, pathsToJNodes, UsesSelections(), isDarkMode);
                                 node.ExpandAll();
                                 isExpandingAllSubtrees = false;
                                 Tree.EndUpdate();

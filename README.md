@@ -15,7 +15,7 @@ If you have any issues, see if [updating to the latest release](https://github.c
     * [Python-style comments](/CHANGELOG.md#4120---2023-03-28)
     * Missing commas and colons
     * Unterminated strings, arrays, and objects
-5. [Get the path to the current line](/docs/README.md#path-to-current-line)
+5. [Get the path to the current position](/docs/README.md#path-to-current-position)
 6. Query and edit JSON with:
     * a [find/replace form](/docs/README.md#find-and-replace-form)
     * an [array sorting form](/docs/README.md#sort-form)
