@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Made the tree view font size configurable with the [`tree_view_font_size` setting](/docs/README.md#styling-of-forms). Fixes [issue 66](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66).
 2. Added dark mode tree view icons (addresses [this GH issue comment](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66#issuecomment-2169216078)).
 
+### Changed
+
+1. Removed the `max_threads_parsing` setting for the [JSON from files and APIs form](/docs/README.md#get-json-from-files-and-apis), because nobody upvoted the first post in [GH issue 67](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/67). 
+
 ### Fixed
 
 1. Avoid unnecessarily refreshing the styles of all forms when settings other than `use_npp_styling` or `tree_view_font_size` are changed.

@@ -13,6 +13,12 @@ namespace JSON_Tools.Forms
 {
     public partial class GrepperForm : Form
     {
+        /// <summary>
+        /// maximum number of threads to use when parsing JSON
+        /// (each thread parses a separate subset of the documents)
+        /// </summary>
+        public const int MAX_THREADS_PARSING = 4;
+
         public TreeViewer tv;
         public JsonGrepper grepper;
         HashSet<string> filesFound;
@@ -26,7 +32,7 @@ namespace JSON_Tools.Forms
             NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             grepper = new JsonGrepper(Main.JsonParserFromSettings(),
-                Main.settings.max_threads_parsing
+                MAX_THREADS_PARSING
             );
             tv = null;
             filesFound = new HashSet<string>();

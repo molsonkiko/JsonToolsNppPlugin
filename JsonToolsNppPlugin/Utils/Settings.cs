@@ -153,12 +153,6 @@ namespace JSON_Tools.Utils
         public bool auto_try_guess_csv_delim_newline { get; set; }
         #endregion
 
-        #region GREP_API_SETTINGS
-        [Description("How many threads to use for parsing JSON files obtained by JsonGrep and API requester"),
-            Category("Grep and API requests"), DefaultValue(4)]
-        public int max_threads_parsing { get; set; }
-        #endregion
-
         #region STYLING
         [Description("Use the same colors as the editor window for the tree viewer and other JsonTools forms?"),
             Category("Styling"), DefaultValue(true)]

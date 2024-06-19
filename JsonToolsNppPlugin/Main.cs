@@ -1157,7 +1157,6 @@ namespace Kbg.NppPluginNET
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
                 grepperForm.grepper.jsonParser = JsonParserFromSettings();
-                grepperForm.grepper.maxThreadsParsing = settings.max_threads_parsing;
             }
             if (settings.tree_view_font_size != oldTreeViewFontSize || settings.use_npp_styling != oldUseNppStyling)
                 RestyleEverything();
