@@ -59,10 +59,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. Removed the `max_threads_parsing` setting for the [JSON from files and APIs form](/docs/README.md#get-json-from-files-and-apis), because nobody upvoted the first post in [GH issue 67](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/67). 
+2. Datetime objects (which may be parsed when the [`allow_datetimes` setting](/docs/README.md#parsing-dates-and-date-times-in-json)) will now be represented with trailing milliseconds. Previously, the milliseconds were trimmed off.
+3. To avoid making Notepad++ crash due to an out-of-memory error, the [JSON from files and APIs form](/docs/README.md#get-json-from-files-and-apis) will stop reading files and show an error message once the total length of files read exceeds 429496729 bytes (1/5th of the largest positive 32-bit integer). 
 
 ### Fixed
 
 1. Avoid unnecessarily refreshing the styles of all forms when settings other than `use_npp_styling` or `tree_view_font_size` are changed.
+2. Fixed bug where [datetime strings](/docs/README.md#parsing-dates-and-date-times-in-json) (any string with the format `YYYY-MM-DD hh:mm:ss.fff` with optional trailing `Z`) were formatted incorrectly as 12-hour datetimes, rather than 24-hour datetimes. For example, `2024-01-13 17:05:10` was previously formatted as `2024-01-13 05:05:10`.
 
 ## [7.2.0] - 2024-04-19
 

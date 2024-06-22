@@ -44,24 +44,22 @@ namespace JSON_Tools.Tests
                 }
                 catch { }
             }
-            var testcases = new object[][]
+            var testcases = new (string[] patterns, bool recursive, JNode desiredFiles)[]
             {
-                new object[]{"*.json", false, rparser.Search("keys(@)[@ =~ `.json$` & not(@ =~ `subsmall`)]", allJsons)}, // fnames w/o submall but ending in .json
-				new object[]{"*.ipynb", false, rparser.Search("keys(@)[@ =~ `ipynb$` & not(@ =~ `subsmall`)]", allJsons) }, // fnames w/o subsmall but ending in .ipynb
-				new object[]{"*.json", true, rparser.Search("keys(@)[@ =~ `json$`]", allJsons)}, // fnames ending in .json
-				new object[]{"*.txt", true, rparser.Search("keys(@)[@ =~ `txt$`]", allJsons) }, // fnames ending in .txt
+                (new string[] { "*.json" }, false, rparser.Search("keys(@)[@ =~ `.json$` & not(@ =~ `subsmall`)]", allJsons)), // fnames w/o submall but ending in .json
+				(new string[] { "*.ipynb" }, false, rparser.Search("keys(@)[@ =~ `ipynb$` & not(@ =~ `subsmall`)]", allJsons)), // fnames w/o subsmall but ending  .ip{ynb
+				(new string[] { "*.json" }, true, rparser.Search("keys(@)[@ =~ `json$`]", allJsons)), // fnames ending in .json
+				(new string[] { "*.txt" }, true, rparser.Search("keys(@)[@ =~ `txt$`]", allJsons) ), // fnames ending in .txt
+				(new string[] { "*.txt", "*.json" }, true, rparser.Search("keys(@)[@ =~ `(?:txt|json)$`]", allJsons) ), // fnames ending in .txt or .json
             };
             // test string slicer
             int testsFailed = 0;
             int ii = 0;
             JsonGrepper grepper = new JsonGrepper(new JsonParser());
-            foreach (object[] test in testcases)
+            foreach ((string[] patterns, bool recursive, JNode desiredFiles) in testcases)
             {
-                string searchPattern = (string)test[0];
-                bool recursive = (bool)test[1];
-                JNode desiredFiles = (JNode)test[2];
                 grepper.Reset();
-                grepper.Grep(smalldir.FullName, recursive, searchPattern);
+                grepper.Grep(smalldir.FullName, recursive, patterns);
                 JNode foundFiles = rparser.Search("keys(@)", grepper.fnameJsons);
                 ((JArray)foundFiles).children.Sort();
                 ((JArray)desiredFiles).children.Sort();
@@ -70,7 +68,7 @@ namespace JSON_Tools.Tests
                     testsFailed++;
                     Npp.AddLine(String.Format("Test {0} (grepper.Grep({1}, {2}, {3})) failed:\n" +
                                                     "Expected to find files\n{4}\nGot files\n{5}",
-                                                    ii + 1, subdir.FullName, recursive, searchPattern, desiredFiles.PrettyPrint(), foundFiles.PrettyPrint()));
+                                                    ii + 1, subdir.FullName, recursive, string.Join(", ", patterns), desiredFiles.PrettyPrint(), foundFiles.PrettyPrint()));
                 }
                 ii++;
             }

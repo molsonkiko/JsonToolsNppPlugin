@@ -440,7 +440,7 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.NULL: return "null";
                 case Dtype.BOOL: return (bool)value ? "true" : "false";
                 case Dtype.REGEX: return StrToString(((JRegex)this).regex.ToString(), true);
-                case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:mm:ss") + '"';
+                case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss.fff") + '"';
                 case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
                 default: return ((object)this).ToString(); // just show the type name for it
             }

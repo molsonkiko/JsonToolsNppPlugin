@@ -847,9 +847,9 @@ namespace JSON_Tools.JSON_Tools
                         // yyyy-mm-dd dates have length 10
                         return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATE, startUtf8Pos);
                     }
-                    if (len >= 19 && len <= 23)
+                    if (len >= 19 && len <= 24)
                     {
-                        // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sss has length 23
+                        // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sssZ has length 24
                         return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATETIME, startUtf8Pos);
                     }
                 }

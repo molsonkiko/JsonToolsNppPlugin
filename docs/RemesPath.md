@@ -1134,9 +1134,12 @@ Returns the string representation of `x`, unless `x` is a string, in which case 
 
 ---
 `zfill(x: anything, padToLen: int) -> string`
+
 *Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
-return a string that contains `x` (or the string representation of `x`, if not a string)
+
+Returns a string that contains `x` (or the string representation of `x`, if not a string)
 padded on the left with enough repetitions of the `0` character to make a composite string with length `padToLen`
+
 __EXAMPLES:__
 * `zfill(10, 5)` returns `"00010"`
 * `zfill(ab, 4)` returns `"00ab"`

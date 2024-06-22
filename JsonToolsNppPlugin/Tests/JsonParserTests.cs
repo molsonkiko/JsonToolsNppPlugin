@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -207,6 +206,19 @@ namespace JSON_Tools.Tests
                     "[3.1234E+15, -2.178E+15, 7.59E+15, 5.71138315710726E+18]",
                     "["+NL+"3.1234E+15,"+NL+"-2.178E+15,"+NL+"7.59E+15,"+NL+"5.71138315710726E+18"+NL+"]",
                     "floating point numbers using 'E' notation that can exactly represent integers"
+                ),
+                (
+                    // valid datetime,              invalid datetime,           invalid date,    valid datetime (no milliseconds),  valid date
+                    "[\"2027-02-08 14:02:09.987\", \"1915-13-08 23:54:09.100\", \"1903-05-44\", \"2005-03-04 01:00:00\",            \"1843-06-11\"]",
+                    "[\"2027-02-08 14:02:09.987\", \"1915-13-08 23:54:09.100\", \"1903-05-44\", \"2005-03-04 01:00:00.000\", \"1843-06-11\"]",
+                    "["+ NL +
+                    "\"2027-02-08 14:02:09.987\"," + NL + 
+                    "\"1915-13-08 23:54:09.100\"," + NL + 
+                    "\"1903-05-44\"," + NL +
+                    "\"2005-03-04 01:00:00.000\"," + NL +
+                    "\"1843-06-11\"" + NL +
+                    "]",
+                    "dates and datetimes (both valid and invalid)"
                 ),
             };
             int testsFailed = 0;
@@ -706,6 +718,7 @@ Got
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
+            TimeSpan offsetFromUtc = DateTime.Now.Subtract(DateTime.UtcNow);
             var testcases = new (string inp, JNode desiredOut)[]
             {
                 ("{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}")),
@@ -718,7 +731,13 @@ multiline comment
                 ),
                 ("[.75, 0xff, +9]", simpleparser.Parse("[0.75, 255, 9]")), // leading decimal points, hex numbers, leading + sign
                 ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
-                ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)),
+                ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)), // HH:mm:ss.fff datetime
+                ("\"1956-11-13T11:17:56.6\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 600), Dtype.DATETIME, 0)), // HH:mm:ss.f datetime
+                ("\"1956-11-13 11:17:56\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 0), Dtype.DATETIME, 0)), // HH:mm:ss datetime
+                // datetimes ending with "Z" are UTC by definition
+                ("\"2027-05-08 14:02:09.987Z\"", new JNode(new DateTime(2027, 5, 8, 14, 2, 9, 987, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fffZ datetime
+                ("\"2027-06-15 04:41:20.5Z\"", new JNode(new DateTime(2027, 6, 15, 4, 41, 20, 500, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fZ datetime
+                ("\"2048-10-25 16:59:38Z\"", new JNode(new DateTime(2048, 10, 25, 16, 59, 38, 0, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ssZ datetime
                 ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
                 ("\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0)), // bad datetime- hour too high
                 ("\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0)), // bad date- has space at end

@@ -13,12 +13,6 @@ namespace JSON_Tools.Forms
 {
     public partial class GrepperForm : Form
     {
-        /// <summary>
-        /// maximum number of threads to use when parsing JSON
-        /// (each thread parses a separate subset of the documents)
-        /// </summary>
-        public const int MAX_THREADS_PARSING = 4;
-
         public TreeViewer tv;
         public JsonGrepper grepper;
         HashSet<string> filesFound;
@@ -31,9 +25,7 @@ namespace JSON_Tools.Forms
             InitializeComponent();
             NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
-            grepper = new JsonGrepper(Main.JsonParserFromSettings(),
-                MAX_THREADS_PARSING
-            );
+            grepper = new JsonGrepper(Main.JsonParserFromSettings());
             tv = null;
             filesFound = new HashSet<string>();
             var configSubdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
@@ -159,23 +151,20 @@ namespace JSON_Tools.Forms
                 }
                 if (Directory.Exists(rootDir))
                 {
-                    foreach (string searchPattern in searchPatterns)
+                    try
                     {
-                        try
-                        {
-                            // TODO: this could take a long time; maybe add a line to show a MessageBox
-                            // that asks if you want to stop the search after a little while?
-                            UseWaitCursor = true;
-                            grepper.Grep(rootDir, recursive, searchPattern);
-                            UseWaitCursor = false;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("JSON file search failed:\n" + RemesParser.PrettifyException(ex),
-                                "Json file search error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                        }
+                        // TODO: this could take a long time; maybe add a line to show a MessageBox
+                        // that asks if you want to stop the search after a little while?
+                        UseWaitCursor = true;
+                        grepper.Grep(rootDir, recursive, searchPatterns);
+                        UseWaitCursor = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("JSON file search failed:\n" + RemesParser.PrettifyException(ex),
+                            "Json file search error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
                     }
                 }
             }

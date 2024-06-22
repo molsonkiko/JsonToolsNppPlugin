@@ -117,6 +117,10 @@ In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors.
 
 Beginning in [v7.1](/CHANGELOG.md#710---2024-02-28), if there is a fatal error such that JsonTools cannot parse a document, the caret is moved to the location of the fatal error.
 
+### Parsing dates and date-times in JSON
+
+The `allow_datetimes` setting (off by default) will, if turned on, cause strings representing dates with the formats `YYYY-MM-DD` or `YYYY-MM-DD hh:mm:ss(.fff)?Z` to be [parsed as C# `DateTime` objects](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.parse?view=netframework-4.8). There is not much benefit to doing this, except that dates and datetimes are represented by calendar icons in the tree view. __*DO NOT* turn on the `allow_datetimes` setting if your JsonTools version is less than [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd)__, because there were known bugs in the parsing and formatting of dates and datetimes prior to that release.
+
 ### Document type box *(added in v6.0)* ###
 
 *Beginning in version [v6.0](/CHANGELOG.md#600---2023-12-13),* the tree view has a document type box just above the tree itself.
@@ -772,6 +776,8 @@ If you want to open up all the JSON files in a directory, look to the bottom cen
 For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the `View errors button`.
 
 ![JSON grepper/API requester search JSON in local directories](/docs/json_from_files_and_apis%20get%20json%20in%20directory.PNG)
+
+Beginning in version [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes. This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
 
 ### Viewing results in a buffer ###
 

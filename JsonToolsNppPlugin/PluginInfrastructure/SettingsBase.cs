@@ -169,7 +169,7 @@ namespace CsvQuery.PluginInfrastructure
 
             var dialog = new Form
             {
-                Text = "Settings - JSON Viewer plug-in",
+                Text = "Settings - JsonTools plug-in",
                 ClientSize = new Size(DEFAULT_WIDTH, DEFAULT_HEIGHT),
                 MinimumSize = new Size(250, 250),
                 ShowIcon = false,
