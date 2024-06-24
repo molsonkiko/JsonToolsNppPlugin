@@ -1,0 +1,227 @@
+// If you want to translate JsonTools into another language, follow these steps (in the example below, we are translating into the "fooish" language):
+// 1. Find where JsonTools plugin config data is stored for your JsonTools installation.
+//     Usually, this will be in the "%AppData%/Roaming/Notepad++/plugins/config/JsonTools",
+//     but it will be in a subdirectory of the executable's directory if you have a portable installation.
+// 2. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin config directory.
+// 3. Edit the values associated with the various keys in this document.
+//     DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
+// 4. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
+{
+    "forms": {
+        "AboutForm": {
+            // this is the name that appears in the title bar for this form
+            "title": "Informazioni su JsonTools",
+            // Each key in this object is the name of the control in the JsonTools codebase.
+            //     If a control name is missing, that control is not translated.
+            "controls": {
+                // If the value associated with a control name is a string,
+                //     that controls the text of the control.
+                "Description": "Strumento di query/modifica per JSON che include linting, riformattazione, \r\n visualizzatore di alberi con navigazione tra file,\r\n linguaggio di query simile a JMESpath e molto altro",
+                "GitHubLink": {
+                    // This is a LinkLabel, meaning it has a clickable link (the JsonTools repo URL).
+                    "text": "[{\"necessiti\": \"aiuto?\"}, \"chiedi a\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
+                    // If you change the text of this LinkLabel,
+                    //      make sure that you change the linkStart property
+                    //      so that only the URL is in the highlighted region.
+                    "linkStart": 34,
+                    "linkLength": 50
+                },
+                "DebugInfoLabel": "Notepad++ versione: X.Y.Z. Per maggiori informazioni sulla\r\ninstallazione, vai a ? -> Debug Info on the main status bar.",
+                "ThanksWowLinkLabel": {
+                    "text": "Un ringraziamento spaciale a:\r\n* Don Ho per Notepad++\r\n* kbilsted for making the plugin pack this is based on\r\n* And of course everyone who helped make this plugin\r\n   better!\r\n* The amazing community makes this work worthwhile.\r\n  Wow!",
+                    "linkStart": 228,
+                    "linkLength": 4
+                }
+            }
+        },
+        "ErrorForm": {
+            // This form has no translatable controls, so only the title is here.
+            "title": "Errore di sintassi nel JSON"
+        },
+        "FindReplaceForm": {
+            "title": "Trova/sostituisci nel JSON",
+            "controls": {
+                "FindReplaceFormTitle": "Trova/sostituisci nel JSON",
+                "FindTextBoxLabel": "Trova...",
+                "SwapFindReplaceButton": "Scambia",
+                "ReplaceTextBoxLabel": "Sostituisci con...",
+                "RootTextBoxLabel": "Radice",
+                // This control is a checkbox with text that changes
+                //     depending on whether it is checked or unchecked.
+                "ShowAdvancedOptionsCheckBox": {
+                    // Change this value to set the text when the box is *checked*
+                    "checked": "Visualizza opzioni avanzate",
+                    // Change this value to set the text when the box is *unchecked*
+                    "unchecked": "Nascondi opzioni avanzate"
+                },
+                // This is a ListBox, where the text can be selected from a drop-down list.
+                // DO NOT CHANGE THE NUMBER OF ELEMENTS IN THIS ARRAY!
+                "KeysValsBothBox": [
+                    "Chiavi",
+                    "Valori",
+                    "Chiavi e valori"
+                ],
+                "KeysValsBothBoxLabel": "Cerca nelle chiavi o valori?",
+                "RegexBox": "Usa espressione regolare?",
+                "MathBox": "Espressione matematica",
+                "RecursiveSearchBox": "Ricerca ricorsiva?",
+                "IgnoreCaseCheckBox": "Ignora maiuscole/minuscole?",
+                "MatchExactlyBox": "Corrispondenza esatta?",
+                "FindButton": "Ricerca tutto",
+                "ReplaceButton": "Sostituisci tutto"
+            }
+        },
+        "GrepperForm": {
+            "title": "JSON da file e API",
+            "controls": {
+                "GrepperFormTitle": "JSON da file e API",
+                "GetJsonFromApisTitle": "Ottieni JSON da APIs",
+                "UrlsBoxLabel": "Inserisci gli URL delle API da cui ottenere JSON (uno per riga o come array JSON)",
+                "SendRequestsButton": "Invia richiesta API",
+                "GetJsonFromFilesTitle": "Ottieni JSON da file locale",
+                "RecursiveSearchCheckBox": "Cercare nelle sottocartelle?",
+                "ChooseDirectoriesButton": "Seleziona cartella...",
+                // This is another ListBox. There may be more than one element in this list,
+                //    but only the first element can be translated in this case.
+                "DirectoriesVisitedBox": [
+                    "Cartelle recenti..."
+                ],
+                "SearchDirectoriesButton": "Cerca cartelle",
+                "DocsButton": "Documentazione",
+                "ViewErrorsButton": "Visualizza errori",
+                "ViewResultsButton": "Visualizza risultati nel buffer",
+                "ChooseFilesTitle": "Scegli file e URL",
+                "RemoveSelectedFilesButton": "Remuovi i file selezionati"
+            }
+        },
+        "JsonToCsvForm": {
+            "title": "Da JSON a CSV",
+            "controls": {
+                "JsonToCsvFormTitle": "Crea CSV da JSON",
+                "KeySepBoxLabel": "Separatore di chiave",
+                "DelimBoxLabel": "Delimitatori del file di output",
+                "eolComboBoxLabel": "Terminatore di riga nel output box",
+                "BoolsToIntsCheckBox": "Convertu vero/falso in 1/0?",
+                "StrategyBox": [
+                    "Predefinito",
+                    "Ricorsione completa",
+                    "No ricorsione",
+                    "Stringify iterables"
+                ],
+                "StrategyBoxLabel": "Strategy",
+                "GenerateCSVButton": "Genera CSV",
+                "DocsButton": "Docs"
+            }
+        },
+        "RegexSearchForm": {
+            "title": "Espressione Regolare su JSON",
+            "controls": {
+                "Title": "Espressione Regolare su JSON",
+                "RegexTextBoxLabel": "Inserisci Espressione Regolare",
+                "IgnoreCaseCheckBox": "Ignora maiuscole/minuscole?",
+                "IncludeFullMatchAsFirstItemCheckBox": "Include full match as first item?",
+                "ParseAsCsvCheckBox": "Parse as CSV?",
+                "DelimiterTextBoxLabel": "Delimitatore",
+                "QuoteCharTextBoxLabel": "Carattere stringa",
+                "NewlineComboBoxLabel": "Nuova riga",
+                "NColumnsTextBoxLabel": "Numero di colonne",
+                "HeaderHandlingComboBox": [
+                    "Ignora intestazione",
+                    "Includi intestazione",
+                    "Usa intestazione come chiave"
+                ],
+                "HeaderHandlingComboBoxLabel": "Gestione intestazione",
+                "ColumnsToParseAsNumberTextBoxLabel": "Gruppi da analizzare come numero (array int)",
+                "SearchButton": "Trova"
+            }
+        },
+        "SortForm": {
+            "title": "Ordina array JSON",
+            "controls": {
+                "SortFormTitle": "Ordina JSON array",
+                "PathTextBoxLabel": "Percorso array",
+                "IsMultipleArraysCheckBox": "Percorso usato negli array multipli; ordina ogni subarray",
+                "ReverseOrderCheckBox": "Decrescente?",
+                "SortMethodBox": [
+                    "Predefinito",
+                    "Come stringa (ignora maiuscole/minuscole)",
+                    "Per indice/chiave di ogni figlio",
+                    "By query on each child",
+                    "Shuffle"
+                ],
+                "SortMethodBoxLabel": "Metodo di ordinamento",
+                "QueryKeyIndexTextBoxLabel": "Chiave/indice/query",
+                "SortButton": "Ordina"
+            }
+        },
+        "TreeViewer": {
+            "controls": {
+                "SubmitQueryButton": "Invia query",
+                "QueryToCsvButton": "Da Query a CSV",
+                "SaveQueryButton": "Salva risultati query",
+                "RefreshButton": "Aggiorna",
+                "FindReplaceButton": "Trova/sostituisci"
+            }
+        }
+    },
+    // this controls the text of the main menu items
+    //      associated with the JsonTools item on the Notepad++ plugin menu.
+    "menuItems": {
+        // The "&D" in this text means that this menu item can be accessed by the "D"
+        //    accelerator key, meaning that the Alt-P-J-D key sequence can access this menu item.
+        // When translating menu items, it is good practice to include an accelerator key,
+        //     and it is *even better* if the accelerator key is the same as in the English translation.
+        // Thus, the Italian translation might be "&Documentazione".
+        "&Documentation": "&Documentazione",
+        "&Pretty-print current JSON file": "&Formatta il file JSON corrente",
+        "&Compress current JSON file": "&Comprimi file JSON corrente",
+        "Path to current &position": "Percorso della &posizione corrente",
+        "Select every val&id JSON in selection": "Seleziona ogni JSON val&ido nella selezione",
+        "Chec&k JSON syntax now": "&Verifica la sintassi del JSON",
+        "Open &JSON tree viewer": "Apri Visualizzazione struttura &JSON",
+        "&Get JSON from files and APIs": "&Ottieni JSON da file e API",
+        "Sort arra&ys": "Ordina arra&y",
+        "&Settings": "I&mpostazioni",
+        "&Validate JSON against JSON schema": "Con&valida JSON con lo schema JSON",
+        "Choose schemas to automatically validate &filename patterns": "Scegli gli schemi per convalidare automaticamente i modelli dei &nome file",
+        "Generate sc&hema from JSON": "Genera sc&hema da JSON",
+        "Generate &random JSON from schema": "Genera JSON casuale da schema",
+        "Run &tests": "Esegui &test",
+        "A&bout": "A&bout",
+        "See most recent syntax &errors in this file": "Visualizza gli &errori di sintassi più recenti di questo file",
+        "JSON to YAML": "Da JSON a YAML",
+        "Parse JSON Li&nes document": "Analizza le righe del &documento JSON",
+        "&Array to JSON Lines": "Da &Array a righe JSON",
+        "D&ump selected text as JSON string(s)": "Scarica il testo selezionato come stringa JSON",
+        "Dump JSON string(s) as ra&w text": "Scarica le stringhe JSON come testo non elaborato",
+        "Open tree for &INI file": "Apri struttura per file INI",
+        "Rege&x search to JSON": "Usa espressioni &regolari nella ricerca JSON"
+    },
+    // When a user opens the settings form and clicks on a setting,
+    //     the translation associated with that setting's name will appear.
+    "settingsDescriptions": {
+        "logger_level": "Disattiva la registrazione degli errori del livello corrente e di quelli inferiori.\r\nSTRICT: registra tutte le deviazioni dalla struttura JSON originale.\r\nOK: la struttura JSON originale e quanto segue::\r\n    * le stringhe possono contenere caratteri con valori ASCII inferiori a 0x20 ( compreso '\\t')\r\nNAN_INF: non registrare gli errori quando vengono analizzati NaN, Infinity, e vengono analizzati -Infinity.\r\nJSONC: i seguenti errori non vengono registrati:\r\n    * Commenti JavaScript su riga singola '//' e commenti multi-riga '/*...*/' \r\n    * NaN e +/-Infinity\r\nJSON5: Tutto nei JSONC e livello NAN_INF non loggato, e quanto segue:\r\n    * stringhe tra apici singoli\r\n    * virgole dopo l'ultimo elemento di un array od oggetto\r\n    * chiavi oggetto senza virgolette\r\n    * vedi https://json5.org/ per maggiori informazioni.",
+        "offer_to_show_lint": "Quando il documento viene analizzato, visualizza con un messaggio gli errori di sintassi nel documento.",
+        "auto_validate": "Convalida automaticamente i file  .json, .jsonc, e .jsonl ogni 2 secondi, tranne per i file di grandi dimensioni",
+        "inactivity_seconds_before_parse": "Secondi di inattività dell'utente prima che il plug-in analizzi nuovamente il documento. Minimo 1.",
+        "max_file_size_MB_slow_actions": "Per impostazione predefinita i file di dimensioni superiori a quelle indicate (Mb) hanno le seguenti azioni lente DISABILITATE:\r\n* Attivazione automatica del lexer JSON.\r\n* Analisi automatica del file all'apertura e circa 2 secondi dopo ogni modifica.",
+        "max_json_length_full_tree": "La lunghezza massima di un array o oggetto JSON che aggiunge tutti i suoi figli alla visualizzazione ad albero. Gli iterabili più lunghi ottengono solo alcuni dei loro figli aggiunti all'albero.",
+        "tree_node_images": "Ogni nodo nell'albero dovrebbe avere un'immagine associata al suo tipo?",
+        "ask_before_pretty_printing_json_lines": "Chiedi prima di formattare le righe dei documenti JSON, ignora le richieste di formattazione, o formattare senza chiedere?",
+        "indent_pretty_print": "Il numero di spazi tra i livelli JSON quando formattato",
+        "minimal_whitespace_compression": "Se vero, l'utilizzo del comando del plugin 'Comprimi JSON' rimuoverà TUTTI gli spazi bianchi non necessari dal JSON. Altrimenti, lascerà dopo i due punti negli oggetti e dopo la virgola sia negli oggetti che negli array",
+        "remember_comments": "Quando JSON viene formattato o compresso, vengono inclusi tutti i commenti trovati durante l'ultima analisi.\r\nQuando viene formattato, ogni commento avrà la stessa posizione relativa a ciascun elemento JSON di quando è stato analizzato.\r\nDurante la compressione, tutti i commenti verranno visualizzati all'inizio del documento.",
+        "sort_keys": "Utilizza il tabulatore ('\\t') invece degli spazi tra i livelli di JSON durante la formattazione",
+        "auto_try_guess_csv_delim_newline": "Se questa impostazione è abilitata,\r\nquando la finestra di ricerca con espressione regolare, o quando \"Analizza come CSV?\" di questa finestra è attivata,\r\nJsonTools tenterà di indovinare se il documento corrente è un file CSV o TSV, e quante colonne e quale nuova riga contiene.\r\nIn questo caso l'apertura della finestra di ricerca espressione regolare richiederà leggermente più tempo.",
+        "csv_newline": "Indicare il fine riga da usare per generare file  CSV.",
+        "key_style": "Lo stile della chiave da usare quando si ottiene il percorso o chiave/indice di un nodo o riga",
+        "skip_api_request_and_fuzz_tests": "Durante l'esecuzione dei test, salta i test che inviano richieste alle API e i test RemesPath fuzz",
+        "try_parse_start_chars": "Quando si seleziona ogni JSON nel file, iniziare a provare ad analizzare solo questi caratteri.\r\nSono ammessi solo JSON validi in base a NAN_INF logger_level.\r\nEsempio: se \"[{ sono selezionati (impostazione predefinita), vengono considerate solo stringhe, arrays, e oggetti potenziali.\r\nSe \"[{tf sono selezionate, vengono considerate stringhe, arrays, oggetti, e booleans potenziali.",
+        "tree_view_font_size": "La dimensione del carattere (in punti) per il visualizzatore dell'albero. Per riferimento, il valore predefinito è 7,8.",
+        "use_npp_styling": "Utilizzare gli stessi colori della finestra dell'editor per il visualizzatore dell'albero e altri moduli JsonTools?",
+        "extended_ascii_strings": "Utilizza caratteri ASCII estesi (es., \u000b, ñ) nelle stringhe?",
+        "maxArrayLength": "Lunghezza massima degli array casuali, se non diversamente specificato dalla parola chiave \"maxItems\" ",
+        "minArrayLength": "Lunghezza minima degli array casuali, se non diversamente specificato dalla parola chiave \"minItems\" ",
+        "max_schema_validation_problems": "Numero massimo di problemi di convalida dello schema JSON da registrare prima che il validatore si interrompa"
+    }
+}
