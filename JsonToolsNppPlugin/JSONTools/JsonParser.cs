@@ -198,12 +198,12 @@ namespace JSON_Tools.JSON_Tools
         public const int MAX_RECURSION_DEPTH = 512;
 
         #region JSON_PARSER_ATTRS
-        /// <summary>
-        /// If true, any strings in the standard formats of ISO 8601 dates (yyyy-MM-dd) and datetimes (yyyy-MM-dd hh:mm:ss.sss)
-        ///  will be automatically parsed as the appropriate type.
-        ///  Not currently supported. May never be.
-        /// </summary>
-        public bool parseDatetimes;
+        ///// <summary>
+        ///// If true, any strings in the standard formats of ISO 8601 dates (yyyy-MM-dd) and datetimes (yyyy-MM-dd hh:mm:ss.sss)
+        /////  will be automatically parsed as the appropriate type.
+        /////  Not currently supported. May never be.
+        ///// </summary>
+        //public bool parseDatetimes;
 
         /// <summary>
         /// If line is not null, most forms of invalid syntax will not cause the parser to stop,<br></br>
@@ -297,11 +297,10 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
-        public JsonParser(LoggerLevel loggerLevel = LoggerLevel.NAN_INF, bool parseDatetimes = false, bool throwIfLogged = true, bool throwIfFatal = true, bool rememberComments = false)
+        public JsonParser(LoggerLevel loggerLevel = LoggerLevel.NAN_INF, bool throwIfLogged = true, bool throwIfFatal = true, bool rememberComments = false)
             //, bool includeExtraProperties = false)
         {
             this.loggerLevel = loggerLevel;
-            this.parseDatetimes = parseDatetimes;
             this.throwIfLogged = throwIfLogged;
             this.throwIfFatal = throwIfFatal;
             //this.includeExtraProperties = includeExtraProperties;
@@ -686,10 +685,10 @@ namespace JSON_Tools.JSON_Tools
                 ii++;
             }
             ii++;
-            if (parseDatetimes)
-            {
-                return TryParseDateOrDateTime(sb.ToString(), startUtf8Pos);
-            }
+            //if (parseDatetimes)
+            //{
+            //    return TryParseDateOrDateTime(sb.ToString(), startUtf8Pos);
+            //}
             return new JNode(sb.ToString(), Dtype.STR, startUtf8Pos);
         }
 
@@ -830,34 +829,34 @@ namespace JSON_Tools.JSON_Tools
             return result;
         }
 
-        private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date
-                                                           (?:[T ](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d # hours, minutes, seconds
-                                                           (?:\.\d{1,3})?Z?)?$ # milliseconds",
-                                                         RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-        private JNode TryParseDateOrDateTime(string maybeDatetime, int startUtf8Pos)
-        {
-            Match mtch = DATE_TIME_REGEX.Match(maybeDatetime);
-            int len = maybeDatetime.Length;
-            if (mtch.Success)
-            {
-                try
-                {
-                    if (len == 10)
-                    {
-                        // yyyy-mm-dd dates have length 10
-                        return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATE, startUtf8Pos);
-                    }
-                    if (len >= 19 && len <= 24)
-                    {
-                        // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sssZ has length 24
-                        return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATETIME, startUtf8Pos);
-                    }
-                }
-                catch { } // it was an invalid date, i guess
-            }
-            // it didn't match, so it's just a normal string
-            return new JNode(maybeDatetime, Dtype.STR, startUtf8Pos);
-        }
+        //private static Regex DATE_TIME_REGEX = new Regex(@"^\d{4}-\d\d-\d\d # date
+        //                                                   (?:[T ](?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d # hours, minutes, seconds
+        //                                                   (?:\.\d{1,3})?Z?)?$ # milliseconds",
+        //                                                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        //private JNode TryParseDateOrDateTime(string maybeDatetime, int startUtf8Pos)
+        //{
+        //    Match mtch = DATE_TIME_REGEX.Match(maybeDatetime);
+        //    int len = maybeDatetime.Length;
+        //    if (mtch.Success)
+        //    {
+        //        try
+        //        {
+        //            if (len == 10)
+        //            {
+        //                // yyyy-mm-dd dates have length 10
+        //                return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATE, startUtf8Pos);
+        //            }
+        //            if (len >= 19 && len <= 24)
+        //            {
+        //                // yyyy-mm-dd hh:mm:ss has length 19, and yyyy-mm-dd hh:mm:ss.sssZ has length 24
+        //                return new JNode(DateTime.Parse(maybeDatetime), Dtype.DATETIME, startUtf8Pos);
+        //            }
+        //        }
+        //        catch { } // it was an invalid date, i guess
+        //    }
+        //    // it didn't match, so it's just a normal string
+        //    return new JNode(maybeDatetime, Dtype.STR, startUtf8Pos);
+        //}
 
         /// <summary>
         /// Parse a number in a JSON string, including NaN or Infinity<br></br>
@@ -1569,7 +1568,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public JsonParser Copy()
         {
-            return new JsonParser(loggerLevel, parseDatetimes, throwIfLogged, throwIfFatal);//, includeExtraProperties);
+            return new JsonParser(loggerLevel, throwIfLogged, throwIfFatal);//, includeExtraProperties);
         }
         #endregion
         #region MISC_OTHER_FUNCTIONS

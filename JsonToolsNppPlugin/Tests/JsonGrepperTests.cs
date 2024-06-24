@@ -74,7 +74,7 @@ namespace JSON_Tools.Tests
             }
 
             // test nonstandard JsonParser settings for the grepper
-            grepper.jsonParser = new JsonParser(LoggerLevel.JSON5, false);
+            grepper.jsonParser = new JsonParser(LoggerLevel.JSON5);
             string jsonSubdirName = subdir.FullName.Replace("\\", "\\\\");
 
             var specialTestcases = new Dictionary<string, JNode>

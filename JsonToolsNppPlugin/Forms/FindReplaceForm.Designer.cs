@@ -46,8 +46,8 @@
             this.RootTextBox = new System.Windows.Forms.TextBox();
             this.RootTextBoxLabel = new System.Windows.Forms.Label();
             this.AdvancedGroupBox = new System.Windows.Forms.GroupBox();
-            this.MatchExactlyBox = new System.Windows.Forms.CheckBox();
             this.IgnoreCaseCheckBox = new System.Windows.Forms.CheckBox();
+            this.MatchExactlyBox = new System.Windows.Forms.CheckBox();
             this.SwapFindReplaceButton = new System.Windows.Forms.Button();
             this.ShowAdvancedOptionsCheckBox = new System.Windows.Forms.CheckBox();
             this.AdvancedGroupBox.SuspendLayout();
@@ -229,6 +229,17 @@
             this.AdvancedGroupBox.TabIndex = 4;
             this.AdvancedGroupBox.TabStop = false;
             // 
+            // IgnoreCaseCheckBox
+            // 
+            this.IgnoreCaseCheckBox.AutoSize = true;
+            this.IgnoreCaseCheckBox.Location = new System.Drawing.Point(201, 99);
+            this.IgnoreCaseCheckBox.Name = "IgnoreCaseCheckBox";
+            this.IgnoreCaseCheckBox.Size = new System.Drawing.Size(107, 20);
+            this.IgnoreCaseCheckBox.TabIndex = 9;
+            this.IgnoreCaseCheckBox.Text = "Ignore &case?";
+            this.IgnoreCaseCheckBox.UseVisualStyleBackColor = true;
+            this.IgnoreCaseCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
+            // 
             // MatchExactlyBox
             // 
             this.MatchExactlyBox.AutoSize = true;
@@ -241,17 +252,6 @@
             this.MatchExactlyBox.UseVisualStyleBackColor = true;
             this.MatchExactlyBox.CheckedChanged += new System.EventHandler(this.MatchExactlyBox_CheckedChanged);
             this.MatchExactlyBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
-            // 
-            // IgnoreCaseCheckBox
-            // 
-            this.IgnoreCaseCheckBox.AutoSize = true;
-            this.IgnoreCaseCheckBox.Location = new System.Drawing.Point(201, 99);
-            this.IgnoreCaseCheckBox.Name = "IgnoreCaseCheckBox";
-            this.IgnoreCaseCheckBox.Size = new System.Drawing.Size(107, 20);
-            this.IgnoreCaseCheckBox.TabIndex = 9;
-            this.IgnoreCaseCheckBox.Text = "Ignore &case?";
-            this.IgnoreCaseCheckBox.UseVisualStyleBackColor = true;
-            this.IgnoreCaseCheckBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FindReplaceForm_KeyUp);
             // 
             // SwapFindReplaceButton
             // 

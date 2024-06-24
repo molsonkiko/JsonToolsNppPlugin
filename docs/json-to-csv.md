@@ -7,8 +7,6 @@ This app uses an [algorithm](https://github.com/molsonkiko/JsonToolsNppPlugin/bl
     * Thus the JSON string `"foo,\n\"bar\""` would become `"foo,\n""bar""""` (with an actual newline) in a CSV file with `,` as delimiter and `"` as quote character, because the newline, quote character, and delimiter in the string all necessitate enclosing quotes, and the internal quotes must be doubled up.
 * Floating point numbers are always exported with `.` as the decimal separator, as in JSON. This is not currently configurable, but may become optional in the future.
 * `null` is represented as an empty string.
-* Dates are represented in `YYYY-MM-DD` format (e.g., January 7, 2015 is represented as `2015-01-07`)
-* Datetimes are represented in `yyyy-MM-dd hh:mm:ss` format (e.g., 4:15:35PM April 29 2021 is represented as `2021-04-29 16:15:35`)
 
 [Pre-v6.0 docs are here](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/110cbb7d30c6a48cd2c7cfac3cb65534230b9c86/docs/json-to-csv.md).
 

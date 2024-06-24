@@ -32,7 +32,7 @@ namespace JSON_Tools.Tests
         {
             int ii = 0;
             int testsFailed = 0;
-            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5);
             string[] tests = new string[]
             {
                 "2",
@@ -105,7 +105,7 @@ namespace JSON_Tools.Tests
 
         public static bool Test()
         {
-            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true, true);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, true, true);
             // includes:
             // 1. hex
             // 2. all other backslash escape sequences
@@ -210,12 +210,12 @@ namespace JSON_Tools.Tests
                 (
                     // valid datetime,              invalid datetime,           invalid date,    valid datetime (no milliseconds),  valid date
                     "[\"2027-02-08 14:02:09.987\", \"1915-13-08 23:54:09.100\", \"1903-05-44\", \"2005-03-04 01:00:00\",            \"1843-06-11\"]",
-                    "[\"2027-02-08 14:02:09.987\", \"1915-13-08 23:54:09.100\", \"1903-05-44\", \"2005-03-04 01:00:00.000\", \"1843-06-11\"]",
+                    "[\"2027-02-08 14:02:09.987\", \"1915-13-08 23:54:09.100\", \"1903-05-44\", \"2005-03-04 01:00:00\", \"1843-06-11\"]",
                     "["+ NL +
                     "\"2027-02-08 14:02:09.987\"," + NL + 
                     "\"1915-13-08 23:54:09.100\"," + NL + 
                     "\"1903-05-44\"," + NL +
-                    "\"2005-03-04 01:00:00.000\"," + NL +
+                    "\"2005-03-04 01:00:00\"," + NL +
                     "\"1843-06-11\"" + NL +
                     "]",
                     "dates and datetimes (both valid and invalid)"
@@ -717,8 +717,8 @@ Got
         public static bool TestSpecialParserSettings()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(LoggerLevel.JSON5, true, false);
-            TimeSpan offsetFromUtc = DateTime.Now.Subtract(DateTime.UtcNow);
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, false);
+            //TimeSpan offsetFromUtc = DateTime.Now.Subtract(DateTime.UtcNow);
             var testcases = new (string inp, JNode desiredOut)[]
             {
                 ("{\"a\": 1, // this is a comment\n\"b\": 2}", simpleparser.Parse("{\"a\": 1, \"b\": 2}")),
@@ -730,21 +730,19 @@ multiline comment
                     simpleparser.Parse("[1, 2]")
                 ),
                 ("[.75, 0xff, +9]", simpleparser.Parse("[0.75, 255, 9]")), // leading decimal points, hex numbers, leading + sign
-                ("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
-                ("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)), // HH:mm:ss.fff datetime
-                ("\"1956-11-13T11:17:56.6\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 600), Dtype.DATETIME, 0)), // HH:mm:ss.f datetime
-                ("\"1956-11-13 11:17:56\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 0), Dtype.DATETIME, 0)), // HH:mm:ss datetime
-                // datetimes ending with "Z" are UTC by definition
-                ("\"2027-05-08 14:02:09.987Z\"", new JNode(new DateTime(2027, 5, 8, 14, 2, 9, 987, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fffZ datetime
-                ("\"2027-06-15 04:41:20.5Z\"", new JNode(new DateTime(2027, 6, 15, 4, 41, 20, 500, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fZ datetime
-                ("\"2048-10-25 16:59:38Z\"", new JNode(new DateTime(2048, 10, 25, 16, 59, 38, 0, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ssZ datetime
+                //("\"2022-06-04\"", new JNode(new DateTime(2022, 6, 4), Dtype.DATE, 0)),
+                //("\"1956-11-13 11:17:56.123\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 123), Dtype.DATETIME, 0)), // HH:mm:ss.fff datetime
+                //("\"1956-11-13T11:17:56.6\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 600), Dtype.DATETIME, 0)), // HH:mm:ss.f datetime
+                //("\"1956-11-13 11:17:56\"", new JNode(new DateTime(1956, 11, 13, 11, 17, 56, 0), Dtype.DATETIME, 0)), // HH:mm:ss datetime
+                //// datetimes ending with "Z" are UTC by definition
+                //("\"2027-05-08 14:02:09.987Z\"", new JNode(new DateTime(2027, 5, 8, 14, 2, 9, 987, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fffZ datetime
+                //("\"2027-06-15 04:41:20.5Z\"", new JNode(new DateTime(2027, 6, 15, 4, 41, 20, 500, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ss.fZ datetime
+                //("\"2048-10-25 16:59:38Z\"", new JNode(new DateTime(2048, 10, 25, 16, 59, 38, 0, DateTimeKind.Utc) + offsetFromUtc, Dtype.DATETIME, 0)), // HH:mm:ssZ datetime
                 ("\"1956-13-12\"", new JNode("1956-13-12", Dtype.STR, 0)), // bad date- month too high
                 ("\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0)), // bad datetime- hour too high
                 ("\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0)), // bad date- has space at end
                 ("['abc', 2, '1999-01-03']", // single-quoted strings 
-                    new JArray(0, new List<JNode>(new JNode[]{new JNode("abc", Dtype.STR, 0),
-                                                          new JNode(Convert.ToInt64(2), Dtype.INT, 0),
-                                                          new JNode(new DateTime(1999, 1, 3), Dtype.DATE, 0)}))),
+                    new JArray(0, new List<JNode>(new JNode[]{new JNode("abc"), new JNode(2L), new JNode("1999-01-03")}))),
                 ("{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
                     simpleparser.Parse("{\"a\": \"1\", \"b\": 2}")),
                 (@"{'a':
@@ -827,7 +825,7 @@ multiline comment
         public static bool TestLinter()
         {
             JsonParser simpleparser = new JsonParser();
-            JsonParser parser = new JsonParser(LoggerLevel.STRICT, true, false, false);
+            JsonParser parser = new JsonParser(LoggerLevel.STRICT, false, false);
             var testcases = new (string inp, string desiredOut, string[] desiredLint)[]
             {
                 ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON

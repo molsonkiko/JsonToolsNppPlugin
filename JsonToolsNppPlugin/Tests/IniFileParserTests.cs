@@ -61,7 +61,7 @@ namespace JSON_Tools.Tests
                 ("[]\r\na=a", "{\"\": {\"a\": \"a\"}}", "[]\r\na=a\r\n", new (string path, int utf8pos)[]{("]a", 4)}),
                 ("[f]\r\n b = 1", "{\"f\": {\"b\": \"1\"}}", "[]\r\nb=1\r\n", new (string path, int utf8pos)[]{}),
             };
-            var jsonParser = new JsonParser(LoggerLevel.JSON5, false, true, true, true);
+            var jsonParser = new JsonParser(LoggerLevel.JSON5, true, true, true);
             int testsPerLoop = 2;
             foreach ((string iniText, string correctJsonStrWithoutInterpolation, /*bool interpolation,*/ string correctReformattedIniText,
                 (string path, int utf8pos)[] correctPathPositionsAfterParsing) in testcases)

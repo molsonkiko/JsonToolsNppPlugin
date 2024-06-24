@@ -834,12 +834,12 @@ namespace JSON_Tools.JSON_Tools
             case Dtype.STR:
                 val = (string)jnode.value;
                 break; // only apply quotes if internal delims, quotes, or newlines
-            case Dtype.DATE:
-                val = ((DateTime)jnode.value).ToString("yyyy-MM-dd");
-                break;
-            case Dtype.DATETIME:
-                val = ((DateTime)jnode.value).ToString("yyyy-MM-dd hh:mm:ss");
-                break;
+            //case Dtype.DATE:
+            //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd");
+            //    break;
+            //case Dtype.DATETIME:
+            //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd hh:mm:ss");
+            //    break;
             case Dtype.NULL:
                 return; // nulls should be empty entries
             case Dtype.BOOL:

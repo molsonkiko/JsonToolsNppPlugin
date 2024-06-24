@@ -84,7 +84,7 @@
             // ThanksWowLinkLabel
             // 
             this.ThanksWowLinkLabel.AutoSize = true;
-            this.ThanksWowLinkLabel.LinkArea = new System.Windows.Forms.LinkArea(228, 234);
+            this.ThanksWowLinkLabel.LinkArea = new System.Windows.Forms.LinkArea(228, 4);
             this.ThanksWowLinkLabel.LinkColor = System.Drawing.Color.Black;
             this.ThanksWowLinkLabel.Location = new System.Drawing.Point(28, 255);
             this.ThanksWowLinkLabel.Name = "ThanksWowLinkLabel";

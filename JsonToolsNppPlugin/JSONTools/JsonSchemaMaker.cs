@@ -76,8 +76,8 @@ namespace JSON_Tools.JSON_Tools
                 || x == Dtype.BOOL
                 || x == Dtype.NULL
                 || x == Dtype.REGEX
-                || x == Dtype.DATE
-                || x == Dtype.DATETIME
+                //|| x == Dtype.DATE
+                //|| x == Dtype.DATETIME
                 || x == Dtype.SLICE;
         }
 

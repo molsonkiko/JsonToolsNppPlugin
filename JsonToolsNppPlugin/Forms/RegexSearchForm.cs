@@ -22,7 +22,7 @@ namespace JSON_Tools.Forms
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
             HeaderHandlingComboBox.SelectedIndex = 0;
             NewlineComboBox.SelectedIndex = 0;
-            jsonParser = new JsonParser(LoggerLevel.JSON5, false, false, false, false);
+            jsonParser = new JsonParser(LoggerLevel.JSON5, false, false, false);
             settingsValidator = JsonSchemaValidator.CompileValidationFunc(new JsonParser().Parse(
                 "{\r\n" +
                  "\t\"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n" +

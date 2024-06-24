@@ -106,7 +106,6 @@ namespace JSON_Tools.Utils
         public PrettyPrintStyle pretty_print_style { get; set; }
 
         [Description("When JSON is pretty-printed or compressed, any comments found when it was last parsed are included.\r\n" +
-                     "For logistical reasons, the user-selected pretty_print_style value is ignored if this is true, and Google style will always be used.\r\n" +
                      "When pretty-printing, each comment will have the same relative location to each JSON element as when it was parsed.\r\n" +
                      "When compressing, all comments will come at the beginning of the document."
                     ),

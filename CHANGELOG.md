@@ -49,23 +49,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [7.3.0] - (UNRELEASED) YYYY-MM-DD
+## [8.0.0] - (UNRELEASED) YYYY-MM-DD
 
 ### Added
 
 1. Made the tree view font size configurable with the [`tree_view_font_size` setting](/docs/README.md#styling-of-forms). Fixes [issue 66](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66).
 2. Added dark mode tree view icons (addresses [this GH issue comment](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/66#issuecomment-2169216078)).
+3. Allow users to manually enter directory names in the [JSON from files and APIs form](/docs/README.md#getting-json-from-local-directories) (referred to as "grepper form" for the rest of this section) rather than using a dialog or the dropdown menu.
+4. Added a "Search directories" button to the grepper form.
 
 ### Changed
 
-1. Removed the `max_threads_parsing` setting for the [JSON from files and APIs form](/docs/README.md#get-json-from-files-and-apis), because nobody upvoted the first post in [GH issue 67](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/67). 
-2. Datetime objects (which may be parsed when the [`allow_datetimes` setting](/docs/README.md#parsing-dates-and-date-times-in-json)) will now be represented with trailing milliseconds. Previously, the milliseconds were trimmed off.
-3. To avoid making Notepad++ crash due to an out-of-memory error, the [JSON from files and APIs form](/docs/README.md#get-json-from-files-and-apis) will stop reading files and show an error message once the total length of files read exceeds 429496729 bytes (1/5th of the largest positive 32-bit integer). 
+1. Removed the `max_threads_parsing` setting for the [grepper form](/docs/README.md#get-json-from-files-and-apis), because the underlying implementation was changed in a way that made that setting useless.
+2. __Removed the `allow_datetimes` setting__, because I did not feel confident that the potential benefits of the setting outweigh the danger of accidentally changing the format of people's dates or datetimes in some way that they were not expecting.
+3. When all files have been parsed in the directory chosen with the [grepper form](/docs/README.md#getting-json-from-local-directories), the directory name is no longer reset to the default value.
 
 ### Fixed
 
 1. Avoid unnecessarily refreshing the styles of all forms when settings other than `use_npp_styling` or `tree_view_font_size` are changed.
-2. Fixed bug where [datetime strings](/docs/README.md#parsing-dates-and-date-times-in-json) (any string with the format `YYYY-MM-DD hh:mm:ss.fff` with optional trailing `Z`) were formatted incorrectly as 12-hour datetimes, rather than 24-hour datetimes. For example, `2024-01-13 17:05:10` was previously formatted as `2024-01-13 05:05:10`.
+2. The list of recently chosen directories in the grepper form is pre-filtered for existing directories, to hide the partial directory names that contaminate the config file.
+3. Fix bug where, if a setting in the config file had an invalid value (for example, a numeric setting having a value of `blah`), there might be an uncaught exception that would cause Notepad++ to crash. This bug appears to be most likely to occur when the localization is *not* set to `en-us`.
 
 ## [7.2.0] - 2024-04-19
 

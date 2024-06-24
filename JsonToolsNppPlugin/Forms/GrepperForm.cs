@@ -40,7 +40,7 @@ namespace JSON_Tools.Forms
                 }
                 foreach (string dirVisited in dirsVisited)
                 {
-                    if (dirVisited.Length > 0)
+                    if (Directory.Exists(dirVisited))
                         DirectoriesVisitedBox.Items.Add(dirVisited);
                     // increase the dropdown width as needed to accomodate the longest dirname
                     if (dirVisited.Length > maxDirnameChars)
@@ -118,58 +118,57 @@ namespace JSON_Tools.Forms
 
         private void ChooseDirectoriesButton_Click(object sender, EventArgs e)
         {
-            string[] searchPatterns = SearchPatternsBox.Lines;
-            bool recursive = RecursiveSearchCheckBox.Checked;
             FolderBrowserDialog1.RootFolder = Environment.SpecialFolder.MyComputer;
             // the user can select from previously opened directories, or they can use a folder browser dialog
             FolderBrowserDialog1.SelectedPath = DirectoriesVisitedBox.Items.Count == 0
                 ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
                 : LastVisitedDirectory();
-            if (DirectoriesVisitedBox.SelectedIndex != 0 || FolderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            if (FolderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
-                string rootDir;
-                // if the user used the dialog, add the folder found to the list of recently visited dirs
-                if (DirectoriesVisitedBox.SelectedIndex == 0)
+                DirectoriesVisitedBox.Text = FolderBrowserDialog1.SelectedPath;
+                AddDirectoryToDirectoriesVisited(FolderBrowserDialog1.SelectedPath);
+            }
+        }
+
+        private void SearchDirectoriesButton_Click(object sender, EventArgs e)
+        {
+            string[] searchPatterns = SearchPatternsBox.Lines;
+            bool recursive = RecursiveSearchCheckBox.Checked;
+            string rootDir = DirectoriesVisitedBox.Text;
+            AddDirectoryToDirectoriesVisited(rootDir);
+            if (Directory.Exists(rootDir))
+            {
+                try
                 {
-                    rootDir = FolderBrowserDialog1.SelectedPath;
-                    DirectoriesVisitedBox.Items.Add(rootDir);
-                    // only track 10 most recently visited dirs
-                    // the count will be at most 11 because we always have the reminder as item at index 0.
-                    if (DirectoriesVisitedBox.Items.Count > 11)
-                        DirectoriesVisitedBox.Items.RemoveAt(1);
-                    // increase the dropdown width as needed to accomodate the longest dirname
-                    if (rootDir.Length * 7 > DirectoriesVisitedBox.DropDownWidth)
-                        DirectoriesVisitedBox.DropDownWidth = rootDir.Length * 7;
+                    // TODO: this could take a long time; maybe add a line to show a MessageBox
+                    // that asks if you want to stop the search after a little while?
+                    UseWaitCursor = true;
+                    grepper.Grep(rootDir, recursive, searchPatterns);
+                    UseWaitCursor = false;
                 }
-                else
+                catch (Exception ex)
                 {
-                    // avoid IndexError in case of weird stuff pasted into box
-                    int selectedIndex = DirectoriesVisitedBox.SelectedIndex >= DirectoriesVisitedBox.Items.Count || DirectoriesVisitedBox.SelectedIndex < 0
-                        ? 0
-                        : DirectoriesVisitedBox.SelectedIndex;
-                    rootDir = DirectoriesVisitedBox.Items[selectedIndex].ToString();
-                }
-                if (Directory.Exists(rootDir))
-                {
-                    try
-                    {
-                        // TODO: this could take a long time; maybe add a line to show a MessageBox
-                        // that asks if you want to stop the search after a little while?
-                        UseWaitCursor = true;
-                        grepper.Grep(rootDir, recursive, searchPatterns);
-                        UseWaitCursor = false;
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("JSON file search failed:\n" + RemesParser.PrettifyException(ex),
-                            "Json file search error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show("JSON file search failed:\n" + RemesParser.PrettifyException(ex),
+                        "Json file search error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                 }
             }
-            DirectoriesVisitedBox.SelectedIndex = 0;
             AddFilesToFilesFound();
+        }
+
+        private void AddDirectoryToDirectoriesVisited(string rootDir)
+        {
+            if (!Directory.Exists(rootDir) || DirectoriesVisitedBox.Items.IndexOf(rootDir) >= 0)
+                return; // only add existing directories that aren't already in the list
+            DirectoriesVisitedBox.Items.Add(rootDir);
+            // only track 10 most recently visited dirs
+            // the count will be at most 11 because we always have the reminder as item at index 0.
+            if (DirectoriesVisitedBox.Items.Count > 11)
+                DirectoriesVisitedBox.Items.RemoveAt(1);
+            // increase the dropdown width as needed to accomodate the longest dirname
+            if (rootDir.Length * 7 > DirectoriesVisitedBox.DropDownWidth)
+                DirectoriesVisitedBox.DropDownWidth = rootDir.Length * 7;
         }
 
         private void ViewErrorsButton_Click(object sender, EventArgs e)

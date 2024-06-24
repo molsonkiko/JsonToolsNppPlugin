@@ -90,7 +90,7 @@ namespace JSON_Tools.JSON_Tools
             exceptions = new JObject();
 			if (jsonParser == null)
             {
-				this.jsonParser = new JsonParser(LoggerLevel.JSON5, true);
+				this.jsonParser = new JsonParser(LoggerLevel.JSON5);
 			}
             else
             {

@@ -117,10 +117,6 @@ In [v5.3.0](/CHANGELOG.md#530---2023-06-10), a form was added to display errors.
 
 Beginning in [v7.1](/CHANGELOG.md#710---2024-02-28), if there is a fatal error such that JsonTools cannot parse a document, the caret is moved to the location of the fatal error.
 
-### Parsing dates and date-times in JSON
-
-The `allow_datetimes` setting (off by default) will, if turned on, cause strings representing dates with the formats `YYYY-MM-DD` or `YYYY-MM-DD hh:mm:ss(.fff)?Z` to be [parsed as C# `DateTime` objects](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.parse?view=netframework-4.8). There is not much benefit to doing this, except that dates and datetimes are represented by calendar icons in the tree view. __*DO NOT* turn on the `allow_datetimes` setting if your JsonTools version is less than [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd)__, because there were known bugs in the parsing and formatting of dates and datetimes prior to that release.
-
 ### Document type box *(added in v6.0)* ###
 
 *Beginning in version [v6.0](/CHANGELOG.md#600---2023-12-13),* the tree view has a document type box just above the tree itself.
@@ -310,15 +306,23 @@ Prior to [v6.0](/CHANGELOG.md#600---2023-12-13), submitting a query automaticall
 
 If you want to perform some simple search or find-and-replace operations on JSON without worrying about [RemesPath](/docs/RemesPath.md) syntax, you can use the find/replace form.
 
+Below is an example of a simple search for the substring `on` in keys and values. The tree view displays all the *strings that contain `on`*, or the *values associated with a key that contains `on`.*
+
 ![Find/replace form simple find](/docs/find%20replace%20form%20simple%20find.PNG)
+
+Below is an example using the find/replace form to replace the regular expression `(s?in)` with the replacement `$1$1$`, which effectively triples every instance of (`sin` or `in`) in values, converting `raisin` into `raisinsinsin` and `wine` into `wininine`. __When using the `Replace all` button, keys are not affected.__
 
 ![Find/replace form simple replace](/docs/find%20replace%20form%20simple%20replace.PNG)
 
-This form provides lets you perform text searches on keys and values in JSON, and also lets you do mathematical find/replace operations on numeric values.
+This form provides lets you perform text searches on keys and values in JSON, and also lets you do __mathematical__ find/replace operations on numeric values.
 
 The default behavior of the form is to do a regular expression search on both keys and values, or a text find/replace on values only. You can change that under `Show advanced options`.
 
+Below is an example of searching for all *children of the `year` key* (because `Root` is set to `.year`) that are *less than the number `2010`* (because `Find...` is `< 2010` and the `Math expression` option is checked). This means that the tree view shows only the numbers between `2007` and `2009` in the `year` array.
+
 ![Find/replace form math find](/docs/find%20replace%20form%20math%20find.PNG)
+
+Below is an example of *replacing* (by clicking `Replace all`) values *in the `year` array* (by setting `Root` to `.year`) by *subtracting `500` from all values less than `2010`* (because the `Find...` is set to `< 2010` and `Replace with...` is set to `- 500`, and the `Math expression` box is checked).
 
 ![Find/replace form math replace](/docs/find%20replace%20form%20math%20replace.PNG)
 
@@ -331,6 +335,14 @@ Starting in version [4.11.0](/CHANGELOG.md#4110---2023-03-15), non-regular-expre
 The form has limited functionality. For example, you can't perform a search on keys and a replacement on values. However, the form generates RemesPath queries in the RemesPath query box in the tree viewer, so you can use those queries as a starting point.
 
 Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), when a `Replace all` query is run, only the values that were replaced are displayed in the tree. Prior to that, the tree would show the entire JSON after a successful `Replace all` query.
+
+Sometimes you may wish to do find/replace operations __only in *direct children or grandchildren* of an object or array,__ which can be done by *unchecking* the `Recursive search?` button under the `Show advanced options` checkbox.
+
+The find/replace form finds *grandchildren as well as children* in non-recursive mode because of some weirdness in RemesPath syntax.
+
+Below is an example of searching *only direct children or grandchildren* (by unchecking `Recursive search?`) that are less than `0` (because `Find...` is `< 0` and the `Math expression` box is checked).
+
+![Find/replace form non-recursive search](/docs/find%20replace%20form%20NOT%20RECURSIVE.PNG)
 
 ## JSON to CSV ##
 
@@ -361,7 +373,7 @@ Populating the tree is *much* more expensive than parsing JSON or executing Reme
 
 ![Only direct children of the root are displayed for a big file](/docs/partial%20tree%20load%20example.PNG)
 
-For best performance, you can disable the tree view completely. If the JSON is a single scalar (bool, int, float, string, null, or date), it will display. For arrays and objects, you will only see the type icon.
+For best performance, you can disable the tree view completely. If the JSON is a single scalar (bool, int, float, string, null), it will display. For arrays and objects, you will only see the type icon.
 
 The `View all subtrees` checkbox on the JSON viewer form allows you to quickly toggle between viewing the full tree and only the direct children. Some notes on the checkbox:
 - If the full tree will not be shown when the tree is loaded, this box is unchecked; otherwise it is checked.
@@ -771,19 +783,43 @@ Of course, sometimes an API request will fail. You can click the [View errors bu
 
 ## Getting JSON from local directories ##
 
-If you want to open up all the JSON files in a directory, look to the bottom center left. There you can customize what type(s) of [filename search pattern](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension), choose whether to recursively search in subdirectories (false by default), and finally search for files using the settings you chose.
+If you want to open up all the JSON files in a directory, here's how to do it:
+1. Choose whether you want to search in subdirectories.
+2. Choose what [filename search pattern(s)](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension).
+3. Choose what directory you want to search. *If you are using a version of JsonTools __older than [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd)__*, you can do this in one of the following ways:
+    - Choose a directory using a GUI dialog. To do this, *make sure that the central list box has the default value of `Previously visited directories...`*, then click the `Choose directory...` button, and a dialog will pop up. Once you select a directory and click `OK`, JsonTools will search the chosen directory.
+    ![Choose a directory using a modal dialog](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20USING%20DIALOG.PNG)
+    - Choose a previously searched directory from the central list box, *then click the `Choose directory...` button.*
+    ![Choose a directory using a dropdown list](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20USING%20DROPDOWN%20LIST.PNG)
+4. Choosing a directory takes two steps *if you are using JsonTools __[v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd) or newer:__*
+    1. Choose a directory in one of the following ways:
+         - Open a dialog (as shown in step 3 above)
+         - Select a previously searched directory (as shown above)
+         - Type a directory name into the list box.
+    2. Click the `Search directories` button below the list box.
+    ![Choosing a directory in JsonTools v8.0](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20VERSION%208p0.PNG)
 
-For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the `View errors button`.
+For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the [`View errors` button](#viewing-errors).
 
-![JSON grepper/API requester search JSON in local directories](/docs/json_from_files_and_apis%20get%20json%20in%20directory.PNG)
-
-Beginning in version [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes. This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
+Beginning in version [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes. This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
 
 ### Viewing results in a buffer ###
 
 If you want to see the JSON found by this tool, just click the `View results in buffer` button. This will open a new buffer in Notepad++ with an object mapping filenames and URLs to the JSON associated with them.
 
+Below is an example of the tree view showing JSON searched from a local directory and two APIS, then displayed as a tree view with the `View results in buffer` button.
+
+![Grepper form - View results in buffer button](/docs/json_from_files_and_apis%20view%20results%20in%20buffer%20button.PNG)
+
 This form has its own tree viewer associated with this buffer. You can use this plugin's normal tree viewers for other buffers. If you close the buffer, the tree viewer is destroyed.
+
+If you wish to filter the files shown in the tree view, you may find the [tree view's find/replace form](#find-and-replace-form) useful.
+
+For example, if you wanted to search only files with `foo` (case-sensitive) in their filename, you would do the following:
+1. Click `Find/replace` at the bottom of the tree view.
+2. Input the settings (`Find...` = `foo`, `Search in keys or values?` = `Keys`, `Recursive search?` = unchecked, `Ignore case?` = unchecked) in the find/replace form.
+3. Click `Find all` in the find/replace form.
+4. Look at the tree view, and see which files are displayed. 
 
 ## Clearing selected files ##
 
@@ -953,7 +989,7 @@ And below is what the forms look like with `use_npp_styling` set to `False`:
 
 ![Forms appearance use_npp_styling FALSE](/docs/use_npp_styling%20FALSE%20example.PNG)
 
-Beginning in [v7.3](/CHANGELOG.md#730---unreleased-yyyy-mm-dd), the font size for nodes in the tree view is also configurable with the `tree_view_font_size` setting. Below is a side-by-side comparison showing the effect of this setting.
+Beginning in [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd), the font size for nodes in the tree view is also configurable with the `tree_view_font_size` setting. Below is a side-by-side comparison showing the effect of this setting.
 
 ![Side-by-side comparison demonstrating tree_view_font_size setting](/docs/tree_view_font_size%20side-by-side%20comparison.PNG)
 

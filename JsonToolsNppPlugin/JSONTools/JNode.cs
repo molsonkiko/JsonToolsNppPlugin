@@ -37,14 +37,14 @@ namespace JSON_Tools.JSON_Tools
         REGEX = 256,
         /// <summary>a string representing an array slice</summary>
         SLICE = 512,
-        /// <summary>
-        /// A YYYY-MM-DD date
-        /// </summary>
-        DATE = 1024,
-        /// <summary>
-        /// A YYYY-MM-DD hh:mm:ss.sss datetime
-        /// </summary>
-        DATETIME = 2048,
+        ///// <summary>
+        ///// A YYYY-MM-DD date
+        ///// </summary>
+        //DATE = 1024,
+        ///// <summary>
+        ///// A YYYY-MM-DD hh:mm:ss.sss datetime
+        ///// </summary>
+        //DATETIME = 2048,
         /// <summary>
         /// NO JNODES ACTUALLY HAVE THE FUNCTION TYPE.<br></br>
         /// It is used in RemesPath to distinguish CurJson from non-CurJson
@@ -59,10 +59,9 @@ namespace JSON_Tools.JSON_Tools
         NUM = FLOAT | INT | BOOL,
         ITERABLE = UNKNOWN | ARR | OBJ,
         STR_OR_REGEX = STR | REGEX,
-        DATE_OR_DATETIME = DATE | DATETIME,
         INT_OR_SLICE = INT | SLICE,
         ARR_OR_OBJ = ARR | OBJ,
-        SCALAR = FLOAT | INT | BOOL | STR | NULL | REGEX | DATETIME | DATE, // | TIME
+        SCALAR = FLOAT | INT | BOOL | STR | NULL | REGEX, // | TIME
         ANYTHING = SCALAR | ITERABLE,
     }
 
@@ -440,8 +439,8 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.NULL: return "null";
                 case Dtype.BOOL: return (bool)value ? "true" : "false";
                 case Dtype.REGEX: return StrToString(((JRegex)this).regex.ToString(), true);
-                case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss.fff") + '"';
-                case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
+                //case Dtype.DATETIME: return '"' + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss.fff") + '"';
+                //case Dtype.DATE: return '"' + ((DateTime)value).ToString("yyyy-MM-dd") + '"';
                 default: return ((object)this).ToString(); // just show the type name for it
             }
         }
@@ -706,8 +705,8 @@ namespace JSON_Tools.JSON_Tools
                     if (other != null)
                         throw new ArgumentException("Cannot compare null to non-null");
                     return 0;
-                case Dtype.DATE: // return ((DateOnly)value).CompareTo((DateOnly)other);
-                case Dtype.DATETIME: return ((DateTime)value).CompareTo((DateTime)other);
+                //case Dtype.DATE: return ((DateOnly)value).CompareTo((DateOnly)other);
+                //case Dtype.DATETIME: return ((DateTime)value).CompareTo((DateTime)other);
                 case Dtype.ARR:
                 case Dtype.OBJ: throw new ArgumentException("Cannot compare JArrays or JObjects");
                 default: throw new ArgumentException($"Cannot compare JNodes of type {type}");
@@ -746,11 +745,11 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public virtual JNode Copy()
         {
-            if (value is DateTime dt)
-            {
-                // DateTimes are mutable, unlike all other valid JNode values. We need to deal with them separately
-                return new JNode(new DateTime(dt.Ticks), type, position);
-            }
+            //if (value is DateTime dt)
+            //{
+            //    // DateTimes are mutable, unlike all other valid JNode values. We need to deal with them separately
+            //    return new JNode(new DateTime(dt.Ticks), type, position);
+            //}
             return new JNode(value, type, position);
         }
 
@@ -980,9 +979,9 @@ namespace JSON_Tools.JSON_Tools
             [Dtype.STR] = "string",
             [Dtype.UNKNOWN] = "unknown",
             [Dtype.SLICE] = "slice",
-            [Dtype.DATE] = "date",
+            //[Dtype.DATE] = "date",
             [Dtype.REGEX] = "regex",
-            [Dtype.DATETIME] = "datetime",
+            //[Dtype.DATETIME] = "datetime",
         };
 
         /// <summary>

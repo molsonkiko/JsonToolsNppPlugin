@@ -1168,7 +1168,6 @@ namespace Kbg.NppPluginNET
         public static JsonParser JsonParserFromSettings()
         {
             return new JsonParser(settings.logger_level,
-                                  settings.allow_datetimes,
                                   false,
                                   false,
                                   settings.remember_comments);
@@ -1186,7 +1185,11 @@ namespace Kbg.NppPluginNET
             if (sortForm != null && !sortForm.IsDisposed)
                 FormStyle.ApplyStyle(sortForm, settings.use_npp_styling);
             if (grepperForm != null && !grepperForm.IsDisposed)
+            {
                 FormStyle.ApplyStyle(grepperForm, settings.use_npp_styling);
+                if (grepperForm.tv != null && !grepperForm.tv.IsDisposed)
+                    grepperForm.tv.ChangeTreeViewFont();
+            }
             if (regexSearchForm != null && !regexSearchForm.IsDisposed)
                 FormStyle.ApplyStyle(regexSearchForm, settings.use_npp_styling);
             string[] keys = jsonFileInfos.Keys.ToArray();
@@ -1380,7 +1383,7 @@ namespace Kbg.NppPluginNET
                 selections.Add((0, utf8Len));
             }
             selections.Sort(SelectionManager.StartEndCompareByStart);
-            JsonParser jsonChecker = new JsonParser(LoggerLevel.NAN_INF, false, true);
+            JsonParser jsonChecker = new JsonParser(LoggerLevel.NAN_INF);
             var startEnds = new List<string>();
             int lastEnd = 0;
             Predicate<char> isTryParseStart = c => settings.try_parse_start_chars.IndexOf(c) >= 0;
@@ -1841,7 +1844,7 @@ namespace Kbg.NppPluginNET
         public static int EndOfJNodeAtPos(int startUtf8Pos, int end)
         {
             string slice = Npp.GetSlice(startUtf8Pos, end);
-            var parser = new JsonParser(LoggerLevel.JSON5, false, true, true, false);
+            var parser = new JsonParser(LoggerLevel.JSON5);
             try
             {
                 parser.ParseSomething(slice, 0);
@@ -1878,7 +1881,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             string slice = Npp.GetSlice(minPos, Npp.editor.GetLength());
-            var parser = new JsonParser(LoggerLevel.JSON5, false, true, true);
+            var parser = new JsonParser(LoggerLevel.JSON5);
             int utf8ExtraBytes = 0;
             int positionsIdx = 0;
             int nextStartPos = 0;
@@ -2019,7 +2022,7 @@ namespace Kbg.NppPluginNET
             JNode schema;
             try
             {
-                var parser = new JsonParser(LoggerLevel.JSON5, false, true, true, false);
+                var parser = new JsonParser(LoggerLevel.JSON5);
                 schema = parser.Parse(schemaText);
             }
             catch (Exception ex)

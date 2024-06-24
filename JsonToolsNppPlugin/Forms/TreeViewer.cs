@@ -223,8 +223,8 @@ namespace JSON_Tools.Forms
             {
                 case Dtype.ARR:      imageIndex += 0; break;
                 case Dtype.BOOL:     imageIndex += 1; break;
-                case Dtype.DATE:
-                case Dtype.DATETIME: imageIndex += 2; break;
+                //case Dtype.DATE:
+                //case Dtype.DATETIME: imageIndex += 2; break;
                 case Dtype.FLOAT:    imageIndex += 3; break;
                 case Dtype.INT:      imageIndex += 4; break;
                 case Dtype.OBJ:      imageIndex += 5; break;

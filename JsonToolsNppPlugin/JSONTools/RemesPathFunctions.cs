@@ -3271,7 +3271,7 @@ namespace JSON_Tools.JSON_Tools
             if (!(elt.value is string s))
                 throw new RemesPathArgumentException(null, 0, FUNCTIONS["s_format"], elt.type);
             bool rememberComments = args[4].type != Dtype.NULL && (bool)args[4].value;
-            var parser = new JsonParser(LoggerLevel.JSON5, false, false, false, rememberComments);
+            var parser = new JsonParser(LoggerLevel.JSON5, false, false, rememberComments);
             JNode result = parser.Parse(s);
             if (parser.fatal)
                 return new JNode(s);
@@ -3559,7 +3559,7 @@ namespace JSON_Tools.JSON_Tools
         {
             string stringified = (string)args[0].value;
             var output = new Dictionary<string, JNode>();
-            var parser = new JsonParser(LoggerLevel.JSON5, false, false, false);
+            var parser = new JsonParser(LoggerLevel.JSON5, false, false);
             JNode result = parser.Parse(stringified);
             if (parser.fatal)
             {
