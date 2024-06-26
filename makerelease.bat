@@ -1,8 +1,13 @@
 : this script requires 7-zip to be installed on your computer
 : sync testfiles with ones in repo
 : ONLY EXECUTE THIS BATCH FILE FROM THE SAME DIRECTORY WHERE IT LIVES IN THE REPO!!!!
+
+: copy helper files into x64 bin dir 
+xcopy .\translation .\JsonToolsNppPlugin\bin\Release-x64\translation\ /s /y
 xcopy .\testfiles .\JsonToolsNppPlugin\bin\Release-x64\testfiles\ /s /y
 copy ".\DSON UDL.xml" ".\JsonToolsNppPlugin\bin\Release-x64\DSON UDL.xml" /y
+: copy helper files into x86 bin dir 
+xcopy .\translation .\JsonToolsNppPlugin\bin\Release\translation\ /s /y
 xcopy .\testfiles .\JsonToolsNppPlugin\bin\Release\testfiles\ /s /y
 copy ".\DSON UDL.xml" ".\JsonToolsNppPlugin\bin\Release\DSON UDL.xml" /y
 : zip testfiles and dlls to release zipfiles

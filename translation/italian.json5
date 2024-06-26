@@ -1,11 +1,8 @@
 // If you want to translate JsonTools into another language, follow these steps (in the example below, we are translating into the "fooish" language):
-// 1. Find where JsonTools plugin config data is stored for your JsonTools installation.
-//     Usually, this will be in the "%AppData%/Roaming/Notepad++/plugins/config/JsonTools",
-//     but it will be in a subdirectory of the executable's directory if you have a portable installation.
-// 2. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin config directory.
-// 3. Edit the values associated with the various keys in this document.
+// 1. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin directory (the directory where the JsonTools.dll binary is installed, *not* the plugin config directory).
+// 2. Edit the values associated with the various keys in this document.
 //     DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
-// 4. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
+// 3. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
 {
     "forms": {
         "AboutForm": {
@@ -23,13 +20,13 @@
                     // If you change the text of this LinkLabel,
                     //      make sure that you change the linkStart property
                     //      so that only the URL is in the highlighted region.
-                    "linkStart": 34,
+                    "linkStart": 39,
                     "linkLength": 50
                 },
                 "DebugInfoLabel": "Notepad++ versione: X.Y.Z. Per maggiori informazioni sulla\r\ninstallazione, vai a ? -> Debug Info on the main status bar.",
                 "ThanksWowLinkLabel": {
                     "text": "Un ringraziamento spaciale a:\r\n* Don Ho per Notepad++\r\n* kbilsted for making the plugin pack this is based on\r\n* And of course everyone who helped make this plugin\r\n   better!\r\n* The amazing community makes this work worthwhile.\r\n  Wow!",
-                    "linkStart": 228,
+                    "linkStart": 232,
                     "linkLength": 4
                 }
             }
@@ -50,9 +47,9 @@
                 //     depending on whether it is checked or unchecked.
                 "ShowAdvancedOptionsCheckBox": {
                     // Change this value to set the text when the box is *checked*
-                    "checked": "Visualizza opzioni avanzate",
+                    "checked": "Nascondi opzioni avanzate",
                     // Change this value to set the text when the box is *unchecked*
-                    "unchecked": "Nascondi opzioni avanzate"
+                    "unchecked": "Visualizza opzioni avanzate"
                 },
                 // This is a ListBox, where the text can be selected from a drop-down list.
                 // DO NOT CHANGE THE NUMBER OF ELEMENTS IN THIS ARRAY!
@@ -155,6 +152,8 @@
             }
         },
         "TreeViewer": {
+            // the title of this form is programmatically generated
+            // so we can't translate it.
             "controls": {
                 "SubmitQueryButton": "Invia query",
                 "QueryToCsvButton": "Da Query a CSV",
@@ -172,10 +171,18 @@
         // When translating menu items, it is good practice to include an accelerator key,
         //     and it is *even better* if the accelerator key is the same as in the English translation.
         // Thus, the Italian translation might be "&Documentazione".
+        //
+        // *VERY VERY IMPORTANT*: Every menu item name MUST have 63 characters or fewer when encoded in UTF-16.
+        //     The easiest way to check if any menu items are too long is to open the JsonTools treeview for this file,
+        //     and submit the query on the next line in the text box in the top-left corner:
+        //     @.menuItems[s_len(@) >= 64]
+        //     The query on the line above will select all menu items with 64 or more UTF-16 characters.
+        //
+        //     You *cannot* check the length by selecting it with Notepad++, because Notepad++ shows UTF-8 byte counts in the status bar.
         "&Documentation": "&Documentazione",
         "&Pretty-print current JSON file": "&Formatta il file JSON corrente",
         "&Compress current JSON file": "&Comprimi file JSON corrente",
-        "Path to current &position": "Percorso della &posizione corrente",
+        "Path to current p&osition": "Percorso della p&osizione corrente",
         "Select every val&id JSON in selection": "Seleziona ogni JSON val&ido nella selezione",
         "Chec&k JSON syntax now": "&Verifica la sintassi del JSON",
         "Open &JSON tree viewer": "Apri Visualizzazione struttura &JSON",
@@ -183,7 +190,7 @@
         "Sort arra&ys": "Ordina arra&y",
         "&Settings": "I&mpostazioni",
         "&Validate JSON against JSON schema": "Con&valida JSON con lo schema JSON",
-        "Choose schemas to automatically validate &filename patterns": "Scegli gli schemi per convalidare automaticamente i modelli dei &nome file",
+        "Choose schemas to automatically validate &filename patterns": "Scegli lo schema per convalidare i &nomi file",
         "Generate sc&hema from JSON": "Genera sc&hema da JSON",
         "Generate &random JSON from schema": "Genera JSON casuale da schema",
         "Run &tests": "Esegui &test",

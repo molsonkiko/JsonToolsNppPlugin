@@ -13,9 +13,10 @@ namespace JSON_Tools.Forms
     public static class NppFormHelper
     {
         /// <summary>
-        /// CALL THIS IN YOUR Dispose(bool disposing) METHOD, INSIDE OF THE ".Designer.cs" FILE<br></br>
+        /// CALL THIS IN YOUR constructor METHOD, INSIDE OF THE "Form.cs" FILE<br></br>
         /// When this form is initialized, *if it is a modeless dialog* (i.e., !isModal; the form does not block the parent application until closed)<br></br>
-        /// this will call Notepad++ with the NPPM_MODELESSDIALOG message to register the form.
+        /// this will call Notepad++ with the NPPM_MODELESSDIALOG message to register the form.<br></br>
+        /// <i>As an added convenience, this method will also translate the form using Translator.cs, even though that is totally unrelated.</i><br></br>
         /// <strong>VERY IMPORTANT: in your Designer.cs files, in the part where it says this.Controls.Add(nameOfControl),
         /// you need to make sure the controls are added in tabstop order.</strong><br></br>
         /// This is because the order in which the controls are added controls tab order.<br></br>
@@ -33,6 +34,7 @@ namespace JSON_Tools.Forms
         /// <param name="isModal">if true, this blocks the parent application until closed. THIS IS ONLY TRUE OF POP-UP DIALOGS</param>
         public static void RegisterFormIfModeless(Form form, bool isModal)
         {
+            Translator.TranslateForm(form);
             if (!isModal)
                 Npp.notepad.AddModelessDialog(form.Handle);
         }

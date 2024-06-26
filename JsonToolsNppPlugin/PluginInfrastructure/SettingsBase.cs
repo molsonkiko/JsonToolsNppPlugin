@@ -296,6 +296,12 @@ namespace CsvQuery.PluginInfrastructure
                 SaveToIniFile();
                 dialog.Close();
             };
+            //var grid = (PropertyGrid)dialog.Controls["Grid"];
+            //grid.SelectedGridItemChanged += (object _, SelectedGridItemChangedEventArgs e) =>
+            //{
+            //    GridItem selectedItem = e.NewSelection;
+            //    selectedItem.
+            //};
             dialog.ShowDialog();
         }
 

@@ -31,10 +31,6 @@ namespace JSON_Tools.Utils
         [Description("When the document is parsed, show a prompt to see syntax errors in the document."),
             Category("JSON Parser"), DefaultValue(true)]
         public bool offer_to_show_lint { get; set; }
-
-        [Description("Parse \"yyyy-mm-dd dates\" and \"yyyy-MM-dd hh:mm:ss.sss\" datetimes as the appropriate type."),
-            Category("JSON Parser"), DefaultValue(false)]
-        public bool allow_datetimes { get; set; }
         #endregion
         #region PERFORMANCE
         [Description("Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n" +

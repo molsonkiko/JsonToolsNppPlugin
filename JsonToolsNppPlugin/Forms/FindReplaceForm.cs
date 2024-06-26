@@ -96,7 +96,8 @@ namespace JSON_Tools.Forms
             {
                 if (Height < EXTENDED_HEIGHT)
                     Height = EXTENDED_HEIGHT;
-                ShowAdvancedOptionsCheckBox.Text = "Hide advanced options";
+                if (!Translator.HasTranslations) // the translator has options for checked and unchecked states already
+                    ShowAdvancedOptionsCheckBox.Text = "Hide advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_EXTENDED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
                 {
@@ -108,7 +109,8 @@ namespace JSON_Tools.Forms
             {
                 if (Height == EXTENDED_HEIGHT)
                     Height = COLLAPSED_HEIGHT;
-                ShowAdvancedOptionsCheckBox.Text = "Show advanced options";
+                if (!Translator.HasTranslations)
+                    ShowAdvancedOptionsCheckBox.Text = "Show advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
                 {

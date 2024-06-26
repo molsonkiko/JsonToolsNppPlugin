@@ -135,54 +135,6 @@
     <Compile Include="PluginInfrastructure\UnmanagedExports.cs" />
     <Compile Include="PluginInfrastructure\Win32.cs" />
     <Compile Include="PluginInfrastructure\resource_h.cs" />
-    <!-- <Compile Include="PluginInfrastructure\DllExport\DllExportAttribute.cs">
-      <Link>PluginInfrastructure\DllExport\DllExportAttribute.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\ClikeStringArray.cs">
-      <Link>PluginInfrastructure\ClikeStringArray.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\NotepadPPGateway.cs">
-      <Link>PluginInfrastructure\NotepadPPGateway.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Preference_h.cs">
-      <Link>PluginInfrastructure\Preference_h.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Resource_h.cs">
-      <Link>PluginInfrastructure\Resource_h.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Win32.cs">
-      <Link>PluginInfrastructure\Win32.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\ScintillaGateway.cs">
-      <Link>PluginInfrastructure\ScintillaGateway.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\IScintillaGateway.cs">
-      <Link>PluginInfrastructure\IScintillaGateway.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\GatewayDomain.cs">
-      <Link>PluginInfrastructure\GatewayDomain.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Docking_h.cs">
-      <Link>PluginInfrastructure\Docking_h.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\MenuCmdID_h.cs">
-      <Link>PluginInfrastructure\MenuCmdID_h.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Msgs_h.cs">
-      <Link>PluginInfrastructure\Msgs_h.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\Scintilla_iface.cs">
-      <Link>PluginInfrastructure\Scintilla_iface.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\NppPluginNETBase.cs">
-      <Link>PluginInfrastructure\NppPluginNETBase.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\NppPluginNETHelper.cs">
-      <Link>PluginInfrastructure\NppPluginNETHelper.cs</Link>
-    </Compile>
-    <Compile Include="PluginInfrastructure\UnmanagedExports.cs">
-      <Link>PluginInfrastructure\UnmanagedExports.cs</Link>
-    </Compile> -->
     <!-- forms -->
     <!-- designers -->
     <Compile Include="Properties\Resources.Designer.cs">
@@ -232,6 +184,7 @@
     <Compile Include="Utils\Settings.cs" />
     <Compile Include="Utils\ArrayExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\Translator.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- references -->

@@ -1,11 +1,8 @@
 // If you want to translate JsonTools into another language, follow these steps (in the example below, we are translating into the "fooish" language):
-// 1. Find where JsonTools plugin config data is stored for your JsonTools installation.
-//     Usually, this will be in the "%AppData%/Roaming/Notepad++/plugins/config/JsonTools",
-//     but it will be in a subdirectory of the executable's directory if you have a portable installation.
-// 2. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin config directory.
-// 3. Edit the values associated with the various keys in this document.
+// 1. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin directory (the directory where the JsonTools.dll binary is installed, *not* the plugin config directory).
+// 2. Edit the values associated with the various keys in this document.
 //     DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
-// 4. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
+// 3. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
 {
     "forms": {
         "AboutForm": {
@@ -155,6 +152,8 @@
             }
         },
         "TreeViewer": {
+            // the title of this form is programmatically generated
+            // so we can't translate it.
             "controls": {
                 "SubmitQueryButton": "Submit query",
                 "QueryToCsvButton": "Query to CSV",
@@ -172,6 +171,14 @@
         // When translating menu items, it is good practice to include an accelerator key,
         //     and it is *even better* if the accelerator key is the same as in the English translation.
         // Thus, the Italian translation might be "&Documentazione".
+        //
+        // *VERY VERY IMPORTANT*: Every menu item name MUST have 63 characters or fewer when encoded in UTF-16.
+        //     The easiest way to check if any menu items are too long is to open the JsonTools treeview for this file,
+        //     and submit the query on the next line in the text box in the top-left corner:
+        //     @.menuItems[s_len(@) >= 64]
+        //     The query on the line above will select all menu items with 64 or more UTF-16 characters.
+        //
+        //     You *cannot* check the length by selecting it with Notepad++, because Notepad++ shows UTF-8 byte counts in the status bar.
         "&Documentation": "&Documentation",
         "&Pretty-print current JSON file": "&Pretty-print current JSON file",
         "&Compress current JSON file": "&Compress current JSON file",

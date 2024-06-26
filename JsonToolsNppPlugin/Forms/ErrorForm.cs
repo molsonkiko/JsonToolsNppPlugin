@@ -45,7 +45,6 @@ namespace JSON_Tools.Forms
             isRepopulatingErrorGrid = true;
             this.fname = fname;
             this.lints = lints;
-            Text = "JSON errors in current file";
             ErrorGrid.Rows.Clear();
             int interval = 1;
             int lintCount = lints is null ? 0 : lints.Count;

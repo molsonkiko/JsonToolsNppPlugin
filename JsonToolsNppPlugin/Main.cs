@@ -108,6 +108,8 @@ namespace Kbg.NppPluginNET
 
         static internal void CommandMenuInit()
         {
+            // Load translations from the applicable translation file.
+            Translator.LoadTranslations();
             // Initialization of your plugin commands
 
             // with function :
@@ -117,39 +119,39 @@ namespace Kbg.NppPluginNET
             //            ShortcutKey *shortcut,                // optional. Define a shortcut to trigger this command
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
-            PluginBase.SetCommand(0, "&Documentation", docs);
+            PluginBase.SetCommand(0, Translator.GetTranslatedMenuItem("&Documentation"), docs);
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
-            PluginBase.SetCommand(1, "&Pretty-print current JSON file", PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P)); prettyPrintId = 1;
-            PluginBase.SetCommand(2, "&Compress current JSON file", CompressJson, new ShortcutKey(true, true, true, Keys.C)); compressId = 2;
-            PluginBase.SetCommand(3, "Path to current p&osition", CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
-            PluginBase.SetCommand(4, "Select every val&id JSON in selection", SelectEveryValidJson);
-            PluginBase.SetCommand(5, "Chec&k JSON syntax now", CheckJsonSyntaxNow);
+            PluginBase.SetCommand(1, Translator.GetTranslatedMenuItem("&Pretty-print current JSON file"), PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P)); prettyPrintId = 1;
+            PluginBase.SetCommand(2, Translator.GetTranslatedMenuItem("&Compress current JSON file"), CompressJson, new ShortcutKey(true, true, true, Keys.C)); compressId = 2;
+            PluginBase.SetCommand(3, Translator.GetTranslatedMenuItem("Path to current p&osition"), CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
+            PluginBase.SetCommand(4, Translator.GetTranslatedMenuItem("Select every val&id JSON in selection"), SelectEveryValidJson);
+            PluginBase.SetCommand(5, Translator.GetTranslatedMenuItem("Chec&k JSON syntax now"), CheckJsonSyntaxNow);
             // Here you insert a separator
             PluginBase.SetCommand(6, "---", null);
-            PluginBase.SetCommand(7, "Open &JSON tree viewer", () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 7;
-            PluginBase.SetCommand(8, "&Get JSON from files and APIs", OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 8;
-            PluginBase.SetCommand(9, "Sort arra&ys", OpenSortForm); sortFormId = 9;
-            PluginBase.SetCommand(10, "&Settings", OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(7, Translator.GetTranslatedMenuItem("Open &JSON tree viewer"), () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 7;
+            PluginBase.SetCommand(8, Translator.GetTranslatedMenuItem("&Get JSON from files and APIs"), OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 8;
+            PluginBase.SetCommand(9, Translator.GetTranslatedMenuItem("Sort arra&ys"), OpenSortForm); sortFormId = 9;
+            PluginBase.SetCommand(10, Translator.GetTranslatedMenuItem("&Settings"), OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(11, "---", null);
-            PluginBase.SetCommand(12, "&Validate JSON against JSON schema", () => ValidateJson());
-            PluginBase.SetCommand(13, "Choose schemas to automatically validate &filename patterns", MapSchemasToFnamePatterns);
-            PluginBase.SetCommand(14, "Generate sc&hema from JSON", GenerateJsonSchema);
-            PluginBase.SetCommand(15, "Generate &random JSON from schema", GenerateRandomJson);
+            PluginBase.SetCommand(12, Translator.GetTranslatedMenuItem("&Validate JSON against JSON schema"), () => ValidateJson());
+            PluginBase.SetCommand(13, Translator.GetTranslatedMenuItem("Choose schemas to automatically validate &filename patterns"), MapSchemasToFnamePatterns);
+            PluginBase.SetCommand(14, Translator.GetTranslatedMenuItem("Generate sc&hema from JSON"), GenerateJsonSchema);
+            PluginBase.SetCommand(15, Translator.GetTranslatedMenuItem("Generate &random JSON from schema"), GenerateRandomJson);
             PluginBase.SetCommand(16, "---", null);
-            PluginBase.SetCommand(17, "Run &tests", async () => await TestRunner.RunAll());
-            PluginBase.SetCommand(18, "A&bout", ShowAboutForm); AboutFormId = 18;
-            PluginBase.SetCommand(19, "See most recent syntax &errors in this file", () => OpenErrorForm(activeFname, false)); errorFormId = 19;
-            PluginBase.SetCommand(20, "JSON to YAML", DumpYaml);
+            PluginBase.SetCommand(17, Translator.GetTranslatedMenuItem("Run &tests"), async () => await TestRunner.RunAll());
+            PluginBase.SetCommand(18, Translator.GetTranslatedMenuItem("A&bout"), ShowAboutForm); AboutFormId = 18;
+            PluginBase.SetCommand(19, Translator.GetTranslatedMenuItem("See most recent syntax &errors in this file"), () => OpenErrorForm(activeFname, false)); errorFormId = 19;
+            PluginBase.SetCommand(20, Translator.GetTranslatedMenuItem("JSON to YAML"), DumpYaml);
             PluginBase.SetCommand(21, "---", null);
-            PluginBase.SetCommand(22, "Parse JSON Li&nes document", () => OpenJsonTree(DocumentType.JSONL));
-            PluginBase.SetCommand(23, "&Array to JSON Lines", DumpJsonLines);
+            PluginBase.SetCommand(22, Translator.GetTranslatedMenuItem("Parse JSON Li&nes document"), () => OpenJsonTree(DocumentType.JSONL));
+            PluginBase.SetCommand(23, Translator.GetTranslatedMenuItem("&Array to JSON Lines"), DumpJsonLines);
             PluginBase.SetCommand(24, "---", null);
-            PluginBase.SetCommand(25, "D&ump selected text as JSON string(s)", DumpSelectedTextAsJsonString);
-            PluginBase.SetCommand(26, "Dump JSON string(s) as ra&w text", DumpSelectedJsonStringsAsText);
+            PluginBase.SetCommand(25, Translator.GetTranslatedMenuItem("D&ump selected text as JSON string(s)"), DumpSelectedTextAsJsonString);
+            PluginBase.SetCommand(26, Translator.GetTranslatedMenuItem("Dump JSON string(s) as ra&w text"), DumpSelectedJsonStringsAsText);
             PluginBase.SetCommand(27, "---", null);
-            PluginBase.SetCommand(28, "Open tree for &INI file", () => OpenJsonTree(DocumentType.INI));
+            PluginBase.SetCommand(28, Translator.GetTranslatedMenuItem("Open tree for &INI file"), () => OpenJsonTree(DocumentType.INI));
             PluginBase.SetCommand(29, "---", null);
-            PluginBase.SetCommand(30, "Rege&x search to JSON", RegexSearchToJson);
+            PluginBase.SetCommand(30, Translator.GetTranslatedMenuItem("Rege&x search to JSON"), RegexSearchToJson);
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -1003,7 +1005,7 @@ namespace Kbg.NppPluginNET
         {
             string curFname = Npp.notepad.GetCurrentFilePath();
             (ParserState parserState, _, _, _) = TryParseJson(Npp.FileExtension(curFname) == "jsonl" ? DocumentType.JSONL : DocumentType.JSON);
-            if (parserState == ParserState.FATAL)
+            if (errorForm != null && errorForm.Visible && !settings.offer_to_show_lint)
                 RefreshErrorFormInOwnThread(curFname);
         }
 
