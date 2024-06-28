@@ -1,5 +1,6 @@
 ﻿using JSON_Tools.JSON_Tools;
 using System;
+using System.Linq;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Text;
@@ -10,8 +11,6 @@ using Kbg.NppPluginNET.PluginInfrastructure;
 // TODO:
 // 1. Implement translation of settings descriptions.
 //     This is surprisingly complicated, due to the PropertyGrid class not allowing public read/write access to the descriptive text for a property.
-// 2. Resolve collisions between controls due to the text length changing.
-//     This will require some kind of simple collision-detection algorithm in the TranslateControl method.
 
 namespace JSON_Tools.Utils
 {
@@ -78,6 +77,15 @@ namespace JSON_Tools.Utils
                 return s;
             }
             return menuItem;
+        }
+
+        /// <summary>
+        /// This assumes that each character in Size 7.8 font is 7 pixels across.<br></br>
+        /// In practice, this generally returns a number that is greater than the width of the text.
+        /// </summary>
+        public static int WidthInCharacters(int numChars, float fontSize)
+        {
+            return Convert.ToInt32(Math.Round(numChars * fontSize / 7.8 * 7));
         }
 
         /// <summary>
@@ -148,13 +156,88 @@ namespace JSON_Tools.Utils
                                 maxTranslationLen = translationVal.Length;
                         }
                     }
-                    int newDropDownWidth = maxTranslationLen * 7;
+                    int newDropDownWidth = WidthInCharacters(maxTranslationLen, ctrl.Font.Size);
                     if (newDropDownWidth > comboBox.DropDownWidth)
                         comboBox.DropDownWidth = newDropDownWidth;
                 }
             }
-            foreach (Control child in ctrl.Controls)
-                TranslateControl(child, controlTranslations);
+            int ctrlCount = ctrl.Controls.Count;
+            if (ctrlCount > 0)
+            {
+                // translate each child of this control
+                var childrenByLeft = new List<(Control ctrl, bool textWasMultiline, bool isAnchoredRight)>(ctrlCount);
+                foreach (Control child in ctrl.Controls)
+                {
+                    int childWidthInChars = WidthInCharacters(child.Text.Length, child.Font.Size);
+                    bool textWasMultiline = !child.AutoSize && ((child is Label || child is LinkLabel) && childWidthInChars > child.Width);
+                    TranslateControl(child, controlTranslations);
+                    childrenByLeft.Add((child, textWasMultiline, (child.Anchor & AnchorStyles.Right) == AnchorStyles.Right));
+                }
+                // the child controls may have more text now,
+                //    so we need to resolve any collisions that may have resulted.
+                childrenByLeft.Sort((x, y) => x.ctrl.Left.CompareTo(y.ctrl.Left));
+                for (int ii = 0; ii < ctrlCount; ii++)
+                {
+                    (Control child, bool textWasMultiline, bool isAnchoredRight) = childrenByLeft[ii];
+                    int textLen = child.Text.Length;
+                    int widthIfButtonOrLabel = WidthInCharacters(textLen, child.Font.Size + 1);
+                    if (child is Button && textLen > 2 && textLen < 14)
+                    {
+                        int increase = textLen <= 5 ? 25 : (15 - textLen) * 2 + 7;
+                        widthIfButtonOrLabel += increase;
+                    }
+                    if (!textWasMultiline && (child is Button || child is Label || child is CheckBox) &&
+                        !child.Text.Contains('\n') && widthIfButtonOrLabel > child.Width)
+                    {
+                        child.Width = widthIfButtonOrLabel;
+                        if (isAnchoredRight)
+                            child.Left -= 5; // to account for weirdness when you resize a right-anchored thing
+                        // if there are overlapping controls to the right, move those far enough right that they don't overlap.
+                        for (int jj = ii + 1; jj < ctrlCount; jj++)
+                        {
+                            Control otherChild = childrenByLeft[jj].ctrl;
+                            if (otherChild.Left > child.Left && Overlap(child, otherChild))
+                            {
+                                if (otherChild.Left > child.Left)
+                                    otherChild.Left = child.Right + 2;
+                            }
+                        }
+                    }
+                    child.Refresh();
+                }
+                int maxRight = 0;
+                foreach (Control child in ctrl.Controls)
+                {
+                    maxRight = child.Right > maxRight ? child.Right : maxRight;
+                    // unanchor everything from the right, so resizing the form doesn't move those controls
+                    child.Anchor &= (AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left);
+                }
+                if (maxRight > ctrl.Width)
+                {
+                    int padding = ctrl is Form ? 25 : 5;
+                    ctrl.Width = maxRight + padding;
+                }
+                foreach ((Control child, _, bool wasAnchoredRight) in childrenByLeft)
+                {
+                    if (wasAnchoredRight)
+                        child.Anchor |= AnchorStyles.Right;
+                }
+            }
+        }
+
+        private static bool VerticalOverlap(Control ctrl1, Control ctrl2)
+        {
+            return !(ctrl1.Bottom < ctrl2.Top || ctrl2.Bottom < ctrl1.Top);
+        }
+
+        private static bool HorizontalOverlap(Control ctrl1, Control ctrl2)
+        {
+            return !(ctrl1.Right < ctrl2.Left || ctrl2.Right < ctrl1.Left);
+        }
+
+        private static bool Overlap(Control ctrl1, Control ctrl2)
+        {
+            return HorizontalOverlap(ctrl1, ctrl2) && VerticalOverlap(ctrl1, ctrl2);
         }
     }
 }

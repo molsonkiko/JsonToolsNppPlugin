@@ -60,6 +60,9 @@ namespace JSON_Tools.Forms
                 }
             }
             DirectoriesVisitedBox.SelectedIndex = 0;
+            // we need to select something other than the UrlsBox because otherwise all its text will be selected
+            //    and the user could accidentally overwrite it.
+            SearchDirectoriesButton.Select();
         }
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)
