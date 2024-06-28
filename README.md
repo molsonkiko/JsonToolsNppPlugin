@@ -120,6 +120,27 @@ differ in that the first element of `root['a'][2]['b']` was changed from 3 to 4.
 
 I expect you could find plenty of other good websites if you did some research.
 
+## Translating JsonTools to another language ##
+
+If you are interested in helping users of JsonTools who don't speak English, JsonTools can be translated to other languages beginning in [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd).
+
+To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
+
+Currently JsonTools has been translated into the following languages:
+- English (obviously)
+- [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)
+
+The following aspects of JsonTools __can__ be translated:
+- Forms (including all controls and items in drop-down menus)
+- Items in the JsonTools sub-menu of the Notepad++ Plugins menu
+- The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings)
+
+The following aspect(s) of JsonTools __may eventually__ be translated:
+- The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (this is harder than translating the config file for weird technical reasons).
+
+The following aspects of JsonTools __will not__ be translated:
+- This documentation
+- Error messages and message boxes
 
 ## Acknowledgments ##
 

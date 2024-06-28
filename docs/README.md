@@ -993,6 +993,14 @@ Beginning in [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd), the font size fo
 
 ![Side-by-side comparison demonstrating tree_view_font_size setting](/docs/tree_view_font_size%20side-by-side%20comparison.PNG)
 
+## Customizing settings ##
+
+The `Settings` menu item opens a dialog that allows you to customize various aspects of JsonTools. If this documentation references a *setting*, it can be customized there.
+
+These settings are stored in a config file in your plugins config folder. As shown below (look at the file path at the top of the image), this file will be in the directory `\AppData\Roaming\Notepad++\plugins\config\JsonTools\` if you have a normal *ProgramFiles* installation, and in the directory `\plugins\Config\JsonTools\` relative to the root of a *portable* installation.
+
+![Settings form and config file](/docs/settings%20form%20and%20config%20file.PNG)
+
 ## DSON ##
 
 JSON is not sufficiently [Doge-friendly](https://dogeon.xyz/index.html). This plugin aims to help correct that.

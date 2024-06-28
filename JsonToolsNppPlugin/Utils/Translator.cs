@@ -7,6 +7,9 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using Kbg.NppPluginNET.PluginInfrastructure;
+using System.Reflection;
+using System.Web;
+using System.ComponentModel;
 
 // TODO:
 // 1. Implement translation of settings descriptions.
@@ -79,11 +82,26 @@ namespace JSON_Tools.Utils
             return menuItem;
         }
 
+        public static string TranslateSettingsDescription(PropertyInfo propertyInfo)
+        {
+            if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
+                && dict.TryGetValue("settingsDescriptions", out JNode settingsDescNode)
+                && settingsDescNode is JObject settingsDescObj
+                && settingsDescObj.children.TryGetValue(propertyInfo.Name, out JNode descNode)
+                && descNode.value is string s)
+            {
+                return s;
+            }
+            if (propertyInfo.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault() is DescriptionAttribute description)
+                return description.Description;
+            return "";
+        }
+
         /// <summary>
         /// This assumes that each character in Size 7.8 font is 7 pixels across.<br></br>
         /// In practice, this generally returns a number that is greater than the width of the text.
         /// </summary>
-        public static int WidthInCharacters(int numChars, float fontSize)
+        private static int WidthInCharacters(int numChars, float fontSize)
         {
             return Convert.ToInt32(Math.Round(numChars * fontSize / 7.8 * 7));
         }

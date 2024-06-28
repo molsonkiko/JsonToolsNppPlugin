@@ -171,8 +171,8 @@ namespace CsvQuery.PluginInfrastructure
                     fp.WriteLine(Environment.NewLine + "[{0}]", section.Key);
                     foreach (var propertyInfo in section.OrderBy(x => x.Name))
                     {
-                        if (propertyInfo.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault() is DescriptionAttribute description)
-                            fp.WriteLine("; " + description.Description.Replace(Environment.NewLine, Environment.NewLine + "; "));
+                        string description = Translator.TranslateSettingsDescription(propertyInfo);
+                        fp.WriteLine("; " + description.Replace(Environment.NewLine, Environment.NewLine + "; "));
                         var converter = TypeDescriptor.GetConverter(propertyInfo.PropertyType);
                         fp.WriteLine("{0}={1}", propertyInfo.Name, converter.ConvertToInvariantString(propertyInfo.GetValue(this, null)));
                     }
