@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 using JSON_Tools.PluginInfrastructure;
+using JSON_Tools.Utils;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {
@@ -250,12 +251,22 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         public void SetCurrentBufferInternalName(string newName)
 		{
 			IntPtr bufferId = Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
-			// we need to manually do the operations that would normally happen automatically in response to a NPPN_FILEBEFORERENAME and subsequent NPPN_FILERENAMED
-			// because those notifications are not sent out when a buffer's internal name is changed
-			Main.FileBeforeRename(bufferId);
-			// change the current file extension to ".dson" (this command only works for unsaved files, but of course we just made an unsaved file)
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_INTERNAL_SETFILENAME, bufferId, newName);
-			Main.FileRenamed(bufferId);
+			int nppMajor = Npp.nppVersion[0], nppMinor = Npp.nppVersion[1], nppBugfix = Npp.nppVersion[2];
+			bool atLeastNpp8p6p9 = nppMajor > 8 || (nppMajor == 8 && (nppMinor > 6 || (nppMinor == 6 && nppBugfix >= 9)));
+			if (atLeastNpp8p6p9)
+			{
+				// NPPM_SETUNTITLEDNAME doesn't need the hack (shown below) that we needed to do for NPPM_INTERNAL_SETFILENAME
+				Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETUNTITLEDNAME, bufferId, newName);
+			}
+			else
+			{
+				// we need to manually do the operations that would normally happen automatically
+				//     in response to a NPPN_FILEBEFORERENAME and subsequent NPPN_FILERENAMED
+				//     because those notifications are not sent out when a buffer's internal name is changed using NPPM_INTERNAL_SETFILENAME
+				Main.FileBeforeRename(bufferId);
+				Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_INTERNAL_SETFILENAME, bufferId, newName);
+				Main.FileRenamed(bufferId);
+			}
         }
 
 		/// <summary>

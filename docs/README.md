@@ -786,12 +786,12 @@ Of course, sometimes an API request will fail. You can click the [View errors bu
 If you want to open up all the JSON files in a directory, here's how to do it:
 1. Choose whether you want to search in subdirectories.
 2. Choose what [filename search pattern(s)](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension).
-3. Choose what directory you want to search. *If you are using a version of JsonTools __older than [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd)__*, you can do this in one of the following ways:
+3. Choose what directory you want to search. *If you are using a version of JsonTools __older than [v8.0](/CHANGELOG.md#800---2024-06-29)__*, you can do this in one of the following ways:
     - Choose a directory using a GUI dialog. To do this, *make sure that the central list box has the default value of `Previously visited directories...`*, then click the `Choose directory...` button, and a dialog will pop up. Once you select a directory and click `OK`, JsonTools will search the chosen directory.
     ![Choose a directory using a modal dialog](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20USING%20DIALOG.PNG)
     - Choose a previously searched directory from the central list box, *then click the `Choose directory...` button.*
     ![Choose a directory using a dropdown list](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20USING%20DROPDOWN%20LIST.PNG)
-4. Choosing a directory takes two steps *if you are using JsonTools __[v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd) or newer:__*
+4. Choosing a directory takes two steps *if you are using JsonTools __[v8.0](/CHANGELOG.md#800---2024-06-29) or newer:__*
     1. Choose a directory in one of the following ways:
          - Open a dialog (as shown in step 3 above)
          - Select a previously searched directory (as shown above)
@@ -801,7 +801,7 @@ If you want to open up all the JSON files in a directory, here's how to do it:
 
 For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the [`View errors` button](#viewing-errors).
 
-Beginning in version [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes. This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
+Beginning in version [v8.0](/CHANGELOG.md#800---2024-06-29), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes (215 megabytes for 32-bit Notepad++). This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
 
 ### Viewing results in a buffer ###
 
@@ -989,7 +989,7 @@ And below is what the forms look like with `use_npp_styling` set to `False`:
 
 ![Forms appearance use_npp_styling FALSE](/docs/use_npp_styling%20FALSE%20example.PNG)
 
-Beginning in [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd), the font size for nodes in the tree view is also configurable with the `tree_view_font_size` setting. Below is a side-by-side comparison showing the effect of this setting.
+Beginning in [v8.0](/CHANGELOG.md#800---2024-06-29), the font size for nodes in the tree view is also configurable with the `tree_view_font_size` setting. Below is a side-by-side comparison showing the effect of this setting.
 
 ![Side-by-side comparison demonstrating tree_view_font_size setting](/docs/tree_view_font_size%20side-by-side%20comparison.PNG)
 

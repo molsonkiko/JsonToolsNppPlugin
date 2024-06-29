@@ -292,6 +292,8 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         NPPM_RELOADBUFFERID = Constants.NPPMSG + 61,
 
         ///<summary>
+        /// BOOL NPPM_INTERNAL_SETFILENAME(UINT_PTR bufferID, const TCHAR * newName)<br></br>
+        /// <strong>Removed in Notepad++ 8.6.9</strong> (replaced by <see cref="NPPM_SETUNTITLEDNAME"/>)<br></br>
         ///wParam: BufferID to rename<br></br>
         ///lParam: name to set (TCHAR*)<br></br>
         ///Buffer must have been previously unnamed (eg "new 1" document types)
@@ -573,21 +575,33 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         NPPM_ADDTOOLBARICON_FORDARKMODE = Constants.NPPMSG + 101,
 
-        // BOOL NPPM_ALLOCATEINDICATOR(int numberRequested, int* startNumber)
-        // Allocates an indicator number to a plugin: if a plugin needs to add an indicator,
-        // it has to use this message to get the indicator number, in order to prevent a conflict with the other plugins.
-        // wParam[in]: numberRequested is the number of ID you request for the reservation
-        // lParam[out]: startNumber will be set to the initial command ID if successful
-        // Return TRUE if successful, FALSE otherwise. startNumber will also be set to 0 if unsuccessful
-        //
-        // Example: If a plugin needs 1 indicator ID, the following code can be used :
-        //
-        //    int idBegin;
-        //    BOOL isAllocatedSuccessful = ::SendMessage(nppData._nppHandle, NPPM_ALLOCATEINDICATOR, 1, &idBegin);
-        //
-        // if isAllocatedSuccessful is TRUE, and value of idBegin is 7
-        // then indicator ID 7 is preserved by Notepad++, and it is safe to be used by the plugin.
+        /// <summary>
+        /// BOOL NPPM_ALLOCATEINDICATOR(int numberRequested, int* startNumber)<br></br>
+        /// Allocates an indicator number to a plugin: if a plugin needs to add an indicator,
+        /// it has to use this message to get the indicator number, in order to prevent a conflict with the other plugins.<br></br>
+        /// wParam[in]: numberRequested is the number of ID you request for the reservation<br></br>
+        /// lParam[out]: startNumber will be set to the initial command ID if successful<br></br>
+        /// Return TRUE if successful, FALSE otherwise. startNumber will also be set to 0 if unsuccessful<br></br>
+        ///
+        /// Example: If a plugin needs 1 indicator ID, the following code can be used :<br></br>
+        ///
+        ///    int idBegin;<br></br>
+        ///    BOOL isAllocatedSuccessful = ::SendMessage(nppData._nppHandle, NPPM_ALLOCATEINDICATOR, 1, &amp;idBegin);<br></br>
+        ///
+        /// if isAllocatedSuccessful is TRUE, and value of idBegin is 7
+        /// then indicator ID 7 is preserved by Notepad++, and it is safe to be used by the plugin.
+        /// </summary>
         NPPM_ALLOCATEINDICATOR = Constants.NPPMSG + 113,
+
+        /// <summary>
+        /// int NPPM_SETUNTITLEDNAME(BufferID id, const TCHAR* newName)<br></br>
+        /// <strong>Added in Notepad++ 8.6.9</strong> (drop-in replacement for <see cref="NPPM_INTERNAL_SETFILENAME"/>)<br></br>
+        /// Rename the tab name for an untitled tab.<br></br>
+        /// wParam[in]: id - BufferID of the tab. -1 for currently active tab<br></br>
+        /// lParam[in]: newName - the desired new name of the tab<br></br>
+        /// Return TRUE upon success; FALSE upon failure
+        /// </summary>
+        NPPM_SETUNTITLEDNAME = Constants.NPPMSG + 115,
 
         RUNCOMMAND_USER = Constants.WM_USER + 3000,
         NPPM_GETFULLCURRENTPATH = RUNCOMMAND_USER + FULL_CURRENT_PATH,

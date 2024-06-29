@@ -82,6 +82,13 @@ namespace JSON_Tools.Utils
             return menuItem;
         }
 
+        /// <summary>
+        /// Used to translate the settings in <see cref="Settings"/>.<br></br>
+        /// If there is no active translation file, return the propertyInfo's <see cref="DescriptionAttribute.Description"/>
+        /// (which can be seen in the source code in the Description decorator of each setting).<br></br>
+        /// If the propertyInfo's name is in @.settingsDescriptions of the active translation file,
+        /// return @.settingsDescriptions[propertyInfo.Name] of the active translation file.
+        /// </summary>
         public static string TranslateSettingsDescription(PropertyInfo propertyInfo)
         {
             if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict

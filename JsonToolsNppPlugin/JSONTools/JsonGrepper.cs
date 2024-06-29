@@ -13,7 +13,7 @@ namespace JSON_Tools.JSON_Tools
 {
     public class TooMuchTextToParseException : Exception
     {
-        public const int MAX_COMBINED_LENGTH_TEXT_TO_PARSE = int.MaxValue / 5;
+        public static readonly int MAX_COMBINED_LENGTH_TEXT_TO_PARSE = IntPtr.Size == 4 ? int.MaxValue / 10 : int.MaxValue / 5;
 
         public int lengthOfTextToParse;
 

@@ -122,7 +122,20 @@ I expect you could find plenty of other good websites if you did some research.
 
 ## Translating JsonTools to another language ##
 
-If you are interested in helping users of JsonTools who don't speak English, JsonTools can be translated to other languages beginning in [v8.0](/CHANGELOG.md#800---unreleased-yyyy-mm-dd).
+If you are interested in helping users of JsonTools who don't speak English, JsonTools can be translated to other languages beginning in [v8.0](/CHANGELOG.md#800---2024-06-29).
+
+JsonTools infers your preferred language and attempts to translate in the following way:
+1. JsonTools looks up your [`current culture`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-culture?view=powershell-7.4) (which can be checked using the `get-culture` command in Powershell).
+2. Next, we find the `EnglishName` property of the `current culture` (which can be found by the `$foo = get-culture; $foo.EnglishName` command in Powershell), take the first word, and convert it to lowercase. Call this `lowerEnglishCulture`.
+    - Example: the `EnglishName` of the `en-us` culture is `English (United States)`, so `lowerEnglishCulture` is `english`
+    - Example: the `EnglishName` of the `it-it` culture is `Italian (Italy)`, so `lowerEnglishCulture` is `italian`
+3. JsonTools then does one of the following:
+    - If `lowerEnglishName` is `english`, it does nothing (because JsonTools is naturally in English)
+    - Otherwise, it looks in the `translation` subdirectory of the `JsonTools` plugin folder (where `JsonTools.dll` lives) for a file named `{lowerEnglishName}.json5`
+    - __NOTE:__ because the translation files are in a subdirectory of the plugin folder, *translation does not work for versions of Notepad++ older than [version 8](https://notepad-plus-plus.org/downloads/v8/),* since those older versions do not have separate folders for each plugin.
+4. If JsonTools found `translation\{lowerEnglishName}.json5`, it attempts to parse the file. If parsing fails, a message box will appear warning the user of this.
+    - If no translation file was found, or if parsing failed, the default English will be used.
+5. If parsing was successful, JsonTools will use the translation file as described below.
 
 To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
 
