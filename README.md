@@ -137,6 +137,8 @@ JsonTools infers your preferred language and attempts to translate in the follow
     - If no translation file was found, or if parsing failed, the default English will be used.
 5. If parsing was successful, JsonTools will use the translation file as described below.
 
+To be clear, *JsonTools may not be in the same language of the Notepad++ UI,* and I do not plan to change that.
+
 To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
 
 Currently JsonTools has been translated into the following languages:
@@ -153,7 +155,8 @@ The following aspect(s) of JsonTools __may eventually__ be translated:
 
 The following aspects of JsonTools __will not__ be translated:
 - This documentation
-- Error messages and message boxes
+- Message boxes (includes warnings, errors, requests for confirmation)
+- Generic modal dialogs (for example, file-opening dialogs, directory selection dialogs)
 
 ## Acknowledgments ##
 
