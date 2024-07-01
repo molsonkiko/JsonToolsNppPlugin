@@ -26,7 +26,7 @@
                 "DebugInfoLabel": "Notepad++ versione: X.Y.Z. Per maggiori informazioni sulla\r\ninstallazione, vai a ? -> Debug Info on the main status bar.",
                 "ThanksWowLinkLabel": {
                     "text": "Un ringraziamento speciale a:\r\n* Don Ho per Notepad++\r\n* kbilsted per la creazione del pacchetto del plugin dal quale è basato\r\n* E sicuramente chiunque abbia aiutato a rendere il plugin\r\n   migliore!\r\n* La straordinaria comunità che rende utile questo lavoro.\r\n  Wow!",
-                    "linkStart": 232,
+                    "linkStart": 264,
                     "linkLength": 4
                 }
             }
@@ -220,7 +220,6 @@
         "minimal_whitespace_compression": "Se vero, l'utilizzo del comando del plugin 'Comprimi JSON' rimuoverà TUTTI gli spazi bianchi non necessari dal JSON. Altrimenti, lascerà dopo i due punti negli oggetti e dopo la virgola sia negli oggetti che negli array",
         "remember_comments": "Quando JSON viene formattato o compresso, vengono inclusi tutti i commenti trovati durante l'ultima analisi.\r\nQuando viene formattato, ogni commento avrà la stessa posizione relativa a ciascun elemento JSON di quando è stato analizzato.\r\nDurante la compressione, tutti i commenti verranno visualizzati all'inizio del documento.",
         "sort_keys": "Utilizza il tabulatore ('\\t') invece degli spazi tra i livelli di JSON durante la formattazione",
-        // TODO: translate the toolbar_icons setting
         "toolbar_icons": "Per ogni icona della barra degli strumenti, indica una delle seguenti icone nell'ordine desiderato:\r\n('t' = visualizzazione ad albero, 'c' = compressione, 'p' = formatta, 'o' = Percorso della posizione corrente)\r\n Questa impostazione avrà effetto al riavvio di Notepad++.\r\n Per non visualizzare le icone nella barra degli strumenti, inserisci un carattere diverso dai precedenti; NON lasciare questo campo vuoto.",
         "auto_try_guess_csv_delim_newline": "Se questa impostazione è abilitata,\r\nquando la finestra di ricerca con espressione regolare, o quando \"Analizza come CSV?\" di questa finestra è attivata,\r\nJsonTools tenterà di indovinare se il documento corrente è un file CSV o TSV, e quante colonne e quale nuova riga contiene.\r\nIn questo caso l'apertura della finestra di ricerca espressione regolare richiederà leggermente più tempo.",
         "csv_newline": "Indicare il fine riga da usare per generare file  CSV.",
