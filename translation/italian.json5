@@ -25,7 +25,7 @@
                 },
                 "DebugInfoLabel": "Notepad++ versione: X.Y.Z. Per maggiori informazioni sulla\r\ninstallazione, vai a ? -> Debug Info on the main status bar.",
                 "ThanksWowLinkLabel": {
-                    "text": "Un ringraziamento spaciale a:\r\n* Don Ho per Notepad++\r\n* kbilsted for making the plugin pack this is based on\r\n* And of course everyone who helped make this plugin\r\n   better!\r\n* The amazing community makes this work worthwhile.\r\n  Wow!",
+                    "text": "Un ringraziamento speciale a:\r\n* Don Ho per Notepad++\r\n* kbilsted per la creazione del pacchetto del plugin dal quale è basato\r\n* E sicuramente chiunque abbia aiutato a rendere il plugin\r\n   migliore!\r\n* La straordinaria comunità che rende utile questo lavoro.\r\n  Wow!",
                     "linkStart": 232,
                     "linkLength": 4
                 }
@@ -88,7 +88,7 @@
                 "ViewErrorsButton": "Visualizza errori",
                 "ViewResultsButton": "Visualizza risultati nel buffer",
                 "ChooseFilesTitle": "Scegli file e URL",
-                "RemoveSelectedFilesButton": "Remuovi i file selezionati"
+                "RemoveSelectedFilesButton": "Rimuovi i file selezionati"
             }
         },
         "JsonToCsvForm": {
@@ -98,7 +98,7 @@
                 "KeySepBoxLabel": "Separatore di chiave",
                 "DelimBoxLabel": "Delimitatori del file di output",
                 "eolComboBoxLabel": "Terminatore di riga nel output box",
-                "BoolsToIntsCheckBox": "Convertu vero/falso in 1/0?",
+                "BoolsToIntsCheckBox": "Converti vero/falso in 1/0?",
                 "StrategyBox": [
                     "Predefinito",
                     "Ricorsione completa",
@@ -116,8 +116,8 @@
                 "Title": "Espressione Regolare su JSON",
                 "RegexTextBoxLabel": "Inserisci Espressione Regolare",
                 "IgnoreCaseCheckBox": "Ignora maiuscole/minuscole?",
-                "IncludeFullMatchAsFirstItemCheckBox": "Include full match as first item?",
-                "ParseAsCsvCheckBox": "Parse as CSV?",
+                "IncludeFullMatchAsFirstItemCheckBox": "Includi corrispondenza completa come prima voce?",
+                "ParseAsCsvCheckBox": "Analizza come CSV?",
                 "DelimiterTextBoxLabel": "Delimitatore",
                 "QuoteCharTextBoxLabel": "Carattere stringa",
                 "NewlineComboBoxLabel": "Nuova riga",
@@ -143,7 +143,7 @@
                     "Predefinito",
                     "Come stringa (ignora maiuscole/minuscole)",
                     "Per indice/chiave di ogni figlio",
-                    "By query on each child",
+                    "Tramite interrogazione su ogni figlio",
                     "Shuffle"
                 ],
                 "SortMethodBoxLabel": "Metodo di ordinamento",
@@ -183,7 +183,7 @@
         "&Pretty-print current JSON file": "&Formatta il file JSON corrente",
         "&Compress current JSON file": "&Comprimi file JSON corrente",
         "Path to current p&osition": "Percorso della p&osizione corrente",
-        "Select every val&id JSON in selection": "Seleziona ogni JSON val&ido nella selezione",
+        "Select every val&id JSON in selection": "Seleziona ogni JSON val&ido della selezione",
         "Chec&k JSON syntax now": "&Verifica la sintassi del JSON",
         "Open &JSON tree viewer": "Apri Visualizzazione struttura &JSON",
         "&Get JSON from files and APIs": "&Ottieni JSON da file e API",
@@ -194,7 +194,7 @@
         "Generate sc&hema from JSON": "Genera sc&hema da JSON",
         "Generate &random JSON from schema": "Genera JSON casuale da schema",
         "Run &tests": "Esegui &test",
-        "A&bout": "A&bout",
+        "A&bout": "Informazioni s&u",
         "See most recent syntax &errors in this file": "Visualizza gli &errori di sintassi più recenti di questo file",
         "JSON to YAML": "Da JSON a YAML",
         "Parse JSON Li&nes document": "Analizza le righe del &documento JSON",
@@ -221,12 +221,12 @@
         "remember_comments": "Quando JSON viene formattato o compresso, vengono inclusi tutti i commenti trovati durante l'ultima analisi.\r\nQuando viene formattato, ogni commento avrà la stessa posizione relativa a ciascun elemento JSON di quando è stato analizzato.\r\nDurante la compressione, tutti i commenti verranno visualizzati all'inizio del documento.",
         "sort_keys": "Utilizza il tabulatore ('\\t') invece degli spazi tra i livelli di JSON durante la formattazione",
         // TODO: translate the toolbar_icons setting
-        "toolbar_icons": "Specify one of these chars for each toolbar icon you want to show, in the order you want:\r\n('t' = tree view, 'c' = compress, 'p' = pretty-print, 'o' = path to current position)\r\nThis setting will take effect the next time you start Notepad++.\r\nIf you want there to be NO toolbar icons, enter a character that does not represent an icon; do NOT leave this field empty.",
+        "toolbar_icons": "Per ogni icona della barra degli strumenti, indica una delle seguenti icone nell'ordine desiderato:\r\n('t' = visualizzazione ad albero, 'c' = compressione, 'p' = formatta, 'o' = Percorso della posizione corrente)\r\n Questa impostazione avrà effetto al riavvio di Notepad++.\r\n Per non visualizzare le icone nella barra degli strumenti, inserisci un carattere diverso dai precedenti; NON lasciare questo campo vuoto.",
         "auto_try_guess_csv_delim_newline": "Se questa impostazione è abilitata,\r\nquando la finestra di ricerca con espressione regolare, o quando \"Analizza come CSV?\" di questa finestra è attivata,\r\nJsonTools tenterà di indovinare se il documento corrente è un file CSV o TSV, e quante colonne e quale nuova riga contiene.\r\nIn questo caso l'apertura della finestra di ricerca espressione regolare richiederà leggermente più tempo.",
         "csv_newline": "Indicare il fine riga da usare per generare file  CSV.",
         "key_style": "Lo stile della chiave da usare quando si ottiene il percorso o chiave/indice di un nodo o riga",
         "skip_api_request_and_fuzz_tests": "Durante l'esecuzione dei test, salta i test che inviano richieste alle API e i test RemesPath fuzz",
-        "try_parse_start_chars": "Quando si seleziona ogni JSON nel file, iniziare a provare ad analizzare solo questi caratteri.\r\nSono ammessi solo JSON validi in base a NAN_INF logger_level.\r\nEsempio: se \"[{ sono selezionati (impostazione predefinita), vengono considerate solo stringhe, arrays, e oggetti potenziali.\r\nSe \"[{tf sono selezionate, vengono considerate stringhe, arrays, oggetti, e booleans potenziali.",
+        "try_parse_start_chars": "Quando si seleziona ogni JSON nel file, iniziare a provare ad analizzare solo questi caratteri.\r\nSono ammessi solo JSON validi in base a NAN_INF logger_level.\r\nEsempio: se \"[{ sono selezionati (impostazione predefinita), vengono considerate solo stringhe, arrays, e oggetti potenziali.\r\nSe \"[{tf sono selezionate, vengono considerate stringhe, arrays, oggetti, e potenziali booleani.",
         "tree_view_font_size": "La dimensione del carattere (in punti) per il visualizzatore dell'albero. Per riferimento, il valore predefinito è 7,8.",
         "use_npp_styling": "Utilizzare gli stessi colori della finestra dell'editor per il visualizzatore dell'albero e altri moduli JsonTools?",
         "extended_ascii_strings": "Utilizza caratteri ASCII estesi (es., \u000b, ñ) nelle stringhe?",
