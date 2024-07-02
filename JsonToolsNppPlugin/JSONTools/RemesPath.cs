@@ -2313,6 +2313,10 @@ namespace JSON_Tools.JSON_Tools
             {
                 return $"DSON dump error: {dde.Message}";
             }
+            if (ex is OutOfMemoryException)
+            {
+                return $"System.OutOfMemoryException (JsonTools ran out of memory)";
+            }
             string exstr = ex.ToString();
             Match isCast = CAST_REGEX.Match(exstr);
             if (isCast.Success)

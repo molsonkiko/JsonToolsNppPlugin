@@ -19,13 +19,18 @@ namespace JSON_Tools.Forms
         private readonly FileInfo directoriesVisitedFile;
         private readonly FileInfo urlsQueriedFile;
         private List<string> urlsQueried;
+        // fields related to progress reporting
+        private const int CHECKPOINT_COUNT = 25;
+        private string bufferOpenBeforeProgressReport;
+        private string progressReportBufferName;
+        private static object progressReportLock = new object();
 
         public GrepperForm()
         {
             InitializeComponent();
             NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
-            grepper = new JsonGrepper(Main.JsonParserFromSettings());
+            grepper = new JsonGrepper(Main.JsonParserFromSettings(), true, CHECKPOINT_COUNT, CreateProgressReportBuffer, ReportJsonParsingProgress, AfterProgressReport);
             tv = null;
             filesFound = new HashSet<string>();
             var configSubdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
@@ -160,6 +165,64 @@ namespace JSON_Tools.Forms
             AddFilesToFilesFound();
         }
 
+        /// <summary>
+        /// Looks like this:
+        /// <code>
+        /// JSON from files and APIs - JSON parsing progress
+        /// |========                 |
+        /// 0.301 MB of 1.25 MB parsed
+        /// </code>
+        /// </summary>
+        /// <param name="checkPointsFinished"></param>
+        /// <returns></returns>
+        private static string ProgressBarText(int checkPointsFinished, int lengthParsedSoFar, int totalLengthToParse)
+        {
+            return "JSON from files and APIs - JSON parsing progress\r\n|" +
+                    ArgFunction.StrMulHelper("=", checkPointsFinished) + ArgFunction.StrMulHelper(" ", CHECKPOINT_COUNT - checkPointsFinished) + "|\r\n" +
+                   $"{Math.Round(lengthParsedSoFar / 1e6, 3)} MB of {Math.Round(totalLengthToParse / 1e6, 3)} MB parsed" +
+                   (lengthParsedSoFar == totalLengthToParse ? "\r\nPARSING COMPLETE!" : "");
+        }
+
+        private void CreateProgressReportBuffer(int totalLengthToParse)
+        {
+            bufferOpenBeforeProgressReport = Npp.notepad.GetCurrentFilePath();
+            Npp.notepad.FileNew();
+            Npp.notepad.SetCurrentBufferInternalName("JSON parsing progress report");
+            progressReportBufferName = Npp.notepad.GetCurrentFilePath();
+            Npp.editor.SetText(ProgressBarText(0, 0, totalLengthToParse));
+            Npp.editor.GrabFocus();
+        }
+
+        private void ReportJsonParsingProgress(int lengthParsedSoFar, int totalLengthToParse)
+        {
+            lock (progressReportLock)
+            {
+                // we need to do a / (b / c) rather than a * c / b, because:
+                //    a * (c / b) will be 0 because c is less than b
+                //    (a * c) / b could easily cause overflow, because a * c might be larger than int32.Max
+                int checkPointsFinished = lengthParsedSoFar / (totalLengthToParse / CHECKPOINT_COUNT);
+                if (Npp.notepad.GetCurrentFilePath() == progressReportBufferName)
+                {
+                    Npp.editor.SetText(ProgressBarText(checkPointsFinished, lengthParsedSoFar, totalLengthToParse));
+                }
+            }
+        }
+
+        private void AfterProgressReport()
+        {
+            //// navigate to whatever buffer was open before the progress report started
+            //if (progressReportBufferName != null)
+            //{
+            //    if (Npp.notepad.GetCurrentFilePath() == progressReportBufferName
+            //        && bufferOpenBeforeProgressReport != null
+            //        && Npp.notepad.GetOpenFileNames().Contains(bufferOpenBeforeProgressReport))
+            //    {
+            //        Npp.notepad.OpenFile(bufferOpenBeforeProgressReport);
+            //    }
+            //}
+            ViewResultsButton.Focus();
+        }
+
         private void AddDirectoryToDirectoriesVisited(string rootDir)
         {
             if (!Directory.Exists(rootDir) || DirectoriesVisitedBox.Items.IndexOf(rootDir) >= 0)
@@ -292,6 +355,13 @@ namespace JSON_Tools.Forms
         private void GrepperForm_KeyUp(object sender, KeyEventArgs e)
         {
             NppFormHelper.GenericKeyUpHandler(this, sender, e, false);
+            // Enter in the DirectoriesVisitedBox selects the entered directory
+            if (e.KeyCode == Keys.Enter &&
+                sender is ComboBox cbx && cbx.Name == "DirectoriesVisitedBox"
+                && Directory.Exists(cbx.Text))
+            {
+                SearchDirectoriesButton.PerformClick();
+            }
             //if (e.Alt)
             //{
             //    switch (e.KeyCode)

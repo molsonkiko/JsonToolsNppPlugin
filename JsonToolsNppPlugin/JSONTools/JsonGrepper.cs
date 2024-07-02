@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -56,9 +55,10 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private const int PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH = 8_000_000;
         /// <summary>
-        /// when reporting progress using a progress bar, the progress bar is only updated this many times.
+        /// If the total combined length of all files to be parsed is at least this great,<br></br>
+        /// show a progress bar <i>even if there are fewer than <see cref="PROGRESS_REPORT_FILE_MIN_COUNT"/> files.</i>
         /// </summary>
-        private const int NUM_PROGRESS_REPORT_CHECKPOINTS = 25;
+        private const int PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH_IF_LT_MINCOUNT_FILES = 50_000_000;
 		/// <summary>
 		/// maps filenames and urls to parsed JSON
 		/// </summary>
@@ -70,20 +70,29 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// the combined length of all files to be parsed
         /// </summary>
-        private int totLengthToParse;
-        //private int totLengthAlreadyParsed;
-        //private int checkPointLength;
-        //private bool reportProgress;
-        //private Form progressBarForm;
-        //private ProgressBar progressBar;
-        ///// <summary>
-        ///// could be used to enable the user to cancel grepping by clicking a button
-        ///// when the progress bar pops up.
-        ///// </summary>
-        //private CancellationToken cancellationToken;
-        //private int nextCheckPoint;
+        private int totalLengthToParse;
 
-		public JsonGrepper(JsonParser jsonParser = null)
+        public delegate void ProgressReportSetup(int totalLengthToParse);
+        public delegate void ProgressReportCallback(int lengthParsedSoFar, int totalLengthToParse);
+        // constructor fields related to progress reporting
+        private bool reportProgress;
+        private ProgressReportSetup progressReportSetup;
+        private ProgressReportCallback progressReportCallback;
+        private Action progressReportTeardown;
+        // derived fields related to progress reporting
+        private int totLengthAlreadyParsed;
+        private int progressReportCheckpoints;
+        private int checkPointLength;
+        private int nextCheckPoint;
+
+        /// <summary></summary>
+        /// <param name="jsonParser">the parser to use to parse API responses and grepped files</param>
+        /// <param name="reportProgress">whether to report progress</param>
+        /// <param name="progressReportCheckpoints">How many times to report progress</param>
+        /// <param name="progressReportSetup">Anything that must be done before progress reporting starts</param>
+        /// <param name="progressReportCallback">A function that is called at each progress report checkpoint</param>
+        /// <param name="progressReportTeardown">Anything that must be done after progress reporting is complete</param>
+		public JsonGrepper(JsonParser jsonParser = null, bool reportProgress = false, int progressReportCheckpoints = -1, ProgressReportSetup progressReportSetup = null, ProgressReportCallback progressReportCallback = null, Action progressReportTeardown = null)
 		{
             fnameStrings = new Dictionary<string, string>();
 			fnameJsons = new JObject();
@@ -100,6 +109,12 @@ namespace JSON_Tools.JSON_Tools
             this.jsonParser.throwIfLogged = true;
             // security protocol addresses issue: https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            // configure progress reporting
+            this.reportProgress = reportProgress;
+            this.progressReportCheckpoints = progressReportCheckpoints;
+            this.progressReportSetup = progressReportSetup;
+            this.progressReportCallback = progressReportCallback;
+            this.progressReportTeardown = progressReportTeardown;
         }
 
         /// <summary>
@@ -119,7 +134,7 @@ namespace JSON_Tools.JSON_Tools
                 dirInfo = new DirectoryInfo(rootDir);
             }
             catch { return; }
-            totLengthToParse = 0;
+            totalLengthToParse = 0;
             SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (string searchPattern in searchPatterns)
             {
@@ -131,8 +146,8 @@ namespace JSON_Tools.JSON_Tools
                         using (var fp = fileInfo.OpenText())
                         {
                             string text = fp.ReadToEnd();
-                            totLengthToParse += text.Length;
-                            TooMuchTextToParseException.ThrowIfTooMuchText(totLengthToParse);
+                            totalLengthToParse += text.Length;
+                            TooMuchTextToParseException.ThrowIfTooMuchText(totalLengthToParse);
                             fnameStrings[fname] = text;
                         }
                     }
@@ -140,7 +155,7 @@ namespace JSON_Tools.JSON_Tools
             }
 		}
 
-        private (string fname, JNode parsedOrError, bool error) ParseOrGetError(string fname, string jsonStr, JsonParser jsonParserTemplate)
+        private (string fname, JNode parsedOrError, bool error) ParseOrGetError(string fname, string jsonStr, JsonParser jsonParserTemplate, bool shouldReportProgress)
         {
             JNode parsedOrError;
             bool error = false;
@@ -154,19 +169,19 @@ namespace JSON_Tools.JSON_Tools
                 error = true;
                 parsedOrError = new JNode(ex.ToString());
             }
-            //if (reportProgress)
-            //{
-            //    // Update the progress bar if the next checkpoint has been reached, then advance the checkpoint.
-            //    // Otherwise, keep moving toward the next checkpoint.
-            //    int alreadyParsed = Interlocked.Add(ref totLengthAlreadyParsed, jsonStr.Length);
-            //    if (alreadyParsed >= nextCheckPoint)
-            //    {
-            //        int newNextCheckPoint = alreadyParsed + checkPointLength;
-            //        newNextCheckPoint = newNextCheckPoint > totLengthToParse ? totLengthToParse : newNextCheckPoint;
-            //        Interlocked.Exchange(ref nextCheckPoint, newNextCheckPoint);
-            //        progressBar.Invoke(new Action(() => { progressBar.Value = alreadyParsed; }));
-            //    }
-            //}
+            if (shouldReportProgress && !(progressReportCallback is null))
+            {
+                // Update the progress bar if the next checkpoint has been reached, then advance the checkpoint.
+                // Otherwise, keep moving toward the next checkpoint.
+                int alreadyParsed = Interlocked.Add(ref totLengthAlreadyParsed, jsonStr.Length);
+                if (alreadyParsed >= nextCheckPoint)
+                {
+                    progressReportCallback(alreadyParsed, totalLengthToParse);
+                    int newNextCheckPoint = alreadyParsed + checkPointLength;
+                    newNextCheckPoint = newNextCheckPoint > totalLengthToParse ? totalLengthToParse : newNextCheckPoint;
+                    Interlocked.Exchange(ref nextCheckPoint, newNextCheckPoint);
+                }
+            }
             return (fname, parsedOrError, error);
         }
 
@@ -176,49 +191,24 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private void ParseJsonStringsThreaded()
         {
+            bool shouldReportProgress = reportProgress
+                && (totalLengthToParse >= PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH_IF_LT_MINCOUNT_FILES
+                    || (totalLengthToParse >= PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH && fnameStrings.Count >= PROGRESS_REPORT_FILE_MIN_COUNT));
+            totLengthAlreadyParsed = 0;
+            checkPointLength = totalLengthToParse / progressReportCheckpoints;
 		    string[] fnames = fnameStrings.Keys.ToArray();
+            if (shouldReportProgress)
+            {
+                progressReportSetup?.Invoke(totalLengthToParse);
+                progressReportCallback(0, totalLengthToParse);
+            }
             var results = fnames
-                .Select(fname => ParseOrGetError(fname, fnameStrings[fname], jsonParser))
+                .Select(fname => ParseOrGetError(fname, fnameStrings[fname], jsonParser, shouldReportProgress))
                 .AsParallel()
                 .OrderBy(x => x.fname)
                 .ToArray();
-            //// below lines are for progress reporting using a visual bar.
-            //reportProgress = totLengthToParse >= PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH && fnameStrings.Count >= PROGRESS_REPORT_FILE_MIN_COUNT;
-            //progressBarForm = null;
-            //if (reportProgress)
-            //{
-            //    progressBar = new ProgressBar
-            //    {
-            //        Name = "progress",
-            //        Minimum = 0,
-            //        Maximum = totLengthToParse,
-            //        Style = ProgressBarStyle.Blocks,
-            //        Left = 20,
-            //        Width = 450,
-            //        Top = 200,
-            //        Height = 50,
-            //    };
-            //    string totLengthToParseMB = (totLengthToParse / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
-            //    Label label = new Label
-            //    {
-            //        Name = "title",
-            //        Text = "All JSON documents have been read into memory.\r\n" +
-            //              $"Now parsing {fnameStrings.Count} documents with combined length of about {totLengthToParseMB} MB.",
-            //        TextAlign=ContentAlignment.TopCenter,
-            //        Top = 20,
-            //        AutoSize = true,
-            //    };
-            //    progressBarForm = new Form
-            //    {
-            //        Text = "JSON parsing in progress",
-            //        Controls = { label, progressBar },
-            //        Width=500,
-            //        Height=300,
-            //    };
-            //    progressBarForm.Show();
-            //}
-            //totLengthAlreadyParsed = 0;
-            //checkPointLength = totLengthToParse / NUM_PROGRESS_REPORT_CHECKPOINTS;
+            if (shouldReportProgress)
+                progressReportTeardown?.Invoke();
             foreach ((string fname, JNode parsedOrError, bool error) in results)
             {
                 if (error)
@@ -227,13 +217,6 @@ namespace JSON_Tools.JSON_Tools
                     fnameJsons[fname] = parsedOrError;
             }
             fnameStrings.Clear(); // don't need the strings anymore, only the JSON
-            //if (reportProgress)
-            //{
-            //    progressBarForm.Close();
-            //    progressBarForm.Dispose();
-            //    progressBarForm = null;
-            //    progressBar = null;
-            //}
         }
 
         /// <summary>

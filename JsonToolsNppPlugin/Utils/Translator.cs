@@ -1,15 +1,16 @@
-﻿using JSON_Tools.JSON_Tools;
+﻿using Kbg.NppPluginNET;
+using JSON_Tools.JSON_Tools;
 using System;
 using System.Linq;
-using System.Globalization;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using System.Reflection;
-using System.Web;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
+using System.Globalization;
 
 // TODO:
 // 1. Implement translation of settings descriptions.
@@ -24,18 +25,48 @@ namespace JSON_Tools.Utils
 
         public static void LoadTranslations()
         {
-            CultureInfo currentCulture = CultureInfo.CurrentCulture;
-            string languageFullname = currentCulture.EnglishName;
-            string languageFirstname = languageFullname.Split(' ')[0].ToLower();
-            if (languageFirstname == "Unknown")
-                languageFirstname = currentCulture.Parent.EnglishName.Split(' ')[0].ToLower();
-            if (languageFirstname == "english")
+            string languageName = "english";
+            // TODO: maybe use Notepad++ nativeLang preference to guide translation?
+            // Possible references include:
+            // * https://github.com/daddel80/notepadpp-multireplace/blob/65411ac5754878bbf8af7a35dba7b35d7d919ff4/src/MultiReplacePanel.cpp#L6347
+            // * https://npp-user-manual.org/docs/binary-translation/
+
+            //// first try to use the Notepad++ nativeLang.xml config file to determine the user's language preference
+            //string nativeLangXmlFname = Path.Combine(Npp.notepad.GetConfigDirectory(), "..", "nativeLang.xml");
+            //if (File.Exists(nativeLangXmlFname))
+            //{
+            //    try
+            //    {
+            //        string nativeLangXml;
+            //        using (var reader = new StreamReader(File.OpenRead(nativeLangXmlFname), Encoding.UTF8, true))
+            //        {
+            //            nativeLangXml = reader.ReadToEnd();
+            //        }
+            //        Match match = Regex.Match(nativeLangXml, "<Native-Langue .*? filename=\"(.*?)\\.xml\"");
+            //        if (match.Success)
+            //            languageName = match.Groups[1].Value.Trim().ToLower();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        MessageBox.Show($"While attempting to determine native language preference from Notepad++ config XML, got an error:\r\n{ex}");
+            //    }
+            //}
+            if (languageName == "english")
+            {
+                // as a fallback, try to determine the user's language by asking Windows for their current culture
+                CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                string languageFullname = currentCulture.EnglishName;
+                languageName = languageFullname.Split(' ')[0].ToLower();
+                if (languageName == "Unknown")
+                    languageName = currentCulture.Parent.EnglishName.Split(' ')[0].ToLower();
+            }
+            if (languageName == "english")
             {
                 //MessageBox.Show("Not loading translations, because english is the current culture language");
                 return;
             }
             string translationDir = Path.Combine(Npp.pluginDllDirectory, "translation");
-            string translationFilename = Path.Combine(translationDir, languageFirstname + ".json5");
+            string translationFilename = Path.Combine(translationDir, languageName + ".json5");
             if (!File.Exists(translationFilename))
             {
                 //MessageBox.Show($"Could not find a translation file for language {languageFirstname} in directory {translationDir}");

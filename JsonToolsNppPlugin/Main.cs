@@ -381,6 +381,8 @@ namespace Kbg.NppPluginNET
                 if (TryGetInfoForFile(bufferModified, out info) && !(info.tv is null) && !info.tv.IsDisposed)
                     info.tv.shouldRefresh = true;
                 break;
+            // the user changed their native language preference
+
                 //if (code > int.MaxValue) // windows messages
                 //{
                 //    int wm = -(int)code;
@@ -974,8 +976,15 @@ namespace Kbg.NppPluginNET
             }
             else
             {
-                string newText = formatter(json);
-                Npp.editor.SetText(newText);
+                try
+                {
+                    string newText = formatter(json);
+                    Npp.editor.SetText(newText);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"While attempting to reformat the file's JSON, got an error:\r\n{RemesParser.PrettifyException(ex)}");
+                }
             }
             info = AddJsonForFile(activeFname, json);
             Npp.RemoveTrailingSOH();

@@ -821,6 +821,22 @@ For example, if you wanted to search only files with `foo` (case-sensitive) in t
 3. Click `Find all` in the find/replace form.
 4. Look at the tree view, and see which files are displayed. 
 
+### Reporting progress when parsing large amounts of JSON ###
+
+When getting JSON from [directories](#getting-json-from-local-directories) or [APIs](#sending-rest-api-requests), it is possible that JsonTools will need to parse very large amounts of JSON. JsonTools can parse approximately 30 megabytes of JSON per second per thread, but its rate of parsing depends on many factors, chiefly the number of documents to be parsed.
+
+Although JsonTools does not currently report progress while reading files from the hard drive or sending API requests, beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), it will report progress while parsing documents (which is typically the most time-consuming part). To report progress, JsonTools will open up a buffer in Notepad++ named `JSON parsing progress report` and put text in the document that looks like this:
+
+```txt
+JSON from files and APIs - JSON parsing progress
+|======                   |
+33.047 MB of 121.678 MB parsed
+```
+
+This progress reporting only takes place if the total amount of text to be parsed is at least 50 megabytes, or if there are at least 16 files with a combined total of 8 megabytes of text.
+
+To be clear, __versions of JsonTools earlier than [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) did not have progress reporting for this form,__ but the underlying process was still very reliable, and *just because Notepad++ stopped responding doesn't mean that JsonTools had an error or went into an infinite loop.*
+
 ## Clearing selected files ##
 
 If you like most of the JSON documents you've found but you don't want to keep *all* of the files, you can select some of them, and then click the `Remove selected files` button in the bottom right center.

@@ -49,6 +49,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
+## [8.1.0] - (UNRELEASED) YYYY-MM-DD
+
+### Added
+
+1. [Progress reporting](/docs/README.md#reporting-progress-when-parsing-large-amounts-of-json) with the JSON from files and APIs form (henceforth the `grepper form`).
+2. In the `grepper form`, pressing `Enter` inside the `Previously viewed directories...` box causes the current text of the box to be searched, assuming that it is a valid directory.
+
+### Fixed
+
+1. If there would be an `OutOfMemoryException` due to running out of memory while formatting JSON (a likely occurrence when using the `grepper form`), that error is caught and reported with a message box, rather than potentially causing Notepad++ to crash.
+
 ## [8.0.0] - 2024-06-29
 
 ### Added
