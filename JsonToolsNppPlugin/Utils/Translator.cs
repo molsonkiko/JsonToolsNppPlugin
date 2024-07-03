@@ -12,10 +12,6 @@ using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Globalization;
 
-// TODO:
-// 1. Implement translation of settings descriptions.
-//     This is surprisingly complicated, due to the PropertyGrid class not allowing public read/write access to the descriptive text for a property.
-
 namespace JSON_Tools.Utils
 {
     public static class Translator

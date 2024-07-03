@@ -50,6 +50,20 @@ You can unzip the 64-bit download to `C:\Program Files\Notepad++\plugins\JsonToo
 
 Alternatively, you can follow these [installation instructions](https://npp-user-manual.org/docs/plugins/) to install the latest version of the plugin from Notepad++.
 
+### Downloading unreleased versions ###
+
+You can also download recently committed but unreleased versions of JsonTools by downloading the appropriate GitHub artifact in the following way:
+1. Go to the [commit history](https://github.com/molsonkiko/JsonToolsNppPlugin/commits/main/) of JsonTools.
+2. Most commits will have a green checkmark and the text `4/4` next to their commit message. Click on it.
+3. A dropdown menu showing the CI tasks will appear. Click on one of the `Details` links. [Here's an example of a page that this leads to.](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/runs/9767448644/job/26962739908).
+4. Click the `Summary` link near the top-left corner of the page. [Here's an example of the page this leads to.](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/runs/9767448644)
+5. If you chose a commit that was made in the last 90 days, at the bottom of this page you will find links to download `plugin_dll_x64` (a zip archive containing 64-bit `JsonTools.dll`) or `plugin_dll_x86` (a zip archive containing 32-bit `JsonTools.dll`). Download the appropriate binary for your current Notepad++ installation.
+
+If you also want to download the most recent [translation to another language](#translating-jsontools-to-another-language), you will need to also download the most up-to-date translation file for that language from [the `translation` folder of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/tree/main/translation). To do that:
+1. Click on one of the files in the list.
+2. Click the download icon near the top of the page.
+3. Put the downloaded raw `{yourLanguage}.json5` file into the `translation` folder of your JsonTools plugin directory, as discussed in [the documentation on translating JsonTools](#translating-jsontools-to-another-language).
+
 ## System Requirements ##
 
 Every version of the plugin works on Notepad++ 8.4.1 onward, although [some versions of Notepad++ have problems](#problematic-notepad-versions).

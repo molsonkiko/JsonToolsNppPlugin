@@ -51,7 +51,7 @@
                     // Change this value to set the text when the box is *unchecked*
                     "unchecked": "Visualizza opzioni avanzate"
                 },
-                // This is a ListBox, where the text can be selected from a drop-down list.
+                // This is a ComboBox, where the text can be selected from a drop-down list.
                 // DO NOT CHANGE THE NUMBER OF ELEMENTS IN THIS ARRAY!
                 "KeysValsBothBox": [
                     "Chiavi",
@@ -78,7 +78,7 @@
                 "GetJsonFromFilesTitle": "Ottieni JSON da file locale",
                 "RecursiveSearchCheckBox": "Cercare nelle sottocartelle?",
                 "ChooseDirectoriesButton": "Seleziona cartella...",
-                // This is another ListBox. There may be more than one element in this list,
+                // This is another ComboBox. There may be more than one element in this list,
                 //    but only the first element can be translated in this case.
                 "DirectoriesVisitedBox": [
                     "Cartelle recenti..."
