@@ -122,6 +122,8 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static string TranslateSettingsDescription(PropertyInfo propertyInfo)
         {
+            if (propertyInfo is null)
+                return "";
             if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
                 && dict.TryGetValue("settingsDescriptions", out JNode settingsDescNode)
                 && settingsDescNode is JObject settingsDescObj

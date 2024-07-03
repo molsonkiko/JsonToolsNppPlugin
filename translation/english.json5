@@ -206,7 +206,7 @@
     },
     // The JsonTools.ini config file (in your plugin config folder)
     //     will have these translated descriptions as comments above each setting.
-    // TODO: When a user opens the settings form and clicks on a setting, the translation should also appear.
+    //     The settings form will also show these translated descriptions when the named setting is selected.
     "settingsDescriptions": {
         "logger_level": "Suppress logging of errors at or below this level.\r\nSTRICT: Log all deviations from the original JSON spec.\r\nOK: The original JSON spec plus the following:\r\n    * strings can contain characters with ASCII values less than 0x20 (includes '\\t')\r\nNAN_INF: Do not log errors when NaN, Infinity, and -Infinity are parsed.\r\nJSONC: The following errors are not logged:\r\n    * JavaScript single-line '//' and multi-line '/*...*/' comments\r\n    * NaN and +/-Infinity\r\nJSON5: Everything in the JSONC and NAN_INF levels is not logged, as well as the following:\r\n    * singlequoted strings\r\n    * commas after the last element of an array or object\r\n    * unquoted object keys\r\n    * see https://json5.org/ for more.",
         "offer_to_show_lint": "When the document is parsed, show a prompt to see syntax errors in the document.",
@@ -217,9 +217,10 @@
         "tree_node_images": "Should each node in the tree have an image associated with its type?",
         "ask_before_pretty_printing_json_lines": "Ask before pretty-printing JSON Lines documents, ignore requests to pretty-print, or pretty-print without asking?",
         "indent_pretty_print": "The number of spaces between levels of JSON when pretty-printing",
+        "tab_indent_pretty_print": "Use one horizontal tab ('\\t') instead of spaces between levels of JSON when pretty-printing",
         "minimal_whitespace_compression": "If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays",
         "remember_comments": "When JSON is pretty-printed or compressed, any comments found when it was last parsed are included.\r\nWhen pretty-printing, each comment will have the same relative location to each JSON element as when it was parsed.\r\nWhen compressing, all comments will come at the beginning of the document.",
-        "sort_keys": "Use one horizontal tab ('\\t') instead of spaces between levels of JSON when pretty-printing",
+        "sort_keys": "Sort the keys of objects alphabetically when formatting or compressing",
         "toolbar_icons": "Specify one of these chars for each toolbar icon you want to show, in the order you want:\r\n('t' = tree view, 'c' = compress, 'p' = pretty-print, 'o' = path to current position)\r\nThis setting will take effect the next time you start Notepad++.\r\nIf you want there to be NO toolbar icons, enter a character that does not represent an icon; do NOT leave this field empty.",
         "auto_try_guess_csv_delim_newline": "If this setting is true,\r\nwhen the regex search form is opened, or when the \"Parse as CSV?\" checkbox in that form is toggled on,\r\nJsonTools will attempt to guess whether the current document is a CSV or TSV file, and how many columns and what newline it has.\r\nThe regex search form will take slightly longer to open if this is true.",
         "csv_newline": "Which type of newline to use for generated CSV files.",

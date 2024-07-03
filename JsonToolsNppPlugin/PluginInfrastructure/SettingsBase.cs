@@ -296,12 +296,30 @@ namespace CsvQuery.PluginInfrastructure
                 SaveToIniFile();
                 dialog.Close();
             };
-            //var grid = (PropertyGrid)dialog.Controls["Grid"];
-            //grid.SelectedGridItemChanged += (object _, SelectedGridItemChangedEventArgs e) =>
-            //{
-            //    GridItem selectedItem = e.NewSelection;
-            //    selectedItem.
-            //};
+            var grid = dialog.Controls["Grid"];
+            if (Translator.HasTranslations
+                && grid.Controls.Count >= 1 && grid.Controls[0] is Control commentPane
+                && commentPane.Controls.Count >= 2 && commentPane.Controls[1] is Label descriptionLabel)
+            {
+                string translatedDescription = "";
+                var propGrid = (PropertyGrid)grid;
+                propGrid.SelectedGridItemChanged += (object _, SelectedGridItemChangedEventArgs e) =>
+                {
+                    GridItem selectedItem = e.NewSelection;
+                    PropertyDescriptor selectedPropertyDesc = selectedItem?.PropertyDescriptor;
+                    if (selectedPropertyDesc is null)
+                        return;
+                    PropertyInfo selectedProp = GetType().GetProperty(selectedPropertyDesc.Name);
+                    translatedDescription = Translator.TranslateSettingsDescription(selectedProp);
+                    if (translatedDescription.Length > 0)
+                        descriptionLabel.Text = translatedDescription;
+                };
+                commentPane.SizeChanged += (object _, EventArgs e) =>
+                {
+                    if (translatedDescription.Length > 0)
+                        descriptionLabel.Text = translatedDescription;
+                };
+            }
             dialog.ShowDialog();
         }
 

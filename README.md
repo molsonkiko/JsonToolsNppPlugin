@@ -149,9 +149,7 @@ The following aspects of JsonTools __can__ be translated:
 - Forms (including all controls and items in drop-down menus)
 - Items in the JsonTools sub-menu of the Notepad++ Plugins menu
 - The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings)
-
-The following aspect(s) of JsonTools __may eventually__ be translated:
-- The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (this is harder than translating the config file for weird technical reasons).
+- The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
 
 The following aspects of JsonTools __will not__ be translated:
 - This documentation
