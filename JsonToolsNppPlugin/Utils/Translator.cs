@@ -261,21 +261,18 @@ namespace JSON_Tools.Utils
                 }
                 int maxRight = 0;
                 foreach (Control child in ctrl.Controls)
-                {
                     maxRight = child.Right > maxRight ? child.Right : maxRight;
-                    // unanchor everything from the right, so resizing the form doesn't move those controls
-                    child.Anchor &= (AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left);
-                }
+                // Temporarily turn off the normal layout logic,
+                //     because this would cause controls to move right when the form is resized
+                //     (yes, even if they're not anchored right. No, that doesn't make sense)
+                ctrl.SuspendLayout();
                 if (maxRight > ctrl.Width)
                 {
                     int padding = ctrl is Form ? 25 : 5;
                     ctrl.Width = maxRight + padding;
                 }
-                foreach ((Control child, _, bool wasAnchoredRight) in childrenByLeft)
-                {
-                    if (wasAnchoredRight)
-                        child.Anchor |= AnchorStyles.Right;
-                }
+                // Resume layout logic, ignoring the pending requests to move controls right due to resizing of form
+                ctrl.ResumeLayout(false);
             }
         }
 

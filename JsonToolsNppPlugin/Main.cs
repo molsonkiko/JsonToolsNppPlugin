@@ -134,7 +134,7 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(10, Translator.GetTranslatedMenuItem("&Settings"), OpenSettings, new ShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(11, "---", null);
             PluginBase.SetCommand(12, Translator.GetTranslatedMenuItem("&Validate JSON against JSON schema"), () => ValidateJson());
-            PluginBase.SetCommand(13, Translator.GetTranslatedMenuItem("Choose schemas to automatically validate &filename patterns"), MapSchemasToFnamePatterns);
+            PluginBase.SetCommand(13, Translator.GetTranslatedMenuItem("Validate &files with JSON schema if name matches pattern"), MapSchemasToFnamePatterns);
             PluginBase.SetCommand(14, Translator.GetTranslatedMenuItem("Generate sc&hema from JSON"), GenerateJsonSchema);
             PluginBase.SetCommand(15, Translator.GetTranslatedMenuItem("Generate &random JSON from schema"), GenerateRandomJson);
             PluginBase.SetCommand(16, "---", null);

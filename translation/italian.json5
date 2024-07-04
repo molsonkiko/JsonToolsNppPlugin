@@ -132,6 +132,14 @@
                 "SearchButton": "Trova"
             }
         },
+        "SettingsForm": {
+            "title": "Impostazioni - JsonTools plug-in",
+            "controls": {
+                "Cancel": "&Annulla",
+                "Reset": "&Ripristina",
+                "Ok": "&Ok"
+            }
+        },
         "SortForm": {
             "title": "Ordina array JSON",
             "controls": {
@@ -190,14 +198,14 @@
         "Sort arra&ys": "Ordina arra&y",
         "&Settings": "I&mpostazioni",
         "&Validate JSON against JSON schema": "Con&valida JSON con lo schema JSON",
-        "Choose schemas to automatically validate &filename patterns": "Scegli lo schema per convalidare i &nomi file",
+        "Validate &files with JSON schema if name matches pattern": "Convalida file con schema JSON se &nome corrisponde a modello",
         "Generate sc&hema from JSON": "Genera sc&hema da JSON",
         "Generate &random JSON from schema": "Genera JSON casuale da schema",
         "Run &tests": "Esegui &test",
         "A&bout": "Informazioni s&u",
         "See most recent syntax &errors in this file": "Visualizza gli &errori di sintassi più recenti di questo file",
         "JSON to YAML": "Da JSON a YAML",
-        "Parse JSON Li&nes document": "Analizza le righe del &documento JSON",
+        "Parse JSON Li&nes document": "Analizza il &documento di righe JSON",
         "&Array to JSON Lines": "Da &Array a righe JSON",
         "D&ump selected text as JSON string(s)": "Scarica il testo selezionato come stringa JSON",
         "Dump JSON string(s) as ra&w text": "Scarica le stringhe JSON come testo non elaborato",
@@ -215,9 +223,12 @@
         "max_file_size_MB_slow_actions": "Per impostazione predefinita i file di dimensioni superiori a quelle indicate (Mb) hanno le seguenti azioni lente DISABILITATE:\r\n* Attivazione automatica del lexer JSON.\r\n* Analisi automatica del file all'apertura e circa 2 secondi dopo ogni modifica.",
         "max_json_length_full_tree": "La lunghezza massima di un array o oggetto JSON che aggiunge tutti i suoi figli alla visualizzazione ad albero. Gli iterabili più lunghi ottengono solo alcuni dei loro figli aggiunti all'albero.",
         "tree_node_images": "Ogni nodo nell'albero dovrebbe avere un'immagine associata al suo tipo?",
-        "ask_before_pretty_printing_json_lines": "Chiedi prima di formattare le righe dei documenti JSON, ignora le richieste di formattazione, o formattare senza chiedere?",
+        "ask_before_pretty_printing_json_lines": "Chiedi prima di formattare le righe JSON, ignora le richieste di formattazione, o formattare senza chiedere?\r\nDONT_DO_DONT_ASK: non fare nulla quando provi a formattare righe JSON.\r\nASK_BEFORE_DOING: crea una finestra di messaggio per chiedere conferma quando provi a formattare righe JSON.\r\nDO_WITHOUT_ASKING: Formatta righe JSON quando richiesto senza creare una finestra di messaggio.",
         "indent_pretty_print": "Il numero di spazi tra i livelli JSON quando formattato",
         "tab_indent_pretty_print": "Utilizza il tabulatore ('\\t') invece degli spazi tra i livelli di JSON durante la formattazione",
+        // Do not translate the example object for PPrint style! Leave it in English.
+        // Only translate the following: "How JSON is pretty printed", "Google style (default)", "Whitesmith style", "PPrint style"
+        "pretty_print_style": "Come è formattato JSON.\r\nStile Google (predefinito):\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nStile Whitesmith:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nStile PPrint:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
         "minimal_whitespace_compression": "Se vero, l'utilizzo del comando del plugin 'Comprimi JSON' rimuoverà TUTTI gli spazi bianchi non necessari dal JSON. Altrimenti, lascerà dopo i due punti negli oggetti e dopo la virgola sia negli oggetti che negli array",
         "remember_comments": "Quando JSON viene formattato o compresso, vengono inclusi tutti i commenti trovati durante l'ultima analisi.\r\nQuando viene formattato, ogni commento avrà la stessa posizione relativa a ciascun elemento JSON di quando è stato analizzato.\r\nDurante la compressione, tutti i commenti verranno visualizzati all'inizio del documento.",
         "sort_keys": "Ordina le chiavi degli oggetti in ordine alfabetico durante la formattazione o la compressione",

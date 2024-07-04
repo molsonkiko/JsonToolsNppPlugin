@@ -132,6 +132,14 @@
                 "SearchButton": "Search"
             }
         },
+        "SettingsForm": {
+            "title": "Settings - JsonTools plug-in",
+            "controls": {
+                "Cancel": "&Cancel",
+                "Reset": "&Reset",
+                "Ok": "&Ok"
+            }
+        },
         "SortForm": {
             "title": "Sort JSON arrays",
             "controls": {
@@ -190,7 +198,7 @@
         "Sort arra&ys": "Sort arra&ys",
         "&Settings": "&Settings",
         "&Validate JSON against JSON schema": "&Validate JSON against JSON schema",
-        "Choose schemas to automatically validate &filename patterns": "Choose schemas to automatically validate &filename patterns",
+        "Validate &files with JSON schema if name matches pattern": "Validate &files with JSON schema if name matches pattern",
         "Generate sc&hema from JSON": "Generate sc&hema from JSON",
         "Generate &random JSON from schema": "Generate &random JSON from schema",
         "Run &tests": "Run &tests",
@@ -215,9 +223,12 @@
         "max_file_size_MB_slow_actions": "Files larger than this number of megabytes have the following slow actions DISABLED by default:\r\n* Automatically turning on the JSON lexer.\r\n* Automatic parsing of the file on opening and approximately 2 seconds after every edit.",
         "max_json_length_full_tree": "The longest length of a JSON array or object that gets all its children added to the tree view. Longer iterables get only some of their children added to the tree.",
         "tree_node_images": "Should each node in the tree have an image associated with its type?",
-        "ask_before_pretty_printing_json_lines": "Ask before pretty-printing JSON Lines documents, ignore requests to pretty-print, or pretty-print without asking?",
+        "ask_before_pretty_printing_json_lines": "Ask before pretty-printing JSON Lines documents, ignore requests to pretty-print, or pretty-print without asking?\r\nDONT_DO_DONT_ASK: Do nothing when you try to pretty-print JSON lines.\r\nASK_BEFORE_DOING: Create a message box to ask for confirmation when you try to do this.\r\nDO_WITHOUT_ASKING: Do this when asked without making a message box.",
         "indent_pretty_print": "The number of spaces between levels of JSON when pretty-printing",
         "tab_indent_pretty_print": "Use one horizontal tab ('\\t') instead of spaces between levels of JSON when pretty-printing",
+        // Do not translate the example object for PPrint style! Leave it in English.
+        // Only translate the following: "How JSON is pretty printed", "Google style (default)", "Whitesmith style", "PPrint style"
+        "pretty_print_style": "How JSON is pretty printed.\r\nGoogle style (default):\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nWhitesmith style:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nPPrint style:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
         "minimal_whitespace_compression": "If true, using the 'Compress JSON' plugin command will remove ALL unnecessary whitespace from the JSON. Otherwise, it will leave after the colon in objects and after the comma in both objects and arrays",
         "remember_comments": "When JSON is pretty-printed or compressed, any comments found when it was last parsed are included.\r\nWhen pretty-printing, each comment will have the same relative location to each JSON element as when it was parsed.\r\nWhen compressing, all comments will come at the beginning of the document.",
         "sort_keys": "Sort the keys of objects alphabetically when pretty-printing or compressing",

@@ -959,7 +959,7 @@ This JSON schema generator only produces schemas with the following keywords:
 
 As of version [4.11.0](/CHANGELOG.md#4110---2023-03-15), you can set up this plugin to *automatically validate* JSON files with certain filenames whenever you open them. (*starting in version [4.11.2](/CHANGELOG.md#4112---2023-03-21), auto-validation also occurs when files are saved or renamed*)
 
-Let's try out this feature! We can use the plugin command `Choose schemas to automatically validate filename patterns`, which will open up a file that looks like this.
+Let's try out this feature! We can use the plugin command `Choose schemas to automatically validate filename patterns` (renamed in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) to `Validate files with JSON schema if name matches pattern`), which will open up a file that looks like this.
 
 ![schemas to filename patterns file new](/docs/schemasToFnamePatterns%20with%20no%20fname%20patterns.PNG)
 

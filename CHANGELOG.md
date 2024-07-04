@@ -57,6 +57,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. In the `grepper form`, pressing `Enter` inside the `Previously viewed directories...` box causes the current text of the box to be searched, assuming that it is a valid directory.
 3. [Translation](/README.md#translating-jsontools-to-another-language) of settings in the [Settings form](/docs/README.md#customizing-settings).
 
+### Changed
+
+1. Rename `Choose schemas to automatically validate filename patterns` to [`Validate files with JSON schema if name matches pattern`](/docs/README.md#automatic-validation-of-json-against-json-schema), in the hopes that the new name will be less confusing.
+
 ### Fixed
 
 1. If there would be an `OutOfMemoryException` due to running out of memory while formatting JSON (a likely occurrence when using the `grepper form`), that error is caught and reported with a message box, rather than potentially causing Notepad++ to crash.

@@ -216,6 +216,7 @@ namespace CsvQuery.PluginInfrastructure
 
             var dialog = new Form
             {
+                Name = "SettingsForm",
                 Text = "Settings - JsonTools plug-in",
                 ClientSize = new Size(DEFAULT_WIDTH, DEFAULT_HEIGHT),
                 MinimumSize = new Size(250, 250),
@@ -232,7 +233,7 @@ namespace CsvQuery.PluginInfrastructure
                         Text = "&Cancel",
                         Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                         Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 115, DEFAULT_HEIGHT - 36),
+                        Location = new Point(DEFAULT_WIDTH - 135, DEFAULT_HEIGHT - 36),
                         UseVisualStyleBackColor = true
                     },
                     new Button
@@ -241,7 +242,7 @@ namespace CsvQuery.PluginInfrastructure
                         Text = "&Reset",
                         Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                         Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 212, DEFAULT_HEIGHT - 36),
+                        Location = new Point(DEFAULT_WIDTH - 232, DEFAULT_HEIGHT - 36),
                         UseVisualStyleBackColor = true
                     },
                     new Button
@@ -250,7 +251,7 @@ namespace CsvQuery.PluginInfrastructure
                         Text = "&Ok",
                         Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                         Size = new Size(75, 23),
-                        Location = new Point(DEFAULT_WIDTH - 310, DEFAULT_HEIGHT - 36),
+                        Location = new Point(DEFAULT_WIDTH - 330, DEFAULT_HEIGHT - 36),
                         UseVisualStyleBackColor = true
                     },
                     new PropertyGrid
@@ -265,6 +266,7 @@ namespace CsvQuery.PluginInfrastructure
                     },
                 }
             };
+            Translator.TranslateForm(dialog);
 
             dialog.Controls["Cancel"].Click += (a, b) => dialog.Close();
             dialog.Controls["Ok"].Click += (a, b) =>
@@ -296,6 +298,16 @@ namespace CsvQuery.PluginInfrastructure
                 SaveToIniFile();
                 dialog.Close();
             };
+            // close dialog on pressing Escape (this doesn't work if a grid cell is selected, but it does work if a button is selected)
+            KeyEventHandler keyDownHandler = (a, b) =>
+            {
+                if (b.KeyCode == Keys.Escape)
+                    dialog.Close();
+            };
+            dialog.KeyDown += keyDownHandler;
+            foreach (Control ctrl in dialog.Controls)
+                ctrl.KeyDown += keyDownHandler;
+            // translate the descriptions of the settings
             var grid = dialog.Controls["Grid"];
             if (Translator.HasTranslations
                 && grid.Controls.Count >= 1 && grid.Controls[0] is Control commentPane
