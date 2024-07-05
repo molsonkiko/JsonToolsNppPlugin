@@ -37,39 +37,8 @@ namespace JSON_Tools.Tests
                 return true;
             }
             string jsonstr = File.ReadAllText(fname);
-            int len = jsonstr.Length;
-            long[] loadTimes = new long[numParseTrials];
-            JNode json = new JNode();
-            // benchmark time to load json
-            for (int ii = 0; ii < numParseTrials; ii++)
-            {
-                watch.Reset();
-                watch.Start();
-                try
-                {
-                    json = jsonParser.Parse(jsonstr);
-                }
-                catch (Exception ex)
-                {
-                    Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
-                    return true;
-                }
-                watch.Stop();
-                long t = watch.Elapsed.Ticks;
-                loadTimes[ii] = t;
-            }
-            // display loading results
-            string jsonPreview = json.ToString().Slice(":300") + "\n...";
-            Npp.AddLine($"Preview of json: {jsonPreview}");
-            (double mean, double sd) = GetMeanAndSd(loadTimes);
-            Npp.AddLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
-                $"ms over {loadTimes.Length} trials");
-            var loadTimesStr = new string[loadTimes.Length];
-            for (int ii = 0; ii < loadTimes.Length; ii++)
-            {
-                loadTimesStr[ii] = (loadTimes[ii] / 10000).ToString();
-            }
-            Npp.AddLine($"Load times (ms): {String.Join(", ", loadTimesStr)}");
+            if (!BenchmarkParser(jsonstr, numParseTrials, jsonParser, watch, out JNode json))
+                return true;
             // time query compiling
             RemesParser parser = new RemesParser();
             foreach (string[] queryAndDesc in queriesAndDescriptions)
@@ -148,8 +117,8 @@ Performance tests for RemesPath ({description})
                     }
                 }
                 // display querying results
-                (mean, sd) = GetMeanAndSd(queryTimes);
-                Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {len} into took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numQueryTrials} trials");
+                (double mean, double sd) = GetMeanAndSd(queryTimes);
+                Npp.AddLine($"To run pre-compiled query \"{query}\" on JNode from JSON of size {jsonstr.Length} into took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numQueryTrials} trials");
                 var queryTimesStr = new string[queryTimes.Length];
                 for (int ii = 0; ii < queryTimes.Length; ii++)
                 {
@@ -160,6 +129,58 @@ Performance tests for RemesPath ({description})
                 Npp.AddLine($"Preview of result: {resultPreview}");
             }
             return false;
+        }
+
+        //public static bool BenchmarkParsingAndLintingJsonWithErrors(int numTrials)
+        //{
+        //    JsonParser jsonParser = new JsonParser();
+        //    Stopwatch watch = new Stopwatch();
+        //    // this is just the text of testfiles/small/bad_json.json, but with some closing brackets and a comma at the end, so we can chain them together to make an array
+        //    string singleBadJson = "{ // this file has ALL the bad things\r\n\\u0348z草 false, # yes, all of them\r\n\"b\": None /* so much bad */\r\n'9' :False, \r\n\"😀\"\r\n      { \r\n      \"u\\\r\ny\":\r\n            [\r\n            1\r\n            \"FO\\x4fBAR\r\n   \"         +2,　\r\n            NaN,\r\n            .75 \r\n-0xF            +0xabcde\r\n0xABCDE\r\n            , // missing ']' here\r\n      \"y\r\nu\":\r\n            [\r\n                  [\r\n                  -.5,\r\n                        {\r\n                        \"y\" : 'b\\9\\x0a':\r\n                        \"m8\": 9.,\r\n                        }\r\n                  ],\r\n            Infinity\r\n            -Infinity\r\n            ],\r\n      $unquồted_‍key\\u00df \"are *very naughty*\"\r\n      _st\\u1eb2tus‌_ｪ : \"jubaЯ\"\r\n      ],\r\n\"9\\\"a\\\"\t\"    \r\n:null,\r\n\"\\u0042lutentharst\":\r\n      [\r\n      \"\\n'\\\"DOOM\\\" BOOM\b, AND I CONSUME', said Bludd, the mighty Blood God.\\n\\t\",\r\n      True,\r\n      undefined\r\n      [ // some unclosed things too\r\n      { /* \r\n      and finally an unclosed multiline comment\r\n      */\r\n      }]]},\r\n";
+        //    string jsonstr = "[" + ArgFunction.StrMulHelper(singleBadJson, 100);
+        //    BenchmarkParser(jsonstr, numTrials, jsonParser, watch, out _);
+        //    for (int ii = 0; ii < numTrials; ii++)
+        //    {
+
+        //    }
+        //}
+
+        private static bool BenchmarkParser(string jsonstr, int numTrials, JsonParser jsonParser, Stopwatch watch, out JNode json)
+        {
+            json = new JNode();
+            int len = jsonstr.Length;
+            long[] loadTimes = new long[numTrials];
+            // benchmark time to load json
+            for (int ii = 0; ii < numTrials; ii++)
+            {
+                watch.Reset();
+                watch.Start();
+                try
+                {
+                    json = jsonParser.Parse(jsonstr);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"Couldn't run benchmark tests because parsing error occurred:\n{ex}");
+                    return false;
+                }
+                watch.Stop();
+                long t = watch.Elapsed.Ticks;
+                loadTimes[ii] = t;
+            }
+            // display loading results
+            string jsonPreview = json.ToString().Slice(":300") + "\n...";
+            Npp.AddLine($"Preview of json: {jsonPreview}");
+            (double mean, double sd) = GetMeanAndSd(loadTimes);
+            Npp.AddLine($"To convert JSON string of size {len} into JNode took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} " +
+                $"ms over {loadTimes.Length} trials");
+            var loadTimesStr = new string[loadTimes.Length];
+            for (int ii = 0; ii < loadTimes.Length; ii++)
+            {
+                loadTimesStr[ii] = (loadTimes[ii] / 10000).ToString();
+            }
+            Npp.AddLine($"Load times (ms): {String.Join(", ", loadTimesStr)}");
+            return true;
         }
 
         public static bool BenchmarkJNodeToString(int numTrials, string fname)

@@ -109,6 +109,7 @@ namespace JSON_Tools.Tests
                     "JsonParser performance",
                     true, false
                 ),
+                //(() => Benchmarker.BenchmarkParsingAndLintingJsonWithErrors(30), "JsonParser performance and performance of JsonLint.message"),
                 (() => Benchmarker.BenchmarkJNodeToString(64, bigRandomFname),
                     "performance of JSON compression and pretty-printing",
                     true, false

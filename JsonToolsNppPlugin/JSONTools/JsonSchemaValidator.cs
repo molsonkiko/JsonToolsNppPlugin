@@ -131,7 +131,7 @@ namespace JSON_Tools.JSON_Tools
                 break;
             default: throw new ArgumentException($"Unknown validation problem type {problemType}");
             }
-            return new JsonLint(msg, position, '\x00', ParserState.SCHEMA);
+            return new JsonLint(JsonLintType.SCHEMA_FIRST, position, '\x00', msg);
         }
 
         /// <summary>
@@ -149,9 +149,15 @@ namespace JSON_Tools.JSON_Tools
             return lints.Count <= maxLintCount;
         }
 
-        public static string LintsAsJArrayString(List<JsonLint> lints)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lints"></param>
+        /// <param name="translated">currently does nothing, as schema validation errors are not yet translated</param>
+        /// <returns></returns>
+        public static string LintsAsJArrayString(List<JsonLint> lints, bool translated = false)
         {
-            return new JArray(0, lints.Select(x => x.ToJson()).ToList()).ToString();
+            return new JArray(0, lints.Select(x => x.ToJson(false)).ToList()).ToString();
         }
 
         public delegate bool ValidationFunc(JNode x, out List<JsonLint> lints);

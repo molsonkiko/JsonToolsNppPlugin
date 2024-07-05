@@ -165,7 +165,7 @@ The following aspects of JsonTools __can__ be translated:
 - The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings)
 - The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
 
-The following aspects of JsonTools __will not__ be translated:
+The following aspects of JsonTools __may eventually__ be translated:
 - This documentation
 - Message boxes (includes warnings, errors, requests for confirmation)
 - Generic modal dialogs (for example, file-opening dialogs, directory selection dialogs)

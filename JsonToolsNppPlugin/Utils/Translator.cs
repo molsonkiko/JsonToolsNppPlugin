@@ -133,6 +133,107 @@ namespace JSON_Tools.Utils
             return "";
         }
 
+        #region message box and error translation
+
+        public static string TranslateJsonLint(JsonLint lint)
+        {
+            JsonLintType lintType = lint.lintType;
+            string lintTypeStr = lintType.ToString();
+            if (!(translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
+                && dict.TryGetValue("jsonLint", out JNode lintTranslations) && lintTranslations is JObject lintTransObj
+                && lintTransObj.children.TryGetValue(lintTypeStr, out JNode lintTypeTrans)
+                && lintTypeTrans.value is string newMessage))
+                return lint.message;
+            switch (lintType)
+            {
+            case JsonLintType.FATAL_INVALID_STARTSWITH_I:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_N:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_i:
+            case JsonLintType.FATAL_HEX_INT_OVERFLOW:
+            case JsonLintType.FATAL_SECOND_DECIMAL_POINT:
+            case JsonLintType.FATAL_NUM_TRAILING_e_OR_E:
+            case JsonLintType.FATAL_MAX_RECURSION_DEPTH:
+            case JsonLintType.FATAL_UNEXPECTED_EOF:
+            case JsonLintType.FATAL_NO_VALID_LITERAL_POSSIBLE:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_t:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_f:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_T:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_F:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_u:
+            case JsonLintType.FATAL_NO_INPUT:
+            case JsonLintType.FATAL_ONLY_WHITESPACE_COMMENTS:
+            case JsonLintType.FATAL_JSONL_NOT_ONE_DOC_PER_LINE:
+            case JsonLintType.OK_CONTROL_CHAR:
+            case JsonLintType.NAN_INF_Infinity:
+            case JsonLintType.NAN_INF_NaN:
+            case JsonLintType.JSONC_JAVASCRIPT_COMMENT:
+            case JsonLintType.JSON5_WHITESPACE_CHAR:
+            case JsonLintType.JSON5_SINGLEQUOTED_STRING:
+            case JsonLintType.JSON5_ESCAPED_NEWLINE:
+            case JsonLintType.JSON5_X_ESCAPE:
+            case JsonLintType.JSON5_UNQUOTED_KEY:
+            case JsonLintType.JSON5_NUM_LEADING_PLUS:
+            case JsonLintType.JSON5_HEX_NUM:
+            case JsonLintType.JSON5_NUM_LEADING_DECIMAL_POINT:
+            case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY:
+            case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT:
+            case JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT:
+            case JsonLintType.BAD_UNTERMINATED_MULTILINE_COMMENT:
+            case JsonLintType.BAD_PYTHON_COMMENT:
+            case JsonLintType.BAD_STRING_CONTAINS_NEWLINE:
+            case JsonLintType.BAD_KEY_CONTAINS_NEWLINE:
+            case JsonLintType.BAD_PYTHON_nan:
+            case JsonLintType.BAD_PYTHON_None:
+            case JsonLintType.BAD_PYTHON_inf:
+            case JsonLintType.BAD_UNNECESSARY_LEADING_0:
+            case JsonLintType.BAD_SLASH_FRACTION:
+            case JsonLintType.BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY:
+            case JsonLintType.BAD_ARRAY_ENDSWITH_CURLYBRACE:
+            case JsonLintType.BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS:
+            case JsonLintType.BAD_COLON_BETWEEN_ARRAY_ITEMS:
+            case JsonLintType.BAD_UNTERMINATED_ARRAY:
+            case JsonLintType.BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT:
+            case JsonLintType.BAD_UNTERMINATED_OBJECT:
+            case JsonLintType.BAD_OBJECT_ENDSWITH_SQUAREBRACE:
+            case JsonLintType.BAD_COLON_BETWEEN_OBJECT_PAIRS:
+            case JsonLintType.BAD_PYTHON_True:
+            case JsonLintType.FATAL_NUL_CHAR:
+            case JsonLintType.BAD_PYTHON_False:
+            case JsonLintType.BAD_JAVASCRIPT_undefined:
+            case JsonLintType.FATAL_UNTERMINATED_KEY:
+            case JsonLintType.FATAL_INVALID_STARTSWITH_n:
+            case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT:
+                return newMessage;
+            case JsonLintType.BAD_CHAR_INSTEAD_OF_EOF:
+            case JsonLintType.FATAL_HEXADECIMAL_TOO_SHORT:
+            case JsonLintType.JSON5_ESCAPED_CHAR:
+            case JsonLintType.BAD_UNTERMINATED_STRING:
+            case JsonLintType.BAD_INVALID_UNQUOTED_KEY:
+            case JsonLintType.BAD_NUMBER_INVALID_FORMAT:
+            case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_ARRAY:
+            case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_OBJECT:
+            case JsonLintType.BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS:
+            case JsonLintType.BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE:
+            case JsonLintType.BAD_DUPLICATE_KEY:
+            case JsonLintType.FATAL_PLUS_OR_MINUS_AT_EOF:
+            case JsonLintType.FATAL_BADLY_LOCATED_CHAR:
+                return string.Format(newMessage, lint.param1);
+            case JsonLintType.BAD_CHAR_WHERE_COLON_EXPECTED:
+                return string.Format(newMessage, lint.param1, lint.param2);
+
+            // FATAL messages that wrap an exception
+            //case JsonLintType.FATAL_INI_FILE_EXCEPTION:
+            case JsonLintType.FATAL_UNSPECIFIED_ERROR: return (string)lint.param1;
+            //// SCHEMA messages
+            //case JsonLintType.SCHEMA_FIRST:
+            default: return $"No translated message was found for JsonLintType " + lintTypeStr;
+            }
+        }
+
+        #endregion
+
+        #region Form translation
+
         /// <summary>
         /// This assumes that each character in Size 7.8 font is 7 pixels across.<br></br>
         /// In practice, this generally returns a number that is greater than the width of the text.
@@ -290,5 +391,6 @@ namespace JSON_Tools.Utils
         {
             return HorizontalOverlap(ctrl1, ctrl2) && VerticalOverlap(ctrl1, ctrl2);
         }
+        #endregion
     }
 }

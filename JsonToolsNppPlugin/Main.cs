@@ -603,7 +603,7 @@ namespace Kbg.NppPluginNET
                             json = jsonParser.Parse(text);
                         lints = jsonParser.lint.ToList();
                         fatalErrors.Add(jsonParser.fatal);
-                        errorMessage = jsonParser.fatalError?.ToString();
+                        errorMessage = jsonParser.fatalError?.TranslatedToString();
                     }
                     catch (Exception ex)
                     {
@@ -643,12 +643,12 @@ namespace Kbg.NppPluginNET
                         try
                         {
                             subJson = jsonParser.Parse(selRange);
-                            lints.AddRange(jsonParser.lint.Select(x => new JsonLint(x.message, x.pos + start, x.curChar, x.severity)));
+                            lints.AddRange(jsonParser.lint.Select(x => x.Copy()));
                             fatalErrors.Add(jsonParser.fatal);
                             if (jsonParser.fatal)
                             {
                                 if (errorMessage == null)
-                                    errorMessage = jsonParser.fatalError?.ToString();
+                                    errorMessage = jsonParser.fatalError?.TranslatedToString();
                             }
                         }
                         catch (Exception ex)
@@ -737,7 +737,7 @@ namespace Kbg.NppPluginNET
                 errorChar = text[errorPos];
             }
             string errorMessage = RemesParser.PrettifyException(ex);
-            lints.Add(new JsonLint(errorMessage, errorPos, errorChar, ParserState.FATAL));
+            lints.Add(new JsonLint(JsonLintType.FATAL_UNSPECIFIED_ERROR, errorPos, errorChar, errorMessage));
             return errorMessage;
         }
 

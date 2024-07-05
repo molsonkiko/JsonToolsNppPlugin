@@ -30,7 +30,7 @@ namespace JSON_Tools.JSON_Tools
 
         public JsonLint ToJsonLint()
         {
-            return new JsonLint(Message, Position, CurChar, ParserState.FATAL);
+            return new JsonLint(JsonLintType.FATAL_UNSPECIFIED_ERROR, Position, CurChar, Message);
         }
     }
 
