@@ -290,7 +290,7 @@ Performance tests for RemesPath ({description})
                 JsonSchemaValidator.ValidationFunc validator;
                 try
                 {
-                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema, 0);
+                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema, 0, true);
                 }
                 catch (Exception ex)
                 {

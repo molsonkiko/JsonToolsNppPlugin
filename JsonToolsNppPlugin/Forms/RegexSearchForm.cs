@@ -53,7 +53,7 @@ namespace JSON_Tools.Forms
                  "\t\t}\r\n" +
                  "\t]\r\n" +
                  "}"),
-            0);
+            0, false);
             GetTreeViewInRegexMode();
             // check if we have a CSV file
             if (Main.settings.auto_try_guess_csv_delim_newline

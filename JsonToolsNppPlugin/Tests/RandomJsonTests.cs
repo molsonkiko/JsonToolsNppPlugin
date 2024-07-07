@@ -112,7 +112,7 @@ namespace JSON_Tools.Tests
                 foreach (JNode rand in rands)
                 {
                     // make sure all random JSON validates under the schema
-                    bool validates = JsonSchemaValidator.Validates(rand, schema, 0, out List<JsonLint> lints);
+                    bool validates = JsonSchemaValidator.Validates(rand, schema, 0, true, out List<JsonLint> lints);
                     if (!validates)
                     {
                         testsFailed++;
@@ -195,7 +195,7 @@ namespace JSON_Tools.Tests
                 List<JsonLint> lints;
                 try
                 {
-                    validates = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema, 0, out lints);
+                    validates = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema, 0, true, out lints);
                 }
                 catch (Exception ex)
                 {

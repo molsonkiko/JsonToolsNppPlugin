@@ -332,6 +332,24 @@
         "FATAL_BADLY_LOCATED_CHAR": "Badly located character {0}",
         "FATAL_NO_INPUT": "No input",
         "FATAL_ONLY_WHITESPACE_COMMENTS": "Json string is only whitespace and maybe comments",
-        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines document does not contain exactly one JSON document per line"
+        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines document does not contain exactly one JSON document per line",
+        // SCHEMA problems (see ValidationProblemType in JsonSchemaValidator.cs)
+        "SCHEMA_TYPE_MISMATCH": "found type {0}, expected type {1}.",
+        "SCHEMA_TYPE_ARRAY_MISMATCH": "found type {0}, expected one of the types {1}.",
+        "SCHEMA_VALUE_NOT_IN_ENUM": "found value {0}, but the only allowed values are {1}.",
+        "SCHEMA_ARRAY_TOO_LONG": "array required to have no more than {0} items, but it has {1} items.",
+        "SCHEMA_ARRAY_TOO_SHORT": "array required to have at least {0} items, but it has {1} items.",
+        "SCHEMA_CONTAINS_VIOLATION": "Array must have between {0} and {1} items that match \"contains\" schema {2}",
+        "SCHEMA_MINCONTAINS_VIOLATION": "Array must have at least {0} items that match \"contains\" schema {1}",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "object missing required key {0}",
+        "SCHEMA_FALSE_SCHEMA": "the schema is `false`, so nothing will validate.",
+        "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "string '{0}' does not match regex '{1}'",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "validation has a maximum depth of 128",
+        "SCHEMA_NUMBER_LESS_THAN_MIN": "number {0} less than minimum {1}",
+        "SCHEMA_NUMBER_GREATER_THAN_MAX": "number {0} greater than maximum {1}",
+        "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "number {0} less than or equal to exclusive minimum {1}",
+        "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "number {0} greater than or equal to exclusive maximum {1}",
+        "SCHEMA_STRING_TOO_LONG": "string {0} had greater than maxLength {1}",
+        "SCHEMA_STRING_TOO_SHORT": "string {0} had less than minLength {1}"
     }
 }

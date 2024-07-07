@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. [Progress reporting](/docs/README.md#reporting-progress-when-parsing-large-amounts-of-json) with the JSON from files and APIs form (henceforth the `grepper form`).
 2. In the `grepper form`, pressing `Enter` inside the `Previously viewed directories...` box causes the current text of the box to be searched, assuming that it is a valid directory.
 3. [Translation](/README.md#translating-jsontools-to-another-language) of settings in the [Settings form](/docs/README.md#customizing-settings).
-4. Translation of JSON syntax errors (under the `jsonLint` field of the [translation file](/translation/english.json5))
+4. Translation of [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (under the `jsonLint` field of the [translation file](/translation/english.json5))
 
 ### Changed
 

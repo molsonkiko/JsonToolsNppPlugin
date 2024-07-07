@@ -164,6 +164,7 @@ The following aspects of JsonTools __can__ be translated:
 - Items in the JsonTools sub-menu of the Notepad++ Plugins menu
 - The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings)
 - The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
+- [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
 
 The following aspects of JsonTools __may eventually__ be translated:
 - This documentation

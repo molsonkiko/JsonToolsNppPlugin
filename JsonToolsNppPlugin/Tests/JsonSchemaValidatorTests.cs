@@ -44,13 +44,13 @@ namespace JSON_Tools.Tests
             {
                 JNode basicJson = jsonParser.Parse(basicJsonStr);
                 ii += 2;
-                bool validates = JsonSchemaValidator.Validates(basicJson, new JObject(), 0, out List<JsonLint> lints);
+                bool validates = JsonSchemaValidator.Validates(basicJson, new JObject(), 0, true, out List<JsonLint> lints);
                 if (!validates && lints.Count > 0)
                 {
                     testsFailed++;
                     Npp.AddLine($"Expected {basicJsonStr} to validate under empty schema {{}}, but instead got validation problem {lints[0]}");
                 }
-                validates = JsonSchemaValidator.Validates(basicJson, new JNode(true, Dtype.BOOL, 0), 0, out lints);
+                validates = JsonSchemaValidator.Validates(basicJson, new JNode(true, Dtype.BOOL, 0), 0, true, out lints);
                 if (!validates && lints.Count > 0)
                 {
                     testsFailed++;
@@ -64,7 +64,7 @@ namespace JSON_Tools.Tests
                     bool shouldValidate = JsonSchemaValidator.TypeValidates(
                         basicJson.type, schemaType
                     );
-                    validates = JsonSchemaValidator.Validates(basicJson, schema, 0, out lints);
+                    validates = JsonSchemaValidator.Validates(basicJson, schema, 0, true, out lints);
                     if (shouldValidate && (!validates && lints.Count > 0))
                     {
                         testsFailed++;
@@ -858,7 +858,7 @@ namespace JSON_Tools.Tests
                 ii++;
                 try
                 {
-                    bool validates = JsonSchemaValidator.Validates(json, schema, int.MaxValue, out List<JsonLint> lints);
+                    bool validates = JsonSchemaValidator.Validates(json, schema, int.MaxValue, true, out List<JsonLint> lints);
                     if (!validates)
                     {
                         ii++;

@@ -69,7 +69,7 @@ namespace Kbg.NppPluginNET
             "\"patternProperties\":{" +
                 "\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"}," + // nonzero-length keys must be mapped to non-empty string arrays
                 "\"^$\":false" + // zero-length keys are not allowed
-            "}}"), 0);
+            "}}"), 0, false);
         // stuff for periodically parsing and possibly validating a file
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
@@ -2052,7 +2052,7 @@ namespace Kbg.NppPluginNET
             }
             try
             {
-                validator = JsonSchemaValidator.CompileValidationFunc(schema, Main.settings.max_schema_validation_problems);
+                validator = JsonSchemaValidator.CompileValidationFunc(schema, Main.settings.max_schema_validation_problems, true);
                 lastRetrieved[fname] = DateTime.Now;
                 cache[fname] = validator;
                 return true;

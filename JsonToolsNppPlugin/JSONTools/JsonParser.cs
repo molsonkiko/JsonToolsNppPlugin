@@ -63,6 +63,7 @@ namespace JSON_Tools.JSON_Tools
         /// the ParserState that this lint could raise a JsonParser to.
         /// </summary>
         public ParserState severity => (ParserState)(((int)lintType >> 10) + 1);
+        public string message => TranslateMessageIfDesired(false);
 
         /// <summary>
         /// 
@@ -76,15 +77,6 @@ namespace JSON_Tools.JSON_Tools
             this.curChar = curChar;
             this.param1 = param1;
             this.param2 = param2;
-        }
-
-        /// <summary>
-        /// if translated, <see cref="Translator.translations"/>["jsonLint"][str(this.<see cref="lintType"/>)]<br></br>
-        /// Else this.<see cref="message"/>
-        /// </summary>
-        public string TranslateMessageIfDesired(bool translated)
-        {
-            return translated ? Translator.TranslateJsonLint(this) : message;
         }
 
         public override string ToString()
@@ -137,96 +129,133 @@ namespace JSON_Tools.JSON_Tools
             return new JsonLint(lintType, pos, curChar, param1, param2);
         }
 
-        public string message
+        public string TranslateMessageIfDesired(bool translated)
         {
-            get
+            switch (lintType)
             {
-                switch (lintType)
-                {
-                // OK messages
-                case JsonLintType.OK_CONTROL_CHAR: return "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification";
-                // NAN_INF messages
-                case JsonLintType.NAN_INF_Infinity: return "Infinity is not part of the original JSON specification";
-                case JsonLintType.NAN_INF_NaN: return "NaN is not part of the original JSON specification";
-                // JSONC messages
-                case JsonLintType.JSONC_JAVASCRIPT_COMMENT: return "JavaScript comments are not part of the original JSON specification";
-                // JSON5 messages
-                case JsonLintType.JSON5_WHITESPACE_CHAR: return "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5";
-                case JsonLintType.JSON5_SINGLEQUOTED_STRING: return "Singlequoted strings are only allowed in JSON5";
-                case JsonLintType.JSON5_ESCAPED_NEWLINE: return "Escaped newline characters are only allowed in JSON5";
-                case JsonLintType.JSON5_X_ESCAPE: return "\\x escapes are only allowed in JSON5";
-                case JsonLintType.JSON5_ESCAPED_CHAR: return string.Format("Escaped char '{0}' is only valid in JSON5", param1);
-                case JsonLintType.JSON5_UNQUOTED_KEY: return "Unquoted keys are only supported in JSON5";
-                case JsonLintType.JSON5_NUM_LEADING_PLUS: return "Leading + signs in numbers are not allowed except in JSON5";
-                case JsonLintType.JSON5_HEX_NUM: return "Hexadecimal numbers are only part of JSON5";
-                case JsonLintType.JSON5_NUM_LEADING_DECIMAL_POINT: return "Numbers with a leading decimal point are only part of JSON5";
-                case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY: return "Comma after last element of array";
-                case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT: return "Comma after last key-value pair of object";
-                // BAD messages
-                case JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT: return "Numbers with a trailing decimal point are only part of JSON5";
-                case JsonLintType.BAD_UNTERMINATED_MULTILINE_COMMENT: return "Unterminated multi-line comment";
-                case JsonLintType.BAD_PYTHON_COMMENT: return "Python-style '#' comments are not part of any well-accepted JSON specification";
-                case JsonLintType.BAD_STRING_CONTAINS_NEWLINE: return "String literal contains newline";
-                case JsonLintType.BAD_KEY_CONTAINS_NEWLINE: return "Object key contains newline";
-                case JsonLintType.BAD_UNTERMINATED_STRING: return string.Format("Unterminated string literal starting at position {0}", param1);
-                case JsonLintType.BAD_INVALID_UNQUOTED_KEY: return string.Format("No valid unquoted key beginning at {0}", param1);
-                case JsonLintType.BAD_PYTHON_nan: return "nan is not a valid representation of Not a Number in JSON";
-                case JsonLintType.BAD_PYTHON_None: return "None is not an accepted part of any JSON specification";
-                case JsonLintType.BAD_PYTHON_inf: return "inf is not the correct representation of Infinity in JSON";
-                case JsonLintType.BAD_UNNECESSARY_LEADING_0: return "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification";
-                case JsonLintType.BAD_SLASH_FRACTION: return "Fractions of the form 1/3 are not part of any JSON specification";
-                case JsonLintType.BAD_NUMBER_INVALID_FORMAT: return string.Format("Number string {0} had bad format", param1);
-                case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_ARRAY: return string.Format("Two consecutive commas after element {0} of array", param1);
-                case JsonLintType.BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY: return "Comma before first value in array";
-                case JsonLintType.BAD_ARRAY_ENDSWITH_CURLYBRACE: return "Tried to terminate an array with '}'";
-                case JsonLintType.BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS: return "No comma between array members";
-                case JsonLintType.BAD_COLON_BETWEEN_ARRAY_ITEMS: return "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?";
-                case JsonLintType.BAD_UNTERMINATED_ARRAY: return "Unterminated array";
-                case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_OBJECT: return string.Format("Two consecutive commas after key-value pair {0} of object", param1);
-                case JsonLintType.BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT: return "Comma before first value in object";
-                case JsonLintType.BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS: return string.Format("No comma after key-value pair {0} in object", param1);
-                case JsonLintType.BAD_UNTERMINATED_OBJECT: return "Unterminated object";
-                case JsonLintType.BAD_OBJECT_ENDSWITH_SQUAREBRACE: return "Tried to terminate object with ']'";
-                case JsonLintType.BAD_COLON_BETWEEN_OBJECT_PAIRS: return "':' found instead of comma after key-value pair";
-                case JsonLintType.BAD_CHAR_WHERE_COLON_EXPECTED: return string.Format("Found '{0}' after key {1} when colon expected", param1, param2);
-                case JsonLintType.BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE: return string.Format("No ':' between key {0} and value {0} of object", param1);
-                case JsonLintType.BAD_DUPLICATE_KEY: return string.Format("Object has multiple of key \"{0}\"", param1);
-                case JsonLintType.BAD_PYTHON_True: return "True is not an accepted part of any JSON specification";
-                case JsonLintType.BAD_PYTHON_False: return "False is not an accepted part of any JSON specification";
-                case JsonLintType.BAD_JAVASCRIPT_undefined: return "undefined is not part of any JSON specification";
-                case JsonLintType.BAD_CHAR_INSTEAD_OF_EOF: return string.Format("At end of valid JSON document, got {0} instead of EOF", param1);
-                // FATAL messages
-                case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT: return "Expected JavaScript comment after '/'";
-                case JsonLintType.FATAL_HEXADECIMAL_TOO_SHORT: return string.Format("Could not find valid hexadecimal of length {0}", param1);
-                case JsonLintType.FATAL_NUL_CHAR: return "'\\x00' is the null character, which is illegal in JsonTools";
-                case JsonLintType.FATAL_UNTERMINATED_KEY: return "Unterminated object key";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_n: return "Expected literal starting with 'n' to be null or nan";
-                case JsonLintType.FATAL_PLUS_OR_MINUS_AT_EOF: return string.Format("'{0}' sign at end of document", param1);
-                case JsonLintType.FATAL_INVALID_STARTSWITH_I: return "Expected literal starting with 'I' to be Infinity";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_N: return "Expected literal starting with 'N' to be NaN or None";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_i: return "Expected literal starting with 'i' to be inf";
-                case JsonLintType.FATAL_HEX_INT_OVERFLOW: return "Hex number too large for a 64-bit signed integer type";
-                case JsonLintType.FATAL_SECOND_DECIMAL_POINT: return "Number with a decimal point in the wrong place";
-                case JsonLintType.FATAL_NUM_TRAILING_e_OR_E: return "Scientific notation 'e' with no number following";
-                case JsonLintType.FATAL_MAX_RECURSION_DEPTH: return $"Maximum recursion depth ({JsonParser.MAX_RECURSION_DEPTH}) reached";
-                case JsonLintType.FATAL_UNEXPECTED_EOF: return "Unexpected end of file";
-                case JsonLintType.FATAL_NO_VALID_LITERAL_POSSIBLE: return "No valid literal possible";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_t: return "Expected literal starting with 't' to be true";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_f: return "Expected literal starting with 'f' to be false";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_T: return "Expected literal starting with 'T' to be True";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_F: return "Expected literal starting with 'F' to be False";
-                case JsonLintType.FATAL_INVALID_STARTSWITH_u: return "Expected literal starting with 'u' to be undefined";
-                case JsonLintType.FATAL_BADLY_LOCATED_CHAR: return string.Format("Badly located character {0}", param1);
-                case JsonLintType.FATAL_NO_INPUT: return "No input";
-                case JsonLintType.FATAL_ONLY_WHITESPACE_COMMENTS: return "Json string is only whitespace and maybe comments";
-                case JsonLintType.FATAL_JSONL_NOT_ONE_DOC_PER_LINE: return "JSON Lines document does not contain exactly one JSON document per line";
-                // FATAL messages that wrap an exception
-                case JsonLintType.FATAL_UNSPECIFIED_ERROR:
-                // SCHEMA messages
-                case JsonLintType.SCHEMA_FIRST:
-                    return (string)param1;
-                default: return $"No message was found for JsonLintType {lintType}";
-                }
+            // OK messages
+            case JsonLintType.OK_CONTROL_CHAR: return Translator.TranslateLintMessage(translated, lintType, "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification");
+            // NAN_INF messages
+            case JsonLintType.NAN_INF_Infinity: return Translator.TranslateLintMessage(translated, lintType, "Infinity is not part of the original JSON specification");
+            case JsonLintType.NAN_INF_NaN: return Translator.TranslateLintMessage(translated, lintType, "NaN is not part of the original JSON specification");
+            // JSONC messages
+            case JsonLintType.JSONC_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "JavaScript comments are not part of the original JSON specification");
+            // JSON5 messages
+            case JsonLintType.JSON5_WHITESPACE_CHAR: return Translator.TranslateLintMessage(translated, lintType, "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5");
+            case JsonLintType.JSON5_SINGLEQUOTED_STRING: return Translator.TranslateLintMessage(translated, lintType, "Singlequoted strings are only allowed in JSON5");
+            case JsonLintType.JSON5_ESCAPED_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "Escaped newline characters are only allowed in JSON5");
+            case JsonLintType.JSON5_X_ESCAPE: return Translator.TranslateLintMessage(translated, lintType, "\\x escapes are only allowed in JSON5");
+            case JsonLintType.JSON5_ESCAPED_CHAR: return TryTranslateWithOneParam(translated, lintType, "Escaped char '{0}' is only valid in JSON5", param1);
+            case JsonLintType.JSON5_UNQUOTED_KEY: return Translator.TranslateLintMessage(translated, lintType, "Unquoted keys are only supported in JSON5");
+            case JsonLintType.JSON5_NUM_LEADING_PLUS: return Translator.TranslateLintMessage(translated, lintType, "Leading + signs in numbers are not allowed except in JSON5");
+            case JsonLintType.JSON5_HEX_NUM: return Translator.TranslateLintMessage(translated, lintType, "Hexadecimal numbers are only part of JSON5");
+            case JsonLintType.JSON5_NUM_LEADING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a leading decimal point are only part of JSON5");
+            case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Comma after last element of array");
+            case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Comma after last key-value pair of object");
+            // BAD messages
+            case JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a trailing decimal point are only part of JSON5");
+            case JsonLintType.BAD_UNTERMINATED_MULTILINE_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Unterminated multi-line comment");
+            case JsonLintType.BAD_PYTHON_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Python-style '#' comments are not part of any well-accepted JSON specification");
+            case JsonLintType.BAD_STRING_CONTAINS_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "String literal contains newline");
+            case JsonLintType.BAD_KEY_CONTAINS_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "Object key contains newline");
+            case JsonLintType.BAD_UNTERMINATED_STRING: return TryTranslateWithOneParam(translated, lintType, "Unterminated string literal starting at position {0}", param1);
+            case JsonLintType.BAD_INVALID_UNQUOTED_KEY: return TryTranslateWithOneParam(translated, lintType, "No valid unquoted key beginning at {0}", param1);
+            case JsonLintType.BAD_PYTHON_nan: return Translator.TranslateLintMessage(translated, lintType, "nan is not a valid representation of Not a Number in JSON");
+            case JsonLintType.BAD_PYTHON_None: return Translator.TranslateLintMessage(translated, lintType, "None is not an accepted part of any JSON specification");
+            case JsonLintType.BAD_PYTHON_inf: return Translator.TranslateLintMessage(translated, lintType, "inf is not the correct representation of Infinity in JSON");
+            case JsonLintType.BAD_UNNECESSARY_LEADING_0: return Translator.TranslateLintMessage(translated, lintType, "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification");
+            case JsonLintType.BAD_SLASH_FRACTION: return Translator.TranslateLintMessage(translated, lintType, "Fractions of the form 1/3 are not part of any JSON specification");
+            case JsonLintType.BAD_NUMBER_INVALID_FORMAT: return TryTranslateWithOneParam(translated, lintType, "Number string {0} had bad format", param1);
+            case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_ARRAY: return TryTranslateWithOneParam(translated, lintType, "Two consecutive commas after element {0} of array", param1);
+            case JsonLintType.BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Comma before first value in array");
+            case JsonLintType.BAD_ARRAY_ENDSWITH_CURLYBRACE: return Translator.TranslateLintMessage(translated, lintType, "Tried to terminate an array with '}'");
+            case JsonLintType.BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS: return Translator.TranslateLintMessage(translated, lintType, "No comma between array members");
+            case JsonLintType.BAD_COLON_BETWEEN_ARRAY_ITEMS: return Translator.TranslateLintMessage(translated, lintType, "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?");
+            case JsonLintType.BAD_UNTERMINATED_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Unterminated array");
+            case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_OBJECT: return TryTranslateWithOneParam(translated, lintType, "Two consecutive commas after key-value pair {0} of object", param1);
+            case JsonLintType.BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Comma before first value in object");
+            case JsonLintType.BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS: return TryTranslateWithOneParam(translated, lintType, "No comma after key-value pair {0} in object", param1);
+            case JsonLintType.BAD_UNTERMINATED_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Unterminated object");
+            case JsonLintType.BAD_OBJECT_ENDSWITH_SQUAREBRACE: return Translator.TranslateLintMessage(translated, lintType, "Tried to terminate object with ']'");
+            case JsonLintType.BAD_COLON_BETWEEN_OBJECT_PAIRS: return Translator.TranslateLintMessage(translated, lintType, "':' found instead of comma after key-value pair");
+            case JsonLintType.BAD_CHAR_WHERE_COLON_EXPECTED: return TryTranslateWithTwoParams(translated, lintType, "Found '{0}' after key {1} when colon expected", param1, param2);
+            case JsonLintType.BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE: return TryTranslateWithOneParam(translated, lintType, "No ':' between key {0} and value {0} of object", param1);
+            case JsonLintType.BAD_DUPLICATE_KEY: return TryTranslateWithOneParam(translated, lintType, "Object has multiple of key \"{0}\"", param1);
+            case JsonLintType.BAD_PYTHON_True: return Translator.TranslateLintMessage(translated, lintType, "True is not an accepted part of any JSON specification");
+            case JsonLintType.BAD_PYTHON_False: return Translator.TranslateLintMessage(translated, lintType, "False is not an accepted part of any JSON specification");
+            case JsonLintType.BAD_JAVASCRIPT_undefined: return Translator.TranslateLintMessage(translated, lintType, "undefined is not part of any JSON specification");
+            case JsonLintType.BAD_CHAR_INSTEAD_OF_EOF: return TryTranslateWithOneParam(translated, lintType, "At end of valid JSON document, got {0} instead of EOF", param1);
+            // FATAL messages
+            case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Expected JavaScript comment after '/'");
+            case JsonLintType.FATAL_HEXADECIMAL_TOO_SHORT: return TryTranslateWithOneParam(translated, lintType, "Could not find valid hexadecimal of length {0}", param1);
+            case JsonLintType.FATAL_NUL_CHAR: return Translator.TranslateLintMessage(translated, lintType, "'\\x00' is the null character, which is illegal in JsonTools");
+            case JsonLintType.FATAL_UNTERMINATED_KEY: return Translator.TranslateLintMessage(translated, lintType, "Unterminated object key");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_n: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'n' to be null or nan");
+            case JsonLintType.FATAL_PLUS_OR_MINUS_AT_EOF: return TryTranslateWithOneParam(translated, lintType, "'{0}' sign at end of document", param1);
+            case JsonLintType.FATAL_INVALID_STARTSWITH_I: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'I' to be Infinity");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_N: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'N' to be NaN or None");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_i: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'i' to be inf");
+            case JsonLintType.FATAL_HEX_INT_OVERFLOW: return Translator.TranslateLintMessage(translated, lintType, "Hex number too large for a 64-bit signed integer type");
+            case JsonLintType.FATAL_SECOND_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Number with a decimal point in the wrong place");
+            case JsonLintType.FATAL_NUM_TRAILING_e_OR_E: return Translator.TranslateLintMessage(translated, lintType, "Scientific notation 'e' with no number following");
+            case JsonLintType.FATAL_MAX_RECURSION_DEPTH: return Translator.TranslateLintMessage(translated, lintType, $"Maximum recursion depth ({JsonParser.MAX_RECURSION_DEPTH}) reached");
+            case JsonLintType.FATAL_UNEXPECTED_EOF: return Translator.TranslateLintMessage(translated, lintType, "Unexpected end of file");
+            case JsonLintType.FATAL_NO_VALID_LITERAL_POSSIBLE: return Translator.TranslateLintMessage(translated, lintType, "No valid literal possible");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_t: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 't' to be true");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_f: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'f' to be false");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_T: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'T' to be True");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_F: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'F' to be False");
+            case JsonLintType.FATAL_INVALID_STARTSWITH_u: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'u' to be undefined");
+            case JsonLintType.FATAL_BADLY_LOCATED_CHAR: return TryTranslateWithOneParam(translated, lintType, "Badly located character {0}", param1);
+            case JsonLintType.FATAL_NO_INPUT: return Translator.TranslateLintMessage(translated, lintType, "No input");
+            case JsonLintType.FATAL_ONLY_WHITESPACE_COMMENTS: return Translator.TranslateLintMessage(translated, lintType, "Json string is only whitespace and maybe comments");
+            case JsonLintType.FATAL_JSONL_NOT_ONE_DOC_PER_LINE: return Translator.TranslateLintMessage(translated, lintType, "JSON Lines document does not contain exactly one JSON document per line");
+            // FATAL messages that wrap an exception
+            case JsonLintType.FATAL_UNSPECIFIED_ERROR:
+            // SCHEMA messages
+            case JsonLintType.SCHEMA_TYPE_MISMATCH:
+            case JsonLintType.SCHEMA_TYPE_ARRAY_MISMATCH:
+            case JsonLintType.SCHEMA_VALUE_NOT_IN_ENUM:
+            case JsonLintType.SCHEMA_ARRAY_TOO_LONG:
+            case JsonLintType.SCHEMA_ARRAY_TOO_SHORT:
+            case JsonLintType.SCHEMA_CONTAINS_VIOLATION:
+            case JsonLintType.SCHEMA_MINCONTAINS_VIOLATION:
+            case JsonLintType.SCHEMA_OBJECT_MISSING_REQUIRED_KEY:
+            case JsonLintType.SCHEMA_FALSE_SCHEMA:
+            case JsonLintType.SCHEMA_STRING_DOESNT_MATCH_PATTERN:
+            case JsonLintType.SCHEMA_RECURSION_LIMIT_REACHED:
+            case JsonLintType.SCHEMA_NUMBER_LESS_THAN_MIN:
+            case JsonLintType.SCHEMA_NUMBER_GREATER_THAN_MAX:
+            case JsonLintType.SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN:
+            case JsonLintType.SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX:
+            case JsonLintType.SCHEMA_STRING_TOO_LONG:
+            case JsonLintType.SCHEMA_STRING_TOO_SHORT:
+                return (string)param1;
+            default: return $"No message was found for JsonLintType {lintType}";
+            }
+        }
+
+        public static string TryTranslateWithOneParam(bool translated, JsonLintType lintType, string englishMessage, object param1)
+        {
+            try
+            {
+                return string.Format(Translator.TranslateLintMessage(translated, lintType, englishMessage), param1);
+            }
+            catch
+            {
+                return string.Format(englishMessage, param1);
+            }
+        }
+
+        public static string TryTranslateWithTwoParams(bool translated, JsonLintType lintType, string englishMessage, object param1, object param2)
+        {
+            try
+            {
+                return string.Format(Translator.TranslateLintMessage(translated, lintType, englishMessage), param1, param2);
+            }
+            catch
+            {
+                return string.Format(englishMessage, param1, param2);
             }
         }
     }
@@ -246,134 +275,146 @@ namespace JSON_Tools.JSON_Tools
         // ==========  JSONC errors =============
         JSONC_JAVASCRIPT_COMMENT = (ParserState.JSONC - 1) << 10,
         // ==========  JSON5 errors =============
-        JSON5_FIRST = (ParserState.JSON5 - 1) << 10,
-        JSON5_WHITESPACE_CHAR = JSON5_FIRST,
-        JSON5_SINGLEQUOTED_STRING = JSON5_FIRST + 1,
-        JSON5_ESCAPED_NEWLINE = JSON5_FIRST + 2,
-        JSON5_X_ESCAPE = JSON5_FIRST + 3,
+        JSON5_WHITESPACE_CHAR = (ParserState.JSON5 - 1) << 10,
+        JSON5_SINGLEQUOTED_STRING = JSON5_WHITESPACE_CHAR + 1,
+        JSON5_ESCAPED_NEWLINE = JSON5_WHITESPACE_CHAR + 2,
+        JSON5_X_ESCAPE = JSON5_WHITESPACE_CHAR + 3,
         /// <summary>
         /// param1 = nextChar (char)
         /// </summary>
-        JSON5_ESCAPED_CHAR = JSON5_FIRST + 4,
-        JSON5_UNQUOTED_KEY = JSON5_FIRST + 5,
-        JSON5_NUM_LEADING_PLUS = JSON5_FIRST + 6,
-        JSON5_HEX_NUM = JSON5_FIRST + 7,
-        JSON5_NUM_LEADING_DECIMAL_POINT = JSON5_FIRST + 8,
-        JSON5_NUM_TRAILING_DECIMAL_POINT = JSON5_FIRST + 9,
-        JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY = JSON5_FIRST + 10,
-        JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT = JSON5_FIRST + 11,
+        JSON5_ESCAPED_CHAR = JSON5_WHITESPACE_CHAR + 4,
+        JSON5_UNQUOTED_KEY = JSON5_WHITESPACE_CHAR + 5,
+        JSON5_NUM_LEADING_PLUS = JSON5_WHITESPACE_CHAR + 6,
+        JSON5_HEX_NUM = JSON5_WHITESPACE_CHAR + 7,
+        JSON5_NUM_LEADING_DECIMAL_POINT = JSON5_WHITESPACE_CHAR + 8,
+        JSON5_NUM_TRAILING_DECIMAL_POINT = JSON5_WHITESPACE_CHAR + 9,
+        JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY = JSON5_WHITESPACE_CHAR + 10,
+        JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT = JSON5_WHITESPACE_CHAR + 11,
         // ==========  BAD errors =============
-        BAD_FIRST = (ParserState.BAD - 1) << 10,
-        BAD_UNTERMINATED_MULTILINE_COMMENT = BAD_FIRST,
-        BAD_PYTHON_COMMENT = BAD_FIRST + 1,
-        BAD_STRING_CONTAINS_NEWLINE = BAD_FIRST + 2,
+        BAD_UNTERMINATED_MULTILINE_COMMENT = (ParserState.BAD - 1) << 10,
+        BAD_PYTHON_COMMENT = BAD_UNTERMINATED_MULTILINE_COMMENT + 1,
+        BAD_STRING_CONTAINS_NEWLINE = BAD_UNTERMINATED_MULTILINE_COMMENT + 2,
         /// <summary>
         /// param1 = startUtf8Pos (int)
         /// </summary>
-        BAD_UNTERMINATED_STRING = BAD_FIRST + 3,
-        BAD_KEY_CONTAINS_NEWLINE = BAD_FIRST + 4,
+        BAD_UNTERMINATED_STRING = BAD_UNTERMINATED_MULTILINE_COMMENT + 3,
+        BAD_KEY_CONTAINS_NEWLINE = BAD_UNTERMINATED_MULTILINE_COMMENT + 4,
         /// <summary>
         /// param1 = startPosOfKey (int)
         /// </summary>
-        BAD_INVALID_UNQUOTED_KEY = BAD_FIRST + 5,
-        BAD_PYTHON_nan = BAD_FIRST + 6,
-        BAD_PYTHON_None = BAD_FIRST + 7,
-        BAD_PYTHON_inf = BAD_FIRST + 8,
-        BAD_UNNECESSARY_LEADING_0 = BAD_FIRST + 9,
-        BAD_SLASH_FRACTION = BAD_FIRST + 10,
+        BAD_INVALID_UNQUOTED_KEY = BAD_UNTERMINATED_MULTILINE_COMMENT + 5,
+        BAD_PYTHON_nan = BAD_UNTERMINATED_MULTILINE_COMMENT + 6,
+        BAD_PYTHON_None = BAD_UNTERMINATED_MULTILINE_COMMENT + 7,
+        BAD_PYTHON_inf = BAD_UNTERMINATED_MULTILINE_COMMENT + 8,
+        BAD_UNNECESSARY_LEADING_0 = BAD_UNTERMINATED_MULTILINE_COMMENT + 9,
+        BAD_SLASH_FRACTION = BAD_UNTERMINATED_MULTILINE_COMMENT + 10,
         /// <summary>
         /// param1 = numStr (string)
         /// </summary>
-        BAD_NUMBER_INVALID_FORMAT = BAD_FIRST + 11,
+        BAD_NUMBER_INVALID_FORMAT = BAD_UNTERMINATED_MULTILINE_COMMENT + 11,
         /// <summary>
         /// param1 = positionInArr (int)
         /// </summary>
-        BAD_TWO_CONSECUTIVE_COMMAS_ARRAY = BAD_FIRST + 12,
-        BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY = BAD_FIRST + 13,
-        BAD_ARRAY_ENDSWITH_CURLYBRACE = BAD_FIRST + 14,
-        BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS = BAD_FIRST + 15,
-        BAD_COLON_BETWEEN_ARRAY_ITEMS = BAD_FIRST + 16,
-        BAD_UNTERMINATED_ARRAY = BAD_FIRST + 17,
+        BAD_TWO_CONSECUTIVE_COMMAS_ARRAY = BAD_UNTERMINATED_MULTILINE_COMMENT + 12,
+        BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY = BAD_UNTERMINATED_MULTILINE_COMMENT + 13,
+        BAD_ARRAY_ENDSWITH_CURLYBRACE = BAD_UNTERMINATED_MULTILINE_COMMENT + 14,
+        BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS = BAD_UNTERMINATED_MULTILINE_COMMENT + 15,
+        BAD_COLON_BETWEEN_ARRAY_ITEMS = BAD_UNTERMINATED_MULTILINE_COMMENT + 16,
+        BAD_UNTERMINATED_ARRAY = BAD_UNTERMINATED_MULTILINE_COMMENT + 17,
         /// <summary>
         /// param1 = positionInObj (int)
         /// </summary>
-        BAD_TWO_CONSECUTIVE_COMMAS_OBJECT = BAD_FIRST + 18,
-        BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT = BAD_FIRST + 19,
-        BAD_OBJECT_ENDSWITH_SQUAREBRACE = BAD_FIRST + 20,
+        BAD_TWO_CONSECUTIVE_COMMAS_OBJECT = BAD_UNTERMINATED_MULTILINE_COMMENT + 18,
+        BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT = BAD_UNTERMINATED_MULTILINE_COMMENT + 19,
+        BAD_OBJECT_ENDSWITH_SQUAREBRACE = BAD_UNTERMINATED_MULTILINE_COMMENT + 20,
         /// <summary>
         /// param1 = positionInObj (int)
         /// </summary>
-        BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS = BAD_FIRST + 21,
-        BAD_COMMA_AFTER_OBJECT_KEY = BAD_FIRST + 22,
-        BAD_UNTERMINATED_OBJECT = BAD_FIRST + 23,
-        BAD_COLON_BETWEEN_OBJECT_PAIRS = BAD_FIRST + 24,
+        BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS = BAD_UNTERMINATED_MULTILINE_COMMENT + 21,
+        BAD_COMMA_AFTER_OBJECT_KEY = BAD_UNTERMINATED_MULTILINE_COMMENT + 22,
+        BAD_UNTERMINATED_OBJECT = BAD_UNTERMINATED_MULTILINE_COMMENT + 23,
+        BAD_COLON_BETWEEN_OBJECT_PAIRS = BAD_UNTERMINATED_MULTILINE_COMMENT + 24,
         /// <summary>
         /// param1 = c (char); param2 = childCount (int)
         /// </summary>
-        BAD_CHAR_WHERE_COLON_EXPECTED = BAD_FIRST + 25,
+        BAD_CHAR_WHERE_COLON_EXPECTED = BAD_UNTERMINATED_MULTILINE_COMMENT + 25,
         /// <summary>
         /// param1 = childCount (int)
         /// </summary>
-        BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE = BAD_FIRST + 26,
+        BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE = BAD_UNTERMINATED_MULTILINE_COMMENT + 26,
         /// <summary>
         /// param1 = key (string)
         /// </summary>
-        BAD_DUPLICATE_KEY = BAD_FIRST + 27,
-        BAD_PYTHON_True = BAD_FIRST + 28,
-        BAD_PYTHON_False = BAD_FIRST + 29,
-        BAD_JAVASCRIPT_undefined = BAD_FIRST + 30,
+        BAD_DUPLICATE_KEY = BAD_UNTERMINATED_MULTILINE_COMMENT + 27,
+        BAD_PYTHON_True = BAD_UNTERMINATED_MULTILINE_COMMENT + 28,
+        BAD_PYTHON_False = BAD_UNTERMINATED_MULTILINE_COMMENT + 29,
+        BAD_JAVASCRIPT_undefined = BAD_UNTERMINATED_MULTILINE_COMMENT + 30,
         /// <summary>
         /// param1 = c (char)
         /// </summary>
-        BAD_CHAR_INSTEAD_OF_EOF = BAD_FIRST + 31,
+        BAD_CHAR_INSTEAD_OF_EOF = BAD_UNTERMINATED_MULTILINE_COMMENT + 31,
         // ==========  FATAL errors =============
-        FATAL_FIRST = (ParserState.FATAL - 1) << 10,
-        FATAL_EXPECTED_JAVASCRIPT_COMMENT = FATAL_FIRST,
+        FATAL_EXPECTED_JAVASCRIPT_COMMENT = (ParserState.FATAL - 1) << 10,
         /// <summary>
         /// param1 = expected_hex_length (int)
         /// </summary>
-        FATAL_HEXADECIMAL_TOO_SHORT = FATAL_FIRST + 1,
-        FATAL_NUL_CHAR = FATAL_FIRST + 2,
-        FATAL_UNTERMINATED_KEY = FATAL_FIRST + 3,
-        FATAL_INVALID_STARTSWITH_n = FATAL_FIRST + 4,
+        FATAL_HEXADECIMAL_TOO_SHORT = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 1,
+        FATAL_NUL_CHAR = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 2,
+        FATAL_UNTERMINATED_KEY = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 3,
+        FATAL_INVALID_STARTSWITH_n = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 4,
         /// <summary>
         /// param1 = lastCharOfDoc (char)
         /// </summary>
-        FATAL_PLUS_OR_MINUS_AT_EOF = FATAL_FIRST + 5,
-        FATAL_INVALID_STARTSWITH_I = FATAL_FIRST + 6,
-        FATAL_INVALID_STARTSWITH_N = FATAL_FIRST + 7,
-        FATAL_INVALID_STARTSWITH_i = FATAL_FIRST + 8,
-        FATAL_HEX_INT_OVERFLOW = FATAL_FIRST + 9,
-        FATAL_SECOND_DECIMAL_POINT = FATAL_FIRST + 10,
-        FATAL_NUM_TRAILING_e_OR_E = FATAL_FIRST + 11,
-        FATAL_MAX_RECURSION_DEPTH = FATAL_FIRST + 12,
-        FATAL_UNEXPECTED_EOF = FATAL_FIRST + 13,
-        FATAL_NO_VALID_LITERAL_POSSIBLE = FATAL_FIRST + 14,
-        FATAL_INVALID_STARTSWITH_t = FATAL_FIRST + 15,
-        FATAL_INVALID_STARTSWITH_f = FATAL_FIRST + 16,
-        FATAL_INVALID_STARTSWITH_T = FATAL_FIRST + 17,
-        FATAL_INVALID_STARTSWITH_F = FATAL_FIRST + 18,
-        FATAL_INVALID_STARTSWITH_u = FATAL_FIRST + 19,
+        FATAL_PLUS_OR_MINUS_AT_EOF = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 5,
+        FATAL_INVALID_STARTSWITH_I = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 6,
+        FATAL_INVALID_STARTSWITH_N = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 7,
+        FATAL_INVALID_STARTSWITH_i = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 8,
+        FATAL_HEX_INT_OVERFLOW = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 9,
+        FATAL_SECOND_DECIMAL_POINT = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 10,
+        FATAL_NUM_TRAILING_e_OR_E = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 11,
+        FATAL_MAX_RECURSION_DEPTH = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 12,
+        FATAL_UNEXPECTED_EOF = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 13,
+        FATAL_NO_VALID_LITERAL_POSSIBLE = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 14,
+        FATAL_INVALID_STARTSWITH_t = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 15,
+        FATAL_INVALID_STARTSWITH_f = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 16,
+        FATAL_INVALID_STARTSWITH_T = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 17,
+        FATAL_INVALID_STARTSWITH_F = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 18,
+        FATAL_INVALID_STARTSWITH_u = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 19,
         /// <summary>
         /// param1 = charStr (string)
         /// </summary>
-        FATAL_BADLY_LOCATED_CHAR = FATAL_FIRST + 20,
-        FATAL_NO_INPUT = FATAL_FIRST + 21,
-        FATAL_ONLY_WHITESPACE_COMMENTS = FATAL_FIRST + 22,
-        FATAL_JSONL_NOT_ONE_DOC_PER_LINE = FATAL_FIRST + 23,
+        FATAL_BADLY_LOCATED_CHAR = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 20,
+        FATAL_NO_INPUT = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 21,
+        FATAL_ONLY_WHITESPACE_COMMENTS = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 22,
+        FATAL_JSONL_NOT_ONE_DOC_PER_LINE = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 23,
         /// <summary>
         /// param1 = errorMessage (string)<br></br>
         /// catch-all for JsonLints that wrap an unexpected exception thrown while parsing JSON.<br></br>
         /// For the time being, this will include JsonLints generated by <see cref="IniParserException.ToJsonLint"/>.
         /// </summary>
-        FATAL_UNSPECIFIED_ERROR = FATAL_FIRST + 25,
+        FATAL_UNSPECIFIED_ERROR = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 25,
         // ==========  SCHEMA errors =============
         /// <summary>
         /// param1 = errorMessage (string)<br></br>
-        /// for now, schema validation errors all have this value<br></br>
-        /// in the future, I may try moving schema validation errors over to this enum for improved consistency and speed.
+        /// This is true for all SCHEMA_* JsonLintTypes, because constructing their messages is more complex.
         /// </summary>
-        SCHEMA_FIRST = (ParserState.SCHEMA - 1) << 10,
+        SCHEMA_TYPE_MISMATCH = (ParserState.SCHEMA - 1) << 10,
+        SCHEMA_TYPE_ARRAY_MISMATCH = SCHEMA_TYPE_MISMATCH + 1,
+        SCHEMA_VALUE_NOT_IN_ENUM = SCHEMA_TYPE_MISMATCH + 2,
+        SCHEMA_ARRAY_TOO_LONG = SCHEMA_TYPE_MISMATCH + 3,
+        SCHEMA_ARRAY_TOO_SHORT = SCHEMA_TYPE_MISMATCH + 4,
+        SCHEMA_CONTAINS_VIOLATION = SCHEMA_TYPE_MISMATCH + 5,
+        SCHEMA_OBJECT_MISSING_REQUIRED_KEY = SCHEMA_TYPE_MISMATCH + 6,
+        SCHEMA_FALSE_SCHEMA = SCHEMA_TYPE_MISMATCH + 7, // nothing validates
+        SCHEMA_STRING_DOESNT_MATCH_PATTERN = SCHEMA_TYPE_MISMATCH + 8,
+        SCHEMA_RECURSION_LIMIT_REACHED = SCHEMA_TYPE_MISMATCH + 9,
+        SCHEMA_NUMBER_LESS_THAN_MIN = SCHEMA_TYPE_MISMATCH + 10,
+        SCHEMA_NUMBER_GREATER_THAN_MAX = SCHEMA_TYPE_MISMATCH + 11,
+        SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN = SCHEMA_TYPE_MISMATCH + 12,
+        SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX = SCHEMA_TYPE_MISMATCH + 13,
+        SCHEMA_STRING_TOO_LONG = SCHEMA_TYPE_MISMATCH + 14,
+        SCHEMA_STRING_TOO_SHORT = SCHEMA_TYPE_MISMATCH + 15,
+        SCHEMA_MINCONTAINS_VIOLATION = SCHEMA_TYPE_MISMATCH + 16,
     }
 
     /// <summary>

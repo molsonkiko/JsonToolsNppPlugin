@@ -22,116 +22,106 @@ namespace JSON_Tools.JSON_Tools
         // the recursion limit is especially important because the "definitions" and "$ref" keywords
         // allow recursive self-references, and we need to avoid infinite recursion
 
-        public enum ValidationProblemType
-        {
-            TYPE_MISMATCH,
-            VALUE_NOT_IN_ENUM,
-            ARRAY_TOO_LONG,
-            ARRAY_TOO_SHORT,
-            CONTAINS_KEYWORD_VIOLATION,
-            OBJECT_MISSING_REQUIRED_KEY,
-            FALSE_SCHEMA, // nothing validates
-            STRING_DOESNT_MATCH_PATTERN,
-            RECURSION_LIMIT_REACHED,
-            NUMBER_LESS_THAN_MIN,
-            NUMBER_GREATER_THAN_MAX,
-            NUMBER_LESSEQ_EXCLUSIVE_MIN,
-            NUMBER_GREATEREQ_EXCLUSIVE_MAX,
-            STRING_TOO_LONG,
-            STRING_TOO_SHORT,
-        }
-
-        private static JsonLint ValidationProblemToLint(ValidationProblemType problemType, Dictionary<string, object> keywords, int position)
+        private static JsonLint ValidationProblemToLint(JsonLintType problemType, Dictionary<string, object> keywords, int position, bool translated)
         {
             string msg;
             switch (problemType)
             {
-            case ValidationProblemType.TYPE_MISMATCH:
+            case JsonLintType.SCHEMA_TYPE_MISMATCH:
                 var foundType = JsonSchemaMaker.TypeName((Dtype)keywords["found"]);
                 object required = keywords["required"];
-                if (required is JArray reqArr)
-                {
-                    msg = $"found type {foundType}, expected one of the types {reqArr.ToString()}.";
-                }
-                else
-                    msg = $"found type {foundType}, expected type {JsonSchemaMaker.TypeName((Dtype)required)}.";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "found type {0}, expected type {1}.", foundType, JsonSchemaMaker.TypeName((Dtype)required));
                 break;
-            case ValidationProblemType.VALUE_NOT_IN_ENUM:
+            case JsonLintType.SCHEMA_TYPE_ARRAY_MISMATCH:
+                foundType = JsonSchemaMaker.TypeName((Dtype)keywords["found"]);
+                var reqArr = (JArray)keywords["required"];
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "found type {0}, expected one of the types {1}.", foundType, reqArr.ToString());
+                break;
+            case JsonLintType.SCHEMA_VALUE_NOT_IN_ENUM:
                 var enum_ = (JArray)keywords["enum"];
                 var foundNode = (JNode)keywords["found"];
-                msg = $"found value {foundNode.ToString()}, but the only allowed values are {enum_.ToString()}.";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "found value {0}, but the only allowed values are {1}.", foundNode.ToString(), enum_.ToString());
                 break;
-            case ValidationProblemType.ARRAY_TOO_SHORT:
+            case JsonLintType.SCHEMA_ARRAY_TOO_SHORT:
                 int foundLength = (int)keywords["found"];
                 keywords.TryGetValue("minItems", out object minItemsObj);
                 int minItems = 0;
                 if (minItemsObj != null) minItems = (int)minItemsObj;
-                msg = $"array required to have at least {minItems} items, but it has {foundLength} items.";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "array required to have at least {0} items, but it has {1} items.", minItems, foundLength);
                 break;
-            case ValidationProblemType.ARRAY_TOO_LONG:
+            case JsonLintType.SCHEMA_ARRAY_TOO_LONG:
                 foundLength = (int)keywords["found"];
                 keywords.TryGetValue("maxItems", out object maxItemsObj);
                 int maxItems = 0;
                 if (maxItemsObj != null) maxItems = (int)maxItemsObj;
-                msg = $"array required to have no more than {maxItems} items, but it has {foundLength} items.";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "array required to have no more than {0} items, but it has {1} items.", maxItems, foundLength);
                 break;
-            case ValidationProblemType.CONTAINS_KEYWORD_VIOLATION:
+            case JsonLintType.SCHEMA_CONTAINS_VIOLATION:
                 var containsSchema = (JNode)keywords["contains"];
                 var minContains = (int)keywords["minContains"];
                 var maxContains = (int)keywords["maxContains"];
-                var quantifier = maxContains == int.MaxValue
-                    ? $"at least {minContains}"
-                    : $"between {minContains} and {maxContains}";
-                msg = $"Array must have {quantifier} items that match \"contains\" schema {containsSchema.ToString()}";
+                try
+                {
+                    msg = string.Format(Translator.TranslateLintMessage(translated, problemType, "Array must have between {0} and {1} items that match \"contains\" schema {2}"), minContains, maxContains, containsSchema.ToString());
+                }
+                catch
+                {
+                    msg = string.Format("Array must have between {0} and {1} items that match \"contains\" schema {2}", minContains, maxContains, containsSchema.ToString());
+                }
                 break;
-            case ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY:
+            case JsonLintType.SCHEMA_MINCONTAINS_VIOLATION:
+                containsSchema = (JNode)keywords["contains"];
+                minContains = (int)keywords["minContains"];
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "Array must have at least {0} items that match \"contains\" schema {1}", minContains, containsSchema.ToString());
+                break;
+            case JsonLintType.SCHEMA_OBJECT_MISSING_REQUIRED_KEY:
                 string keyMissing = (string)keywords["required"];
-                msg = $"object missing required key {keyMissing}";
+                msg = JsonLint.TryTranslateWithOneParam(translated, problemType, "object missing required key {0}", keyMissing);
                 break;
-            case ValidationProblemType.FALSE_SCHEMA:
-                msg = "the schema is `false`, so nothing will validate.";
+            case JsonLintType.SCHEMA_FALSE_SCHEMA:
+                msg = Translator.TranslateLintMessage(translated, problemType, "the schema is `false`, so nothing will validate.");
                 break;
-            case ValidationProblemType.STRING_DOESNT_MATCH_PATTERN:
+            case JsonLintType.SCHEMA_STRING_DOESNT_MATCH_PATTERN:
                 string str = (string)keywords["string"];
                 Regex regex = (Regex)keywords["regex"];
-                msg = $"string '{str}' does not match regex '{regex}'";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "string '{0}' does not match regex '{1}'", str, regex);
                 break;
-            case ValidationProblemType.RECURSION_LIMIT_REACHED:
-                msg = "validation has a maximum depth of 128";
+            case JsonLintType.SCHEMA_RECURSION_LIMIT_REACHED:
+                msg = Translator.TranslateLintMessage(translated, problemType, "validation has a maximum depth of 128");
                 break;
-            case ValidationProblemType.NUMBER_LESS_THAN_MIN:
+            case JsonLintType.SCHEMA_NUMBER_LESS_THAN_MIN:
                 var min = (double)keywords["min"];
                 var num = (double)keywords["num"];
-                msg = $"number {num} less than minimum {min}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "number {0} less than minimum {1}", num, min);
                 break;
-            case ValidationProblemType.NUMBER_GREATER_THAN_MAX:
+            case JsonLintType.SCHEMA_NUMBER_GREATER_THAN_MAX:
                 var max = (double)keywords["max"];
                 num = (double)keywords["num"];
-                msg = $"number {num} greater than maximum {max}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "number {0} greater than maximum {1}", num, max);
                 break;
-            case ValidationProblemType.STRING_TOO_LONG:
+            case JsonLintType.SCHEMA_STRING_TOO_LONG:
                 var maxLength = (int)keywords["maxLength"];
                 str = (string)keywords["string"];
-                msg = $"string {str} had greater than maxLength {maxLength}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "string {0} had greater than maxLength {1}", str, maxLength);
                 break;
-            case ValidationProblemType.STRING_TOO_SHORT:
+            case JsonLintType.SCHEMA_STRING_TOO_SHORT:
                 var minLength = (int)keywords["minLength"];
                 str = (string)keywords["string"];
-                msg = $"string {str} had less than minLength {minLength}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "string {0} had less than minLength {1}", str, minLength);
                 break;
-            case ValidationProblemType.NUMBER_LESSEQ_EXCLUSIVE_MIN:
+            case JsonLintType.SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN:
                 var exMin = (double)keywords["exMin"];
                 num = (double)keywords["num"];
-                msg = $"number {num} less than or equal to exclusive minimum {exMin}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "number {0} less than or equal to exclusive minimum {1}", num, exMin);
                 break;
-            case ValidationProblemType.NUMBER_GREATEREQ_EXCLUSIVE_MAX:
+            case JsonLintType.SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX:
                 var exMax = (double)keywords["exMax"];
                 num = (double)keywords["num"];
-                msg = $"number {num} greater than or equal to exclusive maximum {exMax}";
+                msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "number {0} greater than or equal to exclusive maximum {1}", num, exMax);
                 break;
             default: throw new ArgumentException($"Unknown validation problem type {problemType}");
             }
-            return new JsonLint(JsonLintType.SCHEMA_FIRST, position, '\x00', msg);
+            return new JsonLint(JsonLintType.SCHEMA_TYPE_MISMATCH, position, '\x00', msg);
         }
 
         /// <summary>
@@ -143,9 +133,9 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="keywords"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        private static bool AppendValidationProblem(ValidationProblemType problemType, Dictionary<string, object> keywords, int position, List<JsonLint> lints, int maxLintCount)
+        private static bool AppendValidationProblem(JsonLintType problemType, Dictionary<string, object> keywords, int position, List<JsonLint> lints, int maxLintCount, bool translated)
         {
-            lints.Add(ValidationProblemToLint(problemType, keywords, position));
+            lints.Add(ValidationProblemToLint(problemType, keywords, position, translated));
             return lints.Count <= maxLintCount;
         }
 
@@ -191,14 +181,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="schema_">a JNode representing a parsed JSON schema</param>
         /// <returns></returns>
-        public static ValidationFunc CompileValidationFunc(JNode schema_, int maxLintCount)
+        public static ValidationFunc CompileValidationFunc(JNode schema_, int maxLintCount, bool translated)
         {
             ValidationHelperFunc helper = (!(schema_ is JObject obj) || !(
                 obj.children.TryGetValue("definitions", out JNode defs)
                 || obj.children.TryGetValue("$defs", out defs)))
                 ? // boolean schemas and schemas without a "$defs" or "definitions" keyword
-                  CompileValidationHelperFunc(schema_, new JObject(), 0, maxLintCount)
-                : CompileValidationHelperFunc(schema_, (JObject)defs, 0, maxLintCount);
+                  CompileValidationHelperFunc(schema_, new JObject(), 0, maxLintCount, translated)
+                : CompileValidationHelperFunc(schema_, (JObject)defs, 0, maxLintCount, translated);
             bool outfunc(JNode x, out List<JsonLint> lints)
             {
                 lints = new List<JsonLint>();
@@ -216,17 +206,17 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="definitions"></param>
         /// <returns></returns>
         /// <exception cref="SchemaValidationException"></exception>
-        public static ValidationHelperFunc CompileValidationHelperFunc(JNode schema_, JObject definitions, int recursions, int maxLintCount)
+        public static ValidationHelperFunc CompileValidationHelperFunc(JNode schema_, JObject definitions, int recursions, int maxLintCount, bool translated)
         {
             if (recursions == RECURSION_LIMIT)
-                return (x, lints) => AppendValidationProblem(ValidationProblemType.RECURSION_LIMIT_REACHED, null, 0, lints, maxLintCount);
+                return (x, lints) => AppendValidationProblem(JsonLintType.SCHEMA_RECURSION_LIMIT_REACHED, null, 0, lints, maxLintCount, translated);
             if (!(schema_ is JObject schema))
             {
                 // the booleans are valid schemas.
                 // true validates everything, and false validates nothing
                 if ((bool)schema_.value)
                     return (_, __) => { };
-                return (x, lints) => AppendValidationProblem(ValidationProblemType.FALSE_SCHEMA, null, x.position, lints, maxLintCount);
+                return (x, lints) => AppendValidationProblem(JsonLintType.SCHEMA_FALSE_SCHEMA, null, x.position, lints, maxLintCount, translated);
             }
             if (schema.Length == 0)
                 return (_, __) => { }; // the empty schema validates everything
@@ -246,7 +236,7 @@ namespace JSON_Tools.JSON_Tools
                     throw new SchemaValidationException($"\"$ref\" {refnode} does not point to a definition defined in the definitions:\r\n{definitions}");
                 }
                 // we now use the schema that was pointed to
-                var func = CompileValidationHelperFunc(def, definitions, recursions, maxLintCount);
+                var func = CompileValidationHelperFunc(def, definitions, recursions, maxLintCount, translated);
                 return func;
             }
             if (schema.children.TryGetValue("enum", out JNode enum_) && enum_ is JArray enumarr)
@@ -263,7 +253,7 @@ namespace JSON_Tools.JSON_Tools
                         if (possible.Equals(json)) return;
                     }
                     AppendValidationProblem(
-                        ValidationProblemType.VALUE_NOT_IN_ENUM,
+                        JsonLintType.SCHEMA_VALUE_NOT_IN_ENUM,
                         new Dictionary<string, object>
                         {
                             { "found", json },
@@ -271,7 +261,8 @@ namespace JSON_Tools.JSON_Tools
                         },
                         json.position,
                         lints,
-                        maxLintCount
+                        maxLintCount,
+                        translated
                     );
                 };
             }
@@ -283,7 +274,7 @@ namespace JSON_Tools.JSON_Tools
                     throw new SchemaValidationException("Each schema must have one of the '$ref', 'anyOf', 'type', or 'enum' keywords.");
                 }
                 var subValidators = ((JArray)anyOf).children
-                    .Select((subschema) => CompileValidationHelperFunc(subschema, definitions, recursions, maxLintCount))
+                    .Select((subschema) => CompileValidationHelperFunc(subschema, definitions, recursions, maxLintCount, translated))
                     .ToArray();
                 return (JNode json, List<JsonLint> lints) =>
                 {
@@ -302,7 +293,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                     }
                     // all schema options failed
-                    AppendValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                    AppendValidationProblem(JsonLintType.SCHEMA_TYPE_ARRAY_MISMATCH,
                         new Dictionary<string, object>
                         {
                             { "found", json.type },
@@ -310,7 +301,8 @@ namespace JSON_Tools.JSON_Tools
                         },
                         json.position,
                         lints,
-                        maxLintCount
+                        maxLintCount,
+                        translated
                     );
                 };
             }
@@ -327,7 +319,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if ((json.type & dtypes) != 0 || ((json.type == Dtype.INT) && (dtypes & Dtype.FLOAT) != 0))
                         return;
-                    AppendValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                    AppendValidationProblem(types is JArray ? JsonLintType.SCHEMA_TYPE_ARRAY_MISMATCH : JsonLintType.SCHEMA_TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
                             { "found", json.type },
@@ -335,7 +327,8 @@ namespace JSON_Tools.JSON_Tools
                         },
                         json.position,
                         lints,
-                        maxLintCount
+                        maxLintCount,
+                        translated
                     );
                 };
             }
@@ -361,25 +354,27 @@ namespace JSON_Tools.JSON_Tools
                         if (len_ < minItems) // minItems sets minimum length for array
                         {
                             return ValidationProblemToLint(
-                                ValidationProblemType.ARRAY_TOO_SHORT,
+                                JsonLintType.SCHEMA_ARRAY_TOO_SHORT,
                                 new Dictionary<string, object>
                                 {
                                     { "found", len_ },
                                     { "minItems", minItems },
                                 },
-                                arr.position
+                                arr.position,
+                                translated
                             );
                         }
                         if (len_ > maxItems) // maxItems sets maximum length for array
                         {
                             return ValidationProblemToLint(
-                                ValidationProblemType.ARRAY_TOO_LONG,
+                                JsonLintType.SCHEMA_ARRAY_TOO_LONG,
                                 new Dictionary<string, object>
                                 {
                                     { "found", len_ },
                                     { "maxItems", maxItems },
                                 },
-                                arr.position
+                                arr.position,
+                                translated
                             );
                         }
                         return null;
@@ -387,12 +382,12 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (schema.children.TryGetValue("items", out JNode items))
                 {
-                    var itemsValidator = CompileValidationHelperFunc(items, definitions, recursions + 1, maxLintCount);
+                    var itemsValidator = CompileValidationHelperFunc(items, definitions, recursions + 1, maxLintCount, translated);
                     if (schema.children.TryGetValue("contains", out JNode contains))
                     {
                         // "contains" keyword adds another schema that some members
                         // must match instead of the "items" schema
-                        var containsValidator = CompileValidationHelperFunc(contains, definitions, recursions + 1, maxLintCount);
+                        var containsValidator = CompileValidationHelperFunc(contains, definitions, recursions + 1, maxLintCount, translated);
                         var minContains = schema.children.TryGetValue("minContains", out JNode minContainsNode)
                             ? Convert.ToInt32(minContainsNode.value)
                             : 1;
@@ -403,13 +398,14 @@ namespace JSON_Tools.JSON_Tools
                         {
                             if (!(json is JArray arr))
                             {
-                                lints.Add(ValidationProblemToLint(ValidationProblemType.TYPE_MISMATCH,
+                                lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                                     new Dictionary<string, object>
                                     {
                                     { "found", json.type },
                                     { "required", Dtype.ARR }
                                     },
-                                    json.position
+                                    json.position,
+                                    translated
                                 ));
                                 return;
                             }
@@ -443,14 +439,16 @@ namespace JSON_Tools.JSON_Tools
                             }
                             if (containsCount < minContains || containsCount > maxContains)
                             {
-                                lints.Add(ValidationProblemToLint(ValidationProblemType.CONTAINS_KEYWORD_VIOLATION,
+                                JsonLintType lintType = maxContains == int.MaxValue ? JsonLintType.SCHEMA_MINCONTAINS_VIOLATION : JsonLintType.SCHEMA_CONTAINS_VIOLATION;
+                                lints.Add(ValidationProblemToLint(lintType,
                                     new Dictionary<string, object>
                                     {
                                         { "contains", contains },
                                         { "minContains", minContains },
                                         { "maxContains", maxContains },
                                     },
-                                    arr.position
+                                    arr.position,
+                                    translated
                                 ));
                             }
                         };
@@ -460,13 +458,14 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (!(json is JArray arr))
                         {
-                            lints.Add(ValidationProblemToLint(ValidationProblemType.TYPE_MISMATCH,
+                            lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                                 new Dictionary<string, object>
                                 {
                                     { "found", json.type },
                                     { "required", Dtype.ARR }
                                 },
-                                json.position
+                                json.position,
+                                translated
                             ));
                             return;
                         }
@@ -495,7 +494,7 @@ namespace JSON_Tools.JSON_Tools
                             lints.Add(lint.Value);
                         return;
                     }
-                    AppendValidationProblem(ValidationProblemType.TYPE_MISMATCH,
+                    AppendValidationProblem(JsonLintType.SCHEMA_TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
                             { "found", json.type },
@@ -503,7 +502,8 @@ namespace JSON_Tools.JSON_Tools
                         },
                         json.position,
                         lints,
-                        maxLintCount
+                        maxLintCount,
+                        translated
                     );
 
                 };
@@ -518,7 +518,7 @@ namespace JSON_Tools.JSON_Tools
                     JObject props = (JObject)properties;
                     foreach (KeyValuePair<string, JNode> kv in props.children)
                     {
-                        propsValidators[kv.Key] = CompileValidationHelperFunc(kv.Value, definitions, recursions + 1, maxLintCount);
+                        propsValidators[kv.Key] = CompileValidationHelperFunc(kv.Value, definitions, recursions + 1, maxLintCount, translated);
                     }
                 }
                 string[] required = schema.children.TryGetValue("required", out JNode requiredNode)
@@ -538,7 +538,7 @@ namespace JSON_Tools.JSON_Tools
                         .Select((kv) =>
                         {
                             string pat = kv.Key.Replace("\\\\", "\\");
-                            var validator = CompileValidationHelperFunc(kv.Value, definitions, recursions + 1, maxLintCount);
+                            var validator = CompileValidationHelperFunc(kv.Value, definitions, recursions + 1, maxLintCount, translated);
                             return new RegexAndValidator(new Regex(pat, RegexOptions.Compiled), validator);
                         })
                         .ToArray();
@@ -565,13 +565,14 @@ namespace JSON_Tools.JSON_Tools
                 {
                     if (!(json is JObject obj))
                     {
-                        lints.Add(ValidationProblemToLint(ValidationProblemType.TYPE_MISMATCH,
+                        lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                             new Dictionary<string, object>
                             {
                                 { "found", json.type },
                                 { "required", Dtype.OBJ }
                             },
-                            json.position
+                            json.position,
+                            translated
                         ));
                         return;
                     }
@@ -581,14 +582,15 @@ namespace JSON_Tools.JSON_Tools
                         if (!obj.children.ContainsKey(requiredKey))
                         {
                             if (!AppendValidationProblem(
-                                ValidationProblemType.OBJECT_MISSING_REQUIRED_KEY,
+                                JsonLintType.SCHEMA_OBJECT_MISSING_REQUIRED_KEY,
                                 new Dictionary<string, object>
                                 {
                                     { "required", requiredKey },
                                 },
                                 obj.position,
                                 lints,
-                                maxLintCount
+                                maxLintCount,
+                                translated
                             ))
                                 return;
                         }
@@ -623,7 +625,7 @@ namespace JSON_Tools.JSON_Tools
                         if (!regex.IsMatch(str))
                         {
                             return AppendValidationProblem(
-                                ValidationProblemType.STRING_DOESNT_MATCH_PATTERN,
+                                JsonLintType.SCHEMA_STRING_DOESNT_MATCH_PATTERN,
                                 new Dictionary<string, object>
                                 {
                                     { "string", str },
@@ -631,7 +633,8 @@ namespace JSON_Tools.JSON_Tools
                                 },
                                 lineNum,
                                 lints,
-                                maxLintCount
+                                maxLintCount,
+                                translated
                             );
                         }
                         return true;
@@ -658,25 +661,27 @@ namespace JSON_Tools.JSON_Tools
                         if (s.Length < minLength)
                         {
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.STRING_TOO_SHORT,
+                                JsonLintType.SCHEMA_STRING_TOO_SHORT,
                                 new Dictionary<string, object>
                                 {
                                     { "string", s },
                                     { "minLength", minLength }
                                 },
-                                position
+                                position,
+                                translated
                             ));
                         }
                         else if (s.Length > maxLength)
                         {
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.STRING_TOO_LONG,
+                                JsonLintType.SCHEMA_STRING_TOO_LONG,
                                 new Dictionary<string, object>
                                 {
                                     { "string", s },
                                     { "maxLength", maxLength }
                                 },
-                                position
+                                position,
+                                translated
                             ));
                         }
                         return true;
@@ -689,13 +694,14 @@ namespace JSON_Tools.JSON_Tools
                         if (!(json.value is string str))
                         {
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.TYPE_MISMATCH,
+                                JsonLintType.SCHEMA_TYPE_MISMATCH,
                                 new Dictionary<string, object>
                                 {
                                     { "found", json.type },
-                                    { "required", dtype },
+                                    { "required", Dtype.STR },
                                 },
-                                json.position
+                                json.position,
+                                translated
                             ));
                             return;
                         }
@@ -728,40 +734,45 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (!TypeValidates(json.type, dtype))
                         {
-                            lints.Add(ValidationProblemToLint(ValidationProblemType.TYPE_MISMATCH,
+                            lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                                 new Dictionary<string, object>
                                 {
                                     { "found", json.type },
                                     { "required", dtype }
                                 },
-                                json.position
+                                json.position,
+                                translated
                             ));
                             return;
                         }
                         var floatedValue = Convert.ToDouble(json.value);
                         if (floatedValue < minimum)
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.NUMBER_LESS_THAN_MIN,
+                                JsonLintType.SCHEMA_NUMBER_LESS_THAN_MIN,
                                 new Dictionary<string, object> { { "min", minimum }, { "num", floatedValue } },
-                                json.position
+                                json.position,
+                                translated
                             ));
                         else if (floatedValue > maximum)
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.NUMBER_GREATER_THAN_MAX,
+                                JsonLintType.SCHEMA_NUMBER_GREATER_THAN_MAX,
                                 new Dictionary<string, object> { { "max", maximum }, { "num", floatedValue } },
-                                json.position
+                                json.position,
+                                translated
                             ));
                         if (floatedValue <= exclusiveMin)
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.NUMBER_LESSEQ_EXCLUSIVE_MIN,
+                                JsonLintType.SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN,
                                 new Dictionary<string, object> { { "exMin", exclusiveMin }, { "num", floatedValue } },
-                                json.position
+                                json.position,
+                                translated
                             ));
                         else if (floatedValue >= exclusiveMax)
                             lints.Add(ValidationProblemToLint(
-                                ValidationProblemType.NUMBER_GREATEREQ_EXCLUSIVE_MAX,
+                                JsonLintType.SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX,
                                 new Dictionary<string, object> { { "exMax", exclusiveMax }, { "num", floatedValue } },
-                                json.position
+                                json.position,
+                                translated
                             ));
                     };
                 }
@@ -772,21 +783,22 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (!TypeValidates(json.type, dtype))
                 {
-                    lints.Add(ValidationProblemToLint(ValidationProblemType.TYPE_MISMATCH,
+                    lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                         new Dictionary<string, object>
                         {
                             { "found", json.type },
                             { "required", dtype }
                         },
-                        json.position
+                        json.position,
+                        translated
                     ));
                 }
             };
         }
 
-        public static bool Validates(JNode json, JNode schema_, int maxLintCount, out List<JsonLint> lints)
+        public static bool Validates(JNode json, JNode schema_, int maxLintCount, bool translated, out List<JsonLint> lints)
         {
-            var validator = CompileValidationFunc(schema_, maxLintCount);
+            var validator = CompileValidationFunc(schema_, maxLintCount, translated);
             return validator(json, out lints);
         }
     }
