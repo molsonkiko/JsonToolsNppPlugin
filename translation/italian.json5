@@ -256,14 +256,14 @@
     //     BAD (missing "{1}"): "Trovato '{0}' dopo la chiave {} quando erano previsti i due punti"
     //     BAD (has "{0.}" instead of "{0}"): "Trovato '{0.}' dopo la chiave {1} quando erano previsti i due punti"
     "jsonLint": {
-        // ============== OK messages ==============,
+        // ============== OK messages ==============
         "OK_CONTROL_CHAR": "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
-        // ============== NAN_INF messages ==============,
+        // ============== NAN_INF messages ==============
         "NAN_INF_Infinity": "Infinity is not part of the original JSON specification",
         "NAN_INF_NaN": "NaN is not part of the original JSON specification",
-        // ============== JSONC messages ==============,
+        // ============== JSONC messages ==============
         "JSONC_JAVASCRIPT_COMMENT": "JavaScript comments are not part of the original JSON specification",
-        // ============== JSON5 messages ==============,
+        // ============== JSON5 messages ==============
         "JSON5_WHITESPACE_CHAR": "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
         "JSON5_SINGLEQUOTED_STRING": "Singlequoted strings are only allowed in JSON5",
         "JSON5_ESCAPED_NEWLINE": "Escaped newline characters are only allowed in JSON5",
@@ -275,7 +275,7 @@
         "JSON5_NUM_LEADING_DECIMAL_POINT": "Numbers with a leading decimal point are only part of JSON5",
         "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "Comma after last element of array",
         "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "Comma after last key-value pair of object",
-        // ============== BAD messages ==============,
+        // ============== BAD messages ==============
         "JSON5_NUM_TRAILING_DECIMAL_POINT": "Numbers with a trailing decimal point are only part of JSON5",
         "BAD_UNTERMINATED_MULTILINE_COMMENT": "Unterminated multi-line comment",
         "BAD_PYTHON_COMMENT": "Python-style '#' comments are not part of any well-accepted JSON specification",
@@ -308,7 +308,7 @@
         "BAD_PYTHON_False": "False is not an accepted part of any JSON specification",
         "BAD_JAVASCRIPT_undefined": "undefined is not part of any JSON specification",
         "BAD_CHAR_INSTEAD_OF_EOF": "At end of valid JSON document, got {0} instead of EOF",
-        // ============== FATAL messages ==============,
+        // ============== FATAL messages ==============
         "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "Expected JavaScript comment after '/'",
         "FATAL_HEXADECIMAL_TOO_SHORT": "Could not find valid hexadecimal of length {0}",
         "FATAL_NUL_CHAR": "'\\x00' is the null character, which is illegal in JsonTools",
@@ -333,7 +333,7 @@
         "FATAL_NO_INPUT": "No input",
         "FATAL_ONLY_WHITESPACE_COMMENTS": "Json string is only whitespace and maybe comments",
         "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines document does not contain exactly one JSON document per line",
-        // SCHEMA problems (see ValidationProblemType in JsonSchemaValidator.cs)
+        // ============== SCHEMA messages ==============
         "SCHEMA_TYPE_MISMATCH": "found type {0}, expected type {1}.",
         "SCHEMA_TYPE_ARRAY_MISMATCH": "found type {0}, expected one of the types {1}.",
         "SCHEMA_VALUE_NOT_IN_ENUM": "found value {0}, but the only allowed values are {1}.",
