@@ -76,7 +76,7 @@ namespace JSON_Tools.JSON_Tools
                 break;
             case JsonLintType.SCHEMA_OBJECT_MISSING_REQUIRED_KEY:
                 string keyMissing = (string)keywords["required"];
-                msg = JsonLint.TryTranslateWithOneParam(translated, problemType, "object missing required key {0}", keyMissing);
+                msg = JsonLint.TryTranslateWithOneParam(translated, problemType, "object missing \"required\" key {0}", keyMissing);
                 break;
             case JsonLintType.SCHEMA_FALSE_SCHEMA:
                 msg = Translator.TranslateLintMessage(translated, problemType, "the schema is `false`, so nothing will validate.");

@@ -915,7 +915,7 @@ multiline comment
                 }),
                 ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
                 ("", "null", new string[]{"No input"}),
-                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Json string is only whitespace and maybe comments" }),
+                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Input is only whitespace and maybe comments" }),
                 ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
                 ("\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", "\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", new string[]
                 {

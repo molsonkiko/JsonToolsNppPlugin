@@ -208,7 +208,7 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.FATAL_INVALID_STARTSWITH_u: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'u' to be undefined");
             case JsonLintType.FATAL_BADLY_LOCATED_CHAR: return TryTranslateWithOneParam(translated, lintType, "Badly located character {0}", param1);
             case JsonLintType.FATAL_NO_INPUT: return Translator.TranslateLintMessage(translated, lintType, "No input");
-            case JsonLintType.FATAL_ONLY_WHITESPACE_COMMENTS: return Translator.TranslateLintMessage(translated, lintType, "Json string is only whitespace and maybe comments");
+            case JsonLintType.FATAL_ONLY_WHITESPACE_COMMENTS: return Translator.TranslateLintMessage(translated, lintType, "Input is only whitespace and maybe comments");
             case JsonLintType.FATAL_JSONL_NOT_ONE_DOC_PER_LINE: return Translator.TranslateLintMessage(translated, lintType, "JSON Lines document does not contain exactly one JSON document per line");
             // FATAL messages that wrap an exception
             case JsonLintType.FATAL_UNSPECIFIED_ERROR:

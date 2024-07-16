@@ -276,8 +276,8 @@
         "JSON5_NUM_LEADING_DECIMAL_POINT": "Numbers with a leading decimal point are only part of JSON5",
         "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "Comma after last element of array",
         "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "Comma after last key-value pair of object",
-        // ============== BAD messages ==============
         "JSON5_NUM_TRAILING_DECIMAL_POINT": "Numbers with a trailing decimal point are only part of JSON5",
+        // ============== BAD messages ==============
         "BAD_UNTERMINATED_MULTILINE_COMMENT": "Unterminated multi-line comment",
         "BAD_PYTHON_COMMENT": "Python-style '#' comments are not part of any well-accepted JSON specification",
         "BAD_STRING_CONTAINS_NEWLINE": "String literal contains newline",
@@ -332,7 +332,7 @@
         "FATAL_INVALID_STARTSWITH_u": "Expected literal starting with 'u' to be undefined",
         "FATAL_BADLY_LOCATED_CHAR": "Badly located character {0}",
         "FATAL_NO_INPUT": "No input",
-        "FATAL_ONLY_WHITESPACE_COMMENTS": "Json string is only whitespace and maybe comments",
+        "FATAL_ONLY_WHITESPACE_COMMENTS": "Input is only whitespace and maybe comments",
         "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines document does not contain exactly one JSON document per line",
         // ============== SCHEMA messages ==============
         "SCHEMA_TYPE_MISMATCH": "found type {0}, expected type {1}.",
@@ -342,7 +342,7 @@
         "SCHEMA_ARRAY_TOO_SHORT": "array required to have at least {0} items, but it has {1} items.",
         "SCHEMA_CONTAINS_VIOLATION": "Array must have between {0} and {1} items that match \"contains\" schema {2}",
         "SCHEMA_MINCONTAINS_VIOLATION": "Array must have at least {0} items that match \"contains\" schema {1}",
-        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "object missing required key {0}",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "object missing \"required\" key {0}",
         "SCHEMA_FALSE_SCHEMA": "the schema is `false`, so nothing will validate.",
         "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "string '{0}' does not match regex '{1}'",
         "SCHEMA_RECURSION_LIMIT_REACHED": "validation has a maximum depth of 128",
