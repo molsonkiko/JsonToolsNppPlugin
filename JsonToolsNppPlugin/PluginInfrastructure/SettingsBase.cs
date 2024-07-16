@@ -284,7 +284,19 @@ namespace CsvQuery.PluginInfrastructure
                     var oldValue = propertyInfo.GetValue(this, null);
                     var newValue = propertyInfo.GetValue(copy, null);
                     if (!oldValue.Equals(newValue))
-                        propertyInfo.SetValue(this, newValue, null);
+                    {
+                        try
+                        {
+                            propertyInfo.SetValue(this, newValue, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Could not change setting {propertyInfo.Name} to value {newValue}, so it will remain set as {oldValue}.\r\n" +
+                                $"Got the following exception:\r\n{ex}",
+                                $"Invalid value for setting {propertyInfo.Name}",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
                 }
                 dialog.Close();
             };

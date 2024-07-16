@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     * Add `uses_context` field to ArgFunction instances, so that they have JQueryContext appended to their arguments, and they can reference fields of that JQueryContext.
 	* This way we don't have to have these methods mutating and referencing a global static variable.
 	* Additionally, the presence of a function with `uses_context=true` would serve as a flag that the query cannot be executed in parallel, because doing so would cause race conditions associated with the shared JQueryContext fields.
-7. Unit tests that randomly generate text with JSON chars to make sure JSON parser never throws for any reason, since errors aren't caught.
 
 ### To Be Changed
 
@@ -57,6 +56,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. In the `grepper form`, pressing `Enter` inside the `Previously viewed directories...` box causes the current text of the box to be searched, assuming that it is a valid directory.
 3. [Translation](/README.md#translating-jsontools-to-another-language) of settings in the [Settings form](/docs/README.md#customizing-settings).
 4. Translation of [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (under the `jsonLint` field of the [translation file](/translation/english.json5))
+5. The [`path_separator` setting](/docs/README.md#key_style-and-path_separator-settings) for formatting keys/indices and paths. Addresses [issue 69](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/69).
+6. Make it so left-clicking on the `Key/index to clipboard` and `Path to clipboard` options of the [treenode right-click context menu](/docs/README.md#get-info-about-tree-nodes) gets the path or key/index in whatever the default is from your settings, without having to click on one of the sub-menu items.
 
 ### Changed
 
@@ -813,7 +814,7 @@ __[.NET Framework 4.8](https://learn.microsoft.com/en-us/dotnet/framework/migrat
 
 1. [Menu command](/docs/README.md#path-to-current-line) for getting path to first node in current line.
 2. Right-clicking on tree nodes lets you get the current node's value, key/index in parent iterable, or path.
-3. [key_style](/docs/README.md#key-style) option in settings for customizing how the path is formatted (e.g., dot syntax for JavaScript vs. obligatory square brackets and quotes for Python)
+3. [key_style](/docs/README.md#key_style-and-path_separator-settings) option in settings for customizing how the path is formatted (e.g., dot syntax for JavaScript vs. obligatory square brackets and quotes for Python)
 4. Automatic resizing of the query box and the tree view when the docking box is resized.
 5. A text box containing the path to the currently selected tree node (in the default key style) and a [button for copying it to the clipboard](/docs/README.md#get-info-about-tree-nodes).
 

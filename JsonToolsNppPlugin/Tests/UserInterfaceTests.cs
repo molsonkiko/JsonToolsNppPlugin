@@ -793,6 +793,8 @@ namespace JSON_Tools.Tests
             bool previousRememberComments = Main.settings.remember_comments;
             bool previousHasWarnedSelectionsForgotten = Main.hasWarnedSelectionsForgotten;
             bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
+            KeyStyle previousKeyStyle = Main.settings.key_style;
+            string previousPathSeparator = Main.settings.path_separator;
             // remember what the user's clipboard was before tests start, because the tests hijack the clipboard and that's not nice
             string clipboardValueBeforeTests = Clipboard.GetText();
             // require these settings for the UI tests alone
@@ -804,6 +806,8 @@ namespace JSON_Tools.Tests
             Main.settings.minimal_whitespace_compression = true;
             Main.settings.remember_comments = false;
             Main.settings.offer_to_show_lint = false;
+            Main.settings.path_separator = "\"\\u0001\"";
+            Main.settings.key_style = KeyStyle.RemesPath;
             // if this is false, a message-box will pop up at some point.
             // this message box doesn't block the main thread, but it introduces some asynchronous behavior
             // that was probably responsible for crashing the UI tests
@@ -867,6 +871,8 @@ namespace JSON_Tools.Tests
             Main.settings.remember_comments = previousRememberComments;
             Main.hasWarnedSelectionsForgotten = previousHasWarnedSelectionsForgotten;
             Main.settings.offer_to_show_lint = previousOfferToShowLint;
+            Main.settings.key_style = previousKeyStyle;
+            Main.settings.path_separator = previousPathSeparator;
             // if the user's clipboard is still set to whatever we most recently hijacked it with, reset it to whatever it was before the tests
             // this won't work if their clipboard contained non-text data beforehand, but it's better than nothing
             if (Clipboard.GetText() == lastClipboardValue && !(clipboardValueBeforeTests is null) && clipboardValueBeforeTests.Length > 0)

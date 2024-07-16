@@ -258,7 +258,7 @@ Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this automatic validation w
 
 *Added in version v5.0.0*
 
-The `Path to current position` menu option lets you fill the clipboard with the path to the current position in the document.
+The `Path to current position` menu option lets you fill the clipboard with the path to the current position in the document. The path is formatted according to the [`key_style` and `path_separator` settings](#key_style-and-path_separator-settings), described below.
 
 This replaced the old `Path to current line` menu option.
 
@@ -275,13 +275,25 @@ The `Path to current line` menu option lets you fill the clipboard with the path
 ![Getting the path to current line](/docs/path%20to%20current%20line.PNG)
 </details>
 
-### Key style ###
+### `key_style` and `path_separator` settings ###
 
-By default, the path clipped is in RemesPath style (dot syntax and backtick-quoted strings). You can get JavaScript style (dot syntax and c-style quoted strings in square brackets) or Python style (c-style quoted strings in square brackets) in the settings.
+If you are using JsonTools [v8](/CHANGELOG.md#800---2024-06-29) or older, you can ignore the below discussion of the `path_separator` setting, as it was added in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd).
+
+The `key_style` and `path_separator` settings control the formatting of the `Path to current position` command.
+
+The `key_style` setting has the following options. `RemesPath` style is the default.
+- `RemesPath` style (dot syntax and backtick-quoted strings)
+- `JavaScript` style (dot syntax and C-style quoted strings in square brackets)
+- `Python` style (C-style quoted strings in square brackets)
+
+If you prefer for keys and indices to be separated by a custom character, use the `path_separator` setting. __`path_separator` ignored when it is set to the default `"\u0001"`; otherwise `key_style` is ignored.__ The `path_separator` character *cannot* be any of the characters in the following JSON string: `"\"0123456789"`.
+
 For example, the different path styles might look like this:
-- Remespath (default): ``[`a b`][0].c``
-- Python: `['a b'][0]['c']`
-- JavaScript: `['a b'][0].c` 
+- `Remespath` (default): ``[`a b`][0].c``
+- `Python`: `['a b'][0]['c']`
+- `JavaScript`: `['a b'][0].c`
+- `path_separator` set to `/`: `/"a b"/0/c` (the `"a b"` key is in quotes because it does not match the regular expression `^[_a-zA-Z][_a-zA-Z\d]*$`)
+- `path_separator` set to `c`: `c"a b"c0c"c"` (the `"c"` key is also in quotes because it contains the `path_separator`)
 
 ## RemesPath ##
 
@@ -392,8 +404,8 @@ The `View all subtrees` checkbox on the JSON viewer form allows you to quickly t
 
 You can right click on a tree node to copy any of the following to the clipboard:
 * Value
-* Key/index (customizable via [key style](#key-style))
-* Path (see [key style](#key-style))
+* Key/index (see the [the `key_style` and `path_separator` settings](#key_style-and-path_separator-settings))
+* Path (see the `key_style` and `path_separator` settings)
 
 In versions 3.4.0 through 3.6.1.1, you can also click on the `Current path` button beneath the tree to copy the path of the currently selected tree node to the clipboard. The path will have the style of whatever default style you chose in the settings (shown in the adjacent text box). In versions 3.7.0 and above, this button does not exist, so just select and copy the text in the box.
 

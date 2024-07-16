@@ -55,7 +55,7 @@
             this.PythonStyleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStyleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CopyPathItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.JavaScriptStyleKeyItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.JavaScriptStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,6 +66,8 @@
             this.RefreshButton = new System.Windows.Forms.Button();
             this.FindReplaceButton = new System.Windows.Forms.Button();
             this.DocumentTypeComboBox = new System.Windows.Forms.ComboBox();
+            this.path_separatorStyleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.path_separatorStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -170,7 +172,7 @@
             this.OpenSortFormItem,
             this.SelectAllChildrenItem});
             this.NodeRightClickMenu.Name = "NodeRightClickMenu";
-            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 172);
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 200);
             // 
             // CopyValueMenuItem
             // 
@@ -183,7 +185,8 @@
             this.CopyKeyItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.JavaScriptStyleItem,
             this.PythonStyleItem,
-            this.RemesPathStyleItem});
+            this.RemesPathStyleItem,
+            this.path_separatorStyleItem});
             this.CopyKeyItem.Name = "CopyKeyItem";
             this.CopyKeyItem.Size = new System.Drawing.Size(267, 24);
             this.CopyKeyItem.Text = "Key/index to clipboard";
@@ -191,47 +194,48 @@
             // JavaScriptStyleItem
             // 
             this.JavaScriptStyleItem.Name = "JavaScriptStyleItem";
-            this.JavaScriptStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.JavaScriptStyleItem.Size = new System.Drawing.Size(268, 26);
             this.JavaScriptStyleItem.Text = "JavaScript style";
             // 
             // PythonStyleItem
             // 
             this.PythonStyleItem.Name = "PythonStyleItem";
-            this.PythonStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.PythonStyleItem.Size = new System.Drawing.Size(268, 26);
             this.PythonStyleItem.Text = "Python style";
             // 
             // RemesPathStyleItem
             // 
             this.RemesPathStyleItem.Name = "RemesPathStyleItem";
-            this.RemesPathStyleItem.Size = new System.Drawing.Size(198, 26);
+            this.RemesPathStyleItem.Size = new System.Drawing.Size(268, 26);
             this.RemesPathStyleItem.Text = "RemesPath style";
             // 
             // CopyPathItem
             // 
             this.CopyPathItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.JavaScriptStyleKeyItem,
+            this.JavaScriptStylePathItem,
             this.PythonStylePathItem,
-            this.RemesPathStylePathItem});
+            this.RemesPathStylePathItem,
+            this.path_separatorStylePathItem});
             this.CopyPathItem.Name = "CopyPathItem";
             this.CopyPathItem.Size = new System.Drawing.Size(267, 24);
             this.CopyPathItem.Text = "Path to clipboard";
             // 
-            // JavaScriptStyleKeyItem
+            // JavaScriptStylePathItem
             // 
-            this.JavaScriptStyleKeyItem.Name = "JavaScriptStyleKeyItem";
-            this.JavaScriptStyleKeyItem.Size = new System.Drawing.Size(198, 26);
-            this.JavaScriptStyleKeyItem.Text = "JavaScript style";
+            this.JavaScriptStylePathItem.Name = "JavaScriptStylePathItem";
+            this.JavaScriptStylePathItem.Size = new System.Drawing.Size(268, 26);
+            this.JavaScriptStylePathItem.Text = "JavaScript style";
             // 
             // PythonStylePathItem
             // 
             this.PythonStylePathItem.Name = "PythonStylePathItem";
-            this.PythonStylePathItem.Size = new System.Drawing.Size(198, 26);
+            this.PythonStylePathItem.Size = new System.Drawing.Size(268, 26);
             this.PythonStylePathItem.Text = "Python style";
             // 
             // RemesPathStylePathItem
             // 
             this.RemesPathStylePathItem.Name = "RemesPathStylePathItem";
-            this.RemesPathStylePathItem.Size = new System.Drawing.Size(198, 26);
+            this.RemesPathStylePathItem.Size = new System.Drawing.Size(268, 26);
             this.RemesPathStylePathItem.Text = "RemesPath style";
             // 
             // ToggleSubtreesItem
@@ -314,6 +318,18 @@
             this.DocumentTypeComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryBox_KeyPress);
             this.DocumentTypeComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
+            // path_separatorStyleItem
+            // 
+            this.path_separatorStyleItem.Name = "path_separatorStyleItem";
+            this.path_separatorStyleItem.Size = new System.Drawing.Size(268, 26);
+            this.path_separatorStyleItem.Text = "Use path_separator setting";
+            // 
+            // path_separatorStylePathItem
+            // 
+            this.path_separatorStylePathItem.Name = "path_separatorStylePathItem";
+            this.path_separatorStylePathItem.Size = new System.Drawing.Size(268, 26);
+            this.path_separatorStylePathItem.Text = "Use path_separator setting";
+            // 
             // TreeViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -350,7 +366,7 @@
         private System.Windows.Forms.ToolStripMenuItem PythonStyleItem;
         private System.Windows.Forms.ToolStripMenuItem RemesPathStyleItem;
         private System.Windows.Forms.ToolStripMenuItem CopyPathItem;
-        private System.Windows.Forms.ToolStripMenuItem JavaScriptStyleKeyItem;
+        private System.Windows.Forms.ToolStripMenuItem JavaScriptStylePathItem;
         private System.Windows.Forms.ToolStripMenuItem PythonStylePathItem;
         private System.Windows.Forms.ToolStripMenuItem RemesPathStylePathItem;
         private System.Windows.Forms.TextBox CurrentPathBox;
@@ -364,5 +380,7 @@
         private System.Windows.Forms.ToolStripMenuItem SelectThisItem;
         private System.Windows.Forms.ToolStripMenuItem SelectAllChildrenItem;
         private System.Windows.Forms.ComboBox DocumentTypeComboBox;
+        private System.Windows.Forms.ToolStripMenuItem path_separatorStyleItem;
+        private System.Windows.Forms.ToolStripMenuItem path_separatorStylePathItem;
     }
 }

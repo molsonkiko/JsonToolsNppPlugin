@@ -825,7 +825,7 @@ namespace JSON_Tools.JSON_Tools
             return false;
         }
 
-        private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$");
+        private static readonly Regex DOT_COMPATIBLE_REGEX = new Regex("^[_a-zA-Z][_a-zA-Z\\d]*$", RegexOptions.Compiled);
         // "dot compatible" means a string that starts with a letter or underscore
         // and contains only letters, underscores, and digits
 
@@ -844,25 +844,22 @@ namespace JSON_Tools.JSON_Tools
             return pos > position && pos <= position + utf8len;
         }
 
+        public const char DEFAULT_PATH_SEPARATOR = '\x01';
+
         /// <summary>
         /// Get the the path to the JNode that contains position pos in a UTF-8 encoded document.<br></br>
-        /// See PathToTreeNode for information on how paths are formatted.
+        /// See <see cref="FormatPath(List{object}, KeyStyle, char)"/> for information on how paths are formatted.
         /// </summary>
-        /// <param name="node"></param>
-        /// <param name="pos"></param>
-        /// <param name="style"></param>
-        /// <param name="keysSoFar"></param>
-        /// <returns></returns>
-        public string PathToPosition(int pos, KeyStyle style = KeyStyle.Python)
+        public string PathToPosition(int pos, KeyStyle style = KeyStyle.Python, char separator=DEFAULT_PATH_SEPARATOR)
         {
-            return PathToPositionHelper(pos, style, new List<object>());
+            return PathToPositionHelper(pos, style, new List<object>(), separator);
         }
 
-        public string PathToPositionHelper(int pos, KeyStyle style, List<object> path)
+        public string PathToPositionHelper(int pos, KeyStyle style, List<object> path, char separator)
         {
             string result;
             if (ContainsPosition(pos))
-                return FormatPath(path, style);
+                return FormatPath(path, style, separator);
             if (this is JArray arr)
             {
                 if (arr.Length == 0)
@@ -874,7 +871,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 JNode child = arr[ii];
                 path.Add(ii);
-                result = child.PathToPositionHelper(pos, style, path);
+                result = child.PathToPositionHelper(pos, style, path, separator);
                 if (result.Length > 0)
                     return result;
                 path.RemoveAt(path.Count - 1);
@@ -884,7 +881,7 @@ namespace JSON_Tools.JSON_Tools
                 foreach (KeyValuePair<string, JNode> kv in obj.children)
                 {
                     path.Add(kv.Key);
-                    result = kv.Value.PathToPositionHelper(pos, style, path);
+                    result = kv.Value.PathToPositionHelper(pos, style, path, separator);
                     if (result.Length > 0)
                         return result;
                     path.RemoveAt(path.Count - 1);
@@ -893,25 +890,36 @@ namespace JSON_Tools.JSON_Tools
             return "";
         }
 
-        private static string FormatPath(List<object> path, KeyStyle style)
+
+        private static string FormatPath(List<object> path, KeyStyle style, char separator)
         {
             StringBuilder sb = new StringBuilder();
+            bool usesSeparator = separator != DEFAULT_PATH_SEPARATOR;
             foreach (object member in path)
             {
                 if (member is int ii)
                 {
-                    sb.Append($"[{ii}]");
+                    sb.Append(FormatIndex(ii, separator));
                 }
                 else if (member is string key)
                 {
-                    sb.Append(FormatKey(key, style));
+                    sb.Append(FormatKey(key, style, separator));
                 }
             }
             return sb.ToString();
         }
 
         /// <summary>
-        /// Get the key in square brackets or prefaced by a quote as determined by the style.<br></br>
+        /// sep CANNOT be any of the characters in the following JSON string: "\"0123456789"
+        /// </summary>
+        public static void ThrowIfPathSeparatorInvalid(char sep)
+        {
+            if (sep == '"' || (sep >= '0' && sep <= '9'))
+                throw new ArgumentException("separator CANNOT be any of the characters in the following JSON string: \"\\\"0123456789\"", "separator");
+        }
+
+        /// <summary>
+        /// Get the key in square brackets or prefaced by a quote as determined by the style and separator (ignored if equal to <see cref="DEFAULT_PATH_SEPARATOR"/>)<br></br>
         /// Style: one of 'p' (Python), 'j' (JavaScript), or 'r' (RemesPath)<br></br>
         /// EXAMPLES (using the JSON {"a b": [1, {"c": 2}], "d": [4]}<br></br>
         /// Using key "a b'":<br></br>
@@ -921,48 +929,58 @@ namespace JSON_Tools.JSON_Tools
         /// Using key "c":<br></br>
         /// - JavaScript style: .c<br></br>
         /// - RemesPath style: .c<br></br>
-        /// - Python style: ['c']
+        /// - Python style: ['c']<br></br>
+        /// Using key "a b" and separator '/', we get "/\"a b\""<br></br>
+        /// Using key "a b" and separator 'b', we get "b\"a b\""<br></br>
+        /// Using key "c" and separator 'c', we get "c\"c\""<br></br>
+        /// Using key "c" and separator '/', we get "/c"
         /// </summary>
         /// <param name="node"></param>
         /// <param name="style"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static string FormatKey(string key, KeyStyle style = KeyStyle.Python)
+        public static string FormatKey(string key, KeyStyle style = KeyStyle.Python, char separator = DEFAULT_PATH_SEPARATOR)
         {
+            if (separator != DEFAULT_PATH_SEPARATOR)
+            {
+                ThrowIfPathSeparatorInvalid(separator);
+                return key.IndexOf(separator) < 0 && DOT_COMPATIBLE_REGEX.IsMatch(key)
+                    ? $"{separator}{key}"
+                    : $"{separator}{StrToString(key, true)}";
+            }
             switch (style)
             {
-                case KeyStyle.RemesPath:
-                    {
-                        if (DOT_COMPATIBLE_REGEX.IsMatch(key))
-                            return $".{key}";
-                        string escapedKey = StrToString(key, false);
-                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"").Replace("`", "\\`");
-                        return $"[`{keyDubquotesUnescaped}`]";
-                    }
-                case KeyStyle.JavaScript:
-                    {
-                        if (DOT_COMPATIBLE_REGEX.IsMatch(key))
-                            return $".{key}";
-                        string escapedKey = StrToString(key, false);
-                        if (key.Contains('\''))
-                        {
-                            return $"[\"{escapedKey}\"]";
-                        }
-                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
-                        return $"['{keyDubquotesUnescaped}']";
-                    }
-                case KeyStyle.Python:
-                    {
-                        string escapedKey = StrToString(key, false);
-                        if (escapedKey.Contains('\''))
-                        {
-                            return $"[\"{escapedKey}\"]";
-                        }
-                        string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
-                        return $"['{keyDubquotesUnescaped}']";
-                    }
-                default: throw new ArgumentException("style argument for PathToTreeNode must be a KeyStyle member");
+            case KeyStyle.RemesPath:
+                if (DOT_COMPATIBLE_REGEX.IsMatch(key))
+                    return $".{key}";
+                string escapedKey = StrToString(key, false);
+                string keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"").Replace("`", "\\`");
+                return $"[`{keyDubquotesUnescaped}`]";
+            case KeyStyle.JavaScript:
+                if (DOT_COMPATIBLE_REGEX.IsMatch(key))
+                    return $".{key}";
+                escapedKey = StrToString(key, false);
+                if (key.Contains('\''))
+                {
+                    return $"[\"{escapedKey}\"]";
+                }
+                keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
+                return $"['{keyDubquotesUnescaped}']";
+            case KeyStyle.Python:
+                escapedKey = StrToString(key, false);
+                if (escapedKey.Contains('\''))
+                {
+                    return $"[\"{escapedKey}\"]";
+                }
+                keyDubquotesUnescaped = escapedKey.Replace("\\\"", "\"");
+                return $"['{keyDubquotesUnescaped}']";
+            default: throw new ArgumentException("style argument for FormatKey must be a KeyStyle member", "style");
             }
+        }
+
+        public static string FormatIndex(int idx, char separator)
+        {
+            return separator == DEFAULT_PATH_SEPARATOR ? $"[{idx}]" : $"{separator}{idx}";
         }
 
         public static Dictionary<Dtype, string> DtypeStrings = new Dictionary<Dtype, string>
@@ -979,9 +997,7 @@ namespace JSON_Tools.JSON_Tools
             [Dtype.STR] = "string",
             [Dtype.UNKNOWN] = "unknown",
             [Dtype.SLICE] = "slice",
-            //[Dtype.DATE] = "date",
             [Dtype.REGEX] = "regex",
-            //[Dtype.DATETIME] = "datetime",
         };
 
         /// <summary>

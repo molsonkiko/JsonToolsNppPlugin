@@ -76,11 +76,11 @@ namespace Kbg.NppPluginNET
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
         private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl", "json5" };
         private static bool bufferFinishedOpening = false;
-        ///// <summary>
-        ///// this form is always created on the main thread, so mainThreadForm.Invoke(X) could be a way to call X on the main thread.<br></br>
-        ///// I am not using this approach at present because it appears to have a noticeable (and annoying) impact on Notepad++ startup.
-        ///// </summary>
-        //public static Form mainThreadForm;
+
+        /// <summary>
+        /// this is set from <see cref="Settings.path_separator"/>
+        /// </summary>
+        public static char pathSeparator = SetPathSeparatorFromSettings();
         // toolbar icons
         static Icon dockingFormIcon = null;
         // indicators (used for selection remembering)
@@ -1160,10 +1160,13 @@ namespace Kbg.NppPluginNET
         {
             bool oldUseNppStyling = settings.use_npp_styling;
             float oldTreeViewFontSize = settings.tree_view_font_size;
+            string oldPathSepStr = settings.path_separator;
             settings.ShowDialog();
             millisecondsAfterLastEditToParse = (settings.inactivity_seconds_before_parse < 1)
                     ? 1000
                     : 1000 * settings.inactivity_seconds_before_parse;
+            if (settings.path_separator != oldPathSepStr)
+                pathSeparator = SetPathSeparatorFromSettings(oldPathSepStr);
             // make sure grepperForm gets these new settings as well
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
@@ -1171,6 +1174,29 @@ namespace Kbg.NppPluginNET
             }
             if (settings.tree_view_font_size != oldTreeViewFontSize || settings.use_npp_styling != oldUseNppStyling)
                 RestyleEverything();
+        }
+
+        private static char SetPathSeparatorFromSettings(string oldPathSepStr = "\"\\u0001\"")
+        {
+            string newPathSepStr;
+            char newPathSepChar;
+            try
+            {
+                newPathSepStr = (string)new JsonParser().ParseString(settings.path_separator).value;
+                if (newPathSepStr.Length != 1)
+                    throw new Exception("path_separator setting must be a JSON string containing exactly one character");
+                newPathSepChar = newPathSepStr[0];
+                JNode.ThrowIfPathSeparatorInvalid(newPathSepChar);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"path_separator setting could not be changed from {oldPathSepStr} to {settings.path_separator} due to the following error:\r\n{ex}",
+                    "Could not change path_separator setting", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                settings.path_separator = oldPathSepStr;
+                newPathSepChar = pathSeparator;
+                settings.SaveToIniFile();
+            }
+            return newPathSepChar;
         }
 
         /// <summary>
@@ -1311,7 +1337,7 @@ namespace Kbg.NppPluginNET
         public static void CopyPathToCurrentPosition()
         {
             int pos = Npp.editor.GetCurrentPos();
-            string result = PathToPosition(settings.key_style, pos);
+            string result = PathToPosition(settings.key_style, pathSeparator, pos);
             if (result.Length == 0)
             {
                 MessageBox.Show($"Did not find a node at position {pos} of this file",
@@ -1329,7 +1355,7 @@ namespace Kbg.NppPluginNET
         /// </summary>
         /// <param name="pos"></param>
         /// <returns></returns>
-        private static string PathToPosition(KeyStyle style, int pos = -1)
+        private static string PathToPosition(KeyStyle style, char separator, int pos = -1)
         {
             if (pos == -1)
                 pos = Npp.editor.GetCurrentPos();
@@ -1359,25 +1385,34 @@ namespace Kbg.NppPluginNET
                 if (parserState == ParserState.FATAL || json == null)
                     return "";
             }
-            if (usesSelections)
+            try
             {
-                // check if pos is inside a selection
-                // re-parse this remembered selection
-                // (we can't rely on the position-json mapping of the selection-remembering object being in sync with the document)
-                (int start, int end) = SelectionManager.GetEnclosingRememberedSelection(pos, selectionRememberingIndicator1, selectionRememberingIndicator2);
-                if (start < 0)
-                    return "";
-                string selText = Npp.GetSlice(start, end);
-                var parser = JsonParserFromSettings();
-                JNode selJson = parser.Parse(selText);
-                if (parser.fatal)
-                    return "";
-                // this remembered selection still contains JSON, so find the path to this position in it
-                string formattedKey = JNode.FormatKey($"{start},{end}", style);
-                return formattedKey + selJson.PathToPosition(pos - start, style);
+                if (usesSelections)
+                {
+                    // check if pos is inside a selection
+                    // re-parse this remembered selection
+                    // (we can't rely on the position-json mapping of the selection-remembering object being in sync with the document)
+                    (int start, int end) = SelectionManager.GetEnclosingRememberedSelection(pos, selectionRememberingIndicator1, selectionRememberingIndicator2);
+                    if (start < 0)
+                        return "";
+                    string selText = Npp.GetSlice(start, end);
+                    var parser = JsonParserFromSettings();
+                    JNode selJson = parser.Parse(selText);
+                    if (parser.fatal)
+                        return "";
+                    // this remembered selection still contains JSON, so find the path to this position in it
+                    string formattedKey = JNode.FormatKey($"{start},{end}", style, separator);
+                    return formattedKey + selJson.PathToPosition(pos - start, style, separator);
+                }
+                else
+                    return json.PathToPosition(pos, style, separator);
             }
-            else
-                return json.PathToPosition(pos, style);
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While attempting to format the path to the current position, the following error occurred:\r\n{ex}",
+                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return "";
+            }
         }
 
         /// <summary>
@@ -1839,7 +1874,7 @@ namespace Kbg.NppPluginNET
         {
             if (sortForm == null || sortForm.IsDisposed)
                 sortForm = new SortForm();
-            sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath);
+            sortForm.PathTextBox.Text = PathToPosition(KeyStyle.RemesPath, JNode.DEFAULT_PATH_SEPARATOR);
             sortForm.Show();
             sortForm.Focus();
         }

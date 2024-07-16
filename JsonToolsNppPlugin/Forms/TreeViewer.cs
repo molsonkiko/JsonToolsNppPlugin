@@ -72,13 +72,18 @@ namespace JSON_Tools.Forms
         public bool isDarkMode = false;
 
         // event handlers for the node mouseclick drop down menu
+        private bool hasWarnedNo_path_separator = false;
         private static MouseEventHandler valToClipboardHandler = null;
+        private static MouseEventHandler pathToClipboardHandler = null;
         private static MouseEventHandler pathToClipboardHandler_Remespath = null;
         private static MouseEventHandler pathToClipboardHandler_Python = null;
         private static MouseEventHandler pathToClipboardHandler_Javascript = null;
+        private static MouseEventHandler pathToClipboardHandler_path_separator = null;
+        private static MouseEventHandler keyToClipboardHandler = null;
         private static MouseEventHandler keyToClipboardHandler_Remespath = null;
         private static MouseEventHandler keyToClipboardHandler_Python = null;
         private static MouseEventHandler keyToClipboardHandler_Javascript = null;
+        private static MouseEventHandler keyToClipboardHandler_path_separator = null;
         private static MouseEventHandler ToggleSubtreesHandler = null;
         private static MouseEventHandler selectThisHandler = null;
         private static MouseEventHandler showSortFormHandler = null;
@@ -924,6 +929,30 @@ namespace JSON_Tools.Forms
                     }
                 );
                 keyToClipboard_RemesPath.MouseUp += keyToClipboardHandler_Remespath;
+                var keyToClipboard_path_separator = keyToClipboard.DropDownItems[3];
+                keyToClipboard_path_separator.Text = $"Use path_separator setting ({Main.settings.path_separator})";
+                if (keyToClipboardHandler_path_separator != null)
+                {
+                    try
+                    {
+                        keyToClipboard_path_separator.MouseUp -= keyToClipboardHandler_path_separator;
+                    }
+                    catch { }
+                }
+                keyToClipboardHandler_path_separator = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        if (Main.pathSeparator == JNode.DEFAULT_PATH_SEPARATOR && !hasWarnedNo_path_separator)
+                        {
+                            MessageBox.Show($"You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {Main.settings.path_separator}. The {Main.settings.key_style} style is being used instead.",
+                                "path_separator setting not configured",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            hasWarnedNo_path_separator = true;
+                        }
+                        Npp.TryCopyToClipboard(KeyOfTreeNode(node, Main.settings.key_style, Main.pathSeparator));
+                    }
+                );
+                keyToClipboard_path_separator.MouseUp += keyToClipboardHandler_path_separator;
                 // drop down menu for getting path to clipboard
                 var pathToClipboard = (ToolStripMenuItem)NodeRightClickMenu.Items[2];
                 var pathToClipboard_Javascript = pathToClipboard.DropDownItems[0];
@@ -974,12 +1003,60 @@ namespace JSON_Tools.Forms
                     }
                 );
                 pathToClipboard_RemesPath.MouseUp += pathToClipboardHandler_Remespath;
-                switch (Main.settings.key_style)
+                var pathToClipboard_path_separator = pathToClipboard.DropDownItems[3];
+                pathToClipboard_path_separator.Text = $"Use path_separator setting ({Main.settings.path_separator})";
+                if (pathToClipboardHandler_path_separator != null)
                 {
-                    case (KeyStyle.RemesPath): pathToClipboard.MouseUp += pathToClipboardHandler_Remespath; break;
-                    case (KeyStyle.Python): pathToClipboard.MouseUp += pathToClipboardHandler_Python; break;
-                    case (KeyStyle.JavaScript): pathToClipboard.MouseUp += pathToClipboardHandler_Javascript; break;
+                    try
+                    {
+                        pathToClipboard_path_separator.MouseUp -= pathToClipboardHandler_path_separator;
+                    }
+                    catch { }
                 }
+                pathToClipboardHandler_path_separator = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        if (Main.pathSeparator == JNode.DEFAULT_PATH_SEPARATOR && !hasWarnedNo_path_separator)
+                        {
+                            MessageBox.Show($"You chose \"Path to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {Main.settings.path_separator}. The {Main.settings.key_style} style is being used instead.",
+                                "path_separator setting not configured",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            hasWarnedNo_path_separator = true;
+                        }
+                        Npp.TryCopyToClipboard(PathToTreeNode(node, Main.settings.key_style, Main.pathSeparator));
+                    }
+                );
+                pathToClipboard_path_separator.MouseUp += pathToClipboardHandler_path_separator;
+                // shortcut to whatever the current settings say if user clicks on the parent item
+                if (pathToClipboardHandler != null)
+                    pathToClipboard.MouseUp -= pathToClipboardHandler;
+                if (keyToClipboardHandler != null)
+                    keyToClipboard.MouseUp -= keyToClipboardHandler;
+                if (Main.pathSeparator == JNode.DEFAULT_PATH_SEPARATOR)
+                {
+                    switch (Main.settings.key_style)
+                    {
+                    case KeyStyle.RemesPath:
+                        pathToClipboardHandler = pathToClipboardHandler_Remespath;
+                        keyToClipboardHandler = keyToClipboardHandler_Remespath;
+                        break;
+                    case KeyStyle.Python:
+                        pathToClipboardHandler = pathToClipboardHandler_Python;
+                        keyToClipboardHandler = keyToClipboardHandler_Python;
+                        break;
+                    case KeyStyle.JavaScript:
+                        pathToClipboardHandler = pathToClipboardHandler_Javascript;
+                        keyToClipboardHandler = keyToClipboardHandler_Javascript;
+                        break;
+                    }
+                }
+                else
+                {
+                    pathToClipboardHandler = pathToClipboardHandler_path_separator;
+                    keyToClipboardHandler = keyToClipboardHandler_path_separator;
+                }
+                pathToClipboard.MouseUp += pathToClipboardHandler;
+                keyToClipboard.MouseUp += keyToClipboardHandler;
                 NodeRightClickMenu.Items[3].MouseUp -= ToggleSubtreesHandler;
                 JNode nodeJson = pathsToJNodes[node.FullPath];
                 ToggleSubtreesHandler = new MouseEventHandler(
@@ -1056,7 +1133,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         /// <param name="style"></param>
         /// <returns></returns>
-        public string PathToTreeNode(TreeNode node, KeyStyle style = KeyStyle.Python, List<string> path = null)
+        public string PathToTreeNode(TreeNode node, KeyStyle style = KeyStyle.Python, char separator =  JNode.DEFAULT_PATH_SEPARATOR, List<string> path = null)
         {
             if (path == null)
                 path = new List<string>();
@@ -1067,17 +1144,14 @@ namespace JSON_Tools.Forms
                 path.Reverse(); // cuz they were added from the node to the root
                 return string.Join("", path);
             }
-            path.Add(KeyOfTreeNode(node, style));
-            return PathToTreeNode(node.Parent, style, path);
+            path.Add(KeyOfTreeNode(node, style, separator));
+            return PathToTreeNode(node.Parent, style, separator, path);
         }
 
         /// <summary>
-        /// See JNode.FormatKey, but uses the key of a TreeNode
+        /// See <see cref="JNode.FormatKey(string, KeyStyle, char)"/>, but uses the key of a TreeNode as the first argument, and separator as the third argument.
         /// </summary>
-        /// <param name="node"></param>
-        /// <param name="style"></param>
-        /// <returns></returns>
-        public string KeyOfTreeNode(TreeNode node, KeyStyle style)
+        public string KeyOfTreeNode(TreeNode node, KeyStyle style, char separator = JNode.DEFAULT_PATH_SEPARATOR)
         {
             if (node.Name == "" // TreeNodes representing array members have no name
                 // but we need to be careful because an object could have the empty string as a key
@@ -1088,9 +1162,18 @@ namespace JSON_Tools.Forms
                 // one treenode for every i^th JNode in the JArray. 
                 string[] parts = node.Text.Split(' ', ':');
                 int idx = int.Parse(parts[0]);
-                return $"[{idx}]";
+                return JNode.FormatIndex(idx, separator);
             }
-            return JNode.FormatKey(node.Name, style);
+            try
+            {
+                return JNode.FormatKey(node.Name, style, separator);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"While attempting to format key {node.Name} using style, the following error occurred:\r\n{ex}",
+                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return "";
+            }
         }
 
         /// <summary>
