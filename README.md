@@ -156,8 +156,10 @@ To be clear, *JsonTools may not be in the same language of the Notepad++ UI,* an
 To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
 
 Currently JsonTools has been translated into the following languages:
-- English (obviously)
-- [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)
+| Language | First version with translation | Translator(s) | Translator is native speaker?  |
+|----------|--------------------------------|---------------|--------------------------------|
+| [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `jsonLint` section)  | Only conky77 |
+
 
 The following aspects of JsonTools __can__ be translated:
 - Forms (including all controls and items in drop-down menus)
