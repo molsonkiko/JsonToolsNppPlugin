@@ -136,35 +136,35 @@ namespace JSON_Tools.JSON_Tools
             // OK messages
             case JsonLintType.OK_CONTROL_CHAR: return Translator.TranslateLintMessage(translated, lintType, "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification");
             // NAN_INF messages
-            case JsonLintType.NAN_INF_Infinity: return Translator.TranslateLintMessage(translated, lintType, "Infinity is not part of the original JSON specification");
-            case JsonLintType.NAN_INF_NaN: return Translator.TranslateLintMessage(translated, lintType, "NaN is not part of the original JSON specification");
+            case JsonLintType.NAN_INF_Infinity: return Translator.TranslateLintMessage(translated, lintType, "Infinity is not allowed in the original JSON specification");
+            case JsonLintType.NAN_INF_NaN: return Translator.TranslateLintMessage(translated, lintType, "NaN is not allowed in the original JSON specification");
             // JSONC messages
-            case JsonLintType.JSONC_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "JavaScript comments are not part of the original JSON specification");
+            case JsonLintType.JSONC_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "JavaScript comments are not allowed in the original JSON specification");
             // JSON5 messages
             case JsonLintType.JSON5_WHITESPACE_CHAR: return Translator.TranslateLintMessage(translated, lintType, "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5");
             case JsonLintType.JSON5_SINGLEQUOTED_STRING: return Translator.TranslateLintMessage(translated, lintType, "Singlequoted strings are only allowed in JSON5");
             case JsonLintType.JSON5_ESCAPED_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "Escaped newline characters are only allowed in JSON5");
             case JsonLintType.JSON5_X_ESCAPE: return Translator.TranslateLintMessage(translated, lintType, "\\x escapes are only allowed in JSON5");
-            case JsonLintType.JSON5_ESCAPED_CHAR: return TryTranslateWithOneParam(translated, lintType, "Escaped char '{0}' is only valid in JSON5", param1);
-            case JsonLintType.JSON5_UNQUOTED_KEY: return Translator.TranslateLintMessage(translated, lintType, "Unquoted keys are only supported in JSON5");
-            case JsonLintType.JSON5_NUM_LEADING_PLUS: return Translator.TranslateLintMessage(translated, lintType, "Leading + signs in numbers are not allowed except in JSON5");
-            case JsonLintType.JSON5_HEX_NUM: return Translator.TranslateLintMessage(translated, lintType, "Hexadecimal numbers are only part of JSON5");
-            case JsonLintType.JSON5_NUM_LEADING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a leading decimal point are only part of JSON5");
+            case JsonLintType.JSON5_ESCAPED_CHAR: return TryTranslateWithOneParam(translated, lintType, "Escaped char '{0}' is only allowed in JSON5", param1);
+            case JsonLintType.JSON5_UNQUOTED_KEY: return Translator.TranslateLintMessage(translated, lintType, "Unquoted keys are only allowed in JSON5");
+            case JsonLintType.JSON5_NUM_LEADING_PLUS: return Translator.TranslateLintMessage(translated, lintType, "Leading + signs in numbers are only allowed in JSON5");
+            case JsonLintType.JSON5_HEX_NUM: return Translator.TranslateLintMessage(translated, lintType, "Hexadecimal numbers are only allowed in JSON5");
+            case JsonLintType.JSON5_NUM_LEADING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a leading decimal point are only allowed in JSON5");
             case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Comma after last element of array");
             case JsonLintType.JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Comma after last key-value pair of object");
+            case JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a trailing decimal point are only allowed in JSON5");
             // BAD messages
-            case JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Numbers with a trailing decimal point are only part of JSON5");
             case JsonLintType.BAD_UNTERMINATED_MULTILINE_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Unterminated multi-line comment");
-            case JsonLintType.BAD_PYTHON_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Python-style '#' comments are not part of any well-accepted JSON specification");
+            case JsonLintType.BAD_PYTHON_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Python-style '#' comments are not allowed in any well-accepted JSON specification");
             case JsonLintType.BAD_STRING_CONTAINS_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "String literal contains newline");
             case JsonLintType.BAD_KEY_CONTAINS_NEWLINE: return Translator.TranslateLintMessage(translated, lintType, "Object key contains newline");
             case JsonLintType.BAD_UNTERMINATED_STRING: return TryTranslateWithOneParam(translated, lintType, "Unterminated string literal starting at position {0}", param1);
             case JsonLintType.BAD_INVALID_UNQUOTED_KEY: return TryTranslateWithOneParam(translated, lintType, "No valid unquoted key beginning at {0}", param1);
             case JsonLintType.BAD_PYTHON_nan: return Translator.TranslateLintMessage(translated, lintType, "nan is not a valid representation of Not a Number in JSON");
-            case JsonLintType.BAD_PYTHON_None: return Translator.TranslateLintMessage(translated, lintType, "None is not an accepted part of any JSON specification");
+            case JsonLintType.BAD_PYTHON_None: return Translator.TranslateLintMessage(translated, lintType, "None is not allowed in any JSON specification");
             case JsonLintType.BAD_PYTHON_inf: return Translator.TranslateLintMessage(translated, lintType, "inf is not the correct representation of Infinity in JSON");
-            case JsonLintType.BAD_UNNECESSARY_LEADING_0: return Translator.TranslateLintMessage(translated, lintType, "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification");
-            case JsonLintType.BAD_SLASH_FRACTION: return Translator.TranslateLintMessage(translated, lintType, "Fractions of the form 1/3 are not part of any JSON specification");
+            case JsonLintType.BAD_UNNECESSARY_LEADING_0: return Translator.TranslateLintMessage(translated, lintType, "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification");
+            case JsonLintType.BAD_SLASH_FRACTION: return Translator.TranslateLintMessage(translated, lintType, "Fractions of the form 1/3 are not allowed in any JSON specification");
             case JsonLintType.BAD_NUMBER_INVALID_FORMAT: return TryTranslateWithOneParam(translated, lintType, "Number string {0} had bad format", param1);
             case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_ARRAY: return TryTranslateWithOneParam(translated, lintType, "Two consecutive commas after element {0} of array", param1);
             case JsonLintType.BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Comma before first value in array");
@@ -181,9 +181,9 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.BAD_CHAR_WHERE_COLON_EXPECTED: return TryTranslateWithTwoParams(translated, lintType, "Found '{0}' after key {1} when colon expected", param1, param2);
             case JsonLintType.BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE: return TryTranslateWithOneParam(translated, lintType, "No ':' between key {0} and value {0} of object", param1);
             case JsonLintType.BAD_DUPLICATE_KEY: return TryTranslateWithOneParam(translated, lintType, "Object has multiple of key \"{0}\"", param1);
-            case JsonLintType.BAD_PYTHON_True: return Translator.TranslateLintMessage(translated, lintType, "True is not an accepted part of any JSON specification");
-            case JsonLintType.BAD_PYTHON_False: return Translator.TranslateLintMessage(translated, lintType, "False is not an accepted part of any JSON specification");
-            case JsonLintType.BAD_JAVASCRIPT_undefined: return Translator.TranslateLintMessage(translated, lintType, "undefined is not part of any JSON specification");
+            case JsonLintType.BAD_PYTHON_True: return Translator.TranslateLintMessage(translated, lintType, "True is not allowed in any JSON specification");
+            case JsonLintType.BAD_PYTHON_False: return Translator.TranslateLintMessage(translated, lintType, "False is not allowed in any JSON specification");
+            case JsonLintType.BAD_JAVASCRIPT_undefined: return Translator.TranslateLintMessage(translated, lintType, "undefined is not allowed in any JSON specification");
             case JsonLintType.BAD_CHAR_INSTEAD_OF_EOF: return TryTranslateWithOneParam(translated, lintType, "At end of valid JSON document, got {0} instead of EOF", param1);
             // FATAL messages
             case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Expected JavaScript comment after '/'");

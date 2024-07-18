@@ -839,7 +839,7 @@ multiline comment
                 ("{\"a\": 1, \"b\": \"q\" : //foo\n \"c\": 7}", "{\"a\": 1, \"b\": \"q\", \"c\": 7}", new string[] {
                     "No comma after key-value pair 1 in object",
                     "':' found instead of comma after key-value pair" ,
-                    "JavaScript comments are not part of the original JSON specification" }),
+                    "JavaScript comments are not allowed in the original JSON specification" }),
                 ("{\"a\": -1.5 :", "{\"a\": -1.5}", new string[]{
                     "No comma after key-value pair 0 in object",
                     "No valid unquoted key beginning at 11",
@@ -847,7 +847,7 @@ multiline comment
                 ("{\"a\":false: /* baz */", "{\"a\": false}", new string[]{
                     "No comma after key-value pair 0 in object",
                     "':' found instead of comma after key-value pair",
-                    "JavaScript comments are not part of the original JSON specification",
+                    "JavaScript comments are not allowed in the original JSON specification",
                     "Unterminated object"
                 }),
                 ("{\"a\":true\n:\r\n\t ", "{\"a\": true}", new string[]{
@@ -857,9 +857,9 @@ multiline comment
                 }),
                 ("[1  \"a\n\"]", "[1, \"a\\n\"]", new string[]{"No comma between array members", "String literal contains newline"}),
                 ("[NaN, -Infinity, Infinity]", "[NaN, -Infinity, Infinity]",
-                    new string[]{ "NaN is not part of the original JSON specification",
-                                  "Infinity is not part of the original JSON specification",
-                                  "Infinity is not part of the original JSON specification" }),
+                    new string[]{ "NaN is not allowed in the original JSON specification",
+                                  "Infinity is not allowed in the original JSON specification",
+                                  "Infinity is not allowed in the original JSON specification" }),
                 ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']'", "Comma after last key-value pair of object" }),
                 ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
                 ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
@@ -868,17 +868,17 @@ multiline comment
                                                                                                 "Unterminated object" }),
                 ("{", "{}", new string[] { "Unterminated object" }),
                 ("[", "[]", new string[] { "Unterminated array" }),
-                ("[+1.5, +2e3, +Infinity, +7.5/-3]", "[1.5, 2000.0, Infinity, -2.5]", new string[]{ "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Infinity is not part of the original JSON specification", "Leading + signs in numbers are not allowed except in JSON5", "Fractions of the form 1/3 are not part of any JSON specification" }),
-                ("[1] // comment", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification" }),
+                ("[+1.5, +2e3, +Infinity, +7.5/-3]", "[1.5, 2000.0, Infinity, -2.5]", new string[]{ "Leading + signs in numbers are only allowed in JSON5", "Leading + signs in numbers are only allowed in JSON5", "Leading + signs in numbers are only allowed in JSON5", "Infinity is not allowed in the original JSON specification", "Leading + signs in numbers are only allowed in JSON5", "Fractions of the form 1/3 are not allowed in any JSON specification" }),
+                ("[1] // comment", "[1]", new string[] { "JavaScript comments are not allowed in the original JSON specification" }),
                 ("{\"a\": 1,,\"b\": 2}", "{\"a\": 1, \"b\": 2}", new string[] { "Two consecutive commas after key-value pair 0 of object" }),
-                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not part of any well-accepted JSON specification" }),
-                ("[1] /* unterminated multiline", "[1]", new string[] { "JavaScript comments are not part of the original JSON specification", "Unterminated multi-line comment" }),
+                ("[1]\r\n# Python comment", "[1]", new string[] { "Python-style '#' comments are not allowed in any well-accepted JSON specification" }),
+                ("[1] /* unterminated multiline", "[1]", new string[] { "JavaScript comments are not allowed in the original JSON specification", "Unterminated multi-line comment" }),
                 ("\"\\u043\"", "\"\"", new string[] { "Could not find valid hexadecimal of length 4" }),
                 ("'abc'", "\"abc\"", new string[] { "Singlequoted strings are only allowed in JSON5" }),
                 ("  \"a\n\"", "\"a\\n\"", new string[] { "String literal contains newline" }),
                 ("[.75, 0xabcdef, +9, -0xABCDEF, +0x0123456789]", "[0.75, 11259375, 9, -11259375, 4886718345]", new string[]
                 {
-                    "Numbers with a leading decimal point are only part of JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5", "Leading + signs in numbers are not allowed except in JSON5", "Hexadecimal numbers are only part of JSON5",
+                    "Numbers with a leading decimal point are only allowed in JSON5", "Hexadecimal numbers are only allowed in JSON5", "Leading + signs in numbers are only allowed in JSON5", "Hexadecimal numbers are only allowed in JSON5", "Leading + signs in numbers are only allowed in JSON5", "Hexadecimal numbers are only allowed in JSON5",
                 }),
                 ("{\"\u000c\t\": \"\u0008\t\u0009\"}", "{\"\\f\\t\": \"\\b\\t\\u0009\"}", new string[]{
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
@@ -903,7 +903,7 @@ multiline comment
                 ("Hugre", "null", new string[]{"Badly located character \"H\""}),
                 ("[undefined, underpants]", "[null, null]",
                 new string[]{
-                    "undefined is not part of any JSON specification",
+                    "undefined is not allowed in any JSON specification",
                     "Expected literal starting with 'u' to be undefined"
                 }),
                 ("[nan, inf, -inf]", "[NaN, Infinity, -Infinity]",
@@ -913,10 +913,10 @@ multiline comment
                     "inf is not the correct representation of Infinity in JSON",
                     "inf is not the correct representation of Infinity in JSON"
                 }),
-                ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only valid in JSON5"}),
+                ("\"\\i\"", "\"i\"", new string[]{"Escaped char 'i' is only allowed in JSON5"}),
                 ("", "null", new string[]{"No input"}),
-                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not part of the original JSON specification", "JavaScript comments are not part of the original JSON specification","Input is only whitespace and maybe comments" }),
-                ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not part of the original JSON specification", "Expected JavaScript comment after '/'" }),
+                ("\t\r\n  // comments\r\n/* */ ", "null", new string[]{ "JavaScript comments are not allowed in the original JSON specification", "JavaScript comments are not allowed in the original JSON specification","Input is only whitespace and maybe comments" }),
+                ("[5/ ]", "[5]", new string[]{ "JavaScript comments are not allowed in the original JSON specification", "Expected JavaScript comment after '/'" }),
                 ("\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", "\"\xa0\u2028\u2029\ufeff\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\"", new string[]
                 {
                     "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
@@ -942,16 +942,16 @@ multiline comment
                 ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6, f\\u0000o: 1}",
                  "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 6}",
                  new string[]{
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
-                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "String literal contains newline", // the \u000a in \\b\\u000a is secretly a newline
-                    "Unquoted keys are only supported in JSON5",
+                    "Unquoted keys are only allowed in JSON5",
                     "'\\x00' is the null character, which is illegal in JsonTools"
                 }),
                 ("[1,\"b\\\nb\\\rb\\\r\nb\"]", "[1, \"bbbb\"]",
@@ -972,10 +972,10 @@ multiline comment
                 ("[\"a\\u0000b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
                 ("{\"\\1\\A\": \"\\7\\B\"}", "{\"1A\": \"7B\"}",
                 new string[]{
-                    "Escaped char '1' is only valid in JSON5",
-                    "Escaped char 'A' is only valid in JSON5",
-                    "Escaped char '7' is only valid in JSON5",
-                    "Escaped char 'B' is only valid in JSON5",
+                    "Escaped char '1' is only allowed in JSON5",
+                    "Escaped char 'A' is only allowed in JSON5",
+                    "Escaped char '7' is only allowed in JSON5",
+                    "Escaped char 'B' is only allowed in JSON5",
                 }),
                 ("{\"\\x51ED\\v\": \"\\x51ED\\v\"}", "{\"QED\\v\": \"QED\\v\"}",
                 new string[]{
@@ -1001,12 +1001,12 @@ multiline comment
                 ("[True, False, None]", "[true, false, null]",
                 new string[]
                 {
-                    "True is not an accepted part of any JSON specification",
-                    "False is not an accepted part of any JSON specification",
-                    "None is not an accepted part of any JSON specification"
+                    "True is not allowed in any JSON specification",
+                    "False is not allowed in any JSON specification",
+                    "None is not allowed in any JSON specification"
                 }),
-                ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
-                ("-0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only part of JSON5", "Hex number too large for a 64-bit signed integer type"}),
+                ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only allowed in JSON5", "Hex number too large for a 64-bit signed integer type"}),
+                ("-0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only allowed in JSON5", "Hex number too large for a 64-bit signed integer type"}),
                 ("{\"a\": [[1, 2], [3, 4, \"b\": [5 , \"c\": [, \"d\": 6}", "{\"a\": [[1, 2], [3, 4]], \"b\": [5], \"c\": [], \"d\": 6}",
                     new string[]{ "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
                                   "No comma between array members",
@@ -1029,7 +1029,7 @@ multiline comment
                     ", \"j\"]",
                     "[{\"a\": 0}, null, {}, 2, {}, 3, {\"b\": [4, 5, {\"c\": 6}, \"d\"]}, {\"e\": {\"f\": [null], \"g\": {\"h\": 7}}}, \"i\", \"j\"]",
                     new string[]{
-                            "Unquoted keys are only supported in JSON5",
+                            "Unquoted keys are only allowed in JSON5",
                             "Found ',' after key 1 when colon expected",
                             "No comma between array members",
                             "No valid unquoted key beginning at 17",
@@ -1066,18 +1066,18 @@ multiline comment
                     }
                 ),
                 ("-[]", "NaN", new string[]{"Number string \"-\" had bad format", "At end of valid JSON document, got [ instead of EOF"}),
-                (" +\r\nfalse", "NaN", new string[]{"Leading + signs in numbers are not allowed except in JSON5", "Number string \"+\" had bad format", "At end of valid JSON document, got f instead of EOF"}),
-                (" +", "null", new string[]{"Leading + signs in numbers are not allowed except in JSON5", "'+' sign at end of document"}),
+                (" +\r\nfalse", "NaN", new string[]{"Leading + signs in numbers are only allowed in JSON5", "Number string \"+\" had bad format", "At end of valid JSON document, got f instead of EOF"}),
+                (" +", "null", new string[]{"Leading + signs in numbers are only allowed in JSON5", "'+' sign at end of document"}),
                 ("-", "null", new string[]{"'-' sign at end of document"}),
                 ("[5e, -0.2e]", "[NaN, NaN]", new string[]{"Number string \"5e\" had bad format", "Number string \"-0.2e\" had bad format"}),
                 ("[-5., 03, 2.e2, +05.0, -00]", "[-5.0, 3, 200.0, 5.0, 0]", new string[]
                 {
-                    "Numbers with a trailing decimal point are only part of JSON5",
-                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
-                    "Numbers with a trailing decimal point are only part of JSON5",
-                    "Leading + signs in numbers are not allowed except in JSON5",
-                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
-                    "Numbers with an unnecessary leading 0 (like \"01\") are not part of any JSON specification",
+                    "Numbers with a trailing decimal point are only allowed in JSON5",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
+                    "Numbers with a trailing decimal point are only allowed in JSON5",
+                    "Leading + signs in numbers are only allowed in JSON5",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
+                    "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
                 }),
             };
 

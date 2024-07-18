@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. Rename `Choose schemas to automatically validate filename patterns` to [`Validate files with JSON schema if name matches pattern`](/docs/README.md#automatic-validation-of-json-against-json-schema), in the hopes that the new name will be less confusing.
+2. Changed the wording of many JSON syntax error messages to be more consistent, per [conky77's suggestion here](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/70#issuecomment-2234114308).
 
 ### Fixed
 
