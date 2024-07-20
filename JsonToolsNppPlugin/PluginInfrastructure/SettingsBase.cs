@@ -59,6 +59,7 @@ namespace CsvQuery.PluginInfrastructure
         public SettingsBase(bool loadFromFile = true)
         {
             // Set defaults
+            Translator.LoadTranslations();
             foreach (var propertyInfo in GetType().GetProperties())
             {
                 if (propertyInfo.GetCustomAttributes(typeof(DefaultValueAttribute), false).FirstOrDefault() is DefaultValueAttribute def)
@@ -117,15 +118,26 @@ namespace CsvQuery.PluginInfrastructure
                         allConvertedCorrectly = false;
                         // use the default value for the property, since the config file couldn't be read in this case.
                         SetPropertyInfoToDefault(propertyInfo);
-                        string errorDescription = ex is null ? "could not be converted for an unknown reason." : $"raised the following error:\r\n{ex}";
-                        MessageBox.Show(
-                            $"While parsing {Main.PluginName} config file, expected setting \"{name}\" to be type {propertyInfo.PropertyType.Name}, but got an error.\r\n" +
-                            $"That setting was set to its default value of {propertyInfo.GetValue(this, null)}.\r\n" + 
-                            $"The given value {rawString} {errorDescription}",
-                            $"Error while parsing {Main.PluginName} config file",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
+                        if (ex is null)
+                        {
+                            Translator.ShowTranslatedMessageBox(
+                                "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} could not be converted for an unknown reason.",
+                                "Unknown error while parsing JsonTools config file",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error,
+                                4, name, propertyInfo.PropertyType.Name, propertyInfo.GetValue(this, null), rawString
+                            );
+                        }
+                        else
+                        {
+                            Translator.ShowTranslatedMessageBox(
+                                "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} raised the following error:\r\n{4}",
+                                "Error while parsing JsonTools config file",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error,
+                                5, name, propertyInfo.PropertyType.Name, propertyInfo.GetValue(this, null), rawString, ex
+                            );
+                        }
                     }
                 }
             }
@@ -291,10 +303,11 @@ namespace CsvQuery.PluginInfrastructure
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Could not change setting {propertyInfo.Name} to value {newValue}, so it will remain set as {oldValue}.\r\n" +
-                                $"Got the following exception:\r\n{ex}",
-                                $"Invalid value for setting {propertyInfo.Name}",
-                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            Translator.ShowTranslatedMessageBox(
+                                "Could not change setting {0} to value {1}, so it will remain set as {2}.\r\nGot the following exception:\r\n{3}",
+                                "Invalid value for setting {0}",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error,
+                                4, propertyInfo.Name, newValue, oldValue, ex, propertyInfo.Name);
                         }
                     }
                 }

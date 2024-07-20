@@ -1,8 +1,35 @@
 // If you want to translate JsonTools into another language, follow these steps (in the example below, we are translating into the "fooish" language):
 // 1. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin directory (the directory where the JsonTools.dll binary is installed, *not* the plugin config directory).
-// 2. Edit the values associated with the various keys in this document.
-//     DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
-// 3. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
+// 2. If you are not 100% certain you understand all the rules of JSON syntax, read https://www.json.org/json-en.html
+// 3. Edit the values associated with the various keys in this document. Here are some rules that you must follow.
+//     i. DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
+//     ii. Some of these values will have "{integer}" in their text,
+//         like the "{0}" and "{1}" in "Found '{0}' after key {1} when colon expected".
+//         When you see "{1}" in a value, this means "insert the 2nd piece of extra information required to render this message".
+//         When translating these values, it is VERY IMPORTANT that your translation includes all the "{integer}" occurrences.
+//         EXAMPLES OF TRANSLATING "Found '{0}' after key {1} when colon expected" TO ITALIAN:
+//         GOOD: "Trovato '{0}' dopo la chiave {1} quando erano previsti i due punti"
+//         BAD (missing "{0}"): "Trovato '' dopo la chiave {1} quando erano previsti i due punti"
+//         BAD (missing "{1}"): "Trovato '{0}' dopo la chiave {} quando erano previsti i due punti"
+//         BAD (has "{0.}" instead of "{0}"): "Trovato '{0.}' dopo la chiave {1} quando erano previsti i due punti"
+//     iii. The following words are keywords and MUST BE PRESERVED EXACTLY (including case).
+//         - null
+//         - true
+//         - false
+//         - NaN
+//         - Infinity
+//         - None
+//         - True
+//         - False
+//         - nan
+//         - inf
+//         - undefined
+//     iv. The ', ", and ` characters have specific meanings, and CANNOT BE USED INTERCHANGABLY.
+//         If you see 'x' in one place, `x` in another place, and "x" in a third place, assume that this was an intentional choice by molsonkiko, and leave it unchanged.
+//     v. If you see a word surrounded in \" or ' or ` inside a value, it is a keyword, so don't change it.
+// 4a. Go to the settings and change the `logger_level` setting to JSON5.
+// 4b. Use the "Check JSON syntax now" command to make sure that this document has no syntax errors with a severity of BAD or FATAL.
+// 5. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
 {
     "forms": {
         "AboutForm": {
@@ -314,17 +341,17 @@
         "FATAL_HEXADECIMAL_TOO_SHORT": "Impossibile trovare un esadecimale valido di lunghezza {0}",
         "FATAL_NUL_CHAR": "'\\x00' è il carattere nullo, che non è valido in JsonTools",
         "FATAL_UNTERMINATED_KEY": "Chiave oggetto non terminata",
-        "FATAL_INVALID_STARTSWITH_n": "Un letterale che inizia con 'n' deve essere null o nan",
         "FATAL_PLUS_OR_MINUS_AT_EOF": "Segni '{0}' alla fine del documento",
-        "FATAL_INVALID_STARTSWITH_I": "Un letterale che inizia con 'I' deve essere Infinity",
-        "FATAL_INVALID_STARTSWITH_N": "Un letterale che inizia con 'N' deve essere Nan o None",
-        "FATAL_INVALID_STARTSWITH_i": "Un letterale che inizia con 'i' deve essere inf",
         "FATAL_HEX_INT_OVERFLOW": "Numero esadecimale troppo grande per un tipo intero con segno a 64 bit",
         "FATAL_SECOND_DECIMAL_POINT": "Numero con un punto decimale al posto sbagliato",
         "FATAL_NUM_TRAILING_e_OR_E": "Notazione scientifica 'e' senza numero seguito",
         "FATAL_MAX_RECURSION_DEPTH": "Profondità massima di ricorsione (512) raggiunta",
         "FATAL_UNEXPECTED_EOF": "Fine del file imprevista",
         "FATAL_NO_VALID_LITERAL_POSSIBLE": "Nessun valore letterale valido possibile",
+        "FATAL_INVALID_STARTSWITH_I": "Un letterale che inizia con 'I' deve essere Infinity",
+        "FATAL_INVALID_STARTSWITH_N": "Un letterale che inizia con 'N' deve essere NaN o None",
+        "FATAL_INVALID_STARTSWITH_i": "Un letterale che inizia con 'i' deve essere inf",
+        "FATAL_INVALID_STARTSWITH_n": "Un letterale che inizia con 'n' deve essere null o nan",
         "FATAL_INVALID_STARTSWITH_t": "Un letterale che inizia con 't' deve essere true",
         "FATAL_INVALID_STARTSWITH_f": "Un letterale che inizia con 'f' deve essere false",
         "FATAL_INVALID_STARTSWITH_T": "Un letterale che inizia con 'T' deve essere True",
@@ -343,7 +370,7 @@
         "SCHEMA_CONTAINS_VIOLATION": "L'array deve contenere tra {0} e {1} elementi che corrispondono a \"contains\" lo schema {2}",
         "SCHEMA_MINCONTAINS_VIOLATION": "L'array deve contenere almeno {0} elementi che corrispondono a \"contains\" schema {1}",
         "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "Oggetto mancante \"required\" chiave {0}",
-        "SCHEMA_FALSE_SCHEMA": "lo schema è `false`, quindi nulla supererà la convalida",
+        "SCHEMA_FALSE_SCHEMA": "lo schema è false, quindi nulla supererà la convalida",
         "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "la stringa '{0}' non corrisponde alla regex '{1}'",
         "SCHEMA_RECURSION_LIMIT_REACHED": "la convalida ha una profondità massima di 128",
         "SCHEMA_NUMBER_LESS_THAN_MIN": "numero {0} inferiore al minimo {1}",
@@ -352,5 +379,78 @@
         "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "numero {0} maggiore o uguale al massimo esclusivo {1}",
         "SCHEMA_STRING_TOO_LONG": "la stringa {0} era maggiore di maxLength {1}",
         "SCHEMA_STRING_TOO_SHORT": "la stringa {0} aveva meno di minLength {1}"
+    },
+    "messageBoxes": {
+        // This object is used to translate message boxes (the little boxes with OK, Yes, No, Cancel buttons that pop up and tell you things or ask you for confirmation).
+        // Each key in this object is the caption of a message box.
+        // Each message box translation has the "text" and "caption" fields:
+        //      The "caption" field is the translation of the caption (the title line of the message box, to the left of the X to close the box).
+        //      The "text" field is the translation of the text inside the message box
+        // As in the "jsonLint" object, the {integer} inside any text have special meaning, so you need to leave those alone.
+        // ===== MessageBoxes in Main.cs =====
+        "Could not open url in web browser": {"caption": "Could not open url in web browser", "text": "While attempting to open URL {0} in web browser, got exception\r\n{1}"}, // text is just an exception, nothing to translate
+        "View syntax errors in document?": {"caption": "View syntax errors in document?", "text": "There were {0} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))"},
+        "Error while trying to parse {0}": {"caption": "Error while trying to parse {0}", "text": "Could not parse the document because of error\r\n{0}"},
+        "Possible issue with remembering selections": {"caption": "Possible issue with remembering selections", "text": "JsonTools is using the indicators {0} and {1} to remember selections, but one or both of those may collide with another plugin.\r\nIf you see this message and then you notice Notepad++ or a plugin start to behave oddly, please consider creating an issue describing what happened in the JsonTools GitHub repository."},
+        "Pretty-print JSON Lines document?": {"caption": "Pretty-print JSON Lines document?", "text": "Pretty-printing a JSON Lines document will generally lead to it no longer being a valid JSON Lines document. Pretty-print anyway?"},
+        "Error while reformatting INI file": {"caption": "Error while reformatting INI file", "text": "Error while reformatting INI file:\r\n{0}"},
+        "Programmatic error while reformatting JSON": {"caption": "Programmatic error while reformatting JSON", "text": "While attempting to reformat the file's JSON, got a programmatic error:\r\n{0}"},
+        "Failed to parse selected text as JSON": {"caption": "Failed to parse selected text as JSON", "text": "Selected text is not a JSON string"},
+        "JSON to YAML feature has some bugs": {"caption": "JSON to YAML feature has some bugs", "text": "This feature has known bugs that may result in invalid YAML being emitted. Run the tests to see examples. Use it anyway?"},
+        "Error while trying to convert JSON to YAML": {"caption": "Error while trying to convert JSON to YAML", "text": "Could not convert the JSON to YAML because of error\r\n{0}"},
+        "Only arrays can be converted to JSON Lines": {"caption": "Only arrays can be converted to JSON Lines", "text": "Only JSON arrays can be converted to JSON Lines format."},
+        "Could not change path_separator setting": {"caption": "Could not change path_separator setting", "text": "path_separator setting could not be changed from {0} to {1} due to the following error:\r\n{2}"},
+        "No JSON syntax errors for this file": {"caption": "No JSON syntax errors for this file", "text": "No JSON syntax errors (at or below {0} level) for {1}"},
+        "Could not find a node at this position": {"caption": "Could not find a node at this position", "text": "Did not find a node at position {0} of this file"},
+        "Error while formatting path to current position": {"caption": "Error while formatting path to current position", "text": "While attempting to format the path to the current position, the following error occurred:\r\n{0}"},
+        "No valid JSON elements found": {"caption": "No valid JSON elements found", "text": "No valid JSON elements starting with chars {0} were found in the document"},
+        "Error while validating JSON against schema": {"caption": "Error while validating JSON against schema", "text": "While validating JSON against the schema at path {0}, the following error occurred:\r\n{1}"},
+        "Validation failed...": {"caption": "Validation failed...", "text": "The JSON in file {0} DOES NOT validate against the schema at path {1}. Problem 1 of {2}:\r\n{3}"},
+        "Validation succeeded!": {"caption": "Validation succeeded!", "text": "The JSON in file {0} validates against the schema at path {1}."},
+        "JSON schema generation error": {"caption": "JSON schema generation error", "text": "Could not generate a JSON schema. Got the following error:\r\n{0}"},
+        "Error while generating random JSON from schema": {"caption": "Error while generating random JSON from schema", "text": "While trying to generate random JSON from this schema, got an error:\r\n{0}"},
+        "Couldn't parse schemas to fname patterns file": {"caption": "Couldn't parse schemas to fname patterns file", "text": "Failed to parse the schemas to fname patterns file. Got error\r\n{0}"},
+        "schemas to fnames patterns JSON badly formatted": {"caption": "schemas to fnames patterns JSON badly formatted", "text": "Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n{0}"},
+        "No schema exists at path {0}.": {"caption": "No schema exists at path {0}.", "text": "No schema exists at path {0}."},
+        "Regex did not compile (in schemas to fname patterns file)": {"caption": "Regex did not compile (in schemas to fname patterns file)", "text": "While testing all the regexes associated with file {0},\r\nregular expression {1} failed to compile due to an error:\r\n{2}"},
+        "Can't select all children": {"caption": "Can't select all children", "text": "Cannot select all children because one or more of the children does not correspond to a JSON node in the document"},
+        "Error while trying to parse schema": {"caption": "Error while trying to parse schema", "text": "While trying to parse the schema at path {0}, the following error occurred:\r\n{1}"},
+        "Error while compiling JSON schema": {"caption": "Error while compiling JSON schema", "text": "While compiling schema for file \"{0}\", got exception:\r\n{1}"},
+        // ===== MessageBoxes in AboutForm.cs =====
+        "such error very sad": {"caption": "such error very sad", "text": "Could not convert JSON to DSON. Got exception:\r\n{0}"}, // how translate? Shiba Inu only understands English. Such confuse, wow
+        // ===== MessageBoxes in JsonToCsvForm.cs =====
+        "Exception while tabularizing JSON": {"caption": "Exception while tabularizing JSON", "text": "While trying to create CSV from JSON, raised this exception:\r\n{0}"},
+        // ===== MessageBoxes in GrepperForm.cs =====
+        "Json file search error": {"caption": "Json file search error", "text": "While searching JSON files, got an exception:\r\n{0}"},
+        "No errors while searching documents": {"caption": "No errors while searching documents", "text": "No exceptions! {0}"},
+        "Error while sending API requests": {"caption": "Error while sending API requests" /* text is just an exception */},
+        // ===== MessageBoxes in TreeViewer.cs =====
+        "Can't populate JSON tree": {"caption": "Can't populate JSON tree", "text": "Cannot populate the JSON tree because no JSON is stored."},
+        "Error while populating tree": {"caption": "Error while populating tree", "text": "Could not populate JSON tree because of error:\n{0}"},
+        "Compilation error in RemesPath query": {"caption": "Compilation error in RemesPath query", "text": "Could not execute query {0} because of compilation error:\r\n{1}"},
+        "Stop seeing errors?": {"caption": "Stop seeing errors?", "text": "Select Yes to stop seeing error message boxes for this query"},
+        "Runtime error while executing query on selection": {"caption": "Runtime error while executing query on selection", "text": "While executing query {0} on selection between positions {1} and {2}, encountered runtime error:\r\n{3}"},
+        "Runtime error while executing query": {"caption": "Runtime error while executing query", "text": "While executing query {0}, encountered runtime error:\r\n{1}"},
+        "Error while formatting ini file values as strings after RemesPath mutation": {"caption": "Error while formatting ini file values as strings after RemesPath mutation", "text": "Could not mutate ini file because of error while trying to stringify all values:\r\n{0}"},
+        "path_separator setting not configured": {"caption": "path_separator setting not configured", "text": "You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {0}. The {1} style is being used instead."},
+        "Error while formatting key of tree node": {"caption": "Error while formatting key of tree node", "text": "While attempting to format key {0} using style, the following error occurred:\r\n{1}"},
+        "Can't select object or array in non-JSON": {"caption": "Can't select object or array in non-JSON", "text": "Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region"},
+        "Couldn't select associated JSON": {"caption": "Couldn't select associated JSON", "text": "The selected tree node does not appear to correspond to a JSON element in the document."},
+        "Couldn't select children of JSON": {"caption": "Couldn't select children of JSON", "text": "The selected tree node does not appear to correspond to a JSON element in the document."},
+        "Can only select children of object or array": {"caption": "Can only select children of object or array", "text": "The selected JSON is not an object or array, and thus has no children."},
+        // ===== MessageBoxes in SettingsBase.cs =====
+        "Unknown error while parsing JsonTools config file": {"caption": "Unknown error while parsing JsonTools config file", "text": "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} could not be converted for an unknown reason."},
+        "Error while parsing JsonTools config file": {"caption": "Error while parsing JsonTools config file", "text": "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} raised the following error:\r\n{4}"},
+        "Invalid value for setting {0}": {"caption": "Invalid value for setting {0}", "text": "Could not change setting {0} to value {1}, so it will remain set as {2}.\r\nGot the following exception:\r\n{3}"},
+        // ===== MessageBoxes in Npp.cs =====
+        "Nothing to copy to clipboard": {"caption": "Nothing to copy to clipboard", "text": "Couldn't find anything to copy to the clipboard"},
+        // ===== MessageBoxes in SortForm.cs =====
+        "Could not find json at that path": {"caption": "Could not find json at that path", "text": "Could not find json at the specified path ({0}).\r\nGot the following error:\r\n{1}"},
+        "Failed to compile query for sorting": {"caption": "Failed to compile query for sorting", "text": "Based on selected sort method, attempted to compile query \"{0}\",\r\nbut got the following error:\r\n{1}"},
+        "JSON at specified path must be object or array": {"caption": "JSON at specified path must be object or array", "text": "JSON at the specified path must be object or array, got {0}"},
+        "Can only sort arrays": {"caption": "Can only sort arrays", "text": "Can only sort arrays, got JSON of type {0}"},
+        "Error while sorting array": {"caption": "Error while sorting array", "text": "While sorting an array, got the following error:\r\n{0}"},
+        // ===== MessageBoxes in RegexSearchForm.cs =====
+        "Columns to parse as number must be array of integers": {"caption": "Columns to parse as number must be array of integers", "text": "Columns to parse as number must be a nonempty JSON array of integers"}
     }
 }

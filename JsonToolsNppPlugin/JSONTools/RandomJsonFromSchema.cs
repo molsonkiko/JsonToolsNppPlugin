@@ -270,6 +270,8 @@ namespace JSON_Tools.JSON_Tools
         {
             if (!(schema is JObject obj))
             {
+                if (schema is null)
+                    throw new SchemaValidationException("Schema was null (in the programmatic sense, not a JSON element representing null)");
                 if (schema.type != Dtype.BOOL)
                 {
                     throw new SchemaValidationException("A JSON schema must be an object or a boolean");

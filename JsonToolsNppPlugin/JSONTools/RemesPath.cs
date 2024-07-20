@@ -2291,7 +2291,7 @@ namespace JSON_Tools.JSON_Tools
             }
             if (ex is JsonParserException jpe)
             {
-                return jpe.ToString();
+                return jpe.Translate(true);
             }
             if (ex is RemesPathArgumentException rpae)
             {

@@ -172,7 +172,7 @@ namespace JSON_Tools.Utils
         {
             if (text == null || text.Length == 0)
             {
-                MessageBox.Show("Couldn't find anything to copy to the clipboard",
+                Translator.ShowTranslatedMessageBox("Couldn't find anything to copy to the clipboard",
                     "Nothing to copy to clipboard",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning

@@ -162,15 +162,15 @@ Currently JsonTools has been translated into the following languages:
 
 
 The following aspects of JsonTools __can__ be translated:
-- Forms (including all controls and items in drop-down menus)
-- Items in the JsonTools sub-menu of the Notepad++ Plugins menu
-- The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings)
-- The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
-- [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*)
+- Forms (including all controls and items in drop-down menus) (see the `forms` field of the translation `json5` file)
+- Items in the JsonTools sub-menu of the Notepad++ Plugins menu (see the `menuItems` field)
+- The descriptions of settings in the [`JsonTools.ini` config file](/docs/README.md#customizing-settings) (see the `settingsDescriptions` field)
+- The descriptions of settings in the [settings form](/docs/README.md#customizing-settings) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*) (also controlled by `settingsDescriptions`)
+- [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*) (see the `jsonLint` field)
+- Message boxes (includes warnings, errors, requests for confirmation) (*only for versions since [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd)*) (see the `messageBoxes` field)
 
 The following aspects of JsonTools __may eventually__ be translated:
 - This documentation
-- Message boxes (includes warnings, errors, requests for confirmation)
 - Generic modal dialogs (for example, file-opening dialogs, directory selection dialogs)
 
 ## Acknowledgments ##

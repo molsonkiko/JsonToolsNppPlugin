@@ -34,9 +34,10 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not find json at the specified path\r\nGot the following error:\r\n{ex}",
+                Translator.ShowTranslatedMessageBox("Could not find json at the specified path ({0}).\r\nGot the following error:\r\n{1}",
                     "Could not find json at that path",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, pathQuery, RemesParser.PrettifyException(ex));
                 return;
             }
             Func<JNode, JNode> query = null;
@@ -51,9 +52,11 @@ namespace JSON_Tools.Forms
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Based on selected sort method, attempted to compile query \"{queryText}\",\r\nbut got the following error:\r\n{ex}",
-                        "Failed to compile query",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Translator.ShowTranslatedMessageBox(
+                        "Based on selected sort method, attempted to compile query \"{0}\",\r\nbut got the following error:\r\n{1}",
+                        "Failed to compile query for sorting",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        2, queryText, RemesParser.PrettifyException(ex));
                     return;
                 }
             }
@@ -78,9 +81,10 @@ namespace JSON_Tools.Forms
                 else
                 {
                     string gotType = JNode.FormatDtype(jsonAtPath.type);
-                    MessageBox.Show($"JSON at the specified path must be object or array, got {gotType}",
+                    Translator.ShowTranslatedMessageBox("JSON at the specified path must be object or array, got {0}",
                         "JSON at specified path must be object or array",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        1, gotType);
                     return;
                 }
             }
@@ -102,9 +106,10 @@ namespace JSON_Tools.Forms
             if (!(toSort is JArray arr))
             {
                 string gotType = JNode.FormatDtype(toSort.type);
-                MessageBox.Show($"Can only sort arrays, not {gotType}",
-                    $"Can't sort {gotType}s",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox("Can only sort arrays, got JSON of type {0}",
+                    "Can only sort arrays",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    1, gotType);
                 return false;
             }
             try
@@ -128,9 +133,10 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While sorting the array, got the following error:\r\n{ex}",
+                Translator.ShowTranslatedMessageBox("While sorting an array, got the following error:\r\n{0}",
                     "Error while sorting array",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    1, RemesParser.PrettifyException(ex));
                 return false;
             }
             if (ReverseOrderCheckBox.Checked && ReverseOrderCheckBox.Enabled)

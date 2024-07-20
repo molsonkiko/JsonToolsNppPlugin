@@ -27,7 +27,7 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// return the string representation of this, translated to
+        /// return the string representation of this, translated by <see cref="Translator"/> if <paramref name="translated"/> is true.
         /// </summary>
         /// <param name="translated"></param>
         /// <returns></returns>
@@ -35,6 +35,8 @@ namespace JSON_Tools.JSON_Tools
         {
             return $"{jsonLint.TranslateMessageIfDesired(translated)} at position {Position} (char {JsonLint.CharDisplay(CurChar)})";
         }
+
+        public override string ToString() => Translate(false);
     }
 
     /// <summary>
@@ -168,7 +170,7 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.BAD_NUMBER_INVALID_FORMAT: return TryTranslateWithOneParam(translated, lintType, "Number string {0} had bad format", param1);
             case JsonLintType.BAD_TWO_CONSECUTIVE_COMMAS_ARRAY: return TryTranslateWithOneParam(translated, lintType, "Two consecutive commas after element {0} of array", param1);
             case JsonLintType.BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Comma before first value in array");
-            case JsonLintType.BAD_ARRAY_ENDSWITH_CURLYBRACE: return Translator.TranslateLintMessage(translated, lintType, "Tried to terminate an array with '}'");
+            case JsonLintType.BAD_ARRAY_ENDSWITH_CURLYBRACE: return Translator.TranslateLintMessage(translated, lintType, "Expected ']' at the end of an array, but found '}'");
             case JsonLintType.BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS: return Translator.TranslateLintMessage(translated, lintType, "No comma between array members");
             case JsonLintType.BAD_COLON_BETWEEN_ARRAY_ITEMS: return Translator.TranslateLintMessage(translated, lintType, "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?");
             case JsonLintType.BAD_UNTERMINATED_ARRAY: return Translator.TranslateLintMessage(translated, lintType, "Unterminated array");
@@ -176,7 +178,7 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Comma before first value in object");
             case JsonLintType.BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS: return TryTranslateWithOneParam(translated, lintType, "No comma after key-value pair {0} in object", param1);
             case JsonLintType.BAD_UNTERMINATED_OBJECT: return Translator.TranslateLintMessage(translated, lintType, "Unterminated object");
-            case JsonLintType.BAD_OBJECT_ENDSWITH_SQUAREBRACE: return Translator.TranslateLintMessage(translated, lintType, "Tried to terminate object with ']'");
+            case JsonLintType.BAD_OBJECT_ENDSWITH_SQUAREBRACE: return Translator.TranslateLintMessage(translated, lintType, "Expected '}' at the end of an object, but found ']'");
             case JsonLintType.BAD_COLON_BETWEEN_OBJECT_PAIRS: return Translator.TranslateLintMessage(translated, lintType, "':' found instead of comma after key-value pair");
             case JsonLintType.BAD_CHAR_WHERE_COLON_EXPECTED: return TryTranslateWithTwoParams(translated, lintType, "Found '{0}' after key {1} when colon expected", param1, param2);
             case JsonLintType.BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE: return TryTranslateWithOneParam(translated, lintType, "No ':' between key {0} and value {0} of object", param1);

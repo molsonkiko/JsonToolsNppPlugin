@@ -159,9 +159,11 @@ namespace JSON_Tools.Forms
             int lintCount = lints == null ? 0 : lints.Count;
             if (lintCount == 0)
             {
-                MessageBox.Show($"No JSON syntax errors (at or below {Main.settings.logger_level} level) for {fname}",
+                Translator.ShowTranslatedMessageBox(
+                    "No JSON syntax errors (at or below {0} level) for {1}",
                     "No JSON syntax errors for this file",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBoxButtons.OK, MessageBoxIcon.Information,
+                    2, Main.settings.logger_level, fname);
                 return;
             }
             var lintArrChildren = new List<JNode>();

@@ -860,7 +860,7 @@ multiline comment
                     new string[]{ "NaN is not allowed in the original JSON specification",
                                   "Infinity is not allowed in the original JSON specification",
                                   "Infinity is not allowed in the original JSON specification" }),
-                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Tried to terminate an array with '}'", "Comma after last element of array", "Tried to terminate object with ']'", "Comma after last key-value pair of object" }),
+                ("{'a\n':[1,2,},]", "{\"a\\n\": [1,2]}", new string[]{"Singlequoted strings are only allowed in JSON5", "Object key contains newline", "Expected ']' at the end of an array, but found '}'", "Comma after last element of array", "Expected '}' at the end of an object, but found ']'", "Comma after last key-value pair of object" }),
                 ("[1, 2", "[1, 2]", new string[]{ "Unterminated array" }),
                 ("{\"a\": 1", "{\"a\": 1}", new string[]{ "Unterminated object" }),
                 ("{\"a\": [1, {\"b\": 2", "{\"a\": [1, {\"b\": 2}]}", new string[] { "Unterminated object",
@@ -1060,7 +1060,7 @@ multiline comment
                     "[{\"foo\": 1, \"bar\": [\"a\", \"b\"]}, {\"foo\": 2, \"bar\": [\"c\", \"d\"]}, {\"foo\": 3, \"bar\": [\"e\", \"f\"]}]",
                     new string[]
                     {
-                            "Tried to terminate an array with '}'",
+                            "Expected ']' at the end of an array, but found '}'",
                             "No valid unquoted key beginning at 43",
                             "No comma between array members"
                     }

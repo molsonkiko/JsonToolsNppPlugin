@@ -54,8 +54,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. [Progress reporting](/docs/README.md#reporting-progress-when-parsing-large-amounts-of-json) with the JSON from files and APIs form (henceforth the `grepper form`).
 2. In the `grepper form`, pressing `Enter` inside the `Previously viewed directories...` box causes the current text of the box to be searched, assuming that it is a valid directory.
-3. [Translation](/README.md#translating-jsontools-to-another-language) of settings in the [Settings form](/docs/README.md#customizing-settings).
-4. Translation of [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (under the `jsonLint` field of the [translation file](/translation/english.json5))
+3. [Translation](/README.md#translating-jsontools-to-another-language) of the following:
+    - Settings in the [Settings form](/docs/README.md#customizing-settings).
+    - [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (under the `jsonLint` field of the [translation file](/translation/english.json5))
+	- Generic Windows message boxes (the boxes with `Ok`, `Yes`, `No`, and `Cancel` buttons and no other controls).
 5. The [`path_separator` setting](/docs/README.md#key_style-and-path_separator-settings) for formatting keys/indices and paths. Addresses [issue 69](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/69).
 6. Make it so left-clicking on the `Key/index to clipboard` and `Path to clipboard` options of the [treenode right-click context menu](/docs/README.md#get-info-about-tree-nodes) gets the path or key/index in whatever the default is from your settings, without having to click on one of the sub-menu items.
 

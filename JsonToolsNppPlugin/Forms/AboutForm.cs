@@ -27,23 +27,7 @@ namespace JSON_Tools.Forms
         /// </summary>
         private void GitHubLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            string helpUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
-            try
-            {
-                var ps = new ProcessStartInfo(helpUrl)
-                {
-                    UseShellExecute = true,
-                    Verb = "open"
-                };
-                Process.Start(ps);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(),
-                    "Could not open documentation",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
+            Main.OpenUrlInWebBrowser(Main.PluginRepoUrl);
         }
 
         /// <summary>
@@ -114,9 +98,11 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not convert JSON to DSON. Got exception:\r\n{RemesParser.PrettifyException(ex)}",
+                Translator.ShowTranslatedMessageBox(
+                    "Could not convert JSON to DSON. Got exception:\r\n{0}",
                     "such error very sad",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    1, RemesParser.PrettifyException(ex));
             }
         }
     }

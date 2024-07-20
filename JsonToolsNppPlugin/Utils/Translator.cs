@@ -17,10 +17,15 @@ namespace JSON_Tools.Utils
     public static class Translator
     {
         private static JObject translations = null;
-        public static bool HasTranslations => !(translations is null); 
+        public static bool HasTranslations => !(translations is null);
 
-        public static void LoadTranslations()
+        public static bool HasLoadedAtStartup { get; private set; } = false;
+
+        public static void LoadTranslations(bool atStartup = true)
         {
+            if (atStartup && HasLoadedAtStartup)
+                return;
+            HasLoadedAtStartup = true;
             string languageName = "english";
             // TODO: maybe use Notepad++ nativeLang preference to guide translation?
             // Possible references include:
@@ -88,10 +93,10 @@ namespace JSON_Tools.Utils
 
         public static string GetTranslatedMenuItem(string menuItem)
         {
-            if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
-                && dict.TryGetValue("menuItems", out JNode menuItemsObjNode)
-                && menuItemsObjNode is JObject menuItemsObj && menuItemsObj.children is Dictionary<string, JNode> menuItemsDict
-                && menuItemsDict.TryGetValue(menuItem, out JNode menuItemNode)
+            if (translations is JObject jobj
+                && jobj.TryGetValue("menuItems", out JNode menuItemsObjNode)
+                && menuItemsObjNode is JObject menuItemsObj
+                && menuItemsObj.TryGetValue(menuItem, out JNode menuItemNode)
                 && menuItemNode.value is string s)
             {
                 if (s.Length > FuncItem.MAX_FUNC_ITEM_NAME_LENGTH)
@@ -110,6 +115,59 @@ namespace JSON_Tools.Utils
         }
 
         /// <summary>
+        /// Finds the appropriate translation for a <see cref="MessageBox"/> (using <paramref name="caption"/> as key in the "messageBoxes" field), then displays it and returns the result of <see cref="MessageBox.Show(string, string, MessageBoxButtons, MessageBoxIcon)"/>
+        /// </summary>
+        /// <param name="text">the text of the MessageBox, which may be a format string of the form "expected {0}, got {1}"</param>
+        /// <param name="caption">the text of the MessageBox, which may be a format string of the form "expected {0}, got {1}"</param>
+        /// <param name="buttons">which buttons to show in the MB</param>
+        /// <param name="icon">the icon to use</param>
+        /// <param name="nTextParams">the first nTextParams values in the <paramref name="formattingParams"/> are used to format the <paramref name="text"/> argument</param>
+        /// <param name="nCaptionParams">the first nTextParams values in the <paramref name="formattingParams"/> are used to format the <paramref name="text"/> argument</param>
+        /// <param name="formattingParams">all values in this array after the first <paramref name="nTextParams"/> are used to format the caption</param>
+        /// <returns>the result of MessageBox.Show with the translated box</returns>
+        public static DialogResult ShowTranslatedMessageBox(string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon, int nTextParams = 0, params object[] formattingParams)
+        {
+            string translatedText = text, translatedCaption = caption;
+            if (translations is JObject jobj
+                && jobj.TryGetValue("messageBoxes", out JNode messagesNode) && messagesNode is JObject messages
+                && messages.TryGetValue(caption, out JNode mbTransNode) && mbTransNode is JObject mbTrans
+                && mbTrans.children is Dictionary<string, JNode> mbDict)
+            {
+                if (mbDict.TryGetValue("caption", out JNode captionTrans) && captionTrans.value is string captionTransStr)
+                    translatedCaption = captionTransStr;
+                if (mbDict.TryGetValue("text", out JNode textTrans) && textTrans.value is string textTransStr)
+                    translatedText = textTransStr;
+            }
+            if (formattingParams.Length < nTextParams)
+            {
+                MessageBox.Show($"While attempting to call ShowTranslatedMessageBox({JNode.StrToString(text, true)}, {JNode.StrToString(caption, true)}, {buttons}, {icon}, {nTextParams}, ...)\r\ngot {formattingParams.Length} formatting params, but expected {nTextParams}", "error in formatting for ShowTranslatedMessageBox", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return MessageBox.Show(translatedText, translatedCaption, buttons, icon);
+            }
+            int nCaptionParams = formattingParams.Length - nTextParams;
+            object[] textParams = formattingParams.Take(nTextParams).ToArray(), captionParams = formattingParams.LazySlice(nTextParams).ToArray();
+            string formattedText = nTextParams == 0 ? translatedText : TryTranslateWithFormatting(text, translatedText, textParams);
+            string formattedCaption = nCaptionParams == 0 ? translatedCaption : TryTranslateWithFormatting(caption, translatedCaption, captionParams);
+            return MessageBox.Show(formattedText, formattedCaption, buttons, icon);
+        }
+
+        private static string TryTranslateWithFormatting(string untranslated, string translated, params object[] formatParams)
+        {
+            try
+            {
+                return string.Format(translated, formatParams);
+            }
+            catch { }
+            try
+            {
+                return string.Format(untranslated, formatParams);
+            }
+            catch
+            {
+                return untranslated;
+            }
+        }
+
+        /// <summary>
         /// Used to translate the settings in <see cref="Settings"/>.<br></br>
         /// If there is no active translation file, return the propertyInfo's <see cref="DescriptionAttribute.Description"/>
         /// (which can be seen in the source code in the Description decorator of each setting).<br></br>
@@ -120,10 +178,10 @@ namespace JSON_Tools.Utils
         {
             if (propertyInfo is null)
                 return "";
-            if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
-                && dict.TryGetValue("settingsDescriptions", out JNode settingsDescNode)
+            if (translations is JObject jobj
+                && jobj.TryGetValue("settingsDescriptions", out JNode settingsDescNode)
                 && settingsDescNode is JObject settingsDescObj
-                && settingsDescObj.children.TryGetValue(propertyInfo.Name, out JNode descNode)
+                && settingsDescObj.TryGetValue(propertyInfo.Name, out JNode descNode)
                 && descNode.value is string s)
             {
                 return s;
@@ -137,9 +195,9 @@ namespace JSON_Tools.Utils
         public static string TranslateLintMessage(bool translated, JsonLintType lintType, string englishMessage)
         {
             if (translated
-                && translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
-                && dict.TryGetValue("jsonLint", out JNode lintTranslations) && lintTranslations is JObject lintTransObj
-                && lintTransObj.children.TryGetValue(lintType.ToString(), out JNode problemTypeTransNode)
+                && translations is JObject jobj
+                && jobj.TryGetValue("jsonLint", out JNode lintTranslations) && lintTranslations is JObject lintTransObj
+                && lintTransObj.TryGetValue(lintType.ToString(), out JNode problemTypeTransNode)
                 && problemTypeTransNode.value is string s)
                 return s;
             return englishMessage;
@@ -164,10 +222,10 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static void TranslateForm(Form form)
         {
-            if (translations is JObject jobj && jobj.children is Dictionary<string, JNode> dict
-                && dict.TryGetValue("forms", out JNode formsNode)
-                && formsNode is JObject allFormsObj && allFormsObj.children is Dictionary<string, JNode> allFormsDict
-                && allFormsDict.TryGetValue(form.Name, out JNode formNode)
+            if (translations is JObject jobj
+                && jobj.TryGetValue("forms", out JNode formsNode)
+                && formsNode is JObject allFormsObj
+                && allFormsObj.TryGetValue(form.Name, out JNode formNode)
                 && formNode is JObject formObj && formObj.children is Dictionary<string, JNode> formDict)
             {
                 if (formDict.TryGetValue("title", out JNode transTitle) && transTitle.value is string transStr)

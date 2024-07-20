@@ -24,6 +24,7 @@ namespace Kbg.NppPluginNET
         #region " Fields "
         internal const int UNDO_BUFFER_SIZE = 64;
         internal const string PluginName = "JsonTools";
+        public const string PluginRepoUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
         // general stuff things
         public static Settings settings = new Settings();
         public static IniFileParser iniParser = new IniFileParser();
@@ -468,12 +469,16 @@ namespace Kbg.NppPluginNET
         #endregion
 
         #region " Menu functions "
-        public static void docs()
+        private static void docs()
         {
-            string helpUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
+            OpenUrlInWebBrowser(PluginRepoUrl);
+        }
+
+        public static void OpenUrlInWebBrowser(string url)
+        {
             try
             {
-                var ps = new ProcessStartInfo(helpUrl)
+                var ps = new ProcessStartInfo(url)
                 {
                     UseShellExecute = true,
                     Verb = "open"
@@ -482,10 +487,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(),
-                    "Could not open documentation",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While attempting to open URL {0} in web browser, got exception\r\n{1}",
+                    "Could not open url in web browser",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, url, ex);
             }
         }
 
@@ -684,9 +690,8 @@ namespace Kbg.NppPluginNET
             SetStatusBarSection(parserStateToSet, fname, info, documentType, lintCount);
             if (lintCount > 0 && settings.offer_to_show_lint && !wasAutotriggered)
             {
-                string msg = $"There were {lintCount} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))";
-                if (MessageBox.Show(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                    == DialogResult.Yes)
+                string msg = "There were {0} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))";
+                if (Translator.ShowTranslatedMessageBox(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, 1, lintCount) == DialogResult.Yes)
                 {
                     if (errorForm != null)
                         Npp.notepad.HideDockingForm(errorForm);
@@ -701,10 +706,12 @@ namespace Kbg.NppPluginNET
                     Npp.editor.GoToLegalPos(lints[lintCount - 1].pos);
                 // unacceptable error, show message box
                 if (!errorFormTriggeredParse)
-                    MessageBox.Show($"Could not parse the document because of error\n{errorMessage}",
-                                    $"Error while trying to parse {Npp.DocumentTypeSuperTypeName(documentType)}",
+                    Translator.ShowTranslatedMessageBox(
+                                    "Could not parse the document because of error\r\n{0}",
+                                    "Error while trying to parse {0}",
                                     MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
+                                    MessageBoxIcon.Error,
+                                    1, errorMessage, Npp.DocumentTypeSuperTypeName(documentType));
             }
             if (info.tv != null)
             {
@@ -753,11 +760,11 @@ namespace Kbg.NppPluginNET
             if (selectionRememberingIndicatorsMayCollide && !hasWarnedSelectionRememberingIndicatorsMayCollide)
             {
                 hasWarnedSelectionRememberingIndicatorsMayCollide = true;
-                string warning = $"JsonTools is using the indicators {selectionRememberingIndicator1} and {selectionRememberingIndicator2} to remember selections, " +
+                string warning = "JsonTools is using the indicators {0} and {1} to remember selections, " +
                                 "but one or both of those may collide with another plugin.\r\n" +
                                 "If you see this message and then you notice Notepad++ or a plugin start to behave oddly, " +
                                 "please consider creating an issue describing what happened in the JsonTools GitHub repository.";
-                MessageBox.Show(warning, "Possible issue with remembering selections", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Translator.ShowTranslatedMessageBox(warning, "Possible issue with remembering selections", MessageBoxButtons.OK, MessageBoxIcon.Warning, 2, selectionRememberingIndicator1, selectionRememberingIndicator2);
             }
             Npp.editor.SetIndicatorCurrent(selectionRememberingIndicator1);
             Npp.editor.IndicatorClearRange(0, len);
@@ -875,7 +882,7 @@ namespace Kbg.NppPluginNET
             bool isJsonLines = info.documentType == DocumentType.JSONL;
             if (isJsonLines && (settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.DONT_DO_DONT_ASK
                 || settings.ask_before_pretty_printing_json_lines == AskUserWhetherToDoThing.ASK_BEFORE_DOING
-                    && MessageBox.Show(
+                    && Translator.ShowTranslatedMessageBox(
                         "Pretty-printing a JSON Lines document will generally lead to it no longer being a valid JSON Lines document. Pretty-print anyway?",
                         "Pretty-print JSON Lines document?",
                         MessageBoxButtons.YesNo,
@@ -969,7 +976,7 @@ namespace Kbg.NppPluginNET
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error while reformatting INI file:\r\n{ex.ToString()}", "Error while reformatting INI file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Translator.ShowTranslatedMessageBox("Error while reformatting INI file:\r\n{0}", "Error while reformatting INI file", MessageBoxButtons.OK, MessageBoxIcon.Error, 1, ex);
                     return keyChanges;
                 }
                 Npp.editor.SetText(iniText);
@@ -983,7 +990,12 @@ namespace Kbg.NppPluginNET
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"While attempting to reformat the file's JSON, got an error:\r\n{RemesParser.PrettifyException(ex)}");
+                    Translator.ShowTranslatedMessageBox(
+                        "While attempting to reformat the file's JSON, got a programmatic error:\r\n{0}",
+                        "Programmatic error while reformatting JSON",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        1, RemesParser.PrettifyException(ex)
+                    );
                 }
             }
             info = AddJsonForFile(activeFname, json);
@@ -1092,14 +1104,14 @@ namespace Kbg.NppPluginNET
                     return s;
             }
             catch { }
-            MessageBox.Show("Selected text is not a JSON string", "Failed to parse selected text as JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Translator.ShowTranslatedMessageBox("Selected text is not a JSON string", "Failed to parse selected text as JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return null;
         }
 
         static void DumpYaml()
         {
             string warning = "This feature has known bugs that may result in invalid YAML being emitted. Run the tests to see examples. Use it anyway?";
-            if (MessageBox.Show(warning,
+            if (Translator.ShowTranslatedMessageBox(warning,
                             "JSON to YAML feature has some bugs",
                             MessageBoxButtons.OKCancel,
                             MessageBoxIcon.Warning)
@@ -1116,10 +1128,11 @@ namespace Kbg.NppPluginNET
             catch (Exception ex)
             {
                 string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not convert the JSON to YAML because of error\n{expretty}",
+                Translator.ShowTranslatedMessageBox("Could not convert the JSON to YAML because of error\r\n{0}",
                                 "Error while trying to convert JSON to YAML",
                                 MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                                MessageBoxIcon.Error,
+                                1, expretty);
                 return;
             }
             Npp.editor.SetText(yaml);
@@ -1145,7 +1158,7 @@ namespace Kbg.NppPluginNET
             if (parserState == ParserState.FATAL || json == null) return;
             if (!(json is JArray))
             {
-                MessageBox.Show("Only JSON arrays can be converted to JSON Lines format.",
+                Translator.ShowTranslatedMessageBox("Only JSON arrays can be converted to JSON Lines format.",
                                 "Only arrays can be converted to JSON Lines",
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -1190,8 +1203,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"path_separator setting could not be changed from {oldPathSepStr} to {settings.path_separator} due to the following error:\r\n{ex}",
-                    "Could not change path_separator setting", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "path_separator setting could not be changed from {0} to {1} due to the following error:\r\n{2}",
+                    "Could not change path_separator setting",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    3, oldPathSepStr, settings.path_separator, RemesParser.PrettifyException(ex));
                 settings.path_separator = oldPathSepStr;
                 newPathSepChar = pathSeparator;
                 settings.SaveToIniFile();
@@ -1261,9 +1277,11 @@ namespace Kbg.NppPluginNET
                 && !wasAutoTriggered)
             {
 
-                MessageBox.Show($"No JSON syntax errors (at or below {settings.logger_level} level) for {fname}",
+                Translator.ShowTranslatedMessageBox(
+                    "No JSON syntax errors (at or below {0} level) for {1}",
                     "No JSON syntax errors for this file",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBoxButtons.OK, MessageBoxIcon.Information,
+                    2, settings.logger_level, fname);
                 return;
             }
             if (wasVisible)
@@ -1340,10 +1358,12 @@ namespace Kbg.NppPluginNET
             string result = PathToPosition(settings.key_style, pathSeparator, pos);
             if (result.Length == 0)
             {
-                MessageBox.Show($"Did not find a node at position {pos} of this file",
-                    "Could not find a node on this line",
+                Translator.ShowTranslatedMessageBox(
+                    "Did not find a node at position {0} of this file",
+                    "Could not find a node at this position",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    MessageBoxIcon.Error,
+                    1, pos);
                 return;
             }
             Npp.TryCopyToClipboard(result);
@@ -1409,8 +1429,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While attempting to format the path to the current position, the following error occurred:\r\n{ex}",
-                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While attempting to format the path to the current position, the following error occurred:\r\n{0}",
+                    "Error while formatting path to current position",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    1, ex);
                 return "";
             }
         }
@@ -1471,9 +1494,11 @@ namespace Kbg.NppPluginNET
             }
             if (startEnds.Count == 0)
             {
-                MessageBox.Show($"No valid JSON elements starting with chars {settings.try_parse_start_chars} were found in the document",
+                Translator.ShowTranslatedMessageBox(
+                    "No valid JSON elements starting with chars {0} were found in the document",
                     "No valid JSON elements found",
-                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation,
+                    1, settings.try_parse_start_chars);
             }
             else
                 SelectionManager.SetSelectionsFromStartEnds(startEnds);
@@ -1637,8 +1662,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception e)
             {
-                MessageBox.Show($"While validating JSON against the schema at path {schemaPath}, the following error occurred:\r\n{e}",
-                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While validating JSON against the schema at path {0}, the following error occurred:\r\n{1}",
+                    "Error while validating JSON against schema",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, schemaPath, RemesParser.PrettifyException(e));
                 return;
             }
             if (!TryGetInfoForFile(curFname, out JsonFileInfo info))
@@ -1653,13 +1681,19 @@ namespace Kbg.NppPluginNET
                 JsonLint firstProblem = problems[0];
                 if (!wasAutotriggered)
                     Npp.editor.GoToLegalPos(firstProblem.pos);
-                MessageBox.Show($"The JSON in file {curFname} DOES NOT validate against the schema at path {schemaPath}. Problem 1 of {problems.Count}:\n{firstProblem}",
-                    "Validation failed...", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                Translator.ShowTranslatedMessageBox(
+                    "The JSON in file {0} DOES NOT validate against the schema at path {1}. Problem 1 of {2}:\r\n{3}",
+                    "Validation failed...",
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation,
+                    4, curFname, schemaPath, problems.Count, firstProblem);
                 return;
             }
             if (messageOnSuccess)
-                MessageBox.Show($"The JSON in file {curFname} validates against the schema at path {schemaPath}.",
-                    "Validation succeeded!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Translator.ShowTranslatedMessageBox(
+                    "The JSON in file {0} validates against the schema at path {1}.",
+                    "Validation succeeded!",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information,
+                    2, curFname, schemaPath);
         }
 
         /// <summary>
@@ -1676,11 +1710,12 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Could not generate a JSON schema. Got the following error:\n{ex}",
+                Translator.ShowTranslatedMessageBox(
+                    "Could not generate a JSON schema. Got the following error:\r\n{0}",
                     "JSON schema generation error",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
+                    MessageBoxIcon.Error,
+                    1, ex
                 );
                 return;
             }
@@ -1714,7 +1749,11 @@ namespace Kbg.NppPluginNET
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"While trying to generate random JSON from this schema, got an error:\n{ex}");
+                    Translator.ShowTranslatedMessageBox(
+                        "While trying to generate random JSON from this schema, got an error:\r\n{0}",
+                        "Error while generating random JSON from schema",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        1, ex);
                     return;
                 }
             }
@@ -1760,7 +1799,11 @@ namespace Kbg.NppPluginNET
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to parse the schemas to fname patterns file. Got error\r\n{ex}");
+                    Translator.ShowTranslatedMessageBox(
+                        "Failed to parse the schemas to fname patterns file. Got error\r\n{0}",
+                        "Couldn't parse schemas to fname patterns file",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        1, ex);
                     return;
                 }
             }
@@ -1769,10 +1812,11 @@ namespace Kbg.NppPluginNET
             bool validates = schemasToFnamePatterns_SCHEMA(schemasToFnamePatterns, out List<JsonLint> lints);
             if (!validates && lints.Count > 0)
             {
-                MessageBox.Show("Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n"
-                        + JsonSchemaValidator.LintsAsJArrayString(lints),
+                Translator.ShowTranslatedMessageBox(
+                    "Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n{0}",
                     "schemas to fnames patterns JSON badly formatted",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    1, JsonSchemaValidator.LintsAsJArrayString(lints));
                 schemasToFnamePatterns = new JObject();
                 return;
             }
@@ -1781,12 +1825,12 @@ namespace Kbg.NppPluginNET
             var fnames = schemasToFnamePatterns.children.Keys.ToArray<string>();
             foreach (string fname in fnames)
             {
-                string msgIfBadFname = $"No schema exists at path {fname}.";
+                string msgIfBadFname = "No schema exists at path {0}.";
                 try
                 {
                     if (!new FileInfo(fname).Exists)
                     {
-                        MessageBox.Show(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname);
                         schemasToFnamePatterns.children.Remove(fname);
                         continue;
                     }
@@ -1794,7 +1838,7 @@ namespace Kbg.NppPluginNET
                 }
                 catch
                 {
-                    MessageBox.Show(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname);
                     schemasToFnamePatterns.children.Remove(fname);
                     continue;
                 }
@@ -1811,9 +1855,11 @@ namespace Kbg.NppPluginNET
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"While testing all the regexes associated with file {fname},\r\nregular expression {pattern} failed to compile due to an error:\r\n{ex}",
-                            "Regex did not compile",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Translator.ShowTranslatedMessageBox(
+                            "While testing all the regexes associated with file {0},\r\nregular expression {1} failed to compile due to an error:\r\n{2}",
+                            "Regex did not compile (in schemas to fname patterns file)",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error,
+                            3, fname, pattern, ex);
                     }
                 }
                 // now we replace all the patterns with all the correctly formatted regexes.
@@ -1919,10 +1965,10 @@ namespace Kbg.NppPluginNET
             if (!isJsonLines && minPos == 0)
             {
                 // it's not possible for a child of a parsed JNode to have a position of 0,
-                // because only the root can be at position 0.
+                // because only the root can be at position 0 (except in JSON Lines).
                 // this would only happen if this is being invoked from the right click context menu
                 // on the treeview for a RemesPath query result
-                MessageBox.Show("Cannot select all children because one or more of the children does not correspond to a JSON node in the document",
+                Translator.ShowTranslatedMessageBox("Cannot select all children because one or more of the children does not correspond to a JSON node in the document",
                     "Can't select all children", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
@@ -2073,7 +2119,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While trying to parse the schema at path {fname}, the following error occurred:\r\n{RemesParser.PrettifyException(ex)}", "error while trying to parse schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While trying to parse the schema at path {0}, the following error occurred:\r\n{1}",
+                    "Error while trying to parse schema",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, fname, RemesParser.PrettifyException(ex));
                 return false;
             }
             if (schema == null)
@@ -2094,9 +2144,11 @@ namespace Kbg.NppPluginNET
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While compiling schema for file \"{fname}\", got exception {RemesParser.PrettifyException(ex)}",
-                    "error while compiling JSON schema",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While compiling schema for file \"{0}\", got exception:\r\n{1}",
+                    "Error while compiling JSON schema",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, fname, RemesParser.PrettifyException(ex));
                 return false;
             }
         }

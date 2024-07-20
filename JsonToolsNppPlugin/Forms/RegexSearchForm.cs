@@ -103,7 +103,7 @@ namespace JSON_Tools.Forms
             {
                 JNode columnsToParseAsNumberArr = jsonParser.Parse(ColumnsToParseAsNumberTextBox.Text);
                 if (jsonParser.fatal || !(columnsToParseAsNumberArr is JArray arr) || arr.Length == 0 || arr.children.Any(x => x.type != Dtype.INT))
-                    MessageBox.Show("Columns to parse as number must be a nonempty JSON array of integers", "Columns to parse as number must be int array", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Translator.ShowTranslatedMessageBox("Columns to parse as number must be a nonempty JSON array of integers", "Columns to parse as number must be array of integers", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 else
                     columnsToParseAsNumber = ", " + columnsToParseAsNumberArr.ToString(false).Slice("1:-1");
             }

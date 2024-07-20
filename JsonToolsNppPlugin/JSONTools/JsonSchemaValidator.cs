@@ -14,6 +14,8 @@ namespace JSON_Tools.JSON_Tools
         {
             Message = message;
         }
+
+        public override string ToString() => Message;
     }
 
     public class JsonSchemaValidator
@@ -79,7 +81,7 @@ namespace JSON_Tools.JSON_Tools
                 msg = JsonLint.TryTranslateWithOneParam(translated, problemType, "object missing \"required\" key {0}", keyMissing);
                 break;
             case JsonLintType.SCHEMA_FALSE_SCHEMA:
-                msg = Translator.TranslateLintMessage(translated, problemType, "the schema is `false`, so nothing will validate.");
+                msg = Translator.TranslateLintMessage(translated, problemType, "the schema is false, so nothing will validate.");
                 break;
             case JsonLintType.SCHEMA_STRING_DOESNT_MATCH_PATTERN:
                 string str = (string)keywords["string"];
@@ -214,9 +216,15 @@ namespace JSON_Tools.JSON_Tools
             {
                 // the booleans are valid schemas.
                 // true validates everything, and false validates nothing
-                if ((bool)schema_.value)
-                    return (_, __) => { };
-                return (x, lints) => AppendValidationProblem(JsonLintType.SCHEMA_FALSE_SCHEMA, null, x.position, lints, maxLintCount, translated);
+                if (schema_ is null)
+                    throw new SchemaValidationException("Schema was null (in the programmatic sense, not a JSON element representing null)");
+                if (schema_.value is bool b)
+                {
+                    if (b)
+                        return (_, __) => { };
+                    return (x, lints) => AppendValidationProblem(JsonLintType.SCHEMA_FALSE_SCHEMA, null, x.position, lints, maxLintCount, translated);
+                }
+                throw new SchemaValidationException($"JSON schema must be object or boolean, got type {JNode.FormatDtype(schema_.type)}");
             }
             if (schema.Length == 0)
                 return (_, __) => { }; // the empty schema validates everything

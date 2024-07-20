@@ -35,6 +35,7 @@ namespace JSON_Tools.Forms
             filesFound = new HashSet<string>();
             var configSubdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
             directoriesVisitedFile = new FileInfo(Path.Combine(configSubdir, $"{Main.PluginName} directories visited.txt"));
+            DirectoriesVisitedBox.AutoCompleteSource = AutoCompleteSource.ListItems | AutoCompleteSource.FileSystemDirectories;
             int maxDirnameChars = DirectoriesVisitedBox.Items[0].ToString().Length;
             if (directoriesVisitedFile.Exists)
             {
@@ -92,7 +93,7 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(), 
+                Translator.ShowTranslatedMessageBox(ex.ToString(), 
                     "Error while sending API requests",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -116,7 +117,7 @@ namespace JSON_Tools.Forms
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            Main.docs();
+            Main.OpenUrlInWebBrowser("https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#get-json-from-files-and-apis");
         }
 
         private string LastVisitedDirectory()
@@ -156,10 +157,12 @@ namespace JSON_Tools.Forms
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("JSON file search failed:\n" + RemesParser.PrettifyException(ex),
+                    Translator.ShowTranslatedMessageBox(
+                        "While searching JSON files, got an exception:\r\n{0}",
                         "Json file search error",
                         MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                        MessageBoxIcon.Error,
+                        1, RemesParser.PrettifyException(ex));
                 }
             }
             AddFilesToFilesFound();
@@ -241,7 +244,11 @@ namespace JSON_Tools.Forms
         {
             if (grepper.exceptions.Length == 0)
             {
-                MessageBox.Show("No exceptions! \U0001f600"); // smily face
+                Translator.ShowTranslatedMessageBox(
+                    "No exceptions! {0}",
+                    "No errors while searching documents",
+                    MessageBoxButtons.OK, MessageBoxIcon.None,
+                    1, "\U0001f600"); // smily face
                 return;
             }
             Main.PrettyPrintJsonInNewFile(grepper.exceptions);

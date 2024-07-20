@@ -81,11 +81,12 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show("While trying to create CSV from JSON, raised this exception:\n" + expretty,
+                Translator.ShowTranslatedMessageBox(
+                    "While trying to create CSV from JSON, raised this exception:\r\n{0}",
                     "Exception while tabularizing JSON",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    MessageBoxIcon.Error,
+                    1, RemesParser.PrettifyException(ex));
                 return;
             }
             Npp.notepad.FileNew();
@@ -97,24 +98,7 @@ namespace JSON_Tools.Forms
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            string helpUrl = "https://github.com/molsonkiko/JSONToolsNppPlugin/tree/main/docs/json-to-csv.md";
-            try
-            {
-                var ps = new ProcessStartInfo(helpUrl)
-                {
-                    UseShellExecute = true,
-                    Verb = "open"
-                };
-                Process.Start(ps);
-            }
-            catch (Exception ex)
-            {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show(expretty,
-                    "Could not open documentation",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
+            Main.OpenUrlInWebBrowser("https://github.com/molsonkiko/JSONToolsNppPlugin/tree/main/docs/json-to-csv.md");
         }
     }
 }

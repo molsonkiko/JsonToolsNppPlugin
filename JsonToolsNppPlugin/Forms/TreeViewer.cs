@@ -245,7 +245,7 @@ namespace JSON_Tools.Forms
             if (tree == null) tree = this.Tree;
             if (json == null)
             {
-                MessageBox.Show("Cannot populate the JSON tree because no JSON is stored.",
+                Translator.ShowTranslatedMessageBox("Cannot populate the JSON tree because no JSON is stored.",
                     "Can't populate JSON tree",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Exclamation);
@@ -395,11 +395,12 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not populate JSON tree because of error:\n{expretty}",
-                                "Error while populating tree",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "Could not populate JSON tree because of error:\r\n{0}",
+                    "Error while populating tree",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    1, RemesParser.PrettifyException(ex));
             }
             tree.EndUpdate();
         }
@@ -464,10 +465,12 @@ namespace JSON_Tools.Forms
             catch (Exception ex)
             {
                 string expretty = RemesParser.PrettifyException(ex);
-                MessageBox.Show($"Could not execute query {query} because of compilation error:\n{expretty}",
-                                "Compilation error in RemesPath query",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "Could not execute query {0} because of compilation error:\r\n{1}",
+                    "Compilation error in RemesPath query",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    2, query, expretty);
                 return;
             }
             int runtimeErrorMessagesShown = 0;
@@ -476,7 +479,7 @@ namespace JSON_Tools.Forms
             {
                 if (!suppressRuntimeErrorMsg
                     && ++runtimeErrorMessagesShown % 5 == 0
-                    && MessageBox.Show("Select Yes to stop seeing error message boxes for this query",
+                    && Translator.ShowTranslatedMessageBox("Select Yes to stop seeing error message boxes for this query",
                         "Stop seeing errors?",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question
                        ) == DialogResult.Yes)
@@ -484,19 +487,26 @@ namespace JSON_Tools.Forms
                 if (suppressRuntimeErrorMsg)
                     return;
                 string expretty = RemesParser.PrettifyException(ex);
-                string errorMessage;
                 if (selectionStartEnd != null && SelectionManager.IsStartEnd(selectionStartEnd))
                 {
                     int[] startEnd = SelectionManager.ParseStartEnd(selectionStartEnd);
                     int start = startEnd[0]; int end = startEnd[1];
-                    errorMessage = $"While executing query {query} on selection between positions {start} and {end}, encountered runtime error:\n{expretty}";
+                    Translator.ShowTranslatedMessageBox(
+                        "While executing query {0} on selection between positions {1} and {2}, encountered runtime error:\r\n{3}",
+                        "Runtime error while executing query on selection",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        4, query, start, end, expretty
+                    );
                 }
                 else
-                    errorMessage = $"While executing query {query}, encountered runtime error:\n{expretty}";
-                MessageBox.Show(errorMessage,
-                                "Runtime error while executing query",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                {
+                    Translator.ShowTranslatedMessageBox(
+                        "While executing query {0}, encountered runtime error:\r\n{1}",
+                        "Runtime error while executing query",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error,
+                        2, query, expretty);
+                }
             };
             // if the query mutates input, we need to overwrite the file with the
             // modified JSON after the query has been executed
@@ -556,10 +566,12 @@ namespace JSON_Tools.Forms
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Could not mutate ini file because of error while trying to stringify all values:\n{ex}",
-                                "Error while stringifying ini file values after RemesPath mutation",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                        Translator.ShowTranslatedMessageBox(
+                            "Could not mutate ini file because of error while trying to stringify all values:\r\n{0}",
+                            "Error while formatting ini file values as strings after RemesPath mutation",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error,
+                            1, ex);
                         return;
                     }
                 }
@@ -804,11 +816,12 @@ namespace JSON_Tools.Forms
                 }
                 catch (Exception ex)
                 {
-                    string expretty = RemesParser.PrettifyException(ex);
-                    MessageBox.Show($"Could not populate JSON tree because of error:\n{expretty}",
-                                    "Error while populating tree",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
+                    Translator.ShowTranslatedMessageBox(
+                        "Could not populate JSON tree because of error:\r\n{0}",
+                        "Error while populating tree",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error,
+                        1, RemesParser.PrettifyException(ex));
                 }
             }
             // now this node has its direct children populated, so continue the recursion
@@ -944,9 +957,11 @@ namespace JSON_Tools.Forms
                     {
                         if (Main.pathSeparator == JNode.DEFAULT_PATH_SEPARATOR && !hasWarnedNo_path_separator)
                         {
-                            MessageBox.Show($"You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {Main.settings.path_separator}. The {Main.settings.key_style} style is being used instead.",
+                            Translator.ShowTranslatedMessageBox(
+                                "You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {0}. The {1} style is being used instead.",
                                 "path_separator setting not configured",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning,
+                                2, Main.settings.path_separator, Main.settings.key_style);
                             hasWarnedNo_path_separator = true;
                         }
                         Npp.TryCopyToClipboard(KeyOfTreeNode(node, Main.settings.key_style, Main.pathSeparator));
@@ -1018,9 +1033,11 @@ namespace JSON_Tools.Forms
                     {
                         if (Main.pathSeparator == JNode.DEFAULT_PATH_SEPARATOR && !hasWarnedNo_path_separator)
                         {
-                            MessageBox.Show($"You chose \"Path to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {Main.settings.path_separator}. The {Main.settings.key_style} style is being used instead.",
+                            Translator.ShowTranslatedMessageBox(
+                                "You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {0}. The {1} style is being used instead.",
                                 "path_separator setting not configured",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning,
+                                2, Main.settings.path_separator, Main.settings.key_style);
                             hasWarnedNo_path_separator = true;
                         }
                         Npp.TryCopyToClipboard(PathToTreeNode(node, Main.settings.key_style, Main.pathSeparator));
@@ -1170,8 +1187,11 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"While attempting to format key {node.Name} using style, the following error occurred:\r\n{ex}",
-                    "Error while validating JSON against schema", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "While attempting to format key {0} using style, the following error occurred:\r\n{1}",
+                    "Error while formatting key of tree node",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error,
+                    2, node.Name, ex);
                 return "";
             }
         }
@@ -1196,7 +1216,7 @@ namespace JSON_Tools.Forms
                 JNode jnode = nodes[ii];
                 if (jnode is JArray || jnode is JObject)
                 {
-                    MessageBox.Show("Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region",
+                    Translator.ShowTranslatedMessageBox("Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region",
                         "Can't select object or array in non-JSON",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return false;
@@ -1271,8 +1291,10 @@ namespace JSON_Tools.Forms
                     nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, selectionEnd < 0 ? Npp.editor.GetLength() : selectionEnd);
             }
             if (!isRegex && nodeStartPos == nodeEndPos) // empty selections are fine in regex mode
-                MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
-                    "Couldn't select associated JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox(
+                    "The selected tree node does not appear to correspond to a JSON element in the document.",
+                    "Couldn't select associated JSON",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
             {
                 Npp.editor.ClearSelections();
@@ -1291,7 +1313,7 @@ namespace JSON_Tools.Forms
                 return;
             }
             if (!pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode))
-                MessageBox.Show("The selected tree node does not appear to correspond to a JSON element in the document.",
+                Translator.ShowTranslatedMessageBox("The selected tree node does not appear to correspond to a JSON element in the document.",
                     "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
             (int selectionStartPos, int selectionEndPos) = ParentSelectionStartEnd(node);
             if (info.documentType == DocumentType.REGEX)
@@ -1325,8 +1347,8 @@ namespace JSON_Tools.Forms
                 positions = obj.children.Values.Select(x => selectionStartPos + x.position);
             else
             {
-                MessageBox.Show("The selected JSON is not an object or array, and thus has no children.",
-                    "Couldn't select children of JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Translator.ShowTranslatedMessageBox("The selected JSON is not an object or array, and thus has no children.",
+                    "Can only select children of object or array", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             Main.SelectAllChildren(positions, info.documentType == DocumentType.JSONL);
