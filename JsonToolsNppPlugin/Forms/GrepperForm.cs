@@ -35,7 +35,6 @@ namespace JSON_Tools.Forms
             filesFound = new HashSet<string>();
             var configSubdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
             directoriesVisitedFile = new FileInfo(Path.Combine(configSubdir, $"{Main.PluginName} directories visited.txt"));
-            DirectoriesVisitedBox.AutoCompleteSource = AutoCompleteSource.ListItems | AutoCompleteSource.FileSystemDirectories;
             int maxDirnameChars = DirectoriesVisitedBox.Items[0].ToString().Length;
             if (directoriesVisitedFile.Exists)
             {

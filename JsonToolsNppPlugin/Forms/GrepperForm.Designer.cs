@@ -277,7 +277,6 @@
             // DirectoriesVisitedBox
             // 
             this.DirectoriesVisitedBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.DirectoriesVisitedBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.DirectoriesVisitedBox.FormattingEnabled = true;
             this.DirectoriesVisitedBox.Items.AddRange(new object[] {
             "Previously visited directories..."});

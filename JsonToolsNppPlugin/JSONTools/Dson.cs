@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace JSON_Tools.JSON_Tools
@@ -13,6 +12,8 @@ namespace JSON_Tools.JSON_Tools
         {
             Message = message;
         }
+
+        public override string ToString() => $"DSON dump error: {Message}";
     }
 
     /// <summary>

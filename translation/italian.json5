@@ -388,7 +388,7 @@
         //      The "text" field is the translation of the text inside the message box
         // As in the "jsonLint" object, the {integer} inside any text have special meaning, so you need to leave those alone.
         // ===== MessageBoxes in Main.cs =====
-        "Could not open url in web browser": {"caption": "Could not open url in web browser", "text": "While attempting to open URL {0} in web browser, got exception\r\n{1}"}, // text is just an exception, nothing to translate
+        "Could not open url in web browser": {"caption": "Could not open url in web browser", "text": "While attempting to open URL {0} in web browser, got exception\r\n{1}"},
         "View syntax errors in document?": {"caption": "View syntax errors in document?", "text": "There were {0} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))"},
         "Error while trying to parse {0}": {"caption": "Error while trying to parse {0}", "text": "Could not parse the document because of error\r\n{0}"},
         "Possible issue with remembering selections": {"caption": "Possible issue with remembering selections", "text": "JsonTools is using the indicators {0} and {1} to remember selections, but one or both of those may collide with another plugin.\r\nIf you see this message and then you notice Notepad++ or a plugin start to behave oddly, please consider creating an issue describing what happened in the JsonTools GitHub repository."},

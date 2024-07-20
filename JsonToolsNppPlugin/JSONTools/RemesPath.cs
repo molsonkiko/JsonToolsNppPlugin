@@ -2311,7 +2311,7 @@ namespace JSON_Tools.JSON_Tools
             }
             if (ex is DsonDumpException dde)
             {
-                return $"DSON dump error: {dde.Message}";
+                return dde.ToString();
             }
             if (ex is OutOfMemoryException)
             {
