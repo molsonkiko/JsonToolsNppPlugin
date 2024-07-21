@@ -208,7 +208,10 @@ namespace JSON_Tools.JSON_Tools
                 .OrderBy(x => x.fname)
                 .ToArray();
             if (shouldReportProgress)
+            {
+                progressReportCallback(totalLengthToParse, totalLengthToParse);
                 progressReportTeardown?.Invoke();
+            }
             foreach ((string fname, JNode parsedOrError, bool error) in results)
             {
                 if (error)

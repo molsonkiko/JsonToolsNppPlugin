@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -193,6 +194,8 @@ namespace JSON_Tools.Forms
             progressReportBufferName = Npp.notepad.GetCurrentFilePath();
             Npp.editor.SetText(ProgressBarText(0, 0, totalLengthToParse));
             Npp.editor.GrabFocus();
+            // wait a moment for the editor to finish acquiring focus
+            Thread.Sleep(50);
         }
 
         private void ReportJsonParsingProgress(int lengthParsedSoFar, int totalLengthToParse)
