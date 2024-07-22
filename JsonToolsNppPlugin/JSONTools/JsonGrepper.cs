@@ -47,11 +47,15 @@ namespace JSON_Tools.JSON_Tools
 	public class JsonGrepper
 	{
         /// <summary>
-        /// do not report progress unless there are at least this many files
+        /// Do not report progress while reading files unless there are at least this many files
+        /// </summary>
+        private const int PROGRESS_REPORT_FILE_READING_MIN_COUNT = 64;
+        /// <summary>
+        /// do not report progress while parsing unless there are at least this many files
         /// </summary>
         private const int PROGRESS_REPORT_FILE_MIN_COUNT = 16;
         /// <summary>
-        /// do not report progress unless the combined length of all files to be parsed is at least this great
+        /// do not report progress (while parsing or reading files) unless the combined length of all files to be parsed is at least this great
         /// </summary>
         private const int PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH = 8_000_000;
         /// <summary>
@@ -71,9 +75,15 @@ namespace JSON_Tools.JSON_Tools
         /// the combined length of all files to be parsed
         /// </summary>
         private int totalLengthToParse;
-
-        public delegate void ProgressReportSetup(int totalLengthToParse);
-        public delegate void ProgressReportCallback(int lengthParsedSoFar, int totalLengthToParse);
+        /// <summary>
+        /// Called before beginning progress reporting for file reading or parsing
+        /// </summary>
+        /// <param name="totalNumber">When reporting progress for parsing, the combined number of characters in all files to parse.<br></br>
+        /// Otherwise, the total number of all files to search (before determining whether their names match)</param>
+        /// <param name="totalLengthOnHardDrive">-1 if this is called when reporting progress for parsing.<br></br>
+        /// Otherwise, this is the combined size (on hard drive) of all files to search (before determining whether their names match)</param>
+        public delegate void ProgressReportSetup(int totalNumber, long totalLengthOnHardDrive);
+        public delegate void ProgressReportCallback(int numberSoFar, int totalNumber);
         // constructor fields related to progress reporting
         private bool reportProgress;
         private ProgressReportSetup progressReportSetup;
@@ -136,24 +146,46 @@ namespace JSON_Tools.JSON_Tools
             catch { return; }
             totalLengthToParse = 0;
             SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            foreach (string searchPattern in searchPatterns)
+            FileInfo[] allFiles = dirInfo.GetFiles("*.*", searchOption);
+            long totalLengthToRead = allFiles.Sum(x => x.Length);
+            int nFiles = allFiles.Length;
+            bool shouldReportProgress = reportProgress
+                && (totalLengthToRead >= PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH_IF_LT_MINCOUNT_FILES
+                    || (totalLengthToRead >= PROGRESS_REPORT_TEXT_MIN_TOT_LENGTH && nFiles >= PROGRESS_REPORT_FILE_READING_MIN_COUNT));
+            int checkPointLength = nFiles / progressReportCheckpoints;
+            int nextCheckPoint = checkPointLength;
+            Func<string, bool> globFunc = new Glob().ParseLinesSimple(string.Join("\n", searchPatterns));
+            if (shouldReportProgress)
             {
-			    foreach (FileInfo fileInfo in dirInfo.EnumerateFiles(searchPattern, searchOption))
-			    {
-				    string fname = fileInfo.FullName;
-                    if (!fnameStrings.ContainsKey(fname))
-                    {
-                        using (var fp = fileInfo.OpenText())
-                        {
-                            string text = fp.ReadToEnd();
-                            totalLengthToParse += text.Length;
-                            TooMuchTextToParseException.ThrowIfTooMuchText(totalLengthToParse);
-                            fnameStrings[fname] = text;
-                        }
-                    }
-			    }
+                progressReportSetup?.Invoke(nFiles, totalLengthToRead);
+                progressReportCallback(0, nFiles);
             }
-		}
+            for (int filesReadSoFar = 0; filesReadSoFar < nFiles; filesReadSoFar++)
+			{
+                FileInfo fileInfo = allFiles[filesReadSoFar];
+				string fname = fileInfo.FullName;
+                if (globFunc(fname))
+                {
+                    using (var fp = fileInfo.OpenText())
+                    {
+                        string text = fp.ReadToEnd();
+                        totalLengthToParse += text.Length;
+                        TooMuchTextToParseException.ThrowIfTooMuchText(totalLengthToParse);
+                        fnameStrings[fname] = text;
+                    }
+                }
+                if (shouldReportProgress && filesReadSoFar == nextCheckPoint)
+                {
+                    nextCheckPoint = nextCheckPoint + checkPointLength > nFiles ? nFiles : nextCheckPoint + checkPointLength;
+                    progressReportCallback(filesReadSoFar, nFiles);
+                }
+            }
+            if (shouldReportProgress)
+            {
+                progressReportCallback(nFiles, nFiles);
+                progressReportTeardown?.Invoke();
+            }
+        }
 
         private (string fname, JNode parsedOrError, bool error) ParseOrGetError(string fname, string jsonStr, JsonParser jsonParserTemplate, bool shouldReportProgress)
         {
@@ -199,7 +231,7 @@ namespace JSON_Tools.JSON_Tools
 		    string[] fnames = fnameStrings.Keys.ToArray();
             if (shouldReportProgress)
             {
-                progressReportSetup?.Invoke(totalLengthToParse);
+                progressReportSetup?.Invoke(totalLengthToParse, -1);
                 progressReportCallback(0, totalLengthToParse);
             }
             var results = fnames

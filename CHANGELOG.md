@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 	- Generic Windows message boxes (the boxes with `Ok`, `Yes`, `No`, and `Cancel` buttons and no other controls).
 5. The [`path_separator` setting](/docs/README.md#key_style-and-path_separator-settings) for formatting keys/indices and paths. Addresses [issue 69](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/69).
 6. Make it so left-clicking on the `Key/index to clipboard` and `Path to clipboard` options of the [treenode right-click context menu](/docs/README.md#get-info-about-tree-nodes) gets the path or key/index in whatever the default is from your settings, without having to click on one of the sub-menu items.
+7. The `grepper form` now supports `\` and `/` (path separators) in search patterns, as well as `**` to match any number of characters (including `\`).
 
 ### Changed
 

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -22,8 +22,11 @@ namespace JSON_Tools.Forms
         private List<string> urlsQueried;
         // fields related to progress reporting
         private const int CHECKPOINT_COUNT = 25;
-        private string bufferOpenBeforeProgressReport;
-        private string progressReportBufferName;
+        private Form progressBarForm;
+        private MyProgressBar progressBar;
+        private bool isParsing;
+        //private Button progressBarCancelButton;
+        private Label progressLabel;
         private static object progressReportLock = new object();
 
         public GrepperForm()
@@ -147,13 +150,10 @@ namespace JSON_Tools.Forms
             AddDirectoryToDirectoriesVisited(rootDir);
             if (Directory.Exists(rootDir))
             {
+                UseWaitCursor = true;
                 try
                 {
-                    // TODO: this could take a long time; maybe add a line to show a MessageBox
-                    // that asks if you want to stop the search after a little while?
-                    UseWaitCursor = true;
                     grepper.Grep(rootDir, recursive, searchPatterns);
-                    UseWaitCursor = false;
                 }
                 catch (Exception ex)
                 {
@@ -164,67 +164,102 @@ namespace JSON_Tools.Forms
                         MessageBoxIcon.Error,
                         1, RemesParser.PrettifyException(ex));
                 }
+                UseWaitCursor = false;
             }
             AddFilesToFilesFound();
         }
 
-        /// <summary>
-        /// Looks like this:
-        /// <code>
-        /// JSON from files and APIs - JSON parsing progress
-        /// |========                 |
-        /// 0.301 MB of 1.25 MB parsed
-        /// </code>
-        /// </summary>
-        /// <param name="checkPointsFinished"></param>
-        /// <returns></returns>
-        private static string ProgressBarText(int checkPointsFinished, int lengthParsedSoFar, int totalLengthToParse)
+        private void CreateProgressReportBuffer(int totalLengthToParse, long totalLengthOnHardDrive)
         {
-            return "JSON from files and APIs - JSON parsing progress\r\n|" +
-                    ArgFunction.StrMulHelper("=", checkPointsFinished) + ArgFunction.StrMulHelper(" ", CHECKPOINT_COUNT - checkPointsFinished) + "|\r\n" +
-                   $"{Math.Round(lengthParsedSoFar / 1e6, 3)} MB of {Math.Round(totalLengthToParse / 1e6, 3)} MB parsed" +
-                   (lengthParsedSoFar == totalLengthToParse ? "\r\nPARSING COMPLETE!" : "");
-        }
-
-        private void CreateProgressReportBuffer(int totalLengthToParse)
-        {
-            bufferOpenBeforeProgressReport = Npp.notepad.GetCurrentFilePath();
-            Npp.notepad.FileNew();
-            Npp.notepad.SetCurrentBufferInternalName("JSON parsing progress report");
-            progressReportBufferName = Npp.notepad.GetCurrentFilePath();
-            Npp.editor.SetText(ProgressBarText(0, 0, totalLengthToParse));
-            Npp.editor.GrabFocus();
-            // wait a moment for the editor to finish acquiring focus
-            Thread.Sleep(50);
-        }
-
-        private void ReportJsonParsingProgress(int lengthParsedSoFar, int totalLengthToParse)
-        {
-            lock (progressReportLock)
+            string totLengthToParseMB = (totalLengthToParse / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
+            string totLengthOnHardDriveMB = (totalLengthOnHardDrive / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
+            isParsing = totalLengthOnHardDrive == -1;
+            Label label = new Label
             {
-                // we need to do a / (b / c) rather than a * c / b, because:
-                //    a * (c / b) will be 0 because c is less than b
-                //    (a * c) / b could easily cause overflow, because a * c might be larger than int32.Max
-                int checkPointsFinished = lengthParsedSoFar / (totalLengthToParse / CHECKPOINT_COUNT);
-                if (Npp.notepad.GetCurrentFilePath() == progressReportBufferName)
+                Name = "title",
+                Text = isParsing 
+                           ? "All JSON documents have been read into memory.\r\n" +
+                             $"Now parsing {grepper.fnameStrings.Count} documents with combined length of about {totLengthToParseMB} MB"
+                           : $"Reading {totalLengthToParse} documents with a combined length of about {totLengthOnHardDriveMB} MB",  
+                TextAlign = ContentAlignment.TopCenter,
+                Top = 20,
+                AutoSize = true,
+            };
+            progressLabel = new Label
+            {
+                Name = "progressLabel",
+                Text = isParsing ? $"0 MB of {totLengthToParseMB} MB parsed" : $"0 of {totalLengthToParse} files read",
+                TextAlign = ContentAlignment.TopCenter,
+                Top = 100,
+                AutoSize = true,
+            };
+            progressBar = new MyProgressBar()
+            {
+                Name = "progress",
+                Minimum = 0,
+                Maximum = totalLengthToParse,
+                Style = ProgressBarStyle.Blocks,
+                Left = 20,
+                Width = 450,
+                Top = 200,
+                Height = 50,
+            };
+            //progressBarCancelButton = new Button
+            //{
+            //    Name = "Cancel",
+            //    Left = 200,
+            //    Text = "Cancel parsing",
+            //};
+            //cancelProgressBar = false;
+            //progressBarCancelButton.Click += new EventHandler((object sender, EventArgs e) =>
+            //{
+
+            //});
+
+            progressBarForm = new Form
+            {
+                Text = isParsing ? "JSON parsing in progress" : "File reading in progress",
+                Controls = { label, progressLabel, progressBar },
+                Width = 500,
+                Height = 300,
+            };
+            progressBarForm.Show();
+        }
+
+        private class MyProgressBar : ProgressBar
+        {
+            public MyProgressBar() : base()
+            {
+                CheckForIllegalCrossThreadCalls = false;
+            }
+        }
+
+        private void ReportJsonParsingProgress(int lengthParsedSoFar, int __)
+        {
+            if (isParsing)
+            {
+                lock (progressReportLock)
                 {
-                    Npp.editor.SetText(ProgressBarText(checkPointsFinished, lengthParsedSoFar, totalLengthToParse));
+                    progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
+                    progressBar.Value = lengthParsedSoFar;
                 }
+            }
+            else
+            {
+                // don't need to use the lock when reading files, because that is single-threaded
+                progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+", _ => lengthParsedSoFar.ToString());
+                progressBar.Value = lengthParsedSoFar;
+                progressBarForm.Refresh();
             }
         }
 
         private void AfterProgressReport()
         {
-            //// navigate to whatever buffer was open before the progress report started
-            //if (progressReportBufferName != null)
-            //{
-            //    if (Npp.notepad.GetCurrentFilePath() == progressReportBufferName
-            //        && bufferOpenBeforeProgressReport != null
-            //        && Npp.notepad.GetOpenFileNames().Contains(bufferOpenBeforeProgressReport))
-            //    {
-            //        Npp.notepad.OpenFile(bufferOpenBeforeProgressReport);
-            //    }
-            //}
+            progressBarForm.Close();
+            progressBarForm.Dispose();
+            progressBarForm = null;
+            progressBar = null;
+            progressLabel = null;
             ViewResultsButton.Focus();
         }
 

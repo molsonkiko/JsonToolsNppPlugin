@@ -797,7 +797,7 @@ Of course, sometimes an API request will fail. You can click the [View errors bu
 
 If you want to open up all the JSON files in a directory, here's how to do it:
 1. Choose whether you want to search in subdirectories.
-2. Choose what [filename search pattern(s)](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension).
+2. Choose what [filename search pattern(s)](https://docs.microsoft.com/en-us/dotnet/api/system.io.directoryinfo.enumeratefiles?view=net-6.0#system-io-directoryinfo-enumeratefiles) you want to use (by default files with the `.json` extension). Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), these filename search patterns can include `\` and `/` characters, and `**` can be used to match any number of characters (including `\`).
 3. Choose what directory you want to search. *If you are using a version of JsonTools __older than [v8.0](/CHANGELOG.md#800---2024-06-29)__*, you can do this in one of the following ways:
     - Choose a directory using a GUI dialog. To do this, *make sure that the central list box has the default value of `Previously visited directories...`*, then click the `Choose directory...` button, and a dialog will pop up. Once you select a directory and click `OK`, JsonTools will search the chosen directory.
     ![Choose a directory using a modal dialog](/docs/json_from_files_and_apis%20get%20json%20in%20directory%20USING%20DIALOG.PNG)
@@ -837,15 +837,9 @@ For example, if you wanted to search only files with `foo` (case-sensitive) in t
 
 When getting JSON from [directories](#getting-json-from-local-directories) or [APIs](#sending-rest-api-requests), it is possible that JsonTools will need to parse very large amounts of JSON. JsonTools can parse approximately 30 megabytes of JSON per second per thread, but its rate of parsing depends on many factors, chiefly the number of documents to be parsed.
 
-Although JsonTools does not currently report progress while reading files from the hard drive or sending API requests, beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), it will report progress while parsing documents (which is typically the most time-consuming part). To report progress, JsonTools will open up a buffer in Notepad++ named `JSON parsing progress report` and put text in the document that looks like this:
+Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), it will report progress while reading documents from the hard drive, and then report progress again when parsing documents. To report progress, JsonTools will open up a progress reporting form with a green progress bar and a short explanation of what is happening.
 
-```txt
-JSON from files and APIs - JSON parsing progress
-|======                   |
-33.047 MB of 121.678 MB parsed
-```
-
-This progress reporting only takes place if the total amount of text to be parsed is at least 50 megabytes, or if there are at least 16 files with a combined total of 8 megabytes of text.
+This progress reporting only takes place if the total amount of text to be parsed/read is at least 50 megabytes, or if there are at least 16 files (64 when reading from hard drive) with a combined total of 8 megabytes of text.
 
 To be clear, __versions of JsonTools earlier than [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) did not have progress reporting for this form,__ but the underlying process was still very reliable, and *just because Notepad++ stopped responding doesn't mean that JsonTools had an error or went into an infinite loop.*
 

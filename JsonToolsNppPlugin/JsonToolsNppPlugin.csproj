@@ -160,6 +160,7 @@
     </Compile>
     <Compile Include="Tests\Benchmarker.cs" />
     <Compile Include="Tests\CsvSnifferTests.cs" />
+    <Compile Include="Tests\GlobTests.cs" />
     <Compile Include="Tests\IniFileParserTests.cs" />
     <Compile Include="Tests\JsonGrepperTests.cs" />
     <Compile Include="Tests\JsonParserTests.cs" />
@@ -177,6 +178,7 @@
     <Compile Include="JSONTools\YamlDumper.cs" />
     <Compile Include="Tests\YamlDumperTests.cs" />
     <Compile Include="Utils\FormStyle.cs" />
+    <Compile Include="Utils\Glob.cs" />
     <Compile Include="Utils\LruCache.cs" />
     <Compile Include="Utils\Npp.cs" />
     <Compile Include="Utils\NanInf.cs" />
