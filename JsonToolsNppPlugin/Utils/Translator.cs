@@ -21,56 +21,61 @@ namespace JSON_Tools.Utils
 
         public static bool HasLoadedAtStartup { get; private set; } = false;
 
-        public static void LoadTranslations(bool atStartup = true)
+        public static string languageName { get; private set; } = DEFAULT_LANG;
+
+        public const string DEFAULT_LANG = "english";
+        public static readonly string translationDir = Path.Combine(Npp.pluginDllDirectory, "translation");
+
+        public static void LoadTranslations(bool atStartup = true, string preferredLang = null)
         {
             if (atStartup && HasLoadedAtStartup)
                 return;
             HasLoadedAtStartup = true;
-            string languageName = "english";
-            // TODO: maybe use Notepad++ nativeLang preference to guide translation?
-            // Possible references include:
-            // * https://github.com/daddel80/notepadpp-multireplace/blob/65411ac5754878bbf8af7a35dba7b35d7d919ff4/src/MultiReplacePanel.cpp#L6347
-            // * https://npp-user-manual.org/docs/binary-translation/
-
-            //// first try to use the Notepad++ nativeLang.xml config file to determine the user's language preference
-            //string nativeLangXmlFname = Path.Combine(Npp.notepad.GetConfigDirectory(), "..", "nativeLang.xml");
-            //if (File.Exists(nativeLangXmlFname))
-            //{
-            //    try
-            //    {
-            //        string nativeLangXml;
-            //        using (var reader = new StreamReader(File.OpenRead(nativeLangXmlFname), Encoding.UTF8, true))
-            //        {
-            //            nativeLangXml = reader.ReadToEnd();
-            //        }
-            //        Match match = Regex.Match(nativeLangXml, "<Native-Langue .*? filename=\"(.*?)\\.xml\"");
-            //        if (match.Success)
-            //            languageName = match.Groups[1].Value.Trim().ToLower();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        MessageBox.Show($"While attempting to determine native language preference from Notepad++ config XML, got an error:\r\n{ex}");
-            //    }
-            //}
-            if (languageName == "english")
+            if (preferredLang == null)
             {
+                // first try to use the Notepad++ nativeLang.xml config file to determine the user's language preference
+                string nativeLangXmlFname = Path.Combine(Npp.notepad.GetConfigDirectory(), "..", "..", "nativeLang.xml");
+                if (File.Exists(nativeLangXmlFname))
+                {
+                    try
+                    {
+                        string nativeLangXml;
+                        using (var reader = new StreamReader(File.OpenRead(nativeLangXmlFname), Encoding.UTF8, true))
+                        {
+                            nativeLangXml = reader.ReadToEnd();
+                        }
+                        Match match = Regex.Match(nativeLangXml, "<Native-Langue .*? filename=\"(.*?)\\.xml\"");
+                        if (match.Success)
+                            languageName = match.Groups[1].Value.Trim().ToLower();
+                    }
+                    catch //(Exception ex)
+                    {
+                        //MessageBox.Show($"While attempting to determine native language preference from Notepad++ config XML, got an error:\r\n{ex}");
+                    }
+                }
                 // as a fallback, try to determine the user's language by asking Windows for their current culture
-                CultureInfo currentCulture = CultureInfo.CurrentCulture;
-                string languageFullname = currentCulture.EnglishName;
-                languageName = languageFullname.Split(' ')[0].ToLower();
-                if (languageName == "Unknown")
-                    languageName = currentCulture.Parent.EnglishName.Split(' ')[0].ToLower();
+                if (languageName == DEFAULT_LANG || !TryGetTranslationFileName(languageName, out _))
+                {
+                    CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                    string languageFullname = currentCulture.EnglishName;
+                    languageName = languageFullname.Split(' ')[0].ToLower();
+                    if (languageName == "Unknown")
+                        languageName = currentCulture.Parent.EnglishName.Split(' ')[0].ToLower();
+                }
             }
-            if (languageName == "english")
+            else
+            {
+                languageName = preferredLang;
+            }
+            if (languageName == DEFAULT_LANG)
             {
                 //MessageBox.Show("Not loading translations, because english is the current culture language");
                 return;
             }
-            string translationDir = Path.Combine(Npp.pluginDllDirectory, "translation");
-            string translationFilename = Path.Combine(translationDir, languageName + ".json5");
-            if (!File.Exists(translationFilename))
+            if (!TryGetTranslationFileName(languageName, out string translationFilename))
             {
                 //MessageBox.Show($"Could not find a translation file for language {languageFirstname} in directory {translationDir}");
+                languageName = DEFAULT_LANG;
                 return;
             }
             FileInfo translationFile = new FileInfo(translationFilename);
@@ -87,8 +92,20 @@ namespace JSON_Tools.Utils
             }
             catch/* (exception ex)*/
             {
+                languageName = DEFAULT_LANG;
                 //MessageBox.Show($"While attempting to parse translation file {translationFilename}, got an exception:\r\n{RemesParser.PrettifyException(ex)}");
             }
+        }
+
+        private static bool TryGetTranslationFileName(string langName, out string translationFilename)
+        {
+            translationFilename = Path.Combine(translationDir, langName + ".json5");
+            if (!File.Exists(translationFilename))
+            {
+                translationFilename = null;
+                return false;
+            }
+            return true;
         }
 
         public static string GetTranslatedMenuItem(string menuItem)
