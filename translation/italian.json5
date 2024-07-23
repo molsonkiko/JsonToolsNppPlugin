@@ -118,6 +118,16 @@
                 "RemoveSelectedFilesButton": "Rimuovi i file selezionati"
             }
         },
+        "GrepperFormProgressBar": {
+            "controls": {
+                "titleIfParsing": "Analisi di JSON in corso",
+                "titleIfReading": "Lettura dei file in corso",
+                "captionIfParsing": "Lettura dei file completata.\r\nOra sta analizzando {0} documenti con una lunghezza complessiva di circa {1} MB",
+                "captionIfReading": "Ora sta leggendo {0} file con una lunghezza complessiva di cira {1} MB",
+                "progressLabelIfParsing": "0 MB di {0} MB analizzati",
+                "progressLabelIfReading": "0 di {0} file letti"
+            }
+        },
         "JsonToCsvForm": {
             "title": "Da JSON a CSV",
             "controls": {
@@ -187,8 +197,9 @@
             }
         },
         "TreeViewer": {
-            // the title of this form is programmatically generated
-            // so we can't translate it.
+            "title": "Visualizzazione struttura JSON per {0}",
+            // this is the title for the GrepperForm's tree view
+            "titleIfGrepperForm": "Visualizzazione struttura JSON per \"JSON da file e API\"",
             "controls": {
                 "SubmitQueryButton": "Invia query",
                 "QueryToCsvButton": "Da Query a CSV",

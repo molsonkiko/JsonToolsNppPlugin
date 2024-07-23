@@ -108,6 +108,48 @@ namespace JSON_Tools.Utils
             return true;
         }
 
+        /// <summary>
+        /// Find the string at the end of a sequence of keys in translations, returning false if no such string was found.<br></br>
+        /// For example:<br></br>
+        /// <example>
+        /// Suppose translations is
+        /// <code>{"foo": {"bar": "1", "rnq": "2"}, "quz": "3"}</code>
+        /// - TryGetTranslationAtPath(["foo", "bar"], out JNode result) would set result to "1" and return <i>true</i><br></br>
+        /// - TryGetTranslationAtPath(["foo", "rnq"], out JNode result) would set result to "2" and return <i>true</i><br></br>
+        /// - TryGetTranslationAtPath(["blah", "rnq"], out JNode result) would set result to null and return <i>false</i><br></br>
+        /// - TryGetTranslationAtPath(["foo", "rnq", "b"], out JNode result) would set result to null and return <i>false</i><br></br>
+        /// - TryGetTranslationAtPath(["foo", "b"], out JNode result) would set result to null and return <i>false</i><br></br>
+        /// - TryGetTranslationAtPath(["quz"], out JNode result) would set result to "3" and return <i>true</i><br></br>
+        /// - TryGetTranslationAtPath(["foo"], out JNode result) would set result to {"bar": "1", "rnq": "2"} and return <i>true</i><br></br>
+        /// </example>
+        /// </summary>
+        /// <param name="pathToTrans"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public static bool TryGetTranslationAtPath(string[] pathToTrans, out JNode result)
+        {
+            result = null;
+            if (!(translations is JObject trans) || pathToTrans.Length == 0)
+                return false;
+            int pathLen = pathToTrans.Length;
+            JNode child = new JNode();
+            for (int ii = 0; ii < pathLen; ii++)
+            {
+                string key = pathToTrans[ii];
+                if (!trans.TryGetValue(key, out child))
+                    return false;
+                if (ii < pathLen - 1)
+                {
+                    if (child is JObject childObj)
+                        trans = childObj;
+                    else
+                        return false;
+                }
+            }
+            result = child;
+            return true;
+        }
+
         public static string GetTranslatedMenuItem(string menuItem)
         {
             if (translations is JObject jobj
@@ -167,7 +209,7 @@ namespace JSON_Tools.Utils
             return MessageBox.Show(formattedText, formattedCaption, buttons, icon);
         }
 
-        private static string TryTranslateWithFormatting(string untranslated, string translated, params object[] formatParams)
+        public static string TryTranslateWithFormatting(string untranslated, string translated, params object[] formatParams)
         {
             try
             {

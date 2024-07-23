@@ -1562,7 +1562,14 @@ namespace Kbg.NppPluginNET
             openTreeViewer = new TreeViewer(json);
             info.tv = openTreeViewer;
             jsonFileInfos[activeFname] = info;
-            DisplayJsonTree(openTreeViewer, json, $"Json Tree View for {openTreeViewer.RelativeFilename()}", usesSelections, documentType, parserState == ParserState.FATAL);
+            DisplayJsonTree(openTreeViewer, json, GetNameForJsonTree(openTreeViewer), usesSelections, documentType, parserState == ParserState.FATAL);
+        }
+
+        private static string GetNameForJsonTree(TreeViewer tv)
+        {
+            string defaultNameFormat = "Json Tree View for {0}";
+            string nameFormat = (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "title" }, out JNode node) && node.value is string s) ? s : defaultNameFormat;
+            return Translator.TryTranslateWithFormatting(defaultNameFormat, nameFormat, tv.RelativeFilename());
         }
 
         static void OpenGrepperForm()

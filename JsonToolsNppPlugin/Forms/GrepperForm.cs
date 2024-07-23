@@ -28,6 +28,7 @@ namespace JSON_Tools.Forms
         //private Button progressBarCancelButton;
         private Label progressLabel;
         private static object progressReportLock = new object();
+        private static Dictionary<string, string> progressBarTranslatedStrings = null;
 
         public GrepperForm()
         {
@@ -96,7 +97,7 @@ namespace JSON_Tools.Forms
             }
             catch (Exception ex)
             {
-                Translator.ShowTranslatedMessageBox(ex.ToString(), 
+                Translator.ShowTranslatedMessageBox(ex.ToString(),
                     "Error while sending API requests",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -174,13 +175,39 @@ namespace JSON_Tools.Forms
             string totLengthToParseMB = (totalLengthToParse / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
             string totLengthOnHardDriveMB = (totalLengthOnHardDrive / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
             isParsing = totalLengthOnHardDrive == -1;
+            string titleIfParsing = "JSON parsing in progress";
+            string titleIfReading = "File reading in progress";
+            string captionIfParsing = "File reading complete.\r\nNow parsing {0} documents with combined length of about {1} MB";
+            string captionIfReading = "Now reading {0} files with a combined length of about {1} MB";
+            string progressLabelIfParsing = "0 MB of {0} MB parsed";
+            string progressLabelIfReading = "0 of {0} files read";
+            if (progressBarTranslatedStrings is null)
+            {
+                progressBarTranslatedStrings = new Dictionary<string, string>
+                {
+                    ["titleIfParsing"] = titleIfParsing,
+                    ["titleIfReading"] = titleIfReading,
+                    ["captionIfParsing"] = captionIfParsing,
+                    ["captionIfReading"] = captionIfReading,
+                    ["progressLabelIfParsing"] = progressLabelIfParsing,
+                    ["progressLabelIfReading"] = progressLabelIfReading,
+                };
+                string[] keys = progressBarTranslatedStrings.Keys.ToArray();
+                if (Translator.TryGetTranslationAtPath(new string[] {"forms", "GrepperFormProgressBar", "controls"}, out JNode progressBarTransNode) && progressBarTransNode is JObject progressBarTrans)
+                {
+                    foreach (string key in keys)
+                    {
+                        if (progressBarTrans.TryGetValue(key, out JNode val) && val.value is string s)
+                            progressBarTranslatedStrings[key] = s;
+                    }
+                }
+            }
             Label label = new Label
             {
-                Name = "title",
-                Text = isParsing 
-                           ? "All JSON documents have been read into memory.\r\n" +
-                             $"Now parsing {grepper.fnameStrings.Count} documents with combined length of about {totLengthToParseMB} MB"
-                           : $"Reading {totalLengthToParse} documents with a combined length of about {totLengthOnHardDriveMB} MB",  
+                Name = "caption",
+                Text = isParsing
+                           ? Translator.TryTranslateWithFormatting(captionIfParsing, progressBarTranslatedStrings["captionIfParsing"], grepper.fnameStrings.Count, totLengthToParseMB)
+                           : Translator.TryTranslateWithFormatting(captionIfReading, progressBarTranslatedStrings["captionIfReading"], totalLengthToParse, totLengthOnHardDriveMB),
                 TextAlign = ContentAlignment.TopCenter,
                 Top = 20,
                 AutoSize = true,
@@ -188,7 +215,9 @@ namespace JSON_Tools.Forms
             progressLabel = new Label
             {
                 Name = "progressLabel",
-                Text = isParsing ? $"0 MB of {totLengthToParseMB} MB parsed" : $"0 of {totalLengthToParse} files read",
+                Text = isParsing
+                        ? Translator.TryTranslateWithFormatting(progressLabelIfParsing, progressBarTranslatedStrings["progressLabelIfParsing"], totLengthToParseMB)
+                        : Translator.TryTranslateWithFormatting(progressLabelIfReading, progressBarTranslatedStrings["progressLabelIfReading"], totalLengthToParse),
                 TextAlign = ContentAlignment.TopCenter,
                 Top = 100,
                 AutoSize = true,
@@ -218,11 +247,18 @@ namespace JSON_Tools.Forms
 
             progressBarForm = new Form
             {
-                Text = isParsing ? "JSON parsing in progress" : "File reading in progress",
+                Name = "GrepperFormProgressBar",
+                Text = isParsing ? progressBarTranslatedStrings["titleIfParsing"] : progressBarTranslatedStrings["titleIfReading"],
                 Controls = { label, progressLabel, progressBar },
                 Width = 500,
                 Height = 300,
             };
+            if (label.Right > progressBarForm.Width)
+            {
+                progressBarForm.SuspendLayout();
+                progressBarForm.Width = label.Right + 20;
+                progressBarForm.ResumeLayout(false);
+            }
             progressBarForm.Show();
         }
 
@@ -335,7 +371,10 @@ namespace JSON_Tools.Forms
             }
             tv = new TreeViewer(grepper.fnameJsons);
             AddOwnedForm(tv);
-            Main.DisplayJsonTree(tv, tv.json, "JSON from files and APIs tree", false, DocumentType.JSON, false);
+            string treeName = "JSON from files and APIs tree";
+            if (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "titleIfGrepperForm" }, out JNode node) && node.value is string s)
+                treeName = s;
+            Main.DisplayJsonTree(tv, tv.json, treeName, false, DocumentType.JSON, false);
             if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
                 Npp.notepad.HideDockingForm(Main.openTreeViewer);
         }
