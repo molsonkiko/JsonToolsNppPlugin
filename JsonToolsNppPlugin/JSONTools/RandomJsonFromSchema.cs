@@ -286,24 +286,24 @@ namespace JSON_Tools.JSON_Tools
             }
             if (obj.Length == 0) // the empty schema validates everything
                 return RandomAnything(new JObject(), new JObject(), minArrayLength, maxArrayLength, extendedAsciiStrings);
+            if (obj.children.TryGetValue("enum", out JNode enum_))
+            {
+                // any type can be an enum; it's just a list of possible values
+                List<JNode> enumMembers = ((JArray)enum_).children;
+                return enumMembers[random.Next(enumMembers.Count)].Copy();
+            }
             if (!obj.children.TryGetValue("type", out JNode typeNode))
             {
                 if (!obj.children.TryGetValue("anyOf", out JNode anyOf))
                 {
                     if (!obj.children.TryGetValue("$ref", out JNode refnode))
-                        throw new SchemaValidationException("A schema must have an \"anyOf\" keyword or a \"type\" keyword");
+                        throw new SchemaValidationException("A schema must have at least one of the \"type\", \"enum\", \"anyOf\" keywords.");
                     var refname = ((string)refnode.value).Split('/').Last();
                     if (!refs.children.TryGetValue(refname, out JNode reference))
                         throw new SchemaValidationException($"Reference {refname} to an undefined schema");
                     return RandomJsonHelper(reference, refs, minArrayLength, maxArrayLength, extendedAsciiStrings);
                 }
                 return RandomAnyOf(anyOf, refs, minArrayLength, maxArrayLength, extendedAsciiStrings);
-            }
-            if (obj.children.TryGetValue("enum", out JNode enum_))
-            {
-                // any type can be an enum; it's just a list of possible values
-                List<JNode> enumMembers = ((JArray)enum_).children;
-                return enumMembers[random.Next(enumMembers.Count)].Copy();
             }
             if (typeNode is JArray typeArr)
             {
