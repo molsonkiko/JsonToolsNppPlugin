@@ -164,10 +164,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             Win32.SendMessage(scintilla, SciMsg.SCI_CLEARDOCUMENTSTYLE, (IntPtr) Unused, (IntPtr) Unused);
         }
 
-        /// <summary>Returns the number of bytes in the document. (Scintilla feature 2006)</summary>
-        public int GetLength()
+        public long GetLength()
         {
-            return (int)Win32.SendMessage(scintilla, SciMsg.SCI_GETLENGTH, (IntPtr) Unused, (IntPtr) Unused);
+            return Win32.SendMessage(scintilla, SciMsg.SCI_GETLENGTH, (IntPtr)Unused, (IntPtr)Unused).ToInt64();
         }
 
         /// <summary>Returns the character byte at the position. (Scintilla feature 2007)</summary>

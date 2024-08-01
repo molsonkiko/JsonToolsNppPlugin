@@ -511,6 +511,8 @@ namespace Kbg.NppPluginNET
         /// <returns></returns>
         public static (ParserState parserState, JNode node, bool usesSelections, DocumentType DocumentType) TryParseJson(DocumentType documentType = DocumentType.JSON, bool wasAutotriggered = false, bool preferPreviousDocumentType = false, bool isRecursion = false, bool ignoreSelections = false)
         {
+            if (!Npp.TryGetLengthAsInt(out int len, !wasAutotriggered))
+                return (ParserState.FATAL, new JNode(), false, DocumentType.NONE);
             JsonParser jsonParser = JsonParserFromSettings();
             string fname = Npp.notepad.GetCurrentFilePath();
             List<(int start, int end)> selRanges = SelectionManager.GetSelectedRanges();
@@ -524,7 +526,6 @@ namespace Kbg.NppPluginNET
                 // for some reason we don't want to use selections no matter what (probably because it was an automatic TryParseJson triggered by the timer)
                 || ignoreSelections;
             bool stopUsingSelections = false;
-            int len = Npp.editor.GetLength();
             double sizeThreshold = settings.max_file_size_MB_slow_actions * 1e6;
             bool hasOldSelections = false;
             DocumentType previouslyChosenDocType = DocumentType.NONE;
@@ -934,6 +935,8 @@ namespace Kbg.NppPluginNET
         public static Dictionary<string, (string newKey, JNode child)> ReformatFileWithJson(JNode json, Func<JNode, string> formatter, bool usesSelections)
         {
             var keyChanges = new Dictionary<string, (string newKey, JNode child)>();
+            if (!Npp.TryGetLengthAsInt(out int len))
+                return keyChanges;
             JsonFileInfo info;
             Npp.editor.BeginUndoAction();
             if (usesSelections)
@@ -943,7 +946,7 @@ namespace Kbg.NppPluginNET
                 pluginIsEditing = true;
                 int previouslySelectedIndicator = Npp.editor.GetIndicatorCurrent();
                 var keyvalues = obj.children.ToArray();
-                ClearPreviouslyRememberedSelections(Npp.editor.GetLength(), keyvalues.Length);
+                ClearPreviouslyRememberedSelections(len, keyvalues.Length);
                 int currentIndicator = selectionRememberingIndicator1;
                 Array.Sort(keyvalues, (kv1, kv2) => SelectionManager.StartEndCompareByStart(kv1.Key, kv2.Key));
                 foreach (KeyValuePair<string, JNode> kv in keyvalues)
@@ -1444,7 +1447,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void SelectEveryValidJson()
         {
-            int utf8Len = Npp.editor.GetLength();
+            if (!Npp.TryGetLengthAsInt(out int utf8Len))
+                return;
             var selections = SelectionManager.GetSelectedRanges();
             if (SelectionManager.NoTextSelected(selections))
             {
@@ -1964,6 +1968,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void SelectAllChildren(IEnumerable<int> positions, bool isJsonLines)
         {
+            if (!Npp.TryGetLengthAsInt(out int len))
+                return;
             int[] sortedPositions = positions.Distinct().ToArray();
             if (sortedPositions.Length == 0)
                 return;
@@ -1979,7 +1985,7 @@ namespace Kbg.NppPluginNET
                     "Can't select all children", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            string slice = Npp.GetSlice(minPos, Npp.editor.GetLength());
+            string slice = Npp.GetSlice(minPos, len);
             var parser = new JsonParser(LoggerLevel.JSON5);
             int utf8ExtraBytes = 0;
             int positionsIdx = 0;
@@ -2054,7 +2060,8 @@ namespace Kbg.NppPluginNET
             DateTime now = DateTime.UtcNow;
             if (!settings.auto_validate
                 || !bufferFinishedOpening
-                || Npp.editor.GetLength() > settings.max_file_size_MB_slow_actions * 1e6 // current file too big
+                || !Npp.TryGetLengthAsInt(out int len, false)
+                || len > settings.max_file_size_MB_slow_actions * 1e6 // current file too big
                 || lastEditedTime == DateTime.MaxValue // set when we don't want to edit it
                 || lastEditedTime.AddMilliseconds(millisecondsAfterLastEditToParse) > now)
                 return;

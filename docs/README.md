@@ -57,7 +57,7 @@ We can open up the JSON tree viewer in the main menu by navigating Plugins -> Js
 You can click on the nodes in that tree to see the children. When you select a node, the caret will snap to the line of the node you've selected. *New in [version 5](/CHANGELOG.md#500---2023-05-26): snaps to position instead.*
 
 __NOTES__
-1. __*JsonTools only works with UTF-8 encoded JSON.*__
+1. __*JsonTools only works with UTF-8 encoded JSON.*__ This should only be a problem if you have a JSON file in an encoding that Notepad++ cannot correctly interpret.
 2. If you submit a RemesPath query that is anything other than the default `@`, the JSON tree may no longer send the caret to the correct position.
 3. If you [edit your JSON](/docs/RemesPath.md#editing-with-assignment-expressions) with RemesPath queries *and then undo your change with `Ctrl+Z` or similar, the undo action will not undo the changes to the JSON*. To re-sync the JSON with the document, you will have to close and then re-open the tree view.
     - As of version 3.5.0, you can use the `Refresh` button to refresh the tree with the most recently parsed JSON, rather than closing and re-opening the tree.
@@ -69,6 +69,8 @@ __NOTES__
     - `Ctrl+Down` while in the tree selects the last direct child of the currently selected node. *Added in [v6.0](/CHANGELOG.md#600---2023-12-13).*
     - `Escape` takes focus from the tree view back to the editor.
 5. Beginning in [v4.4.0](/CHANGELOG.md#440---2022-11-23), you can have multiple tree views open.
+6. Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), JsonTools will refuse to perform plugin commands on files with more than 2147483647 bytes. This is the same size restriction that 32-bit Notepad++ has for opening files.
+    - Prior to that release, JsonTools would cause Notepad++ to __crash__ if you attempted to execute plugin commands on files that large.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.
 
@@ -253,6 +255,8 @@ This is off by default. If desired, this feature can be turned on in the setting
 Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation forced the file to be parsed as JSON. As of v6.1, the document will be parsed as [JSON Lines](#json-lines-documents) if the file extension is `jsonl` and as JSON otherwise. In addition, if the document is already in [regex mode](#regex-search-form) or [ini file mode](#parsing-ini-files), automatic validation is suspended.
 
 Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this automatic validation will only ever attempt to parse the entire document, not [a selection](#working-with-selections), and automatic validation is always disabled in selection-based mode. Prior to v7.0, automatic validation could change the user's selections unexpectedly.
+
+__WARNING:__ If this setting is turned on, versions of JsonTools older than [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) will cause Notepad++ to crash if you attempt to open *any* file with more than 2147483647 bytes.
 
 ## Path to current position ##
 

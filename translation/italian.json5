@@ -455,6 +455,7 @@
         "Invalid value for setting {0}": {"caption": "Invalid value for setting {0}", "text": "Could not change setting {0} to value {1}, so it will remain set as {2}.\r\nGot the following exception:\r\n{3}"},
         // ===== MessageBoxes in Npp.cs =====
         "Nothing to copy to clipboard": {"caption": "Nothing to copy to clipboard", "text": "Couldn't find anything to copy to the clipboard"},
+        "File too long for JsonTools": {"caption": "Questo file è troppo lungo per JsonTools", "text": "JsonTools non può eseguire questo comando del plugin su un file con più di 2147483647 byte.\r\nVuoi interrompere la visualizzazione delle notifiche quando un file è troppo lungo?"},
         // ===== MessageBoxes in SortForm.cs =====
         "Could not find json at that path": {"caption": "Could not find json at that path", "text": "Could not find json at the specified path ({0}).\r\nGot the following error:\r\n{1}"},
         "Failed to compile query for sorting": {"caption": "Failed to compile query for sorting", "text": "Based on selected sort method, attempted to compile query \"{0}\",\r\nbut got the following error:\r\n{1}"},

@@ -277,14 +277,14 @@ namespace JSON_Tools.Forms
                 lock (progressReportLock)
                 {
                     progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
-                    progressBar.Value = lengthParsedSoFar;
+                    progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
                 }
             }
             else
             {
                 // don't need to use the lock when reading files, because that is single-threaded
                 progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+", _ => lengthParsedSoFar.ToString());
-                progressBar.Value = lengthParsedSoFar;
+                progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
                 progressBarForm.Refresh();
             }
         }

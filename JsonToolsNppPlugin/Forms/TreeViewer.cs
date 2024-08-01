@@ -1273,7 +1273,7 @@ namespace JSON_Tools.Forms
 
         public void SelectTreeNodeJson(TreeNode node)
         {
-            if (Main.activeFname != fname)
+            if (Main.activeFname != fname || !Npp.TryGetLengthAsInt(out int len, false))
                 return;
             bool isRegex = GetDocumentType() == DocumentType.REGEX;
             (int selectionStart, int selectionEnd) = ParentSelectionStartEnd(node);
@@ -1288,7 +1288,7 @@ namespace JSON_Tools.Forms
                     nodeEndPos = nodeStartPos + utf8Lengths[0];
                 }
                 else
-                    nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, selectionEnd < 0 ? Npp.editor.GetLength() : selectionEnd);
+                    nodeEndPos = Main.EndOfJNodeAtPos(nodeStartPos, selectionEnd < 0 ? len : selectionEnd);
             }
             if (!isRegex && nodeStartPos == nodeEndPos) // empty selections are fine in regex mode
                 Translator.ShowTranslatedMessageBox(

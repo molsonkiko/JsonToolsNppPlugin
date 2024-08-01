@@ -84,6 +84,33 @@ namespace JSON_Tools.Utils
             }
         }
 
+        private static bool stopShowingFileTooLongNotifications = false;
+
+        /// <summary>
+        /// if <see cref="IScintillaGateway.GetLength"/> returns a number greater than <see cref="int.MaxValue"/>, return false and set len to -1.<br></br>
+        /// Otherwise, return true and set len to the length of the document.<br></br>
+        /// If showMessageOnFail, show a message box warning the user that the command could not be executed.
+        /// </summary>
+        public static bool TryGetLengthAsInt(out int len, bool showMessageOnFail = true)
+        {
+            long result = editor.GetLength();
+            if (result > int.MaxValue)
+            {
+                len = -1;
+                if (!stopShowingFileTooLongNotifications && showMessageOnFail)
+                {
+                    stopShowingFileTooLongNotifications = Translator.ShowTranslatedMessageBox(
+                        "JsonTools cannot perform this plugin command on a file with more than 2147483647 bytes.\r\nDo you want to stop showing notifications when a file is too long?",
+                        "File too long for JsonTools",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+
+                }
+                return false;
+            }
+            len = (int)result;
+            return true;
+        }
+
         public static DocumentType DocumentTypeFromFileExtension(string fileExtension)
         {
             switch (fileExtension)
@@ -208,7 +235,9 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static void RemoveTrailingSOH()
         {
-            int lastPos = editor.GetLength() - 1;
+            if (!TryGetLengthAsInt(out int lastPos, false))
+                return;
+            lastPos--;
             int lastChar = editor.GetCharAt(lastPos);
             if (lastChar == 0x01)
             {

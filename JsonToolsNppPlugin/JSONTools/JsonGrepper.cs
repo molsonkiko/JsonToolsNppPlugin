@@ -12,11 +12,15 @@ namespace JSON_Tools.JSON_Tools
 {
     public class TooMuchTextToParseException : Exception
     {
-        public static readonly int MAX_COMBINED_LENGTH_TEXT_TO_PARSE = IntPtr.Size == 4 ? int.MaxValue / 10 : int.MaxValue / 5;
+        /// <summary>
+        /// the limits are significantly lower than you might expect,
+        /// because the combined memory of the tree view and the Notepad++ buffer and the JNodes could exhaust all the memory that the OS allocated to Notepad++.
+        /// </summary>
+        public static readonly int MAX_COMBINED_LENGTH_TEXT_TO_PARSE = IntPtr.Size == 4 ? int.MaxValue / 20 : int.MaxValue / 8;
 
         public int lengthOfTextToParse;
 
-        private TooMuchTextToParseException(int lengthOfTextToParse)
+        public TooMuchTextToParseException(int lengthOfTextToParse)
         {
             this.lengthOfTextToParse = lengthOfTextToParse;
         }
@@ -24,19 +28,6 @@ namespace JSON_Tools.JSON_Tools
         public override string ToString()
         {
             return $"The total length of text ({lengthOfTextToParse}) to be parsed exceeded the maximum length ({MAX_COMBINED_LENGTH_TEXT_TO_PARSE})";
-        }
-
-        /// <summary>
-        /// throw an exception of this type if lengthOfTextToParse is greater than <see cref="MAX_COMBINED_LENGTH_TEXT_TO_PARSE"/>,
-        /// based on the expectation that the computer would run out of memory while attempting to parse everything.<br></br>
-        /// Does nothing if an exception is not thrown.
-        /// </summary>
-        /// <param name="lengthOfTextToParse"></param>
-        /// <exception cref="TooMuchTextToParseException"></exception>
-        public static void ThrowIfTooMuchText(int lengthOfTextToParse)
-        {
-            if (lengthOfTextToParse > MAX_COMBINED_LENGTH_TEXT_TO_PARSE)
-                throw new TooMuchTextToParseException(lengthOfTextToParse);
         }
     }
 
@@ -146,7 +137,7 @@ namespace JSON_Tools.JSON_Tools
             catch { return; }
             totalLengthToParse = 0;
             SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            FileInfo[] allFiles = dirInfo.GetFiles("*.*", searchOption);
+            FileInfo[] allFiles = dirInfo.GetFiles("*", searchOption);
             long totalLengthToRead = allFiles.Sum(x => x.Length);
             int nFiles = allFiles.Length;
             bool shouldReportProgress = reportProgress
@@ -170,7 +161,13 @@ namespace JSON_Tools.JSON_Tools
                     {
                         string text = fp.ReadToEnd();
                         totalLengthToParse += text.Length;
-                        TooMuchTextToParseException.ThrowIfTooMuchText(totalLengthToParse);
+                        if (totalLengthToParse > TooMuchTextToParseException.MAX_COMBINED_LENGTH_TEXT_TO_PARSE)
+                        {
+                            // throw an exception if there's too much text,
+                            // based on the expectation that the computer would run out of memory while attempting to parse everything.
+                            progressReportTeardown?.Invoke();
+                            throw new TooMuchTextToParseException(totalLengthToParse);
+                        }
                         fnameStrings[fname] = text;
                     }
                 }
