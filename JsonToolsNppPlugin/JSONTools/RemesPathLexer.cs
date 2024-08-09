@@ -43,21 +43,6 @@ Syntax error at position 3: Number with two decimal points
         }
     }
 
-    public struct UnquotedString
-    {
-        public string value;
-
-        public UnquotedString(string value)
-        {
-            this.value = value;
-        }
-
-        public override string ToString()
-        {
-            return JNode.StrToString(value, true);
-        }
-    }
-
     public class RemesPathLexer
     {
         public const int MAX_RECURSION_DEPTH = JsonParser.MAX_RECURSION_DEPTH;

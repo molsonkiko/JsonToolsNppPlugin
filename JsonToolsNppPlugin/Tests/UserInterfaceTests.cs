@@ -521,7 +521,7 @@ namespace JSON_Tools.Tests
                 ("compare_text", new object[]{"[1,2,3]"}),
                 ("overwrite", new object[]{"[1,2,-9e15]\r\n//foo"}),
                 ("compress", new object[]{}),
-                ("compare_text", new object[]{"[1,2,-9E+15]"}),
+                ("compare_text", new object[]{"[1,2,-9000000000000000.0]"}),
                 // TEST PARSE JSON LINES
                 ("overwrite", new object[]{"[1,2,3]\r\n{\"a\": 1, \"b\": [-3,-4]}\r\n-7\r\nfalse"}),
                 ("tree_open", new object[]{}), // to close the tree so it can be reopened

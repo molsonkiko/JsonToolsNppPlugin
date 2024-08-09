@@ -93,7 +93,7 @@ namespace JSON_Tools.JSON_Tools
                     // floating point numbers are formatted
                     // such that fractional part, exponent, and integer part are all octal
                     double val = (double)json.value;
-                    string valstr = json.ToString();
+                    string valstr = val.ToString(JNode.DOT_DECIMAL_SEP);
                     if (double.IsInfinity(val) || double.IsNaN(val))
                         // Infinity and NaN are not in the DSON specification
                         throw new DsonDumpException($"{valstr} is fake number, can't understand. So silly, wow");

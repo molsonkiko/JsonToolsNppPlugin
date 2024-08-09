@@ -55,7 +55,7 @@ Got
                 new string[] { "[\" big \"]", "- \" big \"\n", "leading or ending space in array value" },
                 new string[] { "\"a \"", "\"a \"\n", "scalar string" },
                 new string[] { "9", "9\n", "scalar int" },
-                new string[] { "-940.3", "-940.3\n", "scalar float" },
+                new string[] { "-940.3", "-940.29999999999995\n", "scalar float" },
                 new string[] { "[true, false]", "- True\n- False\n", "scalar bools" },
                 new string[] { "[null, Infinity, -Infinity, NaN]", "- null\n- .inf\n- -.inf\n- .nan\n", "null, +/-infinity, NaN" },
                 // in the below case, there's actually a bit of an error;

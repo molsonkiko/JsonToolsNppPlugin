@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Ensure that hitting the down key does nothing when the last row of the [error form](/docs/README.md#error-form-and-status-bar) is selected.
 3. Fix bug with [random json from schema](/docs/README.md#generating-random-json-from-a-schema) when parsing a schema that has the `enum` key but not the `type` key.
 4. Make it so JsonTools simply does nothing rather than causing Notepad++ to crash when attempting to run plugin commands on files with more than 2147483647 bytes.
+5. Fixed number precision bug ([issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)).
 
 ## [8.0.0] - 2024-06-29
 

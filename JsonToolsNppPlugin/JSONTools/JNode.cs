@@ -403,6 +403,17 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// returns d formatted with up to 17 digits of precision, using '.' as the decimal separator.<br></br>
+        /// For whatever reason, d.ToString(<see cref="DOT_DECIMAL_SEP"/>) only gives 15 digits of precision by default.
+        /// </summary>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        public static string DoubleToString(double d)
+        {
+            return d.ToString("G17", DOT_DECIMAL_SEP);
+        }
+
+        /// <summary>
         /// Compactly prints the JSON.<br></br>
         /// If sortKeys is true, the keys of objects are printed in alphabetical order.<br></br>
         /// keyValueSep (default ": ") is the separator between the key and the value in an object. Use ":" instead if you want minimal whitespace.<br></br>
@@ -425,7 +436,7 @@ namespace JSON_Tools.JSON_Tools
                         return (v < 0) ? "-Infinity" : "Infinity";
                     }
                     if (double.IsNaN(v)) { return "NaN"; }
-                    string dubstring = v.ToString(DOT_DECIMAL_SEP);
+                    string dubstring = DoubleToString(v);
                     if (v == Math.Round(v) && !(v > long.MaxValue || v < long.MinValue) && dubstring.IndexOf('E') < 0)
                     {
                         // add ending ".0" to distinguish doubles equal to integers from actual integers

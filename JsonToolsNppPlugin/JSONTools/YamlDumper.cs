@@ -159,7 +159,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if (d % 1 == 0)
                     return $"{d}.0"; // add .0 at end of floats that are equal to ints
-                return d.ToString(JNode.DOT_DECIMAL_SEP);
+                return JNode.DoubleToString(d);
             }
             return strv;
         }

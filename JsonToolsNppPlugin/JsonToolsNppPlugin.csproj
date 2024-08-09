@@ -182,6 +182,7 @@
     <Compile Include="Utils\LruCache.cs" />
     <Compile Include="Utils\Npp.cs" />
     <Compile Include="Utils\NanInf.cs" />
+    <Compile Include="Utils\RandomStringFromRegex.cs" />
     <Compile Include="Utils\SelectionManager.cs" />
     <Compile Include="Utils\Settings.cs" />
     <Compile Include="Utils\ArrayExtensions.cs" />
