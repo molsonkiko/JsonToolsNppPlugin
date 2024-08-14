@@ -951,14 +951,15 @@ The following keywords are supported for random JSON generation:
 
 Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), JsonTools can generate random strings from a limited subset of .NET regular expressions.
 
-If the `generate_random_patterns` setting is set to `true` (it is `false`) by default, this new feature can be used to generate random strings using the `pattern` keyword, or random object properties using the `patternProperties` keyword.
+If the `generate_random_patterns` setting is set to `true` (it is `false` by default), this new feature can be used to generate random strings using the `pattern` keyword, or random object properties using the `patternProperties` keyword.
 
 A regular expression can only be used to generate random strings if:
-* It does not contain any quantifers greater than `20` (thus, `f{200}` would be rejected)
+* It does not contain any quantifers greater than `20` (thus, `f{200}` would be rejected, and the `+` and `*` quantifiers will never generate more than 20 repetitions)
 * It does not contain anything that would require backtracking. For example:
     - `(?=foo)\w+` would be rejected because lookahead requires backtracking
     - `(?<!foo)\w+` would be rejected because lookbehind requires backtracking
     - The `^` and `$` metacharacters will *always* match the start and end of the string, respectively, because using them to match the start/end of a line requires backtracking
+    - Greedy (e.g., `g++`) and lazy (e.g., `l*?`) quantifiers will be rejected
 * It does not contain any `NUL` or non-ASCII characters, or `\xXX` or `\uXXXX` escapes that represent non-ASCII characters or the `NUL` character
 * It does not contain any named capture groups
 * It contains only backreferences of the form `\X`, where `X` is a digit from `1` to `9`
