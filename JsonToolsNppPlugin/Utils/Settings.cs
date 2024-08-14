@@ -175,7 +175,7 @@ namespace JSON_Tools.Utils
             Category("Random JSON"), DefaultValue(false)]
         public bool extended_ascii_strings { get; set; }
 
-        [Description("Generate random strings that match \"pattern\" schemas, and random keys that match \"patternProperties\" object subschemas."),
+        [Description("Generate random strings that match the \"pattern\" keyword of string schemas, and random keys that match the \"patternProperties\" keyword of object schemas."),
             Category("Random JSON"), DefaultValue(false)]
         public bool generate_random_patterns { get; set; }
         #endregion

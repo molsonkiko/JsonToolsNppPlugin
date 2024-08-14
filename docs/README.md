@@ -962,6 +962,7 @@ A regular expression can only be used to generate random strings if:
 * It does not contain any `NUL` or non-ASCII characters, or `\xXX` or `\uXXXX` escapes that represent non-ASCII characters or the `NUL` character
 * It does not contain any named capture groups
 * It contains only backreferences of the form `\X`, where `X` is a digit from `1` to `9`
+* It uses only the `i` (ignore case) and `s` (`.` matches `\n`) flags
 
 __EXAMPLES__
 

@@ -282,7 +282,8 @@
         "extended_ascii_strings": "Use extended ASCII characters (e.g., \u000b, ñ) in strings?",
         "maxArrayLength": "Maximum length of random arrays, unless otherwise specified by the \"maxItems\" keyword",
         "minArrayLength": "Minimum length of random arrays, unless otherwise specified by the \"minItems\" keyword",
-        "max_schema_validation_problems": "Maximum number of JSON Schema validation problems to log before the validator stops"
+        "max_schema_validation_problems": "Maximum number of JSON Schema validation problems to log before the validator stops",
+        "generate_random_patterns": "Generate random strings that match the \"pattern\" keyword of string schemas, and random keys that match the \"patternProperties\" keyword of object schemas."
     },
     // These are the error messages that JsonTools can report while parsing JSON and JSON Lines.
     "jsonLint": {

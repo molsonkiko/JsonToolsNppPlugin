@@ -282,7 +282,8 @@
         "extended_ascii_strings": "Utilizza caratteri ASCII estesi (es., \u000b, ñ) nelle stringhe?",
         "maxArrayLength": "Lunghezza massima degli array casuali, se non diversamente specificato dalla parola chiave \"maxItems\" ",
         "minArrayLength": "Lunghezza minima degli array casuali, se non diversamente specificato dalla parola chiave \"minItems\" ",
-        "max_schema_validation_problems": "Numero massimo di problemi di convalida dello schema JSON da registrare prima che il validatore si interrompa"
+        "max_schema_validation_problems": "Numero massimo di problemi di convalida dello schema JSON da registrare prima che il validatore si interrompa",
+        "generate_random_patterns": "Genera stringhe casuali che corrispondono alla parola chiave \"pattern\" degli schemi stringa e chiavi casuali che corrispondono alla parola chiave \"patternProperties\" degli schemi oggetto."
     },
     // These are the error messages that JsonTools can report while parsing JSON and JSON Lines.
     //     Note that some of these error messages will have "{integer}" in their text,
