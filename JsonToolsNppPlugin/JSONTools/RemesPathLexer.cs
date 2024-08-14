@@ -33,13 +33,44 @@ namespace JSON_Tools.JSON_Tools
 
         public override string ToString()
         {
-            /* Looks like this:
-Syntax error at position 3: Number with two decimal points
-3.5>>>HERE>>>.2
-             */
+            return MarkLocationOfSyntaxError(query, lexpos, msg);
+        }
+
+        /// <summary>
+        /// EXAMPLE<br></br>
+        /// <c>MarkLocationOfError("3.5.2", 3, "Number with two decimal points")</c> would return
+        /// <code>
+        /// Syntax error at position 3: Number with two decimal points
+        /// 3.5>>>HERE>>>.2
+        /// </code>
+        /// </summary>
+        public static string MarkLocationOfSyntaxError(string query, int lexpos, string msg)
+        {
+            if (lexpos < 0)
+                lexpos = 0;
+            else if (lexpos >= query.Length)
+                lexpos = query.Length - 1;
             string firstQueryPart = query.Substring(0, lexpos);
             string secondQueryPart = query.Substring(lexpos);
             return $"Syntax error at position {lexpos}: {msg}\r\n{firstQueryPart}>>>HERE>>>{secondQueryPart}";
+        }
+    }
+
+    /// <summary>
+    /// in RemesPathLexers, represents an unquoted string.
+    /// </summary>
+    public struct UnquotedString
+    {
+        public string value;
+
+        public UnquotedString(string value)
+        {
+            this.value = value;
+        }
+
+        public override string ToString()
+        {
+            return JNode.StrToString(value, true);
         }
     }
 

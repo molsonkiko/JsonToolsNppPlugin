@@ -77,6 +77,8 @@ namespace Kbg.NppPluginNET
         private static System.Threading.Timer parseTimer = new System.Threading.Timer(DelayedParseAfterEditing, new System.Threading.AutoResetEvent(true), 1000, 1000);
         private static readonly string[] fileExtensionsToAutoParse = new string[] { "json", "jsonc", "jsonl", "json5" };
         private static bool bufferFinishedOpening = false;
+        // Random JSON from schema stuff
+        private static bool warnUserOfRSFR_IncompatibleRegexes = true;
 
         /// <summary>
         /// this is set from <see cref="Settings.path_separator"/>
@@ -1747,7 +1749,21 @@ namespace Kbg.NppPluginNET
             try
             {
                 // try to use the currently open file as a schema
-                randomJson = RandomJsonFromSchema.RandomJson(json, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings);
+                randomJson = RandomJsonFromSchema.RandomJson(json, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings, settings.generate_random_patterns);
+                if (settings.generate_random_patterns && warnUserOfRSFR_IncompatibleRegexes)
+                {
+                    // We know json is a valid schema. Now we check if the schema contains any patterns or patternProperties that RandomJsonFromSchema can't handle
+                    if (!RandomStringFromRegex.AllPatternsAreRSFR_Compatible(json, out List<(string regex, string errMsg)> regexErrors))
+                    {
+                        string regexErrorsAsString = string.Join("\r\n------------\r\n", regexErrors.Select(x => $"Regex: {x.regex}\r\nError message:\r\n{x.errMsg}"));
+                        DialogResult result = MessageBox.Show(
+                            $"Select \"No\" to stop seeing these messages.\r\nSome regular expressions (\"patternProperties\" keys or \"pattern\" values) in this schema could not be used to generate random strings from regex.\r\nBelow are the (regex, error message) pairs:\r\n{regexErrorsAsString}",
+                            "Schema contained regular expressions that can't be used to generate random strings",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                        if (result == DialogResult.No)
+                            warnUserOfRSFR_IncompatibleRegexes = false;
+                    }
+                }
             }
             catch
             {
@@ -1756,7 +1772,7 @@ namespace Kbg.NppPluginNET
                     // the most likely reason for an exception above is that the JSON file wasn't a schema at all.
                     // we will instead build a JSON schema from the file, and use that as the basis for generating random JSON.
                     JNode schema = JsonSchemaMaker.GetSchema(json);
-                    randomJson = RandomJsonFromSchema.RandomJson(schema, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings);
+                    randomJson = RandomJsonFromSchema.RandomJson(schema, settings.minArrayLength, settings.maxArrayLength, settings.extended_ascii_strings, settings.generate_random_patterns);
                 }
                 catch (Exception ex)
                 {

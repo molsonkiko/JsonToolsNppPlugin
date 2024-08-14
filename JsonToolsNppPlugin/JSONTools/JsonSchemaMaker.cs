@@ -512,10 +512,10 @@ namespace JSON_Tools.JSON_Tools
                 // this should only happen in the base schema
                 return new JNode(str, Dtype.STR, 0);
             }
-            if (schema is Dictionary<string, object>)
+            if (schema is Dictionary<string, object> schemaDict)
             {
                 var kids = new Dictionary<string, JNode>();
-                foreach (KeyValuePair<string, object> kv in (Dictionary<string, object>)schema)
+                foreach (KeyValuePair<string, object> kv in schemaDict)
                 {
                     kids[kv.Key] = SchemaToJNode(kv.Value);
                 }
@@ -523,19 +523,25 @@ namespace JSON_Tools.JSON_Tools
             }
             var children = new List<JNode>();
             // anyOf list of schemas
-            if (schema is List<object>)
+            if (schema is List<object> anyOfList)
             {
-                foreach (object v in (List<object>)schema)
+                foreach (object v in anyOfList)
                 {
                     children.Add(SchemaToJNode(v));
                 }
                 children.Sort(SchemaComparer);
                 return new JArray(0, children);
             }
-            // by process of elimination, it's the "required" attribute of object schemas which is initially a HashSet
-            foreach (string v in (HashSet<string>)schema)
+            // by process of elimination, it's the "required" attribute of object schemas which is initially a HashSet or a List<string>
+            if (schema is HashSet<string> requiredHash)
             {
-                children.Add(new JNode(v, Dtype.STR, 0));
+                foreach (string v in requiredHash)
+                    children.Add(new JNode(v, Dtype.STR, 0));
+            }
+            else if (schema is List<string> requiredList)
+            {
+                foreach (string v in requiredList)
+                    children.Add(new JNode(v, Dtype.STR, 0));
             }
             children.Sort();
             return new JArray(0, children);

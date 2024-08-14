@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. The [`path_separator` setting](/docs/README.md#key_style-and-path_separator-settings) for formatting keys/indices and paths. Addresses [issue 69](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/69).
 6. Make it so left-clicking on the `Key/index to clipboard` and `Path to clipboard` options of the [treenode right-click context menu](/docs/README.md#get-info-about-tree-nodes) gets the path or key/index in whatever the default is from your settings, without having to click on one of the sub-menu items.
 7. The `grepper form` now supports `\` and `/` (path separators) in search patterns, as well as `**` to match any number of characters (including `\`).
+8. Generation of [random strings from regular expressions](/docs/README.md#random-strings-from-regex-added-in-v81).
 
 ### Changed
 
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Fix bug with [random json from schema](/docs/README.md#generating-random-json-from-a-schema) when parsing a schema that has the `enum` key but not the `type` key.
 4. Make it so JsonTools simply does nothing rather than causing Notepad++ to crash when attempting to run plugin commands on files with more than 2147483647 bytes.
 5. Fixed number precision bug ([issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)).
+6. Rare bug [generating schemas from JSON](/docs/README.md#generating-json-schema-from-json), only seen with some arrays of objects.
 
 ## [8.0.0] - 2024-06-29
 

@@ -929,6 +929,7 @@ The following keywords are supported for random JSON generation:
 ### Keywords for objects
 * [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
 * [required](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-required)
+* [patternProperties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-patternproperties) (*see note below on [random strings from regex](#random-strings-from-regex-added-in-v81)*)
 
 ### Keywords for arrays
 * [items](https://json-schema.org/draft/2020-12/json-schema-core.html#name-items)
@@ -944,6 +945,65 @@ The following keywords are supported for random JSON generation:
 ### Keywords for strings ###
 
 * [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) and [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [7.1](/CHANGELOG.md#710---2024-02-28)*)
+* [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*see note below on [random strings from regex](#random-strings-from-regex-added-in-v81)*)
+
+### Random strings from regex (*added in v8.1*)
+
+Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), JsonTools can generate random strings from a limited subset of .NET regular expressions.
+
+If the `generate_random_patterns` setting is set to `true` (it is `false`) by default, this new feature can be used to generate random strings using the `pattern` keyword, or random object properties using the `patternProperties` keyword.
+
+A regular expression can only be used to generate random strings if:
+* It does not contain any quantifers greater than `20` (thus, `f{200}` would be rejected)
+* It does not contain anything that would require backtracking. For example:
+    - `(?=foo)\w+` would be rejected because lookahead requires backtracking
+    - `(?<!foo)\w+` would be rejected because lookbehind requires backtracking
+    - The `^` and `$` metacharacters will *always* match the start and end of the string, respectively, because using them to match the start/end of a line requires backtracking
+* It does not contain any `NUL` or non-ASCII characters, or `\xXX` or `\uXXXX` escapes that represent non-ASCII characters or the `NUL` character
+* It does not contain any named capture groups
+* It contains only backreferences of the form `\X`, where `X` is a digit from `1` to `9`
+
+__EXAMPLES__
+
+- The schema
+   ```json
+    {
+        "type": "array",
+        "items": {"type": "string", "pattern": "[a-d][ \t]{2}\\d{3,7}"},
+        "minItems": 4, "maxItems": 6
+    }
+    ```
+    might generate the following JSON:
+    ```json
+    [
+        "d\t\t217",
+        "a  1330449",
+        "c\t 062",
+        "a\t\t40544",
+        "c  4676",
+    ]
+    ```
+- The schema
+    ```json
+    {
+        "type": "object",
+        "patternProperties": {
+            "(foo|bar|baz) = \\w{4,6}\\.\\1": {"type": "boolean"},
+            "(?is)0x[0-9a-f]{4}---.{3}": {"type": "integer"}
+        }
+    }
+    ```
+    might generate the following JSON:
+    ```json
+    {
+        "bar = m_to_.bar": false,
+        "foo = x7Jf6.foo": false,
+        "baz = qEx4Pl.baz": true,
+        "0x0c94---\u0011N\u0016": -696089,
+        "0xaCFE---3Z\u0017": -732610
+    }
+    ```
+
 
 ## Generating JSON schema from JSON ##
 

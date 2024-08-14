@@ -1,7 +1,8 @@
 [
     {
         "a": 3,
-        "d7": 0
+        "d7": 0,
+        "0xbacDEF = PASS\tqa": "baz j_jrkejjke_.baz"
     },
     {
         "a": 1.5,
@@ -18,7 +19,8 @@
                 }
             }
         ],
-        "e": "fg"
+        "e": "fg",
+        "0xA7Edcb = PASS\tffbec": "bar\n\f\ndkk348653_4jj.bar"
     },
     {
         "a": 1,
@@ -38,6 +40,7 @@
         "c": 3,
         "d1": 1,
         "d2": 3,
-        "e": "abc"
+        "e": "abc",
+        "0x031f9A = FAIL\taqbg": "foo \f\t \rblah.foo"
     }
 ]

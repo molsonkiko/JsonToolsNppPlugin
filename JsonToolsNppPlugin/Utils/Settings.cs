@@ -174,6 +174,10 @@ namespace JSON_Tools.Utils
         [Description("Use extended ASCII characters (e.g., \x0b, \xf1) in strings?"),
             Category("Random JSON"), DefaultValue(false)]
         public bool extended_ascii_strings { get; set; }
+
+        [Description("Generate random strings that match \"pattern\" schemas, and random keys that match \"patternProperties\" object subschemas."),
+            Category("Random JSON"), DefaultValue(false)]
+        public bool generate_random_patterns { get; set; }
         #endregion
 
         #region JSON_SCHEMA_SETTINGS

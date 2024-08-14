@@ -170,6 +170,7 @@
     <Compile Include="Tests\FormatPathTests.cs" />
     <Compile Include="Tests\LruCacheTests.cs" />
     <Compile Include="Tests\RandomJsonTests.cs" />
+    <Compile Include="Tests\RandomStringFromRegexTests.cs" />
     <Compile Include="Tests\RemesPathTests.cs" />
     <Compile Include="Tests\UserInterfaceTests.cs" />
     <Compile Include="Tests\SliceTests.cs" />
@@ -177,6 +178,7 @@
     <Compile Include="Tests\TestRunner.cs" />
     <Compile Include="JSONTools\YamlDumper.cs" />
     <Compile Include="Tests\YamlDumperTests.cs" />
+    <Compile Include="Utils\CharExtensions.cs" />
     <Compile Include="Utils\FormStyle.cs" />
     <Compile Include="Utils\Glob.cs" />
     <Compile Include="Utils\LruCache.cs" />

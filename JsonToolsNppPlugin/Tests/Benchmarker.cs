@@ -256,45 +256,84 @@ Performance tests for RemesPath ({description})
             return false;
         }
 
-        public static bool BenchmarkRandomJsonAndSchemaValidation(int numTrials)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="numTrials"></param>
+        /// <param name="usePatterns"></param>
+        /// <param name="lengthOfRootArray">only valid for an array schema. Sets the number of elements in the root array</param>
+        /// <param name="lengthOfOtherArrays">length of arrays other than the root array</param>
+        /// <param name="schemaText">text to use (if this is not null, filePath is ignored)</param>
+        /// <returns></returns>
+        public static bool BenchmarkRandomJsonAndSchemaValidation(string filePath, int numTrials, bool usePatterns, int lengthOfRootArray = -1, int lengthOfOtherArrays = 3, string schemaText = null)
         {
             var parser = new JsonParser();
-            var tweetSchema = (JObject)parser.Parse(File.ReadAllText(Path.Combine(Npp.pluginDllDirectory, "testfiles", "tweet_schema.json")));
-            // restrict to exactly 15 tweets for consistency and 3 items per other array for consistency 
-            int numTweets = 15;
-            tweetSchema["minItems"] = new JNode((long)numTweets, Dtype.INT, 0);
-            tweetSchema["maxItems"] = new JNode((long)numTweets, Dtype.INT, 0);
+            string text = schemaText;
+            if (schemaText is null)
+            {
+                if (!File.Exists(filePath))
+                {
+                    Npp.AddLine($"FAIL: schemaText was null, and could not find a file at path {filePath}");
+                    return true;
+                }
+                text = File.ReadAllText(filePath);
+            }
+            JObject schema;
+            string descriptionOfText = schemaText is null ? $"file at path {filePath}" : JNode.StrToString(schemaText, true);
+            // use the short description if there's no error (user doesn't need to see how the sausage is made)
+            string shortDescriptionOfText = schemaText is null ? descriptionOfText : "string (see TestRunner.cs)";
+            try
+            {
+                schema = (JObject)parser.Parse(text);
+            }
+            catch (Exception ex)
+            {
+                Npp.AddLine($"FAIL: Could not parse text {descriptionOfText} due to exception:\r\n{ex}");
+                return true;
+            }
+            // restrict to exactly lengthOfArray items for consistency and 3 items per other array for consistency
+            if (lengthOfRootArray >= 0)
+            {
+                schema["minItems"] = new JNode((long)lengthOfRootArray, Dtype.INT, 0);
+                schema["maxItems"] = new JNode((long)lengthOfRootArray, Dtype.INT, 0);
+            }
             long[] makeRandomTimes = new long[numTrials];
             long[] validateTimes = new long[numTrials];
             long[] compileTimes = new long[numTrials];
-            JNode randomTweets = new JNode();
+            JNode randomJson = new JNode();
             var watch = new Stopwatch();
+            var validationErrors = new List<JsonLint>();
+            JNode exampleOfValidationFailingJson = new JNode();
+            bool failed = false;
             for (int ii = 0; ii < numTrials; ii++)
             {
                 watch.Reset();
                 watch.Start();
                 try
                 {
-                    randomTweets = RandomJsonFromSchema.RandomJson(tweetSchema, 3, 3, true);
+                    randomJson = RandomJsonFromSchema.RandomJson(schema, lengthOfOtherArrays, lengthOfOtherArrays, false, usePatterns);
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While trying to create random tweets from tweet schema, got exception:\r\n{ex}");
+                    failed = true;
+                    Npp.AddLine($"While trying to create random json from schema, got exception:\r\n{ex}");
                     break;
                 }
                 watch.Stop();
                 makeRandomTimes[ii] = watch.ElapsedTicks;
                 watch.Reset();
                 watch.Start();
-                // validation will succeed because the tweets are generated from that schema
+                // validation should succeed because the json is generated from that schema
                 JsonSchemaValidator.ValidationFunc validator;
                 try
                 {
-                    validator = JsonSchemaValidator.CompileValidationFunc(tweetSchema, 0, true);
+                    validator = JsonSchemaValidator.CompileValidationFunc(schema, 0, true);
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While trying to compile tweet schema to validation function, got exception:\r\n{ex}");
+                    failed = true;
+                    Npp.AddLine($"While trying to compile schema to validation function, got exception:\r\n{ex}");
                     break;
                 }
                 watch.Stop();
@@ -303,30 +342,36 @@ Performance tests for RemesPath ({description})
                 watch.Start();
                 try
                 {
-                    bool validates = validator(randomTweets, out List<JsonLint> lints);
-                    if (!validates)
+                    bool validates = validator(randomJson, out List<JsonLint> lints);
+                    if (!validates && validationErrors.Count < 5)
                     {
-                        Npp.AddLine("BAD! JsonSchemaValidator found that tweets made from the tweet schema did not adhere to the tweet schema. Got validation problem\r\n"
-                            + JsonSchemaValidator.LintsAsJArrayString(lints));
-                        break;
+                        failed = true;
+                        exampleOfValidationFailingJson = randomJson;
+                        validationErrors.AddRange(lints);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While trying to validate random tweets under tweet schema, got exception:\r\n{ex}");
+                    failed = true;
+                    Npp.AddLine($"While trying to validate random json with the schema that made it, got exception:\r\n{ex}");
                     break;
                 }
                 watch.Stop();
                 validateTimes[ii] = watch.ElapsedTicks;
             }
-            var len = randomTweets.ToString().Length;
+            if (validationErrors.Count > 0)
+                Npp.AddLine($"BAD! JsonSchemaValidator found that json made from " +
+                            $"the schema did not adhere to the schema:\r\n{descriptionOfText}\r\n" +
+                            $"An example of JSON that failed is {exampleOfValidationFailingJson.ToString()}\r\n" +
+                            $"Got validation problems\r\n{JsonSchemaValidator.LintsAsJArrayString(validationErrors)}");
+            var len = randomJson.ToString().Length;
             (double mean, double sd) = GetMeanAndSd(makeRandomTimes);
-            Npp.AddLine($"To create a random set of tweet JSON of size {len} ({numTweets} tweets) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
+            Npp.AddLine($"To create a random set of JSON from {shortDescriptionOfText} of size {len} (array of {lengthOfRootArray} items) based on the matching schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
             (mean, sd) = GetMeanAndSd(compileTimes);
-            Npp.AddLine($"To compile the tweet schema to a validation function took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
+            Npp.AddLine($"To compile the schema to a validation function took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
             (mean, sd) = GetMeanAndSd(validateTimes);
-            Npp.AddLine($"To validate tweet JSON of size {len} ({numTweets} tweets) based on the compiled schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
-            return false;
+            Npp.AddLine($"To validate JSON of size {len} (array of {lengthOfRootArray} items) based on the compiled schema took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
+            return failed;
         }
 
 

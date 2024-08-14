@@ -190,15 +190,18 @@ namespace JSON_Tools.Tests
                         "}" +
                     "}"
                 },
+                new string[]{"[{\"a\": \"bar\"}, {}]", "{\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"string\"}}, \"required\": []}}" },
             };
             int ii = 0;
             int testsFailed = 0;
             JObject baseSchemaJ = (JObject)JsonSchemaMaker.SchemaToJNode(JsonSchemaMaker.BASE_SCHEMA);
             foreach (string[] test in testcases)
             {
+                ii++;
+                if (test.Length != 2)
+                    continue;
                 string inp = test[0];
                 string desiredOut = test[1];
-                ii++;
                 JNode jinp = jsonParser.Parse(inp);
                 JObject desiredSchema = (JObject)jsonParser.Parse(desiredOut);
                 foreach (KeyValuePair<string, JNode> kv in baseSchemaJ.children)

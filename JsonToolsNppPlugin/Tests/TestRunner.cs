@@ -52,6 +52,8 @@ namespace JSON_Tools.Tests
                 (CsvSnifferTests.Test, "CSV sniffer", false, false),
 
                 (GlobTester.TestParseLinesSimple, "Glob syntax parser", false, false),
+
+                (RandomStringFromRegexTests.Test, "Random string from regex", false, false),
                 
                 // tests that require reading files (skip on Notepad++ earlier than v8)
                 (JsonGrepperTester.TestFnames, "JSON grepper's file reading ability", true, false),
@@ -116,8 +118,16 @@ namespace JSON_Tools.Tests
                     "performance of JSON compression and pretty-printing",
                     true, false
                 ),
-                (() => Benchmarker.BenchmarkRandomJsonAndSchemaValidation(64),
+                (() => Benchmarker.BenchmarkRandomJsonAndSchemaValidation(Path.Combine(Npp.pluginDllDirectory, "testfiles", "tweet_schema.json"), 25, false, 15),
                     "performance of JsonSchemaValidator and random JSON creation",
+                    true, false
+                ),
+                (() => Benchmarker.BenchmarkRandomJsonAndSchemaValidation(null, 25, true, 120, 3, RandomJsonTests.kitchenSinkSchemaText),
+                    "performance of random JSON from schema with patterns and patternProperties",
+                    true, false
+                ),
+                (() => Benchmarker.BenchmarkRandomJsonAndSchemaValidation(null, 25, false, 120, 3, RandomJsonTests.kitchenSinkSchemaTextNoPatterns),
+                    "performance of random JSON from schema *ignoring* patterns and patternProperties",
                     true, false
                 ),
             };

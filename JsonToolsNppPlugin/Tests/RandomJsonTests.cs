@@ -8,6 +8,18 @@ namespace JSON_Tools.Tests
 {
     internal class RandomJsonTests
     {
+        /// <summary>
+        /// this is very similar to "testfiles/small/kitchen_sink_schema.json", except it replaces<br></br>
+        /// <c>{"type": "number", "exclusiveMaximum": 100, "exclusiveMinimum": 0}</c> with <c>{"type": "number", "maximum": 99, "minimum": 1}</c><br></br>
+        /// because RandomJsonFromSchema does not currently support the <c>exclusiveMinimum</c> and <c>exclusiveMaximum</c> keywords.
+        /// </summary>
+        public static readonly string kitchenSinkSchemaText = "{\"$defs\": {\"super_fancy\": {\"properties\": {\"b\": {\"anyOf\": [{\"type\": \"integer\"}, {\"pattern\": \"^a\", \"type\": \"string\"}, {\"contains\": {\"enum\": [1, 2, 3], \"type\": \"integer\"}, \"items\": {\"type\": [\"integer\", \"string\"]}, \"maxContains\": 2, \"maxItems\": 4, \"minContains\": 1, \"minItems\": 1, \"type\": \"array\"}]}, \"c\": {\"type\": [\"integer\", \"null\"]}, \"d\": {\"type\": \"boolean\"}}, \"required\": [\"b\"], \"type\": \"object\"}}, \"$schema\": \"http://json-schema.org/schema#\", \"items\": {\"patternProperties\": {\"^d\\\\d+$\": {\"type\": \"integer\", \"minimum\": -5, \"maximum\": 5}, \"^0x(?i)[0-9a-f]{6} = (?-i)(?:PASS|FAIL)\\t[a-q]{2,5}$\": {\"type\": \"string\", \"pattern\": \"^(foo|bar|baz)\\\\s+\\\\w+\\\\.\\\\1$\"}}, \"properties\": {\"a\": {\"type\": \"number\", \"maximum\": 99, \"minimum\": 1}, \"b\": {\"items\": {\"properties\": {\"a\": {\"$ref\": \"#/$defs/super_fancy\"}}, \"required\": [\"a\"], \"type\": \"object\"}, \"type\": \"array\"}, \"c\": {\"type\": \"integer\"}, \"e\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}, \"required\": [\"a\"], \"type\": \"object\"}, \"type\": \"array\"}";
+
+        /// <summary>
+        /// this is just <see cref="kitchenSinkSchemaText"/> with all instances of the <c>pattern</c> keyword mapped to the pattern <c>(?s).*</c> (which can be ignored, because it accepts everything)
+        /// </summary>
+        public static readonly string kitchenSinkSchemaTextNoPatterns = "{\"$defs\": {\"super_fancy\": {\"properties\": {\"b\": {\"anyOf\": [{\"type\": \"integer\"}, {\"pattern\": \"(?s).*\", \"type\": \"string\"}, {\"contains\": {\"enum\": [1, 2, 3], \"type\": \"integer\"}, \"items\": {\"type\": [\"integer\", \"string\"]}, \"maxContains\": 2, \"maxItems\": 4, \"minContains\": 1, \"minItems\": 1, \"type\": \"array\"}]}, \"c\": {\"type\": [\"integer\", \"null\"]}, \"d\": {\"type\": \"boolean\"}}, \"required\": [\"b\"], \"type\": \"object\"}}, \"$schema\": \"http://json-schema.org/schema#\", \"items\": {\"patternProperties\": {\"^d\\\\d+$\": {\"type\": \"integer\", \"minimum\": -5, \"maximum\": 5}, \"^0x(?i)[0-9a-f]{6} = (?-i)(?:PASS|FAIL)\\t[a-q]{2,5}$\": {\"type\": \"string\", \"pattern\": \"(?s).*\"}}, \"properties\": {\"a\": {\"type\": \"number\", \"maximum\": 99, \"minimum\": 1}, \"b\": {\"items\": {\"properties\": {\"a\": {\"$ref\": \"#/$defs/super_fancy\"}}, \"required\": [\"a\"], \"type\": \"object\"}, \"type\": \"array\"}, \"c\": {\"type\": \"integer\"}, \"e\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}, \"required\": [\"a\"], \"type\": \"object\"}, \"type\": \"array\"}";
+
         public static bool TestRandomJson()
         {
             int ii = 0;
@@ -83,7 +95,7 @@ namespace JSON_Tools.Tests
                 {
                     try
                     {
-                        rands.Add(RandomJsonFromSchema.RandomJson(schema, 1, 4, false));
+                        rands.Add(RandomJsonFromSchema.RandomJson(schema, 1, 4, false, false));
                     }
                     catch (Exception ex3)
                     {
@@ -98,7 +110,7 @@ namespace JSON_Tools.Tests
                 {
                     try
                     {
-                        rands.Add(RandomJsonFromSchema.RandomJson(schema, 1, 4, false));
+                        rands.Add(RandomJsonFromSchema.RandomJson(schema, 1, 4, false, false));
                     }
                     catch (Exception ex3)
                     {
@@ -174,42 +186,50 @@ namespace JSON_Tools.Tests
                     }
                 }
             }
-            // also test a schema that contains keywords that can't be generated randomly, like contains, minContains, minItems, maxItems, maxContains, and $defs/$ref
-            var kitchenSinkSchemaText = "{\"$defs\":{\"super_fancy\":{\"properties\":{\"b\":{\"anyOf\":[{\"type\": [\"integer\",\"string\"]},{\"contains\":{\"enum\":[1,2.5,true,\"\"]},\"items\": {\"type\": \"string\", \"minLength\": 3, \"maxLength\": 6},\"maxContains\":2,\"maxItems\":4,\"minContains\":1,\"minItems\":1,\"type\":\"array\"}]},\"c\":{\"type\":[\"integer\",\"null\"]},\"d\": {\"type\": \"boolean\"}},\"required\":[\"b\"],\"type\":\"object\"}},\"$schema\":\"http://json-schema.org/schema#\",\"items\":{\"properties\":{\"a\":{\"type\":\"number\", \"minimum\": -20, \"maximum\": 20},\"b\": {\"items\": {\"properties\": {\"a\": {\"$ref\": \"#/$defs/super_fancy\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"},\"c\": {\"type\": \"integer\"}},\"required\":[\"a\"],\"type\":\"object\"},\"type\":\"array\"}";
-            var kitchenSinkSchema = parser.Parse(kitchenSinkSchemaText);
-            ii++;
-            for (int i = 0; i < 200; i++)
+            // also test a schema that contains keywords that can't be implicitly derived from non-schema JSON,
+            //     like contains, minContains, minItems, maxItems, maxContains, $defs/$ref, pattern, and patternProperties
+            ii += 3;
+            try
             {
-                JNode randomFromKitchenSink;
-                try
+                var kitchenSinkSchema = parser.Parse(kitchenSinkSchemaText);
+                for (int i = 0; i < 200; i++)
                 {
-                    randomFromKitchenSink = RandomJsonFromSchema.RandomJson(kitchenSinkSchema, 0, 10, true);
+                    JNode randomFromKitchenSink;
+                    try
+                    {
+                        randomFromKitchenSink = RandomJsonFromSchema.RandomJson(kitchenSinkSchema, 0, 10, true, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        testsFailed++;
+                        Npp.AddLine($"FAIL: While trying to generate random JSON from schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
+                        break;
+                    }
+                    bool validates;
+                    List<JsonLint> lints;
+                    try
+                    {
+                        validates = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema, 0, true, out lints);
+                    }
+                    catch (Exception ex)
+                    {
+                        testsFailed++;
+                        Npp.AddLine($"FAIL: While trying to validate random JSON using schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
+                        break;
+                    }
+                    if (!validates)
+                    {
+                        testsFailed++;
+                        Npp.AddLine($"FAIL: Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem(s)\r\n"
+                            + JsonSchemaValidator.LintsAsJArrayString(lints));
+                        break;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    testsFailed++;
-                    Npp.AddLine($"While trying to generate random JSON from schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
-                    break;
-                }
-                bool validates;
-                List<JsonLint> lints;
-                try
-                {
-                    validates = JsonSchemaValidator.Validates(randomFromKitchenSink, kitchenSinkSchema, 0, true, out lints);
-                }
-                catch (Exception ex)
-                {
-                    testsFailed++;
-                    Npp.AddLine($"While trying to validate random JSON using schema\r\n{kitchenSinkSchemaText}\r\ngot error\r\n{ex}");
-                    break;
-                }
-                if (!validates)
-                {
-                    testsFailed++;
-                    Npp.AddLine($"Random json generated from schema\r\n{kitchenSinkSchemaText}\r\nfailed validation with validation problem(s)\r\n"
-                        + JsonSchemaValidator.LintsAsJArrayString(lints));
-                    break;
-                }
+            }
+            catch (Exception ex)
+            {
+                testsFailed += 3;
+                Npp.AddLine($"FAIL: Could not parse the kitchen sink schema text\r\n{JNode.StrToString(kitchenSinkSchemaText, true)}\r\ndue to an exception\r\n{ex}");
             }
             Npp.AddLine($"Failed {testsFailed} tests.");
             Npp.AddLine($"Passed {ii - testsFailed} tests.");

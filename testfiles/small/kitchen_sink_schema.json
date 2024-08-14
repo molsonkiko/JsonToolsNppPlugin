@@ -53,11 +53,12 @@
     "$schema": "http://json-schema.org/schema#",
     "items": {
         "patternProperties": {
-            "d\\d+": {
+            "^d\\d+$": {
                 "type": "integer",
                 "minimum": -5,
                 "maximum": 5
-            }
+            },
+            "^0x(?i)[0-9a-f]{6} = (?-i)(?:PASS|FAIL)\t[a-q]{2,5}$": {"type": "string", "pattern": "^(foo|bar|baz)\\s+\\w+\\.\\1$"}
         },
         "properties": {
             "a": {

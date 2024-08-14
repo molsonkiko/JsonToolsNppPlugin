@@ -107,5 +107,11 @@ namespace JSON_Tools.Utils
             useOrder.RemoveLast();
             return lastVal;
         }
+
+        public void Clear()
+        {
+            cache.Clear();
+            useOrder.Clear();
+        }
     }
 }
