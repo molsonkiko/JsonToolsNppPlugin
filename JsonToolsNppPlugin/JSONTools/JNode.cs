@@ -1811,6 +1811,11 @@ namespace JSON_Tools.JSON_Tools
         {
             this.regex = regex;
         }
+
+        public override JNode Copy()
+        {
+            return new JRegex(regex);
+        }
     }
 
     [System.Diagnostics.DebuggerDisplay("JSlicer({slicer})")]

@@ -83,7 +83,7 @@ namespace JSON_Tools.Forms
             {
                 Translator.ShowTranslatedMessageBox(
                     "While trying to create CSV from JSON, raised this exception:\r\n{0}",
-                    "Exception while tabularizing JSON",
+                    "Exception while converting JSON to CSV",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error,
                     1, RemesParser.PrettifyException(ex));

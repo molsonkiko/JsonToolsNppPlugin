@@ -81,7 +81,7 @@ namespace JSON_Tools.Forms
                 else
                 {
                     string gotType = JNode.FormatDtype(jsonAtPath.type);
-                    Translator.ShowTranslatedMessageBox("JSON at the specified path must be object or array, got {0}",
+                    Translator.ShowTranslatedMessageBox("JSON at the specified path must be object or array, got type {0}",
                         "JSON at specified path must be object or array",
                         MessageBoxButtons.OK, MessageBoxIcon.Error,
                         1, gotType);

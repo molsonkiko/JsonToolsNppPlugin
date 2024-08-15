@@ -161,7 +161,7 @@ To translate JsonTools to another language, just look at [`english.json5` in the
 Currently JsonTools has been translated into the following languages:
 | Language | First version with translation | Translator(s) | Translator is native speaker?  |
 |----------|--------------------------------|---------------|--------------------------------|
-| [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `jsonLint` section)  | Only conky77 |
+| [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `messageBoxes` and `fileComments` sections)  | Only conky77 |
 
 
 The following aspects of JsonTools __can__ be translated:
@@ -175,6 +175,7 @@ The following aspects of JsonTools __can__ be translated:
 The following aspects of JsonTools __may eventually__ be translated:
 - This documentation
 - Generic modal dialogs (for example, file-opening dialogs, directory selection dialogs)
+- Error messsages (other than JSON syntax errors, which are already translated)
 
 ## Acknowledgments ##
 

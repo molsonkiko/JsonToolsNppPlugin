@@ -996,7 +996,7 @@ namespace Kbg.NppPluginNET
                 catch (Exception ex)
                 {
                     Translator.ShowTranslatedMessageBox(
-                        "While attempting to reformat the file's JSON, got a programmatic error:\r\n{0}",
+                        "While attempting to reformat the file's JSON, got a programmatic error (likely due to a mistake in the source code):\r\n{0}",
                         "Programmatic error while reformatting JSON",
                         MessageBoxButtons.OK, MessageBoxIcon.Error,
                         1, RemesParser.PrettifyException(ex)
@@ -1794,13 +1794,31 @@ namespace Kbg.NppPluginNET
         static void WriteSchemasToFnamePatternsFile(JObject schemasToPatterns)
         {
             Npp.CreateConfigSubDirectoryIfNotExists();
+            List<string> commentsAtStartOfFile;
+            if (Translator.TryGetTranslationAtPath(new string[] {"fileComments", "schemasToFnamePatterns.json"}, out JNode fileCommentsNode)
+                && fileCommentsNode is JArray fileCommentsArr)
+            {
+                commentsAtStartOfFile = new List<string>();
+                foreach (JNode child in fileCommentsArr.children)
+                {
+                    if (child.value is string s)
+                        commentsAtStartOfFile.Add("// " + s);
+                }
+            }
+            else
+            {
+                commentsAtStartOfFile = new List<string> {
+                    "// this file determines when automatic JSON validation should be performed",
+                    "// each key must be the filename of a JSON schema file",
+                    "// each value must be a non-empty list of valid C# regular expressions (e.g., [\"blah.*\\\\.txt\"])",
+                    "// thus, if this file contained {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}",
+                    "// it would automatically perform validation using \"c:\\\\path\\\\to\\\\foo_schema.json\" whenever a \".txt\" file with the substring \"blah\" in its name was opened.",
+                };
+            }
             using (var fp = new StreamWriter(schemasToFnamePatternsFname, false, Encoding.UTF8))
             {
-                fp.WriteLine("// this file determines when automatic JSON validation should be performed");
-                fp.WriteLine("// each key must be the filename of a JSON schema file");
-                fp.WriteLine("// each value must be a non-empty list of valid C# regular expressions (e.g., [\"blah.*\\\\.txt\"]");
-                fp.WriteLine("// thus, if this file contained {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}");
-                fp.WriteLine("// it would automatically perform validation using \"c:\\\\path\\\\to\\\\foo_schema.json\" whenever a \".txt\" file with the substring \"blah\" in its name was opened.");
+                foreach (string comment in commentsAtStartOfFile)
+                    fp.WriteLine(comment);
                 fp.Write(schemasToPatterns.PrettyPrint());
                 fp.Flush();
             }
@@ -1827,8 +1845,8 @@ namespace Kbg.NppPluginNET
                 catch (Exception ex)
                 {
                     Translator.ShowTranslatedMessageBox(
-                        "Failed to parse the schemas to fname patterns file. Got error\r\n{0}",
-                        "Couldn't parse schemas to fname patterns file",
+                        "Failed to parse schemasToFnamePatterns.json. Got error\r\n{0}",
+                        "Couldn't parse schemasToFnamePatterns.json",
                         MessageBoxButtons.OK, MessageBoxIcon.Error,
                         1, ex);
                     return;
@@ -1840,8 +1858,8 @@ namespace Kbg.NppPluginNET
             if (!validates && lints.Count > 0)
             {
                 Translator.ShowTranslatedMessageBox(
-                    "Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n{0}",
-                    "schemas to fnames patterns JSON badly formatted",
+                    "schemasToFnamePatterns.json must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n{0}",
+                    "schemasToFnamePatterns.json badly formatted",
                     MessageBoxButtons.OK, MessageBoxIcon.Error,
                     1, JsonSchemaValidator.LintsAsJArrayString(lints));
                 schemasToFnamePatterns = new JObject();
@@ -1857,7 +1875,7 @@ namespace Kbg.NppPluginNET
                 {
                     if (!new FileInfo(fname).Exists)
                     {
-                        Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname);
+                        Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname, fname);
                         schemasToFnamePatterns.children.Remove(fname);
                         continue;
                     }
@@ -1865,7 +1883,7 @@ namespace Kbg.NppPluginNET
                 }
                 catch
                 {
-                    Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname);
+                    Translator.ShowTranslatedMessageBox(msgIfBadFname, msgIfBadFname, MessageBoxButtons.OK, MessageBoxIcon.Error, 1, fname, fname);
                     schemasToFnamePatterns.children.Remove(fname);
                     continue;
                 }
@@ -1884,7 +1902,7 @@ namespace Kbg.NppPluginNET
                     {
                         Translator.ShowTranslatedMessageBox(
                             "While testing all the regexes associated with file {0},\r\nregular expression {1} failed to compile due to an error:\r\n{2}",
-                            "Regex did not compile (in schemas to fname patterns file)",
+                            "Regex did not compile (in schemasToFnamePatterns.json)",
                             MessageBoxButtons.OK, MessageBoxIcon.Error,
                             3, fname, pattern, ex);
                     }
@@ -1898,7 +1916,7 @@ namespace Kbg.NppPluginNET
         }
 
         /// <summary>
-        /// open the schemas to fname patterns file in Notepad++ so the user can edit it
+        /// open schemasToFnamePatterns.json in Notepad++ so the user can edit it
         /// </summary>
         static void MapSchemasToFnamePatterns()
         {
@@ -1925,13 +1943,13 @@ namespace Kbg.NppPluginNET
         {
             if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
                 return false;
-            foreach (string schemaFname in schemasToFnamePatterns.children.Keys)
+            foreach (string schemaFname in schemasToFnamePatterns.children.Keys.ToArray())
             {
                 JArray fnamePatterns = (JArray)schemasToFnamePatterns[schemaFname];
-                foreach (JNode pat in fnamePatterns.children)
+                foreach (JNode pat in fnamePatterns.children.ToArray())
                 {
-                    var regex = ((JRegex)pat).regex;
-                    if (!regex.IsMatch(fname)) continue;
+                    if (!(pat is JRegex jregex && jregex.regex.IsMatch(fname)))
+                        continue;
                     // the filename matches a pattern for this schema, so we'll try to validate it.
                     ValidateJson(schemaFname, false, true, wasAutotriggered);
                     return true;

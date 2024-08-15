@@ -1133,6 +1133,32 @@ namespace JSON_Tools.Forms
                 }
                 NodeRightClickMenu.Show(MousePosition);
             }
+            if (Translator.TryGetTranslationAtPath(new string[] {"forms", "TreeViewer", "controls"}, out JNode controlsTranslationsNode)
+                && controlsTranslationsNode is JObject controlTranslations)
+            {
+                string[] controlNames = new string[] { "CopyValueMenuItem", "CopyKeyItem", "CopyPathItem", "ToggleSubtreesItem", "SelectThisItem", "OpenSortFormItem", "SelectAllChildrenItem" };
+                for (int ii = 0; ii < controlNames.Length; ii++)
+                {
+                    string name = controlNames[ii];
+                    if (controlTranslations.TryGetValue(name, out JNode translatedTextNode)
+                        && translatedTextNode.value is string s)
+                        NodeRightClickMenu.Items[ii].Text = s;
+                }
+                if (controlTranslations.TryGetValue("LanguageNameStyleItem", out JNode langNameStyleNode) && langNameStyleNode.value is string langNameStyle && langNameStyle.Contains("{0}"))
+                {
+                    PythonStyleItem.Text = string.Format(langNameStyle, "Python");
+                    PythonStylePathItem.Text = string.Format(langNameStyle, "Python");
+                    JavaScriptStyleItem.Text = string.Format(langNameStyle, "JavaScript");
+                    JavaScriptStylePathItem.Text = string.Format(langNameStyle, "JavaScript");
+                    RemesPathStyleItem.Text = string.Format(langNameStyle, "RemesPath");
+                    RemesPathStylePathItem.Text = string.Format(langNameStyle, "RemesPath");
+                }
+                if (controlTranslations.TryGetValue("PathSeparatorStyleItem", out JNode pathSepStyleNode) && pathSepStyleNode.value is string pathSepStyleText)
+                {
+                    path_separatorStyleItem.Text = pathSepStyleText;
+                    path_separatorStylePathItem.Text = pathSepStyleText;
+                }
+            }
             if (node.IsSelected)
                 // normally clicking a node selects it, so we don't need to explicitly invoke this method
                 // but if the node was already selected, we need to call it
@@ -1188,10 +1214,10 @@ namespace JSON_Tools.Forms
             catch (Exception ex)
             {
                 Translator.ShowTranslatedMessageBox(
-                    "While attempting to format key {0} using style, the following error occurred:\r\n{1}",
+                    "While attempting to format key {0} using style {1}, the following error occurred:\r\n{2}",
                     "Error while formatting key of tree node",
                     MessageBoxButtons.OK, MessageBoxIcon.Error,
-                    2, node.Name, ex);
+                    2, node.Name, style, ex);
                 return "";
             }
         }

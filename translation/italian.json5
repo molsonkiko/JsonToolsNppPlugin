@@ -205,7 +205,17 @@
                 "QueryToCsvButton": "Da Query a CSV",
                 "SaveQueryButton": "Salva risultati query",
                 "RefreshButton": "Aggiorna",
-                "FindReplaceButton": "Trova/sostituisci"
+                "FindReplaceButton": "Trova/sostituisci",
+                // below are the items for the treenode right-click context menu
+                "CopyValueMenuItem": "Valore negli appunti",
+                "CopyKeyItem": "Chiave/indice negli appunti",
+                "CopyPathItem": "Percorso negli appunti",
+                "ToggleSubtreesItem": "Espandi/contrai tutte le sottostrutture",
+                "SelectThisItem": "Seleziona questo",
+                "OpenSortFormItem": "Ordina array",
+                "SelectAllChildrenItem": "Seleziona tutti i figli",
+                "LanguageNameStyleItem": "Stile {0}",
+                "PathSeparatorStyleItem": "Usa l'impostazione path_separator"
             }
         }
     },
@@ -400,70 +410,253 @@
         //      The "text" field is the translation of the text inside the message box
         // As in the "jsonLint" object, the {integer} inside any text have special meaning, so you need to leave those alone.
         // ===== MessageBoxes in Main.cs =====
-        "Could not open url in web browser": {"caption": "Could not open url in web browser", "text": "While attempting to open URL {0} in web browser, got exception\r\n{1}"},
-        "View syntax errors in document?": {"caption": "View syntax errors in document?", "text": "There were {0} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))"},
-        "Error while trying to parse {0}": {"caption": "Error while trying to parse {0}", "text": "Could not parse the document because of error\r\n{0}"},
-        "Possible issue with remembering selections": {"caption": "Possible issue with remembering selections", "text": "JsonTools is using the indicators {0} and {1} to remember selections, but one or both of those may collide with another plugin.\r\nIf you see this message and then you notice Notepad++ or a plugin start to behave oddly, please consider creating an issue describing what happened in the JsonTools GitHub repository."},
-        "Pretty-print JSON Lines document?": {"caption": "Pretty-print JSON Lines document?", "text": "Pretty-printing a JSON Lines document will generally lead to it no longer being a valid JSON Lines document. Pretty-print anyway?"},
-        "Error while reformatting INI file": {"caption": "Error while reformatting INI file", "text": "Error while reformatting INI file:\r\n{0}"},
-        "Programmatic error while reformatting JSON": {"caption": "Programmatic error while reformatting JSON", "text": "While attempting to reformat the file's JSON, got a programmatic error:\r\n{0}"},
-        "Failed to parse selected text as JSON": {"caption": "Failed to parse selected text as JSON", "text": "Selected text is not a JSON string"},
-        "JSON to YAML feature has some bugs": {"caption": "JSON to YAML feature has some bugs", "text": "This feature has known bugs that may result in invalid YAML being emitted. Run the tests to see examples. Use it anyway?"},
-        "Error while trying to convert JSON to YAML": {"caption": "Error while trying to convert JSON to YAML", "text": "Could not convert the JSON to YAML because of error\r\n{0}"},
-        "Only arrays can be converted to JSON Lines": {"caption": "Only arrays can be converted to JSON Lines", "text": "Only JSON arrays can be converted to JSON Lines format."},
-        "Could not change path_separator setting": {"caption": "Could not change path_separator setting", "text": "path_separator setting could not be changed from {0} to {1} due to the following error:\r\n{2}"},
-        "No JSON syntax errors for this file": {"caption": "No JSON syntax errors for this file", "text": "No JSON syntax errors (at or below {0} level) for {1}"},
-        "Could not find a node at this position": {"caption": "Could not find a node at this position", "text": "Did not find a node at position {0} of this file"},
-        "Error while formatting path to current position": {"caption": "Error while formatting path to current position", "text": "While attempting to format the path to the current position, the following error occurred:\r\n{0}"},
-        "No valid JSON elements found": {"caption": "No valid JSON elements found", "text": "No valid JSON elements starting with chars {0} were found in the document"},
-        "Error while validating JSON against schema": {"caption": "Error while validating JSON against schema", "text": "While validating JSON against the schema at path {0}, the following error occurred:\r\n{1}"},
-        "Validation failed...": {"caption": "Validation failed...", "text": "The JSON in file {0} DOES NOT validate against the schema at path {1}. Problem 1 of {2}:\r\n{3}"},
-        "Validation succeeded!": {"caption": "Validation succeeded!", "text": "The JSON in file {0} validates against the schema at path {1}."},
-        "JSON schema generation error": {"caption": "JSON schema generation error", "text": "Could not generate a JSON schema. Got the following error:\r\n{0}"},
-        "Error while generating random JSON from schema": {"caption": "Error while generating random JSON from schema", "text": "While trying to generate random JSON from this schema, got an error:\r\n{0}"},
-        "Couldn't parse schemas to fname patterns file": {"caption": "Couldn't parse schemas to fname patterns file", "text": "Failed to parse the schemas to fname patterns file. Got error\r\n{0}"},
-        "schemas to fnames patterns JSON badly formatted": {"caption": "schemas to fnames patterns JSON badly formatted", "text": "Validation of the schemas to fnames patterns JSON must be an object mapping filenames to non-empty arrays of valid regexes (strings).\r\nThere were the following validation problem(s):\r\n{0}"},
-        "No schema exists at path {0}.": {"caption": "No schema exists at path {0}.", "text": "No schema exists at path {0}."},
-        "Regex did not compile (in schemas to fname patterns file)": {"caption": "Regex did not compile (in schemas to fname patterns file)", "text": "While testing all the regexes associated with file {0},\r\nregular expression {1} failed to compile due to an error:\r\n{2}"},
-        "Can't select all children": {"caption": "Can't select all children", "text": "Cannot select all children because one or more of the children does not correspond to a JSON node in the document"},
-        "Error while trying to parse schema": {"caption": "Error while trying to parse schema", "text": "While trying to parse the schema at path {0}, the following error occurred:\r\n{1}"},
-        "Error while compiling JSON schema": {"caption": "Error while compiling JSON schema", "text": "While compiling schema for file \"{0}\", got exception:\r\n{1}"},
+        "Could not open url in web browser": {
+            "caption": "Impossibile aprire l'URL nel browser Web",
+            "text": "Durante il tentativo di aprire l'URL {0} nel browser Web, è stata rilevata un'eccezione\r\n{1}"
+        },
+        "View syntax errors in document?": {
+            "caption": "Visualizzare gli errori di sintassi nel documento?",
+            "text": "C'erano {0} errori di sintassi nel documento. Vuoi vederli?\r\n(Puoi disattivare queste richieste nelle impostazioni (impostazione offer_to_show_lint))"
+        },
+        "Error while trying to parse {0}": {
+            "caption": "Errore durante il tentativo di analisi di {0}",
+            "text": "Impossibile analizzare il documento a causa dell'errore\r\n{0}"
+        },
+        "Possible issue with remembering selections": {
+            "caption": "Possibile problema con la memorizzazione delle selezioni",
+            "text": "JsonTools utilizza gli indicatori {0} e {1} per memorizzare le selezioni, ma uno o entrambi potrebbero entrare in conflitto con un altro plugin.\r\nSe vedi questo messaggio e poi noti che Notepad++ o un plugin iniziano a comportarsi in modo strano, prendi in considerazione la possibilità di creare un problema descrivendo cosa è successo nel repository GitHub di JsonTools."
+        },
+        "Pretty-print JSON Lines document?": {
+            "caption": "Vuoi formattare un documento di righe JSON?",
+            "text": "Formattazione di un documento di righe JSON generalmente lo renderà un documento invalido di righe JSON. Formatta comunque?"
+        },
+        "Error while reformatting INI file": {
+            "caption": "Errore durante la riformattazione del file INI",
+            "text": "Errore durante la riformattazione del file INI:\r\n{0}"
+        },
+        "Programmatic error while reformatting JSON": {
+            "caption": "Errore programmatico durante la riformattazione del JSON",
+            "text": "Durante il tentativo di riformattare il JSON, si è verificato un errore di programmazione (probabilmente dovuto a un errore nel codice sorgente):\r\n{0}"
+        },
+        "Failed to parse selected text as JSON": {
+            "caption": "Impossibile analizzare il testo selezionato come JSON",
+            "text": "Il testo selezionato non è una stringa JSON"
+        },
+        "JSON to YAML feature has some bugs": {
+            "caption": "La funzionalità \"Da JSON a YAML\" presenta alcuni bug",
+            "text": "Questa funzionalità presenta bug noti che potrebbero causare l'emissione di YAML non validi. Esegui i test per vedere degli esempi. La usi comunque?"
+        },
+        "Error while trying to convert JSON to YAML": {
+            "caption": "Errore durante il tentativo di conversione da JSON a YAML",
+            "text": "Impossibile convertire JSON a YAML a causa dell'errore\r\n{0}"
+        },
+        "Only arrays can be converted to JSON Lines": {
+            "caption": "Solo gli array possono essere convertiti a righe JSON",
+            "text": "Solo gli array possono essere convertiti a righe JSON"
+        },
+        "Could not change path_separator setting": {
+            "caption": "Impossibile modificare l'impostazione path_separator",
+            "text": "Impossibile modificare l'impostazione path_separator da {0} a {1} a causa del seguente errore:\r\n{2}"
+        },
+        "No JSON syntax errors for this file": {
+            "caption": "Questo file non presenta errori di sintassi JSON",
+            "text": "Nessun errore di sintassi JSON (a livello {0} o inferiore) per {1}"
+        },
+        "Could not find a node at this position": {
+            "caption": "Impossibile trovare un nodo in questa posizione",
+            "text": "Impossibile trovare un nodo nella posizione {0} di questo file"
+        },
+        "Error while formatting path to current position": {
+            "caption": "Errore durante la formattazione del percorso della posizione corrente",
+            "text": "Durante il tentativo formattare il percorso della posizione corrente, si è verificato un errore:\r\n{0}"
+        },
+        "No valid JSON elements found": {
+            "caption": "Nessun elemento JSON valido trovato",
+            "text": "Nessun elemento JSON valido trovato che inizia con un di gli caratteri {0}"
+        },
+        "Error while validating JSON against schema": {
+            "caption": "Errore durante la convalida del JSON con lo schema JSON",
+            "text": "Durante la convalida di JSON con schema JSON nel percorso {0}, si è verificato un errore:\r\n{1}"
+        },
+        "Validation failed...": {
+            "caption": "Convalida NON riuscita",
+            "text": "Il JSON nel file {0} NON viene convalidato rispetto allo schema nel percorso {1}. Problema 1 di {2}:\r\n{3}"
+        },
+        "Validation succeeded!": {
+            "caption": "Convalida riuscita!",
+            "text": "Il JSON nel file {0} viene convalidato rispetto allo schema nel percorso {1}."
+        },
+        "JSON schema generation error": {
+            "caption": "Errore durante la generazione del schema JSON",
+            "text": "Durante la generazione del JSON schema, si è verificato un errore:\r\n{0}"
+        },
+        "Error while generating random JSON from schema": {
+            "caption": "Errore durante la generazione di JSON casuale da schema",
+            "text": "Durante la generazione di JSON casuale da schema, si è verificato un errore:\r\n{0}"
+        },
+        "Couldn't parse schemasToFnamePatterns.json": {
+            "caption": "Impossibile analizzare schemasToFnamePatterns.json",
+            "text": "Impossibile analizzare schemasToFnamePatterns.json. Si è verificato un errore:\r\n{0}"
+        },
+        "schemasToFnamePatterns.json badly formatted": {
+            "caption": "schemasToFnamePatterns.json formattato male",
+            "text": "schemasToFnamePatterns.json deve essere un oggetto che mappa i nomi dei file a array non vuoti di espressioni regolari valide (stringhe).\r\nSi sono verificati i seguenti problemi di convalida:\r\n{0}"
+        },
+        "No schema exists at path {0}.": {
+            "caption": "Non esiste alcuno schema nel percorso {0}.",
+            "text": "Non esiste alcuno schema nel percorso {0}."
+        },
+        "Regex did not compile (in schemasToFnamePatterns.json)": {
+            "caption": "Espressione regolare non può compilare (in schemasToFnamePatterns.json)",
+            "text": "Durante il test di tutte le espressioni regolari associate al file {0},\r\nl'espressione regolare {1} non può compilare a causa di un errore:\r\n{2}"
+        },
+        "Can't select all children": {
+            "caption": "Non è possibile selezionare tutti i figli",
+            "text": "Non è possibile selezionare tutti i figli perché uno o più figli non corrispondono a un nodo JSON nel documento"
+        },
+        "Error while trying to parse schema": {
+            "caption": "Errore durante il tentativo di analizzare lo schema",
+            "text": "Durante il tentativo di analizzare lo schema nel percorso {0}, si è verificato un errore:\r\n{1}"
+        },
+        "Error while compiling JSON schema": {
+            "caption": "Errore durante la compilazione dello schema",
+            "text": "Durante la compilazione dello schema per il file \"{0}\", si è verificato un errore:\r\n{1}"
+        },
         // ===== MessageBoxes in AboutForm.cs =====
-        "such error very sad": {"caption": "such error very sad", "text": "Could not convert JSON to DSON. Got exception:\r\n{0}"}, // how translate? Shiba Inu only understands English. Such confuse, wow
+        "such error very sad": {
+            "caption": "tale errore molto triste",
+            "text": "Impossibile convertire JSON a DSON. Si è verificato un errore:\r\n{0}"
+            // how translate? Shiba Inu only understands English. Such confuse, wow
+        },
         // ===== MessageBoxes in JsonToCsvForm.cs =====
-        "Exception while tabularizing JSON": {"caption": "Exception while tabularizing JSON", "text": "While trying to create CSV from JSON, raised this exception:\r\n{0}"},
+        "Exception while converting JSON to CSV": {
+            "caption": "Impossibile convertire JSON a CSV",
+            "text": "Durante il tentativo di creare CSV da JSON, si è verificato un errore:\r\n{0}"
+        },
         // ===== MessageBoxes in GrepperForm.cs =====
-        "Json file search error": {"caption": "Json file search error", "text": "While searching JSON files, got an exception:\r\n{0}"},
-        "No errors while searching documents": {"caption": "No errors while searching documents", "text": "No exceptions! {0}"},
-        "Error while sending API requests": {"caption": "Error while sending API requests" /* text is just an exception */},
+        "Json file search error": {
+            "caption": "Errore durante la ricerca dei file JSON",
+            "text": "Durante la ricerca dei file JSON, si è verificato un errore:\r\n{0}"
+        },
+        "No errors while searching documents": {
+            "caption": "Nessun errore nei documenti ricercati",
+            "text": "Nessun errore! {0}"
+        },
+        "Error while sending API requests": {
+            "caption": "Errore durante l'invio delle richieste API" /* text is just an exception */
+        },
         // ===== MessageBoxes in TreeViewer.cs =====
-        "Can't populate JSON tree": {"caption": "Can't populate JSON tree", "text": "Cannot populate the JSON tree because no JSON is stored."},
-        "Error while populating tree": {"caption": "Error while populating tree", "text": "Could not populate JSON tree because of error:\n{0}"},
-        "Compilation error in RemesPath query": {"caption": "Compilation error in RemesPath query", "text": "Could not execute query {0} because of compilation error:\r\n{1}"},
-        "Stop seeing errors?": {"caption": "Stop seeing errors?", "text": "Select Yes to stop seeing error message boxes for this query"},
-        "Runtime error while executing query on selection": {"caption": "Runtime error while executing query on selection", "text": "While executing query {0} on selection between positions {1} and {2}, encountered runtime error:\r\n{3}"},
-        "Runtime error while executing query": {"caption": "Runtime error while executing query", "text": "While executing query {0}, encountered runtime error:\r\n{1}"},
-        "Error while formatting ini file values as strings after RemesPath mutation": {"caption": "Error while formatting ini file values as strings after RemesPath mutation", "text": "Could not mutate ini file because of error while trying to stringify all values:\r\n{0}"},
-        "path_separator setting not configured": {"caption": "path_separator setting not configured", "text": "You chose \"Key/index to clipboard\" with the \"Use path_separator setting\" option, but your path_separator is still the default {0}. The {1} style is being used instead."},
-        "Error while formatting key of tree node": {"caption": "Error while formatting key of tree node", "text": "While attempting to format key {0} using style, the following error occurred:\r\n{1}"},
-        "Can't select object or array in non-JSON": {"caption": "Can't select object or array in non-JSON", "text": "Cannot select an object or an array in a non-JSON document, as it does not correspond to a specific text region"},
-        "Couldn't select associated JSON": {"caption": "Couldn't select associated JSON", "text": "The selected tree node does not appear to correspond to a JSON element in the document."},
-        "Couldn't select children of JSON": {"caption": "Couldn't select children of JSON", "text": "The selected tree node does not appear to correspond to a JSON element in the document."},
-        "Can only select children of object or array": {"caption": "Can only select children of object or array", "text": "The selected JSON is not an object or array, and thus has no children."},
+        "Can't populate JSON tree": {
+            "caption": "Impossibile popolare la struttura JSON",
+            "text": "Impossibile popolare la struttura JSON perché non è memorizzato alcun JSON."
+        },
+        "Error while populating tree": {
+            "caption": "Errore durante il popolamento della struttura",
+            "text": "Durante il popolamento della struttura JSON, si è verificato un errore:\r\n{0}"
+        },
+        "Compilation error in RemesPath query": {
+            "caption": "Errore durante la compilazione della query RemesPath",
+            "text": "Durante la compilazione della query {0}, si è verificato un errore:\r\n{1}"
+        },
+        "Stop seeing errors?": {
+            "caption": "Vuoi smettere di visualizzare gli errori?",
+            "text": "Seleziona Yes per non visualizzare più le finestre di messaggio di errore per questa query"
+        },
+        "Runtime error while executing query on selection": {
+            "caption": "Errore di runtime durante l'esecuzione della query sulla selezione",
+            "text": "Durante l'esecuzione della query {0} sulla selezione tra le posizioni {1} e {2}, si è verificato un errore di runtime:\r\n{3}"
+        },
+        "Runtime error while executing query": {
+            "caption": "Errore di runtime durante l'esecuzione della query",
+            "text": "Durante l'esecuzione della query {0}, si è verificato un errore di runtime:\r\n{1}"
+        },
+        "Error while formatting ini file values as strings after RemesPath mutation": {
+            "caption": "Errore durante la formattazione dei valori del file INI come stringhe dopo la mutazione RemesPath",
+            "text": "Impossibile modificare il file INI a causa di un errore durante il tentativo di convertire tutti i valori a stringhe:\r\n{0}"
+        },
+        "path_separator setting not configured": {
+            "caption": "impostazione path_separator non configurata",
+            "text": "Hai scelto \"Chiave/indice negli appunti\" con l'opzione \"Usa l'impostazione path_separator\", ma il tuo path_separator è ancora il predefinito {0}. Viene invece utilizzato lo stile {1}."
+        },
+        "Error while formatting key of tree node": {
+            "caption": "Errore formattando la chiave del nodo nella struttura",
+            "text": "Durante il tentativo di formattare la chiave {0} utilizzando lo stile {1}, si è verificato un errore:\r\n{2}"
+        },
+        "Can't select object or array in non-JSON": {
+            "caption": "Impossibile selezionare un oggetto o un array in un documento non JSON",
+            "text": "Impossibile selezionare un oggetto o un array in un documento non JSON, perché non corrisponde ad una regione di testo specifica"
+        },
+        "Couldn't select associated JSON": {
+            "caption": "Impossibile selezionare il JSON associato",
+            "text": "Il nodo selezionato nella struttura non sembra corrispondere a un elemento JSON nel documento."
+        },
+        "Couldn't select children of JSON": {
+            "caption": "Impossibile selezionare figli di JSON",
+            "text": "Il nodo selezionato nella struttura non sembra corrispondere a un elemento JSON nel documento."
+        },
+        "Can only select children of object or array": {
+            "caption": "Solo oggetti e array hanno figli",
+            "text": "Il JSON selezionato non è un oggetto o un array e quindi non ha figli."
+        },
         // ===== MessageBoxes in SettingsBase.cs =====
-        "Unknown error while parsing JsonTools config file": {"caption": "Unknown error while parsing JsonTools config file", "text": "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} could not be converted for an unknown reason."},
-        "Error while parsing JsonTools config file": {"caption": "Error while parsing JsonTools config file", "text": "While parsing JsonTools config file, expected setting \"{0}\" to be type {1}, but got an error.\r\nThat setting was set to its default value of {2}.\r\nThe given value {3} raised the following error:\r\n{4}"},
-        "Invalid value for setting {0}": {"caption": "Invalid value for setting {0}", "text": "Could not change setting {0} to value {1}, so it will remain set as {2}.\r\nGot the following exception:\r\n{3}"},
+        "Unknown error while parsing JsonTools config file": {
+            "caption": "Errore sconosciuto durante l'analisi del file di configurazione di JsonTools",
+            "text": "Durante l'analisi del file di configurazione di JsonTools, ci si aspettava che l'impostazione \"{0}\" fosse di tipo {1}, ma si è verificato un errore.\r\nTale impostazione era impostata sul valore predefinito di {2}.\r\nIl valore specificato {3} non poteva essere convertito per un motivo sconosciuto."
+        },
+        "Error while parsing JsonTools config file": {
+            "caption": "Errore durante l'analisi del file di configurazione di JsonTools",
+            "text": "Durante l'analisi del file di configurazione di JsonTools, ci si aspettava che l'impostazione \"{0}\" fosse di tipo {1}, ma si è verificato un errore.\r\nTale impostazione era impostata sul valore predefinito di {2}.\r\nIl valore dato {3} ha generato il seguente errore:\r\n{4}"
+        },
+        "Invalid value for setting {0}": {
+            "caption": "Valore non valido per l'impostazione {0}",
+            "text": "Impossibile modificare l'impostazione {0} sul valore {1}, quindi rimarrà impostata su {2}.\r\nSi è verificata la seguente eccezione:\r\n{3}"
+        },
         // ===== MessageBoxes in Npp.cs =====
-        "Nothing to copy to clipboard": {"caption": "Nothing to copy to clipboard", "text": "Couldn't find anything to copy to the clipboard"},
-        "File too long for JsonTools": {"caption": "Questo file è troppo lungo per JsonTools", "text": "JsonTools non può eseguire questo comando del plugin su un file con più di 2147483647 byte.\r\nVuoi interrompere la visualizzazione delle notifiche quando un file è troppo lungo?"},
+        "Nothing to copy to clipboard": {
+            "caption": "Niente da copiare negli appunti",
+            "text": "Niente da copiare negli appunti"
+        },
+        "File too long for JsonTools": {
+            "caption": "File troppo lungo per JsonTools",
+            "text": "JsonTools non può eseguire questo comando del plugin su un file con più di 2147483647 byte.\r\nVuoi interrompere la visualizzazione delle notifiche quando un file è troppo lungo?"
+        },
         // ===== MessageBoxes in SortForm.cs =====
-        "Could not find json at that path": {"caption": "Could not find json at that path", "text": "Could not find json at the specified path ({0}).\r\nGot the following error:\r\n{1}"},
-        "Failed to compile query for sorting": {"caption": "Failed to compile query for sorting", "text": "Based on selected sort method, attempted to compile query \"{0}\",\r\nbut got the following error:\r\n{1}"},
-        "JSON at specified path must be object or array": {"caption": "JSON at specified path must be object or array", "text": "JSON at the specified path must be object or array, got {0}"},
-        "Can only sort arrays": {"caption": "Can only sort arrays", "text": "Can only sort arrays, got JSON of type {0}"},
-        "Error while sorting array": {"caption": "Error while sorting array", "text": "While sorting an array, got the following error:\r\n{0}"},
+        "Could not find json at that path": {
+            "caption": "Impossibile trovare JSON in quel percorso",
+            "text": "Impossibile trovare JSON nel percorso specificato ({0}).\r\nSi è verificato il seguente errore:\r\n{1}"
+        },
+        "Failed to compile query for sorting": {
+            "caption": "Impossibile compilare la query per l'ordinamento",
+            "text": "In base al metodo di ordinamento selezionato, si è tentato di compilare la query \"{0}\",\r\nma è stato riscontrato il seguente errore:\r\n{1}"
+        },
+        "JSON at specified path must be object or array": {
+            "caption": "JSON nel percorso specificato deve essere un oggetto o un array",
+            "text": "JSON nel percorso specificato deve essere un oggetto o un array, ma ha il tipo {0}"
+        },
+        "Can only sort arrays": {
+            "caption": "Può ordinare solo array",
+            "text": "Può ordinare solo array, ottenuto JSON di tipo {0}"
+        },
+        "Error while sorting array": {
+            "caption": "Errore durante l'ordinamento di un array",
+            "text": "Durante l'ordinamento di un array, è stato visualizzato il seguente errore:\r\n{0}"
+        },
         // ===== MessageBoxes in RegexSearchForm.cs =====
-        "Columns to parse as number must be array of integers": {"caption": "Columns to parse as number must be array of integers", "text": "Columns to parse as number must be a nonempty JSON array of integers"}
+        "Columns to parse as number must be array of integers": {
+            "caption": "\"Gruppi da analizzare come numero\" deve essere un array di numeri interi",
+            "text": "\"Gruppi da analizzare come numero\" deve essere un array JSON non vuoto di numeri interi"
+        }
+    },
+    "fileComments": {
+        // schemasToFnamePatterns.json (and possibly other config files in the future)
+        //     can have comments at the beginning of the file.
+        // This object maps each filename to an array of single-line comments at the start of the file.
+        "schemasToFnamePatterns.json": [
+            "questo file determina quando deve essere eseguita la convalida automatica JSON",
+            "ogni chiave deve essere il nome file di un file di schema JSON",
+            "ogni valore deve essere un elenco non vuoto di espressioni regolari C# valide (ad esempio, [\"blah.*\\\\.txt\"]",
+            "quindi, se questo file contenesse {\"c:\\\\percorso\\\\a\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}",
+            "eseguirebbe automaticamente la convalida utilizzando \"c:\\\\percorso\\\\a\\\\foo_schema.json\" ogni volta che veniva aperto un file \".txt\" con la sottostringa \"blah\" nel suo nome."
+        ]
     }
 }

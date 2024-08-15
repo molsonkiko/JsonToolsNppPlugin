@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 4. Make it so JsonTools simply does nothing rather than causing Notepad++ to crash when attempting to run plugin commands on files with more than 2147483647 bytes.
 5. Fixed number precision bug ([issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)).
 6. Rare bug [generating schemas from JSON](/docs/README.md#generating-json-schema-from-json), only seen with some arrays of objects.
+7. Rare crash when saving [`schemasToFnamePatterns.json`](/docs/README.md#automatic-validation-of-json-against-json-schema) if [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) is enabled.
 
 ## [8.0.0] - 2024-06-29
 
