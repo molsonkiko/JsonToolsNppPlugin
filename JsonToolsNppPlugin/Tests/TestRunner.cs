@@ -56,7 +56,6 @@ namespace JSON_Tools.Tests
                 (RandomStringFromRegexTests.Test, "Random string from regex", false, false),
                 
                 // tests that require reading files (skip on Notepad++ earlier than v8)
-                (JsonGrepperTester.TestFnames, "JSON grepper's file reading ability", true, false),
                 (RandomJsonTests.TestRandomJson, "generation of random JSON from schema", true, false),
                 (DsonTester.TestDump, "conversion of JSON to DSON (see https://dogeon.xyz/)", true, false),
                 (FormatPathTester.Test, "JNode PathToPosition method", true, false),
@@ -166,22 +165,34 @@ Testing {name}
                 }
             }
 
-            if (Npp.nppVersionAtLeast8)
+            // need to do these separately because they're async
+            string apiRequestTestName = "JSON grepper's API request tool";
+
+            var asyncTests = new (Func<Task<bool>> tester, string name, bool onlyIfNpp8Plus, bool onlyIfNpp8p5p5Plus)[]
             {
-                // need to do this one separately because it's async
-                Npp.AddLine(@"=========================
-Testing JSON grepper's API request tool
-=========================
-");
-                if (Main.settings.skip_api_request_and_fuzz_tests)
+                (JsonGrepperTester.TestApiRequester, apiRequestTestName, true, false),
+                (JsonGrepperTester.TestFnames, "JSON grepper's file reading ability", true, false),
+            };
+
+            foreach ((Func<Task<bool>> tester, string name, bool onlyIfNpp8Plus, bool onlyIfNpp8p5p5Plus) in asyncTests)
+            {
+                if (onlyIfNpp8Plus && !Npp.nppVersionAtLeast8)
                 {
-                    Npp.AddLine("skipped tests because settings.skip_api_request_and_fuzz_tests was set to true");
-                    skipped.Add("JSON grepper's API request tool");
+                    skipped.Add(name);
+                }
+                else if (Main.settings.skip_api_request_and_fuzz_tests && name == apiRequestTestName)
+                {
+                    Npp.AddLine("\r\nskipped API request tests because settings.skip_api_request_and_fuzz_tests was set to true");
+                    skipped.Add(name);
                 }
                 else
                 {
-                    if (await JsonGrepperTester.TestApiRequester())
-                        failures.Add("JSON grepper's API request tool");
+                    Npp.AddLine($@"=========================
+Testing {name}
+=========================
+");
+                    if (await tester())
+                        failures.Add(name);
                 }
             }
 

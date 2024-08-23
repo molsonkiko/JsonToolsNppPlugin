@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     * Add `uses_context` field to ArgFunction instances, so that they have JQueryContext appended to their arguments, and they can reference fields of that JQueryContext.
 	* This way we don't have to have these methods mutating and referencing a global static variable.
 	* Additionally, the presence of a function with `uses_context=true` would serve as a flag that the query cannot be executed in parallel, because doing so would cause race conditions associated with the shared JQueryContext fields.
+7. Allow grepper form to parse JSON Lines documents. Would probably only try to parse `.jsonl` documents as JSON Lines.
+8. Bring back multi-threaded parsing of JSON in the grepper form. I had to go back to single-threaded to avoid deadlocks when reporting progress.
+9. Implement a progress bar for the [JSON-to-CSV form](/docs/json-to-csv.md).
 
 ### To Be Changed
 
@@ -44,7 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
-- __GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.__
+- GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
@@ -57,17 +60,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. [Translation](/README.md#translating-jsontools-to-another-language) of the following:
     - Settings in the [Settings form](/docs/README.md#customizing-settings).
     - [JSON syntax errors and JSON schema validation errors](/docs/README.md#error-form-and-status-bar) (under the `jsonLint` field of the [translation file](/translation/english.json5))
-	- Generic Windows message boxes (the boxes with `Ok`, `Yes`, `No`, and `Cancel` buttons and no other controls).
+    - Generic Windows message boxes (the boxes with `Ok`, `Yes`, `No`, and `Cancel` buttons and no other controls).
 5. The [`path_separator` setting](/docs/README.md#key_style-and-path_separator-settings) for formatting keys/indices and paths. Addresses [issue 69](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/69).
 6. Make it so left-clicking on the `Key/index to clipboard` and `Path to clipboard` options of the [treenode right-click context menu](/docs/README.md#get-info-about-tree-nodes) gets the path or key/index in whatever the default is from your settings, without having to click on one of the sub-menu items.
 7. The `grepper form` now supports `\` and `/` (path separators) in search patterns, as well as `**` to match any number of characters (including `\`).
 8. Generation of [random strings from regular expressions](/docs/README.md#random-strings-from-regex-added-in-v81).
+9. The `grepper form` now reads and parses all files asynchronously, and can be canceled.
+10. While the `grepper form` is working on a request, it now ignores clicks on the API request button and the Search directories button.
 
 ### Changed
 
 1. Rename `Choose schemas to automatically validate filename patterns` to [`Validate files with JSON schema if name matches pattern`](/docs/README.md#automatic-validation-of-json-against-json-schema), in the hopes that the new name will be less confusing.
 2. Changed the wording of many JSON syntax error messages to be more consistent, per [conky77's suggestion here](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/70#issuecomment-2234114308).
 3. When attempting to translate to other languages, JsonTools now checks the UI language of Notepad++ before checking the Windows UI culture.
+4. When [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) is turned on, only modifications that *change the text of the document* will trigger re-parsing.
 
 ### Fixed
 
@@ -78,6 +84,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. Fixed number precision bug ([issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)).
 6. Rare bug [generating schemas from JSON](/docs/README.md#generating-json-schema-from-json), only seen with some arrays of objects.
 7. Rare crash when saving [`schemasToFnamePatterns.json`](/docs/README.md#automatic-validation-of-json-against-json-schema) if [automatic validation after editing](/docs/README.md#automatically-check-for-errors-after-editing) is enabled.
+8. Changes to the [`max_schema_validation_problems` setting](/docs/README.md#validating-json-against-json-schema) will apply immediately, including to previously compiled JSON schemas.
+9. Unrecoverable crash due to stack overflow when generating [random JSON from a recursive schema](/docs/README.md#generating-random-json-from-a-schema).
 
 ## [8.0.0] - 2024-06-29
 

@@ -8,6 +8,7 @@ namespace JSON_Tools.JSON_Tools
 {
     public class RandomJsonFromSchema
     {
+        public const int RECURSION_LIMIT = JsonSchemaValidator.RECURSION_LIMIT;
         public static Random random { get; private set; } = new Random();
 
         public static void Reseed()
@@ -15,11 +16,37 @@ namespace JSON_Tools.JSON_Tools
             random = new Random();
         }
 
+        private int minArrayLength;
+        private int maxArrayLength;
+        private bool extendedAsciiStrings;
+        private bool usePatterns;
+        private Dictionary<string, Func<JNode, JObject, int, JNode>> generatorMap;
+
+
+        private RandomJsonFromSchema(int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        {
+            this.minArrayLength = minArrayLength;
+            this.maxArrayLength = maxArrayLength;
+            this.extendedAsciiStrings = extendedAsciiStrings;
+            this.usePatterns = usePatterns;
+
+            generatorMap = new Dictionary<string, Func<JNode, JObject, int, JNode>>
+            {
+                { "array", RandomArray },
+                { "boolean", RandomBoolean },
+                { "integer", RandomInt },
+                { "null", RandomNull },
+                { "number", RandomNumber },
+                { "object", RandomObject },
+                { "string", RandomString },
+            };
+        }
+
         #region RANDOM_SCALARS
         /// <summary>
         /// 50% chance for true or false
         /// </summary>
-        private static JNode RandomBoolean(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomBoolean(JNode schema, JObject refs, int recursionDepth)
         {
             return new JNode(random.Next(2) == 1);
         }
@@ -27,7 +54,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// random double from -5 to 5
         /// </summary>
-        private static JNode RandomFloat(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomFloat(JNode schema, JObject refs, int recursionDepth)
         {
             return new JNode(random.NextDouble() * 10 - 5, Dtype.FLOAT, 0);
         }
@@ -35,11 +62,11 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// random int from -1 million to 1 million 
         /// </summary>
-        private static JNode RandomInt(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomInt(JNode schema, JObject refs, int recursionDepth)
         {
             return new JNode((long)random.Next(-1_000_000, 1_000_001), Dtype.INT, 0);
         }
-        
+
         private static JNode RandomNumberBetweenMinAndMax(double min, double max)
         {
             if (min == NanInf.neginf) min = -1e6;
@@ -63,17 +90,17 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// 50% chance of random int, 50% chance of random float
         /// </summary>
-        private static JNode RandomNumber(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomNumber(JNode schema, JObject refs, int recursionDepth)
         {
             if (random.NextDouble() < 0.5)
-                return RandomInt(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-            return RandomFloat(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                return RandomInt(schema, refs, recursionDepth);
+            return RandomFloat(schema, refs, recursionDepth);
         }
 
         /// <summary>
         /// always returns the null JNode
         /// </summary>
-        private static JNode RandomNull(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomNull(JNode schema, JObject refs, int recursionDepth)
         {
             return new JNode();
         }
@@ -89,7 +116,7 @@ namespace JSON_Tools.JSON_Tools
         /// If <c>extendedAsciiStrings</c>, can contain any character with UTF-16 code 1-255 (extended ASCII)<br></br>
         /// Note that <c>pattern</c> will be silently ignored if the regex cannot be recognized by <see cref="RandomStringFromRegex"/>. 
         /// </summary>
-        private static JNode RandomString(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomString(JNode schema, JObject refs, int recursionDepth)
         {
             int minLength = 0;
             int exclusiveMaxLength = 11;
@@ -134,7 +161,7 @@ namespace JSON_Tools.JSON_Tools
         #endregion
 
         #region RANDOM_ITERABLES
-        private static JNode RandomArray(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomArray(JNode schema, JObject refs, int recursionDepth)
         {
             Dictionary<string, JNode> children = ((JObject)schema).children;
             if (!children.TryGetValue("items", out JNode items))
@@ -143,7 +170,7 @@ namespace JSON_Tools.JSON_Tools
                 // no "items" keyword technically means that the array could contain
                 // anything, but we will just produce empty arrays for such schemas
             }
-            int minlen = minArrayLength; 
+            int minlen = minArrayLength;
             if (children.TryGetValue("minItems", out JNode minItemsNode))
                 minlen = Convert.ToInt32(minItemsNode.value);
             int maxlen = maxArrayLength;
@@ -164,10 +191,10 @@ namespace JSON_Tools.JSON_Tools
                 int ncontains = random.Next(minContains, maxContains + 1);
                 length -= ncontains;
                 for (int ii = 0; ii < ncontains; ii++)
-                    outItems.Add(RandomJsonHelper(contains, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns));
+                    outItems.Add(RandomJsonHelper(contains, refs, recursionDepth + 1));
             }
             for (int ii = 0; ii < length; ii++)
-                outItems.Add(RandomJsonHelper(items, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns));
+                outItems.Add(RandomJsonHelper(items, refs, recursionDepth + 1));
             if (contains != null)
             {
                 // shuffle the array to randomize the order in which
@@ -190,14 +217,7 @@ namespace JSON_Tools.JSON_Tools
         /// * If <c>usePatterns</c>, and <c>schema</c> has a <c>patternProperties</c> subschema,<br></br>
         /// for each key-value pair (<c>patternKey</c>, <c>patternSchema</c>) in <c>patternProperties</c>, generates 0-4 random keys (each matching <c>patternKey</c>) with values matching <c>patternSchema</c>. 
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="refs"></param>
-        /// <param name="minArrayLength"></param>
-        /// <param name="maxArrayLength"></param>
-        /// <param name="extendedAsciiStrings"></param>
-        /// <param name="usePatterns"></param>
-        /// <returns></returns>
-        private static JNode RandomObject(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomObject(JNode schema, JObject refs, int recursionDepth)
         {
             var children = ((JObject)schema).children;
             var result = new Dictionary<string, JNode>();
@@ -216,7 +236,7 @@ namespace JSON_Tools.JSON_Tools
                         for (int ii = 0; ii < numPatProps; ii++)
                         {
                             string patKey = generator();
-                            result[patKey] = RandomJsonHelper(patSchema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                            result[patKey] = RandomJsonHelper(patSchema, refs, recursionDepth + 1);
                         }
                     }
                     catch { }
@@ -260,22 +280,11 @@ namespace JSON_Tools.JSON_Tools
             foreach (string k in requiredKeys.Concat(optionalIncluded))
             {
                 JNode subschema = propertiesObj[k];
-                result[k] = RandomJsonHelper(subschema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                result[k] = RandomJsonHelper(subschema, refs, recursionDepth + 1);
             }
             return new JObject(0, result);
         }
         #endregion
-
-        private static readonly Dictionary<string, Func<JNode, JObject, int, int, bool, bool, JNode>> GENERATORS = new Dictionary<string, Func<JNode, JObject, int, int, bool, bool, JNode>>
-        {
-            { "array", RandomArray },
-            { "boolean", RandomBoolean },
-            { "integer", RandomInt },
-            { "null", RandomNull },
-            { "number", RandomNumber },
-            { "object", RandomObject },
-            { "string", RandomString },
-        };
 
         /// <summary>
         /// Produces a random value of a random type.
@@ -285,19 +294,19 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="maxArrayLength"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        private static JNode RandomAnything(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomAnything(JNode schema, JObject refs, int recursionDepth)
         {
             int choice = random.Next(7);
             switch (choice)
             {
-                case 0: return RandomBoolean(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 1: return RandomFloat(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 2: return RandomInt(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 3: return RandomNull(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 4: return RandomString(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 5: return RandomArray(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                case 6: return RandomObject(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                default: throw new ArgumentOutOfRangeException();
+            case 0: return RandomBoolean(schema, refs, recursionDepth);
+            case 1: return RandomFloat(schema, refs, recursionDepth);
+            case 2: return RandomInt(schema, refs, recursionDepth);
+            case 3: return RandomNull(schema, refs, recursionDepth);
+            case 4: return RandomString(schema, refs, recursionDepth);
+            case 5: return RandomArray(schema, refs, recursionDepth);
+            case 6: return RandomObject(schema, refs, recursionDepth);
+            default: throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -305,15 +314,20 @@ namespace JSON_Tools.JSON_Tools
         /// choose a random schema from an anyOf list of schemas, and make random JSON based on that schema
         /// </summary>
         /// <returns></returns>
-        private static JNode RandomAnyOf(JNode anyOf, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        private JNode RandomAnyOf(JNode anyOf, JObject refs, int recursionDepth)
         {
             JArray anyOfArr = (JArray)anyOf;
             JNode schema = anyOfArr.children[random.Next(anyOfArr.Length)];
-            return RandomJsonHelper(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+            return RandomJsonHelper(schema, refs, recursionDepth);
         }
 
-        public static JNode RandomJsonHelper(JNode schema, JObject refs, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
+        public JNode RandomJsonHelper(JNode schema, JObject refs, int recursionDepth)
         {
+            if (recursionDepth >= RECURSION_LIMIT)
+            {
+                var problemLint = JsonSchemaValidator.ValidationProblemToLint(JsonLintType.SCHEMA_RECURSION_LIMIT_REACHED, null, 0, true);
+                throw new SchemaValidationException(problemLint.message);
+            }
             if (!(schema is JObject obj))
             {
                 if (schema is null)
@@ -323,15 +337,15 @@ namespace JSON_Tools.JSON_Tools
                     throw new SchemaValidationException("A JSON schema must be an object or a boolean");
                 }
                 if ((bool)schema.value)
-                    return RandomAnything(new JObject(), new JObject(), minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
-                    // the true schema validates everything, so we'll make a
-                    // random instance of a random type
+                    return RandomAnything(new JObject(), new JObject(), recursionDepth);
+                // the true schema validates everything, so we'll make a
+                // random instance of a random type
                 return new JNode();
                 // the false schema validates nothing,
                 // and the null JNode is the closest we can get to nothing
             }
             if (obj.Length == 0) // the empty schema validates everything
-                return RandomAnything(new JObject(), new JObject(), minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                return RandomAnything(new JObject(), new JObject(), recursionDepth);
             if (obj.children.TryGetValue("enum", out JNode enum_))
             {
                 // any type can be an enum; it's just a list of possible values
@@ -347,15 +361,15 @@ namespace JSON_Tools.JSON_Tools
                     var refname = ((string)refnode.value).Split('/').Last();
                     if (!refs.children.TryGetValue(refname, out JNode reference))
                         throw new SchemaValidationException($"Reference {refname} to an undefined schema");
-                    return RandomJsonHelper(reference, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                    return RandomJsonHelper(reference, refs, recursionDepth);
                 }
-                return RandomAnyOf(anyOf, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                return RandomAnyOf(anyOf, refs, recursionDepth);
             }
             if (typeNode is JArray typeArr)
             {
                 // multiple scalar types possible
                 JNode typeChoice = typeArr.children[random.Next(typeArr.Length)];
-                return GENERATORS[(string)typeChoice.value](schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+                return generatorMap[(string)typeChoice.value](schema, refs, recursionDepth);
             }
             string type = (string)typeNode.value;
             bool typeInt = type[0] == 'i';  // "integer" is the only type that starts with 'i'
@@ -373,8 +387,8 @@ namespace JSON_Tools.JSON_Tools
                     return RandomNumberBetweenMinAndMax(min, max);
                 }
             }
-            var typeGenerator = GENERATORS[type];
-            return typeGenerator(schema, refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+            var typeGenerator = generatorMap[type];
+            return typeGenerator(schema, refs, recursionDepth);
         }
 
         public static JNode RandomJson(JNode schema, int minArrayLength, int maxArrayLength, bool extendedAsciiStrings, bool usePatterns)
@@ -384,7 +398,8 @@ namespace JSON_Tools.JSON_Tools
             if (!(schemobj.children.TryGetValue("$defs", out refs)
                 || schemobj.children.TryGetValue("definitions", out refs)))
                 refs = new JObject();
-            return RandomJsonHelper(schema, (JObject)refs, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+            var rjfs = new RandomJsonFromSchema(minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+            return rjfs.RandomJsonHelper(schema, (JObject)refs, 0);
         }
     }
 }

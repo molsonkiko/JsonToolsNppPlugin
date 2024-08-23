@@ -256,6 +256,8 @@ Prior to [v6.1](/CHANGELOG.md#610---2023-12-28), this automatic validation force
 
 Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), this automatic validation will only ever attempt to parse the entire document, not [a selection](#working-with-selections), and automatic validation is always disabled in selection-based mode. Prior to v7.0, automatic validation could change the user's selections unexpectedly.
 
+Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), only modifications that *change the text of the document* will trigger re-parsing.
+
 __WARNING:__ If this setting is turned on, versions of JsonTools older than [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) will cause Notepad++ to crash if you attempt to open *any* file with more than 2147483647 bytes.
 
 ## Path to current position ##
@@ -817,7 +819,7 @@ If you want to open up all the JSON files in a directory, here's how to do it:
 
 For every file that the JSON tries and fails to parse, the exception will be caught and saved so you can view it later with the [`View errors` button](#viewing-errors).
 
-Beginning in version [v8.0](/CHANGELOG.md#800---2024-06-29), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes (215 megabytes for 32-bit Notepad++). This change was made to avoid out-of-memory errors that could cause Notepad++ to crash.
+Beginning in version [v8.0](/CHANGELOG.md#800---2024-06-29), this tool will stop reading files and show an error message once the combined size of all the files to be parsed exceeds about 429 megabytes (215 megabytes for 32-bit Notepad++). This change was made to avoid out-of-memory errors that could cause Notepad++ to crash. In version [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), this was reduced to exactly 400MB for 64-bit Notepad++ and 70MB for 32-bit Notepad++.
 
 ### Viewing results in a buffer ###
 
@@ -841,9 +843,9 @@ For example, if you wanted to search only files with `foo` (case-sensitive) in t
 
 When getting JSON from [directories](#getting-json-from-local-directories) or [APIs](#sending-rest-api-requests), it is possible that JsonTools will need to parse very large amounts of JSON. JsonTools can parse approximately 30 megabytes of JSON per second per thread, but its rate of parsing depends on many factors, chiefly the number of documents to be parsed.
 
-Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), it will report progress while reading documents from the hard drive, and then report progress again when parsing documents. To report progress, JsonTools will open up a progress reporting form with a green progress bar and a short explanation of what is happening.
+Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), the JSON from Files and APIs form will report progress while reading documents from the hard drive, and then report progress again when parsing documents. To report progress, JsonTools will open up a progress reporting form with a green progress bar and a short explanation of what is happening. If the progress form has a `Cancel` button, you can press it to try to cancel the current operation. In the unlikely event that the progress form becomes unresponsive, you should be able to close it by closing the JSON from Files and APIs form.
 
-This progress reporting only takes place if the total amount of text to be parsed/read is at least 50 megabytes, or if there are at least 16 files (64 when reading from hard drive) with a combined total of 8 megabytes of text.
+This progress reporting only takes place if the total amount of text to be parsed/read is at least 50 megabytes, or if there are at least 16 files (64 when reading from hard drive) with a combined total of 8 megabytes of text. Progress will not be reported until the number and combined size of files to be read is known, which could take a very long time if you attempt to do recursive search on a huge directory tree like `C:\Program Files`.
 
 To be clear, __versions of JsonTools earlier than [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd) did not have progress reporting for this form,__ but the underlying process was still very reliable, and *just because Notepad++ stopped responding doesn't mean that JsonTools had an error or went into an infinite loop.*
 
@@ -867,7 +869,7 @@ Click the `View errors` button to see if any errors happened. If any did, a new 
 
 As of version *4.6.0*, the plugin can validate JSON against a [JSON schema](https://json-schema.org/). If the schema is valid, a message box will tell you if your JSON validates. If it doesn't validate, the plugin will tell you the first location where validation failed.
 
-Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are. To avoid very slow performance on files that do not match the schema, the validator will exit after it encounters 64 problems (configurable by the `max_schema_validation_problem` setting). Note that changes to the `max_schema_validation_problem` setting only take effect the next time you start Notepad++.
+Beginning in [v7.0](/CHANGELOG.md#700---2024-02-09), validators can catch multiple JSON schema validation problems, not just one. You can use the [error form](#error-form-and-status-bar) to see where all of the schema validation problems are. To avoid very slow performance on files that do not match the schema, the validator will exit after it encounters 64 problems (configurable by the `max_schema_validation_problems` setting). Note that, prior to [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), changes to the `max_schema_validation_problems` setting will only take effect after you restart Notepad++.
 
 As of version [4.11.2](/CHANGELOG.md#4112---2023-03-21), the recursion limit for validation is currently 64. Deeper JSON than that can't be validated, period. Very deep or recursive schemas will still compile.
 
@@ -925,6 +927,7 @@ The following keywords are supported for random JSON generation:
     * __Notes:__
     * support added in version [4.11.2](/CHANGELOG.md#4112---2023-03-21)
     * `definitions` and `$defs` keywords are equivalent.
+    * __Warning:__ Prior to [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), the random JSON generator did not count recursion depth, so recursive self-references in `$defs/definitions` could sometimes cause an unrecoverable Notepad++ crash. Beginning in v8.1, a recursion counter ensures that such unrecoverable crashes are extremely unlikely.
 
 ### Keywords for objects
 * [properties](https://json-schema.org/draft/2020-12/json-schema-core.html#name-properties)
@@ -951,7 +954,7 @@ The following keywords are supported for random JSON generation:
 
 Beginning in [v8.1](/CHANGELOG.md#810---unreleased-yyyy-mm-dd), JsonTools can generate random strings from a limited subset of .NET regular expressions.
 
-If the `generate_random_patterns` setting is set to `true` (it is `false` by default), this new feature can be used to generate random strings using the `pattern` keyword, or random object properties using the `patternProperties` keyword.
+If the `generate_random_patterns` setting is set to `true` (it is `false` by default), this new feature can be used to generate random strings using the `pattern` keyword, or random object properties using the `patternProperties` keyword. Random strings generated this way *ignore the `minLength` and `maxLength` keywords* of `string` schemas.
 
 A regular expression can only be used to generate random strings if:
 * It does not contain any quantifers greater than `20` (thus, `f{200}` would be rejected, and the `+` and `*` quantifiers will never generate more than 20 repetitions)

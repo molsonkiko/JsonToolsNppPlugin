@@ -20,11 +20,11 @@ namespace JSON_Tools.JSON_Tools
 
     public class JsonSchemaValidator
     {
-        private const int RECURSION_LIMIT = 64;
+        public const int RECURSION_LIMIT = 64;
         // the recursion limit is especially important because the "definitions" and "$ref" keywords
         // allow recursive self-references, and we need to avoid infinite recursion
 
-        private static JsonLint ValidationProblemToLint(JsonLintType problemType, Dictionary<string, object> keywords, int position, bool translated)
+        public static JsonLint ValidationProblemToLint(JsonLintType problemType, Dictionary<string, object> keywords, int position, bool translated)
         {
             string msg;
             switch (problemType)
@@ -89,7 +89,7 @@ namespace JSON_Tools.JSON_Tools
                 msg = JsonLint.TryTranslateWithTwoParams(translated, problemType, "string '{0}' does not match regex '{1}'", str, regex);
                 break;
             case JsonLintType.SCHEMA_RECURSION_LIMIT_REACHED:
-                msg = Translator.TranslateLintMessage(translated, problemType, "validation has a maximum depth of 128");
+                msg = Translator.TranslateLintMessage(translated, problemType, $"validation has a maximum depth of {RECURSION_LIMIT}");
                 break;
             case JsonLintType.SCHEMA_NUMBER_LESS_THAN_MIN:
                 var min = (double)keywords["min"];

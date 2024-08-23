@@ -252,6 +252,7 @@ namespace JSON_Tools.Utils
         /// </summary>
         /// <param name="inp"></param>
         /// <returns></returns>
+        /// <exception cref="FormatException"></exception>
         public Func<string, bool> ParseLinesSimple(string inp)
         {
             var sb = new StringBuilder("(?:");

@@ -59,8 +59,11 @@
             }
         },
         "ErrorForm": {
-            // This form has no translatable controls, so only the title is here.
-            "title": "Errore di sintassi nel JSON"
+            "title": "Errore di sintassi nel JSON",
+            "controls": {
+                "exportToJsonMenuItem": "Esporta in JSON",
+                "refreshMenuItem": "Aggiorna con gli errori correnti"
+            }
         },
         "FindReplaceForm": {
             "title": "Trova/sostituisci nel JSON",
@@ -394,7 +397,7 @@
         "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "All'oggetto manca una chiave richiesta {0}",
         "SCHEMA_FALSE_SCHEMA": "lo schema è false, quindi nulla supererà la convalida",
         "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "la stringa '{0}' non corrisponde all'espressione regolare '{1}'",
-        "SCHEMA_RECURSION_LIMIT_REACHED": "la convalida ha una profondità massima di 128",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "la convalida ha una profondità massima di 64",
         "SCHEMA_NUMBER_LESS_THAN_MIN": "Il numero {0} è inferiore al minimo {1}",
         "SCHEMA_NUMBER_GREATER_THAN_MAX": "Il numero {0} è maggiore al massimo {1}",
         "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "Il numero {0} è inferiore o uguale al minimo esclusivo {1}",
@@ -545,6 +548,10 @@
         "Error while sending API requests": {
             "caption": "Errore durante l'invio delle richieste API" /* text is just an exception */
         },
+        "Too much text to parse": {
+            "caption": "Troppo testo da analizzare",
+            "text": "La lunghezza totale del testo ({0}) da analizzare ha superato la lunghezza massima ({1})"
+        },
         // ===== MessageBoxes in TreeViewer.cs =====
         "Can't populate JSON tree": {
             "caption": "Impossibile popolare la struttura JSON",
@@ -654,7 +661,7 @@
         "schemasToFnamePatterns.json": [
             "questo file determina quando deve essere eseguita la convalida automatica JSON",
             "ogni chiave deve essere il nome file di un file di schema JSON",
-            "ogni valore deve essere un elenco non vuoto di espressioni regolari C# valide (ad esempio, [\"blah.*\\\\.txt\"]",
+            "ogni valore deve essere un elenco non vuoto di espressioni regolari C# valide (ad esempio, [\"blah.*\\\\.txt\"])",
             "quindi, se questo file contenesse {\"c:\\\\percorso\\\\a\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}",
             "eseguirebbe automaticamente la convalida utilizzando \"c:\\\\percorso\\\\a\\\\foo_schema.json\" ogni volta che veniva aperto un file \".txt\" con la sottostringa \"blah\" nel suo nome."
         ]

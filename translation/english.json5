@@ -59,8 +59,11 @@
             }
         },
         "ErrorForm": {
-            // This form has no translatable controls, so only the title is here.
-            "title": "Syntax errors in JSON"
+            "title": "Syntax errors in JSON",
+            "controls": {
+                "exportToJsonMenuItem": "Export to JSON",
+                "refreshMenuItem": "Refresh with current errors"
+            }
         },
         "FindReplaceForm": {
             "title": "Find/replace in JSON",
@@ -385,7 +388,7 @@
         "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "object missing \"required\" key {0}",
         "SCHEMA_FALSE_SCHEMA": "the schema is false, so nothing will validate.",
         "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "string '{0}' does not match regex '{1}'",
-        "SCHEMA_RECURSION_LIMIT_REACHED": "validation has a maximum depth of 128",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "validation has a maximum depth of 64",
         "SCHEMA_NUMBER_LESS_THAN_MIN": "number {0} less than minimum {1}",
         "SCHEMA_NUMBER_GREATER_THAN_MAX": "number {0} greater than maximum {1}",
         "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "number {0} less than or equal to exclusive minimum {1}",
@@ -536,6 +539,10 @@
         "Error while sending API requests": {
             "caption": "Error while sending API requests" /* text is just an exception */
         },
+        "Too much text to parse": {
+            "caption": "Too much text to parse",
+            "text": "The total length of text ({0}) to be parsed exceeded the maximum length ({1})"
+        },
         // ===== MessageBoxes in TreeViewer.cs =====
         "Can't populate JSON tree": {
             "caption": "Can't populate JSON tree",
@@ -645,7 +652,7 @@
         "schemasToFnamePatterns.json": [
             "this file determines when automatic JSON validation should be performed",
             "each key must be the filename of a JSON schema file",
-            "each value must be a non-empty list of valid C# regular expressions (e.g., [\"blah.*\\\\.txt\"]",
+            "each value must be a non-empty list of valid C# regular expressions (e.g., [\"blah.*\\\\.txt\"])",
             "thus, if this file contained {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}",
             "it would automatically perform validation using \"c:\\\\path\\\\to\\\\foo_schema.json\" whenever a \".txt\" file with the substring \"blah\" in its name was opened."
         ]

@@ -12,7 +12,7 @@ namespace JSON_Tools.Tests
         public static JsonParser jparser = new JsonParser();
         public static RemesParser rparser = new RemesParser();
 
-        public static bool TestFnames()
+        public static async Task<bool> TestFnames()
         {
             DirectoryInfo smalldir;
             try
@@ -59,7 +59,7 @@ namespace JSON_Tools.Tests
             foreach ((string[] patterns, bool recursive, JNode desiredFiles) in testcases)
             {
                 grepper.Reset();
-                grepper.Grep(smalldir.FullName, recursive, patterns);
+                await grepper.Grep(smalldir.FullName, recursive, patterns);
                 JNode foundFiles = rparser.Search("keys(@)", grepper.fnameJsons);
                 ((JArray)foundFiles).children.Sort();
                 ((JArray)desiredFiles).children.Sort();
@@ -87,7 +87,7 @@ namespace JSON_Tools.Tests
                 string searchPattern = kv.Key;
                 JNode desiredFiles = kv.Value;
                 grepper.Reset();
-                grepper.Grep(subdir.FullName, false, searchPattern);
+                await grepper.Grep(subdir.FullName, false, searchPattern);
                 JNode foundFiles = rparser.Search("keys(@)", grepper.fnameJsons);
                 ((JArray)foundFiles).children.Sort();
                 ((JArray)desiredFiles).children.Sort();
@@ -106,7 +106,7 @@ namespace JSON_Tools.Tests
             return testsFailed > 0;
         }
 
-        public static async Task<int[]> TestApiRequesterHelper(string[] urls, int ii, int testsFailed, JsonGrepper grepper)
+        private static async Task<int[]> TestApiRequesterHelper(string[] urls, int ii, int testsFailed, JsonGrepper grepper)
         {
             int n = urls.Length;
             ii += 1;

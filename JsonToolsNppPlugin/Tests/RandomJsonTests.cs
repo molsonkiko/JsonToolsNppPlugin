@@ -231,6 +231,28 @@ namespace JSON_Tools.Tests
                 testsFailed += 3;
                 Npp.AddLine($"FAIL: Could not parse the kitchen sink schema text\r\n{JNode.StrToString(kitchenSinkSchemaText, true)}\r\ndue to an exception\r\n{ex}");
             }
+            ii++;
+            // this schema has a recursive self-reference, which tests the ability of the random JSON generator to handle recursive self-references without crashing Notepad++
+            // We expect this to error out due to reaching RandomJsonFromSchema.RECURSION_LIMIT; anything other than a crash is considered a success.
+            string recursiveArraySchemaText = "{\"$defs\":{\"foo\":{\"items\":{\"anyOf\":[{\"type\":\"null\"},{\"$ref\":\"#/$defs/foo\"}]},\"type\":\"array\"}},\"$ref\":\"#/$defs/foo\"}";
+            try
+            {
+                var recursiveArraySchema = parser.Parse(recursiveArraySchemaText);
+                for (int i = 0; i < 50; i++)
+                {
+                    try
+                    {
+                        RandomJsonFromSchema.RandomJson(recursiveArraySchema, 0, 10, true, true);
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                testsFailed++;
+                Npp.AddLine($"FAIL: Could not parse the recursive array schema text\r\n{JNode.StrToString(recursiveArraySchemaText, true)}\r\ndue to an exception\r\n{ex}");
+            }
+
             Npp.AddLine($"Failed {testsFailed} tests.");
             Npp.AddLine($"Passed {ii - testsFailed} tests.");
             return testsFailed > 0;

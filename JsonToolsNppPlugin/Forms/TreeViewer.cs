@@ -1155,8 +1155,8 @@ namespace JSON_Tools.Forms
                 }
                 if (controlTranslations.TryGetValue("PathSeparatorStyleItem", out JNode pathSepStyleNode) && pathSepStyleNode.value is string pathSepStyleText)
                 {
-                    path_separatorStyleItem.Text = pathSepStyleText;
-                    path_separatorStylePathItem.Text = pathSepStyleText;
+                    path_separatorStyleItem.Text = $"{pathSepStyleText} ({Main.settings.path_separator})";
+                    path_separatorStylePathItem.Text = $"{pathSepStyleText} ({Main.settings.path_separator})";
                 }
             }
             if (node.IsSelected)

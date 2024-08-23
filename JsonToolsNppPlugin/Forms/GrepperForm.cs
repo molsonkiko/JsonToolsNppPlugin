@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -25,8 +26,8 @@ namespace JSON_Tools.Forms
         private Form progressBarForm;
         private MyProgressBar progressBar;
         private bool isParsing;
-        //private Button progressBarCancelButton;
-        private Label progressLabel;
+        private Button cancelButton;
+        private MyLabel progressLabel;
         private static object progressReportLock = new object();
         private static Dictionary<string, string> progressBarTranslatedStrings = null;
 
@@ -35,7 +36,7 @@ namespace JSON_Tools.Forms
             InitializeComponent();
             NppFormHelper.RegisterFormIfModeless(this, false);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
-            grepper = new JsonGrepper(Main.JsonParserFromSettings(), true, CHECKPOINT_COUNT, CreateProgressReportBuffer, ReportJsonParsingProgress, AfterProgressReport);
+            grepper = new JsonGrepper(Main.JsonParserFromSettings(), true, CHECKPOINT_COUNT, CreateProgressReportForm, ReportJsonParsingProgress, AfterProgressReport);
             tv = null;
             filesFound = new HashSet<string>();
             var configSubdir = Path.Combine(Npp.notepad.GetConfigDirectory(), Main.PluginName);
@@ -77,6 +78,8 @@ namespace JSON_Tools.Forms
 
         private async void SendRequestsButton_Click(object sender, EventArgs e)
         {
+            if (grepper.isBusy)
+                return;
             string[] urls;
             try
             {
@@ -143,8 +146,10 @@ namespace JSON_Tools.Forms
             }
         }
 
-        private void SearchDirectoriesButton_Click(object sender, EventArgs e)
+        private async void SearchDirectoriesButton_Click(object sender, EventArgs e)
         {
+            if (grepper.isBusy)
+                return;
             string[] searchPatterns = SearchPatternsBox.Lines;
             bool recursive = RecursiveSearchCheckBox.Checked;
             string rootDir = DirectoriesVisitedBox.Text;
@@ -154,7 +159,7 @@ namespace JSON_Tools.Forms
                 UseWaitCursor = true;
                 try
                 {
-                    grepper.Grep(rootDir, recursive, searchPatterns);
+                    await grepper.Grep(rootDir, recursive, searchPatterns);
                 }
                 catch (Exception ex)
                 {
@@ -170,7 +175,7 @@ namespace JSON_Tools.Forms
             AddFilesToFilesFound();
         }
 
-        private void CreateProgressReportBuffer(int totalLengthToParse, long totalLengthOnHardDrive)
+        private void CreateProgressReportForm(int totalLengthToParse, long totalLengthOnHardDrive)
         {
             string totLengthToParseMB = (totalLengthToParse / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
             string totLengthOnHardDriveMB = (totalLengthOnHardDrive / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP);
@@ -212,14 +217,14 @@ namespace JSON_Tools.Forms
                 Top = 20,
                 AutoSize = true,
             };
-            progressLabel = new Label
+            progressLabel = new MyLabel
             {
                 Name = "progressLabel",
                 Text = isParsing
                         ? Translator.TryTranslateWithFormatting(progressLabelIfParsing, progressBarTranslatedStrings["progressLabelIfParsing"], totLengthToParseMB)
                         : Translator.TryTranslateWithFormatting(progressLabelIfReading, progressBarTranslatedStrings["progressLabelIfReading"], totalLengthToParse),
                 TextAlign = ContentAlignment.TopCenter,
-                Top = 100,
+                Top = 85,
                 AutoSize = true,
             };
             progressBar = new MyProgressBar()
@@ -230,20 +235,10 @@ namespace JSON_Tools.Forms
                 Style = ProgressBarStyle.Blocks,
                 Left = 20,
                 Width = 450,
-                Top = 200,
+                Top = 105,
                 Height = 50,
             };
-            //progressBarCancelButton = new Button
-            //{
-            //    Name = "Cancel",
-            //    Left = 200,
-            //    Text = "Cancel parsing",
-            //};
-            //cancelProgressBar = false;
-            //progressBarCancelButton.Click += new EventHandler((object sender, EventArgs e) =>
-            //{
 
-            //});
 
             progressBarForm = new Form
             {
@@ -251,8 +246,22 @@ namespace JSON_Tools.Forms
                 Text = isParsing ? progressBarTranslatedStrings["titleIfParsing"] : progressBarTranslatedStrings["titleIfReading"],
                 Controls = { label, progressLabel, progressBar },
                 Width = 500,
-                Height = 300,
+                Height = 250,
             };
+
+            if (JsonGrepper.CAN_CANCEL_PARSING || !isParsing)
+            {
+                cancelButton = new Button
+                {
+                    Name = "Cancel",
+                    Left = 200,
+                    Top = 175,
+                    Text = "Cancel",
+                };
+                cancelButton.Click += new EventHandler((_, __) => grepper.Cancel());
+                progressBarForm.Controls.Add(cancelButton);
+            }
+
             if (label.Right > progressBarForm.Width)
             {
                 progressBarForm.SuspendLayout();
@@ -260,6 +269,11 @@ namespace JSON_Tools.Forms
                 progressBarForm.ResumeLayout(false);
             }
             progressBarForm.Show();
+            if (!isParsing)
+            {
+                Thread.Sleep(20);
+                progressBarForm.Refresh();
+            }
         }
 
         private class MyProgressBar : ProgressBar
@@ -270,32 +284,55 @@ namespace JSON_Tools.Forms
             }
         }
 
+        private class MyLabel : Label
+        {
+            public MyLabel() : base()
+            {
+                CheckForIllegalCrossThreadCalls = false;
+            }
+        }
+
         private void ReportJsonParsingProgress(int lengthParsedSoFar, int __)
         {
             if (isParsing)
             {
-                lock (progressReportLock)
+#if PARSER_PARALLEL
+                // wait a bit trying to lock the progress bar; otherwise just give up to avoid deadlock
+                if (Monitor.TryEnter(progressReportLock, 500))
                 {
-                    progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
-                    progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                    try
+                    {
+                        progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
+                        progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(progressReportLock);
+                    }
                 }
+#else
+                progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
+                progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                progressLabel.Refresh();
+#endif
+
             }
             else
             {
                 // don't need to use the lock when reading files, because that is single-threaded
                 progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+", _ => lengthParsedSoFar.ToString());
                 progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
-                progressBarForm.Refresh();
+                progressLabel.Refresh();
             }
         }
 
         private void AfterProgressReport()
         {
             progressBarForm.Close();
-            progressBarForm.Dispose();
             progressBarForm = null;
             progressBar = null;
             progressLabel = null;
+            cancelButton = null;
             ViewResultsButton.Focus();
         }
 
@@ -388,8 +425,16 @@ namespace JSON_Tools.Forms
         /// <param name="e"></param>
         private void GrepperForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            grepper.Reset();
-            if (tv != null)
+            if (grepper != null)
+            {
+                grepper.Cancel();
+                grepper.Reset();
+            }
+            if (progressBarForm != null && !progressBarForm.IsDisposed)
+            {
+                progressBarForm.Close();
+            }
+            if (tv != null && !tv.IsDisposed)
             {
                 Npp.notepad.HideDockingForm(tv);
                 tv.Close();
@@ -467,6 +512,7 @@ namespace JSON_Tools.Forms
 
         private void AddFilesToFilesFound()
         {
+            FilesFoundBox.SuspendLayout();
             var urlRegex = new Regex("^https?://");
             foreach (string fname in grepper.fnameJsons.children.Keys)
             {
@@ -484,6 +530,7 @@ namespace JSON_Tools.Forms
                         urlsQueried.RemoveAt(0);
                 }
             }
+            FilesFoundBox.ResumeLayout(false);
         }
     }
 }

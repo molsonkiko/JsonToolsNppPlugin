@@ -1144,6 +1144,17 @@ namespace JSON_Tools.JSON_Tools
             return !(children is null) && children.TryGetValue(key, out val); 
         }
 
+        public bool TryGetString(string key, out string val)
+        {
+            val = null;
+            if (!(children is null) && children.TryGetValue(key, out JNode valNode) && valNode.value is string s)
+            {
+                val = s;
+                return true;
+            }
+            return false;
+        }
+
         /// <inheritdoc/>
         public override string ToString(bool sortKeys = true, string keyValueSep = ": ", string itemSep = ", ", int maxLength = int.MaxValue)
         {

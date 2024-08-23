@@ -27,6 +27,22 @@ namespace JSON_Tools.Forms
             NppFormHelper.RegisterFormIfModeless(this, false);
             Reload(fname, lints, true);
             FormStyle.ApplyStyle(this, Main.settings.use_npp_styling);
+            TranslateMenuItems();
+        }
+
+        /// <summary>
+        /// <see cref="Translator.TranslateForm(Form)"/> can't translate menu items, so unfortunately we need to do this manually
+        /// </summary>
+        public void TranslateMenuItems()
+        {
+            if (Translator.TryGetTranslationAtPath(new string[] { "forms", "ErrorForm", "controls" }, out JNode controlsNode)
+                && controlsNode is JObject controls)
+            {
+                if (controls.TryGetString("exportToJsonMenuItem", out string exportToJsonText))
+                    exportToJsonMenuItem.Text = exportToJsonText;
+                if (controls.TryGetString("refreshMenuItem", out string refreshText))
+                    refreshMenuItem.Text = refreshText;
+            }
         }
 
         public bool SlowReloadExpected(IList<JsonLint> lints) { return lints is null || lints.Count >= SLOW_RELOAD_THRESHOLD; }

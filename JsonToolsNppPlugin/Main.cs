@@ -370,9 +370,12 @@ namespace Kbg.NppPluginNET
             // if the user did nothing for a while (default 1 second) after editing,
             // re-parse the file and also perform validation if that's enabled.
             case (uint)SciMsg.SCN_MODIFIED:
-                lastEditedTime = System.DateTime.UtcNow;
-                if (openTreeViewer != null)
-                    openTreeViewer.shouldRefresh = true;
+                if ((notification.ModificationType & (int)(SciMsg.SC_MOD_INSERTTEXT | SciMsg.SC_MOD_DELETETEXT)) != 0)
+                {
+                    lastEditedTime = System.DateTime.UtcNow;
+                    if (openTreeViewer != null)
+                        openTreeViewer.shouldRefresh = true;
+                }
                 break;
             // a find/replace action was performed.
             // Tag the treeview of the modified file as needing to refresh, and indicate that the document was edited.
@@ -1041,6 +1044,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void DumpSelectedTextAsJsonString()
         {
+            if (!Npp.TryGetLengthAsInt(out _))
+                return;
             var selections = SelectionManager.GetSelectedRanges();
             if (SelectionManager.NoTextSelected(selections))
             {
@@ -1071,6 +1076,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         public static void DumpSelectedJsonStringsAsText()
         {
+            if (!Npp.TryGetLengthAsInt(out _))
+                return;
             var selections = SelectionManager.GetSelectedRanges();
             selections.Sort(SelectionManager.StartEndCompareByStart);
             var sb = new StringBuilder();
@@ -1179,6 +1186,7 @@ namespace Kbg.NppPluginNET
             bool oldUseNppStyling = settings.use_npp_styling;
             float oldTreeViewFontSize = settings.tree_view_font_size;
             string oldPathSepStr = settings.path_separator;
+            int oldMaxSchemaValidationProblems = settings.max_schema_validation_problems;
             settings.ShowDialog();
             millisecondsAfterLastEditToParse = (settings.inactivity_seconds_before_parse < 1)
                     ? 1000
@@ -1192,6 +1200,8 @@ namespace Kbg.NppPluginNET
             }
             if (settings.tree_view_font_size != oldTreeViewFontSize || settings.use_npp_styling != oldUseNppStyling)
                 RestyleEverything();
+            if (settings.max_schema_validation_problems != oldMaxSchemaValidationProblems)
+                schemaCache.Invalidate();
         }
 
         private static char SetPathSeparatorFromSettings(string oldPathSepStr = "\"\\u0001\"")
@@ -1361,7 +1371,7 @@ namespace Kbg.NppPluginNET
         {
             int pos = Npp.editor.GetCurrentPos();
             string result = PathToPosition(settings.key_style, pathSeparator, pos);
-            if (result.Length == 0)
+            if (result.Length == 0 && Npp.TryGetLengthAsInt(out _))
             {
                 Translator.ShowTranslatedMessageBox(
                     "Did not find a node at position {0} of this file",
@@ -1382,6 +1392,8 @@ namespace Kbg.NppPluginNET
         /// <returns></returns>
         private static string PathToPosition(KeyStyle style, char separator, int pos = -1)
         {
+            if (!Npp.TryGetLengthAsInt(out _, false))
+                return "";
             if (pos == -1)
                 pos = Npp.editor.GetCurrentPos();
             string fname = Npp.notepad.GetCurrentFilePath();
@@ -1829,6 +1841,8 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static void ParseSchemasToFnamePatternsFile()
         {
+            bool wasAutoValidating = settings.auto_validate;
+            settings.auto_validate = false;
             var schemasToFnamePatternsFile = new FileInfo(schemasToFnamePatternsFname);
             if (!schemasToFnamePatternsFile.Exists || schemasToFnamePatternsFile.Length == 0)
             {
@@ -1849,6 +1863,7 @@ namespace Kbg.NppPluginNET
                         "Couldn't parse schemasToFnamePatterns.json",
                         MessageBoxButtons.OK, MessageBoxIcon.Error,
                         1, ex);
+                    settings.auto_validate = wasAutoValidating;
                     return;
                 }
             }
@@ -1863,6 +1878,7 @@ namespace Kbg.NppPluginNET
                     MessageBoxButtons.OK, MessageBoxIcon.Error,
                     1, JsonSchemaValidator.LintsAsJArrayString(lints));
                 schemasToFnamePatterns = new JObject();
+                settings.auto_validate = wasAutoValidating;
                 return;
             }
             // now make sure that all the regexes compile
@@ -1887,7 +1903,11 @@ namespace Kbg.NppPluginNET
                     schemasToFnamePatterns.children.Remove(fname);
                     continue;
                 }
-                schemaCache.TryAdd(fname, out _);
+                if (!schemaCache.TryAdd(fname, out _))
+                {
+                    schemasToFnamePatterns.children.Remove(fname);
+                    continue;
+                }
                 JArray patterns = (JArray)schemasToFnamePatterns[fname];
                 JArray regexes = new JArray();
                 foreach (JNode patternNode in patterns.children)
@@ -1913,6 +1933,7 @@ namespace Kbg.NppPluginNET
                     schemasToFnamePatterns.children.Remove(fname);
                 else schemasToFnamePatterns[fname] = regexes;
             }
+            settings.auto_validate = wasAutoValidating;
         }
 
         /// <summary>
@@ -1945,7 +1966,8 @@ namespace Kbg.NppPluginNET
                 return false;
             foreach (string schemaFname in schemasToFnamePatterns.children.Keys.ToArray())
             {
-                JArray fnamePatterns = (JArray)schemasToFnamePatterns[schemaFname];
+                if (!(schemasToFnamePatterns.children.TryGetValue(schemaFname, out JNode fnamePatternsNode) && fnamePatternsNode is JArray fnamePatterns))
+                    continue;
                 foreach (JNode pat in fnamePatterns.children.ToArray())
                 {
                     if (!(pat is JRegex jregex && jregex.regex.IsMatch(fname)))
@@ -2127,27 +2149,28 @@ namespace Kbg.NppPluginNET
     {
         LruCache<string, JsonSchemaValidator.ValidationFunc> cache;
         Dictionary<string, DateTime> lastRetrieved;
+        private object cacheLock;
 
         public SchemaCache(int capacity)
         {
             cache = new LruCache<string, JsonSchemaValidator.ValidationFunc>(capacity);
             lastRetrieved = new Dictionary<string, DateTime>();
+            cacheLock = new object();
         }
 
         public bool Get(string fname, out JsonSchemaValidator.ValidationFunc validator)
         {
             validator = null;
-            if (!cache.cache.ContainsKey(fname)) return false;
+            if (!cache.cache.ContainsKey(fname) || !lastRetrieved.TryGetValue(fname, out DateTime retrieved))
+                return false;
             var fileInfo = new FileInfo(fname);
-            var retrieved = lastRetrieved[fname];
             if (fileInfo.LastWriteTime > retrieved)
             {
                 // the file has been edited since we cached it.
                 // thus, we need to read the file, parse and compile the schema, and then re-cache it.
                 return TryAdd(fname, out validator);
             }
-            validator = cache[fname];
-            return true;
+            return cache.TryGetValue(fname, out validator);
         }
 
         /// <summary>
@@ -2176,29 +2199,42 @@ namespace Kbg.NppPluginNET
             }
             if (schema == null)
                 return false;
-            if (cache.isFull)
+            lock (cacheLock)
             {
-                // the cache is about to have its oldest key purged
-                // we find out what that is so we can also purge it from lastRetrieved
-                string lastFnameAdded = cache.OldestKey();
-                lastRetrieved.Remove(lastFnameAdded);
+                if (cache.isFull)
+                {
+                    // the cache is about to have its oldest key purged
+                    // we find out what that is so we can also purge it from lastRetrieved
+                    string lastFnameAdded = cache.OldestKey();
+                    lastRetrieved.Remove(lastFnameAdded);
+                }
+                try
+                {
+                    validator = JsonSchemaValidator.CompileValidationFunc(schema, Main.settings.max_schema_validation_problems, true);
+                    lastRetrieved[fname] = DateTime.Now;
+                    cache[fname] = validator;
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Translator.ShowTranslatedMessageBox(
+                        "While compiling schema for file \"{0}\", got exception:\r\n{1}",
+                        "Error while compiling JSON schema",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        2, fname, RemesParser.PrettifyException(ex));
+                    return false;
+                }
             }
-            try
-            {
-                validator = JsonSchemaValidator.CompileValidationFunc(schema, Main.settings.max_schema_validation_problems, true);
-                lastRetrieved[fname] = DateTime.Now;
-                cache[fname] = validator;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Translator.ShowTranslatedMessageBox(
-                    "While compiling schema for file \"{0}\", got exception:\r\n{1}",
-                    "Error while compiling JSON schema",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error,
-                    2, fname, RemesParser.PrettifyException(ex));
-                return false;
-            }
+        }
+
+        /// <summary>
+        /// Set the last-retrieved time of every filename in the cache to the lowest possible value,<br></br>
+        /// so that any attempt to retrieve a schema from the cache will trigger re-reading and re-parsing of the schema's file.
+        /// </summary>
+        public void Invalidate()
+        {
+            foreach (string fname in lastRetrieved.Keys.ToArray())
+                lastRetrieved[fname] = DateTime.MinValue;
         }
     }
 
