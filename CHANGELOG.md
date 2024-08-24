@@ -51,6 +51,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
+## [8.2.0] - (UNRELEASED) YYYY-MM-DD
+
+### Added
+
+### Changed
+
+### Fixed
+
+1. Fix issue where [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81) would incorrectly flag some valid regular expressions (e.g. `(?-i)(?:xy{1,2}){,2}`) as having two consecutive quantifiers.
+
 ## [8.1.0] - 2024-08-23
 
 ### Added

@@ -395,6 +395,7 @@ namespace JSON_Tools.Utils
         private List<Alternation> AlternationStack;
         private int maxCaptureNumber = 0;
         private RegexOptions Flags = RegexOptions.None;
+        private Alternation LastClosedAlternation;
         /// <summary>
         /// iff true, the regex is treated as case-insensitive
         /// </summary>
@@ -424,6 +425,7 @@ namespace JSON_Tools.Utils
             bool charsetIsNegated = false;
             int maxClosedCaptureNumber = 0;
             AlternationStack = new List<Alternation> { baseAlternation };
+            LastClosedAlternation = null;
             tokens = new List<object> { baseAlternation };
             bool isNegatingFlags = false;
             ii = 0;
@@ -812,7 +814,7 @@ namespace JSON_Tools.Utils
             if (AlternationStack.Last().LastOptionIsEmpty(tokens.Count))
                 throw new RandomStringFromRegexException(Rex, ii, RandomStringFromRegexException.ExceptionType.NothingToQuantify);
             // can't allow two consecutive quantifiers
-            if (tokens.Last() is StartEnd)
+            if (tokens.Last() is StartEnd && (LastClosedAlternation == null || LastClosedAlternation.End < tokens.Count))
                 throw new RandomStringFromRegexException(Rex, ii, RandomStringFromRegexException.ExceptionType.TwoConsecutiveQuantifiers);
             tokens.Add(se);
         }
@@ -822,6 +824,7 @@ namespace JSON_Tools.Utils
             var topAlternation = AlternationStack.Pop();
             AddEmptyStringToEmptyOption(topAlternation);
             topAlternation.Close(tokens.Count);
+            LastClosedAlternation = topAlternation;
             return topAlternation;
         }
 

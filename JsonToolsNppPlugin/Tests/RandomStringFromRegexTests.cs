@@ -44,7 +44,9 @@ namespace JSON_Tools.Tests
                 (@"^(?:(fo|ba) ){2}\t\1{1,3}$", new HashSet<string>{ "fo fo \tfo", "fo fo \tfofo", "fo fo \tfofofo",
                                                                    "ba fo \tfo", "ba fo \tfofo", "ba fo \tfofofo",
                                                                    "fo ba \tba", "fo ba \tbaba", "fo ba \tbababa",
-                                                                   "ba ba \tba", "ba ba \tbaba", "ba ba \tbababa" })
+                                                                   "ba ba \tba", "ba ba \tbaba", "ba ba \tbababa" }),
+                (@"(?-i)(?:xy{1,2}){,2}", new HashSet<string>{"", "xy", "xyy", "xyxy", "xyxyy", "xyyxy", "xyyxyy"}),
+                (@"(b|g{3})?", new HashSet<string>{"", "b", "ggg"}),
 
             };
             ii += simpleTestcases.Length * 2;
@@ -113,7 +115,7 @@ namespace JSON_Tools.Tests
             }
 
             // ========== verify that the compiler throws an error of the correct type when faced with various invalid regexes  ==========
-            var mustThrowTestcases = new (string rex, RandomStringFromRegexException.ExceptionType extype, bool compileTime)[]
+            var mustThrowTestcases = new (string rex, RandomStringFromRegexException.ExceptionType extype, bool runTime)[]
             {
                 ("(foo", RandomStringFromRegexException.ExceptionType.UnclosedParen, false),
                 ("(?:foo", RandomStringFromRegexException.ExceptionType.UnclosedParen, false),
@@ -129,6 +131,13 @@ namespace JSON_Tools.Tests
                 (@"(a)$\1", RandomStringFromRegexException.ExceptionType.DollarBeforeEndOfString, false),
                 (@"b$a", RandomStringFromRegexException.ExceptionType.DollarBeforeEndOfString, false),
                 ("c{32}", RandomStringFromRegexException.ExceptionType.QuantifierExceedsMaxReps, false),
+                ("(?:foo|+)", RandomStringFromRegexException.ExceptionType.NothingToQuantify, false),
+                ("{7}", RandomStringFromRegexException.ExceptionType.NothingToQuantify, false),
+                ("(+|yy|)", RandomStringFromRegexException.ExceptionType.NothingToQuantify, false),
+                ("x+?", RandomStringFromRegexException.ExceptionType.TwoConsecutiveQuantifiers, false),
+                ("(Foo|bar)?{8}", RandomStringFromRegexException.ExceptionType.TwoConsecutiveQuantifiers, false),
+                ("(?:baz(Foo|bar))?{8}", RandomStringFromRegexException.ExceptionType.TwoConsecutiveQuantifiers, false),
+                ("jjjx{,5}{6}(?:fooo)", RandomStringFromRegexException.ExceptionType.TwoConsecutiveQuantifiers, false),
                 ("c{1,32}", RandomStringFromRegexException.ExceptionType.QuantifierExceedsMaxReps, false),
                 (@"(foo)(bar)\3(baz)", RandomStringFromRegexException.ExceptionType.BadBackReference, false),
                 (@"a{,\3", RandomStringFromRegexException.ExceptionType.BadCurlybraceQuantifier, false),
@@ -141,14 +150,14 @@ namespace JSON_Tools.Tests
 
             ii += mustThrowTestcases.Length;
 
-            foreach ((string rex, RandomStringFromRegexException.ExceptionType extype, bool compileTime) in mustThrowTestcases)
+            foreach ((string rex, RandomStringFromRegexException.ExceptionType extype, bool runTime) in mustThrowTestcases)
             {
                 string baseErrMsg = $"FAIL: Expected RandomStringFromRegex.GetGenerator({JNode.StrToString(rex, true)}) to throw a RandomStringFromRegexException of type {extype}.\r\nInstead "; 
                 try
                 {
                     Func<string> generator = RandomStringFromRegex.GetGenerator(rex);
                     // most errors occur while compiling, but some are only caught at runtime
-                    if (compileTime)
+                    if (runTime)
                         generator();
                     testsFailed++;
                     Npp.AddLine(baseErrMsg + "did not throw an exception.");
