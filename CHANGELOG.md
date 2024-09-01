@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. Fix issue where [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81) would incorrectly flag some valid regular expressions (e.g. `(?-i)(?:xy{1,2}){,2}`) as having two consecutive quantifiers.
+2. Fix issue where RemesPath incorrectly inferred the type of (a [function](/docs/RemesPath.md#functions) `fun` followed by [indexers](/docs/RemesPath.md#indexing-and-selecting-keys)) to be the return type of `fun`. For example, running the query `sum(dict(items(@)).a)` on the JSON `{"a": [1]}` now correctly returns `1.0`, but RemesPath *used to raise an error because it assumed that `dict(items(@)).a` had the same type as `dict(items(@))`*
 
 ## [8.1.0] - 2024-08-23
 

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -103,10 +102,12 @@ namespace JSON_Tools.JSON_Tools
     public class Projection : Indexer
     {
         public Func<JNode, IEnumerable<object>> projFunc;
+        public Dtype returnType { get; private set; }
 
-        public Projection(Func<JNode, IEnumerable<object>> projFunc)
+        public Projection(Func<JNode, IEnumerable<object>> projFunc, Dtype returnType)
         {
             this.projFunc = projFunc;
+            this.returnType = returnType;
         }
     }
 
@@ -1764,6 +1765,19 @@ namespace JSON_Tools.JSON_Tools
                 // or the next token is the start of a projection (unlike other indexers, projections can operate on scalars too)
                 var idxrs = new List<IndexerFunc>();
                 pos = indStartEndPos;
+                Dtype returnType = lastTok.type;
+                // the return type of a chain of indexers is a complicated function of the nature and order of the indexers.
+                // EXAMPLES:
+                // * @[:].foo and @[1, 2][0]{@.foo, @.bar} must both return arrays, because [:] and [1, 2] both select multiple indices from an array, and the subsequent indexers don't matter
+                // * @[foo, bar] and @.*[3] and @.g`foo`..* all must return objects, because .* and [foo, bar] and .g`foo` all select multiple keys from an object, and subsequent indexers don't matter
+                // * @[0].bar[:3] must return an array, because [0].bar returns a single value, and [:3] must return an array
+                // * @.b[5].c!.d must return an object, because .b[5].c returns a single value, and !.d must return an object
+                // * @[1]..* must return an array, because [1] returns a single value, and ..*  must return an array
+                // * @{foo: @.quz, bar: sum(@.jfj)} must return an object
+                // * @{@.baz, @.quz, @.fjjf} must return an array
+                // * @{@.baz, @.quz, @.fjjf}
+                // * @->sum(@.foo) must return a number (because sum returns a number)
+                bool keepChainingReturnType = true;
                 while (indStart != IndexerStart.NOT_AN_INDEXER)
                 {
                     bool isRecursive = IndexerStart.ANY_DOUBLEDOT_TYPE.HasFlag(indStart);
@@ -1811,6 +1825,21 @@ namespace JSON_Tools.JSON_Tools
                         else
                             idxFunc = ApplyMultiIndex(children, isVarnameList, isRecursive);
                         idxrs.Add(new IndexerFunc(idxFunc, hasOneOption, isProjection, isDict, isRecursive));
+                        if (keepChainingReturnType)
+                        {
+                            if (isRecursive)
+                            {
+                                keepChainingReturnType = false;
+                                returnType = Dtype.ARR;
+                            }
+                            else if (hasOneOption && !isNegated)
+                                returnType = Dtype.UNKNOWN;
+                            else
+                            {
+                                returnType = isVarnameList ? Dtype.OBJ : Dtype.ARR;
+                                keepChainingReturnType = false;
+                            }
+                        }
                     }
                     else if (curIdxr is BooleanIndex boodex)
                     {
@@ -1820,6 +1849,7 @@ namespace JSON_Tools.JSON_Tools
                         var idxr = new IndexerFunc(null, hasOneOption, isProjection, isDict, isRecursive);
                         idxr.idxr = idxr.ApplyBooleanIndex(boodexFun);
                         idxrs.Add(idxr);
+                        keepChainingReturnType = false;
                     }
                     else if (curIdxr is Projection proj)
                     {
@@ -1827,16 +1857,23 @@ namespace JSON_Tools.JSON_Tools
                             throw new RemesPathException("Negated projections are not supported.");
                         Func<JNode, IEnumerable<object>> projFunc = proj.projFunc;
                         idxrs.Add(new IndexerFunc(projFunc, hasOneOption, true, false, false));
+                        if (keepChainingReturnType)
+                            returnType = proj.returnType;
                     }
                     else
                     {
+                        // it's a star indexer
                         if (isNegated)
                             throw new RemesPathException("Negated star indexers are not supported.");
-                        // it's a star indexer
                         if (isRecursive)
+                        {
+                            if (keepChainingReturnType)
+                                returnType = Dtype.ARR;
                             idxrs.Add(new IndexerFunc(RecursivelyFlattenIterable, false, false, false, true));
+                        }
                         else
                             idxrs.Add(new IndexerFunc(ApplyStarIndexer, hasOneOption, isProjection, isDict, false));
+                        keepChainingReturnType = false;
                     }
                     (indStart, pos) = DetermineIndexerStart(toks, opo.pos, end);
                 }
@@ -1850,7 +1887,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             return idxrsFunc(lcur.function(inp));
                         }
-                        return new Obj_Pos(new CurJson(lcur.type, idxFunc), pos);
+                        return new Obj_Pos(new CurJson(returnType, idxFunc), pos);
                     }
                     // if a variable is referenced in the indexers (e.g., "var x = @; range(10)[:]->at(x, @ % len(x))",
                     // we also need to wait until runtime to evaluate the indexers
@@ -1860,7 +1897,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             return idxrsFunc(lastTok);
                         }
-                        return new Obj_Pos(new CurJson(lastTok.type, idxFuncVarRef), pos);
+                        return new Obj_Pos(new CurJson(returnType, idxFuncVarRef), pos);
                     }
                     if (lastTok is JObject lastObj)
                     {
@@ -2220,7 +2257,7 @@ namespace JSON_Tools.JSON_Tools
                                     );
                                 }
                             };
-                            return new Obj_Pos(new Projection(projFunc), pos + 1);
+                            return new Obj_Pos(new Projection(projFunc, Dtype.OBJ), pos + 1);
                         }
                         else
                         {
@@ -2234,7 +2271,7 @@ namespace JSON_Tools.JSON_Tools
                                         : node.Copy();
                                 }
                             };
-                            return new Obj_Pos(new Projection(projFunc), pos + 1);
+                            return new Obj_Pos(new Projection(projFunc, Dtype.ARR), pos + 1);
                         }
                     }
                     if (nd != ',')
@@ -2271,7 +2308,7 @@ namespace JSON_Tools.JSON_Tools
             else
                 outfunc = x => val.Copy();
             IEnumerable<object> iterator(JNode x) { yield return outfunc(x); }
-            return new Obj_Pos(new Projection(iterator), pos);
+            return new Obj_Pos(new Projection(iterator, val.type), pos);
         }
         #endregion
         #region EXCEPTION_PRETTIFIER

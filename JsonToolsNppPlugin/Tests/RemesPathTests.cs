@@ -722,6 +722,23 @@ namespace JSON_Tools.Tests
                     "\"[\\r\\n    1,\\r\\n    {\\r\\n        //c1\\r\\n        \\\"b\\\": 2,\\r\\n        \\\"c\\\": [\\r\\n            true,\\r\\n            null,\\r\\n            -5.5\\r\\n        ]\\r\\n    },\\r\\n    //c2\\r\\n    3.25\\r\\n]\\r\\n\""),
                 new Query_DesiredResult("s_format(`[1, {\"c\": [true, null, -5.5],//c1\\n \"b\": 2},//c2\\n 3.25]`, p, true, `\\t`, true)",
                     "\"[\\r\\n\\t1,\\r\\n\\t{\\r\\n\\t\\t//c1\\r\\n\\t\\t\\\"b\\\": 2,\\r\\n\\t\\t\\\"c\\\": [true, null, -5.5]\\r\\n\\t},\\r\\n\\t//c2\\r\\n\\t3.25\\r\\n]\\r\\n\""),
+                // ====================== correctly infer the return type of an indexer chain ======================
+                new Query_DesiredResult("sum(dict(@{@{a, j`[[1], [2], [3]]`}}).a[:][0])", "6.0"),
+                new Query_DesiredResult("sum(dict(@{@{a, j`[[1], [2], [3]]`}}).a[:][0])", "6.0"),
+                new Query_DesiredResult("add_items(append(@{1}, @{a: 1})[1], b, 2)", "{\"a\": 1, \"b\": 2}"),
+                new Query_DesiredResult("sum(group_by(@.foo, 1)..*)", "36.0"),
+                new Query_DesiredResult("sum(dict(@{@{a, 1}}){a: @{1, @{foo: 10}, @{bar: 20.0}}, foo: 6}..[foo, bar])", "36.0"),
+                new Query_DesiredResult("sum(dict(@{@{a, 1}}){a: @{1, @{foo: 10}, @{bar: 20.0}}, foo: 6}..foo)", "16.0"),
+                new Query_DesiredResult("sum(dict(@{@{a, 1}}){a: @{1, @{foo: 10}, @{bar: 20.0}}, foo: 6}..g`foo|bar`)", "36.0"),
+                new Query_DesiredResult("s_join(items(@)->foo, @.bar.b)", "\"a`gfoobah\""),
+                new Query_DesiredResult("s_join(sum(@.foo[0] + 1)->str(@), j`[\"a\", \"b\", \"c\"]`)", "\"a6.0b6.0c\""),
+                new Query_DesiredResult("sum(group_by(set(@->j`[1]`)->j`[{\"a\": 1, \"b\": \"foo\"}, {\"a\": 2, \"b\": \"foo\"}, {\"a\": 3, \"b\": \"bar\"}]`, b).foo[:].a)", "3.0"),
+                new Query_DesiredResult("items(items(@){foo: 1, bar: 2})", "[[\"foo\", 1], [\"bar\", 2]]"),
+                new Query_DesiredResult("sum(dict(items(@)){@.foo[0][1], @.bar.a})", "1.0"),
+                new Query_DesiredResult("unique(dict(items(@)).foo[0], true)", "[0, 1, 2]"),
+                new Query_DesiredResult("items(items(@)[1][1])", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
+                new Query_DesiredResult("items(items(@)[1][1][a,b])", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
+                new Query_DesiredResult("items(items(@)[1][1].g`[ab]`)", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
             };
             int ii = 0;
             int testsFailed = 0;
