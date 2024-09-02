@@ -59,8 +59,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-1. Fix issue where [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81) would incorrectly flag some valid regular expressions (e.g. `(?-i)(?:xy{1,2}){,2}`) as having two consecutive quantifiers.
+1. Fix the following issues with [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81):
+    - It previously incorrectly flagged some valid regular expressions (e.g. `(?-i)(?:xy{1,2}){,2}`) as having two consecutive quantifiers.
+	- It previously did not correctly handle some character sets where the final character was `-` (for example, `[+-]` previously would only generate `+`, and now it correctly has a 50% chance of generating `-` or `+`)
 2. Fix issue where RemesPath incorrectly inferred the type of (a [function](/docs/RemesPath.md#functions) `fun` followed by [indexers](/docs/RemesPath.md#indexing-and-selecting-keys)) to be the return type of `fun`. For example, running the query `sum(dict(items(@)).a)` on the JSON `{"a": [1]}` now correctly returns `1.0`, but RemesPath *used to raise an error because it assumed that `dict(items(@)).a` had the same type as `dict(items(@))`*
+3. Fix very rare crash bug when using the `Value to clipboard` option of the [tree node right-click context menu](/docs/README.md#get-info-about-tree-nodes).
+4. Fix bug where some invalid JSON Lines documents (for example, `[1, \n2][3]`) would be accepted by the [JSON Lines parser](/docs/README.md#json-lines-documents) despite having elements that span multiple lines.
 
 ## [8.1.0] - 2024-08-23
 

@@ -1799,17 +1799,25 @@ namespace JSON_Tools.JSON_Tools
             while (ii < inp.Length)
             {
                 json = ParseSomething(inp, 0);
+                int endOfLastJson = ii;
                 ConsumeInsignificantChars(inp);
                 children.Add(json);
                 if (fatal)
                 {
                     return arr;
                 }
-                int maxLastII = ii > inp.Length ? inp.Length : ii; 
+                int maxLastII = ii > inp.Length ? inp.Length : ii;
                 for (; lastII < maxLastII; lastII++)
                 {
                     if (inp[lastII] == '\n')
+                    {
+                        if (lastII < endOfLastJson) // for example, "[1,\n2]" is invalid JSON Lines, but "[1,2]\n" is OK because the newline is trailing
+                        {
+                            HandleError(JsonLintType.FATAL_JSONL_NOT_ONE_DOC_PER_LINE, inp, lastII);
+                            return arr;
+                        }
                         lineNum++;
+                    }
                 }
                 // make sure this document was all in one line
                 if (!(lineNum == arr.Length

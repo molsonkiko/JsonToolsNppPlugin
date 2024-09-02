@@ -47,6 +47,7 @@ namespace JSON_Tools.Tests
                                                                    "ba ba \tba", "ba ba \tbaba", "ba ba \tbababa" }),
                 (@"(?-i)(?:xy{1,2}){,2}", new HashSet<string>{"", "xy", "xyy", "xyxy", "xyxyy", "xyyxy", "xyyxyy"}),
                 (@"(b|g{3})?", new HashSet<string>{"", "b", "ggg"}),
+                ("[a-][b-c-]|[hij-][-][+]", new HashSet<string>{"ab", "ac", "a-", "-b", "-c", "--", "h-+", "i-+", "j-+", "--+"}),
 
             };
             ii += simpleTestcases.Length * 2;

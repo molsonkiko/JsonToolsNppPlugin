@@ -858,7 +858,7 @@ namespace JSON_Tools.Forms
 
         /// <summary>
         /// On right click, throw up a context menu that lets you do the following:<br></br>
-        /// - Copy the current node's value to the clipboard<br></br>
+        /// - Copy the current node's value to the clipboard (unless it's an array or object, in which case do nothing)<br></br>
         /// - Copy the node's path (Python style) to the clipboard<br></br>
         /// - Copy the node's key/index (Python style) to the clipboard<br></br>
         /// - Copy the node's path (JavaScript style) to the clipboard<br></br>
@@ -885,8 +885,8 @@ namespace JSON_Tools.Forms
                 valToClipboardHandler = new MouseEventHandler(
                     (object sender2, MouseEventArgs e2) =>
                     {
-                        JNode jnode = pathsToJNodes[node.FullPath];
-                        if (jnode is JObject || jnode is JArray)
+                        if (!pathsToJNodes.TryGetValue(node.FullPath, out JNode jnode)
+                            || jnode is JObject || jnode is JArray)
                             return;
                         Npp.TryCopyToClipboard(jnode.ToString());
                     }

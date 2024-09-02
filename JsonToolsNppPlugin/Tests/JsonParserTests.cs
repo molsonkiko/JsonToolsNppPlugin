@@ -1138,34 +1138,43 @@ multiline comment
 
         public static bool TestJsonLines()
         {
-            JsonParser parser = new JsonParser();
-            var testcases = new string[][]
+            JsonParser parser = new JsonParser(LoggerLevel.JSON5, false, false);
+            var testcases = new (string input, string desiredOutStr)[]
             {
-                new string[]
-                {
+                (
                     "[\"a\", \"b\"]\r\n" +
                     "{\"a\": false, \"b\": 2}\r\n" +
                     "null\r\n" +
                     "1.5", // normal style
                     "[[\"a\", \"b\"], {\"a\": false, \"b\": 2}, null, 1.5]"
-                },
-                new string[]
-                {
+                ),
+                (
                     "[1, 2]\n[3, 4]\n", // newline at end
                     "[[1, 2], [3, 4]]"
-                },
-                new string[]
-                {
+                ),
+                (
                     "{\"a\": [1, 2], \"b\": -7.8}", // single document
                     "[{\"a\": [1, 2], \"b\": -7.8}]"
-                },
+                ),
+                (
+                    "[1, 2] // foo\r\n", // single doc with comment at end
+                    "[[1, 2]]"
+                ),
+                (
+                    "{foo: {bar: 1., baz: [null, /* bunrmeme */ False]}}",
+                    "[{\"foo\": {\"bar\": 1.0, \"baz\": [null, false]}}]"
+                ),
+                (
+                    // honestly this should probably be invalid b/c one of the line breaks is inside a comment, but JsonTools should accept it anyway
+                    "\"nbn\" # py\r\n -.75 /* mul \n    */undefined\n",
+                    "[\"nbn\", -0.75, null]"
+                )
             };
             int testsFailed = 0;
             int ii = 0;
-            foreach (string[] test in testcases)
+            foreach ((string input, string desiredOutStr) in testcases)
             {
-                string input = test[0];
-                JNode desiredOutput = TryParse(test[1], parser);
+                JNode desiredOutput = TryParse(desiredOutStr, parser);
                 JNode json = TryParse(input, parser, true);
                 if (json == null)
                 {
@@ -1181,20 +1190,22 @@ Expected
 {1}
 Got
 {2} ",
-                                     ii + 1, test[1], json.ToString()));
+                                     ii + 1, desiredOutStr, json.ToString()));
                 }
             }
 
             string[] shouldThrowTestcases = new string[]
             {
                 "[1,\n2]\n[3, 4]", // one doc covers multiple lines
-                "[1, 2]\n\n3", // two lines between docs
+                "[1, 2]\n // fjfjfj\n3", // two lines between docs
                 "[1, 2] [3, 4]", // two docs on same line
                 "", // empty input
-                "[1, 2]\n[3, 4", // final doc is invalid
-                "[1, 2\n[3, 4]", // first doc is invalid
-                "[1, 2]\nd", // bad char at EOF
-                "[1, 2]\n\n", // multiple newlines after last doc
+                "[1, 2]\n[3, 0xH", // final doc is invalid (0xH is not valid hex number)
+                "[1, fals\n[3, 4]", // first doc is invalid (invalid literal starting with 'f')
+                "[1, 2]\nd", // bad char 'd' where a new JSON line or EOF expected
+                "[1, 2]\n # foo\n", // multiple newlines after last doc
+                "[1,\n2][3, 4]", // doc covering multiple lines with no newline before next doc
+                "{\"a\": 1}/* bnkk\n */{\"b\": 2}\r\n[1.5,\n3]", // doc covering multiple lines with no newline before EOF
             };
 
             foreach (string test in shouldThrowTestcases)
@@ -1203,8 +1214,11 @@ Got
                 try
                 {
                     JNode json = parser.ParseJsonLines(test);
-                    testsFailed++;
-                    Npp.AddLine($"Expected JSON Lines parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
+                    if (!parser.fatal)
+                    {
+                        testsFailed++;
+                        Npp.AddLine($"Expected JSON Lines parser to throw an error on input\n{test}\nbut instead returned {json.ToString()}");
+                    }
                 }
                 catch { }
             }

@@ -717,7 +717,7 @@ namespace JSON_Tools.Utils
                                     tryCharRange = false;
                                     precededByCharRange = true;
                                 }
-                                else if (d == '-' && jj > firstTokenInCurrentState && !precededByCharRange)
+                                else if (d == '-' && jj > firstTokenInCurrentState && jj < tokens.Count - 1 && !precededByCharRange)
                                     tryCharRange = true;
                                 else
                                 {
