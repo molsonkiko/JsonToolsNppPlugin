@@ -2736,6 +2736,24 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
+        /// Unquote a string that is quoted according to RFC 4180 conventions, where str is enclosed in quoteChars and each literal quoteChar is doubled.<br></br>
+        /// If str is not wrapped in quoteChars, or if quoteChar is '\x00', return str.
+        /// EXAMPLES:<br></br>
+        /// * <c>UnquoteCsvQuotedString("|foo||bar|", '|', "|", "||")</c> would return <c>"foo|bar"</c><br></br>
+        /// * <c>UnquoteCsvQuotedString("^^^quz^", '^', "^", "^^")</c> would return <c>"^quz"</c><br></br>
+        /// * <c>UnquoteCsvQuotedString("bllo", '"', "\"", "\"\"")</c> would return <c>"bllo"</c> (because it's not wrapped in quotes)<br></br>
+        /// * <c>UnquoteCsvQuotedString("^bllo^", '\x00', "\x00", "\x00\x00")</c> would return <c>"bllo"</c> (because quoteChar is '\x00')
+        /// </summary>
+        /// <param name="quoteStr">unless quoteChar == '\x00', must be new string(quoteChar, 1)</param>
+        /// <param name="doubleQuoteStr">unless quoteChar == '\x00', must be new string(quoteChar, 2)</param>
+        private static string UnquoteCsvQuotedString(string str, char quoteChar, string quoteStr, string doubleQuoteStr)
+        {
+            if (quoteChar > 0 && str.Length > 0 && str[0] == quoteChar)
+                return str.Substring(1, str.Length - 2).Replace(doubleQuoteStr, quoteStr);
+            return str;
+        }
+
+        /// <summary>
         /// return an array of strings(if rex has 0 or 1 capture group(s)) or an array of arrays of strings (if there are multiple capture groups)<br></br> 
         /// The arguments in args at index firstOptionalArgNum onward will be treated as the 0-based indices of capture groups to parse as numbers<br></br>
         /// A negative number can be used for a columnsToParseAsNumber arg, and it can be wrapped according to standard Python negative indexing rules.<br></br>
@@ -2772,9 +2790,7 @@ namespace JSON_Tools.JSON_Tools
                         parsed.value = parsedStr.Substring(1, parsedStr.Length - 2).Replace(doubleQuoteStr, quoteStr);
                     return parsed;
                 }
-                if (csvQuoteChar > 0 && mValue.Length > 0 && mValue[0] == csvQuoteChar)
-                    return new JNode(mValue.Substring(1, mValue.Length - 2).Replace(doubleQuoteStr, quoteStr), jnodePosition);
-                return new JNode(mValue, jnodePosition);
+                return new JNode(UnquoteCsvQuotedString(mValue, csvQuoteChar, quoteStr, doubleQuoteStr), jnodePosition);
             }
             int minGroupNum = headerHandling == HeaderHandlingInCsv.INCLUDE_FULL_MATCH_AS_FIRST_ITEM ? 0 : 1;
             int nColumns = minGroupNum >= maxGroupNum ? 1 : maxGroupNum + 1 - minGroupNum;
@@ -2828,7 +2844,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         if (headerHandling == HeaderHandlingInCsv.MAP_HEADER_TO_ROWS)
                         {
-                            header = new List<string> { mValue };  
+                            header = new List<string> { UnquoteCsvQuotedString(mValue, csvQuoteChar, quoteStr, doubleQuoteStr) };  
                         }
                     }
                     if (parseMatchesAsRow)
@@ -2852,7 +2868,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             header = new List<string>(nColumns);
                             for (int ii = minGroupNum; ii <= maxGroupNum; ii++)
-                                header.Add(m.Groups[ii].Value);
+                                header.Add(UnquoteCsvQuotedString(m.Groups[ii].Value, csvQuoteChar, quoteStr, doubleQuoteStr));
                         }
                     }
                     if (parseMatchesAsRow)

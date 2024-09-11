@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+1. When a file is renamed, the name of a [tree view](/docs/README.md#json-tools-overview) associated with that file also changes to match the new name.
+
 ### Changed
 
 ### Fixed
@@ -65,6 +67,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Fix issue where RemesPath incorrectly inferred the type of (a [function](/docs/RemesPath.md#functions) `fun` followed by [indexers](/docs/RemesPath.md#indexing-and-selecting-keys)) to be the return type of `fun`. For example, running the query `sum(dict(items(@)).a)` on the JSON `{"a": [1]}` now correctly returns `1.0`, but RemesPath *used to raise an error because it assumed that `dict(items(@)).a` had the same type as `dict(items(@))`*
 3. Fix very rare crash bug when using the `Value to clipboard` option of the [tree node right-click context menu](/docs/README.md#get-info-about-tree-nodes).
 4. Fix bug where some invalid JSON Lines documents (for example, `[1, \n2][3]`) would be accepted by the [JSON Lines parser](/docs/README.md#json-lines-documents) despite having elements that span multiple lines.
+5. Fix minor bugs with how headers are formatted in [the `s_csv` RemesPath function](/docs/RemesPath.md#vectorized-functions) and [JSON-to-CSV form](/docs/README.md#json-to-csv).
+6. Fix bug where renaming a file subject to [schema validation based on filename patterns](/docs/README.md#automatic-validation-of-json-against-json-schema) would cause its tree view to be lost.
+7. Fix bug where plugin actions (mainly RemesPath queries in [regex mode](/docs/README.md#regex-search-form)) that set the text of the entire document to an empty string would not do anything. Those actions will now correctly remove all the text in the document.
 
 ## [8.1.0] - 2024-08-23
 

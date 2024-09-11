@@ -136,8 +136,8 @@ namespace JSON_Tools.JSON_Tools
 		}
 
 		public JsonTabularizer(JsonTabularizerStrategy strategy = JsonTabularizerStrategy.DEFAULT) // ,
-							// JsonFormat outputFormat = JsonFormat.REC)
-							// don't worry about outputFormat, because other output formats aren't supported
+																								   // JsonFormat outputFormat = JsonFormat.REC)
+																								   // don't worry about outputFormat, because other output formats aren't supported
 		{
 			this.strategy = strategy;
 			//if ((outputFormat & JsonFormat.ANY_TABLE) != 0) _outputFormat = outputFormat;
@@ -446,14 +446,14 @@ namespace JSON_Tools.JSON_Tools
 				}
 				notArrDict = ResolveHang(notArrDict, keySep);
 				if (lenArr == 0)
-                {
+				{
 					// A 0-length array should be dealt with by adding a single row with an empty value
 					// for the array's parent key
 					foreach (string k in arrDict.Keys)
 						notArrDict[k] = new JNode("", Dtype.STR, 0);
 					result.Add(new JObject(0, notArrDict));
 					return;
-                }
+				}
 				for (int ii = 0; ii < lenArr; ii++)
 				{
 					Dictionary<string, JNode> newrec = new Dictionary<string, JNode>(restOfRow);
@@ -650,7 +650,7 @@ namespace JSON_Tools.JSON_Tools
 		private void BuildTableHelper_STRINGIFY_ITERABLES(JNode obj, List<JNode> result, string keySep = ".")
 		{
 			if (obj is JArray)
-            {
+			{
 				foreach (JNode child in ((JArray)obj).children)
 				{
 					Dictionary<string, JNode> row = new Dictionary<string, JNode>();
@@ -724,8 +724,8 @@ namespace JSON_Tools.JSON_Tools
 					// are filled by empty strings
 					if (ii >= v.Length)
 						newrec[k] = new JNode("", Dtype.STR, 0);
-                    else
-                    {
+					else
+					{
 						JNode subchild = v[ii];
 						if (subchild is JArray subarr)
 							newrec[k] = new JNode(subarr.ToString(), Dtype.STR, 0);
@@ -733,7 +733,7 @@ namespace JSON_Tools.JSON_Tools
 							newrec[k] = new JNode(subobj.ToString(), Dtype.STR, 0);
 						else
 							newrec[k] = subchild;
-                    }
+					}
 				}
 				// now add in all the non-array values
 				foreach (string k in notArrDict.Keys)
@@ -795,17 +795,17 @@ namespace JSON_Tools.JSON_Tools
 			return new JArray(0, result);
 		}
 
-        /// <summary>
-        /// If string s contains the delimiter, '\r', '\n', or a literal quote character, append (the string wrapped in quotes) to sb.<br></br>
-        /// If s contains literal quote character, it is escaped by doubling it up according to the CSV RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)<br></br>
-        /// Otherwise, append s to sb unchanged
-        /// </summary>
-        /// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
-        /// <param name="quote">CSV quote char ('\x00' if not specified)</param>
-        /// <returns></returns>
-        public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote)
+		/// <summary>
+		/// If string s contains the delimiter, '\r', '\n', or a literal quote character, append (the string wrapped in quotes) to sb.<br></br>
+		/// If s contains literal quote character, it is escaped by doubling it up according to the CSV RFC 4180 (https://www.ietf.org/rfc/rfc4180.txt)<br></br>
+		/// Otherwise, append s to sb unchanged
+		/// </summary>
+		/// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
+		/// <param name="quote">CSV quote char ('\x00' if not specified)</param>
+		/// <returns></returns>
+		public static void ApplyQuotesIfNeeded(StringBuilder sb, string s, char delim, char quote)
 		{
-			if (s.IndexOfAny(new char[] {delim, '\r', '\n', quote}) >= 0)
+			if (s.IndexOfAny(new char[] { delim, '\r', '\n', quote }) >= 0)
 			{
 				sb.Append(quote);
 				for (int ii = 0; ii < s.Length; ii++)
@@ -813,46 +813,46 @@ namespace JSON_Tools.JSON_Tools
 					char c = s[ii];
 					sb.Append(c);
 					if (c == quote)
-                        sb.Append(quote);
+						sb.Append(quote);
 				}
 				sb.Append(quote);
 			}
 			else sb.Append(s);
 		}
 
-        /// <summary>
-        /// append the CSV (RFC 4180 adherent, using quote character = quote, delimiter = delim) representation of jnode's value to sb.
-        /// </summary>
-        /// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
-        /// <param name="quote">CSV quote char ('\x00' if not specified)</param>
-        /// <param name="boolsAsInts">if true, represent true as "1" and false as "0". If false, represent them as "true" and "false" respectively</param>
-        public static void CsvStringToSb(StringBuilder sb, JNode jnode, char delim, char quote, bool boolsAsInts)
+		/// <summary>
+		/// append the CSV (RFC 4180 adherent, using quote character = quote, delimiter = delim) representation of jnode's value to sb.
+		/// </summary>
+		/// <param name="delim">CSV delimiter ('\x00' if not specified)</param>
+		/// <param name="quote">CSV quote char ('\x00' if not specified)</param>
+		/// <param name="boolsAsInts">if true, represent true as "1" and false as "0". If false, represent them as "true" and "false" respectively</param>
+		public static void CsvStringToSb(StringBuilder sb, JNode jnode, char delim, char quote, bool boolsAsInts)
 		{
 			string val;
-            switch (jnode.type)
-            {
-            case Dtype.STR:
-                val = (string)jnode.value;
-                break; // only apply quotes if internal delims, quotes, or newlines
-            //case Dtype.DATE:
-            //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd");
-            //    break;
-            //case Dtype.DATETIME:
-            //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd hh:mm:ss");
-            //    break;
-            case Dtype.NULL:
-                return; // nulls should be empty entries
-            case Dtype.BOOL:
+			switch (jnode.type)
+			{
+			case Dtype.STR:
+				val = (string)jnode.value;
+				break; // only apply quotes if internal delims, quotes, or newlines
+					   //case Dtype.DATE:
+					   //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd");
+					   //    break;
+					   //case Dtype.DATETIME:
+					   //    val = ((DateTime)jnode.value).ToString("yyyy-MM-dd hh:mm:ss");
+					   //    break;
+			case Dtype.NULL:
+				return; // nulls should be empty entries
+			case Dtype.BOOL:
 				sb.Append((bool)jnode.value
 					? (boolsAsInts ? "1" : "true")
 					: (boolsAsInts ? "0" : "false"));
-                return;
-            default:
-                val = jnode.ToString();
-                break;
-            }
+				return;
+			default:
+				val = jnode.ToString();
+				break;
+			}
 			ApplyQuotesIfNeeded(sb, val, delim, quote);
-        }
+		}
 
 		public string TableToCsv(JArray table, char delim = ',', char quote = '"', string newline = "\n", string[] header = null, bool boolsAsInts = false)
 		{
@@ -878,8 +878,7 @@ namespace JSON_Tools.JSON_Tools
 			StringBuilder sb = new StringBuilder();
 			for (int ii = 0; ii < header.Length; ii++)
 			{
-				string col = header[ii];
-				ApplyQuotesIfNeeded(sb, JNode.StrToString(col, false), delim, quote);
+				ApplyQuotesIfNeeded(sb, header[ii], delim, quote);
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);

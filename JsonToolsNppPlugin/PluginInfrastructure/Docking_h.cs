@@ -43,7 +43,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     public struct NppTbData
     {
         public IntPtr hClient;            // HWND: client Window Handle
-        public string pszName;            // TCHAR*: name of plugin (shown in window)
+        public IntPtr pszName;            // TCHAR*: name of plugin (shown in window)
         public int dlgID;                // int: a funcItem provides the function pointer to start a dialog. Please parse here these ID
                                          // user modifications
         public NppTbMsg uMask;                // UINT: mask params: look to above defines

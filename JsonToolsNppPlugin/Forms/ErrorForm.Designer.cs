@@ -1,4 +1,7 @@
-﻿namespace JSON_Tools.Forms
+﻿using System.Runtime.InteropServices;
+using System;
+
+namespace JSON_Tools.Forms
 {
     partial class ErrorForm
     {
@@ -17,6 +20,16 @@
             {
                 NppFormHelper.UnregisterFormIfModeless(this, false);
                 components.Dispose();
+            }
+            if (ptrTitleBuf != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptrTitleBuf);
+                ptrTitleBuf = IntPtr.Zero;
+            }
+            if (ptrNppTbData != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptrNppTbData);
+                ptrNppTbData = IntPtr.Zero;
             }
             base.Dispose(disposing);
         }

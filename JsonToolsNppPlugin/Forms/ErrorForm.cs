@@ -20,6 +20,8 @@ namespace JSON_Tools.Forms
         public string fname;
         public List<JsonLint> lints;
         private bool isRepopulatingErrorGrid;
+        public IntPtr ptrNppTbData = IntPtr.Zero;
+        public IntPtr ptrTitleBuf = IntPtr.Zero;
 
         public ErrorForm(string fname, List<JsonLint> lints)
         {

@@ -366,7 +366,7 @@ Below is an example of searching *only direct children or grandchildren* (by unc
 
 *Added in version 1.2.0*
 
-Some JSON also has a somewhat __tabular__ format, such that it is amenable to conversion to a CSV file. The JSON in this example is a particularly simple case of this.
+Some JSON also has a somewhat __tabular__ format, such that it is amenable to conversion to a CSV file. The JSON in [this example](#json-tools-overview) is a particularly simple case of this.
 
 This app has a [form](/docs/json-to-csv.md) that allows conversion of such JSON to a tabular format. Remember that even if the JSON file as a whole can't be "tabularized" (or *can*, but you don't *want*  to), you can use a RemesPath query to select the part that you want to tabularize.
 

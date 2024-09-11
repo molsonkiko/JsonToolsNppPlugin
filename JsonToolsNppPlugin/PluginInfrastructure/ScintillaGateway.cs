@@ -1781,6 +1781,11 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <summary>Replace the contents of the document with the argument text. (Scintilla feature 2181)</summary>
         public unsafe void SetText(string text)
         {
+            if (text.Length == 0)
+            {
+                ClearAll();
+                return;
+            }
             fixed (byte* textPtr = Encoding.UTF8.GetBytes(text))
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_SETTEXT, (IntPtr) Unused, (IntPtr) textPtr);

@@ -776,6 +776,8 @@ namespace JSON_Tools.Tests
                 ("tree_query", new object[]{"s_csv(@, 1,`\\t`,`\\r\\n`,`'` ,h)"}),
                 ("treenode_click", new object[]{new string[] { "1 : \"{\\\"ö\\\": \\\"3 4\\\"}\"" } }),
                 ("treenode_click", new object[]{new string[] { "3 : \"{\\\"5\\\": [6]}\"" } }),
+                ("tree_query", new object[]{"@ = ``"}), // test that using RemesPath to clear text of document works
+                ("compare_text", new object[]{""}),
             };
 
             var messages = new List<string>();

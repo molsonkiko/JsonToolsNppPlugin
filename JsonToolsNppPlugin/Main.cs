@@ -412,7 +412,6 @@ namespace Kbg.NppPluginNET
         static internal void FileRenamed(IntPtr bufferRenamedId)
         {
             string bufferNewName = Npp.notepad.GetFilePath(bufferRenamedId);
-            ValidateIfFilenameMatches(bufferNewName);
             if (bufferNewName == schemasToFnamePatternsFname)
             {
                 ParseSchemasToFnamePatternsFile();
@@ -424,7 +423,7 @@ namespace Kbg.NppPluginNET
                 if (TryGetInfoForFile(bufferOldName, out JsonFileInfo oldInfo))
                 {
                     jsonFilesRenamed.Remove(bufferRenamedId);
-                    oldInfo.tv?.Rename(bufferNewName);
+                    oldInfo.tv?.Rename(bufferNewName, true);
                     jsonFileInfos.Remove(bufferOldName);
                     jsonFileInfos[bufferNewName] = oldInfo;
                 }
@@ -434,6 +433,7 @@ namespace Kbg.NppPluginNET
                 grepperForm.tv.fname = bufferNewName;
                 shouldRenameGrepperForm = false;
             }
+            ValidateIfFilenameMatches(bufferNewName);
         }
 
         static internal void FileRenameCancel(IntPtr bufferRenamedId)
@@ -1340,7 +1340,9 @@ namespace Kbg.NppPluginNET
 
             NppTbData _nppTbData = new NppTbData();
             _nppTbData.hClient = form.Handle;
-            _nppTbData.pszName = form.Text;
+            IntPtr ptrTitleBuf = Marshal.StringToHGlobalUni(form.Text);
+            errorForm.ptrTitleBuf = ptrTitleBuf;
+            _nppTbData.pszName = ptrTitleBuf;
             // the dlgDlg should be the index of funcItem where the current function pointer is in
             // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
             _nppTbData.dlgID = errorFormId;
@@ -1349,8 +1351,8 @@ namespace Kbg.NppPluginNET
             _nppTbData.hIconTab = (uint)dockingFormIcon.Handle;
             _nppTbData.pszModuleName = PluginName;
             IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
+            errorForm.ptrNppTbData = _ptrNppTbData;
             Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
-
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             Npp.notepad.ShowDockingForm(form);
         }
@@ -1580,14 +1582,7 @@ namespace Kbg.NppPluginNET
             openTreeViewer = new TreeViewer(json);
             info.tv = openTreeViewer;
             jsonFileInfos[activeFname] = info;
-            DisplayJsonTree(openTreeViewer, json, GetNameForJsonTree(openTreeViewer), usesSelections, documentType, parserState == ParserState.FATAL);
-        }
-
-        private static string GetNameForJsonTree(TreeViewer tv)
-        {
-            string defaultNameFormat = "Json Tree View for {0}";
-            string nameFormat = (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "title" }, out JNode node) && node.value is string s) ? s : defaultNameFormat;
-            return Translator.TryTranslateWithFormatting(defaultNameFormat, nameFormat, tv.RelativeFilename());
+            DisplayJsonTree(openTreeViewer, json, activeFname, usesSelections, documentType, parserState == ParserState.FATAL);
         }
 
         static void OpenGrepperForm()
@@ -1618,17 +1613,18 @@ namespace Kbg.NppPluginNET
 
             NppTbData _nppTbData = new NppTbData();
             _nppTbData.hClient = treeViewer.Handle;
-            _nppTbData.pszName = title;
+            _nppTbData.pszName = treeViewer.SetTitleBuffer(title, grepperForm == null || grepperForm.tv == null || treeViewer != grepperForm.tv);
             // the dlgDlg should be the index of funcItem where the current function pointer is in
             // this case is 15.. so the initial value of funcItem[15]._cmdID - not the updated internal one !
             _nppTbData.dlgID = jsonTreeId;
             // define the default docking behaviour
-            _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
+            _nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR | NppTbMsg.DWS_ADDINFO; // DWS_ADDINFO necessary to allow changing name later
             _nppTbData.hIconTab = (uint)dockingFormIcon.Handle;
             _nppTbData.pszModuleName = PluginName;
             IntPtr _ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(_nppTbData));
             Marshal.StructureToPtr(_nppTbData, _ptrNppTbData, false);
-
+            treeViewer.ptrNppTbData = _ptrNppTbData;
+            
             Npp.SetLangBasedOnDocType(fatalParserError, usesSelections, documentType);
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
             // Following message will toogle both menu item state and toolbar button

@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Forms
 {
@@ -22,6 +24,15 @@ namespace JSON_Tools.Forms
         /// the name of the file holding the JSON that this is associated with
         /// </summary>
         public string fname;
+
+        private int MAX_LEN_TITLE_BUFFER = 256;
+
+        /// <summary>
+        /// a pointer to the buffer containing the name displayed at the top of this docking form
+        /// </summary>
+        public IntPtr ptrTitleBuf = IntPtr.Zero;
+
+        public IntPtr ptrNppTbData = IntPtr.Zero;
 
         /// <summary>
         /// Maps TreeNode.FullPath to the TreeNode's corresponding JNode
@@ -1454,25 +1465,40 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// Just the filename, no directory information.<br></br>
-        /// If no fname supplied, gets the relative filename for this TreeViewer's fname.
+        /// Change the fname attribute of this.<br></br>
+        /// Also change the title of the UI element (the docking form that the user actually sees)
         /// </summary>
-        public string RelativeFilename(string fname = null)
+        /// <param name="newFname"></param>
+        public void Rename(string newFname, bool isFilename)
         {
-            if (fname == null) fname = this.fname;
-            string[] fnameSplit = fname.Split('\\');
-            return fnameSplit[fnameSplit.Length - 1];
+            fname = newFname;
+            SetTitleBuffer(newFname, isFilename);
+            Marshal.WriteIntPtr(ptrNppTbData, IntPtr.Size, ptrTitleBuf);
+            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMUPDATEDISPINFO, 0, Handle);
         }
 
         /// <summary>
-        /// Change the fname attribute of this.<br></br>
-        /// We would like to be able to change the title of the UI element as well,
-        /// but it seems pretty hard to do from C#.
+        /// sets this.ptrTitleBuf to a pointer to an unmanaged Unicode char array containing the title of this TreeViewer's docking form.<br></br>
+        /// If isFilename, strips the directory name away from the beginning of title.
         /// </summary>
-        /// <param name="newFname"></param>
-        public void Rename(string newFname)
+        public IntPtr SetTitleBuffer(string title, bool isFilename)
         {
-            fname = newFname;
+            if (isFilename)
+            {
+                string[] fnameSplit = fname.Split('\\');
+                title = fnameSplit[fnameSplit.Length - 1];
+            }
+            string defaultNameFormat = "Json Tree View for {0}";
+            string nameFormat = (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "title" }, out JNode node) && node.value is string s && s.Contains("{0}")) ? s : defaultNameFormat;
+            string fullTitle = nameFormat.Replace("{0}", title);
+            int maxCharsTitleBuf = MAX_LEN_TITLE_BUFFER / Marshal.SystemDefaultCharSize - 1;
+            if (fullTitle.Length > maxCharsTitleBuf)
+                fullTitle = fullTitle.Substring(0, maxCharsTitleBuf - 3) + "...";
+            if (ptrTitleBuf == IntPtr.Zero)
+                ptrTitleBuf = Marshal.AllocHGlobal(MAX_LEN_TITLE_BUFFER);
+            Marshal.Copy(new byte[MAX_LEN_TITLE_BUFFER], 0, ptrTitleBuf, MAX_LEN_TITLE_BUFFER);
+            Marshal.Copy(fullTitle.ToCharArray(), 0, ptrTitleBuf, fullTitle.Length);
+            return ptrTitleBuf;
         }
     }
 }

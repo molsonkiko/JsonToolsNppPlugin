@@ -503,12 +503,15 @@ namespace JSON_Tools.Tests
 				( "[{\"a\": 1, \"b\": \"a,b\"}, {\"a\": 2, \"b\": \"c\"}]", "a,b\n1,'a,b'\n2,c\n", ',', '\'', null, false, "\n" ), // delims in values
 				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "\"a,b\",b\r\n1,a\r\n2,b\r\n", ',', '"', null, false, "\r\n" ),
 				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", "'a,b',b\r\n1,a\r\n2,b\r\n", ',', '\'', null, false, "\r\n" ),
-				( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
+				("[{\"a\\\"b\": 1.5, \"c\": \"a\"}, {\"a\\\"b\": true, \"c\": null}]", "\"a\"\"b\"\tc\r1.5\ta\rtrue\t\r", '\t', '"', null, false, "\r"), // internal '"' in column header when '"' is quote char
+				("[{\"a\\\"b\": true, \"c\": false}]", "c,\"a\"\"b\"\r\n0,1\r\n", ',', '"', new string[]{"c", "a\"b"}, true, "\r\n"), // internal '"' in column header when '"' is quote char, and header is user-supplied
+				("[{\"a'b\": 1.5, \"c\": \"a\"}, {\"c\": null, \"a'b\": true}]", "'a''b'\tc\n1.5\ta\ntrue\t\n", '\t', '\'', null, false, "\n"), // internal quote char in column header (when '"' is not quote char)
+                ( "[{\"a,b\": 1, \"b\": \"a\"}, {\"a,b\": 2, \"b\": \"b\"}]", // internal delims in column header
 				"b,\"a,b\"\r\na,1\r\nb,2\r\n",
 				',', '"', new string[]{"b", "a,b"}, false, "\r\n"
 				),
 				( "[{\"a\\tb\": 1, \"b\": \"a\"}, {\"a\\tb\": 2, \"b\": \"b\"}]", // \t in column header when \t is delim
-				"a\\tb\tb\r\n1\ta\r\n2\tb\r\n",
+				"\"a\tb\"\tb\r\n1\ta\r\n2\tb\r\n",
 				'\t', '"', null, false, "\r\n"
 				),
 				( "[{\"a\": 1, \"b\": \"a\\tb\"}, {\"a\": 2, \"b\": \"c\"}]",

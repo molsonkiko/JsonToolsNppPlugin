@@ -607,13 +607,13 @@ namespace JSON_Tools.Tests
                                         ", 3, null, null, null, n, 0, -1)",
                 "[[\"a\", \"-3\", NaN], [\"baz\", \"quz\", -Infinity]]"),
                 // 4-column, map header to values, '\t' separator, '\n' newline, parse 2nd-to-last column as numbers
-                new Query_DesiredResult("s_csv(`col1\\tcol2\\tcol3\\tcol4\\n" +
+                new Query_DesiredResult("s_csv(`col1\\tcol2\\t\"col\"\"3\"\\tcol4\\n" +
                                                "ab\\tcd\\t0xfa\\tefg\\n" +
                                                "hi\\tjk\\t-5.3E000\\tlmn\\n" +
                                                "opq\\trs\\t.7e-11\\ttuv\\n" +
                                                "wx\\ty\\t+85\\tz`" +
                                                ", 4, `\\t`, `\\n`, , d, -2)",
-                        "[{\"col1\":\"ab\",\"col2\":\"cd\",\"col3\":250,\"col4\":\"efg\"},{\"col1\":\"hi\",\"col2\":\"jk\",\"col3\":-5.3,\"col4\":\"lmn\"},{\"col1\":\"opq\",\"col2\":\"rs\",\"col3\":7E-12,\"col4\":\"tuv\"},{\"col1\":\"wx\",\"col2\":\"y\",\"col3\":85,\"col4\":\"z\"}]"),
+                        "[{\"col1\":\"ab\",\"col2\":\"cd\",\"col\\\"3\":250,\"col4\":\"efg\"},{\"col1\":\"hi\",\"col2\":\"jk\",\"col\\\"3\":-5.3,\"col4\":\"lmn\"},{\"col1\":\"opq\",\"col2\":\"rs\",\"col\\\"3\":7E-12,\"col4\":\"tuv\"},{\"col1\":\"wx\",\"col2\":\"y\",\"col\\\"3\":85,\"col4\":\"z\"}]"),
                 // 1-column, map header to values, '^' delimiter, '$' quote character, '\r' newline
                 new Query_DesiredResult("s_csv(`a\\r" +
                                                "$b^c$\\r" +
@@ -631,19 +631,22 @@ namespace JSON_Tools.Tests
                                                ", 1, `^`, `\\r`, `$`, , 0)", // omit header arg because it is default
                     "[1, 0.3, 5, -7.2]"),
                 // 1-column, map header to values, '^' delimiter, '$' quote character, '\r' newline, parse as numbers
-                new Query_DesiredResult("s_csv(`foo\\r" +
+                new Query_DesiredResult("s_csv(`$foo$\\r" +
                                                "1\\r" +
                                                ".3\\r" +
                                                "5\\r" +
                                                "$-7.2$`" +
                                                ", 1, `^`, `\\r`, `$`, d, 0)",
                     "[{\"foo\": 1}, {\"foo\": 0.3}, {\"foo\": 5}, {\"foo\": \"-7.2\"}]"),
+                // 1-column, map header to values, ',' delimiter, '\'' quote char, '\n' newline
+                new Query_DesiredResult("s_csv(`ba\\tz\\n'bl,ar'\\n5.75 qun`, 1, `,`, `\\n`, `'`, d)",
+                                        "[{\"ba\\tz\": \"bl,ar\"}, {\"ba\\tz\": \"5.75 qun\"}]"),
                 // 2-column, map header to values, '|' delimiter, '$' quote char, '\r\n' newline, parse first col as numbers
-                new Query_DesiredResult("s_csv(`foo|bar\\r\\n" +
+                new Query_DesiredResult("s_csv(`foo|$$$bar$\\r\\n" +
                                                 "1|3\\r\\n" +
                                                 "-5.5|$3|4$\\r\\n" +
                                                 "$$|`, 2, `|`, `\\r\\n`, `$`, d, 0)",
-                    "[{\"foo\":1,\"bar\":\"3\"},{\"foo\":-5.5,\"bar\":\"3|4\"},{\"foo\":\"\",\"bar\":\"\"}]"),
+                    "[{\"foo\":1,\"$bar\":\"3\"},{\"foo\":-5.5,\"$bar\":\"3|4\"},{\"foo\":\"\",\"$bar\":\"\"}]"),
                 // 2-column, skip header, ']' delimiter, '\'' quote char, '\r\n' newline
                 new Query_DesiredResult("s_csv(`foo]bar\\r\\n" +
                                                 "1]3\\r\\n" +

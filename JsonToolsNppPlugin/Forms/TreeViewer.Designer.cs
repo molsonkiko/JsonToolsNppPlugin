@@ -1,4 +1,7 @@
-﻿namespace JSON_Tools.Forms
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace JSON_Tools.Forms
 {
     partial class TreeViewer
     {
@@ -23,6 +26,16 @@
                 findReplaceForm.Close();
                 findReplaceForm.Dispose();
                 findReplaceForm = null;
+            }
+            if (ptrTitleBuf != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptrTitleBuf);
+                ptrTitleBuf = IntPtr.Zero;
+            }
+            if (ptrNppTbData != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptrNppTbData);
+                ptrNppTbData = IntPtr.Zero;
             }
             if (disposing && (components != null))
             {
