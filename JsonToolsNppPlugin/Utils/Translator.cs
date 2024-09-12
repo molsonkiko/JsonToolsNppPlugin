@@ -11,6 +11,7 @@ using System.Reflection;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Drawing;
 
 namespace JSON_Tools.Utils
 {
@@ -392,21 +393,66 @@ namespace JSON_Tools.Utils
                     }
                     child.Refresh();
                 }
-                int maxRight = 0;
-                foreach (Control child in ctrl.Controls)
+                ExpandToFitAllControls(ctrl, true, false);
+            }
+        }
+
+        /// <summary>
+        /// Check if any child controls inside ctrl extend further right than the right edge of ctrl, or further down than the bottom of ctrl.<br></br>
+        /// This method is <i>not recursive</i>; if you want to check sub-controls inside this control, you will need to 
+        /// If ctrl is already large enough, return the current height and width of the control.<br></br>
+        /// Otherwise:<br></br>
+        /// * if performResize, resize ctrl to make it large enough (adjustForBottomAnchored is only relevant here)<br></br>
+        /// * return its new height and width.
+        /// </summary>
+        public static (int newWidth, int newHeight) ExpandToFitAllControls(Control ctrl, bool performResize, bool adjustForBottomAnchored)
+        {
+            int maxRight = 0, maxBottom = 0;
+            int minTopOfBottomAnchored = int.MaxValue;
+            var bottomAnchoredControls = new List<Control>();
+            foreach (Control child in ctrl.Controls)
+            {
+                if (adjustForBottomAnchored && child.Anchor.HasFlag(AnchorStyles.Bottom))
+                {
+                    minTopOfBottomAnchored = child.Top < minTopOfBottomAnchored ? child.Top : minTopOfBottomAnchored;
+                    bottomAnchoredControls.Add(child);
+                }
+                else
+                {
                     maxRight = child.Right > maxRight ? child.Right : maxRight;
+                    maxBottom = child.Bottom > maxBottom ? child.Bottom : maxBottom;
+                }
+            }
+            int oldWidth = ctrl.Width, oldHeight = ctrl.Height;
+            int padding = ctrl is Form ? 25 : 5;
+            int newWidth = maxRight + padding, newHeight = maxBottom + padding;
+            newWidth = maxRight > oldWidth ? newWidth : oldWidth;
+            newHeight = maxBottom > oldHeight ? newHeight : oldHeight;
+            int extraHeightForBottomAnchored = 0;
+            if (adjustForBottomAnchored && minTopOfBottomAnchored < int.MaxValue)
+            {
+                // bottom-anchored controls screw up all these calculations,
+                // because WinForms will always ensure that a bottom-anchored control
+                // has the same distance from the bottom that it did when the form was created.
+                // Thus, bottom-anchored controls are treated as extra "padding" at the bottom of the form.
+                extraHeightForBottomAnchored = oldHeight - minTopOfBottomAnchored;
+                maxBottom += extraHeightForBottomAnchored;
+            }
+            if (performResize && (maxRight > oldWidth || maxBottom > oldHeight))
+            {
+                newHeight += extraHeightForBottomAnchored;
                 // Temporarily turn off the normal layout logic,
                 //     because this would cause controls to move right when the form is resized
                 //     (yes, even if they're not anchored right. No, that doesn't make sense)
                 ctrl.SuspendLayout();
-                if (maxRight > ctrl.Width)
-                {
-                    int padding = ctrl is Form ? 25 : 5;
-                    ctrl.Width = maxRight + padding;
-                }
+                ctrl.Width = newWidth;
+                ctrl.Height = newHeight;
+                foreach (Control child in bottomAnchoredControls)
+                    child.Top += (newHeight - oldHeight);
                 // Resume layout logic, ignoring the pending requests to move controls right due to resizing of form
                 ctrl.ResumeLayout(false);
             }
+            return (newWidth, newHeight);
         }
 
         private static bool VerticalOverlap(Control ctrl1, Control ctrl2)

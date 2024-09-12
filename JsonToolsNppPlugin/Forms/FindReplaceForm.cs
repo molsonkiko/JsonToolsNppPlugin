@@ -13,10 +13,20 @@ namespace JSON_Tools.Forms
         private string findQuery;
         private string replaceQuery;
         private const int EXTENDED_HEIGHT = 441;
+        private const int WIDTH = 391;
+        private const int ADVANCED_CONTROLS_WIDTH = 337;
         private const int COLLAPSED_HEIGHT = EXTENDED_HEIGHT - ADVANCED_CONTROLS_EXTENDED_HEIGHT + ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
         private const int ADVANCED_CONTROLS_EXTENDED_HEIGHT = 163;
         private const int ADVANCED_CONTROLS_COLLAPSED_HEIGHT = 11;
         int previousKeysValsBothBox_SelectedIndex = 2;
+
+        private static int collapsedWidth = WIDTH;
+        private static int collapsedHeight = COLLAPSED_HEIGHT;
+        private static int extendedHeight = EXTENDED_HEIGHT;
+        private static int extendedWidth = WIDTH;
+        private static int advancedControlsExtendedWidth = ADVANCED_CONTROLS_WIDTH;
+        private static int advancedControlsExtendedHeight = ADVANCED_CONTROLS_EXTENDED_HEIGHT;
+        private static bool hasFoundCorrectAdvancedControlsSize = false;
 
         public FindReplaceForm(TreeViewer treeViewer)
         {
@@ -42,6 +52,7 @@ namespace JSON_Tools.Forms
             KeysValsBothBox.SelectedIndex = 2;
             AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;
             Height = COLLAPSED_HEIGHT;
+            (collapsedWidth, collapsedHeight) = Translator.ExpandToFitAllControls(this, true, true);
             findQuery = "";
             replaceQuery = "";
         }
@@ -94,11 +105,25 @@ namespace JSON_Tools.Forms
             // show the advanced controls and expand the box
             if (!RegexBox.Visible)
             {
-                if (Height < EXTENDED_HEIGHT)
-                    Height = EXTENDED_HEIGHT;
+                if (!hasFoundCorrectAdvancedControlsSize)
+                {
+                    // on higher display resolutions, the AdvancedGroup box may need more space, so we will try recalculating
+                    (advancedControlsExtendedWidth, advancedControlsExtendedHeight) = Translator.ExpandToFitAllControls(AdvancedGroupBox, true, false);
+                    (extendedWidth, extendedHeight) = Translator.ExpandToFitAllControls(this, true, true);
+                    hasFoundCorrectAdvancedControlsSize = true;
+                }
+                else
+                {
+                    // use the best height and width we already determined
+                    if (Height < extendedHeight)
+                        Height = extendedHeight;
+                    if (Width < extendedWidth)
+                        Width = extendedWidth;
+                    AdvancedGroupBox.Height = advancedControlsExtendedHeight;
+                    AdvancedGroupBox.Width = advancedControlsExtendedWidth;
+                }
                 if (!Translator.HasTranslations) // the translator has options for checked and unchecked states already
                     ShowAdvancedOptionsCheckBox.Text = "Hide advanced options";
-                AdvancedGroupBox.Height = ADVANCED_CONTROLS_EXTENDED_HEIGHT;
                 foreach (Control control in AdvancedGroupBox.Controls)
                 {
                     control.Visible = true;
@@ -107,8 +132,10 @@ namespace JSON_Tools.Forms
             // hide the advanced controls and collapse the box
             else
             {
-                if (Height == EXTENDED_HEIGHT)
-                    Height = COLLAPSED_HEIGHT;
+                if (Height == extendedHeight)
+                    Height = collapsedHeight;
+                if (Width == extendedWidth)
+                    Width = collapsedWidth;
                 if (!Translator.HasTranslations)
                     ShowAdvancedOptionsCheckBox.Text = "Show advanced options";
                 AdvancedGroupBox.Height = ADVANCED_CONTROLS_COLLAPSED_HEIGHT;

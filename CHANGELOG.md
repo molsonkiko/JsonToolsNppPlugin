@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. Fix minor bugs with how headers are formatted in [the `s_csv` RemesPath function](/docs/RemesPath.md#vectorized-functions) and [JSON-to-CSV form](/docs/README.md#json-to-csv).
 6. Fix bug where renaming a file subject to [schema validation based on filename patterns](/docs/README.md#automatic-validation-of-json-against-json-schema) would cause its tree view to be lost.
 7. Fix bug where plugin actions (mainly RemesPath queries in [regex mode](/docs/README.md#regex-search-form)) that set the text of the entire document to an empty string would not do anything. Those actions will now correctly remove all the text in the document.
+8. Fix issue [number 79](/https://github.com/molsonkiko/JsonToolsNppPlugin/issues/79) where, on higher display resolutions than the default 125% normally used by molsonkiko in development, some of the advanced controls in the [find/replace form](/docs/README.md#find-and-replace-form) would not be visible.
 
 ## [8.1.0] - 2024-08-23
 

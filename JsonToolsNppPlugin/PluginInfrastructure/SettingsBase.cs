@@ -59,7 +59,6 @@ namespace CsvQuery.PluginInfrastructure
         public SettingsBase(bool loadFromFile = true)
         {
             // Set defaults
-            Translator.LoadTranslations();
             foreach (var propertyInfo in GetType().GetProperties())
             {
                 if (propertyInfo.GetCustomAttributes(typeof(DefaultValueAttribute), false).FirstOrDefault() is DefaultValueAttribute def)
@@ -169,6 +168,8 @@ namespace CsvQuery.PluginInfrastructure
             filename = filename ?? IniFilePath;
             var dir = Path.GetDirectoryName(filename);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            if (!Translator.HasTranslations)
+                Translator.LoadTranslations(false);
 
             // Win32.WritePrivateProfileSection (that NppPlugin uses) doesn't work well with non-ASCII characters. So we roll our own.
             using (var fp = new StreamWriter(filename, false, Encoding.UTF8))
