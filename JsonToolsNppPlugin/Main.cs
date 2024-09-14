@@ -179,10 +179,14 @@ namespace Kbg.NppPluginNET
         /// </summary>
         static internal void HideSelectionRememberingIndicators()
         {
-            if (selectionRememberingIndicator1 >= 0)
-                Npp.editor.IndicSetStyle(selectionRememberingIndicator1, IndicatorStyle.HIDDEN);
-            if (selectionRememberingIndicator2 >= 0)
-                Npp.editor.IndicSetStyle(selectionRememberingIndicator2, IndicatorStyle.HIDDEN);
+            foreach (IntPtr hScintilla in new IntPtr[] {PluginBase.nppData._scintillaMainHandle, PluginBase.nppData._scintillaSecondHandle })
+            {
+                foreach (int indicator in new int[] {selectionRememberingIndicator1, selectionRememberingIndicator2 })
+                {
+                    if (indicator >= 0)
+                        Win32.SendMessage(hScintilla, SciMsg.SCI_INDICSETSTYLE, (IntPtr)indicator, (IntPtr)IndicatorStyle.HIDDEN);
+                }
+            }
         }
 
         static internal void SetToolBarIcons()
@@ -784,6 +788,7 @@ namespace Kbg.NppPluginNET
 
         public static void SetStatusBarSection(ParserState parserState, string fname, JsonFileInfo info, DocumentType documentType, int lintCount)
         {
+            string jsonType = documentType == DocumentType.JSONL ? "JSON lines" : "JSON";
             if (parserState == ParserState.FATAL)
             {
                 string ext = Npp.FileExtension(fname);
@@ -792,7 +797,7 @@ namespace Kbg.NppPluginNET
                 // For instance, we expect a Python file to be un-parseable,
                 // and it's not helpful to indicate that it's a JSON document with fatal errors.
                 if (fileExtensionsToAutoParse.Contains(ext))
-                    Npp.notepad.SetStatusBarSection($"JSON with fatal errors - {lintCount} errors (Alt-P-J-E to view)",
+                    Npp.notepad.SetStatusBarSection($"{jsonType} with fatal errors - {lintCount} errors (Alt-P-J-E to view)",
                         StatusBarSection.DocType);
             }
             else if (parserState < ParserState.FATAL && !(!info.usesSelections && documentType != DocumentType.JSON && documentType != DocumentType.JSONL))
@@ -801,12 +806,12 @@ namespace Kbg.NppPluginNET
                 string doctypeDescription;
                 switch (parserState)
                 {
-                case ParserState.STRICT: doctypeDescription = documentType == DocumentType.JSONL ? "JSON lines" : "JSON"; break;
-                case ParserState.OK: doctypeDescription = "JSON (w/ control chars in strings)"; break;
-                case ParserState.NAN_INF: doctypeDescription = "JSON (w/ NaN and/or Infinity)"; break;
-                case ParserState.JSONC: doctypeDescription = "JSON with comments"; break;
-                case ParserState.JSON5: doctypeDescription = "JSON5"; break;
-                case ParserState.BAD: doctypeDescription = "Non-compliant JSON"; break;
+                case ParserState.STRICT: doctypeDescription = jsonType; break;
+                case ParserState.OK: doctypeDescription = $"{jsonType} (w/ control chars in strings)"; break;
+                case ParserState.NAN_INF: doctypeDescription = $"{jsonType} (w/ NaN and/or Infinity)"; break;
+                case ParserState.JSONC: doctypeDescription = $"{jsonType} with comments"; break;
+                case ParserState.JSON5: doctypeDescription = documentType == DocumentType.JSONL ? "JSON5 lines" : "JSON5"; break;
+                case ParserState.BAD: doctypeDescription = $"Non-compliant {jsonType}"; break;
                 // ParserState.FATAL covered earlier
                 default: throw new ArgumentOutOfRangeException("Unreachable");
                 }

@@ -1,5 +1,4 @@
-﻿using Kbg.NppPluginNET;
-using JSON_Tools.JSON_Tools;
+﻿using JSON_Tools.JSON_Tools;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,7 +10,6 @@ using System.Reflection;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using System.Drawing;
 
 namespace JSON_Tools.Utils
 {

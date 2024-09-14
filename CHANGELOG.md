@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+1. If a [JSON lines document](/docs/README.md#json-lines-documents) is not compliant with the strict JSON specification, the [status bar](/docs/README.md#error-form-and-status-bar) will now reflect that it is JSON lines.
+
 ### Fixed
 
 1. Fix the following issues with [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81):
@@ -70,7 +72,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 5. Fix minor bugs with how headers are formatted in [the `s_csv` RemesPath function](/docs/RemesPath.md#vectorized-functions) and [JSON-to-CSV form](/docs/README.md#json-to-csv).
 6. Fix bug where renaming a file subject to [schema validation based on filename patterns](/docs/README.md#automatic-validation-of-json-against-json-schema) would cause its tree view to be lost.
 7. Fix bug where plugin actions (mainly RemesPath queries in [regex mode](/docs/README.md#regex-search-form)) that set the text of the entire document to an empty string would not do anything. Those actions will now correctly remove all the text in the document.
-8. Fix issue [number 79](/https://github.com/molsonkiko/JsonToolsNppPlugin/issues/79) where, on higher display resolutions than the default 125% normally used by molsonkiko in development, some of the advanced controls in the [find/replace form](/docs/README.md#find-and-replace-form) would not be visible.
+8. Fix [issue 79](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/79) where, on higher display resolutions than the default 125% normally used by molsonkiko in development, some of the advanced controls in the [find/replace form](/docs/README.md#find-and-replace-form) would not be visible.
+9. Fix annoying but harmless bug where, if the user had two views open and [ran a plugin command on one or more selections](/docs/README.md#working-with-selections) in the second view, the indicator that JsonTools uses to remember selections (which is supposed to be hidden at all times) would cause the selections to be underlined.
 
 ## [8.1.0] - 2024-08-23
 
