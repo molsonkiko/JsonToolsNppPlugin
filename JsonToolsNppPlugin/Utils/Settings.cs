@@ -114,7 +114,7 @@ namespace JSON_Tools.Utils
         #endregion
 
         #region MISCELLANEOUS
-        [Description("The style of key to use when getting the path or key/index of a node or line.\r\nSee the documentation (https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-setting) for an explanation of each type.\r\nThis setting is IGNORED when path_separator is NOT the default \"\\u0001\"."),
+        [Description("The style of key to use when getting the path or key/index of a node or line.\r\nSee the documentation (https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-and-path_separator-settings) for an explanation of each type.\r\nThis setting is IGNORED when path_separator is NOT the default \"\\u0001\"."),
             Category("Miscellaneous"), DefaultValue(KeyStyle.RemesPath)]
         public KeyStyle key_style { get; set; }
 
