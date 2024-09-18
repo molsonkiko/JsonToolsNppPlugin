@@ -361,6 +361,7 @@
         "BAD_PYTHON_False": "False non è previsto in nessuna specifica JSON",
         "BAD_JAVASCRIPT_undefined": "undefined non è previsto in nessuna specifica JSON",
         "BAD_CHAR_INSTEAD_OF_EOF": "Alla fine del documento JSON valido, ho ricevuto {0} invece di EOF",
+        "BAD_FLOAT_TOO_LARGE": "La stringa numerica {0} è troppo grande per un numero in virgola mobile a 64 bit",
         // ============== FATAL messages ==============
         "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "Previsto commento JavaScript dopo '/'",
         "FATAL_HEXADECIMAL_TOO_SHORT": "Impossibile trovare un esadecimale valido di lunghezza {0}",

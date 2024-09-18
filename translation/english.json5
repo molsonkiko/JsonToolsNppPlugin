@@ -352,6 +352,7 @@
         "BAD_PYTHON_False": "False is not allowed in any JSON specification",
         "BAD_JAVASCRIPT_undefined": "undefined is not allowed in any JSON specification",
         "BAD_CHAR_INSTEAD_OF_EOF": "At end of valid JSON document, got {0} instead of EOF",
+        "BAD_FLOAT_TOO_LARGE": "Number string {0} is too large for a 64-bit floating point number",
         // ============== FATAL messages ==============
         "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "Expected JavaScript comment after '/'",
         "FATAL_HEXADECIMAL_TOO_SHORT": "Could not find valid hexadecimal of length {0}",

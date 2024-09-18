@@ -1479,18 +1479,19 @@ namespace JSON_Tools.Forms
 
         /// <summary>
         /// sets this.ptrTitleBuf to a pointer to an unmanaged Unicode char array containing the title of this TreeViewer's docking form.<br></br>
-        /// If isFilename, strips the directory name away from the beginning of title.
+        /// If isFilename, inserts the title (after stripping the directory name away from the beginning of title) into the normal format string for the TreeViewer title
         /// </summary>
         public IntPtr SetTitleBuffer(string title, bool isFilename)
         {
+            string fullTitle = title;
             if (isFilename)
             {
                 string[] fnameSplit = fname.Split('\\');
                 title = fnameSplit[fnameSplit.Length - 1];
+                string defaultNameFormat = "Json Tree View for {0}";
+                string nameFormat = (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "title" }, out JNode node) && node.value is string s && s.Contains("{0}")) ? s : defaultNameFormat;
+                fullTitle = nameFormat.Replace("{0}", title);
             }
-            string defaultNameFormat = "Json Tree View for {0}";
-            string nameFormat = (Translator.TryGetTranslationAtPath(new string[] { "forms", "TreeViewer", "title" }, out JNode node) && node.value is string s && s.Contains("{0}")) ? s : defaultNameFormat;
-            string fullTitle = nameFormat.Replace("{0}", title);
             int maxCharsTitleBuf = MAX_LEN_TITLE_BUFFER / Marshal.SystemDefaultCharSize - 1;
             if (fullTitle.Length > maxCharsTitleBuf)
                 fullTitle = fullTitle.Substring(0, maxCharsTitleBuf - 3) + "...";

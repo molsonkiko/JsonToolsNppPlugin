@@ -639,7 +639,10 @@ Got
                 new object[] { "{}", "{" + NL + "   }", true },
                 new object[] { "[]", "[ ]", true },
                 new object[] { "[]", "[1, 2]", false },
-                new object[] { "1" + new string('0', 400), "NaN", true }, // really really big int representations
+                new object[] { "1" + new string('0', 400), "Infinity", true }, // really really big int representations
+                new object[] { "-2" + new string('3', 350), "-Infinity", true }, // really really big int representations (negative)
+                new object[] { "-2.1234567890e700", "-Infinity", true }, // really really big float representations (negative)
+                new object[] { "5.43433666464342343433341e4550", "Infinity", true }, // really really big float representations (positive)
             };
             foreach (object[] test in equalityTestcases)
             {
@@ -1082,6 +1085,14 @@ multiline comment
                     "Leading + signs in numbers are only allowed in JSON5",
                     "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
                     "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
+                }),
+                ("[9.7642E+857, -23e500, 3e-, +" + new string('3', 400) + "]", "[Infinity, -Infinity, NaN, Infinity]", new string[]
+                {
+                    "Number string \"9.7642E+857\" is too large for a 64-bit floating point number",
+                    "Number string \"-23e500\" is too large for a 64-bit floating point number",
+                    "Number string \"3e-\" had bad format",
+                    "Leading + signs in numbers are only allowed in JSON5",
+                    "Number string \"+" + new string('3', 400) + "\" is too large for a 64-bit floating point number",
                 }),
             };
 

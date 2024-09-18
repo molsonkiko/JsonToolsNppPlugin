@@ -187,6 +187,7 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.BAD_PYTHON_False: return Translator.TranslateLintMessage(translated, lintType, "False is not allowed in any JSON specification");
             case JsonLintType.BAD_JAVASCRIPT_undefined: return Translator.TranslateLintMessage(translated, lintType, "undefined is not allowed in any JSON specification");
             case JsonLintType.BAD_CHAR_INSTEAD_OF_EOF: return TryTranslateWithOneParam(translated, lintType, "At end of valid JSON document, got {0} instead of EOF", param1);
+            case JsonLintType.BAD_FLOAT_TOO_LARGE: return TryTranslateWithOneParam(translated, lintType, "Number string {0} is too large for a 64-bit floating point number", param1);
             // FATAL messages
             case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Expected JavaScript comment after '/'");
             case JsonLintType.FATAL_HEXADECIMAL_TOO_SHORT: return TryTranslateWithOneParam(translated, lintType, "Could not find valid hexadecimal of length {0}", param1);
@@ -355,6 +356,10 @@ namespace JSON_Tools.JSON_Tools
         /// param1 = c (char)
         /// </summary>
         BAD_CHAR_INSTEAD_OF_EOF = BAD_UNTERMINATED_MULTILINE_COMMENT + 31,
+        /// <summary>
+        /// param1 = numStr (string)
+        /// </summary>
+        BAD_FLOAT_TOO_LARGE = BAD_UNTERMINATED_MULTILINE_COMMENT + 32,
         // ==========  FATAL errors =============
         FATAL_EXPECTED_JAVASCRIPT_COMMENT = (ParserState.FATAL - 1) << 10,
         /// <summary>
@@ -1357,10 +1362,17 @@ namespace JSON_Tools.JSON_Tools
             {
                 num = double.Parse(numstr, JNode.DOT_DECIMAL_SEP);
             }
-            catch
+            catch (Exception ex)
             {
-                HandleError(JsonLintType.BAD_NUMBER_INVALID_FORMAT, inp, startUtf8Pos, JNode.StrToString(numstr, true));
-                num = NanInf.nan;
+                var errno = JsonLintType.BAD_NUMBER_INVALID_FORMAT;
+                if (ex is OverflowException)
+                {
+                    num = negative ? NanInf.neginf : NanInf.inf;
+                    errno = JsonLintType.BAD_FLOAT_TOO_LARGE;
+                }
+                else
+                    num = NanInf.nan;
+                HandleError(errno, inp, startUtf8Pos, JNode.StrToString(numstr, true));
             }
             if (numstr[numstr.Length - 1] == '.')
                 HandleError(JsonLintType.JSON5_NUM_TRAILING_DECIMAL_POINT, inp, startUtf8Pos);
