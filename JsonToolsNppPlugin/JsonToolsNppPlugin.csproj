@@ -275,15 +275,20 @@
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildProjectDirectory)\PluginInfrastructure\DllExport\NppPlugin.DllExport.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  <Target Name="CopyTestFiles" BeforeTargets="Build">
+  <Target Name="CopyTranslation" AfterTargets="Build" DependsOnTargets="Build">
     <ItemGroup>
-        <TESTFILES Include="testfiles\**\*.*" />
+      <NPP32BIT Include="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools" />
+      <NPP64BIT Include="$(ProgramW6432)\Notepad++\plugins\JsonTools" />
+      <TRANSLATION_ORIGIN Include="..\translation\*.json5" />
+      <TRANSLATION32 Include="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools\translation" />
+      <TRANSLATION64 Include="$(ProgramW6432)\Notepad++\plugins\JsonTools\translation" />
     </ItemGroup>
-    <Copy SourceFiles="@(TESTFILES)" DestinationFolder="$(ProgramW6432)\Notepad++\plugins\JsonTools\%(RecursiveDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(TESTFILES)" DestinationFolder="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <MakeDir Directories="@(NPP64BIT)" Condition=" '$(Platform)' == 'x64' " />
+    <MakeDir Directories="@(NPP32BIT)" Condition=" '$(Platform)' == 'x86' " />
+    <!-- copy all translation files to NPP plugin dir's subdirectory -->
+    <MakeDir Directories="@(TRANSLATION64)" Condition=" '$(Platform)' == 'x64' " />
+    <MakeDir Directories="@(TRANSLATION32)" Condition=" '$(Platform)' == 'x86' " />
+    <Copy Condition=" '$(Platform)' == 'x64' " SourceFiles="@(TRANSLATION_ORIGIN)" DestinationFolder="@(TRANSLATION64)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x86' " SourceFiles="@(TRANSLATION_ORIGIN)" DestinationFolder="@(TRANSLATION32)" SkipUnchangedFiles="true" />
   </Target>
-  -->
 </Project>
