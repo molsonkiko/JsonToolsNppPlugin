@@ -948,10 +948,9 @@ The following keywords are supported for random JSON generation:
 ### Keywords for strings ###
 
 * [minLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-minlength) and [maxLength](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-maxlength) (*added in [7.1](/CHANGELOG.md#710---2024-02-28)*)
-    * if `minLength` is not specified, strings will have a minimum length of 
+    * All strings will have between 0 and 10 characters, unless specified by `minLength` or `maxLength` keywords.
 * [pattern](https://json-schema.org/draft/2020-12/json-schema-validation.html#name-pattern) (*see note below on [random strings from regex](#random-strings-from-regex-added-in-v81)*)
     * If there is no `pattern` keyword, or if `generate_random_patterns` is `False`, the following are all true:
-    * All strings will have fewer than 11 characters.
     * If `extended_ascii_strings` is `False` (the default), the characters in each string will be drawn from the set of printable ASCII characters, ``"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\r\n"``
     * If `extended_ascii_strings` is `True`, the characters in each string will have UTF-16 codes between 1 (`\x01`) and 255 (`ÿ`)
 
