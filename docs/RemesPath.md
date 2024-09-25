@@ -537,6 +537,11 @@ Then the returned value is `0.6*10 + 0.4*8`, or 9.2.
 Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGELOG.md#520---2023-06-04)*
 
 ---
+`rand_schema(schema: object, minArrayLength: int = 0, maxArrayLength: int = 10, extendedAsciiStrings: bool = false, usePatterns: bool = false)`
+
+Creates [random JSON from `schema`](/docs/README.md#generating-random-json-from-a-schema), where the four optional arguments take the place of the global settings `minArrayLength`, `maxArrayLength`, `extended_ascii_strings`, and `generate_random_patterns`, respectively.
+
+---
 `randint(start: int, end: int=null) -> int`
 
 *Added in [v6.0](/CHANGELOG.md#600---2023-12-13)*

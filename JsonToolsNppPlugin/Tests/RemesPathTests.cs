@@ -779,7 +779,6 @@ namespace JSON_Tools.Tests
             }
             // the rand() and randint() functions require a special test because their outputs are nondeterministic
             ii += 7;
-            bool testFailed = false;
             string randints1argQuery = "flatten(@.foo)[:]->randint(1000)";
             string randints2argQuery = "range(9)[:]->randint(-700, 800)";
             string randintsIfElseQuery = "var stuff = j`[\"foo\", \"bar\", \"baz\", \"quz\"]`; range(17)[:]->at(stuff, abs(randint(-20, 20) % 4))";
@@ -814,7 +813,8 @@ namespace JSON_Tools.Tests
                 testsFailed += 3;
                 Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
             }
-            for (int randNum = 0; randNum < 28 && !testFailed; randNum++)
+            bool allRandTestsFailed = false;
+            for (int randNum = 0; randNum < 28 && !allRandTestsFailed; randNum++)
             {
                 // rand()
                 try
@@ -822,14 +822,14 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("rand()", foo);
                     if (!(result.value is double d && d >= 0d && d < 1d))
                     {
-                        testFailed = true;
+                        allRandTestsFailed = true;
                         testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1, but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    testFailed = true;
+                    allRandTestsFailed = true;
                     testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(rand(), foo) to return a double between 0 and 1 but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
@@ -840,14 +840,14 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("ifelse(rand() < 0.5, a, b)", foo);
                     if (!(result.value is string s && (s == "a" || s == "b")))
                     {
-                        testFailed = true;
+                        allRandTestsFailed = true;
                         testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\", but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    testFailed = true;
+                    allRandTestsFailed = true;
                     testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\" but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
@@ -858,7 +858,7 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search("j`[1,2,3]`[:]{rand()}[0]", foo);
                     if (!(result is JArray arr) || arr.children.All(x => x == arr[0]))
                     {
-                        testFailed = true;
+                        allRandTestsFailed = true;
                         testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0], foo) to return array of doubles that aren't all equal" +
                             $", but instead got {result.ToString()}");
@@ -866,7 +866,7 @@ namespace JSON_Tools.Tests
                 }
                 catch (Exception ex)
                 {
-                    testFailed = true;
+                    allRandTestsFailed = true;
                     testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(j`[1,2,3]`{{{{rand(@)}}}}[0] to return array of doubles that aren't equal, but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
@@ -879,14 +879,14 @@ namespace JSON_Tools.Tests
                     result = remesparser.Search(q, foo);
                     if (!(result is JArray arr && arr[0].value is double d1 && d1 >= 0 && d1 <= 1 && arr.children.All(x => x.value is double xd && xd == d1)))
                     {
-                        testFailed = true;
+                        allRandTestsFailed = true;
                         testsFailed++;
                         Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got result {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    testFailed = true;
+                    allRandTestsFailed = true;
                     testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search(\"{q}\", foo) to return an array where every value is the same double between 0 and 1, but instead got exception {RemesParser.PrettifyException(ex)}");
                 }
@@ -947,6 +947,40 @@ namespace JSON_Tools.Tests
                     testsFailed++;
                     Npp.AddLine($"Expected remesparser.Search({query}, {onetofiveStr}) to return {desiredResult.ToString()}, " +
                                       $"but instead got {result.ToString()}.");
+                }
+            }
+            // test that rand_schema correctly uses all args
+            var randFromSchemaTestcases = new (string query, Func<JNode, bool> passIf)[]
+            {
+                ("rand_schema(j`{\"type\": \"boolean\"}`)", x => x.value is bool), // base case, simple schema and no args
+                ("rand_schema(j`{\"type\": \"array\", \"items\": {\"type\": [\"integer\", \"null\"]}}`, 11, 13)", x => x is JArray jarr && jarr.Length >= 11 && jarr.Length <= 13 && jarr.children.All(y => y.type == Dtype.INT || y.type == Dtype.NULL)), // make sure minArrayLength and maxArrayLength are followed
+                ("rand_schema(j`{\"type\": \"string\", \"pattern\": \"\\\\\\\\d{4,9}|foo\"}`,,,,true)", x => x.value is string s && (s == "foo" || (s.Length <= 9 && s.Length >= 4 && s.All(y => y.IsDigit())))), // make sure isPattern = true makes string follow regex
+                ("rand_schema(j`{\"type\": \"string\", \"pattern\": \"\\\\\\\\d{4,9}|foo\"}`)", x => x.value is string s && !(s == "foo" || (s.Length <= 9 && s.Length >= 4 && s.All(y => y.IsDigit())))), // make sure isPattern = false makes string ignore regex
+                ("rand_schema(j`{\"type\": \"array\", \"items\": {\"type\": \"boolean\"}}`)", x => x is JArray jarr && jarr.Length >= 0 && jarr.Length <= 10 && jarr.children.All(y => y.value is bool)), // make sure default array length range applies when no minArrayLength or maxArrayLength specified
+                ("rand_schema(j`{\"type\": \"string\", \"maxLength\": 17, \"minLength\": 14}`,,,true)", x => x.value is string s && s.Length >= 14 && s.Length <= 17 && s.All(y => y >= 1 && y <= 255) && s.Any(y => RandomJsonFromSchema.PRINTABLE.IndexOf(y) < 0)), // make sure extendedAsciiStrings = true makes string extended ASCII
+                ("rand_schema(j`{\"type\": \"string\", \"maxLength\": 12, \"minLength\": 9}`)", x => x.value is string s && s.Length >= 9 && s.Length <= 12 && s.All(y => RandomJsonFromSchema.PRINTABLE.IndexOf(y) >= 0)), // make sure extendedAsciiStrings = false makes string only printables
+            };
+            var jnull = new JNode();
+            foreach ((string query, Func<JNode, bool> passIf) in randFromSchemaTestcases)
+            {
+                ii++;
+                try
+                {
+                    for (int jj = 0; jj < 6; jj++)
+                    {
+                        JNode node = remesparser.Search(query, jnull);
+                        if (!passIf(node))
+                        {
+                            testsFailed++;
+                            Npp.AddLine($"Failed test {query} because output {node.ToString()} did not pass test");
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    testsFailed++;
+                    Npp.AddLine($"Failed test {query} because of exception {ex}");
                 }
             }
             /**

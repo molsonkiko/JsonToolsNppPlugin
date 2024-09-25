@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. When a file is renamed, the name of a [tree view](/docs/README.md#json-tools-overview) associated with that file also changes to match the new name.
+2. Add [`rand_schema` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) to generate random JSON from schema.
 
 ### Changed
 

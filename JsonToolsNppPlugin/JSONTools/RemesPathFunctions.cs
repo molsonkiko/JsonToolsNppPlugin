@@ -1630,6 +1630,16 @@ namespace JSON_Tools.JSON_Tools
             return new JNode(rand, Dtype.FLOAT, 0);
         }
 
+        public static JNode RandomFromSchema(List<JNode> args)
+        {
+            JNode node = args[0];
+            int minArrayLength = args.Count >= 2 && args[1].value is long l && l < int.MaxValue && l >= 0 ? (int)l : 0;
+            int maxArrayLength = args.Count >= 3 && args[2].value is long l2 && l2 < int.MaxValue && l2 >= 0 ? (int)l2 : 10;
+            bool extendedAsciiStrings = args.Count >= 4 && args[3].value is bool b && b;
+            bool usePatterns = args.Count >= 5 && args[4].value is bool b2 && b2;
+            return RandomJsonFromSchema.RandomJson(node, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
+        }
+
         /// <summary>
         /// randint(start: int, end: int=null)  -> int<br></br>
         /// returns a random integer from start (inclusive) to end (exclusive)<br></br>
@@ -3675,6 +3685,7 @@ namespace JSON_Tools.JSON_Tools
             ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),
+            ["rand_schema"] = new ArgFunction(RandomFromSchema, "rand_schema", Dtype.ANYTHING, 1, 5, false, new Dtype[] { Dtype.OBJ, Dtype.INT, Dtype.INT, Dtype.BOOL, Dtype.BOOL }, isDeterministic: false),
             ["randint"] = new ArgFunction(RandomInteger, "randint", Dtype.INT, 1, 2, false, new Dtype[] {Dtype.INT, Dtype.INT}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
             ["s_cat"] = new ArgFunction(StrCat, "s_cat", Dtype.STR, 1, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING}),
