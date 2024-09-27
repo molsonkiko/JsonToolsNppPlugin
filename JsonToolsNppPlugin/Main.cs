@@ -703,12 +703,14 @@ namespace Kbg.NppPluginNET
                 string msg = "There were {0} syntax errors in the document. Would you like to see them?\r\n(You can turn off these prompts in the settings (offer_to_show_lint setting))";
                 if (Translator.ShowTranslatedMessageBox(msg, "View syntax errors in document?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, 1, lintCount) == DialogResult.Yes)
                 {
-                    if (errorForm != null)
+                    if (errorForm != null && !errorForm.IsDisposed)
                         Npp.notepad.HideDockingForm(errorForm);
                     OpenErrorForm(activeFname, true);
                     //mainThreadForm.Invoke(new Action(() => OpenErrorForm(activeFname, true)));
                 }
             }
+            if (lintCount == 0 && errorForm != null && !errorForm.IsDisposed) // clear errorForm when no errors found
+                errorForm.Invoke(new Action(() => errorForm.Reload(activeFname, new List<JsonLint>())));
             if (fatal)
             {
                 // jump to the position of the fatal error (if in whole document mode and not auto-triggered)

@@ -23,7 +23,7 @@ namespace JSON_Tools.Forms
 
         private void SortButton_Clicked(object sender, EventArgs e)
         {
-            (ParserState parserState, JNode json, bool usesSelections, _) = Main.TryParseJson(preferPreviousDocumentType:true);
+            (ParserState parserState, JNode json, bool usesSelections, DocumentType docType) = Main.TryParseJson(preferPreviousDocumentType:true);
             if (parserState == ParserState.FATAL || json == null)
                 return;
             string pathQuery = "@" + PathTextBox.Text;
@@ -93,7 +93,10 @@ namespace JSON_Tools.Forms
                 if (!SortSingleJson(jsonAtPath, query))
                     return;
             }
-            Main.ReformatFileWithJson(json, Main.PrettyPrintFromSettings, usesSelections);
+            Func<JNode, string> formatter = Main.PrettyPrintFromSettings;
+            if (docType == DocumentType.JSONL)
+                formatter = Main.ToJsonLinesFromSettings;
+            Main.ReformatFileWithJson(json, formatter, usesSelections);
         }
 
         /// <summary>

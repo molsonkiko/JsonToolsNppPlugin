@@ -778,6 +778,13 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{new string[] { "3 : \"{\\\"5\\\": [6]}\"" } }),
                 ("tree_query", new object[]{"@ = ``"}), // test that using RemesPath to clear text of document works
                 ("compare_text", new object[]{""}),
+                // TEST SORT FORM ON JSON LINES
+                ("overwrite", new object[]{"[1,'foo',true]\n[2,'bar',false]"}),
+                ("set_document_type", new object[]{"JSONL"}),
+                ("sort_form_run", new object[]{"", false, false, 2, "1"}),
+                ("compare_text", new object[]{"[2,\"bar\",false]\n[1,\"foo\",true]"}),
+                ("sort_form_run", new object[]{"[0]", false, true, 3, "s_len(str(@))"}),
+                ("compare_text", new object[]{"[false,\"bar\",2]\n[1,\"foo\",true]"}),
             };
 
             var messages = new List<string>();

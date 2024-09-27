@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 7. Fix bug where plugin actions (mainly RemesPath queries in [regex mode](/docs/README.md#regex-search-form)) that set the text of the entire document to an empty string would not do anything. Those actions will now correctly remove all the text in the document.
 8. Fix [issue 79](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/79) where, on higher display resolutions than the default 125% normally used by molsonkiko in development, some of the advanced controls in the [find/replace form](/docs/README.md#find-and-replace-form) would not be visible.
 9. Fix annoying but harmless bug where, if the user had two views open and [ran a plugin command on one or more selections](/docs/README.md#working-with-selections) in the second view, the indicator that JsonTools uses to remember selections (which is supposed to be hidden at all times) would cause the selections to be underlined.
+10. Address [issue 80](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/80); now [error form](/docs/README.md#error-form-and-status-bar) will be cleared of errors when the JSON parser does not log any syntax errors.
+11. Make it so that JSON Lines documents are correctly formatted as JSON Lines after sorting by the [sort form](/docs/README.md#sort-form).
 
 ## [8.1.0] - 2024-08-23
 
