@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-1. When a file is renamed, the name of a [tree view](/docs/README.md#json-tools-overview) associated with that file also changes to match the new name.
+1. When a file is renamed, the name of a [tree view](/docs/README.md#json-tools-overview) associated with that file also changes to match the new name. This also happens when a treeview is refreshed with JSON from a different file.
 2. Add [`rand_schema` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) to generate random JSON from schema.
 
 ### Changed
@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 9. Fix annoying but harmless bug where, if the user had two views open and [ran a plugin command on one or more selections](/docs/README.md#working-with-selections) in the second view, the indicator that JsonTools uses to remember selections (which is supposed to be hidden at all times) would cause the selections to be underlined.
 10. Address [issue 80](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/80); now [error form](/docs/README.md#error-form-and-status-bar) will be cleared of errors when the JSON parser does not log any syntax errors.
 11. Make it so that JSON Lines documents are correctly formatted as JSON Lines after sorting by the [sort form](/docs/README.md#sort-form).
+12. Make it so that refreshing a tree view originally associated with `oldFile` with JSON from `newFile` will correctly cause the tree view to be associated with `newFile`. Previously, the tree view stayed associated with `oldFile`, so attempting to open a new tree view for `oldFile` would instead close the tree view now associated with `newFile`, because the command to open a tree view for a file closes that file's tree view if it already has an open one.
 
 ## [8.1.0] - 2024-08-23
 

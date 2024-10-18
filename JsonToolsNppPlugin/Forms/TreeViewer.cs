@@ -1404,7 +1404,7 @@ namespace JSON_Tools.Forms
             (_, JNode newJson, _, DocumentType _) = Main.TryParseJson(GetDocumentTypeFromComboBox());
             if (newJson == null)
                 return;
-            fname = curFname;
+            TransferToNewFile(curFname);
             json = newJson;
             queryResult = json;
             JsonTreePopulate(json);
@@ -1461,6 +1461,7 @@ namespace JSON_Tools.Forms
             if (oldDocumentType == newDocumentType)
                 return;
             (_, JNode newJson, _, _) = Main.TryParseJson(newDocumentType);
+            TransferToNewFile(Npp.notepad.GetCurrentFilePath());
             JsonTreePopulate(newJson);
         }
 
@@ -1475,6 +1476,25 @@ namespace JSON_Tools.Forms
             SetTitleBuffer(newFname, isFilename);
             Marshal.WriteIntPtr(ptrNppTbData, IntPtr.Size, ptrTitleBuf);
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMUPDATEDISPINFO, 0, Handle);
+        }
+
+        /// <summary>
+        /// Rename this tree view to newFname,<br></br>
+        /// set the <c>tv</c> attribute of the <see cref="JsonFileInfo"/> for newFname to this,<br></br>
+        /// and clear the <c>tv</c> attribute for the JsonFileInfo of this tree's previous fname
+        /// </summary>
+        /// <param name="newFname"></param>
+        private void TransferToNewFile(string newFname)
+        {
+            string oldFname = fname;
+            if (oldFname != newFname && (Main.grepperForm is null || Main.grepperForm.tv is null || this != Main.grepperForm.tv))
+            {
+                Rename(newFname, true);
+                if (Main.TryGetInfoForFile(newFname, out JsonFileInfo info))
+                    info.tv = this;
+                if (Main.TryGetInfoForFile(oldFname, out JsonFileInfo oldInfo))
+                    oldInfo.tv = null;
+            }
         }
 
         /// <summary>
