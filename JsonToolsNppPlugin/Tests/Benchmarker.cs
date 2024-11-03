@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 
@@ -181,6 +181,110 @@ Performance tests for RemesPath ({description})
             }
             Npp.AddLine($"Load times (ms): {String.Join(", ", loadTimesStr)}");
             return true;
+        }
+
+        public static bool BenchmarkParseAndFormatDoubles(int numTrials, int arraySize)
+        {
+            var parser = new JsonParser();
+            Stopwatch watch = new Stopwatch();
+            var ticksToParse = new long[numTrials];
+            var ticksToDump = new long[numTrials];
+            string numArrPreview = "";
+            string numArrayStr = "";
+            string numArrayDumped = "";
+            for (int ii = 0; ii < numTrials; ii++)
+            {
+                try
+                {
+                    numArrayStr = GenerateRandomDoubleArrayStr(arraySize);
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While generating the string representation of a random array of doubles, got exception {ex}");
+                    return true;
+                }
+                numArrPreview = numArrayStr.Length <= 200 ? numArrayStr : numArrayStr.Substring(0, 200) + "...";
+                JNode numArrayNode = new JNode();
+                try
+                {
+                    watch.Start();
+                    numArrayNode = parser.Parse(numArrayStr);
+                    watch.Stop();
+                    ticksToParse[ii] = watch.ElapsedTicks;
+                    watch.Reset();
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While parsing the string representation of a random array of doubles (preview: \"{numArrPreview}\"), got exception {ex}");
+                    return true;
+                }
+                try
+                {
+                    watch.Start();
+                    numArrayDumped = numArrayNode.ToString();
+                    watch.Stop();
+                    ticksToDump[ii] = watch.ElapsedTicks;
+                    watch.Reset();
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While compressing the JSON array made by parsing \"{numArrPreview}\", got exception {ex}");
+                    return true;
+                }
+            }
+            (double mean, double sd) = GetMeanAndSd(ticksToParse);
+            Npp.AddLine($"To parse arrays of {arraySize} non-integer numbers (representative length = {numArrayStr.Length}, representative example preview: \"{numArrPreview}\") " +
+                $"took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
+            var parseTimesStr = ticksToParse.Select(x => (x / 10_000).ToString()).ToArray();
+            Npp.AddLine($"Times to parse (ms): {string.Join(", ", parseTimesStr)}");
+            (mean, sd) = GetMeanAndSd(ticksToDump);
+            Npp.AddLine($"To re-compress (convert back to minimal JSON strings) " +
+                $"the arrays made from parsing those strings took {ConvertTicks(mean)} +/- {ConvertTicks(sd)} ms over {numTrials} trials");
+            var dumpTimesStr = ticksToDump.Select(x => (x / 10_000).ToString()).ToArray();
+            Npp.AddLine($"Times to re-compress (ms): {string.Join(", ", dumpTimesStr)}");
+            string numArrayDumpedPreview = numArrayDumped.Length <= 200 ? numArrayDumped : numArrayDumped.Substring(0, 200) + "...";
+            Npp.AddLine($"Representative example of result of re-compression = \"{numArrayDumpedPreview}\"");
+            return false;
+        }
+
+        /// <summary>
+        /// Generate a JSON array of arraySize random string representations of numbers (all valid JSON)<br></br>
+        /// The number of digits before the decimal place should be uniformly distributed (from 1 to 9),<br></br>
+        /// as should the exponent (with a 50% chance of no exponent, otherwise between -100 and +100)<br></br>
+        /// and the number of digits after the decimal place (from 0 to 18; if it would be 0 instead '0' is appended after the '.').<br></br>
+        /// Each number has a 50% chance of being negative.<br></br>
+        /// EXAMPLE:<br></br>
+        /// If arraySize = 3, a potential output might be <c>"[-147563.6521e-20, 349.8, -9.13456632355e95]"</c>
+        /// </summary>
+        /// <param name="arraySize"></param>
+        /// <returns></returns>
+        private static string GenerateRandomDoubleArrayStr(int arraySize)
+        {
+            var sb = new StringBuilder();
+            sb.Append('[');
+            for (int jj = 0; jj < arraySize; jj++)
+            {
+                if (RandomJsonFromSchema.random.Next(0, 2) == 1)
+                    sb.Append('-');
+                int lenInteg = RandomJsonFromSchema.random.Next(1, 10);
+                sb.Append((char)(RandomJsonFromSchema.random.Next(49, 58))); // random char from '1' to '9'
+                for (int kk = 0; kk < lenInteg - 1; kk++)
+                    sb.Append((char)(RandomJsonFromSchema.random.Next(48, 58))); // random char from '0' to '9'
+                int numDecimalPlaces = RandomJsonFromSchema.random.Next(0, 19);
+                sb.Append('.');
+                for (int kk = 0; kk < numDecimalPlaces; kk++)
+                    sb.Append((char)(RandomJsonFromSchema.random.Next(48, 58)));
+                if (numDecimalPlaces == 0)
+                    sb.Append('0');
+                if (RandomJsonFromSchema.random.Next(0, 2) == 1)
+                {
+                    int exponentValue = RandomJsonFromSchema.random.Next(-100, 101);
+                    sb.Append('e');
+                    sb.Append(exponentValue.ToString());
+                }
+                sb.Append(jj == arraySize - 1 ? "]" : ", ");
+            }
+            return sb.ToString();
         }
 
         public static bool BenchmarkJNodeToString(int numTrials, string fname)
