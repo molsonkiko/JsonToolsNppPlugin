@@ -403,14 +403,36 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// returns d formatted with up to 17 digits of precision, using '.' as the decimal separator.<br></br>
-        /// For whatever reason, d.ToString(<see cref="DOT_DECIMAL_SEP"/>) only gives 15 digits of precision by default.
+        /// Let <c>d17</c> = d.ToString("G17", <see cref="JNode.DOT_DECIMAL_SEP"/>) (which can always be parsed to regenerate a double equal to <c>d</c>)<br></br>
+        /// and let <c>d15</c> = d.ToString(<see cref="JNode.DOT_DECIMAL_SEP"/>) (which only keeps 15 digits of precision)<br></br>
+        /// Returns <c>d</c> formatted with up to 17 digits of precision, using '.' as the decimal separator.<br></br>
+        /// If <c>d17</c> includes 17 digits of precision, we will generate <c>d15</c>.<br></br>
+        /// If <c>d15</c> is shorter than <c>d17</c>, and if (<c>double.Parse(d15) == d</c>, we will prefer <c>d15</c> because <c>d17</c> was an unncessarily verbose representation of <c>d</c>.
         /// </summary>
         /// <param name="d"></param>
         /// <returns></returns>
         public static string DoubleToString(double d)
         {
-            return d.ToString("G17", DOT_DECIMAL_SEP);
+            string dubstring = d.ToString(DOT_DECIMAL_SEP);
+            int indexOfE = dubstring.IndexOf('E');
+            if (d == Math.Round(d) && !(d > long.MaxValue || d < long.MinValue) && indexOfE < 0)
+            {
+                // add ending ".0" to distinguish doubles equal to integers from actual integers
+                // unless they use exponential notation, in which case you mess things up
+                // by turning something like 3.123E+15 into 3.123E+15.0 (a non-JSON number representation)
+                return dubstring + ".0";
+            }
+            // the default d.ToString(DOT_DECIMAL_SEP) might lose precision in some cases.
+            // We will nonetheless prefer this representation because the G17 representation
+            //     has stupid unnecessarily verbose representations like representing 2317.24 as 2317.2399999999998
+            // We need to parse dubstring to make sure no precision has been lost.
+            try
+            {
+                if (double.Parse(dubstring) == d)
+                    return dubstring; // default string representation has all necessary precision
+            }
+            catch { }
+            return d.ToString("G17", DOT_DECIMAL_SEP); // we need to use a string representation that retains as much precision as possible
         }
 
         /// <summary>
@@ -436,15 +458,7 @@ namespace JSON_Tools.JSON_Tools
                         return (v < 0) ? "-Infinity" : "Infinity";
                     }
                     if (double.IsNaN(v)) { return "NaN"; }
-                    string dubstring = DoubleToString(v);
-                    if (v == Math.Round(v) && !(v > long.MaxValue || v < long.MinValue) && dubstring.IndexOf('E') < 0)
-                    {
-                        // add ending ".0" to distinguish doubles equal to integers from actual integers
-                        // unless they use exponential notation, in which case you mess things up
-                        // by turning something like 3.123E+15 into 3.123E+15.0 (a non-JSON number representation)
-                        return dubstring + ".0";
-                    }
-                    return dubstring;
+                    return DoubleToString(v);
                 }
                 case Dtype.INT: return Convert.ToInt64(value).ToString();
                 case Dtype.NULL: return "null";

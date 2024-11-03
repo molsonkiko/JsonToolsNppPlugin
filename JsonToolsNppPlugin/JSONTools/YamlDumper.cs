@@ -157,8 +157,6 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return ".nan";
                 }
-                if (d % 1 == 0)
-                    return $"{d}.0"; // add .0 at end of floats that are equal to ints
                 return JNode.DoubleToString(d);
             }
             return strv;
