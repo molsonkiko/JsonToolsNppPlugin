@@ -142,20 +142,16 @@ I expect you could find plenty of other good websites if you did some research.
 If you are interested in helping users of JsonTools who don't speak English, JsonTools can be translated to other languages beginning in [v8.0](/CHANGELOG.md#800---2024-06-29).
 
 JsonTools infers your preferred language and attempts to translate in the following way:
-1. JsonTools checks your [Notepad++ `nativeLang.xml` config file](https://npp-user-manual.org/docs/binary-translation/#creating-or-editing-a-translation) (at [XPath path](https://www.w3schools.com/xml/xml_xpath.asp) `/NotepadPlus/Native-Langue/@name`) to determine what language you prefer to use, and sets `lowerEnglishName` to the appropriate value and __skips to step 3__. For example, if this file says `galician`, we will attempt to translate JsonTools to `galician`. __If the Notepad++ native language is `english` *or* if JsonTools does not have a translation file for the Notepad++ native language, JsonTools then does the following:__
-    1. JsonTools looks up your [`current culture`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-culture?view=powershell-7.4) (which can be checked using the `get-culture` command in Powershell).
-    2. Next, we find the `EnglishName` property of the `current culture` (which can be found by the `$foo = get-culture; $foo.EnglishName` command in Powershell), take the first word, and convert it to lowercase. Call this `lowerEnglishName`.
-        - Example: the `EnglishName` of the `en-us` culture is `English (United States)`, so `lowerEnglishName` is `english`
-        - Example: the `EnglishName` of the `it-it` culture is `Italian (Italy)`, so `lowerEnglishName` is `italian`
-3. JsonTools then does one of the following:
+1. JsonTools checks your [Notepad++ `nativeLang.xml` config file](https://npp-user-manual.org/docs/binary-translation/#creating-or-editing-a-translation) (at [XPath path](https://www.w3schools.com/xml/xml_xpath.asp) `/NotepadPlus/Native-Langue/@name`) to determine what language you prefer to use, and sets `lowerEnglishName` to the appropriate value. For example, if this file says `galician`, we will attempt to translate JsonTools to `galician`.
+2. JsonTools then does one of the following:
     - If `lowerEnglishName` is `english`, it does nothing (because JsonTools is naturally in English)
     - Otherwise, it looks in the `translation` subdirectory of the `JsonTools` plugin folder (where `JsonTools.dll` lives) for a file named `{lowerEnglishName}.json5`
     - __NOTE:__ because the translation files are in a subdirectory of the plugin folder, *translation does not work for versions of Notepad++ older than [version 8](https://notepad-plus-plus.org/downloads/v8/),* since those older versions do not have separate folders for each plugin.
-4. If JsonTools found `translation\{lowerEnglishName}.json5`, it attempts to parse the file. If parsing fails, a message box will appear warning the user of this.
+3. If JsonTools found `translation\{lowerEnglishName}.json5`, it attempts to parse the file. If parsing fails, a message box will appear warning the user of this.
     - If no translation file was found, or if parsing failed, the default English will be used.
-5. If parsing was successful, JsonTools will use the translation file as described below.
+4. If parsing was successful, JsonTools will use the translation file as described below.
 
-JsonTools only attempts to find translation files once, when Notepad++ is starting up. If you change the UI language of Notepad++ or your operating system's UI culture, you will have to close Notepad++ and reopen it before this change will apply to JsonTools.
+JsonTools only attempts to find translation files once, when Notepad++ is starting up. If you change the UI language of Notepad++, you will have to close Notepad++ and reopen it before this change will apply to JsonTools.
 
 To be clear, *JsonTools may not be in the same language of the Notepad++ UI.* The steps described above represent my best effort to automatically translate JsonTools into a language that the user will find useful, without requiring the user to select their language from a list of available languages in the settings form.
 

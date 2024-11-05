@@ -23,6 +23,11 @@ namespace JSON_Tools.Utils
         public static string languageName { get; private set; } = DEFAULT_LANG;
 
         public const string DEFAULT_LANG = "english";
+        /// <summary>
+        /// whether to use the Windows culture (see below) to determine translation language in some cases<br></br>
+        /// This is currently false because of issue 82 (https://github.com/molsonkiko/JsonToolsNppPlugin/issues/82)
+        /// </summary>
+        public const bool CHECK_WINDOWS_CULTURE = false;
         public static readonly string translationDir = Path.Combine(Npp.pluginDllDirectory, "translation");
 
         public static void LoadTranslations(bool atStartup = true, string preferredLang = null)
@@ -52,6 +57,7 @@ namespace JSON_Tools.Utils
                         //MessageBox.Show($"While attempting to determine native language preference from Notepad++ config XML, got an error:\r\n{ex}");
                     }
                 }
+#if CHECK_WINDOWS_CULTURE
                 // as a fallback, try to determine the user's language by asking Windows for their current culture
                 if (languageName == DEFAULT_LANG || !TryGetTranslationFileName(languageName, out _))
                 {
@@ -61,6 +67,7 @@ namespace JSON_Tools.Utils
                     if (languageName == "Unknown")
                         languageName = currentCulture.Parent.EnglishName.Split(' ')[0].ToLower();
                 }
+#endif
             }
             else
             {
