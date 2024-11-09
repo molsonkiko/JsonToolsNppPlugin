@@ -415,7 +415,8 @@ namespace JSON_Tools.JSON_Tools
         {
             string dubstring = d.ToString(DOT_DECIMAL_SEP);
             int indexOfE = dubstring.IndexOf('E');
-            if (d == Math.Round(d) && !(d > long.MaxValue || d < long.MinValue) && indexOfE < 0)
+            bool isValidLong = d == Math.Round(d) && !(d > long.MaxValue || d < long.MinValue);
+            if (isValidLong && indexOfE < 0)
             {
                 // add ending ".0" to distinguish doubles equal to integers from actual integers
                 // unless they use exponential notation, in which case you mess things up
@@ -432,7 +433,8 @@ namespace JSON_Tools.JSON_Tools
                     return dubstring; // default string representation has all necessary precision
             }
             catch { }
-            return d.ToString("G17", DOT_DECIMAL_SEP); // we need to use a string representation that retains as much precision as possible
+            string d17 = d.ToString("G17", DOT_DECIMAL_SEP); // we need to use a string representation that retains as much precision as possible
+            return (isValidLong && d17.IndexOf('E') < 0) ? d17 + ".0" : d17;
         }
 
         /// <summary>

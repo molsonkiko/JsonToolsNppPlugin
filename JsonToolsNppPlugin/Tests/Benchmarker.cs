@@ -183,7 +183,7 @@ Performance tests for RemesPath ({description})
             return true;
         }
 
-        public static bool BenchmarkParseAndFormatDoubles(int numTrials, int arraySize)
+        public static bool BenchmarkAndFuzzParseAndFormatDoubles(int numTrials, int arraySize)
         {
             var parser = new JsonParser();
             Stopwatch watch = new Stopwatch();
@@ -204,11 +204,11 @@ Performance tests for RemesPath ({description})
                     return true;
                 }
                 numArrPreview = numArrayStr.Length <= 200 ? numArrayStr : numArrayStr.Substring(0, 200) + "...";
-                JNode numArrayNode = new JNode();
+                JArray numArray = new JArray();
                 try
                 {
                     watch.Start();
-                    numArrayNode = parser.Parse(numArrayStr);
+                    numArray = (JArray)parser.Parse(numArrayStr);
                     watch.Stop();
                     ticksToParse[ii] = watch.ElapsedTicks;
                     watch.Reset();
@@ -221,7 +221,7 @@ Performance tests for RemesPath ({description})
                 try
                 {
                     watch.Start();
-                    numArrayDumped = numArrayNode.ToString();
+                    numArrayDumped = numArray.ToString();
                     watch.Stop();
                     ticksToDump[ii] = watch.ElapsedTicks;
                     watch.Reset();
@@ -229,6 +229,29 @@ Performance tests for RemesPath ({description})
                 catch (Exception ex)
                 {
                     Npp.AddLine($"While compressing the JSON array made by parsing \"{numArrPreview}\", got exception {ex}");
+                    return true;
+                }
+                try
+                {
+                    // verify that all doubles in numArray round-trip to the same value when parsing numArrayDumped
+                    JArray numArrayFromDumped = (JArray)parser.Parse(numArrayDumped);
+                    var badValues = new List<double>();
+                    for (int jj = 0; jj < numArray.Length; jj++)
+                    {
+                        double val = (double)numArray[jj].value;
+                        double reloaded = (double)numArrayFromDumped[jj].value;
+                        if (val != reloaded)
+                            badValues.Add(val);
+                    }
+                    if (badValues.Count > 0)
+                    {
+                        Npp.AddLine($"The following doubles did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Npp.AddLine($"While parsing the JSON array made by dumping numArray, and comparing the re-parsed array to numArray, got exception {ex}");
                     return true;
                 }
             }

@@ -112,8 +112,8 @@ namespace JSON_Tools.Tests
                     "JsonParser performance",
                     true, false
                 ),
-                (() => Benchmarker.BenchmarkParseAndFormatDoubles(32, 5000),
-                    "performance of parsing and dumping arrays of non-integer numbers",
+                (() => Benchmarker.BenchmarkAndFuzzParseAndFormatDoubles(32, 5000),
+                    "performance and correctness of parsing and dumping arrays of non-integer numbers",
                     false, false),
                 //(() => Benchmarker.BenchmarkParsingAndLintingJsonWithErrors(30), "JsonParser performance and performance of JsonLint.message"),
                 (() => Benchmarker.BenchmarkJNodeToString(64, bigRandomFname),
