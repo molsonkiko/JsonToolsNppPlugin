@@ -181,7 +181,7 @@ namespace JSON_Tools.Tests
                              NL + "    }" +
                              NL + "]",
                              "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" ),
-                ("111111111111111111111111111111", $"1.1111111111111111E+29", $"1.1111111111111111E+29",
+                ("111111111111111111111111111111", $"1.111111111111111e29", $"1.111111111111111e29",
                     "auto-conversion of int64 overflow to double" ),
                 ("{ \"a\"\r\n:1, \"b\" : 1, \"c\"       :1}", "{\"a\": 1, \"b\": 1, \"c\": 1}",
                 "{"+ NL + "\"a\": 1,"+ NL + "\"b\": 1,"+ NL + "\"c\": 1" + NL + "}",
@@ -203,8 +203,8 @@ namespace JSON_Tools.Tests
                     + NL + "}",
                     "culture-sensitive sorting of keys (e.g., 'baßk' should sort before 'basst')"),
                 ("[3.1234e15, -2.178e15, 7.59e15, 5.71138315710726E+18]",
-                    "[3.1234E+15, -2.178E+15, 7.59E+15, 5.71138315710726E+18]",
-                    "["+NL+"3.1234E+15,"+NL+"-2.178E+15,"+NL+"7.59E+15,"+NL+"5.71138315710726E+18"+NL+"]",
+                    "[3.1234e15, -2.178e15, 7.59e15, 5.71138315710726e18]",
+                    "["+NL+"3.1234e15,"+NL+"-2.178e15,"+NL+"7.59e15,"+NL+"5.71138315710726e18"+NL+"]",
                     "floating point numbers using 'E' notation that can exactly represent integers"
                 ),
                 (
@@ -221,8 +221,8 @@ namespace JSON_Tools.Tests
                     "dates and datetimes (both valid and invalid)"
                 ),
                 ("{\"super high precision negative\": -1.7976931348623157e308, \"super high precision positive\": [1.7976931348621957e+308, 2.2250738585072014e-308]}",
-                 "{\"super high precision negative\": -1.7976931348623157E+308, \"super high precision positive\": [1.7976931348621958E+308, 2.2250738585072014E-308]}",
-                 "{\r\n\"super high precision negative\": -1.7976931348623157E+308,\r\n\"super high precision positive\":\r\n    [\r\n    1.7976931348621958E+308,\r\n    2.2250738585072014E-308\r\n    ]\r\n}",
+                 "{\"super high precision negative\": -1.7976931348623157e308, \"super high precision positive\": [1.7976931348621958e308, 2.2250738585072014e-308]}",
+                 "{\r\n\"super high precision negative\": -1.7976931348623157e308,\r\n\"super high precision positive\":\r\n    [\r\n    1.7976931348621958e308,\r\n    2.2250738585072014e-308\r\n    ]\r\n}",
                  "very high-precision large numbers"),
             };
             int testsFailed = 0;
@@ -1281,12 +1281,12 @@ Got
                 (".5,boo", 0, 3, "\".5,\""),
                 ("1,15.5e3E7", 2, 8, "15500.0"),
                 ("1,15.5e3E70", 2, 10, "\"15.5e3E7\""),
-                ("1,2.8e-7,7", 2, 8, "2.8E-07"),
-                (";17.4e+11,7", 1, 9, "1740000000000.0"),
+                ("1,2.8e-7,7", 2, 8, "2.8e-7"),
+                (";17.4e+11,7", 1, 9, "1.74e12"),
                 ("1,15.5e3e7", 2, 8, "15500.0"),
                 ("1,15.5e3e70", 2, 10, "\"15.5e3e7\""),
-                ("1,2.8E-7,7", 2, 8, "2.8E-07"),
-                (";17.4E+11,7", 1, 9, "1740000000000.0"),
+                ("1,2.8E-7,7", 2, 8, "2.8e-7"),
+                (";17.4E+11,7", 1, 9, "1.74e12"),
                 ("1,15.5Eb,ekr", 2, 8, "\"15.5Eb\""),
                 ("a,0x123456789abc,3", 2, 16, "20015998343868"),
                 ("a,0xABCDEFabcdef123,3", 2, 19, "773738404492800291"),

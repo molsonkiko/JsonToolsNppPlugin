@@ -190,6 +190,10 @@
     <Compile Include="Utils\ArrayExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\Translator.cs" />
+    <Compile Include="grisu.net\DiyFp.cs" />
+    <Compile Include="grisu.net\Grisu.cs" />
+    <Compile Include="grisu.net\GrisuDouble.cs" />
+    <Compile Include="grisu.net\PowersOfTenCache.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- references -->

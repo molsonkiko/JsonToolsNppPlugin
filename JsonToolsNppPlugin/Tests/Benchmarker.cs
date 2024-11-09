@@ -192,6 +192,7 @@ Performance tests for RemesPath ({description})
             string numArrPreview = "";
             string numArrayStr = "";
             string numArrayDumped = "";
+            var noRoundTripValues = new List<double>();
             for (int ii = 0; ii < numTrials; ii++)
             {
                 try
@@ -200,7 +201,7 @@ Performance tests for RemesPath ({description})
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While generating the string representation of a random array of doubles, got exception {ex}");
+                    Npp.AddLine($"FAIL: While generating the string representation of a random array of doubles, got exception {ex}");
                     return true;
                 }
                 numArrPreview = numArrayStr.Length <= 200 ? numArrayStr : numArrayStr.Substring(0, 200) + "...";
@@ -215,7 +216,7 @@ Performance tests for RemesPath ({description})
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While parsing the string representation of a random array of doubles (preview: \"{numArrPreview}\"), got exception {ex}");
+                    Npp.AddLine($"FAIL: While parsing the string representation of a random array of doubles (preview: \"{numArrPreview}\"), got exception {ex}");
                     return true;
                 }
                 try
@@ -228,30 +229,24 @@ Performance tests for RemesPath ({description})
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While compressing the JSON array made by parsing \"{numArrPreview}\", got exception {ex}");
+                    Npp.AddLine($"FAIL: While compressing the JSON array made by parsing \"{numArrPreview}\", got exception {ex}");
                     return true;
                 }
                 try
                 {
                     // verify that all doubles in numArray round-trip to the same value when parsing numArrayDumped
                     JArray numArrayFromDumped = (JArray)parser.Parse(numArrayDumped);
-                    var badValues = new List<double>();
                     for (int jj = 0; jj < numArray.Length; jj++)
                     {
                         double val = (double)numArray[jj].value;
                         double reloaded = (double)numArrayFromDumped[jj].value;
                         if (val != reloaded)
-                            badValues.Add(val);
-                    }
-                    if (badValues.Count > 0)
-                    {
-                        Npp.AddLine($"The following doubles did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
-                        return true;
+                            noRoundTripValues.Add(val);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Npp.AddLine($"While parsing the JSON array made by dumping numArray, and comparing the re-parsed array to numArray, got exception {ex}");
+                    Npp.AddLine($"FAIL: While parsing the JSON array made by dumping numArray, and comparing the re-parsed array to numArray, got exception {ex}");
                     return true;
                 }
             }
@@ -267,6 +262,11 @@ Performance tests for RemesPath ({description})
             Npp.AddLine($"Times to re-compress (ms): {string.Join(", ", dumpTimesStr)}");
             string numArrayDumpedPreview = numArrayDumped.Length <= 200 ? numArrayDumped : numArrayDumped.Substring(0, 200) + "...";
             Npp.AddLine($"Representative example of result of re-compression = \"{numArrayDumpedPreview}\"");
+            if (noRoundTripValues.Count > 0)
+            {
+                Npp.AddLine($"FAIL: The following doubles did not round-trip:\r\n" + string.Join(", ", noRoundTripValues.Select(x => x.ToString("G17", JNode.DOT_DECIMAL_SEP))));
+                return true;
+            }
             return false;
         }
 

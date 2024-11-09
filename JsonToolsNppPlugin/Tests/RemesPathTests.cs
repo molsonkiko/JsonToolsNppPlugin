@@ -323,7 +323,7 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("keys(@)", "[\"foo\", \"bar\", \"baz\", \"quz\", \"jub\", \"guzo\", \"7\", \"_\"]"),
                 new Query_DesiredResult("values(@.bar)[:]", "[false, [\"a`g\", \"bah\"]]"),
                 new Query_DesiredResult("s_cat(@.bar.a, ``, 1.5, foo, 1, @.foo[0], null, @._)", "\"false1.5foo1[0, 1, 2]null{\\\"0\\\": 0}\""),
-                new Query_DesiredResult("s_cat(1e3)", "\"1000.0\""),
+                new Query_DesiredResult("s_cat(1e3)", "\"1e3\""),
                 new Query_DesiredResult("s_join(`\t`, @.bar.b)", "\"a`g\\tbah\""),
                 new Query_DesiredResult("sorted(unique(@.foo[1]), true)", "[5.0, 4.0, 3.0]"), // have to sort because this function involves a HashSet so order is random
                 new Query_DesiredResult("unique(@.foo[0], true)", "[0, 1, 2]"),
