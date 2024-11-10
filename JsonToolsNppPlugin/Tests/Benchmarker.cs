@@ -192,6 +192,7 @@ Performance tests for RemesPath ({description})
             string numArrPreview = "";
             string numArrayStr = "";
             string numArrayDumped = "";
+            var badValues = new List<double>();
             for (int ii = 0; ii < numTrials; ii++)
             {
                 try
@@ -235,18 +236,12 @@ Performance tests for RemesPath ({description})
                 {
                     // verify that all doubles in numArray round-trip to the same value when parsing numArrayDumped
                     JArray numArrayFromDumped = (JArray)parser.Parse(numArrayDumped);
-                    var badValues = new List<double>();
                     for (int jj = 0; jj < numArray.Length; jj++)
                     {
                         double val = (double)numArray[jj].value;
                         double reloaded = (double)numArrayFromDumped[jj].value;
                         if (val != reloaded)
                             badValues.Add(val);
-                    }
-                    if (badValues.Count > 0)
-                    {
-                        Npp.AddLine($"The following doubles did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
-                        return true;
                     }
                 }
                 catch (Exception ex)
@@ -266,6 +261,11 @@ Performance tests for RemesPath ({description})
             var dumpTimesStr = ticksToDump.Select(x => (x / 10_000).ToString()).ToArray();
             Npp.AddLine($"Times to re-compress (ms): {string.Join(", ", dumpTimesStr)}");
             string numArrayDumpedPreview = numArrayDumped.Length <= 200 ? numArrayDumped : numArrayDumped.Substring(0, 200) + "...";
+            if (badValues.Count > 0)
+            {
+                Npp.AddLine($"The following doubles did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
+                return true;
+            }
             Npp.AddLine($"Representative example of result of re-compression = \"{numArrayDumpedPreview}\"");
             return false;
         }

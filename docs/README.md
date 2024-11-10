@@ -655,7 +655,7 @@ Of course, there's also the default sort, which can only compare numbers to numb
 
 See the [general notes on string sorting](/README.md#note-on-how-jsontools-sorts-strings) for more notes on how strings are sorted.
 
-For versions of JsonTools [v8.2](/CHANGELOG.md#820---unreleased-yyyy-mm-dd) and newer, [JSON Lines](#json-lines-documents) documents remain formatted as JSON Lines after sorting by the sort form. Earlier versions of JsonTools pretty-printed all JSON after sorting, including JSON Lines.
+For versions of JsonTools [v8.2](/CHANGELOG.md#820---2024-11-09) and newer, [JSON Lines](#json-lines-documents) documents remain formatted as JSON Lines after sorting by the sort form. Earlier versions of JsonTools pretty-printed all JSON after sorting, including JSON Lines.
 
 ## Regex search form ##
 

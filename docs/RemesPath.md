@@ -539,7 +539,7 @@ Random number between 0 (inclusive) and 1 (exclusive). *Added in [v5.2](/CHANGEL
 ---
 `rand_schema(schema: object, minArrayLength: int = 0, maxArrayLength: int = 10, extendedAsciiStrings: bool = false, usePatterns: bool = false)`
 
-*Added in [v8.2](/CHANGELOG.md#820---unreleased-yyyy-mm-dd)*
+*Added in [v8.2](/CHANGELOG.md#820---2024-11-09)*
 
 Creates [random JSON from `schema`](/docs/README.md#generating-random-json-from-a-schema), where the four optional arguments take the place of the global settings `minArrayLength`, `maxArrayLength`, `extended_ascii_strings`, and `generate_random_patterns`, respectively.
 

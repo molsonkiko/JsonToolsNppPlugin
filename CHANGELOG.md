@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#810---2024-08-23) to this project will be documented in this file.
+All [notable changes](#820---2024-11-09) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [8.2.0] - (UNRELEASED) YYYY-MM-DD
+## [8.2.0] - 2024-11-09
 
 ### Added
 
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-1. Fix issue (introduced in v8.1, see issues [83](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/83) and [81](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/81)) where decimal numbers were given unnecessarily precise string representations. __For example, in JsonTools v8.1, `11.11` would be represented as `11.109999999999999` even though the original `11.11` was an equally valid representation.__ Now all decimal numbers will be given the more compact representation used in v8.0 and earlier *unless the more verbose representation introduced in v8.1 would be necessary to avoid loss of precision* (so there will be no regression on [issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)). Note that __this new algorithm for formatting decimal numbers is about twice as slow as the algorithm used in v8.1__, although the impact on performance will be much less dramatic unless you are compressing an array where almost every element is a non-integer decimal number.
+1. Fix issue (introduced in v8.1, see issues [83](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/83) and [81](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/81)) where decimal numbers were given unnecessarily precise string representations. __For example, in JsonTools v8.1, `11.11` would be represented as `11.109999999999999` even though the original `11.11` was an equally valid representation.__ Now all decimal numbers will be given the more compact representation used in v8.0 and earlier *unless the more verbose representation introduced in v8.1 would be necessary to avoid loss of precision* (so there will be no regression on [issue 78](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/78)). Note that __this new algorithm for formatting decimal numbers is about twice as slow as the algorithm used in v8.1__ (for 64-bit JsonTools; 32-bit has no performance loss), although the impact on performance will be much less dramatic unless you are compressing an array where almost every element is a non-integer decimal number.
 1. Fix the following issues with [random string from regex](/docs/README.md#random-strings-from-regex-added-in-v81):
     - It previously incorrectly flagged some valid regular expressions (e.g. `(?-i)(?:xy{1,2}){,2}`) as having two consecutive quantifiers.
 	- It previously did not correctly handle some character sets where the final character was `-` (for example, `[+-]` previously would only generate `+`, and now it correctly has a 50% chance of generating `-` or `+`)
