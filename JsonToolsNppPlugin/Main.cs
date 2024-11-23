@@ -1015,6 +1015,8 @@ namespace Kbg.NppPluginNET
             }
             info = AddJsonForFile(activeFname, json);
             Npp.RemoveTrailingSOH();
+            if (!usesSelections)
+                Npp.editor.ScrollCaret();
             Npp.editor.EndUndoAction();
             lastEditedTime = DateTime.MaxValue; // avoid redundant parsing
             if (!usesSelections)
@@ -1155,6 +1157,7 @@ namespace Kbg.NppPluginNET
                 return;
             }
             Npp.editor.SetText(yaml);
+            Npp.editor.ScrollCaret();
             Npp.RemoveTrailingSOH();
             Npp.notepad.SetCurrentLanguage(LangType.L_YAML);
         }

@@ -51,6 +51,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
+## [8.3.0] - 2024-11-22
+
+### Added
+
+### Changed
+
+### Fixed
+
+1. When a file is [pretty-printed or compressed](/docs/README.md#the-basics) or [edited with RemesPath](/docs/RemesPath.md#editing-with-assignment-expressions), the caret will be scrolled into view. Previously, if the file contained very long lines and word wrapping was turned off, [the user might have to manually scroll to the left](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/84) after pretty-printing or compressing.
+
 ## [8.2.0] - 2024-11-09
 
 ### Added

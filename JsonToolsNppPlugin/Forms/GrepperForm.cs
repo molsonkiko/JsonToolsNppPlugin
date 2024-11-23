@@ -389,6 +389,7 @@ namespace JSON_Tools.Forms
                 string fileOpen = Npp.notepad.GetCurrentFilePath();
                 Npp.notepad.OpenFile(tv.fname);
                 Npp.editor.SetText(Main.PrettyPrintFromSettings(tv.json));
+                Npp.editor.ScrollCaret();
                 tv.SubmitQueryButton.PerformClick();
                 Npp.notepad.OpenFile(fileOpen);
                 if (Main.openTreeViewer != null && !Main.openTreeViewer.IsDisposed)
