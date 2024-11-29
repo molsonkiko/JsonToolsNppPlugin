@@ -947,7 +947,7 @@ multiline comment
 "Whitespace characters other than ' ', '\\t', '\\r', and '\\n' are only allowed in JSON5",
                 }),
                 ("{foo: 1, $baz: 2, 草: 2, _quЯ: 3, \\ud83d\\ude00_$\\u1ed3: 4, a\\uff6acf: 5, \\u0008\\u000a: 6, f\\u0000o: 1}",
-                 "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 6}",
+                 "{\"foo\": 1, \"$baz\": 2, \"草\": 2, \"_quЯ\": 3, \"😀_$ồ\": 4, \"aｪcf\": 5, \"\\b\\n\": 6, \"f\\u0000o\": 1}",
                  new string[]{
                     "Unquoted keys are only allowed in JSON5",
                     "Unquoted keys are only allowed in JSON5",
@@ -959,7 +959,7 @@ multiline comment
                     "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
                     "String literal contains newline", // the \u000a in \\b\\u000a is secretly a newline
                     "Unquoted keys are only allowed in JSON5",
-                    "'\\x00' is the null character, which is illegal in JsonTools"
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification"
                 }),
                 ("[1,\"b\\\nb\\\rb\\\r\nb\"]", "[1, \"bbbb\"]",
                 new string[]
@@ -975,8 +975,12 @@ multiline comment
                     "Escaped newline characters are only allowed in JSON5",
                     "Escaped newline characters are only allowed in JSON5",
                 }),
-                ("[\"a\\x00b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
-                ("[\"a\\u0000b\", 1]", "[\"a\"]", new string[]{"'\\x00' is the null character, which is illegal in JsonTools"}),
+                ("[\"a\\x00b\", 1]",   "[\"a\\u0000b\", 1]", new string[]
+                {
+                    "Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification",
+                    "\\x escapes are only allowed in JSON5",
+                }),
+                ("[\"a\\u0000b\", 1]", "[\"a\\u0000b\", 1]", new string[]{"Control characters (ASCII code less than 0x20) are disallowed inside strings under the strict JSON specification"}),
                 ("{\"\\1\\A\": \"\\7\\B\"}", "{\"1A\": \"7B\"}",
                 new string[]{
                     "Escaped char '1' is only allowed in JSON5",

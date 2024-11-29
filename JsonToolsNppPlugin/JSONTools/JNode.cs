@@ -295,6 +295,7 @@ namespace JSON_Tools.JSON_Tools
             {
             case '\\':   sb.Append("\\\\"   ); break;
             case '"':    sb.Append("\\\""   ); break;
+            case '\x00': sb.Append("\\u0000"); break;
             case '\x01': sb.Append("\\u0001"); break;
             case '\x02': sb.Append("\\u0002"); break;
             case '\x03': sb.Append("\\u0003"); break;

@@ -191,7 +191,6 @@ namespace JSON_Tools.JSON_Tools
             // FATAL messages
             case JsonLintType.FATAL_EXPECTED_JAVASCRIPT_COMMENT: return Translator.TranslateLintMessage(translated, lintType, "Expected JavaScript comment after '/'");
             case JsonLintType.FATAL_HEXADECIMAL_TOO_SHORT: return TryTranslateWithOneParam(translated, lintType, "Could not find valid hexadecimal of length {0}", param1);
-            case JsonLintType.FATAL_NUL_CHAR: return Translator.TranslateLintMessage(translated, lintType, "'\\x00' is the null character, which is illegal in JsonTools");
             case JsonLintType.FATAL_UNTERMINATED_KEY: return Translator.TranslateLintMessage(translated, lintType, "Unterminated object key");
             case JsonLintType.FATAL_INVALID_STARTSWITH_n: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'n' to be null or nan");
             case JsonLintType.FATAL_PLUS_OR_MINUS_AT_EOF: return TryTranslateWithOneParam(translated, lintType, "'{0}' sign at end of document", param1);
@@ -366,7 +365,7 @@ namespace JSON_Tools.JSON_Tools
         /// param1 = expected_hex_length (int)
         /// </summary>
         FATAL_HEXADECIMAL_TOO_SHORT = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 1,
-        FATAL_NUL_CHAR = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 2,
+        
         FATAL_UNTERMINATED_KEY = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 3,
         FATAL_INVALID_STARTSWITH_n = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 4,
         /// <summary>
@@ -888,8 +887,6 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (c == '\n')
                     return HandleError(JsonLintType.BAD_STRING_CONTAINS_NEWLINE, inp, ii, ParserState.BAD);
-                if (c == 0)
-                    return HandleError(JsonLintType.FATAL_NUL_CHAR, inp, ii);
                 if (c < 0)
                     return true;
                 return HandleError(JsonLintType.OK_CONTROL_CHAR, inp, ii);

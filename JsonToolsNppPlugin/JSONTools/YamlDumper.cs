@@ -61,6 +61,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 switch (c)
                 {
+                    case '\x00': sb.Append("\\0"); break;
                     case '\n': sb.Append("\\n"); break;
                     case '\t': sb.Append(@"\\t"); break;
                     case '\\': sb.Append(@"\\"); break;
@@ -83,6 +84,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 switch (c)
                 {
+                    case '\x00': sb.Append("\\0"); break;
                     case '\n': sb.Append("\\n"); break;
                     case '\t': sb.Append(@"\\t"); break;
                     case '\\': sb.Append(@"\\"); break;
@@ -112,7 +114,7 @@ namespace JSON_Tools.JSON_Tools
                 // a YAML parser will recognize that it is not actually a number.
                 return "'" + k + "'";
             }
-            Regex forbiddenKeyChars = new Regex(@"[\t :]");
+            Regex forbiddenKeyChars = new Regex(@"[\t :\x00]");
             if (forbiddenKeyChars.IsMatch(k))
             {
                 // '\t', ' ', and ':' are all illegal inside a YAML key. We will escape those out
@@ -141,7 +143,7 @@ namespace JSON_Tools.JSON_Tools
                 {
                     return $"\"{strv}\"";
                 }
-                Regex backslash = new Regex("([\\\\:\"'\r\t\n\f\b])");
+                Regex backslash = new Regex("([\\\\:\"'\r\t\n\f\b\x00])");
                 if (backslash.IsMatch(strv))
                 {
                     return EscapeBackslash(strv);

@@ -66,6 +66,8 @@ Got
                              "a:\n  -\n    - 1\n    - 2.0\n  -\n    '3':\n      - '5'\n'2': 6\n",
                              "nested iterables" },
                 new string[] { "{\"a\": \"a: b\"}", "a: \"a: b\"\n", "value contains colon" },
+                new string[] { "{\"a\\u0000\": \"a: b\"}", "\"a\\0\": \"a: b\"\n", "value contains colon and key contains NUL" },
+                new string[] { "{\"zwg\": \"a\\u0000b\"}", "zwg: \"a\\0b\"\n", "value contains NUL" },
                 new string[] { "{\"a: b\": \"a\"}", "\"a: b\": a\n", "key contains colon" },
                 new string[] { "{\"a\": \"RT @blah: MondayMo\\\"r\'ing\"}", "a: \'RT @blah: MondayMo\"r\'\'ing\'\n", "Value contains quotes and colon" },
                 new string[] { "{\"a\": \"a\\n\'big\'\\ndog\"}", "a: \"a\\n\'big\'\\ndog\"\n", "Value contains quotes and newline" },

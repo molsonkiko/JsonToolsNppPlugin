@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 1. When a file is [pretty-printed or compressed](/docs/README.md#the-basics) or [edited with RemesPath](/docs/RemesPath.md#editing-with-assignment-expressions), the caret will be scrolled into view. Previously, if the file contained very long lines and word wrapping was turned off, [the user might have to manually scroll to the left](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/84) after pretty-printing or compressing.
+2. NUL characters (when rendered as `\u0000` or `\x00`) can now be parsed. Previously [they raised a fatal error](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/85).
 
 ## [8.2.0] - 2024-11-09
 
