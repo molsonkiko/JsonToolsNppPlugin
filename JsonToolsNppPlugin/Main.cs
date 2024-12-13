@@ -1044,7 +1044,7 @@ namespace Kbg.NppPluginNET
             string curFname = Npp.notepad.GetCurrentFilePath();
             (ParserState parserState, _, _, _) = TryParseJson(Npp.FileExtension(curFname) == "jsonl" ? DocumentType.JSONL : DocumentType.JSON);
             if (errorForm != null && errorForm.Visible && !settings.offer_to_show_lint)
-                RefreshErrorFormInOwnThread(curFname);
+                RefreshErrorFormInOwnThread(curFname, false);
         }
 
         /// <summary>
@@ -1367,13 +1367,17 @@ namespace Kbg.NppPluginNET
             Npp.notepad.ShowDockingForm(form);
         }
 
-        private static void RefreshErrorFormInOwnThread(string fname)
+        /// <summary>
+        /// If <paramref name="suppressIfFormNotVisible"/> and the errorForm is not visible, this is a no-op.<br></br>
+        /// Otherwise, make the error form visible and then refresh it.
+        /// </summary>
+        private static void RefreshErrorFormInOwnThread(string fname, bool suppressIfFormNotVisible)
         {
             if (errorForm == null)
                 return;
             errorForm.Invoke(new Action(() =>
             {
-                if (errorForm.IsDisposed || !TryGetInfoForFile(fname, out JsonFileInfo info) || info.lints == null)
+                if (errorForm.IsDisposed || (suppressIfFormNotVisible && !errorForm.Visible) || !TryGetInfoForFile(fname, out JsonFileInfo info) || info.lints == null)
                     return;
                 errorForm.Reload(fname, info.lints);
             }));
@@ -1669,7 +1673,7 @@ namespace Kbg.NppPluginNET
             string curFname = Npp.notepad.GetCurrentFilePath();
             if (parserState == ParserState.FATAL || json == null)
             {
-                RefreshErrorFormInOwnThread(curFname);
+                RefreshErrorFormInOwnThread(curFname, wasAutotriggered);
                 return;
             }
             if (schemaPath == null)
@@ -1705,7 +1709,7 @@ namespace Kbg.NppPluginNET
             info.filenameOfMostRecentValidatingSchema = schemaPath;
             info.lints = info.lints is null ? problems : info.lints.Concat(problems).ToList();
             int lintCount = info.lints.Count;
-            RefreshErrorFormInOwnThread(curFname);
+            RefreshErrorFormInOwnThread(curFname, wasAutotriggered);
             SetStatusBarSection(parserState, curFname, info, documentType, lintCount);
             if (!validates && problems.Count > 0)
             {
@@ -2140,7 +2144,7 @@ namespace Kbg.NppPluginNET
                 return;
             // filename matches but it's not associated with a schema or being parsed as non-JSON/JSONL, so just parse normally
             TryParseJson(ext == "jsonl" ? DocumentType.JSONL : DocumentType.JSON, true, ignoreSelections:true);
-            RefreshErrorFormInOwnThread(fname);
+            RefreshErrorFormInOwnThread(fname, true);
         }
         #endregion
     }

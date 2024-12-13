@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Use a different algorithm for representing decimal numbers to fix issues [83](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/83) and [81](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/81) on computers where v8.2 had not fixed those issues.
     - As an unfortunate consequence of this fix, a *very very small percentage of very high-precision decimal numbers will lose precision* using this new algorithm. The vast majority of numbers with 17 digits of precision (the maximum precision attainable by JsonTools) will not lose precision when reformatted by JsonTools. For example, JsonTools will pretty-print `-6553693.3617752995` as the lower-precision `-6553693.3617753`. However, note that [JsonTools still handles high-precision doubles *better than the JSON-Viewer plugin*](https://github.com/NPP-JSONViewer/JSON-Viewer/issues/196).
+2. [Automatic parsing after editing](/docs/README.md#automatically-check-for-errors-after-editing) and [automatic JSON schema validation on opening a file](/docs/README.md#automatic-validation-of-json-against-json-schema) no longer makes the error form visible if the user had previously opened the error form and then hid it.
 
 ### Fixed
 

@@ -404,11 +404,9 @@ namespace JSON_Tools.JSON_Tools
         }
 
         /// <summary>
-        /// Let <c>d17</c> = d.ToString("G17", <see cref="JNode.DOT_DECIMAL_SEP"/>) (which can always be parsed to regenerate a double equal to <c>d</c>)<br></br>
-        /// and let <c>d15</c> = d.ToString(<see cref="JNode.DOT_DECIMAL_SEP"/>) (which only keeps 15 digits of precision)<br></br>
-        /// Returns <c>d</c> formatted with up to 17 digits of precision, using '.' as the decimal separator.<br></br>
-        /// If <c>d17</c> includes 17 digits of precision, we will generate <c>d15</c>.<br></br>
-        /// If <c>d15</c> is shorter than <c>d17</c>, and if (<c>double.Parse(d15) == d</c>, we will prefer <c>d15</c> because <c>d17</c> was an unncessarily verbose representation of <c>d</c>.
+        /// Format a valid double as a string.<br></br>
+        /// This method should not be used on NaN or number greater than <see cref="double.MaxValue"/> or less than <see cref="double.MinValue"/>,<br></br>
+        /// so all code should handle those possibilities before invoking this method.
         /// </summary>
         /// <param name="d"></param>
         /// <returns></returns>
