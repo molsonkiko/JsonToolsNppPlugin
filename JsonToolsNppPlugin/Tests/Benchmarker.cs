@@ -263,7 +263,10 @@ Performance tests for RemesPath ({description})
             string numArrayDumpedPreview = numArrayDumped.Length <= 200 ? numArrayDumped : numArrayDumped.Substring(0, 200) + "...";
             if (badValues.Count > 0)
             {
-                Npp.AddLine($"The following doubles did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
+                int valcount = badValues.Count;
+                int totValueCount = numTrials * arraySize;
+                string plural = valcount == 1 ? "" : "s";
+                Npp.AddLine($"FAIL: The following {valcount} double{plural} (out of {totValueCount} total) did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
                 return true;
             }
             Npp.AddLine($"Representative example of result of re-compression = \"{numArrayDumpedPreview}\"");

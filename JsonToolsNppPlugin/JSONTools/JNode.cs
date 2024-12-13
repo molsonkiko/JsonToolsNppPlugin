@@ -414,7 +414,7 @@ namespace JSON_Tools.JSON_Tools
         /// <returns></returns>
         public static string DoubleToString(double d)
         {
-            string dubstring = d.ToString(DOT_DECIMAL_SEP);
+            string dubstring = d.ToString("R", DOT_DECIMAL_SEP);
             int indexOfE = dubstring.IndexOf('E');
             bool isValidLong = d == Math.Round(d) && !(d > long.MaxValue || d < long.MinValue);
             if (isValidLong && indexOfE < 0)
@@ -424,18 +424,7 @@ namespace JSON_Tools.JSON_Tools
                 // by turning something like 3.123E+15 into 3.123E+15.0 (a non-JSON number representation)
                 return dubstring + ".0";
             }
-            // the default d.ToString(DOT_DECIMAL_SEP) might lose precision in some cases.
-            // We will nonetheless prefer this representation because the G17 representation
-            //     has stupid unnecessarily verbose representations like representing 2317.24 as 2317.2399999999998
-            // We need to parse dubstring to make sure no precision has been lost.
-            try
-            {
-                if (double.Parse(dubstring) == d)
-                    return dubstring; // default string representation has all necessary precision
-            }
-            catch { }
-            string d17 = d.ToString("G17", DOT_DECIMAL_SEP); // we need to use a string representation that retains as much precision as possible
-            return (isValidLong && d17.IndexOf('E') < 0) ? d17 + ".0" : d17;
+            return dubstring;
         }
 
         /// <summary>

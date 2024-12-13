@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+1. Use a different algorithm for representing decimal numbers to fix issues [83](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/83) and [81](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/81) on computers where v8.2 had not fixed those issues.
+    - As an unfortunate consequence of this fix, a *very very small percentage of very high-precision decimal numbers will lose precision* using this new algorithm. The vast majority of numbers with 17 digits of precision (the maximum precision attainable by JsonTools) will not lose precision when reformatted by JsonTools. For example, JsonTools will pretty-print `-6553693.3617752995` as the lower-precision `-6553693.3617753`. However, note that [JsonTools still handles high-precision doubles *better than the JSON-Viewer plugin*](https://github.com/NPP-JSONViewer/JSON-Viewer/issues/196).
+
 ### Fixed
 
 1. When a file is [pretty-printed or compressed](/docs/README.md#the-basics) or [edited with RemesPath](/docs/RemesPath.md#editing-with-assignment-expressions), the caret will be scrolled into view. Previously, if the file contained very long lines and word wrapping was turned off, [the user might have to manually scroll to the left](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/84) after pretty-printing or compressing.
