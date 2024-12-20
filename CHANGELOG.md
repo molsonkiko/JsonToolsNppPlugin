@@ -40,11 +40,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
-- When a tree viewer is refreshed using JSON from a file with a different name, the title of the docking form that the user sees doesn't change to reflect the new file. For example, a tree viewer is opened up for `foo.json` and then refreshed with a buffer named `bar.json`, and the title of the docking form still reads `Json Tree View for foo.json`.
-	- This is also true if a file with a tree viewer is renamed, e.g., the file `foo.json` is renamed to `bar.json`, but the tree viewer still says `Json Tree View for foo.json`.
 - Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
     - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
-- bug with calling arg functions on projections - seems like object projections are treated as arrays when calling arg functions on them in some cases?
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.
@@ -60,6 +57,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 1. Use a different algorithm for representing decimal numbers to fix issues [83](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/83) and [81](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/81) on computers where v8.2 had not fixed those issues.
     - As an unfortunate consequence of this fix, a *very very small percentage of very high-precision decimal numbers will lose precision* using this new algorithm. The vast majority of numbers with 17 digits of precision (the maximum precision attainable by JsonTools) will not lose precision when reformatted by JsonTools. For example, JsonTools will pretty-print `-6553693.3617752995` as the lower-precision `-6553693.3617753`. However, note that [JsonTools still handles high-precision doubles *better than the JSON-Viewer plugin*](https://github.com/NPP-JSONViewer/JSON-Viewer/issues/196).
 2. [Automatic parsing after editing](/docs/README.md#automatically-check-for-errors-after-editing) and [automatic JSON schema validation on opening a file](/docs/README.md#automatic-validation-of-json-against-json-schema) no longer makes the error form visible if the user had previously opened the error form and then hid it.
+3. [Tree view icon](/docs/README.md#toolbar-icons) and menu item check are now correctly toggled depending on whether a tree view (other than the grepper form's tree view) is visible. This doesn't matter much, since multiple tree views can be open and a tree view that is not visible could become visible again, but it is a nice visual cue.
 
 ### Fixed
 

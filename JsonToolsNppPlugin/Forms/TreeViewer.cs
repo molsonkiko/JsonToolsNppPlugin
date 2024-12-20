@@ -1410,11 +1410,18 @@ namespace JSON_Tools.Forms
             JsonTreePopulate(json);
         }
 
-        // close the find/replace form when this becomes invisible
+        /// <summary>
+        /// Close the find/replace form when this becomes invisible<br></br>
+        /// If this is not the grepper form's treeview, also toggle the menu item check and toolbar icon highlight depending on whether this is visible.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TreeViewer_VisibleChanged(object sender, EventArgs e)
         {
             if (findReplaceForm != null && !findReplaceForm.IsDisposed)
                 findReplaceForm.Close();
+            if (Main.grepperForm == null || Main.grepperForm.IsDisposed || Main.grepperForm.tv == null || Main.grepperForm.tv.IsDisposed || this != Main.grepperForm.tv)
+                Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[Main.jsonTreeId]._cmdID, Visible ? 1 : 0);
         }
 
         /// <summary>

@@ -1641,8 +1641,6 @@ namespace Kbg.NppPluginNET
             
             Npp.SetLangBasedOnDocType(fatalParserError, usesSelections, documentType);
             Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, _ptrNppTbData);
-            // Following message will toogle both menu item state and toolbar button
-            Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, PluginBase._funcItems.Items[jsonTreeId]._cmdID, 1);
             // now populate the tree and show it
             treeViewer.JsonTreePopulate(json);
             Npp.notepad.ShowDockingForm(treeViewer);
