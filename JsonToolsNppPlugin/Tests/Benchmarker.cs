@@ -266,7 +266,7 @@ Performance tests for RemesPath ({description})
                 int valcount = badValues.Count;
                 int totValueCount = numTrials * arraySize;
                 string plural = valcount == 1 ? "" : "s";
-                Npp.AddLine($"FAIL: The following {valcount} double{plural} (out of {totValueCount} total) did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString(JNode.DOT_DECIMAL_SEP))));
+                Npp.AddLine($"FAIL: The following {valcount} double{plural} (out of {totValueCount} total) did not round-trip:\r\n" + string.Join(", ", badValues.Select(x => x.ToString("G17", JNode.DOT_DECIMAL_SEP))));
                 return true;
             }
             Npp.AddLine($"Representative example of result of re-compression = \"{numArrayDumpedPreview}\"");

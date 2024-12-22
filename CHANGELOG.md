@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#820---2024-11-09) to this project will be documented in this file.
+All [notable changes](#830---2024-12-22) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [8.3.0] - 2024-11-22
+## [8.3.0] - 2024-12-22
 
 ### Added
 
