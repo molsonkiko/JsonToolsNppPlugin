@@ -2019,6 +2019,8 @@ namespace JSON_Tools.JSON_Tools
                     pos = opo.pos;
                     if (!(opo.obj is JNode onode))
                         throw new RemesPathException($"Expected JNode, got {opo.obj.GetType()}");
+                    if (leftOperand is JNode leftNode)
+                        throw new RemesPathException($"Two JNodes {leftNode.ToString()} and {onode.ToString()} with no binop in between");
                     nt = PeekNextToken(toks, pos - 1, end);
                     if (nt == null || (nt is char nd_ && EXPR_FUNC_ENDERS.Contains(nd_)))
                     {
@@ -2040,7 +2042,7 @@ namespace JSON_Tools.JSON_Tools
             }
             if (leftOperand == null)
             {
-                throw new RemesPathException("Null return from ParseExprOrScalar");
+                throw new RemesPathException("Null return from ParseExprFunc");
             }
             return new Obj_Pos(leftOperand, pos);
         }

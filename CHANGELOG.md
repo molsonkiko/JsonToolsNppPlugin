@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#830---2024-12-22) to this project will be documented in this file.
+All [notable changes](#831---2024-12-22) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -48,9 +48,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [8.3.0] - 2024-12-22
+## [8.3.1] - 2024-12-22
 
-### Added
+### Fixed
+
+1. Fixed bug where running a [RemesPath query in the tree view](/docs/README.md#remespath) would cause a crash if the query box was empty or contained only whitespace.
+2. Fixed bug where some errors would not be raised on some syntactically invalid RemesPath queries containing two valid items not separated by a binary operator. For example, `1 * -2 7` and `bar + @[0] 9` both had this problem.
+
+## [8.3.0] - 2024-12-22
 
 ### Changed
 

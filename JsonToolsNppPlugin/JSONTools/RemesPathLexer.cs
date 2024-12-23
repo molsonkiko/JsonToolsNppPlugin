@@ -46,6 +46,8 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static string MarkLocationOfSyntaxError(string query, int lexpos, string msg)
         {
+            if (query.Length == 0)
+                return "Error: query is empty or contains only whitespace";
             if (lexpos < 0)
                 lexpos = 0;
             else if (lexpos >= query.Length)

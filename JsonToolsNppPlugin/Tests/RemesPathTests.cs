@@ -1047,6 +1047,15 @@ namespace JSON_Tools.Tests
             List<string[]> testcases = new List<string[]>
             {
                 new [] {"", "[0]"}, // empty query
+                new [] {"3 3", "[0]"}, // two JNodes not separated by binop
+                new [] {"1 * -2 7", "[\"foo\"]"}, // JNode after binop not separated by binop from another JNode.
+                new [] {"@ * 4 foo = 17", "[\"foo\"]"}, // JNode after binop not separated by binop from another JNode (in a mutator expression before the `=`)
+                new [] {"@ * 4 = foo * 7 blah", "[\"foo\"]"}, // JNode after binop not separated by binop from another JNode (in a mutator expression after the `=`)
+                new [] {"3 * 3 s_slice(@[0], -1)", "[\"foo\"]"}, // JNode after binop not separated by binop from another JNode (function of input).
+                new [] {"bar + @[0] 9", "[\"foo\"]"}, // JNode (function of input) after binop not separated by binop from another JNode.
+                new [] {"bar + at(@, 0) enumerate(@)", "[\"foo\"]"}, // JNode (function of input) after binop not separated by binop from another JNode (function of input).
+                new [] {"@{@ + foo 7}", "[\"foo\"]"}, // inside a projection, JNode after binop not separated by binop from another JNode
+                new [] {"@[1] 3 * 3", "[1, \"a\"]"}, // JNode not separated by binop from another JNode (which is followed by binop)
                 new [] {"  \t \r\n", "[0]"}, // query with only whitespace
                 new [] {"concat(j`[1, 2]`, j`{\"a\": 2}`)", "[]"}, // concat throws with mixed arrays and objects
                 new [] {"concat(@, 1)", "[1, 2]"}, // concat throws with non-iterables
