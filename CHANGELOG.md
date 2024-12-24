@@ -40,13 +40,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
 - Improve Alt-key accelerators *in forms*. They don't seem to work right for some reason.
-- Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
-    - this problem only seems to appear after the user has opened a docking form, and maybe not even every time
+- *Completely* Fix problem where icons disappear when going from light mode to dark mode (until Notepad++ is closed; does not persist after restart)
+    - this problem rarely surfaces, but it doesn't seem to be completely addressed
 - issue with treeview closing when a file with a treeview is moved from one view to another
 - `loop()` function used in `s_sub` callbacks is not thread-safe. *This doesn't matter right now* because RemesPath is single-threaded, but it could matter in the future.
 - GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
+
+## [8.4.0] - (UNRELEASED) YYYY-MM-DD
+
+### Fixed
+
+1. Mostly fix bug where icons would disappear when going from light to dark mode. As a side effect, the icons when using "standard icons: small" are smaller, but the icons under other conditions are larger.
 
 ## [8.3.1] - 2024-12-22
 
