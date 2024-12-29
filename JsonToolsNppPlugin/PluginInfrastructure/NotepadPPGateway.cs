@@ -224,8 +224,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         }
 
 		/// <summary>
-		/// Get all open filenames in both views (all in first view, then all in second view).<br></br>
-		/// Note that if the second view is not open, the last name in the array will be "new 1" because that is the name of the placeholder buffer that is always in an empty view.
+		/// Get all open filenames in both views (all in first view, then all in second view).
 		/// </summary>
 		/// <returns></returns>
         public string[] GetOpenFileNames()
@@ -233,6 +232,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 			var bufs = new List<string>();
             for (int view = 0; view < 2; view++)
 			{
+				int curBufIdx = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTDOCINDEX, 0, view);
+				if (curBufIdx == -1)
+					continue; // NPPM_GETCURRENTDOCINDEX(0, view) returns -1 if that view is invisible
 				int nbOpenFiles = (int)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETNBOPENFILES, 0, view + 1);
 				for (int ii = 0; ii < nbOpenFiles; ii++)
 				{
