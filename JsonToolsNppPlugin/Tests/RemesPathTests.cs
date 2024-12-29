@@ -742,6 +742,12 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("items(items(@)[1][1])", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
                 new Query_DesiredResult("items(items(@)[1][1][a,b])", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
                 new Query_DesiredResult("items(items(@)[1][1].g`[ab]`)", "[[\"a\",false],[\"b\",[\"a`g\",\"bah\"]]]"),
+                // ====================== recurse_until function for recursively searching for JNodes that satisfy a condition ======================
+                new Query_DesiredResult("recurse_until(@, sum(@) <= 3)", "[[0, 1, 2], [], [1], [2], [3]]"),
+                new Query_DesiredResult("recurse_until(@.`7`, in(foo, @))", "[{\"foo\": 2}]"),
+                new Query_DesiredResult("recurse_until(@, in(foo, @))", $"[{fooStr}]"),
+                new Query_DesiredResult("recurse_until(j`[{\"Value\":100,\"Name\":\"GOOD\"},{\"Value\":200,\"Name\":\"GOOD\"}, {\"Value\":50,\"Name\":\"BAD\"},{\"Value\":150,\"Name\":\"BAD\"}]`, and(@.Name == GOOD, @.Value > 100))", "[{\"Value\": 200, \"Name\": \"GOOD\"}]"),
+                new Query_DesiredResult("recurse_until(@.bar, is_str(@))", "[\"a`g\", \"bah\"]"),
             };
             int ii = 0;
             int testsFailed = 0;

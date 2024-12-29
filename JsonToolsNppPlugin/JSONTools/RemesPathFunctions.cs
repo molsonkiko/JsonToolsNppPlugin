@@ -1746,6 +1746,40 @@ namespace JSON_Tools.JSON_Tools
             return nums;
         }
 
+        public static JNode RecurseUntil(List<JNode> args)
+        {
+            JNode node = args[0];
+            if (!(args[1] is CurJson cj))
+                throw new RemesPathArgumentException("second argument must be a functiont that returns a boolean", 1, FUNCTIONS["recurse_until"], args[1].type);
+            Func<JNode, JNode> func = cj.function;
+            var results = new List<JNode>();
+            RecurseUntilHelper(node, func, results);
+            return new JArray(0, results);
+        }
+
+        private static void RecurseUntilHelper(JNode node, Func<JNode, JNode> func, List<JNode> results)
+        {
+            try
+            {
+                if (func(node).value is bool b && b)
+                {
+                    results.Add(node);
+                    return;
+                }
+            }
+            catch { }
+            if (node is JArray jar && jar.children is List<JNode> car)
+            {
+                for (int ii = 0; ii < car.Count; ii++)
+                    RecurseUntilHelper(car[ii], func, results);
+            }
+            else if (node is JObject obj && obj.children is Dictionary<string, JNode> cobj)
+            {
+                foreach (JNode child in cobj.Values)
+                    RecurseUntilHelper(child, func, results);
+            }
+        }
+
         public static JNode Values(List<JNode> args)
         {
             var vals = new JArray(0, ((JObject)args[0]).children.Values.ToList());
@@ -3688,6 +3722,7 @@ namespace JSON_Tools.JSON_Tools
             ["rand_schema"] = new ArgFunction(RandomFromSchema, "rand_schema", Dtype.ANYTHING, 1, 5, false, new Dtype[] { Dtype.OBJ, Dtype.INT, Dtype.INT, Dtype.BOOL, Dtype.BOOL }, isDeterministic: false),
             ["randint"] = new ArgFunction(RandomInteger, "randint", Dtype.INT, 1, 2, false, new Dtype[] {Dtype.INT, Dtype.INT}, false),
             ["range"] = new ArgFunction(Range, "range", Dtype.ARR, 1, 3, false, new Dtype[] {Dtype.INT, Dtype.INT, Dtype.INT}),
+            ["recurse_until"] = new ArgFunction(RecurseUntil, "recurse_until", Dtype.ARR, 2, 2, false, new Dtype[] { Dtype.ARR_OR_OBJ, Dtype.FUNCTION | Dtype.ANYTHING }, conditionalExecution: true),
             ["s_cat"] = new ArgFunction(StrCat, "s_cat", Dtype.STR, 1, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING, /* any # of args */ Dtype.ANYTHING}),
             ["s_join"] = new ArgFunction(StringJoin, "s_join", Dtype.STR, 2, 2, false, new Dtype[] {Dtype.STR, Dtype.ARR}),
             ["set"] = new ArgFunction(Set, "set", Dtype.OBJ, 1, 1, false, new Dtype[] {Dtype.ARR}),

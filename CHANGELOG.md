@@ -50,9 +50,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [8.4.0] - (UNRELEASED) YYYY-MM-DD
 
+### Added
+
+1. Add [`recurse_until` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) to recursively search arrays and objects for anything inside that satisfies a condition.
+
 ### Fixed
 
 1. Mostly fix bug where icons would disappear when going from light to dark mode. As a side effect, the icons when using "standard icons: small" are smaller, but the icons under other conditions are larger.
+2. Fix [intermittent crash during UI tests in 64-bit Notepad++](https://community.notepad-plus-plus.org/topic/26509/intermittent-notepad-crash-related-to-nppm_getopenfilenames-only-on-64-bit-npp) by eliminating reference to the dangerous `NPPM_GETOPENFILENAMES` message.
 
 ## [8.3.1] - 2024-12-22
 

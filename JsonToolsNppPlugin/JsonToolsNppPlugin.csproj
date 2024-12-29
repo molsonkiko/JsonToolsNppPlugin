@@ -118,7 +118,6 @@
     </Compile>
     <Compile Include="JSONTools\CsvSniffer.cs" />
     <Compile Include="JSONTools\Dson.cs" />
-    <Compile Include="PluginInfrastructure\ClikeStringArray.cs" />
     <Compile Include="PluginInfrastructure\DllExport\DllExportAttribute.cs" />
     <Compile Include="PluginInfrastructure\Docking_h.cs" />
     <Compile Include="PluginInfrastructure\GatewayDomain.cs" />

@@ -566,6 +566,29 @@ Returns an array of integers.
    * `range(0, 6, 3)` returns `[0, 3]`.
 
 ---
+`recurse_until(node: anything, condition: function) -> array`
+
+Recursively searches `node` for any children `child` such that `condition(child)` returns `true`.
+
+Consider the input
+```json
+{
+    "foo": {"value": 1, "name": "GOOD"},
+    "bar_array": [
+        {"name": "BAD", "value": 2},
+        {"name": "GOOD", "value": -1},
+        {"name": "GOOD", "value": 3}
+    ],
+    "name": "blah"
+}
+```
+
+__Examples:__
+1. `recurse_until(@, in(name, @))` returns an array containing the input as its first and only element, because the recursive search halts as soon as `in(name, @)` is satisfied by the input.
+2. `recurse_until(@, and(@.name == GOOD, @.value >= 0))` will return `[{"value":1,"name":"GOOD"},{"name":"GOOD","value":3}]`, because those are the two `name,value` arrays such that `name=GOOD` and `value>=0`
+3. ``recurse_until(@, @ =~ `^[bB]`)`` will return `["BAD","blah"]`, because those are the two string values that start with `b` or `B`.
+
+---
 `s_cat(x: anything, ...: anything) -> string`
 
 *Added in [v6.1](/CHANGELOG.md#610---2023-12-28)*
