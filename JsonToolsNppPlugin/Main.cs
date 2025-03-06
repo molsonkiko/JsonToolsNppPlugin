@@ -122,19 +122,23 @@ namespace Kbg.NppPluginNET
             //            ShortcutKey *shortcut,                // optional. Define a shortcut to trigger this command
             //            bool check0nInit                      // optional. Make this menu item be checked visually
             //            );
+
+            // if settings.keyboard_shortcuts is false, we don't automatically assign keyboard shortcuts
+            ShortcutKey getShortcutKey(bool ctrl, bool alt, bool shift, Keys key) => settings.keyboard_shortcuts ? new ShortcutKey(ctrl, alt, shift, key) : new ShortcutKey();
+
             PluginBase.SetCommand(0, Translator.GetTranslatedMenuItem("&Documentation"), docs);
             // adding shortcut keys may cause crash issues if there's a collision, so try not adding shortcuts
-            PluginBase.SetCommand(1, Translator.GetTranslatedMenuItem("&Pretty-print current JSON file"), PrettyPrintJson, new ShortcutKey(true, true, true, Keys.P)); prettyPrintId = 1;
-            PluginBase.SetCommand(2, Translator.GetTranslatedMenuItem("&Compress current JSON file"), CompressJson, new ShortcutKey(true, true, true, Keys.C)); compressId = 2;
-            PluginBase.SetCommand(3, Translator.GetTranslatedMenuItem("Path to current p&osition"), CopyPathToCurrentPosition, new ShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
+            PluginBase.SetCommand(1, Translator.GetTranslatedMenuItem("&Pretty-print current JSON file"), PrettyPrintJson, getShortcutKey(true, true, true, Keys.P)); prettyPrintId = 1;
+            PluginBase.SetCommand(2, Translator.GetTranslatedMenuItem("&Compress current JSON file"), CompressJson, getShortcutKey(true, true, true, Keys.C)); compressId = 2;
+            PluginBase.SetCommand(3, Translator.GetTranslatedMenuItem("Path to current p&osition"), CopyPathToCurrentPosition, getShortcutKey(true, true, true, Keys.L)); pathToPositionId = 3;
             PluginBase.SetCommand(4, Translator.GetTranslatedMenuItem("Select every val&id JSON in selection"), SelectEveryValidJson);
             PluginBase.SetCommand(5, Translator.GetTranslatedMenuItem("Chec&k JSON syntax now"), CheckJsonSyntaxNow);
             // Here you insert a separator
             PluginBase.SetCommand(6, "---", null);
-            PluginBase.SetCommand(7, Translator.GetTranslatedMenuItem("Open &JSON tree viewer"), () => OpenJsonTree(), new ShortcutKey(true, true, true, Keys.J)); jsonTreeId = 7;
-            PluginBase.SetCommand(8, Translator.GetTranslatedMenuItem("&Get JSON from files and APIs"), OpenGrepperForm, new ShortcutKey(true, true, true, Keys.G)); grepperFormId = 8;
+            PluginBase.SetCommand(7, Translator.GetTranslatedMenuItem("Open &JSON tree viewer"), () => OpenJsonTree(), getShortcutKey(true, true, true, Keys.J)); jsonTreeId = 7;
+            PluginBase.SetCommand(8, Translator.GetTranslatedMenuItem("&Get JSON from files and APIs"), OpenGrepperForm, getShortcutKey(true, true, true, Keys.G)); grepperFormId = 8;
             PluginBase.SetCommand(9, Translator.GetTranslatedMenuItem("Sort arra&ys"), OpenSortForm); sortFormId = 9;
-            PluginBase.SetCommand(10, Translator.GetTranslatedMenuItem("&Settings"), OpenSettings, new ShortcutKey(true, true, true, Keys.S));
+            PluginBase.SetCommand(10, Translator.GetTranslatedMenuItem("&Settings"), OpenSettings, getShortcutKey(true, true, true, Keys.S));
             PluginBase.SetCommand(11, "---", null);
             PluginBase.SetCommand(12, Translator.GetTranslatedMenuItem("&Validate JSON against JSON schema"), () => ValidateJson());
             PluginBase.SetCommand(13, Translator.GetTranslatedMenuItem("Validate &files with JSON schema if name matches pattern"), MapSchemasToFnamePatterns);

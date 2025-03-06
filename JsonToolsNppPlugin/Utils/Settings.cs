@@ -118,6 +118,11 @@ namespace JSON_Tools.Utils
             Category("Miscellaneous"), DefaultValue(KeyStyle.RemesPath)]
         public KeyStyle key_style { get; set; }
 
+        [Description("Whether JsonTools automatically assigns default keyboard shortcuts to some plugin commands at startup.\r\n" +
+                     "You may prefer set this to False if you want to change a keyboard shortcut (\"Macro->Modify Shortcut/Delete Macro...\" from the Notepad++ main menu) from the JsonTools defaults."),
+            Category("Miscellaneous"), DefaultValue(true)]
+        public bool keyboard_shortcuts { get; set; }
+
         [Description("The separator to use when formatting a path. This setting is IGNORED when it is set to \"\\u0001\" (the default).\r\nThis MUST have exactly one character, which CANNOT be any of the characters in the following JSON string: \"\\\"0123456789\"\r\nThe algorithm for formatting an object key or array index is as follows:\r\n===========\r\nif the key is an array index:\r\n    format it as plaintext (for example, index 10 becomes \"$10\" if \"$\" was the path_separator)\r\nif the key contains the path_separator:\r\n    format it as a JSON string (for example, key \"foo\" would be formatted as \"/foo\" if \"/\" was the path_separator)\r\nelse if the key starts with (_ or a-z or A-Z) and all its other characters are (_ or 0-9 or a-z or A-Z):\r\n    format it as plain text (for example, key \"_foo\" becomes \"/_foo\" if \"/\" was the path_separator, but \"_\\\"_foo\\\"\" if \"_\" was the path_separator)\r\nelse:\r\n    format it as a JSON string (for example, the key \"a b\" would be formatted as \"/\\\"a b\\\"\" if the path_separator was \"/\" even though it doesn't contain the path_separator)"),
             Category("Miscellaneous"), DefaultValue("\"\\u0001\"")]
         public string path_separator { get; set; }
