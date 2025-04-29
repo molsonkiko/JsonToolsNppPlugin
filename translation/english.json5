@@ -296,7 +296,8 @@
         "maxArrayLength": "Maximum length of random arrays, unless otherwise specified by the \"maxItems\" keyword",
         "minArrayLength": "Minimum length of random arrays, unless otherwise specified by the \"minItems\" keyword",
         "max_schema_validation_problems": "Maximum number of JSON Schema validation problems to log before the validator stops",
-        "generate_random_patterns": "Generate random strings that match the \"pattern\" keyword of string schemas, and random keys that match the \"patternProperties\" keyword of object schemas."
+        "generate_random_patterns": "Generate random strings that match the \"pattern\" keyword of string schemas, and random keys that match the \"patternProperties\" keyword of object schemas.",
+        "keyboard_shortcuts": "Whether JsonTools automatically assigns default keyboard shortcuts to some plugin commands at startup.\r\nYou may prefer set this to False if you want to change a keyboard shortcut (\"Macro->Modify Shortcut/Delete Macro...\" from the Notepad++ main menu) from the JsonTools defaults."
     },
     // These are the error messages that JsonTools can report while parsing JSON and JSON Lines.
     "jsonLint": {

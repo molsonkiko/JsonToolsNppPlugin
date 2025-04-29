@@ -296,7 +296,8 @@
         "maxArrayLength": "Lunghezza massima degli array casuali, se non diversamente specificato dalla parola chiave \"maxItems\" ",
         "minArrayLength": "Lunghezza minima degli array casuali, se non diversamente specificato dalla parola chiave \"minItems\" ",
         "max_schema_validation_problems": "Numero massimo di problemi di convalida dello schema JSON da registrare prima che il validatore si interrompa",
-        "generate_random_patterns": "Genera stringhe casuali che corrispondono alla parola chiave \"pattern\" degli schemi stringa e chiavi casuali che corrispondono alla parola chiave \"patternProperties\" degli schemi oggetto."
+        "generate_random_patterns": "Genera stringhe casuali che corrispondono alla parola chiave \"pattern\" degli schemi stringa e chiavi casuali che corrispondono alla parola chiave \"patternProperties\" degli schemi oggetto.",
+        "keyboard_shortcuts": "Se JsonTools assegna automaticamente le scorciatoie da tastiera predefinite ad alcuni comandi del plugin all'avvio.\r\nPotresti preferire impostare questa opzione su False se vuoi modificare una scorciatoia da tastiera (\"Macro->Modifica scorciatoie/Elimina macro...\" dal menu principale di Notepad++) rispetto alle impostazioni predefinite di JsonTools."
     },
     // These are the error messages that JsonTools can report while parsing JSON and JSON Lines.
     //     Note that some of these error messages will have "{integer}" in their text,
