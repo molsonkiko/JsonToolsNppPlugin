@@ -1,0 +1,564 @@
+{
+    "forms": {
+        "AboutForm": {
+            "title": "JsonTools 정보",
+            "controls": {
+                "Description": "구문 검사, 재포맷, 파일 탐색 기능이 있는 트리 뷰,\r\nJMESpath와 유사한 쿼리 언어 등을 포함한\r\nJSON용 쿼리/편집 도구",
+                "GitHubLink": {
+                    "text": "[{\"need\": \"도움이 필요하신가요?\"}, \"여기에서 질문하세요:\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
+                    "linkStart": 42, // Adjusted for Korean text length
+                    "linkLength": 50
+                },
+                "DebugInfoLabel": "Notepad++ 버전: X.Y.Z. 설치에 대한\r\n자세한 내용은 주 상태 표시줄의 ? -> 디버그 정보로 이동하십시오.",
+                "ThanksWowLinkLabel": {
+                    "text": "특별 감사:\r\n* Notepad++를 만드신 Don Ho님\r\n* 이 플러그인의 기반이 된 플러그인 팩을 만드신 kbilsted님\r\n* 물론 이 플러그인 개선에 도움을 주신\r\n   모든 분들!\r\n* 이 작업을 가치있게 만드는 훌륭한 커뮤니티.\r\n  와우!",
+                    "linkStart": 138, // Adjusted
+                    "linkLength": 3 // Adjusted for "와우!"
+                }
+            }
+        },
+        "ErrorForm": {
+            "title": "JSON 구문 오류",
+            "controls": {
+                "exportToJsonMenuItem": "JSON으로 내보내기",
+                "refreshMenuItem": "현재 오류 새로고침"
+            }
+        },
+        "FindReplaceForm": {
+            "title": "JSON에서 찾기/바꾸기",
+            "controls": {
+                "FindReplaceFormTitle": "JSON에서 찾기/바꾸기",
+                "FindTextBoxLabel": "찾을 내용...",
+                "SwapFindReplaceButton": "바꾸기",
+                "ReplaceTextBoxLabel": "바꿀 내용...",
+                "RootTextBoxLabel": "루트 위치",
+                "ShowAdvancedOptionsCheckBox": {
+                    "checked": "고급 옵션 표시",
+                    "unchecked": "고급 옵션 숨기기"
+                },
+                "KeysValsBothBox": [
+                    "키",
+                    "값",
+                    "키와 값"
+                ],
+                "KeysValsBothBoxLabel": "검색 대상(키/값)?",
+                "RegexBox": "정규 표현식 사용?",
+                "MathBox": "수학 표현식",
+                "RecursiveSearchBox": "재귀 검색?",
+                "IgnoreCaseCheckBox": "대/소문자 무시?",
+                "MatchExactlyBox": "정확히 일치?",
+                "FindButton": "모두 찾기",
+                "ReplaceButton": "모두 바꾸기"
+            }
+        },
+        "GrepperForm": {
+        "title": "파일 및 API에서 JSON 가져오기",
+        "controls": {
+            "GrepperFormTitle": "파일 및 API에서 JSON 가져오기",
+            "GetJsonFromApisTitle": "API에서 JSON 가져오기",
+            "UrlsBoxLabel": "JSON을 요청할 API URL 입력 (줄당 하나 또는 JSON 배열 사용)",
+            "SendRequestsButton": "API 요청 보내기",
+            "GetJsonFromFilesTitle": "로컬 파일에서 JSON 가져오기",
+            "RecursiveSearchCheckBox": "하위 디렉토리 검색?",
+            "ChooseDirectoriesButton": "디렉토리 선택...",
+            "DirectoriesVisitedBox": [
+                "이전에 방문한 디렉토리..."
+            ],
+            "SearchDirectoriesButton": "디렉토리 검색",
+            "DocsButton": "문서",
+            "ViewErrorsButton": "오류 보기",
+            "ViewResultsButton": "버퍼에서 결과 보기",
+            "ChooseFilesTitle": "파일 및 URL 선택",
+            "RemoveSelectedFilesButton": "선택한 파일 제거"
+        }
+        },
+        "GrepperFormProgressBar": {
+            "controls": {
+                "titleIfParsing": "JSON 구문 분석 진행 중",
+                "titleIfReading": "파일 읽기 진행 중",
+                "captionIfParsing": "파일 읽기 완료.\r\n문서 {0}개 구문 분석 중, 총 크기 약 {1}MB",
+                "captionIfReading": "파일 {0}개 읽는 중, 총 크기 약 {1}MB",
+                "progressLabelIfParsing": "구문 분석됨 0MB / {0}MB",
+                "progressLabelIfReading": "읽은 파일 0 / {0}개"
+            }
+        },
+        "JsonToCsvForm": {
+            "title": "JSON을 CSV로",
+            "controls": {
+                "JsonToCsvFormTitle": "JSON에서 CSV 만들기",
+                "KeySepBoxLabel": "키 구분 기호",
+                "DelimBoxLabel": "출력 파일 구분 기호",
+                "eolComboBoxLabel": "출력 줄 바꿈",
+                "BoolsToIntsCheckBox": "true/false를 1/0으로 변환?",
+                "StrategyBox": [
+                    "기본값",
+                    "완전 재귀",
+                    "비재귀",
+                    "반복 가능 객체 문자열화"
+                ],
+                "StrategyBoxLabel": "전략",
+                "GenerateCSVButton": "CSV 생성",
+                "DocsButton": "문서"
+            }
+        },
+        "RegexSearchForm": {
+            "title": "정규식 검색을 JSON으로",
+            "controls": {
+                "Title": "정규식 검색을 JSON으로",
+                "RegexTextBoxLabel": "정규 표현식 입력",
+                "IgnoreCaseCheckBox": "대/소문자 무시?",
+                "IncludeFullMatchAsFirstItemCheckBox": "전체 일치를 첫 번째 항목으로 포함?",
+                "ParseAsCsvCheckBox": "CSV로 구문 분석?",
+                "DelimiterTextBoxLabel": "구분 기호",
+                "QuoteCharTextBoxLabel": "따옴표 문자",
+                "NewlineComboBoxLabel": "줄 바꿈",
+                "NColumnsTextBoxLabel": "열 수",
+                "HeaderHandlingComboBox": [
+                    "헤더 건너뛰기",
+                    "헤더 포함",
+                    "헤더를 키로 사용"
+                ],
+                "HeaderHandlingComboBoxLabel": "헤더 처리",
+                "ColumnsToParseAsNumberTextBoxLabel": "숫자로 구문 분석할 그룹 (정수 배열)",
+                "SearchButton": "검색"
+            }
+        },
+        "SettingsForm": {
+            "title": "JsonTools 플러그인 설정",
+            "controls": {
+                "Cancel": "취소(&C)",
+                "Reset": "재설정(&R)",
+                "Ok": "확인(&O)"
+            }
+        },
+        "SortForm": {
+        "title": "JSON 배열 정렬",
+            "controls": {
+                "SortFormTitle": "JSON 배열 정렬",
+                "PathTextBoxLabel": "배열 경로",
+                "IsMultipleArraysCheckBox": "경로가 여러 배열을 가리킴; 하위 배열 개별 정렬",
+                "ReverseOrderCheckBox": "내림차순 정렬?",
+                "SortMethodBox": [
+                    "기본값",
+                    "문자열로 정렬 (대/소문자 무시)",
+                    "하위 항목의 인덱스/키로 정렬",
+                    "하위 항목에 대한 쿼리로 정렬",
+                    "무작위 섞기"
+                ],
+                "SortMethodBoxLabel": "정렬 방법",
+                "QueryKeyIndexTextBoxLabel": "키/인덱스/쿼리",
+                "SortButton": "정렬"
+            }
+        },
+        "TreeViewer": {
+            "title": "{0}의 JSON 트리 뷰",
+            "titleIfGrepperForm": "파일 및 API의 JSON 트리",
+            "controls": {
+                "SubmitQueryButton": "쿼리 제출",
+                "QueryToCsvButton": "쿼리를 CSV로",
+                "SaveQueryButton": "쿼리 결과 저장",
+                "RefreshButton": "새로 고침",
+                "FindReplaceButton": "찾기/바꾸기",
+                "CopyValueMenuItem": "값을 클립보드에 복사",
+                "CopyKeyItem": "키/인덱스를 클립보드에 복사",
+                "CopyPathItem": "경로를 클립보드에 복사",
+                "ToggleSubtreesItem": "모든 하위 트리 확장/축소",
+                "SelectThisItem": "이 항목 선택",
+                "OpenSortFormItem": "배열 정렬...",
+                "SelectAllChildrenItem": "모든 하위 항목 선택",
+                "LanguageNameStyleItem": "{0} 스타일",
+                "PathSeparatorStyleItem": "경로 구분 기호 설정 사용"
+            }
+        }
+    },
+    "menuItems": {
+        "&Documentation": "문서(&D)",
+        "&Pretty-print current JSON file": "현재 JSON 파일 보기 좋게 인쇄(&P)",
+        "&Compress current JSON file": "현재 JSON 파일 압축(&C)",
+        "Path to current p&osition": "현재 위치 경로(&O)",
+        "Select every val&id JSON in selection": "선택 영역 내 모든 유효한 JSON 선택(&I)",
+        "Chec&k JSON syntax now": "지금 JSON 구문 검사(&K)",
+        "Open &JSON tree viewer": "JSON 트리 뷰어 열기(&J)",
+        "&Get JSON from files and APIs": "파일 및 API에서 JSON 가져오기(&G)",
+        "Sort arra&ys": "배열 정렬(&Y)",
+        "&Settings": "설정(&S)",
+        "&Validate JSON against JSON schema": "JSON 스키마에 대해 JSON 유효성 검사(&V)",
+        "Validate &files with JSON schema if name matches pattern": "이름이 패턴과 일치하면 JSON 스키마로 파일 유효성 검사(&F)",
+        "Generate sc&hema from JSON": "JSON에서 스키마 생성(&H)",
+        "Generate &random JSON from schema": "스키마에서 임의 JSON 생성(&R)",
+        "Run &tests": "테스트 실행(&T)",
+        "A&bout": "정보(&B)",
+        "See most recent syntax &errors in this file": "이 파일의 최근 구문 오류 보기(&E)",
+        "JSON to YAML": "JSON을 YAML로(&J)",
+        "Parse JSON Li&nes document": "JSON Lines 문서 구문 분석(&N)",
+        "&Array to JSON Lines": "배열을 JSON Lines로(&A)",
+        "D&ump selected text as JSON string(s)": "선택한 텍스트를 JSON 문자열로 덤프(&U)",
+        "Dump JSON string(s) as ra&w text": "JSON 문자열을 원시 텍스트로 덤프(&W)",
+        "Open tree for &INI file": "INI 파일 트리 열기(&I)",
+        "Rege&x search to JSON": "정규식 검색을 JSON으로(&X)"
+    },
+    "settingsDescriptions": {
+        "logger_level": "이 수준 이하의 오류 로깅을 억제합니다.\r\nSTRICT: 원본 JSON 사양과의 모든 편차를 기록합니다.\r\nOK: 원본 JSON 사양 + 다음:\r\n    * 문자열은 ASCII 값 0x20 미만의 문자('\\t' 포함)를 포함할 수 있습니다.\r\nNAN_INF: NaN, Infinity, -Infinity 구문 분석 시 오류를 기록하지 않습니다.\r\nJSONC: 다음 오류를 기록하지 않습니다:\r\n    * JavaScript 한 줄 '//' 및 여러 줄 '/*...*/' 주석\r\n    * NaN 및 +/-Infinity\r\nJSON5: JSONC 및 NAN_INF 수준의 모든 것 + 다음:\r\n    * 작은따옴표 문자열\r\n    * 배열 또는 객체의 마지막 요소 뒤 쉼표\r\n    * 따옴표 없는 객체 키\r\n    * 자세한 내용은 https://json5.org/ 참조",
+        "offer_to_show_lint": "문서 구문 분석 완료 후, 문서 내 구문 오류 보기 여부를 묻는 프롬프트를 표시합니다.",
+        "auto_validate": ".json, .jsonc, .jsonl 파일을 자동으로 유효성 검사합니다(2초마다), 매우 큰 파일 제외",
+        "inactivity_seconds_before_parse": "사용자 활동이 중지된 후 플러그인이 문서를 다시 구문 분석하기까지의 시간(초). 최소값은 1입니다.",
+        "max_file_size_MB_slow_actions": "이 메가바이트 수보다 큰 파일의 경우 다음 시간 소모적인 작업이 기본적으로 비활성화됩니다:\r\n* JSON 렉서 자동 활성화.\r\n* 파일 열기 시 및 편집 후 약 2초마다 파일 자동 구문 분석.",
+        "max_json_length_full_tree": "JSON 배열 또는 객체가 트리 뷰에서 모든 하위 항목을 완전히 확장하는 최대 길이. 더 긴 반복 가능 객체는 일부 하위 항목만 트리에 추가됩니다.",
+        "tree_node_images": "트리의 각 노드에 해당 유형과 관련된 이미지가 있어야 하는지 여부.",
+        "ask_before_pretty_printing_json_lines": "JSON Lines 문서를 보기 좋게 인쇄하기 전에 물어볼지, 보기 좋게 인쇄 요청을 무시할지, 묻지 않고 바로 보기 좋게 인쇄할지 여부.\r\nDONT_DO_DONT_ASK: JSON Lines를 보기 좋게 인쇄하려고 할 때 아무 작업도 하지 않습니다.\r\nASK_BEFORE_DOING: 이 작업을 시도할 때 확인을 요청하는 메시지 상자를 만듭니다.\r\nDO_WITHOUT_ASKING: 메시지 상자를 만들지 않고 요청대로 이 작업을 수행합니다.",
+        "indent_pretty_print": "보기 좋게 인쇄할 때 JSON의 각 수준 사이에 사용할 공백 수.",
+        "tab_indent_pretty_print": "보기 좋게 인쇄할 때 JSON의 각 수준 사이에 공백 대신 가로 탭 문자('\\t')를 사용합니다.",
+        "pretty_print_style": "JSON을 보기 좋게 인쇄하는 방법.\r\nGoogle 스타일 (기본값):\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nWhitesmith 스타일:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nPPrint 스타일:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
+        "minimal_whitespace_compression": "true인 경우, 'JSON 압축' 플러그인 명령을 사용하면 JSON에서 불필요한 모든 공백이 제거됩니다. 그렇지 않으면 객체의 콜론 뒤, 객체 및 배열의 쉼표 뒤 공백을 유지합니다.",
+        "remember_comments": "JSON을 보기 좋게 인쇄하거나 압축할 때 마지막 구문 분석 시 발견된 모든 주석이 포함됩니다.\r\n보기 좋게 인쇄할 때 각 주석은 구문 분석될 때와 동일한 JSON 요소에 상대적인 위치에 배치됩니다.\r\n압축할 때 모든 주석은 문서 시작 부분에 배치됩니다.",
+        "sort_keys": "보기 좋게 인쇄하거나 압축할 때 객체의 키를 알파벳 순으로 정렬합니다.",
+        "toolbar_icons": "표시하려는 각 도구 모음 아이콘에 대해 다음 문자 중 하나를 지정하고 원하는 순서대로 정렬합니다:\r\n('t' = 트리 뷰, 'c' = 압축, 'p' = 보기 좋게 인쇄, 'o' = 현재 위치 경로)\r\n이 설정은 다음에 Notepad++를 시작할 때 적용됩니다.\r\n도구 모음 아이콘을 표시하지 않으려면 아이콘을 나타내지 않는 문자를 입력하십시오. 이 필드를 비워 두지 마십시오.",
+        "auto_try_guess_csv_delim_newline": "이 설정이 true인 경우,\r\n정규식 검색 양식을 열거나 해당 양식에서 'CSV로 구문 분석?' 확인란을 전환할 때,\r\nJsonTools는 현재 문서가 CSV 또는 TSV 파일인지, 몇 개의 열이 있고 어떤 줄 바꿈을 사용하는지 추측하려고 시도합니다.\r\n이 설정이 true이면 정규식 검색 양식을 여는 것이 약간 느려집니다.",
+        "csv_newline": "생성된 CSV 파일에서 사용할 줄 바꿈 유형.",
+        "key_style": "노드 또는 행의 경로 또는 키/인덱스를 가져올 때 사용할 키 스타일.\r\n각 유형에 대한 설명은 문서(https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-and-path_separator-settings)를 참조하십시오.\r\npath_separator가 기본값 \"\\u0001\"이 아닌 경우 이 설정은 무시됩니다.",
+        "path_separator": "경로를 서식 지정할 때 사용할 구분 기호. 이 설정이 \"\\u0001\"(기본값)으로 설정된 경우 이 설정은 무시됩니다.\r\n이 설정은 단일 문자여야 하며 다음 JSON 문자열의 어떤 문자도 될 수 없습니다: \"\\\"0123456789\"\r\n객체 키 또는 배열 인덱스를 서식 지정하는 알고리즘은 다음과 같습니다:\r\n===========\r\n키가 배열 인덱스인 경우:\r\n    일반 텍스트로 서식 지정 (예: \"$\"가 path_separator인 경우 인덱스 10은 \"$10\"이 됨)\r\n키에 path_separator가 포함된 경우:\r\n    JSON 문자열로 서식 지정 (예: \"/\"가 path_separator인 경우 키 \"foo\"는 \"/\"foo\"\"로 서식 지정됨)\r\n그렇지 않고 키가 (_ 또는 a-z 또는 A-Z)로 시작하고 다른 모든 문자가 (_ 또는 0-9 또는 a-z 또는 A-Z)인 경우:\r\n    일반 텍스트로 서식 지정 (예: \"/\"가 path_separator인 경우 키 \"_foo\"는 \"/_foo\"가 되지만, \"_\"가 path_separator인 경우 \"_\\\"_foo\\\"\"가 됨)\r\n그 외의 경우:\r\n    JSON 문자열로 서식 지정 (예: 키 \"a b\"에 path_separator가 포함되지 않더라도 path_separator가 \"/\"인 경우 \"/\\\"a b\\\"\"로 서식 지정됨)",
+        "skip_api_request_and_fuzz_tests": "테스트를 실행할 때 API 요청을 보내는 테스트 및 RemesPath 퍼즈 테스트를 건너뜁니다.",
+        "try_parse_start_chars": "파일에서 각 JSON을 선택할 때 이러한 문자로 시작하는 경우에만 구문 분석을 시도합니다.\r\nNAN_INF 로거 수준을 준수하는 유효한 JSON만 허용됩니다.\r\n예: \"[{ (기본값)를 선택하면 잠재적인 문자열, 배열 및 객체만 고려합니다.\r\n\"[{tf\"를 선택하면 잠재적인 문자열, 배열, 객체 및 부울 값을 고려합니다.",
+        "tree_view_font_size": "트리 뷰의 글꼴 크기 (포인트 단위). 참고로 기본값은 7.8입니다.",
+        "use_npp_styling": "트리 뷰 및 기타 JsonTools 양식이 편집기 창과 동일한 색상을 사용하는지 여부.",
+        "extended_ascii_strings": "문자열에서 확장 ASCII 문자(예: \u000b, ñ)를 사용하는지 여부.",
+        "maxArrayLength": "\"maxItems\" 키워드에서 달리 지정하지 않는 한 임의 배열의 최대 길이.",
+        "minArrayLength": "\"minItems\" 키워드에서 달리 지정하지 않는 한 임의 배열의 최소 길이.",
+        "max_schema_validation_problems": "유효성 검사기가 중지되기 전에 기록되는 JSON 스키마 유효성 검사 문제의 최대 수.",
+        "generate_random_patterns": "문자열 스키마의 \"pattern\" 키워드와 일치하는 임의 문자열 및 객체 스키마의 \"patternProperties\" 키워드와 일치하는 임의 키를 생성합니다.",
+        "keyboard_shortcuts": "이 설정은 JsonTools가 시작 시 특정 플러그인 명령에 기본 키보드 단축키를 자동으로 할당할지 여부를 결정합니다.\r\nJsonTools의 기본 설정에서 키보드 단축키를 변경하려는 경우(Notepad++ 기본 메뉴의 '매크로 -> 단축키 수정/매크로 삭제...'를 통해) 이 항목을 False로 설정하는 것이 좋습니다."
+    },
+    "jsonLint": {
+        "OK_CONTROL_CHAR": "엄격한 JSON 사양은 문자열 내 제어 문자(ASCII 코드 0x20 미만)를 허용하지 않습니다",
+        "NAN_INF_Infinity": "원래 JSON 사양은 Infinity를 허용하지 않습니다",
+        "NAN_INF_NaN": "원래 JSON 사양은 NaN을 허용하지 않습니다",
+        "JSONC_JAVASCRIPT_COMMENT": "원래 JSON 사양은 JavaScript 주석을 허용하지 않습니다",
+        "JSON5_WHITESPACE_CHAR": "' ', '\\t', '\\r', '\\n' 이외의 공백 문자는 JSON5에서만 허용됩니다",
+        "JSON5_SINGLEQUOTED_STRING": "작은따옴표 문자열은 JSON5에서만 허용됩니다",
+        "JSON5_ESCAPED_NEWLINE": "이스케이프된 줄 바꿈은 JSON5에서만 허용됩니다",
+        "JSON5_X_ESCAPE": "\\x 이스케이프는 JSON5에서만 허용됩니다",
+        "JSON5_ESCAPED_CHAR": "이스케이프 문자 '{0}'은(는) JSON5에서만 허용됩니다",
+        "JSON5_UNQUOTED_KEY": "따옴표 없는 키는 JSON5에서만 허용됩니다",
+        "JSON5_NUM_LEADING_PLUS": "숫자의 선행 + 기호는 JSON5에서만 허용됩니다",
+        "JSON5_HEX_NUM": "16진수는 JSON5에서만 허용됩니다",
+        "JSON5_NUM_LEADING_DECIMAL_POINT": "선행 소수점이 있는 숫자는 JSON5에서만 허용됩니다",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "배열의 마지막 요소 뒤 쉼표",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "객체의 마지막 키-값 쌍 뒤 쉼표",
+        "JSON5_NUM_TRAILING_DECIMAL_POINT": "후행 소수점이 있는 숫자는 JSON5에서만 허용됩니다",
+        "BAD_UNTERMINATED_MULTILINE_COMMENT": "종료되지 않은 여러 줄 주석",
+        "BAD_PYTHON_COMMENT": "인정된 JSON 사양에서는 Python 스타일 '#' 주석을 허용하지 않습니다",
+        "BAD_STRING_CONTAINS_NEWLINE": "문자열 리터럴에 줄 바꿈 문자가 포함되어 있습니다",
+        "BAD_KEY_CONTAINS_NEWLINE": "객체 키에 줄 바꿈 문자가 포함되어 있습니다",
+        "BAD_UNTERMINATED_STRING": "위치 {0}에서 시작하는 종료되지 않은 문자열 리터럴",
+        "BAD_INVALID_UNQUOTED_KEY": "{0}에서 시작하는 유효한 따옴표 없는 키가 없습니다",
+        "BAD_PYTHON_nan": "nan은 JSON에서 유효한 Not a Number 표현이 아닙니다",
+        "BAD_PYTHON_None": "어떤 JSON 사양에서도 None을 허용하지 않습니다",
+        "BAD_PYTHON_inf": "inf는 JSON에서 Infinity의 올바른 표현이 아닙니다",
+        "BAD_UNNECESSARY_LEADING_0": "어떤 JSON 사양에서도 불필요한 선행 0이 있는 숫자(예: \"01\")를 허용하지 않습니다",
+        "BAD_SLASH_FRACTION": "어떤 JSON 사양에서도 1/3 형식의 분수를 허용하지 않습니다",
+        "BAD_NUMBER_INVALID_FORMAT": "숫자 문자열 {0}의 형식이 잘못되었습니다",
+        "BAD_TWO_CONSECUTIVE_COMMAS_ARRAY": "배열 요소 {0} 뒤에 두 개의 연속된 쉼표가 있습니다",
+        "BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY": "배열의 첫 번째 값 앞에 쉼표가 있습니다",
+        "BAD_ARRAY_ENDSWITH_CURLYBRACE": "배열 끝이 ']'여야 하지만 '}'가 발견되었습니다",
+        "BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS": "배열 멤버 사이에 쉼표가 없습니다",
+        "BAD_COLON_BETWEEN_ARRAY_ITEMS": "배열 멤버 사이에 쉼표가 필요한 위치에 ':'(키-값 구분 기호)가 있습니다. 배열을 닫는 것을 잊으셨나요?",
+        "BAD_UNTERMINATED_ARRAY": "종료되지 않은 배열",
+        "BAD_TWO_CONSECUTIVE_COMMAS_OBJECT": "객체 키-값 쌍 {0} 뒤에 두 개의 연속된 쉼표가 있습니다",
+        "BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT": "객체의 첫 번째 값 앞에 쉼표가 있습니다",
+        "BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS": "객체의 키-값 쌍 {0} 뒤에 쉼표가 없습니다",
+        "BAD_UNTERMINATED_OBJECT": "종료되지 않은 객체",
+        "BAD_OBJECT_ENDSWITH_SQUAREBRACE": "객체 끝이 '}'여야 하지만 ']'가 발견되었습니다",
+        "BAD_COLON_BETWEEN_OBJECT_PAIRS": "키-값 쌍 뒤에 쉼표 대신 ':'가 발견되었습니다",
+        "BAD_CHAR_WHERE_COLON_EXPECTED": "키 {1} 뒤에 콜론이 필요한 위치에 '{0}'가 발견되었습니다",
+        "BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE": "객체 키 {0}과 값 {0} 사이에 ':'가 없습니다",
+        "BAD_DUPLICATE_KEY": "객체에 여러 개의 키 \"{0}\"이(가) 포함되어 있습니다",
+        "BAD_PYTHON_True": "어떤 JSON 사양에서도 True를 허용하지 않습니다",
+        "BAD_PYTHON_False": "어떤 JSON 사양에서도 False를 허용하지 않습니다",
+        "BAD_JAVASCRIPT_undefined": "어떤 JSON 사양에서도 undefined를 허용하지 않습니다",
+        "BAD_CHAR_INSTEAD_OF_EOF": "유효한 JSON 문서 끝에서 EOF(파일 끝) 대신 {0}을(를) 받았습니다",
+        "BAD_FLOAT_TOO_LARGE": "숫자 문자열 {0}이(가) 64비트 부동 소수점 숫자에 비해 너무 큽니다",
+        "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "'/' 뒤에 JavaScript 주석이 필요합니다",
+        "FATAL_HEXADECIMAL_TOO_SHORT": "길이가 {0}인 유효한 16진수를 찾을 수 없습니다",
+        "FATAL_NUL_CHAR": "'\\x00'은(는) null 문자이며 JsonTools에서 잘못되었습니다",
+        "FATAL_UNTERMINATED_KEY": "종료되지 않은 객체 키",
+        "FATAL_INVALID_STARTSWITH_n": "'n'으로 시작하는 리터럴은 null 또는 nan이어야 합니다",
+        "FATAL_PLUS_OR_MINUS_AT_EOF": "문서 끝에 '{0}' 기호가 있습니다",
+        "FATAL_INVALID_STARTSWITH_I": "'I'로 시작하는 리터럴은 Infinity여야 합니다",
+        "FATAL_INVALID_STARTSWITH_N": "'N'으로 시작하는 리터럴은 NaN 또는 None이어야 합니다",
+        "FATAL_INVALID_STARTSWITH_i": "'i'로 시작하는 리터럴은 inf여야 합니다",
+        "FATAL_HEX_INT_OVERFLOW": "16진수가 64비트 부호 있는 정수 유형에 비해 너무 큽니다",
+        "FATAL_SECOND_DECIMAL_POINT": "숫자의 잘못된 위치에 소수점이 있습니다",
+        "FATAL_NUM_TRAILING_e_OR_E": "과학적 표기법 'e' 뒤에 숫자가 없습니다",
+        "FATAL_MAX_RECURSION_DEPTH": "최대 재귀 깊이(512)에 도달했습니다",
+        "FATAL_UNEXPECTED_EOF": "예상치 못한 파일 끝",
+        "FATAL_NO_VALID_LITERAL_POSSIBLE": "가능한 유효한 리터럴이 없습니다",
+        "FATAL_INVALID_STARTSWITH_t": "'t'로 시작하는 리터럴은 true여야 합니다",
+        "FATAL_INVALID_STARTSWITH_f": "'f'로 시작하는 리터럴은 false여야 합니다",
+        "FATAL_INVALID_STARTSWITH_T": "'T'로 시작하는 리터럴은 True여야 합니다",
+        "FATAL_INVALID_STARTSWITH_F": "'F'로 시작하는 리터럴은 False여야 합니다",
+        "FATAL_INVALID_STARTSWITH_u": "'u'로 시작하는 리터럴은 undefined여야 합니다",
+        "FATAL_BADLY_LOCATED_CHAR": "잘못된 위치의 문자 {0}",
+        "FATAL_NO_INPUT": "입력 없음",
+        "FATAL_ONLY_WHITESPACE_COMMENTS": "입력에 공백 및 가능한 주석만 포함되어 있습니다",
+        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines 문서에 줄당 정확히 하나의 JSON 문서가 포함되어 있지 않습니다",
+        "SCHEMA_TYPE_MISMATCH": "유형 {0}이(가) 발견되었지만 유형 {1}이(가) 필요합니다.",
+        "SCHEMA_TYPE_ARRAY_MISMATCH": "유형 {0}이(가) 발견되었지만 유형 {1} 중 하나여야 합니다.",
+        "SCHEMA_VALUE_NOT_IN_ENUM": "값 {0}이(가) 발견되었지만 허용되는 값은 {1}뿐입니다.",
+        "SCHEMA_ARRAY_TOO_LONG": "배열은 최대 {0}개의 항목이 필요하지만 {1}개의 항목이 있습니다.",
+        "SCHEMA_ARRAY_TOO_SHORT": "배열은 최소 {0}개의 항목이 필요하지만 {1}개의 항목만 있습니다.",
+        "SCHEMA_CONTAINS_VIOLATION": "배열에는 \"contains\" 패턴 {2}과(와) 일치하는 항목이 {0}개에서 {1}개 있어야 합니다.",
+        "SCHEMA_MINCONTAINS_VIOLATION": "배열에는 \"contains\" 패턴 {1}과(와) 일치하는 항목이 최소 {0}개 있어야 합니다.",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "객체에 \"required\" 키 {0}이(가) 없습니다.",
+        "SCHEMA_FALSE_SCHEMA": "스키마가 false이므로 아무것도 유효성 검사를 통과하지 못합니다.",
+        "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "문자열 '{0}'이(가) 정규 표현식 '{1}'과(와) 일치하지 않습니다.",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "유효성 검사의 최대 깊이는 64입니다.",
+        "SCHEMA_NUMBER_LESS_THAN_MIN": "숫자 {0}이(가) 최소값 {1}보다 작습니다.",
+        "SCHEMA_NUMBER_GREATER_THAN_MAX": "숫자 {0}이(가) 최대값 {1}보다 큽니다.",
+        "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "숫자 {0}이(가) 배타적 최소값 {1}보다 작거나 같습니다.",
+        "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "숫자 {0}이(가) 배타적 최대값 {1}보다 크거나 같습니다.",
+        "SCHEMA_STRING_TOO_LONG": "문자열 {0}의 길이가 maxLength {1}보다 큽니다.",
+        "SCHEMA_STRING_TOO_SHORT": "문자열 {0}의 길이가 minLength {1}보다 작습니다."
+    },
+    "messageBoxes": {
+        "Could not open url in web browser": {
+            "caption": "웹 브라우저에서 URL을 열 수 없습니다",
+            "text": "웹 브라우저에서 URL {0}을(를) 열려고 시도하는 동안 예외가 발생했습니다:\r\n{1}"
+        },
+        "View syntax errors in document?": {
+            "caption": "문서에서 구문 오류를 보시겠습니까?",
+            "text": "문서에 {0}개의 구문 오류가 있습니다. 보시겠습니까?\r\n(설정에서 이러한 프롬프트를 끌 수 있습니다 (offer_to_show_lint 설정))"
+        },
+        "Error while trying to parse {0}": {
+            "caption": "{0} 구문 분석 중 오류 발생",
+            "text": "다음 오류로 인해 문서를 구문 분석할 수 없습니다:\r\n{0}"
+        },
+        "Possible issue with remembering selections": {
+            "caption": "선택 항목 기억 관련 잠재적 문제",
+            "text": "JsonTools는 선택 항목을 기억하기 위해 표시기 {0} 및 {1}을(를) 사용하지만, 하나 또는 둘 다 다른 플러그인과 충돌할 수 있습니다.\r\n이 메시지가 표시되고 이후 Notepad++ 또는 특정 플러그인이 비정상적으로 작동하기 시작하는 것을 발견하면 JsonTools GitHub 저장소에 발생한 상황을 설명하는 문제를 만드는 것을 고려하십시오."
+        },
+        "Pretty-print JSON Lines document?": {
+            "caption": "JSON Lines 문서를 보기 좋게 인쇄하시겠습니까?",
+            "text": "JSON Lines 문서를 보기 좋게 인쇄하면 일반적으로 더 이상 유효한 JSON Lines 문서가 아니게 됩니다. 그래도 보기 좋게 인쇄하시겠습니까?"
+        },
+        "Error while reformatting INI file": {
+            "caption": "INI 파일 재포맷 중 오류 발생",
+            "text": "INI 파일을 재포맷하는 동안 오류가 발생했습니다:\r\n{0}"
+        },
+        "Programmatic error while reformatting JSON": {
+            "caption": "JSON 재포맷 중 프로그래밍 오류 발생",
+            "text": "파일의 JSON을 재포맷하려고 시도하는 동안 프로그래밍 오류(소스 코드의 버그일 수 있음)가 발생했습니다:\r\n{0}"
+        },
+        "Failed to parse selected text as JSON": {
+            "caption": "선택한 텍스트를 JSON으로 구문 분석하지 못했습니다",
+            "text": "선택한 텍스트는 JSON 문자열이 아닙니다"
+        },
+        "JSON to YAML feature has some bugs": {
+            "caption": "JSON을 YAML로 변환 기능에 일부 버그가 있습니다",
+            "text": "이 기능에는 알려진 버그가 있으며 잘못된 YAML이 생성될 수 있습니다. 예를 보려면 테스트를 실행하십시오. 그래도 사용하시겠습니까?"
+        },
+        "Error while trying to convert JSON to YAML": {
+            "caption": "JSON을 YAML로 변환하는 중 오류 발생",
+            "text": "다음 오류로 인해 JSON을 YAML로 변환할 수 없습니다:\r\n{0}"
+        },
+        "Only arrays can be converted to JSON Lines": {
+            "caption": "배열만 JSON Lines로 변환할 수 있습니다",
+            "text": "JSON 배열만 JSON Lines 형식으로 변환할 수 있습니다."
+        },
+        "Could not change path_separator setting": {
+            "caption": "path_separator 설정을 변경할 수 없습니다",
+            "text": "다음 오류로 인해 path_separator 설정을 {0}에서 {1}(으)로 변경할 수 없습니다:\r\n{2}"
+        },
+        "No JSON syntax errors for this file": {
+            "caption": "이 파일에는 JSON 구문 오류가 없습니다",
+            "text": "{1}에는 JSON 구문 오류(수준 {0} 이하)가 없습니다"
+        },
+        "Could not find a node at this position": {
+            "caption": "이 위치에서 노드를 찾을 수 없습니다",
+            "text": "이 파일의 위치 {0}에서 노드를 찾을 수 없습니다"
+        },
+        "Error while formatting path to current position": {
+            "caption": "현재 위치 경로 서식 지정 중 오류 발생",
+            "text": "현재 위치 경로를 서식 지정하려고 시도하는 동안 다음 오류가 발생했습니다:\r\n{0}"
+        },
+        "No valid JSON elements found": {
+            "caption": "유효한 JSON 요소를 찾을 수 없습니다",
+            "text": "문서에서 문자 {0}(으)로 시작하는 유효한 JSON 요소를 찾을 수 없습니다"
+        },
+        "Error while validating JSON against schema": {
+            "caption": "스키마에 대해 JSON 유효성 검사 중 오류 발생",
+            "text": "경로 {0}의 스키마에 대해 JSON 유효성을 검사하는 동안 다음 오류가 발생했습니다:\r\n{1}"
+        },
+        "Validation failed...": {
+            "caption": "유효성 검사 실패...",
+            "text": "파일 {0}의 JSON이 경로 {1}의 스키마에 대한 유효성 검사에 실패했습니다. 문제 {2}개 중 첫 번째:\r\n{3}"
+        },
+        "Validation succeeded!": {
+            "caption": "유효성 검사 성공!",
+            "text": "파일 {0}의 JSON이 경로 {1}의 스키마에 대해 성공적으로 유효성 검사되었습니다."
+        },
+        "JSON schema generation error": {
+            "caption": "JSON 스키마 생성 오류",
+            "text": "JSON 스키마를 생성할 수 없습니다. 다음 오류가 발생했습니다:\r\n{0}"
+        },
+        "Error while generating random JSON from schema": {
+            "caption": "스키마에서 임의 JSON 생성 중 오류 발생",
+            "text": "이 스키마에서 임의 JSON을 생성하려고 시도하는 동안 오류가 발생했습니다:\r\n{0}"
+        },
+        "Couldn't parse schemasToFnamePatterns.json": {
+            "caption": "schemasToFnamePatterns.json을 구문 분석할 수 없습니다",
+            "text": "schemasToFnamePatterns.json을 구문 분석하지 못했습니다. 오류 발생:\r\n{0}"
+        },
+        "schemasToFnamePatterns.json badly formatted": {
+            "caption": "schemasToFnamePatterns.json 형식이 잘못되었습니다",
+            "text": "schemasToFnamePatterns.json은 파일 이름을 비어 있지 않은 유효한 정규 표현식(문자열) 배열에 매핑하는 객체여야 합니다.\r\n다음 유효성 검사 문제가 있습니다:\r\n{0}"
+        },
+        "No schema exists at path {0}.": {
+            "caption": "경로 {0}에 스키마가 없습니다.",
+            "text": "경로 {0}에 스키마가 없습니다."
+        },
+        "Regex did not compile (in schemasToFnamePatterns.json)": {
+            "caption": "정규 표현식이 컴파일되지 않았습니다 (schemasToFnamePatterns.json에서)",
+            "text": "파일 {0}과(와) 관련된 모든 정규 표현식을 테스트하는 동안,\r\n정규 표현식 {1}이(가) 오류로 인해 컴파일되지 않았습니다:\r\n{2}"
+        },
+        "Can't select all children": {
+            "caption": "모든 하위 항목을 선택할 수 없습니다",
+            "text": "하나 이상의 하위 항목이 문서의 JSON 노드에 해당하지 않으므로 모든 하위 항목을 선택할 수 없습니다"
+        },
+        "Error while trying to parse schema": {
+            "caption": "스키마 구문 분석 중 오류 발생",
+            "text": "경로 {0}의 스키마를 구문 분석하려고 시도하는 동안 다음 오류가 발생했습니다:\r\n{1}"
+        },
+        "Error while compiling JSON schema": {
+            "caption": "JSON 스키마 컴파일 중 오류 발생",
+            "text": "파일 \"{0}\"의 스키마를 컴파일하는 동안 예외가 발생했습니다:\r\n{1}"
+        },
+        "such error very sad": {
+            "caption": "매우 슬픈 오류",
+            "text": "JSON을 DSON으로 변환할 수 없습니다. 예외 발생:\r\n{0}"
+        },
+        "Exception while converting JSON to CSV": {
+            "caption": "JSON을 CSV로 변환하는 중 예외 발생",
+            "text": "JSON에서 CSV를 만들려고 시도하는 동안 이 예외가 발생했습니다:\r\n{0}"
+        },
+        "Json file search error": {
+            "caption": "Json 파일 검색 오류",
+            "text": "JSON 파일을 검색하는 동안 예외가 발생했습니다:\r\n{0}"
+        },
+        "No errors while searching documents": {
+            "caption": "문서 검색 중 오류 없음",
+            "text": "예외 없음! {0}"
+        },
+        "Error while sending API requests": {
+            "caption": "API 요청 전송 중 오류 발생"
+        },
+        "Too much text to parse": {
+            "caption": "구문 분석할 텍스트가 너무 많습니다",
+            "text": "구문 분석할 총 텍스트 길이({0})가 최대 길이({1})를 초과합니다"
+        },
+        "Can't populate JSON tree": {
+            "caption": "JSON 트리를 채울 수 없습니다",
+            "text": "저장된 JSON이 없으므로 JSON 트리를 채울 수 없습니다."
+        },
+        "Error while populating tree": {
+            "caption": "트리 채우는 중 오류 발생",
+            "text": "다음 오류로 인해 JSON 트리를 채울 수 없습니다:\r\n{0}"
+        },
+        "Compilation error in RemesPath query": {
+            "caption": "RemesPath 쿼리 컴파일 오류",
+            "text": "컴파일 오류로 인해 쿼리 {0}을(를) 실행할 수 없습니다:\r\n{1}"
+        },
+        "Stop seeing errors?": {
+            "caption": "오류 보기를 중지하시겠습니까?",
+            "text": "이 쿼리에 대한 오류 메시지 상자 표시를 중지하려면 예를 선택하십시오"
+        },
+        "Runtime error while executing query on selection": {
+            "caption": "선택 항목에 대한 쿼리 실행 중 런타임 오류",
+            "text": "위치 {1}과(와) {2} 사이의 선택 항목에 대해 쿼리 {0}을(를) 실행하는 동안 런타임 오류가 발생했습니다:\r\n{3}"
+        },
+        "Runtime error while executing query": {
+            "caption": "쿼리 실행 중 런타임 오류",
+            "text": "쿼리 {0}을(를) 실행하는 동안 런타임 오류가 발생했습니다:\r\n{1}"
+        },
+        "Error while formatting ini file values as strings after RemesPath mutation": {
+            "caption": "RemesPath 변경 후 INI 파일 값을 문자열로 서식 지정하는 중 오류 발생",
+            "text": "모든 값을 문자열화하려고 시도하는 동안 오류가 발생하여 INI 파일을 변경할 수 없습니다:\r\n{0}"
+        },
+        "path_separator setting not configured": {
+            "caption": "path_separator 설정이 구성되지 않았습니다",
+            "text": "'키/인덱스를 클립보드로 복사'를 선택하고 'path_separator 설정 사용' 옵션을 활성화했지만 path_separator가 여전히 기본값 {0}입니다. 대신 {1} 스타일이 사용됩니다."
+        },
+        "Error while formatting key of tree node": {
+            "caption": "트리 노드의 키 서식 지정 중 오류 발생",
+            "text": "스타일 {1}을(를) 사용하여 키 {0}을(를) 서식 지정하려고 시도하는 동안 다음 오류가 발생했습니다:\r\n{2}"
+        },
+        "Can't select object or array in non-JSON": {
+            "caption": "비 JSON에서 객체 또는 배열을 선택할 수 없습니다",
+            "text": "특정 텍스트 영역에 해당하지 않으므로 비 JSON 문서에서 객체 또는 배열을 선택할 수 없습니다"
+        },
+        "Couldn't select associated JSON": {
+            "caption": "연결된 JSON을 선택할 수 없습니다",
+            "text": "선택한 트리 노드가 문서의 JSON 요소에 해당하지 않는 것 같습니다."
+        },
+        "Couldn't select children of JSON": {
+            "caption": "JSON의 하위 항목을 선택할 수 없습니다",
+            "text": "선택한 트리 노드가 문서의 JSON 요소에 해당하지 않는 것 같습니다."
+        },
+        "Can only select children of object or array": {
+            "caption": "객체 또는 배열의 하위 항목만 선택할 수 있습니다",
+            "text": "선택한 JSON은 객체 또는 배열이 아니므로 하위 항목이 없습니다."
+        },
+        "Unknown error while parsing JsonTools config file": {
+            "caption": "JsonTools 구성 파일 구문 분석 중 알 수 없는 오류 발생",
+            "text": "JsonTools 구성 파일을 구문 분석하는 동안 설정 \"{0}\"의 유형이 {1}이어야 하지만 오류가 발생했습니다.\r\n설정이 기본값 {2}(으)로 설정되었습니다.\r\n알 수 없는 이유로 주어진 값 {3}을(를) 변환할 수 없습니다."
+        },
+        "Error while parsing JsonTools config file": {
+            "caption": "JsonTools 구성 파일 구문 분석 중 오류 발생",
+            "text": "JsonTools 구성 파일을 구문 분석하는 동안 설정 \"{0}\"의 유형이 {1}이어야 하지만 오류가 발생했습니다.\r\n설정이 기본값 {2}(으)로 설정되었습니다.\r\n주어진 값 {3}이(가) 다음 오류를 발생시켰습니다:\r\n{4}"
+        },
+        "Invalid value for setting {0}": {
+            "caption": "설정 {0}에 대한 잘못된 값",
+            "text": "설정 {0}을(를) 값 {1}(으)로 변경할 수 없으므로 {2}(으)로 설정된 상태로 유지됩니다.\r\n다음 예외가 발생했습니다:\r\n{3}"
+        },
+        "Nothing to copy to clipboard": {
+            "caption": "클립보드에 복사할 내용 없음",
+            "text": "클립보드에 복사할 내용을 찾을 수 없습니다"
+        },
+        "File too long for JsonTools": {
+            "caption": "파일이 JsonTools에 비해 너무 깁니다",
+            "text": "JsonTools는 2147483647바이트보다 큰 파일에 대해 이 플러그인 명령을 수행할 수 없습니다.\r\n파일이 너무 길 때 알림 표시를 중지하시겠습니까?"
+        },
+        "Could not find json at that path": {
+            "caption": "해당 경로에서 JSON을 찾을 수 없습니다",
+            "text": "지정된 경로({0})에서 JSON을 찾을 수 없습니다.\r\n다음 오류가 발생했습니다:\r\n{1}"
+        },
+        "Failed to compile query for sorting": {
+            "caption": "정렬용 쿼리를 컴파일하지 못했습니다",
+            "text": "선택한 정렬 방법에 따라 쿼리 \"{0}\"을(를) 컴파일하려고 시도했지만,\r\n다음 오류가 발생했습니다:\r\n{1}"
+        },
+        "JSON at specified path must be object or array": {
+            "caption": "지정된 경로의 JSON은 객체 또는 배열이어야 합니다",
+            "text": "지정된 경로의 JSON은 객체 또는 배열이어야 하지만 유형 {0}이(가) 검색되었습니다"
+        },
+        "Can only sort arrays": {
+            "caption": "배열만 정렬할 수 있습니다",
+            "text": "배열만 정렬할 수 있지만 유형 {0}의 JSON이 검색되었습니다"
+        },
+        "Error while sorting array": {
+            "caption": "배열 정렬 중 오류 발생",
+            "text": "배열을 정렬하는 동안 다음 오류가 발생했습니다:\r\n{0}"
+        },
+        "Columns to parse as number must be array of integers": {
+            "caption": "숫자로 구문 분석할 열은 정수 배열이어야 합니다",
+            "text": "숫자로 구문 분석할 열은 비어 있지 않은 JSON 정수 배열이어야 합니다"
+        }
+    },
+    "fileComments": {
+        "schemasToFnamePatterns.json": [
+            "이 파일은 자동 JSON 유효성 검사를 수행해야 하는 시기를 결정합니다",
+            "각 키는 JSON 스키마 파일의 파일 이름이어야 합니다",
+            "각 값은 유효한 C# 정규 표현식의 비어 있지 않은 목록이어야 합니다 (예: [\"blah.*\\\\.txt\"])",
+            "따라서 이 파일에 {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}이(가) 포함된 경우",
+            "이름에 \"blah\" 부분 문자열이 있는 \".txt\" 파일을 열 때마다 \"c:\\\\path\\\\to\\\\foo_schema.json\"을(를) 사용하여 자동으로 유효성 검사를 수행합니다."
+        ]
+    }
+}
