@@ -1,0 +1,639 @@
+{
+    "forms": {
+        "AboutForm": {
+            // هذا هو الاسم الذي يظهر في شريط العنوان لهذا النموذج
+            "title": "حول JsonTools",
+            // كل مفتاح في هذا الكائن هو اسم عنصر التحكم في قاعدة كود JsonTools.
+            //     إذا كان اسم عنصر التحكم مفقودًا، فلن تتم ترجمة عنصر التحكم هذا.
+            "controls": {
+                // إذا كانت القيمة المرتبطة باسم عنصر التحكم عبارة عن سلسلة نصية،
+                //     فهذا يتحكم في نص عنصر التحكم.
+                "Description": "أدوات استعلام/تحرير لـ JSON، تتضمن فحص الصيغة، إعادة التنسيق،\r\nعرض شجري مع تصفح الملفات،\r\nلغة استعلام شبيهة بـ JMESpath، والمزيد",
+                "GitHubLink": {
+                    // هذا هو LinkLabel، مما يعني أنه يحتوي على رابط قابل للنقر (عنوان URL لمستودع JsonTools).
+                    "text": "[{\"need\": \"هل تحتاج إلى مساعدة؟\"}, \"اطرح سؤالك هنا:\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
+                    // إذا قمت بتغيير نص LinkLabel هذا،
+                    //      تأكد من تغيير خاصية linkStart
+                    //      بحيث يكون عنوان URL فقط في المنطقة المميزة.
+                    "linkStart": 55, // تم التعديل لطول النص العربي وسياق RTL
+                    "linkLength": 50
+                },
+                "DebugInfoLabel": "إصدار Notepad++: X.Y.Z. لمزيد من المعلومات\r\nحول التثبيت الخاص بك، انتقل إلى ؟ -> معلومات التصحيح في شريط الحالة الرئيسي.",
+                "ThanksWowLinkLabel": {
+                    "text": "شكر خاص:\r\n* Don Ho لإنشاء Notepad++\r\n* kbilsted لإنشاء حزمة الإضافات التي تستند إليها هذه الإضافة\r\n* وبالطبع كل الأشخاص الذين ساعدوا في تحسين\r\n   هذه الإضافة!\r\n* المجتمع الرائع الذي يجعل هذا العمل مجديًا.\r\n  واو!",
+                    "linkStart": 208, // تم التعديل للغة العربية
+                    "linkLength": 4 // تم التعديل لـ "واو!"
+                }
+            }
+        },
+        "ErrorForm": {
+            "title": "أخطاء الصيغة في JSON",
+            "controls": {
+                "exportToJsonMenuItem": "تصدير إلى JSON",
+                "refreshMenuItem": "تحديث الأخطاء الحالية"
+            }
+        },
+        "FindReplaceForm": {
+            "title": "بحث/استبدال في JSON",
+            "controls": {
+                "FindReplaceFormTitle": "بحث/استبدال في JSON",
+                "FindTextBoxLabel": "بحث عن...",
+                "SwapFindReplaceButton": "تبديل",
+                "ReplaceTextBoxLabel": "استبدال بـ...",
+                "RootTextBoxLabel": "الموقع الجذر",
+                // عنصر التحكم هذا عبارة عن مربع اختيار يتغير نصه
+                //     اعتمادًا على ما إذا كان محددًا أم لا.
+                "ShowAdvancedOptionsCheckBox": {
+                    // قم بتغيير هذه القيمة لتعيين النص عندما يكون المربع *محددًا*
+                    "checked": "إظهار الخيارات المتقدمة",
+                    // قم بتغيير هذه القيمة لتعيين النص عندما يكون المربع *غير محدد*
+                    "unchecked": "إخفاء الخيارات المتقدمة"
+                },
+                // هذا هو ComboBox، حيث يمكن تحديد النص من قائمة منسدلة.
+                // لا تغير عدد العناصر في هذه المصفوفة!
+                "KeysValsBothBox": [
+                    "مفاتيح",
+                    "قيم",
+                    "مفاتيح وقيم"
+                ],
+                "KeysValsBothBoxLabel": "نطاق البحث (مفتاح/قيمة)؟",
+                "RegexBox": "استخدام التعبيرات النمطية؟",
+                "MathBox": "تعبير رياضي",
+                "RecursiveSearchBox": "بحث متكرر؟",
+                "IgnoreCaseCheckBox": "تجاهل حالة الأحرف؟",
+                "MatchExactlyBox": "مطابقة تامة؟",
+                "FindButton": "بحث عن الكل",
+                "ReplaceButton": "استبدال الكل"
+            }
+        },
+        "GrepperForm": {
+            "title": "الحصول على JSON من الملفات وواجهات برمجة التطبيقات",
+            "controls": {
+                "GrepperFormTitle": "الحصول على JSON من الملفات وواجهات برمجة التطبيقات",
+                "GetJsonFromApisTitle": "الحصول على JSON من واجهات برمجة التطبيقات",
+                "UrlsBoxLabel": "أدخل عناوين URL لواجهات برمجة التطبيقات لطلب JSON (واحد في كل سطر أو استخدم مصفوفة JSON)",
+                "SendRequestsButton": "إرسال طلبات API",
+                "GetJsonFromFilesTitle": "الحصول على JSON من الملفات المحلية",
+                "RecursiveSearchCheckBox": "البحث في الدلائل الفرعية؟",
+                "ChooseDirectoriesButton": "اختيار الدلائل...",
+                // هذا ComboBox آخر. قد يكون هناك أكثر من عنصر واحد في هذه القائمة،
+                //    ولكن يمكن ترجمة العنصر الأول فقط في هذه الحالة.
+                "DirectoriesVisitedBox": [
+                    "الدلائل التي تمت زيارتها سابقًا..."
+                ],
+                "SearchDirectoriesButton": "البحث في الدلائل",
+                "DocsButton": "الوثائق",
+                "ViewErrorsButton": "عرض الأخطاء",
+                "ViewResultsButton": "عرض النتائج في المخزن المؤقت",
+                "ChooseFilesTitle": "اختيار الملفات وعناوين URL",
+                "RemoveSelectedFilesButton": "إزالة الملفات المحددة"
+            }
+        },
+        "GrepperFormProgressBar": {
+            "controls": {
+                "titleIfParsing": "تحليل JSON قيد التقدم",
+                "titleIfReading": "قراءة الملفات قيد التقدم",
+                "captionIfParsing": "اكتملت قراءة الملفات.\r\nجاري تحليل {0} مستندات، الحجم الإجمالي حوالي {1} ميجابايت",
+                "captionIfReading": "جاري قراءة {0} ملفات، الحجم الإجمالي حوالي {1} ميجابايت",
+                "progressLabelIfParsing": "تم التحليل {0} ميجابايت / {1} ميجابايت",
+                "progressLabelIfReading": "تمت القراءة {0} / {1} ملفات"
+            }
+        },
+        "JsonToCsvForm": {
+            "title": "JSON إلى CSV",
+            "controls": {
+                "JsonToCsvFormTitle": "إنشاء CSV من JSON",
+                "KeySepBoxLabel": "فاصل المفتاح",
+                "DelimBoxLabel": "محدد ملف الإخراج",
+                "eolComboBoxLabel": "حرف نهاية السطر للإخراج",
+                "BoolsToIntsCheckBox": "تحويل true/false إلى 1/0؟",
+                "StrategyBox": [
+                    "افتراضي",
+                    "تكراري كامل",
+                    "غير تكراري",
+                    "تسلسل الكائنات القابلة للتكرار"
+                ],
+                "StrategyBoxLabel": "الاستراتيجية",
+                "GenerateCSVButton": "إنشاء CSV",
+                "DocsButton": "الوثائق"
+            }
+        },
+        "RegexSearchForm": {
+            "title": "بحث Regex إلى JSON",
+            "controls": {
+                "Title": "بحث Regex إلى JSON",
+                "RegexTextBoxLabel": "أدخل التعبير النمطي",
+                "IgnoreCaseCheckBox": "تجاهل حالة الأحرف؟",
+                "IncludeFullMatchAsFirstItemCheckBox": "تضمين المطابقة الكاملة كعنصر أول؟",
+                "ParseAsCsvCheckBox": "تحليل كـ CSV؟",
+                "DelimiterTextBoxLabel": "المحدد",
+                "QuoteCharTextBoxLabel": "حرف الاقتباس",
+                "NewlineComboBoxLabel": "حرف السطر الجديد",
+                "NColumnsTextBoxLabel": "عدد الأعمدة",
+                "HeaderHandlingComboBox": [
+                    "تخطي الرأس",
+                    "تضمين الرأس",
+                    "استخدام الرأس كمفاتيح"
+                ],
+                "HeaderHandlingComboBoxLabel": "معالجة الرأس",
+                "ColumnsToParseAsNumberTextBoxLabel": "المجموعات المراد تحليلها كرقم (مصفوفة أعداد صحيحة)",
+                "SearchButton": "بحث"
+            }
+        },
+        "SettingsForm": {
+            "title": "إعدادات إضافة JsonTools",
+            "controls": {
+                "Cancel": "إلغاء (&C)",
+                "Reset": "إعادة تعيين (&R)",
+                "Ok": "موافق (&O)"
+            }
+        },
+        "SortForm": {
+            "title": "فرز مصفوفات JSON",
+            "controls": {
+                "SortFormTitle": "فرز مصفوفات JSON", // لاحظ أن الأصل الصيني كان مختصرًا هنا
+                "PathTextBoxLabel": "مسار المصفوفة",
+                "IsMultipleArraysCheckBox": "يشير المسار إلى مصفوفات متعددة؛ فرز المصفوفات الفرعية بشكل منفصل",
+                "ReverseOrderCheckBox": "فرز تنازلي؟",
+                "SortMethodBox": [
+                    "افتراضي",
+                    "فرز حسب السلسلة (تجاهل الحالة)",
+                    "فرز حسب فهرس/مفتاح العنصر الفرعي",
+                    "فرز حسب الاستعلام على العنصر الفرعي",
+                    "خلط عشوائي"
+                ],
+                "SortMethodBoxLabel": "طريقة الفرز",
+                "QueryKeyIndexTextBoxLabel": "مفتاح/فهرس/استعلام",
+                "SortButton": "فرز"
+            }
+        },
+        "TreeViewer": {
+            "title": "عرض شجري لـ JSON لـ {0}",
+            // هذا هو العنوان لعرض الشجرة في GrepperForm
+            "titleIfGrepperForm": "شجرة JSON للملفات وواجهات برمجة التطبيقات",
+            "controls": {
+                "SubmitQueryButton": "إرسال الاستعلام",
+                "QueryToCsvButton": "استعلام إلى CSV",
+                "SaveQueryButton": "حفظ نتيجة الاستعلام",
+                "RefreshButton": "تحديث",
+                "FindReplaceButton": "بحث/استبدال",
+                // أدناه هي عناصر قائمة النقر بزر الماوس الأيمن لعقدة الشجرة
+                "CopyValueMenuItem": "نسخ القيمة إلى الحافظة",
+                "CopyKeyItem": "نسخ المفتاح/الفهرس إلى الحافظة",
+                "CopyPathItem": "نسخ المسار إلى الحافظة",
+                "ToggleSubtreesItem": "توسيع/طي جميع الأشجار الفرعية",
+                "SelectThisItem": "تحديد هذا العنصر",
+                "OpenSortFormItem": "فرز المصفوفة...",
+                "SelectAllChildrenItem": "تحديد جميع العناصر الفرعية",
+                "LanguageNameStyleItem": "نمط {0}",
+                "PathSeparatorStyleItem": "استخدام إعداد فاصل المسار"
+            }
+        }
+    },
+    // يتحكم هذا في نص عناصر القائمة الرئيسية
+    //      المرتبطة بعنصر JsonTools في قائمة إضافات Notepad++.
+    "menuItems": {
+        // يعني "&D" في هذا النص أنه يمكن الوصول إلى عنصر القائمة هذا بواسطة
+        //    مفتاح التسريع "D"، مما يعني أن تسلسل المفاتيح Alt-P-J-D يمكنه الوصول إلى عنصر القائمة هذا.
+        // عند ترجمة عناصر القائمة، من الممارسات الجيدة تضمين مفتاح تسريع،
+        //     ومن الأفضل *حتى* إذا كان مفتاح التسريع هو نفسه كما في الترجمة الإنجليزية.
+        // وبالتالي، قد تكون الترجمة الإيطالية "&Documentazione".
+        //
+        // *مهم جدًا جدًا*: يجب أن يحتوي كل اسم عنصر قائمة على 63 حرفًا أو أقل عند ترميزه في UTF-16.
+        //     أسهل طريقة للتحقق مما إذا كانت أي عناصر قائمة طويلة جدًا هي فتح عرض شجرة JsonTools لهذا الملف،
+        //     وإرسال الاستعلام في السطر التالي في مربع النص في الزاوية العلوية اليسرى:
+        //     @.menuItems[s_len(@) >= 64]
+        //     سيحدد الاستعلام في السطر أعلاه جميع عناصر القائمة التي تحتوي على 64 حرف UTF-16 أو أكثر.
+        //
+        //     *لا يمكنك* التحقق من الطول عن طريق تحديده باستخدام Notepad++، لأن Notepad++ يعرض عدد بايتات UTF-8 في شريط الحالة.
+        "&Documentation": "التوثيق (&D)",
+        "&Pretty-print current JSON file": "طباعة جميلة لملف JSON الحالي (&P)",
+        "&Compress current JSON file": "ضغط ملف JSON الحالي (&C)",
+        "Path to current p&osition": "المسار إلى الموضع الحالي (&O)",
+        "Select every val&id JSON in selection": "تحديد كل JSON صالح في التحديد (&I)",
+        "Chec&k JSON syntax now": "فحص صيغة JSON الآن (&K)",
+        "Open &JSON tree viewer": "فتح عارض شجرة JSON (&J)",
+        "&Get JSON from files and APIs": "الحصول على JSON من الملفات وواجهات برمجة التطبيقات (&G)",
+        "Sort arra&ys": "فرز المصفوفات (&Y)",
+        "&Settings": "الإعدادات (&S)",
+        "&Validate JSON against JSON schema": "التحقق من صحة JSON مقابل مخطط JSON (&V)",
+        "Validate &files with JSON schema if name matches pattern": "التحقق من المخطط حسب النمط (&F)",
+        "Generate sc&hema from JSON": "إنشاء مخطط من JSON (&H)",
+        "Generate &random JSON from schema": "إنشاء JSON عشوائي من المخطط (&R)",
+        "Run &tests": "تشغيل الاختبارات (&T)",
+        "A&bout": "حول (&B)",
+        "See most recent syntax &errors in this file": "عرض أحدث أخطاء الصيغة في هذا الملف (&E)",
+        "JSON to YAML": "JSON إلى YAML (&J)",
+        "Parse JSON Li&nes document": "تحليل مستند JSON Lines (&N)",
+        "&Array to JSON Lines": "مصفوفة إلى JSON Lines (&A)",
+        "D&ump selected text as JSON string(s)": "تفريغ النص المحدد كسلسلة (سلاسل) JSON (&U)",
+        "Dump JSON string(s) as ra&w text": "تفريغ سلسلة (سلاسل) JSON كنص خام (&W)",
+        "Open tree for &INI file": "فتح شجرة لملف INI (&I)",
+        "Rege&x search to JSON": "بحث Regex إلى JSON (&X)"
+    },
+    // ملف التكوين JsonTools.ini (في مجلد تكوين الإضافة الخاص بك)
+    //     سيحتوي على هذه الأوصاف المترجمة كتعليقات فوق كل إعداد.
+    //     سيعرض نموذج الإعدادات أيضًا هذه الأوصاف المترجمة عند تحديد الإعداد المسمى.
+    "settingsDescriptions": {
+        "logger_level": "يقمع تسجيل الأخطاء عند هذا المستوى أو أقل.\r\nSTRICT: يسجل جميع الانحرافات عن مواصفات JSON الأصلية.\r\nOK: مواصفات JSON الأصلية بالإضافة إلى ما يلي:\r\n    * يمكن أن تحتوي السلاسل على أحرف بقيمة ASCII أقل من 0x20 (بما في ذلك '\\t')\r\nNAN_INF: لا يسجل الأخطاء عند تحليل NaN و Infinity و -Infinity.\r\nJSONC: لا يسجل الأخطاء لـ:\r\n    * تعليقات JavaScript ذات السطر الواحد '//' ومتعددة الأسطر '/*...*/'\r\n    * NaN و +/-Infinity\r\nJSON5: كل شيء في مستويات JSONC و NAN_INF بالإضافة إلى ما يلي:\r\n    * سلاسل بعلامات اقتباس مفردة\r\n    * فاصلة بعد العنصر الأخير في مصفوفة أو كائن\r\n    * مفاتيح الكائن غير المقتبسة\r\n    * انظر https://json5.org/ لمزيد من المعلومات",
+        "offer_to_show_lint": "بعد تحليل المستند، يعرض مطالبة تسأل عما إذا كان يجب عرض أخطاء الصيغة في المستند.",
+        "auto_validate": "يتحقق تلقائيًا من صحة ملفات .json و .jsonc و .jsonl (كل ثانيتين)، باستثناء الملفات الكبيرة جدًا",
+        "inactivity_seconds_before_parse": "كم عدد الثواني بعد توقف المستخدم عن النشاط قبل أن تقوم الإضافة بتحليل المستند مرة أخرى. الحد الأدنى هو 1.",
+        "max_file_size_MB_slow_actions": "يتم تعطيل الإجراءات التالية المستهلكة للوقت افتراضيًا للملفات الأكبر من هذا العدد من الميجابايت:\r\n* التمكين التلقائي لمحلل JSON المعجمي.\r\n* التحليل التلقائي للملف عند الفتح وبعد حوالي ثانيتين من كل تعديل.",
+        "max_json_length_full_tree": "الحد الأقصى لطول مصفوفة أو كائن JSON ليتم توسيع جميع فروعه بالكامل في العرض الشجري. الكائنات القابلة للتكرار الأطول سيتم إضافة جزء فقط من فروعها إلى الشجرة.",
+        "tree_node_images": "هل يجب أن يكون لكل عقدة في الشجرة صورة مرتبطة بنوعها؟",
+        "ask_before_pretty_printing_json_lines": "السؤال قبل الطباعة الجميلة لمستند JSON Lines، تجاهل طلب الطباعة الجميلة، أم عدم السؤال والطباعة الجميلة مباشرة؟\r\nDONT_DO_DONT_ASK: لا تفعل شيئًا عند محاولة الطباعة الجميلة لـ JSON Lines.\r\nASK_BEFORE_DOING: إنشاء مربع رسالة يطلب التأكيد عند محاولة تنفيذ هذا الإجراء.\r\nDO_WITHOUT_ASKING: تنفيذ هذا الإجراء كما هو مطلوب دون إنشاء مربع رسالة.",
+        "indent_pretty_print": "عدد المسافات بين مستويات JSON عند الطباعة الجميلة.",
+        "tab_indent_pretty_print": "يستخدم حرف جدولة أفقي ('\\t') بدلاً من المسافات بين مستويات JSON عند الطباعة الجميلة.",
+        // لا تترجم كائن المثال لنمط PPrint! اتركه باللغة الإنجليزية.
+        // ترجم فقط ما يلي: "كيف يتم طباعة JSON بشكل جميل", "نمط Google (افتراضي)", "نمط Whitesmith", "نمط PPrint"
+        "pretty_print_style": "كيفية طباعة JSON بشكل جميل.\r\nنمط Google (افتراضي):\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nنمط Whitesmith:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nنمط PPrint:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
+        "minimal_whitespace_compression": "إذا كانت true، فإن استخدام أمر الإضافة 'ضغط JSON' سيزيل جميع المسافات البيضاء غير الضرورية في JSON. وإلا، فإنه سيحتفظ بالمسافات بعد النقطتين في الكائنات وبعد الفواصل في الكائنات والمصفوفات.",
+        "remember_comments": "عندما يتم طباعة JSON بشكل جميل أو ضغطه، سيتم تضمين أي تعليقات تم العثور عليها أثناء التحليل الأخير.\r\nعند الطباعة الجميلة، سيتم وضع كل تعليق بالنسبة لكل عنصر JSON كما كان عند تحليله.\r\nعند الضغط، سيتم وضع جميع التعليقات في بداية المستند.",
+        "sort_keys": "فرز مفاتيح الكائنات أبجديًا عند الطباعة الجميلة أو الضغط.",
+        "toolbar_icons": "حدد أحد الأحرف التالية لكل أيقونة شريط أدوات ترغب في عرضها، وبالترتيب الذي تريده:\r\n('t' = عرض شجري, 'c' = ضغط, 'p' = طباعة جميلة, 'o' = المسار إلى الموضع الحالي)\r\nسيصبح هذا الإعداد ساري المفعول عند بدء تشغيل Notepad++ التالي.\r\nإذا كنت لا ترغب في عرض أي أيقونات شريط أدوات، فأدخل حرفًا لا يمثل أيقونة؛ لا تترك هذا الحقل فارغًا.",
+        "auto_try_guess_csv_delim_newline": "إذا كان هذا الإعداد true،\r\nعند فتح نموذج بحث التعبير النمطي، أو عند تبديل مربع الاختيار 'تحليل كـ CSV؟' في هذا النموذج،\r\nسيحاول JsonTools تخمين ما إذا كان المستند الحالي ملف CSV أو TSV، وعدد الأعمدة التي يحتوي عليها وما هو حرف نهاية السطر الذي يستخدمه.\r\nسيكون فتح نموذج بحث التعبير النمطي أبطأ قليلاً إذا كان هذا الإعداد true.",
+        "csv_newline": "نوع حرف نهاية السطر المستخدم في ملفات CSV التي تم إنشاؤها.",
+        "key_style": "نمط المفتاح المستخدم عند الحصول على المسار أو المفتاح/الفهرس لعقدة أو صف.\r\nراجع الوثائق (https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-and-path_separator-settings) للحصول على وصف لكل نوع.\r\nيتم تجاهل هذا الإعداد عندما لا يكون path_separator هو القيمة الافتراضية \"\\u0001\".",
+        "path_separator": "الفاصل المستخدم عند تنسيق المسارات. يتم تجاهل هذا الإعداد عندما يتم تعيين هذا الإعداد على \"\\u0001\" (القيمة الافتراضية).\r\nيجب أن يكون هذا الإعداد حرفًا واحدًا ولا يمكن أن يكون أيًا من الأحرف في سلسلة JSON التالية: \"\\\"0123456789\"\r\nخوارزمية تنسيق مفتاح كائن أو فهرس مصفوفة هي كما يلي:\r\n===========\r\nإذا كان المفتاح هو فهرس مصفوفة:\r\n    قم بتنسيقه كنص عادي (على سبيل المثال، إذا كان \"$\" هو path_separator، يصبح الفهرس 10 \"$10\")\r\nإذا كان المفتاح يحتوي على path_separator:\r\n    قم بتنسيقه كسلسلة JSON (على سبيل المثال، إذا كان \"/\" هو path_separator، يتم تنسيق المفتاح \"foo\" كـ \"/\"foo\"\")\r\nوإلا، إذا كان المفتاح يبدأ بـ (_ أو a-z أو A-Z) وجميع أحرفه الأخرى هي (_ أو 0-9 أو a-z أو A-Z):\r\n    قم بتنسيقه كنص عادي (على سبيل المثال، إذا كان \"/\" هو path_separator، يصبح المفتاح \"_foo\" \"/_foo\"، ولكن إذا كان \"_\" هو path_separator، يصبح \"_\\\"_foo\\\"\")\r\nوإلا:\r\n    قم بتنسيقه كسلسلة JSON (على سبيل المثال، حتى إذا كان المفتاح \"a b\" لا يحتوي على path_separator، إذا كان path_separator هو \"/\"، فسيتم تنسيقه كـ \"/\\\"a b\\\"\")",
+        "skip_api_request_and_fuzz_tests": "عند تشغيل الاختبارات، تخطي الاختبارات التي ترسل طلبات API واختبارات Fuzzing لـ RemesPath.",
+        "try_parse_start_chars": "عند تحديد كل JSON في ملف، حاول التحليل فقط عند هذه الأحرف.\r\nتسامح فقط مع JSON الصالح الذي يتوافق مع مستوى المسجل NAN_INF.\r\nمثال: إذا تم تحديد \"[{ (القيمة الافتراضية)، فإننا نأخذ في الاعتبار فقط السلاسل والمصفوفات والكائنات المحتملة.\r\nإذا تم تحديد \"[{tf\"، فإننا نأخذ في الاعتبار السلاسل والمصفوفات والكائنات والقيم المنطقية المحتملة.",
+        "tree_view_font_size": "حجم خط العرض الشجري (بالنقاط). كمرجع، الافتراضي هو 7.8.",
+        "use_npp_styling": "هل يستخدم العرض الشجري ونماذج JsonTools الأخرى نفس ألوان نافذة المحرر؟",
+        "extended_ascii_strings": "استخدام أحرف ASCII الموسعة (مثل \u000b، ñ) في السلاسل؟",
+        "maxArrayLength": "الحد الأقصى لطول مصفوفة عشوائية، ما لم تحدد الكلمة الأساسية \"maxItems\" خلاف ذلك.",
+        "minArrayLength": "الحد الأدنى لطول مصفوفة عشوائية، ما لم تحدد الكلمة الأساسية \"minItems\" خلاف ذلك.",
+        "max_schema_validation_problems": "الحد الأقصى لعدد مشاكل التحقق من صحة مخطط JSON المسجلة قبل أن يتوقف المدقق.",
+        "generate_random_patterns": "إنشاء سلاسل عشوائية تطابق الكلمة الأساسية \"pattern\" في مخططات السلاسل ومفاتيح عشوائية تطابق الكلمة الأساسية \"patternProperties\" في مخططات الكائنات.",
+        "keyboard_shortcuts": "يحدد هذا الإعداد ما إذا كان JsonTools يقوم تلقائيًا بتعيين اختصارات لوحة المفاتيح الافتراضية لبعض أوامر الإضافة عند بدء التشغيل.\r\nيوصى بتعيين هذا إلى False إذا كنت ترغب في تغيير اختصارات لوحة المفاتيح من إعدادات JsonTools الافتراضية (عبر قائمة Notepad++ الرئيسية 'ماكرو -> تعديل اختصار / حذف ماكرو...')."
+    },
+    // هذه هي رسائل الخطأ التي يمكن أن يبلغ عنها JsonTools أثناء تحليل JSON و JSON Lines.
+    "jsonLint": {
+        // ============== رسائل OK (رسائل عادية) ==============
+        "OK_CONTROL_CHAR": "مواصفات JSON الصارمة لا تسمح بأحرف التحكم (رمز ASCII < 0x20) داخل السلاسل",
+        // ============== رسائل NAN_INF (رسائل NAN/Infinity) ==============
+        "NAN_INF_Infinity": "مواصفات JSON الأصلية لا تسمح بـ Infinity",
+        "NAN_INF_NaN": "مواصفات JSON الأصلية لا تسمح بـ NaN",
+        // ============== رسائل JSONC (رسائل JSONC) ==============
+        "JSONC_JAVASCRIPT_COMMENT": "مواصفات JSON الأصلية لا تسمح بتعليقات JavaScript",
+        // ============== رسائل JSON5 (رسائل JSON5) ==============
+        "JSON5_WHITESPACE_CHAR": "أحرف المسافة البيضاء بخلاف ' ' و '\\t' و '\\r' و '\\n' مسموح بها فقط في JSON5",
+        "JSON5_SINGLEQUOTED_STRING": "السلاسل المقتبسة بعلامات اقتباس مفردة مسموح بها فقط في JSON5",
+        "JSON5_ESCAPED_NEWLINE": "حروف السطر الجديد المهرّبة مسموح بها فقط في JSON5",
+        "JSON5_X_ESCAPE": "الهروب \\x مسموح به فقط في JSON5",
+        "JSON5_ESCAPED_CHAR": "الحرف المهرّب '{0}' مسموح به فقط في JSON5",
+        "JSON5_UNQUOTED_KEY": "المفاتيح غير المقتبسة مسموح بها فقط في JSON5",
+        "JSON5_NUM_LEADING_PLUS": "علامة + البادئة في الأرقام مسموح بها فقط في JSON5",
+        "JSON5_HEX_NUM": "الأرقام السداسية عشرية مسموح بها فقط في JSON5",
+        "JSON5_NUM_LEADING_DECIMAL_POINT": "الأرقام التي تبدأ بنقطة عشرية مسموح بها فقط في JSON5",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "فاصلة بعد العنصر الأخير في المصفوفة",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "فاصلة بعد زوج المفتاح-القيمة الأخير في الكائن",
+        "JSON5_NUM_TRAILING_DECIMAL_POINT": "الأرقام التي تنتهي بنقطة عشرية مسموح بها فقط في JSON5",
+        // ============== رسائل BAD (رسائل خطأ) ==============
+        "BAD_UNTERMINATED_MULTILINE_COMMENT": "تعليق متعدد الأسطر غير منتهٍ",
+        "BAD_PYTHON_COMMENT": "لا توجد مواصفة JSON معترف بها تسمح بتعليقات نمط Python '#'",
+        "BAD_STRING_CONTAINS_NEWLINE": "السلسلة الحرفية تحتوي على حرف سطر جديد",
+        "BAD_KEY_CONTAINS_NEWLINE": "مفتاح الكائن يحتوي على حرف سطر جديد",
+        "BAD_UNTERMINATED_STRING": "سلسلة حرفية غير منتهية تبدأ من الموضع {0}",
+        "BAD_INVALID_UNQUOTED_KEY": "لا يوجد مفتاح صالح غير مقتبس يبدأ من {0}",
+        "BAD_PYTHON_nan": "nan ليست تمثيلاً صالحًا لـ Not a Number في JSON",
+        "BAD_PYTHON_None": "لا توجد مواصفة JSON تسمح بـ None",
+        "BAD_PYTHON_inf": "inf ليست تمثيلاً صحيحًا لـ Infinity في JSON",
+        "BAD_UNNECESSARY_LEADING_0": "لا توجد مواصفة JSON تسمح بأرقام تحتوي على أصفار بادئة غير ضرورية (مثل \"01\")",
+        "BAD_SLASH_FRACTION": "لا توجد مواصفة JSON تسمح بكسور على شكل 1/3",
+        "BAD_NUMBER_INVALID_FORMAT": "سلسلة الأرقام {0} مهيأة بشكل خاطئ",
+        "BAD_TWO_CONSECUTIVE_COMMAS_ARRAY": "فاصلتان متتاليتان بعد عنصر المصفوفة {0}",
+        "BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY": "فاصلة قبل القيمة الأولى للمصفوفة",
+        "BAD_ARRAY_ENDSWITH_CURLYBRACE": "كان متوقعًا ']' لإنهاء المصفوفة، ولكن تم العثور على '}'",
+        "BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS": "لا توجد فاصلة بين أعضاء المصفوفة",
+        "BAD_COLON_BETWEEN_ARRAY_ITEMS": "تم العثور على ':' (فاصل المفتاح-القيمة) حيث كانت متوقعة فاصلة بين أعضاء المصفوفة. هل نسيت إغلاق مصفوفة؟",
+        "BAD_UNTERMINATED_ARRAY": "مصفوفة غير منتهية",
+        "BAD_TWO_CONSECUTIVE_COMMAS_OBJECT": "فاصلتان متتاليتان بعد زوج المفتاح-القيمة للكائن {0}",
+        "BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT": "فاصلة قبل القيمة الأولى للكائن",
+        "BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS": "لا توجد فاصلة بعد زوج المفتاح-القيمة {0} في الكائن",
+        "BAD_UNTERMINATED_OBJECT": "كائن غير منتهٍ",
+        "BAD_OBJECT_ENDSWITH_SQUAREBRACE": "كان متوقعًا '}' لإنهاء الكائن، ولكن تم العثور على ']'",
+        "BAD_COLON_BETWEEN_OBJECT_PAIRS": "تم العثور على ':' بدلاً من فاصلة بعد زوج مفتاح-قيمة",
+        "BAD_CHAR_WHERE_COLON_EXPECTED": "تم العثور على '{0}' بعد المفتاح {1} حيث كانت متوقعة نقطتان رأسيتان",
+        "BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE": "لا توجد ':' بين مفتاح الكائن {0} والقيمة {0}",
+        "BAD_DUPLICATE_KEY": "الكائن يحتوي على مفاتيح متعددة \"{0}\"",
+        "BAD_PYTHON_True": "لا توجد مواصفة JSON تسمح بـ True",
+        "BAD_PYTHON_False": "لا توجد مواصفة JSON تسمح بـ False",
+        "BAD_JAVASCRIPT_undefined": "لا توجد مواصفة JSON تسمح بـ undefined",
+        "BAD_CHAR_INSTEAD_OF_EOF": "في نهاية مستند JSON صالح، تم الحصول على {0} بدلاً من EOF (نهاية الملف)",
+        "BAD_FLOAT_TOO_LARGE": "سلسلة الأرقام {0} كبيرة جدًا بالنسبة لنقطة عائمة 64 بت",
+        // ============== رسائل FATAL (رسائل خطأ فادحة) ==============
+        "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "كان متوقعًا تعليق JavaScript بعد '/'",
+        "FATAL_HEXADECIMAL_TOO_SHORT": "لا يمكن العثور على رقم سداسي عشري صالح بطول {0}",
+        "FATAL_NUL_CHAR": "'\\x00' هو الحرف الفارغ، وهو غير قانوني في JsonTools",
+        "FATAL_UNTERMINATED_KEY": "مفتاح كائن غير منتهٍ",
+        "FATAL_INVALID_STARTSWITH_n": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'n' هو null أو nan",
+        "FATAL_PLUS_OR_MINUS_AT_EOF": "رمز '{0}' في نهاية المستند",
+        "FATAL_INVALID_STARTSWITH_I": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'I' هو Infinity",
+        "FATAL_INVALID_STARTSWITH_N": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'N' هو NaN أو None",
+        "FATAL_INVALID_STARTSWITH_i": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'i' هو inf",
+        "FATAL_HEX_INT_OVERFLOW": "الرقم السداسي العشري كبير جدًا بالنسبة لنوع عدد صحيح 64 بت ذي إشارة",
+        "FATAL_SECOND_DECIMAL_POINT": "نقطة عشرية في مكان خاطئ في الرقم",
+        "FATAL_NUM_TRAILING_e_OR_E": "لا توجد أرقام بعد 'e' في الترميز العلمي",
+        "FATAL_MAX_RECURSION_DEPTH": "تم الوصول إلى أقصى عمق للتكرار (512)",
+        "FATAL_UNEXPECTED_EOF": "نهاية ملف غير متوقعة",
+        "FATAL_NO_VALID_LITERAL_POSSIBLE": "لا يوجد حرفي صالح ممكن",
+        "FATAL_INVALID_STARTSWITH_t": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 't' هو true",
+        "FATAL_INVALID_STARTSWITH_f": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'f' هو false",
+        "FATAL_INVALID_STARTSWITH_T": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'T' هو True",
+        "FATAL_INVALID_STARTSWITH_F": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'F' هو False",
+        "FATAL_INVALID_STARTSWITH_u": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'u' هو undefined",
+        "FATAL_BADLY_LOCATED_CHAR": "حرف في موقع خاطئ {0}",
+        "FATAL_NO_INPUT": "لا يوجد إدخال",
+        "FATAL_ONLY_WHITESPACE_COMMENTS": "الإدخال يحتوي فقط على مسافات بيضاء وتعليقات محتملة",
+        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "مستند JSON Lines لا يحتوي بالضبط على مستند JSON واحد لكل سطر",
+        // ============== رسائل SCHEMA (رسائل التحقق من المخطط) ==============
+        "SCHEMA_TYPE_MISMATCH": "تم العثور على النوع {0}، وكان متوقعًا النوع {1}.",
+        "SCHEMA_TYPE_ARRAY_MISMATCH": "تم العثور على النوع {0}، وكان متوقعًا أحد الأنواع {1}.",
+        "SCHEMA_VALUE_NOT_IN_ENUM": "تم العثور على القيمة {0}، ولكن القيم المسموح بها فقط هي {1}.",
+        "SCHEMA_ARRAY_TOO_LONG": "المصفوفة تتطلب {0} عناصر على الأكثر، ولكنها تحتوي على {1}.",
+        "SCHEMA_ARRAY_TOO_SHORT": "المصفوفة تتطلب {0} عناصر على الأقل، ولكنها تحتوي فقط على {1}.",
+        "SCHEMA_CONTAINS_VIOLATION": "يجب أن تحتوي المصفوفة على ما بين {0} و {1} عناصر تطابق نمط \"contains\" {2}",
+        "SCHEMA_MINCONTAINS_VIOLATION": "يجب أن تحتوي المصفوفة على {0} عناصر على الأقل تطابق نمط \"contains\" {1}",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "الكائن يفتقد المفتاح \"required\" {0}",
+        "SCHEMA_FALSE_SCHEMA": "المخطط هو false، لذلك لن يمر أي شيء بالتحقق.",
+        "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "السلسلة '{0}' لا تطابق التعبير النمطي '{1}'",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "أقصى عمق للتحقق هو 64",
+        "SCHEMA_NUMBER_LESS_THAN_MIN": "الرقم {0} أصغر من الحد الأدنى {1}",
+        "SCHEMA_NUMBER_GREATER_THAN_MAX": "الرقم {0} أكبر من الحد الأقصى {1}",
+        "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "الرقم {0} أصغر من أو يساوي الحد الأدنى الحصري {1}",
+        "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "الرقم {0} أكبر من أو يساوي الحد الأقصى الحصري {1}",
+        "SCHEMA_STRING_TOO_LONG": "طول السلسلة {0} أكبر من maxLength {1}",
+        "SCHEMA_STRING_TOO_SHORT": "طول السلسلة {0} أصغر من minLength {1}"
+    },
+    "messageBoxes": {
+        // يستخدم هذا الكائن لترجمة مربعات الرسائل (المربعات الصغيرة التي تحتوي على أزرار OK، Yes، No، Cancel التي تظهر وتخبرك بأشياء أو تطلب منك التأكيد).
+        // كل مفتاح في هذا الكائن هو عنوان مربع الرسالة.
+        // كل ترجمة لمربع رسالة تحتوي على حقلي "text" و "caption":
+        //      حقل "caption" هو ترجمة العنوان (سطر العنوان في مربع الرسالة، على يسار علامة X لإغلاق المربع).
+        //      حقل "text" هو ترجمة النص داخل مربع الرسالة
+        // كما هو الحال في كائن "jsonLint"، فإن {integer} داخل أي نص له معنى خاص، لذا يجب تركه كما هو.
+        // ===== مربعات الرسائل في Main.cs =====
+        "Could not open url in web browser": {
+            "caption": "تعذر فتح عنوان URL في متصفح الويب",
+            "text": "أثناء محاولة فتح عنوان URL {0} في متصفح الويب، حدث استثناء:\r\n{1}"
+        },
+        "View syntax errors in document?": {
+            "caption": "عرض أخطاء الصيغة في المستند؟",
+            "text": "يوجد {0} أخطاء صيغة في المستند. هل ترغب في عرضها؟\r\n(يمكنك إيقاف تشغيل هذه المطالبات في الإعدادات (إعداد offer_to_show_lint))"
+        },
+        "Error while trying to parse {0}": {
+            "caption": "خطأ أثناء محاولة تحليل {0}",
+            "text": "تعذر تحليل المستند بسبب الخطأ التالي:\r\n{0}"
+        },
+        "Possible issue with remembering selections": {
+            "caption": "مشكلة محتملة في تذكر التحديدات",
+            "text": "يستخدم JsonTools المؤشرات {0} و {1} لتذكر التحديدات، ولكن قد يتعارض أحدهما أو كلاهما مع إضافة أخرى.\r\nإذا رأيت هذه الرسالة ولاحظت لاحقًا أن Notepad++ أو إحدى الإضافات بدأت تتصرف بشكل غريب، فيرجى التفكير في إنشاء مشكلة في مستودع JsonTools GitHub تصف ما حدث."
+        },
+        "Pretty-print JSON Lines document?": {
+            "caption": "طباعة جميلة لمستند JSON Lines؟",
+            "text": "عادةً ما تؤدي الطباعة الجميلة لمستند JSON Lines إلى جعله غير صالح كمستند JSON Lines. هل ما زلت ترغب في طباعته بشكل جميل؟"
+        },
+        "Error while reformatting INI file": {
+            "caption": "خطأ أثناء إعادة تنسيق ملف INI",
+            "text": "حدث خطأ أثناء إعادة تنسيق ملف INI:\r\n{0}"
+        },
+        "Programmatic error while reformatting JSON": {
+            "caption": "خطأ برمجي أثناء إعادة تنسيق JSON",
+            "text": "أثناء محاولة إعادة تنسيق JSON للملف، حدث خطأ برمجي (ربما بسبب خطأ في الكود المصدري):\r\n{0}"
+        },
+        "Failed to parse selected text as JSON": {
+            "caption": "فشل تحليل النص المحدد كـ JSON",
+            "text": "النص المحدد ليس سلسلة JSON"
+        },
+        "JSON to YAML feature has some bugs": {
+            "caption": "ميزة JSON إلى YAML بها بعض الأخطاء",
+            "text": "تحتوي هذه الميزة على أخطاء معروفة قد تؤدي إلى إنشاء YAML غير صالح. قم بتشغيل الاختبارات لرؤية الأمثلة. هل ما زلت ترغب في استخدامه؟"
+        },
+        "Error while trying to convert JSON to YAML": {
+            "caption": "خطأ أثناء محاولة تحويل JSON إلى YAML",
+            "text": "تعذر تحويل JSON إلى YAML بسبب الخطأ التالي:\r\n{0}"
+        },
+        "Only arrays can be converted to JSON Lines": {
+            "caption": "يمكن تحويل المصفوفات فقط إلى JSON Lines",
+            "text": "يمكن تحويل مصفوفات JSON فقط إلى تنسيق JSON Lines."
+        },
+        "Could not change path_separator setting": {
+            "caption": "تعذر تغيير إعداد path_separator",
+            "text": "تعذر تغيير إعداد path_separator من {0} إلى {1} بسبب الخطأ التالي:\r\n{2}"
+        },
+        "No JSON syntax errors for this file": {
+            "caption": "لا توجد أخطاء صيغة JSON لهذا الملف",
+            "text": "لا توجد أخطاء صيغة JSON (المستوى {0} أو أقل) لـ {1}"
+        },
+        "Could not find a node at this position": {
+            "caption": "تعذر العثور على عقدة في هذا الموضع",
+            "text": "لم يتم العثور على عقدة في الموضع {0} من هذا الملف"
+        },
+        "Error while formatting path to current position": {
+            "caption": "خطأ أثناء تنسيق المسار إلى الموضع الحالي",
+            "text": "أثناء محاولة تنسيق المسار إلى الموضع الحالي، حدث الخطأ التالي:\r\n{0}"
+        },
+        "No valid JSON elements found": {
+            "caption": "لم يتم العثور على عناصر JSON صالحة",
+            "text": "لم يتم العثور على عناصر JSON صالحة تبدأ بالأحرف {0} في المستند"
+        },
+        "Error while validating JSON against schema": {
+            "caption": "خطأ أثناء التحقق من صحة JSON مقابل المخطط",
+            "text": "أثناء التحقق من صحة JSON مقابل المخطط في المسار {0}، حدث الخطأ التالي:\r\n{1}"
+        },
+        "Validation failed...": {
+            "caption": "فشل التحقق...",
+            "text": "فشل JSON في الملف {0} في التحقق من صحته مقابل المخطط في المسار {1}. المشكلة الأولى من {2}:\r\n{3}"
+        },
+        "Validation succeeded!": {
+            "caption": "نجح التحقق!",
+            "text": "تم التحقق بنجاح من صحة JSON في الملف {0} مقابل المخطط في المسار {1}."
+        },
+        "JSON schema generation error": {
+            "caption": "خطأ في إنشاء مخطط JSON",
+            "text": "تعذر إنشاء مخطط JSON. حدث الخطأ التالي:\r\n{0}"
+        },
+        "Error while generating random JSON from schema": {
+            "caption": "خطأ أثناء إنشاء JSON عشوائي من المخطط",
+            "text": "أثناء محاولة إنشاء JSON عشوائي من هذا المخطط، حدث خطأ:\r\n{0}"
+        },
+        "Couldn't parse schemasToFnamePatterns.json": {
+            "caption": "تعذر تحليل schemasToFnamePatterns.json",
+            "text": "فشل تحليل schemasToFnamePatterns.json. حدث خطأ:\r\n{0}"
+        },
+        "schemasToFnamePatterns.json badly formatted": {
+            "caption": "schemasToFnamePatterns.json منسق بشكل سيئ",
+            "text": "يجب أن يكون schemasToFnamePatterns.json كائنًا يربط أسماء الملفات بمصفوفات غير فارغة من التعبيرات النمطية الصالحة (سلاسل).\r\nتوجد مشاكل التحقق التالية:\r\n{0}"
+        },
+        "No schema exists at path {0}.": {
+            "caption": "لا يوجد مخطط في المسار {0}.",
+            "text": "لا يوجد مخطط في المسار {0}."
+        },
+        "Regex did not compile (in schemasToFnamePatterns.json)": {
+            "caption": "لم يتم تجميع التعبير النمطي (في schemasToFnamePatterns.json)",
+            "text": "أثناء اختبار جميع التعبيرات النمطية المرتبطة بالملف {0}،\r\nفشل تجميع التعبير النمطي {1} بسبب الخطأ:\r\n{2}"
+        },
+        "Can't select all children": {
+            "caption": "لا يمكن تحديد جميع العناصر الفرعية",
+            "text": "لا يمكن تحديد جميع العناصر الفرعية لأن عنصرًا فرعيًا واحدًا أو أكثر لا يتوافق مع عقدة JSON في المستند"
+        },
+        "Error while trying to parse schema": {
+            "caption": "خطأ أثناء محاولة تحليل المخطط",
+            "text": "أثناء محاولة تحليل المخطط في المسار {0}، حدث الخطأ التالي:\r\n{1}"
+        },
+        "Error while compiling JSON schema": {
+            "caption": "خطأ أثناء تجميع مخطط JSON",
+            "text": "أثناء تجميع المخطط للملف \"{0}\"، حدث استثناء:\r\n{1}"
+        },
+        // ===== مربعات الرسائل في AboutForm.cs =====
+        "such error very sad": {
+            "caption": "خطأ محزن جدا",
+            "text": "تعذر تحويل JSON إلى DSON. حدث استثناء:\r\n{0}"
+        },
+        // ===== مربعات الرسائل في JsonToCsvForm.cs =====
+        "Exception while converting JSON to CSV": {
+            "caption": "استثناء أثناء تحويل JSON إلى CSV",
+            "text": "أثناء محاولة إنشاء CSV من JSON، تم طرح هذا الاستثناء:\r\n{0}"
+        },
+        // ===== مربعات الرسائل في GrepperForm.cs =====
+        "Json file search error": {
+            "caption": "خطأ في البحث عن ملف Json",
+            "text": "أثناء البحث عن ملفات JSON، حدث استثناء:\r\n{0}"
+        },
+        "No errors while searching documents": {
+            "caption": "لا توجد أخطاء أثناء البحث في المستندات",
+            "text": "لا توجد استثناءات! {0}"
+        },
+        "Error while sending API requests": {
+            "caption": "خطأ أثناء إرسال طلبات API" // النص مجرد استثناء
+        },
+        "Too much text to parse": {
+            "caption": "نص كبير جدًا للتحليل",
+            "text": "يتجاوز الطول الإجمالي للنص المراد تحليله ({0}) الطول الأقصى ({1})"
+        },
+        // ===== مربعات الرسائل في TreeViewer.cs =====
+        "Can't populate JSON tree": {
+            "caption": "لا يمكن ملء شجرة JSON",
+            "text": "لا يمكن ملء شجرة JSON لأنه لا يوجد JSON مخزن."
+        },
+        "Error while populating tree": {
+            "caption": "خطأ أثناء ملء الشجرة",
+            "text": "تعذر ملء شجرة JSON بسبب الخطأ التالي:\r\n{0}"
+        },
+        "Compilation error in RemesPath query": {
+            "caption": "خطأ تجميع في استعلام RemesPath",
+            "text": "تعذر تنفيذ الاستعلام {0} بسبب خطأ التجميع:\r\n{1}"
+        },
+        "Stop seeing errors?": {
+            "caption": "التوقف عن رؤية الأخطاء؟",
+            "text": "حدد نعم للتوقف عن رؤية مربعات رسائل الخطأ لهذا الاستعلام"
+        },
+        "Runtime error while executing query on selection": {
+            "caption": "خطأ وقت التشغيل أثناء تنفيذ الاستعلام على التحديد",
+            "text": "أثناء تنفيذ الاستعلام {0} على التحديد بين الموضعين {1} و {2}، حدث خطأ وقت تشغيل:\r\n{3}"
+        },
+        "Runtime error while executing query": {
+            "caption": "خطأ وقت التشغيل أثناء تنفيذ الاستعلام",
+            "text": "أثناء تنفيذ الاستعلام {0}، حدث خطأ وقت تشغيل:\r\n{1}"
+        },
+        "Error while formatting ini file values as strings after RemesPath mutation": {
+            "caption": "خطأ أثناء تنسيق قيم ملف ini كسلاسل بعد تحوير RemesPath",
+            "text": "تعذر تحوير ملف INI لأنه حدث خطأ أثناء محاولة تحويل جميع القيم إلى سلاسل:\r\n{0}"
+        },
+        "path_separator setting not configured": {
+            "caption": "إعداد path_separator غير مهيأ",
+            "text": "لقد حددت 'نسخ المفتاح/الفهرس إلى الحافظة' وقمت بتمكين خيار 'استخدام إعداد path_separator'، لكن path_separator الخاص بك لا يزال هو القيمة الافتراضية {0}. سيتم استخدام النمط {1} بدلاً من ذلك."
+        },
+        "Error while formatting key of tree node": {
+            "caption": "خطأ أثناء تنسيق مفتاح عقدة الشجرة",
+            "text": "أثناء محاولة تنسيق المفتاح {0} بالنمط {1}، حدث الخطأ التالي:\r\n{2}"
+        },
+        "Can't select object or array in non-JSON": {
+            "caption": "لا يمكن تحديد كائن أو مصفوفة في غير JSON",
+            "text": "لا يمكن تحديد كائن أو مصفوفة في مستند غير JSON لأنه لا يتوافق مع منطقة نصية محددة"
+        },
+        "Couldn't select associated JSON": {
+            "caption": "تعذر تحديد JSON المرتبط",
+            "text": "لا يبدو أن عقدة الشجرة المحددة تتوافق مع عنصر JSON في المستند."
+        },
+        "Couldn't select children of JSON": {
+            "caption": "تعذر تحديد العناصر الفرعية لـ JSON",
+            "text": "لا يبدو أن عقدة الشجرة المحددة تتوافق مع عنصر JSON في المستند."
+        },
+        "Can only select children of object or array": {
+            "caption": "يمكن تحديد العناصر الفرعية للكائن أو المصفوفة فقط",
+            "text": "JSON المحدد ليس كائنًا أو مصفوفة، لذلك ليس لديه عناصر فرعية."
+        },
+        // ===== مربعات الرسائل في SettingsBase.cs =====
+        "Unknown error while parsing JsonTools config file": {
+            "caption": "خطأ غير معروف أثناء تحليل ملف تكوين JsonTools",
+            "text": "أثناء تحليل ملف تكوين JsonTools، كان النوع {1} متوقعًا للإعداد \"{0}\"، ولكن حدث خطأ.\r\nتم تعيين الإعداد إلى قيمته الافتراضية {2}.\r\nتعذر تحويل القيمة المعطاة {3} لسبب غير معروف."
+        },
+        "Error while parsing JsonTools config file": {
+            "caption": "خطأ أثناء تحليل ملف تكوين JsonTools",
+            "text": "أثناء تحليل ملف تكوين JsonTools، كان النوع {1} متوقعًا للإعداد \"{0}\"، ولكن حدث خطأ.\r\nتم تعيين الإعداد إلى قيمته الافتراضية {2}.\r\nتسببت القيمة المعطاة {3} في الخطأ التالي:\r\n{4}"
+        },
+        "Invalid value for setting {0}": {
+            "caption": "قيمة غير صالحة للإعداد {0}",
+            "text": "تعذر تغيير الإعداد {0} إلى القيمة {1}، لذلك سيبقى معينًا على {2}.\r\nحدث الاستثناء التالي:\r\n{3}"
+        },
+        // ===== مربعات الرسائل في Npp.cs =====
+        "Nothing to copy to clipboard": {
+            "caption": "لا يوجد شيء لنسخه إلى الحافظة",
+            "text": "تعذر العثور على أي شيء لنسخه إلى الحافظة"
+        },
+        "File too long for JsonTools": {
+            "caption": "الملف طويل جدًا بالنسبة لـ JsonTools",
+            "text": "لا يمكن لـ JsonTools تنفيذ أمر الإضافة هذا على الملفات الأكبر من 2147483647 بايت.\r\nهل ترغب في التوقف عن تلقي الإشعارات عندما تكون الملفات طويلة جدًا؟"
+        },
+        // ===== مربعات الرسائل في SortForm.cs =====
+        "Could not find json at that path": {
+            "caption": "تعذر العثور على json في هذا المسار",
+            "text": "تعذر العثور على JSON في المسار المحدد ({0}).\r\nحدث الخطأ التالي:\r\n{1}"
+        },
+        "Failed to compile query for sorting": {
+            "caption": "فشل تجميع الاستعلام للفرز",
+            "text": "محاولة تجميع الاستعلام \"{0}\" بناءً على طريقة الفرز المحددة،\r\nولكن حدث الخطأ التالي:\r\n{1}"
+        },
+        "JSON at specified path must be object or array": {
+            "caption": "يجب أن يكون JSON في المسار المحدد كائنًا أو مصفوفة",
+            "text": "يجب أن يكون JSON في المسار المحدد كائنًا أو مصفوفة، ولكن تم الحصول على النوع {0}"
+        },
+        "Can only sort arrays": {
+            "caption": "يمكن فرز المصفوفات فقط",
+            "text": "يمكن فرز المصفوفات فقط، ولكن تم الحصول على JSON من النوع {0}"
+        },
+        "Error while sorting array": {
+            "caption": "خطأ أثناء فرز المصفوفة",
+            "text": "أثناء فرز المصفوفة، حدث الخطأ التالي:\r\n{0}"
+        },
+        // ===== مربعات الرسائل في RegexSearchForm.cs =====
+        "Columns to parse as number must be array of integers": {
+            "caption": "يجب أن تكون الأعمدة المراد تحليلها كرقم مصفوفة أعداد صحيحة",
+            "text": "يجب أن تكون الأعمدة المراد تحليلها كرقم مصفوفة JSON غير فارغة من الأعداد الصحيحة"
+        }
+    },
+    "fileComments": {
+        // schemasToFnamePatterns.json (وربما ملفات تكوين أخرى في المستقبل)
+        //     يمكن أن تحتوي على تعليقات في بداية الملف.
+        // هذا الكائن يربط كل اسم ملف بمصفوفة من التعليقات أحادية السطر في بداية الملف.
+        "schemasToFnamePatterns.json": [
+            "يحدد هذا الملف متى يجب إجراء التحقق التلقائي من صحة JSON", // this file determines when automatic JSON validation should be performed
+            "يجب أن يكون كل مفتاح هو اسم ملف مخطط JSON", // each key must be the filename of a JSON schema file
+            "يجب أن تكون كل قيمة قائمة غير فارغة من التعبيرات النمطية الصالحة في C# (على سبيل المثال، [\"blah.*\\\\.txt\"])", // each value must be a non-empty list of valid C# regular expressions (e.g., ["blah.*\\.txt"])
+            "وبالتالي، إذا احتوى هذا الملف على {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}", // thus, if this file contained {"c:\\path\\to\\foo_schema.json": ["blah.*\\.txt"]}
+            "فسيقوم تلقائيًا بإجراء التحقق باستخدام \"c:\\\\path\\\\to\\\\foo_schema.json\" كلما تم فتح ملف \".txt\" يحتوي على السلسلة الفرعية \"blah\" في اسمه." // it would automatically perform validation using "c:\\path\\to\\foo_schema.json" whenever a ".txt" file with the substring "blah" in its name was opened.
+        ]
+    }
+    //, "exceptions": {
+    //     "DsonDumpException": {
+    //         // all exceptions of this type have this basic format.
+    //         // The {integer} parameters in the basicFormat string are filled by various parameters when the exception is thrown at runtime.
+    //         "basicFormat": "DSON dump error: {0}",
+    //         "messages": {
+    //             "message1": "translated message1"
+    //         }
+    //     }
+    // }
+}

@@ -53,7 +53,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 1. Add [`recurse_until` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) to recursively search arrays and objects for anything inside that satisfies a condition.
-2. Add [`keyboard_shortcuts` setting](/docs/README.md#the-basics), allowing users to turn off default JsonTools keyboard shortcuts. 
+2. Add [`keyboard_shortcuts` setting](/docs/README.md#the-basics), allowing users to turn off default JsonTools keyboard shortcuts.
+3. Courtesy of user [hydy100](https://github.com/hydy100), [Translation](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation) to Arabic, Chinese (simplified), French, German, Japanese, Korean, and Taiwanese Mandarin.
 
 ### Fixed
 

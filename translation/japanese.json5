@@ -1,0 +1,564 @@
+{
+    "forms": {
+        "AboutForm": {
+            "title": "JsonToolsについて",
+            "controls": {
+                "Description": "構文チェック、再フォーマット、\r\nファイルナビゲーション付きツリービュー、\r\nJMESpathのようなクエリ言語などを含む、JSON用のクエリ/編集ツール",
+                "GitHubLink": {
+                    "text": "[{\"need\": \"ヘルプが必要ですか？\"}, \"こちらで質問してください：\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
+                    "linkStart": 43, // Adjusted for Japanese text length
+                    "linkLength": 50
+                },
+                "DebugInfoLabel": "Notepad++ バージョン：X.Y.Z。インストールに関する\r\n詳細情報は、メインステータスバーの「?」->「デバッグ情報」に移動してください。",
+                "ThanksWowLinkLabel": {
+                    "text": "特別な感謝：\r\n* Notepad++を作成したDon Ho氏\r\n* このプラグインの基になったプラグインパックを作成したkbilsted氏\r\n* もちろん、このプラグインの改善に協力してくれた\r\n   すべての人々！\r\n* この作業を価値あるものにしてくれる素晴らしいコミュニティ。\r\n  ワオ！",
+                    "linkStart": 146, // Adjusted
+                    "linkLength": 3 // Adjusted for 「ワオ！」
+                }
+            }
+        },
+        "ErrorForm": {
+            "title": "JSONの構文エラー",
+            "controls": {
+                "exportToJsonMenuItem": "JSONにエクスポート",
+                "refreshMenuItem": "現在のエラーを更新"
+            }
+        },
+        "FindReplaceForm": {
+            "title": "JSON内で検索/置換",
+            "controls": {
+                "FindReplaceFormTitle": "JSON内で検索/置換",
+                "FindTextBoxLabel": "検索...",
+                "SwapFindReplaceButton": "交換",
+                "ReplaceTextBoxLabel": "置換...",
+                "RootTextBoxLabel": "ルート位置",
+                "ShowAdvancedOptionsCheckBox": {
+                    "checked": "詳細オプションを表示",
+                    "unchecked": "詳細オプションを非表示"
+                },
+                "KeysValsBothBox": [
+                    "キー",
+                    "値",
+                    "キーと値"
+                ],
+                "KeysValsBothBoxLabel": "検索対象(キー/値)？",
+                "RegexBox": "正規表現を使用？",
+                "MathBox": "数式",
+                "RecursiveSearchBox": "再帰的に検索？",
+                "IgnoreCaseCheckBox": "大文字/小文字を無視？",
+                "MatchExactlyBox": "完全に一致？",
+                "FindButton": "すべて検索",
+                "ReplaceButton": "すべて置換"
+            }
+        },
+        "GrepperForm": {
+            "title": "ファイルとAPIからJSONを取得",
+            "controls": {
+                "GrepperFormTitle": "ファイルとAPIからJSONを取得",
+                "GetJsonFromApisTitle": "APIからJSONを取得",
+                "UrlsBoxLabel": "JSONをリクエストするAPI URLを入力 (1行に1つ、またはJSON配列を使用)",
+                "SendRequestsButton": "APIリクエストを送信",
+                "GetJsonFromFilesTitle": "ローカルファイルからJSONを取得",
+                "RecursiveSearchCheckBox": "サブディレクトリを検索？",
+                "ChooseDirectoriesButton": "ディレクトリを選択...",
+                "DirectoriesVisitedBox": [
+                    "以前にアクセスしたディレクトリ..."
+                ],
+                "SearchDirectoriesButton": "ディレクトリを検索",
+                "DocsButton": "ドキュメント",
+                "ViewErrorsButton": "エラーを表示",
+                "ViewResultsButton": "バッファで結果を表示",
+                "ChooseFilesTitle": "ファイルとURLを選択",
+                "RemoveSelectedFilesButton": "選択したファイルを削除"
+            }
+        },
+        "GrepperFormProgressBar": {
+            "controls": {
+                "titleIfParsing": "JSON解析中",
+                "titleIfReading": "ファイル読み込み中",
+                "captionIfParsing": "ファイル読み込み完了。\r\n{0} 個のドキュメントを解析中、合計サイズ約 {1} MB",
+                "captionIfReading": "{0} 個のファイルを読み込み中、合計サイズ約 {1} MB",
+                "progressLabelIfParsing": "解析済み {0} MB / {1} MB",
+                "progressLabelIfReading": "読み込み済み {0} / {1} 個のファイル"
+            }
+        },
+        "JsonToCsvForm": {
+            "title": "JSONからCSVへ",
+            "controls": {
+                "JsonToCsvFormTitle": "JSONからCSVを作成",
+                "KeySepBoxLabel": "キー区切り文字",
+                "DelimBoxLabel": "出力ファイル区切り文字",
+                "eolComboBoxLabel": "出力改行文字",
+                "BoolsToIntsCheckBox": "true/falseを1/0に変換？",
+                "StrategyBox": [
+                    "デフォルト",
+                    "完全再帰",
+                    "非再帰",
+                    "イテラブルを文字列化"
+                ],
+                "StrategyBoxLabel": "戦略",
+                "GenerateCSVButton": "CSVを生成",
+                "DocsButton": "ドキュメント"
+            }
+        },
+        "RegexSearchForm": {
+            "title": "正規表現検索からJSONへ",
+            "controls": {
+                "Title": "正規表現検索からJSONへ",
+                "RegexTextBoxLabel": "正規表現を入力",
+                "IgnoreCaseCheckBox": "大文字/小文字を無視？",
+                "IncludeFullMatchAsFirstItemCheckBox": "完全一致を最初の項目として含める？",
+                "ParseAsCsvCheckBox": "CSVとして解析？",
+                "DelimiterTextBoxLabel": "区切り文字",
+                "QuoteCharTextBoxLabel": "引用符文字",
+                "NewlineComboBoxLabel": "改行文字",
+                "NColumnsTextBoxLabel": "列数",
+                "HeaderHandlingComboBox": [
+                    "ヘッダーをスキップ",
+                    "ヘッダーを含める",
+                    "ヘッダーをキーとして使用"
+                ],
+                "HeaderHandlingComboBoxLabel": "ヘッダー処理",
+                "ColumnsToParseAsNumberTextBoxLabel": "数値として解析するグループ (整数の配列)",
+                "SearchButton": "検索"
+            }
+        },
+        "SettingsForm": {
+            "title": "JsonToolsプラグイン設定",
+            "controls": {
+                "Cancel": "&キャンセル(&C)",
+                "Reset": "&リセット(&R)",
+                "Ok": "&OK(&O)" // Often OK doesn't need accelerator in JP
+            }
+        },
+        "SortForm": {
+            "title": "JSON配列のソート",
+            "controls": {
+                "SortFormTitle": "JSON配列のソート",
+                "PathTextBoxLabel": "配列パス",
+                "IsMultipleArraysCheckBox": "パスは複数の配列を指します。サブ配列を個別にソート",
+                "ReverseOrderCheckBox": "降順でソート？",
+                "SortMethodBox": [
+                    "デフォルト",
+                    "文字列でソート (大文字/小文字無視)",
+                    "サブ項目のインデックス/キーでソート",
+                    "サブ項目へのクエリでソート",
+                    "ランダムにシャッフル"
+                ],
+                "SortMethodBoxLabel": "ソート方法",
+                "QueryKeyIndexTextBoxLabel": "キー/インデックス/クエリ",
+                "SortButton": "ソート"
+            }
+        },
+        "TreeViewer": {
+            "title": "{0} の JSON ツリービュー",
+            "titleIfGrepperForm": "ファイルと API の JSON ツリー",
+            "controls": {
+                "SubmitQueryButton": "クエリを送信",
+                "QueryToCsvButton": "クエリをCSVへ",
+                "SaveQueryButton": "クエリ結果を保存",
+                "RefreshButton": "更新",
+                "FindReplaceButton": "検索/置換",
+                "CopyValueMenuItem": "値をクリップボードにコピー",
+                "CopyKeyItem": "キー/インデックスをクリップボードにコピー",
+                "CopyPathItem": "パスをクリップボードにコピー",
+                "ToggleSubtreesItem": "すべてのサブツリーを展開/折りたたむ",
+                "SelectThisItem": "この項目を選択",
+                "OpenSortFormItem": "配列をソート...",
+                "SelectAllChildrenItem": "すべての子項目を選択",
+                "LanguageNameStyleItem": "{0} スタイル",
+                "PathSeparatorStyleItem": "パス区切り文字設定を使用"
+            }
+        }
+    },
+    "menuItems": {
+        "&Documentation": "ドキュメント(&D)",
+        "&Pretty-print current JSON file": "現在のJSONファイルを整形(&P)",
+        "&Compress current JSON file": "現在のJSONファイルを圧縮(&C)",
+        "Path to current p&osition": "現在の位置へのパス(&O)",
+        "Select every val&id JSON in selection": "選択範囲内のすべての有効なJSONを選択(&I)",
+        "Chec&k JSON syntax now": "JSON構文を今すぐチェック(&K)",
+        "Open &JSON tree viewer": "JSONツリービューアを開く(&J)",
+        "&Get JSON from files and APIs": "ファイルとAPIからJSONを取得(&G)",
+        "Sort arra&ys": "配列をソート(&Y)",
+        "&Settings": "設定(&S)",
+        "&Validate JSON against JSON schema": "JSONスキーマに対してJSONを検証(&V)",
+        "Validate &files with JSON schema if name matches pattern": "名前がパターンに一致する場合、JSONスキーマでファイルを検証(&F)",
+        "Generate sc&hema from JSON": "JSONからスキーマを生成(&H)",
+        "Generate &random JSON from schema": "スキーマからランダムなJSONを生成(&R)",
+        "Run &tests": "テストを実行(&T)",
+        "A&bout": "バージョン情報(&B)", // About is often Version Info in JP
+        "See most recent syntax &errors in this file": "このファイルの最新の構文エラーを表示(&E)",
+        "JSON to YAML": "JSONからYAMLへ(&J)",
+        "Parse JSON Li&nes document": "JSON Linesドキュメントを解析(&N)",
+        "&Array to JSON Lines": "配列をJSON Linesへ(&A)",
+        "D&ump selected text as JSON string(s)": "選択したテキストをJSON文字列としてダンプ(&U)",
+        "Dump JSON string(s) as ra&w text": "JSON文字列をプレーンテキストとしてダンプ(&W)",
+        "Open tree for &INI file": "INIファイルのツリーを開く(&I)",
+        "Rege&x search to JSON": "正規表現検索をJSONへ(&X)"
+    },
+    "settingsDescriptions": {
+        "logger_level": "このレベル以下のエラーログ記録を抑制します。\r\nSTRICT: 元のJSON仕様からのすべての逸脱を記録します。\r\nOK: 元のJSON仕様に加えて以下を許可します：\r\n    * 文字列にはASCII値0x20未満の文字（'\\t'を含む）を含めることができます\r\nNAN_INF: NaN、Infinity、-Infinityの解析時にエラーを記録しません。\r\nJSONC: 以下のエラーを記録しません：\r\n    * JavaScriptの単一行 '//' および複数行 '/*...*/' コメント\r\n    * NaN および +/-Infinity\r\nJSON5: JSONCおよびNAN_INFレベルのすべてに加えて、以下を記録しません：\r\n    * シングルクォート文字列\r\n    * 配列またはオブジェクトの最後の要素の後のカンマ\r\n    * クォートされていないオブジェクトキー\r\n    * 詳細については https://json5.org/ を参照してください",
+        "offer_to_show_lint": "ドキュメントの解析完了後、構文エラーをドキュメント内で表示するかどうかを尋ねるプロンプトを表示します。",
+        "auto_validate": ".json、.jsonc、.jsonlファイルを自動検証します（2秒ごと）。非常に大きなファイルを除く。",
+        "inactivity_seconds_before_parse": "ユーザーがアクティビティを停止してから何秒後にプラグインがドキュメントを再解析するか。最小値は1です。",
+        "max_file_size_MB_slow_actions": "このメガバイト数より大きいファイルでは、以下の時間のかかるアクションがデフォルトで無効になります：\r\n* JSONレキサーの自動有効化。\r\n* ファイルを開いたとき、および編集後約2秒ごとのファイルの自動解析。",
+        "max_json_length_full_tree": "JSON配列またはオブジェクトがツリービューですべての子項目を完全に展開する最大長。これより長いイテラブルは、一部の子項目のみがツリーに追加されます。",
+        "tree_node_images": "ツリー内の各ノードにそのタイプに関連付けられた画像を表示するかどうか。",
+        "ask_before_pretty_printing_json_lines": "JSON Linesドキュメントを整形する前に尋ねるか、整形要求を無視するか、尋ねずに直接整形するか？\r\nDONT_DO_DONT_ASK: JSON Linesを整形しようとしても何もしません。\r\nASK_BEFORE_DOING: この操作を実行しようとすると、確認を求めるメッセージボックスを作成します。\r\nDO_WITHOUT_ASKING: 要求どおりに操作を実行し、メッセージボックスを作成しません。",
+        "indent_pretty_print": "整形時にJSONの各レベル間に挿入するスペースの数。",
+        "tab_indent_pretty_print": "整形時にJSONの各レベル間にスペースではなく水平タブ文字（'\\t'）を使用します。",
+        "pretty_print_style": "JSONの整形方法。\r\nGoogleスタイル（デフォルト）:\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nWhitesmithスタイル:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nPPrintスタイル:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
+        "minimal_whitespace_compression": "trueの場合、「JSONを圧縮」プラグインコマンドを使用すると、JSON内の不要な空白がすべて削除されます。それ以外の場合、オブジェクト内のコロンの後、およびオブジェクトと配列内のカンマの後の空白は保持されます。",
+        "remember_comments": "JSONが整形または圧縮されるとき、最後に解析されたときに見つかったコメントが含まれます。\r\n整形時、各コメントは解析時と同じJSON要素に対する相対的な位置に配置されます。\r\n圧縮時、すべてのコメントはドキュメントの先頭に配置されます。",
+        "sort_keys": "整形または圧縮時にオブジェクトのキーをアルファベット順にソートします。",
+        "toolbar_icons": "表示したい各ツールバーアイコンに対して以下の文字のいずれかを指定し、希望する順序で配置します：\r\n('t' = ツリービュー, 'c' = 圧縮, 'p' = 整形, 'o' = 現在の位置へのパス)\r\nこの設定は、次回Notepad++を起動したときに有効になります。\r\nツールバーアイコンを表示したくない場合は、アイコンを表さない文字を入力してください。このフィールドを空にしないでください。",
+        "auto_try_guess_csv_delim_newline": "この設定がtrueの場合、\r\n正規表現検索フォームを開いたとき、またはそのフォームで「CSVとして解析？」チェックボックスを切り替えたとき、\r\nJsonToolsは現在のドキュメントがCSVまたはTSVファイルであるか、何列あり、どの改行文字を使用しているかを推測しようとします。\r\nこの設定がtrueの場合、正規表現検索フォームを開くのがわずかに遅くなります。",
+        "csv_newline": "生成されるCSVファイルで使用される改行文字の種類。",
+        "key_style": "ノードまたは行のパスまたはキー/インデックスを取得するときに使用するキースタイル。\r\n各タイプの詳細については、ドキュメント（https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-and-path_separator-settings）を参照してください。\r\npath_separatorがデフォルト値「\\u0001」でない場合、この設定は無視されます。",
+        "path_separator": "パスをフォーマットするときに使用する区切り文字。この設定が「\\u0001」（デフォルト値）の場合、この設定は無視されます。\r\nこの設定は単一文字である必要があり、次のJSON文字列のいずれの文字でもあってはなりません：\"\\\"0123456789\"\r\nオブジェクトキーまたは配列インデックスをフォーマットするアルゴリズムは次のとおりです：\r\n===========\r\nキーが配列インデックスの場合：\r\n    プレーンテキストとしてフォーマットします（例：「$」がpath_separatorの場合、インデックス10は「$10」になります）\r\nキーにpath_separatorが含まれる場合：\r\n    JSON文字列としてフォーマットします（例：「/」がpath_separatorの場合、キー「foo」は「/\"foo\"」としてフォーマットされます）\r\nそれ以外の場合、キーが（_ または a-z または A-Z）で始まり、他のすべての文字が（_ または 0-9 または a-z または A-Z）である場合：\r\n    プレーンテキストとしてフォーマットします（例：「/」がpath_separatorの場合、キー「_foo」は「/_foo」になりますが、「_」がpath_separatorの場合、「_\\\"_foo\\\"」になります）\r\nそれ以外の場合：\r\n    JSON文字列としてフォーマットします（例：キー「a b」がpath_separatorを含まなくても、path_separatorが「/」の場合、「/\\\"a b\\\"」としてフォーマットされます）",
+        "skip_api_request_and_fuzz_tests": "テストを実行するとき、APIリクエストを送信するテストとRemesPathファズテストをスキップします。",
+        "try_parse_start_chars": "ファイル内の各JSONを選択するとき、これらの文字でのみ解析を試みます。\r\nNAN_INFロガーレベルに準拠する有効なJSONのみを許容します。\r\n例：\"[{（デフォルト値）を選択した場合、潜在的な文字列、配列、オブジェクトのみを考慮します。\r\n\"[{tf\"を選択した場合、潜在的な文字列、配列、オブジェクト、ブール値を考慮します。",
+        "tree_view_font_size": "ツリービューのフォントサイズ（ポイント単位）。参考までに、デフォルトは7.8です。",
+        "use_npp_styling": "ツリービューおよび他のJsonToolsフォームがエディタウィンドウと同じ色を使用するかどうか。",
+        "extended_ascii_strings": "文字列内で拡張ASCII文字（例：\u000b、ñ）を使用するかどうか。",
+        "maxArrayLength": "「maxItems」キーワードで特に指定されていない限り、ランダムな配列の最大長。",
+        "minArrayLength": "「minItems」キーワードで特に指定されていない限り、ランダムな配列の最小長。",
+        "max_schema_validation_problems": "バリデーターが停止する前に記録されるJSONスキーマ検証問題の最大数。",
+        "generate_random_patterns": "文字列スキーマの「pattern」キーワードに一致するランダムな文字列、およびオブジェクトスキーマの「patternProperties」キーワードに一致するランダムなキーを生成します。",
+        "keyboard_shortcuts": "この設定は、JsonToolsが起動時に特定のプラグインコマンドにデフォルトのキーボードショートカットを自動的に割り当てるかどうかを決定します。\r\nJsonToolsのデフォルト設定からキーボードショートカットを変更したい場合（Notepad++メインメニューの「マクロ->ショートカットの変更/マクロの削除...」経由）、これをFalseに設定することをお勧めします。"
+    },
+    "jsonLint": {
+        "OK_CONTROL_CHAR": "厳密なJSON仕様では、文字列内に制御文字（ASCIIコード0x20未満）を使用することは許可されていません",
+        "NAN_INF_Infinity": "元のJSON仕様ではInfinityは許可されていません",
+        "NAN_INF_NaN": "元のJSON仕様ではNaNは許可されていません",
+        "JSONC_JAVASCRIPT_COMMENT": "元のJSON仕様ではJavaScriptコメントは許可されていません",
+        "JSON5_WHITESPACE_CHAR": "' '、'\\t'、'\\r'、'\\n'以外の空白文字はJSON5でのみ許可されています",
+        "JSON5_SINGLEQUOTED_STRING": "シングルクォート文字列はJSON5でのみ許可されています",
+        "JSON5_ESCAPED_NEWLINE": "エスケープされた改行文字はJSON5でのみ許可されています",
+        "JSON5_X_ESCAPE": "\\xエスケープはJSON5でのみ許可されています",
+        "JSON5_ESCAPED_CHAR": "エスケープ文字 '{0}' はJSON5でのみ許可されています",
+        "JSON5_UNQUOTED_KEY": "クォートされていないキーはJSON5でのみ許可されています",
+        "JSON5_NUM_LEADING_PLUS": "数値の先頭の+記号はJSON5でのみ許可されています",
+        "JSON5_HEX_NUM": "16進数はJSON5でのみ許可されています",
+        "JSON5_NUM_LEADING_DECIMAL_POINT": "先頭に小数点が付く数値はJSON5でのみ許可されています",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "配列の最後の要素の後のカンマ",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "オブジェクトの最後のキー値ペアの後のカンマ",
+        "JSON5_NUM_TRAILING_DECIMAL_POINT": "末尾に小数点が付く数値はJSON5でのみ許可されています",
+        "BAD_UNTERMINATED_MULTILINE_COMMENT": "終了していない複数行コメント",
+        "BAD_PYTHON_COMMENT": "どの認識されているJSON仕様でもPythonスタイルの'#'コメントは許可されていません",
+        "BAD_STRING_CONTAINS_NEWLINE": "文字列リテラルに改行文字が含まれています",
+        "BAD_KEY_CONTAINS_NEWLINE": "オブジェクトキーに改行文字が含まれています",
+        "BAD_UNTERMINATED_STRING": "位置 {0} から始まる終了していない文字列リテラル",
+        "BAD_INVALID_UNQUOTED_KEY": "{0} から始まる有効な引用符なしキーがありません",
+        "BAD_PYTHON_nan": "nanはJSONで有効なNot a Number表現ではありません",
+        "BAD_PYTHON_None": "どのJSON仕様でもNoneは許可されていません",
+        "BAD_PYTHON_inf": "infはJSONでInfinityの正しい表現ではありません",
+        "BAD_UNNECESSARY_LEADING_0": "どのJSON仕様でも不要な先行ゼロを持つ数値（例：「01」）は許可されていません",
+        "BAD_SLASH_FRACTION": "どのJSON仕様でも1/3のような形式の分数は許可されていません",
+        "BAD_NUMBER_INVALID_FORMAT": "数値文字列 {0} は形式が間違っています",
+        "BAD_TWO_CONSECUTIVE_COMMAS_ARRAY": "配列要素 {0} の後に2つの連続したカンマがあります",
+        "BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY": "配列の最初の値の前にカンマがあります",
+        "BAD_ARRAY_ENDSWITH_CURLYBRACE": "配列の終わりは ']' であるべきですが、'}' が見つかりました",
+        "BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS": "配列メンバー間にカンマがありません",
+        "BAD_COLON_BETWEEN_ARRAY_ITEMS": "配列メンバー間にカンマが期待される場所で ':'（キー値区切り文字）が見つかりました。配列を閉じるのを忘れましたか？",
+        "BAD_UNTERMINATED_ARRAY": "終了していない配列",
+        "BAD_TWO_CONSECUTIVE_COMMAS_OBJECT": "オブジェクトのキー値ペア {0} の後に2つの連続したカンマがあります",
+        "BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT": "オブジェクトの最初の値の前にカンマがあります",
+        "BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS": "オブジェクトのキー値ペア {0} の後にカンマがありません",
+        "BAD_UNTERMINATED_OBJECT": "終了していないオブジェクト",
+        "BAD_OBJECT_ENDSWITH_SQUAREBRACE": "オブジェクトの終わりは '}' であるべきですが、']' が見つかりました",
+        "BAD_COLON_BETWEEN_OBJECT_PAIRS": "キー値ペアの後にカンマではなく ':' が見つかりました",
+        "BAD_CHAR_WHERE_COLON_EXPECTED": "キー {1} の後にコロンが期待される場所で '{0}' が見つかりました",
+        "BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE": "オブジェクトキー {0} と値 {0} の間に ':' がありません",
+        "BAD_DUPLICATE_KEY": "オブジェクトに複数のキー \"{0}\" が含まれています",
+        "BAD_PYTHON_True": "どのJSON仕様でもTrueは許可されていません",
+        "BAD_PYTHON_False": "どのJSON仕様でもFalseは許可されていません",
+        "BAD_JAVASCRIPT_undefined": "どのJSON仕様でもundefinedは許可されていません",
+        "BAD_CHAR_INSTEAD_OF_EOF": "有効なJSONドキュメントの末尾で、EOF（ファイル終端）の代わりに {0} が得られました",
+        "BAD_FLOAT_TOO_LARGE": "数値文字列 {0} は64ビット浮動小数点数には大きすぎます",
+        "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "'/' の後にJavaScriptコメントが期待されました",
+        "FATAL_HEXADECIMAL_TOO_SHORT": "長さ {0} の有効な16進数が見つかりません",
+        "FATAL_NUL_CHAR": "'\\x00' はヌル文字であり、JsonToolsでは不正です",
+        "FATAL_UNTERMINATED_KEY": "終了していないオブジェクトキー",
+        "FATAL_INVALID_STARTSWITH_n": "'n'で始まるリテラルはnullまたはnanであると期待されました",
+        "FATAL_PLUS_OR_MINUS_AT_EOF": "ドキュメントの末尾に '{0}' 記号があります",
+        "FATAL_INVALID_STARTSWITH_I": "'I'で始まるリテラルはInfinityであると期待されました",
+        "FATAL_INVALID_STARTSWITH_N": "'N'で始まるリテラルはNaNまたはNoneであると期待されました",
+        "FATAL_INVALID_STARTSWITH_i": "'i'で始まるリテラルはinfであると期待されました",
+        "FATAL_HEX_INT_OVERFLOW": "16進数は64ビット符号付き整数型には大きすぎます",
+        "FATAL_SECOND_DECIMAL_POINT": "数値の誤った場所に小数点があります",
+        "FATAL_NUM_TRAILING_e_OR_E": "科学表記の 'e' の後に数字がありません",
+        "FATAL_MAX_RECURSION_DEPTH": "最大再帰深度（512）に達しました",
+        "FATAL_UNEXPECTED_EOF": "予期しないファイル終端",
+        "FATAL_NO_VALID_LITERAL_POSSIBLE": "有効なリテラルがありません",
+        "FATAL_INVALID_STARTSWITH_t": "'t'で始まるリテラルはtrueであると期待されました",
+        "FATAL_INVALID_STARTSWITH_f": "'f'で始まるリテラルはfalseであると期待されました",
+        "FATAL_INVALID_STARTSWITH_T": "'T'で始まるリテラルはTrueであると期待されました",
+        "FATAL_INVALID_STARTSWITH_F": "'F'で始まるリテラルはFalseであると期待されました",
+        "FATAL_INVALID_STARTSWITH_u": "'u'で始まるリテラルはundefinedであると期待されました",
+        "FATAL_BADLY_LOCATED_CHAR": "誤った場所にある文字 {0}",
+        "FATAL_NO_INPUT": "入力がありません",
+        "FATAL_ONLY_WHITESPACE_COMMENTS": "入力には空白と可能なコメントのみが含まれています",
+        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Linesドキュメントには1行にちょうど1つのJSONドキュメントが含まれていません",
+        "SCHEMA_TYPE_MISMATCH": "タイプ {0} が見つかりましたが、タイプ {1} が期待されていました。",
+        "SCHEMA_TYPE_ARRAY_MISMATCH": "タイプ {0} が見つかりましたが、タイプ {1} のいずれかである必要がありました。",
+        "SCHEMA_VALUE_NOT_IN_ENUM": "値 {0} が見つかりましたが、許可される値は {1} のみです。",
+        "SCHEMA_ARRAY_TOO_LONG": "配列は最大 {0} 項目である必要がありますが、{1} 項目あります。",
+        "SCHEMA_ARRAY_TOO_SHORT": "配列は少なくとも {0} 項目である必要がありますが、{1} 項目しかありません。",
+        "SCHEMA_CONTAINS_VIOLATION": "配列には、\"contains\" パターン {2} に一致する項目が {0} から {1} 個必要です",
+        "SCHEMA_MINCONTAINS_VIOLATION": "配列には、\"contains\" パターン {1} に一致する項目が少なくとも {0} 個必要です",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "オブジェクトに \"required\" キー {0} がありません",
+        "SCHEMA_FALSE_SCHEMA": "スキーマが false であるため、何も検証に合格しません。",
+        "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "文字列 '{0}' は正規表現 '{1}' に一致しません",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "検証の最大深度は 64 です",
+        "SCHEMA_NUMBER_LESS_THAN_MIN": "数値 {0} は最小値 {1} より小さいです",
+        "SCHEMA_NUMBER_GREATER_THAN_MAX": "数値 {0} は最大値 {1} より大きいです",
+        "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "数値 {0} は排他的最小値 {1} 以下です",
+        "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "数値 {0} は排他的最大値 {1} 以上です",
+        "SCHEMA_STRING_TOO_LONG": "文字列 {0} の長さが maxLength {1} より大きいです",
+        "SCHEMA_STRING_TOO_SHORT": "文字列 {0} の長さが minLength {1} より小さいです"
+    },
+    "messageBoxes": {
+        "Could not open url in web browser": {
+            "caption": "WebブラウザでURLを開けませんでした",
+            "text": "WebブラウザでURL {0} を開こうとして、例外が発生しました：\r\n{1}"
+        },
+        "View syntax errors in document?": {
+            "caption": "ドキュメント内の構文エラーを表示しますか？",
+            "text": "ドキュメントに {0} 個の構文エラーがあります。表示しますか？\r\n（これらのヒントは設定で無効にできます（offer_to_show_lint設定））"
+        },
+        "Error while trying to parse {0}": {
+            "caption": "{0} の解析中にエラーが発生しました",
+            "text": "以下のエラーのため、ドキュメントを解析できませんでした：\r\n{0}"
+        },
+        "Possible issue with remembering selections": {
+            "caption": "選択の記憶に関する潜在的な問題",
+            "text": "JsonToolsは選択を記憶するためにインジケータ {0} と {1} を使用していますが、一方または両方が他のプラグインと競合する可能性があります。\r\nこのメッセージが表示され、その後Notepad++または特定のプラグインが異常な動作を開始することに気付いた場合は、JsonTools GitHubリポジトリで発生したことを説明するissueを作成することを検討してください。"
+        },
+        "Pretty-print JSON Lines document?": {
+            "caption": "JSON Linesドキュメントを整形しますか？",
+            "text": "JSON Linesドキュメントを整形すると、通常、有効なJSON Linesドキュメントではなくなります。それでも整形しますか？"
+        },
+        "Error while reformatting INI file": {
+            "caption": "INIファイルの再フォーマット中にエラーが発生しました",
+            "text": "INIファイルの再フォーマット中にエラーが発生しました：\r\n{0}"
+        },
+        "Programmatic error while reformatting JSON": {
+            "caption": "JSONの再フォーマット中にプログラムエラーが発生しました",
+            "text": "ファイルのJSONを再フォーマットしようとして、プログラムエラー（おそらくソースコードのバグによるもの）が発生しました：\r\n{0}"
+        },
+        "Failed to parse selected text as JSON": {
+            "caption": "選択したテキストをJSONとして解析できませんでした",
+            "text": "選択したテキストはJSON文字列ではありません"
+        },
+        "JSON to YAML feature has some bugs": {
+            "caption": "JSONからYAMLへの機能にはいくつかのバグがあります",
+            "text": "この機能には既知のバグがあり、無効なYAMLが生成される可能性があります。例についてはテストを実行してください。それでも使用しますか？"
+        },
+        "Error while trying to convert JSON to YAML": {
+            "caption": "JSONをYAMLに変換中にエラーが発生しました",
+            "text": "以下のエラーのため、JSONをYAMLに変換できませんでした：\r\n{0}"
+        },
+        "Only arrays can be converted to JSON Lines": {
+            "caption": "配列のみがJSON Linesに変換できます",
+            "text": "JSON配列のみがJSON Lines形式に変換できます。"
+        },
+        "Could not change path_separator setting": {
+            "caption": "path_separator設定を変更できませんでした",
+            "text": "以下のエラーのため、path_separator設定を {0} から {1} に変更できませんでした：\r\n{2}"
+        },
+        "No JSON syntax errors for this file": {
+            "caption": "このファイルにはJSON構文エラーはありません",
+            "text": "{1} にはJSON構文エラー（レベル{0}以下）はありません"
+        },
+        "Could not find a node at this position": {
+            "caption": "この位置にノードが見つかりませんでした",
+            "text": "このファイルの位置 {0} にノードが見つかりませんでした"
+        },
+        "Error while formatting path to current position": {
+            "caption": "現在の位置へのパスのフォーマット中にエラーが発生しました",
+            "text": "現在の位置へのパスをフォーマットしようとして、次のエラーが発生しました：\r\n{0}"
+        },
+        "No valid JSON elements found": {
+            "caption": "有効なJSON要素が見つかりませんでした",
+            "text": "ドキュメント内で文字 {0} で始まる有効なJSON要素が見つかりませんでした"
+        },
+        "Error while validating JSON against schema": {
+            "caption": "スキーマに対するJSONの検証中にエラーが発生しました",
+            "text": "パス {0} のスキーマに対してJSONを検証中に、次のエラーが発生しました：\r\n{1}"
+        },
+        "Validation failed...": {
+            "caption": "検証に失敗しました...",
+            "text": "ファイル {0} のJSONは、パス {1} のスキーマに対する検証に失敗しました。{2} 件の問題のうち最初の問題：\r\n{3}"
+        },
+        "Validation succeeded!": {
+            "caption": "検証に成功しました！",
+            "text": "ファイル {0} のJSONは、パス {1} のスキーマに対して正常に検証されました。"
+        },
+        "JSON schema generation error": {
+            "caption": "JSONスキーマ生成エラー",
+            "text": "JSONスキーマを生成できませんでした。次のエラーが発生しました：\r\n{0}"
+        },
+        "Error while generating random JSON from schema": {
+            "caption": "スキーマからランダムなJSONを生成中にエラーが発生しました",
+            "text": "このスキーマからランダムなJSONを生成しようとして、エラーが発生しました：\r\n{0}"
+        },
+        "Couldn't parse schemasToFnamePatterns.json": {
+            "caption": "schemasToFnamePatterns.jsonを解析できませんでした",
+            "text": "schemasToFnamePatterns.jsonを解析できませんでした。エラーが発生しました：\r\n{0}"
+        },
+        "schemasToFnamePatterns.json badly formatted": {
+            "caption": "schemasToFnamePatterns.jsonの形式が不正です",
+            "text": "schemasToFnamePatterns.jsonは、ファイル名を空でない有効な正規表現（文字列）の配列にマッピングするオブジェクトである必要があります。\r\n以下の検証問題が存在します：\r\n{0}"
+        },
+        "No schema exists at path {0}.": {
+            "caption": "パス {0} にスキーマが存在しません。",
+            "text": "パス {0} にスキーマが存在しません。"
+        },
+        "Regex did not compile (in schemasToFnamePatterns.json)": {
+            "caption": "正規表現がコンパイルされませんでした（schemasToFnamePatterns.json内）",
+            "text": "ファイル {0} に関連付けられたすべての正規表現をテストする際、\r\n正規表現 {1} はエラーのためコンパイルに失敗しました：\r\n{2}"
+        },
+        "Can't select all children": {
+            "caption": "すべての子を選択できません",
+            "text": "1つ以上の子がドキュメント内のJSONノードに対応していないため、すべての子を選択できません"
+        },
+        "Error while trying to parse schema": {
+            "caption": "スキーマの解析中にエラーが発生しました",
+            "text": "パス {0} のスキーマを解析しようとして、次のエラーが発生しました：\r\n{1}"
+        },
+        "Error while compiling JSON schema": {
+            "caption": "JSONスキーマのコンパイル中にエラーが発生しました",
+            "text": "ファイル \"{0}\" のスキーマをコンパイル中に、例外が発生しました：\r\n{1}"
+        },
+        "such error very sad": {
+            "caption": "とても悲しいエラー",
+            "text": "JSONをDSONに変換できませんでした。例外が発生しました：\r\n{0}"
+        },
+        "Exception while converting JSON to CSV": {
+            "caption": "JSONをCSVに変換中に例外が発生しました",
+            "text": "JSONからCSVを作成しようとして、この例外が発生しました：\r\n{0}"
+        },
+        "Json file search error": {
+            "caption": "Jsonファイル検索エラー",
+            "text": "JSONファイルを検索中に、例外が発生しました：\r\n{0}"
+        },
+        "No errors while searching documents": {
+            "caption": "ドキュメント検索中にエラーはありません",
+            "text": "例外はありません！{0}"
+        },
+        "Error while sending API requests": {
+            "caption": "APIリクエスト送信中にエラーが発生しました"
+        },
+        "Too much text to parse": {
+            "caption": "解析するテキストが多すぎます",
+            "text": "解析するテキストの合計長（{0}）が最大長（{1}）を超えています"
+        },
+        "Can't populate JSON tree": {
+            "caption": "JSONツリーを生成できません",
+            "text": "JSONが保存されていないため、JSONツリーを生成できません。"
+        },
+        "Error while populating tree": {
+            "caption": "ツリー生成中にエラーが発生しました",
+            "text": "以下のエラーのため、JSONツリーを生成できませんでした：\r\n{0}"
+        },
+        "Compilation error in RemesPath query": {
+            "caption": "RemesPathクエリのコンパイルエラー",
+            "text": "コンパイルエラーのため、クエリ {0} を実行できませんでした：\r\n{1}"
+        },
+        "Stop seeing errors?": {
+            "caption": "エラー表示を停止しますか？",
+            "text": "「はい」を選択すると、このクエリのエラーメッセージボックスの表示を停止します"
+        },
+        "Runtime error while executing query on selection": {
+            "caption": "選択範囲に対するクエリ実行中のランタイムエラー",
+            "text": "位置 {1} と {2} の間の選択範囲に対してクエリ {0} を実行中に、ランタイムエラーが発生しました：\r\n{3}"
+        },
+        "Runtime error while executing query": {
+            "caption": "クエリ実行中のランタイムエラー",
+            "text": "クエリ {0} を実行中に、ランタイムエラーが発生しました：\r\n{1}"
+        },
+        "Error while formatting ini file values as strings after RemesPath mutation": {
+            "caption": "RemesPath変更後にINIファイル値を文字列としてフォーマット中にエラーが発生しました",
+            "text": "すべての値を文字列化しようとしてエラーが発生したため、INIファイルを変更できませんでした：\r\n{0}"
+        },
+        "path_separator setting not configured": {
+            "caption": "path_separator設定が構成されていません",
+            "text": "「キー/インデックスをクリップボードにコピー」を選択し、「path_separator設定を使用」オプションを有効にしましたが、path_separatorはまだデフォルト値 {0} です。代わりに {1} スタイルが使用されます。"
+        },
+        "Error while formatting key of tree node": {
+            "caption": "ツリーノードのキーのフォーマット中にエラーが発生しました",
+            "text": "スタイル {1} を使用してキー {0} をフォーマットしようとして、次のエラーが発生しました：\r\n{2}"
+        },
+        "Can't select object or array in non-JSON": {
+            "caption": "非JSON内でオブジェクトまたは配列を選択できません",
+            "text": "特定のテキスト領域に対応しないため、非JSONドキュメント内でオブジェクトまたは配列を選択できません"
+        },
+        "Couldn't select associated JSON": {
+            "caption": "関連するJSONを選択できませんでした",
+            "text": "選択したツリーノードは、ドキュメント内のJSON要素に対応していないようです。"
+        },
+        "Couldn't select children of JSON": {
+            "caption": "JSONの子を選択できませんでした",
+            "text": "選択したツリーノードは、ドキュメント内のJSON要素に対応していないようです。"
+        },
+        "Can only select children of object or array": {
+            "caption": "オブジェクトまたは配列の子のみ選択できます",
+            "text": "選択したJSONはオブジェクトまたは配列ではないため、子はありません。"
+        },
+        "Unknown error while parsing JsonTools config file": {
+            "caption": "JsonTools設定ファイルの解析中に不明なエラーが発生しました",
+            "text": "JsonTools設定ファイルの解析中、設定「{0}」のタイプは {1} であると期待されましたが、エラーが発生しました。\r\n設定はデフォルト値 {2} に設定されました。\r\n不明な理由により、指定された値 {3} を変換できませんでした。"
+        },
+        "Error while parsing JsonTools config file": {
+            "caption": "JsonTools設定ファイルの解析中にエラーが発生しました",
+            "text": "JsonTools設定ファイルの解析中、設定「{0}」のタイプは {1} であると期待されましたが、エラーが発生しました。\r\n設定はデフォルト値 {2} に設定されました。\r\n指定された値 {3} は次のエラーを引き起こしました：\r\n{4}"
+        },
+        "Invalid value for setting {0}": {
+            "caption": "設定 {0} の値が無効です",
+            "text": "設定 {0} を値 {1} に変更できなかったため、{2} のままになります。\r\n次の例外が発生しました：\r\n{3}"
+        },
+        "Nothing to copy to clipboard": {
+            "caption": "クリップボードにコピーするものがありません",
+            "text": "クリップボードにコピーするものが見つかりませんでした"
+        },
+        "File too long for JsonTools": {
+            "caption": "ファイルがJsonToolsには長すぎます",
+            "text": "JsonToolsは2147483647バイトを超えるファイルに対してこのプラグインコマンドを実行できません。\r\nファイルが長すぎる場合の通知表示を停止しますか？"
+        },
+        "Could not find json at that path": {
+            "caption": "そのパスにJSONが見つかりませんでした",
+            "text": "指定されたパス ({0}) にJSONが見つかりませんでした。\r\n次のエラーが発生しました：\r\n{1}"
+        },
+        "Failed to compile query for sorting": {
+            "caption": "ソート用のクエリのコンパイルに失敗しました",
+            "text": "選択されたソート方法に基づいてクエリ「{0}」をコンパイルしようとしましたが、\r\n次のエラーが発生しました：\r\n{1}"
+        },
+        "JSON at specified path must be object or array": {
+            "caption": "指定されたパスのJSONはオブジェクトまたは配列である必要があります",
+            "text": "指定されたパスのJSONはオブジェクトまたは配列である必要がありますが、タイプ {0} が取得されました"
+        },
+        "Can only sort arrays": {
+            "caption": "配列のみソートできます",
+            "text": "配列のみソートできますが、タイプ {0} のJSONが取得されました"
+        },
+        "Error while sorting array": {
+            "caption": "配列のソート中にエラーが発生しました",
+            "text": "配列のソート中に、次のエラーが発生しました：\r\n{0}"
+        },
+        "Columns to parse as number must be array of integers": {
+            "caption": "数値として解析する列は整数の配列である必要があります",
+            "text": "数値として解析する列は、空でないJSON整数の配列である必要があります"
+        }
+    },
+    "fileComments": {
+        "schemasToFnamePatterns.json": [
+            "このファイルは、自動JSON検証を実行するタイミングを決定します",
+            "各キーはJSONスキーマファイルのファイル名である必要があります",
+            "各値は、有効なC#正規表現を含む空でないリストである必要があります（例：[\"blah.*\\\\.txt\"]）",
+            "したがって、このファイルに{\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}が含まれている場合",
+            "名前に部分文字列「blah」を含む「.txt」ファイルを開くたびに、「c:\\\\path\\\\to\\\\foo_schema.json」を使用して自動的に検証を実行します。"
+        ]
+    }
+}

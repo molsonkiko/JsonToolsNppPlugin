@@ -161,6 +161,13 @@ Currently JsonTools has been translated into the following languages:
 | Language | First version with translation | Translator(s) | Translator is native speaker?  |
 |----------|--------------------------------|---------------|--------------------------------|
 | [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `messageBoxes` and `fileComments` sections)  | Only conky77 |
+| [Arabic](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/arabic.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Chinese (simplified)](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/chineseSimplified.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [French](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/french.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [German](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/german.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Japanese](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/japanese.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Korean](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/korean.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Taiwanese Mandarin](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/taiwaneseMandarin.json5)  |   [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd) |  [hydy100](https://github.com/hydy100) | Yes |
 
 
 The following aspects of JsonTools __can__ be translated:
