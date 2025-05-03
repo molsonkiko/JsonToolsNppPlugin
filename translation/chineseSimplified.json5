@@ -1,0 +1,672 @@
+// If you want to translate JsonTools into another language, follow these steps (in the example below, we are translating into the "fooish" language):
+// 1. Create a copy of this file at the path "translation/fooish.json5" relative to the JsonTools plugin directory (the directory where the JsonTools.dll binary is installed, *not* the plugin config directory).
+// 2. If you are not 100% certain you understand all the rules of JSON syntax, read https://www.json.org/json-en.html
+// 3. Edit the values associated with the various keys in this document. Here are some rules that you must follow.
+//     i. DO NOT CHANGE THE KEYS OF ANY OBJECT, OR ADD OR REMOVE KEYS! ONLY CHANGE THE VALUES.
+//     ii. Some of these values will have "{integer}" in their text,
+//         like the "{0}" and "{1}" in "Found '{0}' after key {1} when colon expected".
+//         When you see "{1}" in a value, this means "insert the 2nd piece of extra information required to render this message".
+//         When translating these values, it is VERY IMPORTANT that your translation includes all the "{integer}" occurrences.
+//         EXAMPLES OF TRANSLATING "Found '{0}' after key {1} when colon expected" TO ITALIAN:
+//         GOOD: "Trovato '{0}' dopo la chiave {1} quando erano previsti i due punti"
+//         BAD (missing "{0}"): "Trovato '' dopo la chiave {1} quando erano previsti i due punti"
+//         BAD (missing "{1}"): "Trovato '{0}' dopo la chiave {} quando erano previsti i due punti"
+//         BAD (has "{0.}" instead of "{0}"): "Trovato '{0.}' dopo la chiave {1} quando erano previsti i due punti"
+//     iii. The following words are keywords and MUST BE PRESERVED EXACTLY (including case).
+//         - null
+//         - true
+//         - false
+//         - NaN
+//         - Infinity
+//         - None
+//         - True
+//         - False
+//         - nan
+//         - inf
+//         - undefined
+//     iv. The ', ", and ` characters have specific meanings, and CANNOT BE USED INTERCHANGABLY.
+//         If you see 'x' in one place, `x` in another place, and "x" in a third place, assume that this was an intentional choice by molsonkiko, and leave it unchanged.
+//     v. If you see a word surrounded in \" or ' or ` inside a value, it is a keyword, so don't change it.
+// 4a. Go to the settings and change the `logger_level` setting to JSON5.
+// 4b. Use the "Check JSON syntax now" command to make sure that this document has no syntax errors with a severity of BAD or FATAL.
+// 5. Close Notepad++ and reopen it, then look at the various JsonTools forms and menu items to see if the translation is satisfactory.
+{
+    "forms": {
+        "AboutForm": {
+            // this is the name that appears in the title bar for this form
+            "title": "关于JsonTools",
+            // Each key in this object is the name of the control in the JsonTools codebase.
+            //     If a control name is missing, that control is not translated.
+            "controls": {
+                // If the value associated with a control name is a string,
+                //     that controls the text of the control.
+                "Description": "用于 JSON 的查询/编辑工具，包括语法检查、重新格式化、\r\n带文件导航的树状视图、\r\n类似 JMESpath 的查询语言等等",
+                "GitHubLink": {
+                    // This is a LinkLabel, meaning it has a clickable link (the JsonTools repo URL).
+                    "text": "[{\"need\": \"需要帮助？\"}, \"请在这里提问：\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
+                    // If you change the text of this LinkLabel,
+                    //      make sure that you change the linkStart property
+                    //      so that only the URL is in the highlighted region.
+                    "linkStart": 32,
+                    "linkLength": 50
+                },
+                "DebugInfoLabel": "Notepad++ 版本：X.Y.Z。有关您安装的\r\n更多信息，请转到主状态栏上的 ? -> 调试信息。",
+                "ThanksWowLinkLabel": {
+                    "text": "特别鸣谢：\r\n* Don Ho 创建了 Notepad++\r\n* kbilsted 创建了本插件所基于的插件包\r\n* 当然还有所有帮助改进此插件的\r\n   人！\r\n* 优秀的社区让这项工作充满价值。\r\n  哇哦!",
+                    "linkStart": 103,
+                    "linkLength": 2
+                }
+            }
+        },
+        "ErrorForm": {
+            "title": "JSON 中的语法错误",
+            "controls": {
+                "exportToJsonMenuItem": "导出到 JSON",
+                "refreshMenuItem": "刷新当前错误"
+            }
+        },
+        "FindReplaceForm": {
+            "title": "在 JSON 中查找/替换",
+            "controls": {
+                "FindReplaceFormTitle": "在 JSON 中查找/替换",
+                "FindTextBoxLabel": "查找...",
+                "SwapFindReplaceButton": "交换",
+                "ReplaceTextBoxLabel": "替换为...",
+                "RootTextBoxLabel": "根位置",
+                // This control is a checkbox with text that changes
+                //     depending on whether it is checked or unchecked.
+                "ShowAdvancedOptionsCheckBox": {
+                    // Change this value to set the text when the box is *checked*
+                    "checked": "显示高级选项",
+                    // Change this value to set the text when the box is *unchecked*
+                    "unchecked": "隐藏高级选项"
+                },
+                // This is a ComboBox, where the text can be selected from a drop-down list.
+                // DO NOT CHANGE THE NUMBER OF ELEMENTS IN THIS ARRAY!
+                "KeysValsBothBox": [
+                    "键",
+                    "值",
+                    "键值对"
+                ],
+                "KeysValsBothBoxLabel": "搜索范围(键/值)？",
+                "RegexBox": "使用正则表达式？",
+                "MathBox": "数学表达式",
+                "RecursiveSearchBox": "递归搜索？",
+                "IgnoreCaseCheckBox": "忽略大小写？",
+                "MatchExactlyBox": "精确匹配？",
+                "FindButton": "查找全部",
+                "ReplaceButton": "替换全部"
+            }
+        },
+        "GrepperForm": {
+        "title": "从文件和 API 获取 JSON",
+        "controls": {
+            "GrepperFormTitle": "从文件和 API 获取 JSON",
+            "GetJsonFromApisTitle": "从 API 获取 JSON",
+            "UrlsBoxLabel": "输入要请求 JSON 的 API URL (每行一个或使用 JSON 数组)",
+            "SendRequestsButton": "发送 API 请求",
+            "GetJsonFromFilesTitle": "从本地文件获取 JSON",
+            "RecursiveSearchCheckBox": "搜索子目录？",
+            "ChooseDirectoriesButton": "选择目录...",
+            // This is another ComboBox. There may be more than one element in this list,
+            //    but only the first element can be translated in this case.
+            // (这是另一个下拉列表框。列表中可能有多个元素，但此处仅翻译第一个元素。)
+            "DirectoriesVisitedBox": [
+                "以前访问过的目录..."
+            ],
+            "SearchDirectoriesButton": "搜索目录",
+            "DocsButton": "文档",
+            "ViewErrorsButton": "查看错误",
+            "ViewResultsButton": "在缓冲区中查看结果",
+            "ChooseFilesTitle": "选择文件和 URL",
+            "RemoveSelectedFilesButton": "移除所选文件"
+        }
+        },
+        "GrepperFormProgressBar": {
+            "controls": {
+                "titleIfParsing": "JSON 解析进行中",
+                "titleIfReading": "文件读取进行中",
+                "captionIfParsing": "文件读取完成。\r\n正在解析 {0} 个文档，总大小约 {1} MB",
+                "captionIfReading": "正在读取 {0} 个文件，总大小约 {1} MB",
+                "progressLabelIfParsing": "已解析 0 MB / {0} MB",
+                "progressLabelIfReading": "已读取 0 / {0} 个文件"
+            }
+        },
+        "JsonToCsvForm": {
+            "title": "JSON 转 CSV",
+            "controls": {
+                "JsonToCsvFormTitle": "从 JSON 创建 CSV",
+                "KeySepBoxLabel": "键分隔符",
+                "DelimBoxLabel": "输出文件分隔符",
+                "eolComboBoxLabel": "输出框换行符",
+                "BoolsToIntsCheckBox": "将 true/false 转换为 1/0？",
+                "StrategyBox": [
+                    "默认",
+                    "完全递归",
+                    "不递归",
+                    "字符串化可迭代对象"
+                ],
+                "StrategyBoxLabel": "策略",
+                "GenerateCSVButton": "生成 CSV",
+                "DocsButton": "文档"
+            }
+        },
+        "RegexSearchForm": {
+            "title": "正则搜索转 JSON",
+            "controls": {
+                "Title": "正则搜索转 JSON",
+                "RegexTextBoxLabel": "输入正则表达式",
+                "IgnoreCaseCheckBox": "忽略大小写？",
+                "IncludeFullMatchAsFirstItemCheckBox": "将完整匹配作为第一项包含？",
+                "ParseAsCsvCheckBox": "解析为 CSV？",
+                "DelimiterTextBoxLabel": "分隔符",
+                "QuoteCharTextBoxLabel": "引号字符",
+                "NewlineComboBoxLabel": "换行符",
+                "NColumnsTextBoxLabel": "列数",
+                "HeaderHandlingComboBox": [
+                    "跳过表头",
+                    "包含表头",
+                    "使用表头作为键"
+                ],
+                "HeaderHandlingComboBoxLabel": "表头处理",
+                "ColumnsToParseAsNumberTextBoxLabel": "要解析为数字的分组 (整数数组)",
+                "SearchButton": "搜索"
+            }
+        },
+        "SettingsForm": {
+            "title": "JsonTools插件设置",
+            "controls": {
+                "Cancel": "&取消",
+                "Reset": "&重置",
+                "Ok": "&确定"
+            }
+        },
+        "SortForm": {
+        "title": "JSON数组排序",
+            "controls": {
+                "SortFormTitle": "JSON数组排",
+                "PathTextBoxLabel": "数组路径",
+                "IsMultipleArraysCheckBox": "路径指向多个数组；分别排序子数组",
+                "ReverseOrderCheckBox": "降序排序？",
+                "SortMethodBox": [
+                    "默认",
+                    "按字符串排序 (忽略大小写)",
+                    "按子项的索引/键排序",
+                    "按对子项的查询排序",
+                    "随机打乱"
+                ],
+                "SortMethodBoxLabel": "排序方法",
+                "QueryKeyIndexTextBoxLabel": "键/索引/查询",
+                "SortButton": "排序"
+            }
+        },
+        "TreeViewer": {
+            "title": "{0} 的 JSON 树视图",
+            // this is the title for the GrepperForm's tree view
+            "titleIfGrepperForm": "文件和 API 的 JSON 树",
+            "controls": {
+                "SubmitQueryButton": "提交查询",
+                "QueryToCsvButton": "查询转 CSV",
+                "SaveQueryButton": "保存查询结果",
+                "RefreshButton": "刷新",
+                "FindReplaceButton": "查找/替换",
+                // below are the items for the treenode right-click context menu
+                "CopyValueMenuItem": "复制值到剪贴板",
+                "CopyKeyItem": "复制键/索引到剪贴板",
+                "CopyPathItem": "复制路径到剪贴板",
+                "ToggleSubtreesItem": "展开/折叠所有子树",
+                "SelectThisItem": "选择此项",
+                "OpenSortFormItem": "排序数组...",
+                "SelectAllChildrenItem": "选择所有子项",
+                "LanguageNameStyleItem": "{0} 风格",
+                "PathSeparatorStyleItem": "使用路径分隔符设置"
+            }
+        }
+    },
+    // this controls the text of the main menu items
+    //      associated with the JsonTools item on the Notepad++ plugin menu.
+    "menuItems": {
+        // The "&D" in this text means that this menu item can be accessed by the "D"
+        //    accelerator key, meaning that the Alt-P-J-D key sequence can access this menu item.
+        // When translating menu items, it is good practice to include an accelerator key,
+        //     and it is *even better* if the accelerator key is the same as in the English translation.
+        // Thus, the Italian translation might be "&Documentazione".
+        //
+        // *VERY VERY IMPORTANT*: Every menu item name MUST have 63 characters or fewer when encoded in UTF-16.
+        //     The easiest way to check if any menu items are too long is to open the JsonTools treeview for this file,
+        //     and submit the query on the next line in the text box in the top-left corner:
+        //     @.menuItems[s_len(@) >= 64]
+        //     The query on the line above will select all menu items with 64 or more UTF-16 characters.
+        //
+        //     You *cannot* check the length by selecting it with Notepad++, because Notepad++ shows UTF-8 byte counts in the status bar.
+        "&Documentation": "文&档",
+        "&Pretty-print current JSON file": "美化当&前 JSON 文件",
+        "&Compress current JSON file": "压&缩当前 JSON 文件",
+        "Path to current p&osition": "当前位置&路径",
+        "Select every val&id JSON in selection": "选择区域内所有有&效 JSON",
+        "Chec&k JSON syntax now": "立即检查 &JSON 语法",
+        "Open &JSON tree viewer": "打开 &JSON 树视图",
+        "&Get JSON from files and APIs": "从&文件和 API 获取 JSON",
+        "Sort arra&ys": "排序数&组",
+        "&Settings": "&设置",
+        "&Validate JSON against JSON schema": "&根据 JSON schema 验证 JSON",
+        "Validate &files with JSON schema if name matches pattern": "当&文件名匹配模式时用 JSON schema 验证文件",
+        "Generate sc&hema from JSON": "从 JSON 生成 Sc&hema",
+        "Generate &random JSON from schema": "从 Schema 生成&随机 JSON",
+        "Run &tests": "运行&测试",
+        "A&bout": "&关于",
+        "See most recent syntax &errors in this file": "查看此文件最近的语法&错误",
+        "JSON to YAML": "&JSON 转 YAML",
+        "Parse JSON Li&nes document": "解析 JSON Li&nes 文档",
+        "&Array to JSON Lines": "&数组转 JSON Lines",
+        "D&ump selected text as JSON string(s)": "转&储所选文本为 JSON 字符串",
+        "Dump JSON string(s) as ra&w text": "转储 JSON 字符串为原始&文本",
+        "Open tree for &INI file": "打开 &INI 文件树视图",
+        "Rege&x search to JSON": "&正则搜索转 JSON"
+    },
+    // The JsonTools.ini config file (in your plugin config folder)
+    //     will have these translated descriptions as comments above each setting.
+    //     The settings form will also show these translated descriptions when the named setting is selected.
+    "settingsDescriptions": {
+        "logger_level": "抑制等于或低于此级别的错误日志记录。\r\nSTRICT: 记录所有与原始 JSON 规范的偏差。\r\nOK: 原始 JSON 规范加上以下内容：\r\n    * 字符串可以包含 ASCII 值小于 0x20 的字符 (包括 '\\t')\r\nNAN_INF: 解析 NaN、Infinity 和 -Infinity 时不记录错误。\r\nJSONC: 不记录以下错误：\r\n    * JavaScript 单行 '//' 和多行 '/*...*/' 注释\r\n    * NaN 和 +/-Infinity\r\nJSON5: JSONC 和 NAN_INF 级别中的所有内容都不记录，以及以下内容：\r\n    * 单引号字符串\r\n    * 数组或对象最后一个元素后的逗号\r\n    * 未加引号的对象键\r\n    * 更多信息请参见 https://json5.org/",
+        "offer_to_show_lint": "文档解析完成后，显示一个提示，询问是否在文档中查看语法错误。",
+        "auto_validate": "自动验证 .json、.jsonc 和 .jsonl 文件（每 2 秒一次），非常大的文件除外",
+        "inactivity_seconds_before_parse": "用户停止活动多少秒后插件重新解析文档。最小值为 1。",
+        "max_file_size_MB_slow_actions": "大于此兆字节数的文件默认禁用以下耗时操作：\r\n* 自动启用 JSON 词法分析器。\r\n* 打开文件时以及每次编辑后约 2 秒自动解析文件。",
+        "max_json_length_full_tree": "JSON 数组或对象在树视图中完全展开其所有子项的最大长度。更长的可迭代对象只有部分子项添加到树中。",
+        "tree_node_images": "树中的每个节点是否应该有关联其类型的图像？",
+        "ask_before_pretty_printing_json_lines": "在美化打印 JSON Lines 文档前询问，忽略美化打印请求，还是不询问直接美化打印？\r\nDONT_DO_DONT_ASK: 当您尝试美化打印 JSON Lines 时不执行任何操作。\r\nASK_BEFORE_DOING: 当您尝试执行此操作时创建一个消息框以请求确认。\r\nDO_WITHOUT_ASKING: 按要求执行此操作，不创建消息框。",
+        "indent_pretty_print": "美化打印时 JSON 各层级之间的空格数",
+        "tab_indent_pretty_print": "美化打印时在 JSON 各层级之间使用一个水平制表符 ('\\t') 而不是空格",
+        // Do not translate the example object for PPrint style! Leave it in English.
+        // Only translate the following: "How JSON is pretty printed", "Google style (default)", "Whitesmith style", "PPrint style"
+        "pretty_print_style": "JSON 如何美化打印。\r\nGoogle 风格 (默认):\r\n{\r\n    \"a\": [\r\n        1,\r\n        [\r\n            2\r\n        ]\r\n    ]\r\n}\r\nWhitesmith 风格:\r\n{\r\n\"a\":\r\n    [\r\n    1,\r\n        [\r\n        2\r\n        ]\r\n    ]\r\n}\r\nPPrint 风格:\r\n{\r\n    \"algorithm\": [\r\n        [\"start\", \"each\", \"child\", \"on\", \"a\", \"new\", \"line\"],\r\n        [\"if\", \"the\", \"line\", \"would\", \"have\", \"length\", \"at\", \"least\", 80],\r\n        [\r\n            \"follow\",\r\n            \"this\",\r\n            \"algorithm\",\r\n            [\"starting\", \"from\", \"the\", \"beginning\"]\r\n        ],\r\n        [\"else\", \"print\", \"it\", \"out\", \"on\", 1, \"line\"]\r\n    ],\r\n    \"style\": \"PPrint\",\r\n    \"useful\": true\r\n}",
+        "minimal_whitespace_compression": "如果为 true，使用“压缩 JSON”插件命令将移除 JSON 中所有不必要的空白。否则，它将保留对象中冒号后以及对象和数组中逗号后的空白。",
+        "remember_comments": "当 JSON 被美化打印或压缩时，会包含上次解析时找到的任何注释。\r\n美化打印时，每个注释相对于每个 JSON 元素的位置将与其解析时相同。\r\n压缩时，所有注释将位于文档的开头。",
+        "sort_keys": "美化打印或压缩时按字母顺序对对象的键进行排序",
+        "toolbar_icons": "为您想要显示的每个工具栏图标指定以下字符之一，并按您想要的顺序排列：\r\n('t' = 树视图, 'c' = 压缩, 'p' = 美化打印, 'o' = 到当前位置的路径)\r\n此设置将在您下次启动 Notepad++ 时生效。\r\n如果您不希望显示任何工具栏图标，请输入一个不代表图标的字符；请勿将此字段留空。",
+        "auto_try_guess_csv_delim_newline": "如果此设置为 true，\r\n当打开正则表达式搜索表单时，或在该表单中切换“解析为 CSV？”复选框时，\r\nJsonTools 将尝试猜测当前文档是否为 CSV 或 TSV 文件，以及它有多少列和使用何种换行符。\r\n如果此设置为 true，则打开正则表达式搜索表单会稍慢一些。",
+        "csv_newline": "生成的 CSV 文件使用的换行符类型。",
+        "key_style": "获取节点或行的路径或键/索引时使用的键样式。\r\n有关每种类型的说明，请参阅文档 (https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/docs/README.md#key_style-and-path_separator-settings)。\r\n当 path_separator 不是默认值 \"\\u0001\" 时，此设置将被忽略。",
+        "path_separator": "格式化路径时使用的分隔符。当此设置设为 \"\\u0001\" (默认值) 时，此设置将被忽略。\r\n此设置必须只有一个字符，且不能是以下 JSON 字符串中的任何字符：\"\\\"0123456789\"\r\n格式化对象键或数组索引的算法如下：\r\n===========\r\n如果键是数组索引：\r\n    将其格式化为纯文本 (例如，如果 \"$\" 是 path_separator，则索引 10 变为 \"$10\")\r\n如果键包含 path_separator：\r\n    将其格式化为 JSON 字符串 (例如，如果 \"/\" 是 path_separator，则键 \"foo\" 将格式化为 \"/foo\")\r\n否则，如果键以 (_ 或 a-z 或 A-Z) 开头，并且其所有其他字符都是 (_ 或 0-9 或 a-z 或 A-Z)：\r\n    将其格式化为纯文本 (例如，如果 \"/\" 是 path_separator，则键 \"_foo\" 变为 \"/_foo\"，但如果 \"_\" 是 path_separator，则变为 \"_\\\"_foo\\\"\")\r\n否则：\r\n    将其格式化为 JSON 字符串 (例如，即使键 \"a b\" 不包含 path_separator，如果 path_separator 是 \"/\"，它也会被格式化为 \"/\\\"a b\\\"\")",
+        "skip_api_request_and_fuzz_tests": "运行测试时，跳过发送 API 请求的测试和 RemesPath 模糊测试",
+        "try_parse_start_chars": "在文件中选择每个 JSON 时，仅在这些字符处开始尝试解析。\r\n仅容忍符合 NAN_INF logger_level 的有效 JSON。\r\n示例：如果选择 \"[{ (默认值)，我们只考虑潜在的字符串、数组和对象。\r\n如果选择 \"[{tf，我们考虑潜在的字符串、数组、对象和布尔值。",
+        "tree_view_font_size": "树视图的字体大小 (以磅为单位)。供参考，默认值为 7.8。",
+        "use_npp_styling": "树视图和其他 JsonTools 表单是否使用与编辑器窗口相同的颜色？",
+        "extended_ascii_strings": "在字符串中使用扩展 ASCII 字符 (例如，\u000b, ñ)？",
+        "maxArrayLength": "随机数组的最大长度，除非 \"maxItems\" 关键字另有规定",
+        "minArrayLength": "随机数组的最小长度，除非 \"minItems\" 关键字另有规定",
+        "max_schema_validation_problems": "验证器停止前记录的 JSON Schema 验证问题的最大数量",
+        "generate_random_patterns": "生成匹配字符串模式 (string schemas) 中 \"pattern\" 关键字的随机字符串，以及匹配对象模式 (object schemas) 中 \"patternProperties\" 关键字的随机键。",
+        "keyboard_shortcuts": "此设置决定 JsonTools 是否在启动时自动为某些插件命令分配默认键盘快捷键。\r\n如果您希望从 JsonTools 的默认设置更改键盘快捷键（通过 Notepad++ 主菜单的“宏->修改快捷键/删除宏...”），建议将此项设置为 False。"
+    },
+    // These are the error messages that JsonTools can report while parsing JSON and JSON Lines.
+    "jsonLint": {
+        // ============== OK messages (正常消息) ==============
+        "OK_CONTROL_CHAR": "严格的 JSON 规范不允许在字符串内部使用控制字符 (ASCII 码小于 0x20)",
+        // ============== NAN_INF messages (NAN/Infinity 消息) ==============
+        "NAN_INF_Infinity": "原始 JSON 规范不允许 Infinity",
+        "NAN_INF_NaN": "原始 JSON 规范不允许 NaN",
+        // ============== JSONC messages (JSONC 消息) ==============
+        "JSONC_JAVASCRIPT_COMMENT": "原始 JSON 规范不允许 JavaScript 注释",
+        // ============== JSON5 messages (JSON5 消息) ==============
+        "JSON5_WHITESPACE_CHAR": "除 ' '、'\\t'、'\\r' 和 '\\n' 之外的空白字符仅在 JSON5 中允许",
+        "JSON5_SINGLEQUOTED_STRING": "单引号字符串仅在 JSON5 中允许",
+        "JSON5_ESCAPED_NEWLINE": "转义的换行符仅在 JSON5 中允许",
+        "JSON5_X_ESCAPE": "\\x 转义仅在 JSON5 中允许",
+        "JSON5_ESCAPED_CHAR": "转义字符 '{0}' 仅在 JSON5 中允许",
+        "JSON5_UNQUOTED_KEY": "未加引号的键仅在 JSON5 中允许",
+        "JSON5_NUM_LEADING_PLUS": "数字中的前导 + 号仅在 JSON5 中允许",
+        "JSON5_HEX_NUM": "十六进制数仅在 JSON5 中允许",
+        "JSON5_NUM_LEADING_DECIMAL_POINT": "带有前缀小数点的数字仅在 JSON5 中允许",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_ARRAY": "数组最后一个元素后的逗号",
+        "JSON5_COMMA_AFTER_LAST_ELEMENT_OBJECT": "对象最后一个键值对后的逗号",
+        "JSON5_NUM_TRAILING_DECIMAL_POINT": "带有后缀小数点的数字仅在 JSON5 中允许",
+        // ============== BAD messages (错误消息) ==============
+        "BAD_UNTERMINATED_MULTILINE_COMMENT": "未终止的多行注释",
+        "BAD_PYTHON_COMMENT": "任何公认的 JSON 规范都不允许 Python 风格的 '#' 注释",
+        "BAD_STRING_CONTAINS_NEWLINE": "字符串文字包含换行符",
+        "BAD_KEY_CONTAINS_NEWLINE": "对象键包含换行符",
+        "BAD_UNTERMINATED_STRING": "从位置 {0} 开始的未终止字符串文字",
+        "BAD_INVALID_UNQUOTED_KEY": "从 {0} 开始没有有效的未加引号的键",
+        "BAD_PYTHON_nan": "nan 不是 JSON 中有效的 Not a Number 表示",
+        "BAD_PYTHON_None": "任何 JSON 规范都不允许 None",
+        "BAD_PYTHON_inf": "inf 不是 JSON 中 Infinity 的正确表示",
+        "BAD_UNNECESSARY_LEADING_0": "任何 JSON 规范都不允许带有不必要前导 0 的数字 (如 \"01\")",
+        "BAD_SLASH_FRACTION": "任何 JSON 规范都不允许形如 1/3 的分数",
+        "BAD_NUMBER_INVALID_FORMAT": "数字字符串 {0} 格式错误",
+        "BAD_TWO_CONSECUTIVE_COMMAS_ARRAY": "数组元素 {0} 后出现两个连续的逗号",
+        "BAD_COMMA_BEFORE_FIRST_ELEMENT_ARRAY": "数组第一个值之前出现逗号",
+        "BAD_ARRAY_ENDSWITH_CURLYBRACE": "期望数组结尾是 ']'，但找到 '}'",
+        "BAD_NO_COMMA_BETWEEN_ARRAY_ITEMS": "数组成员之间没有逗号",
+        "BAD_COLON_BETWEEN_ARRAY_ITEMS": "在期望数组成员之间使用逗号的地方出现了 ':' (键值分隔符)。也许您忘记关闭数组了？",
+        "BAD_UNTERMINATED_ARRAY": "未终止的数组",
+        "BAD_TWO_CONSECUTIVE_COMMAS_OBJECT": "对象键值对 {0} 后出现两个连续的逗号",
+        "BAD_COMMA_BEFORE_FIRST_PAIR_OBJECT": "对象第一个值之前出现逗号",
+        "BAD_NO_COMMA_BETWEEN_OBJECT_PAIRS": "对象中键值对 {0} 后没有逗号",
+        "BAD_UNTERMINATED_OBJECT": "未终止的对象",
+        "BAD_OBJECT_ENDSWITH_SQUAREBRACE": "期望对象结尾是 '}'，但找到 ']'",
+        "BAD_COLON_BETWEEN_OBJECT_PAIRS": "在键值对后找到 ':' 而不是逗号",
+        "BAD_CHAR_WHERE_COLON_EXPECTED": "在键 {1} 后期望冒号的地方找到 '{0}'",
+        "BAD_NO_COLON_BETWEEN_OBJECT_KEY_VALUE": "对象键 {0} 和值 {0} 之间没有 ':'",
+        "BAD_DUPLICATE_KEY": "对象包含多个键 \"{0}\"",
+        "BAD_PYTHON_True": "任何 JSON 规范都不允许 True",
+        "BAD_PYTHON_False": "任何 JSON 规范都不允许 False",
+        "BAD_JAVASCRIPT_undefined": "任何 JSON 规范都不允许 undefined",
+        "BAD_CHAR_INSTEAD_OF_EOF": "在有效的 JSON 文档末尾，得到 {0} 而不是 EOF (文件结束符)",
+        "BAD_FLOAT_TOO_LARGE": "数字字符串 {0} 对于 64 位浮点数来说太大了",
+        // ============== FATAL messages (致命错误消息) ==============
+        "FATAL_EXPECTED_JAVASCRIPT_COMMENT": "在 '/' 后期望 JavaScript 注释",
+        "FATAL_HEXADECIMAL_TOO_SHORT": "无法找到长度为 {0} 的有效十六进制数",
+        "FATAL_NUL_CHAR": "'\\x00' 是空字符，在 JsonTools 中是非法的",
+        "FATAL_UNTERMINATED_KEY": "未终止的对象键",
+        "FATAL_INVALID_STARTSWITH_n": "期望以 'n' 开头的文字是 null 或 nan",
+        "FATAL_PLUS_OR_MINUS_AT_EOF": "文档末尾出现 '{0}' 符号",
+        "FATAL_INVALID_STARTSWITH_I": "期望以 'I' 开头的文字是 Infinity",
+        "FATAL_INVALID_STARTSWITH_N": "期望以 'N' 开头的文字是 NaN 或 None",
+        "FATAL_INVALID_STARTSWITH_i": "期望以 'i' 开头的文字是 inf",
+        "FATAL_HEX_INT_OVERFLOW": "十六进制数对于 64 位有符号整数类型来说太大了",
+        "FATAL_SECOND_DECIMAL_POINT": "数字在错误的位置出现小数点",
+        "FATAL_NUM_TRAILING_e_OR_E": "科学计数法 'e' 后没有数字",
+        "FATAL_MAX_RECURSION_DEPTH": "达到最大递归深度 (512)",
+        "FATAL_UNEXPECTED_EOF": "意外的文件结束",
+        "FATAL_NO_VALID_LITERAL_POSSIBLE": "没有可能的有效文字",
+        "FATAL_INVALID_STARTSWITH_t": "期望以 't' 开头的文字是 true",
+        "FATAL_INVALID_STARTSWITH_f": "期望以 'f' 开头的文字是 false",
+        "FATAL_INVALID_STARTSWITH_T": "期望以 'T' 开头的文字是 True",
+        "FATAL_INVALID_STARTSWITH_F": "期望以 'F' 开头的文字是 False",
+        "FATAL_INVALID_STARTSWITH_u": "期望以 'u' 开头的文字是 undefined",
+        "FATAL_BADLY_LOCATED_CHAR": "位置错误的字符 {0}",
+        "FATAL_NO_INPUT": "无输入",
+        "FATAL_ONLY_WHITESPACE_COMMENTS": "输入仅包含空白和可能的注释",
+        "FATAL_JSONL_NOT_ONE_DOC_PER_LINE": "JSON Lines 文档每行不正好包含一个 JSON 文档",
+        // ============== SCHEMA messages (Schema 验证消息) ==============
+        "SCHEMA_TYPE_MISMATCH": "找到类型 {0}，期望类型 {1}。",
+        "SCHEMA_TYPE_ARRAY_MISMATCH": "找到类型 {0}，期望是类型 {1} 中的一种。",
+        "SCHEMA_VALUE_NOT_IN_ENUM": "找到值 {0}，但允许的值仅为 {1}。",
+        "SCHEMA_ARRAY_TOO_LONG": "数组要求不超过 {0} 项，但它有 {1} 项。",
+        "SCHEMA_ARRAY_TOO_SHORT": "数组要求至少有 {0} 项，但它有 {1} 项。",
+        "SCHEMA_CONTAINS_VIOLATION": "数组必须有 {0} 到 {1} 项匹配 \"contains\" 模式 {2}",
+        "SCHEMA_MINCONTAINS_VIOLATION": "数组必须至少有 {0} 项匹配 \"contains\" 模式 {1}",
+        "SCHEMA_OBJECT_MISSING_REQUIRED_KEY": "对象缺少 \"required\" 键 {0}",
+        "SCHEMA_FALSE_SCHEMA": "模式为 false，因此没有任何内容会通过验证。",
+        "SCHEMA_STRING_DOESNT_MATCH_PATTERN": "字符串 '{0}' 不匹配正则表达式 '{1}'",
+        "SCHEMA_RECURSION_LIMIT_REACHED": "验证的最大深度为 64",
+        "SCHEMA_NUMBER_LESS_THAN_MIN": "数字 {0} 小于最小值 {1}",
+        "SCHEMA_NUMBER_GREATER_THAN_MAX": "数字 {0} 大于最大值 {1}",
+        "SCHEMA_NUMBER_LESSEQ_EXCLUSIVE_MIN": "数字 {0} 小于或等于排他性最小值 {1}",
+        "SCHEMA_NUMBER_GREATEREQ_EXCLUSIVE_MAX": "数字 {0} 大于或等于排他性最大值 {1}",
+        "SCHEMA_STRING_TOO_LONG": "字符串 {0} 的长度大于 maxLength {1}",
+        "SCHEMA_STRING_TOO_SHORT": "字符串 {0} 的长度小于 minLength {1}"
+    },
+    "messageBoxes": {
+        // This object is used to translate message boxes (the little boxes with OK, Yes, No, Cancel buttons that pop up and tell you things or ask you for confirmation).
+        // Each key in this object is the caption of a message box.
+        // Each message box translation has the "text" and "caption" fields:
+        //      The "caption" field is the translation of the caption (the title line of the message box, to the left of the X to close the box).
+        //      The "text" field is the translation of the text inside the message box
+        // As in the "jsonLint" object, the {integer} inside any text have special meaning, so you need to leave those alone.
+        // ===== MessageBoxes in Main.cs =====
+        "Could not open url in web browser": {
+        "caption": "无法在网页浏览器中打开 URL",
+        "text": "尝试在网页浏览器中打开 URL {0} 时，遇到异常：\r\n{1}"
+        },
+        "View syntax errors in document?": {
+            "caption": "查看文档中的语法错误？",
+            "text": "文档中有 {0} 个语法错误。是否要查看它们？\r\n（您可以在设置中关闭这些提示 (offer_to_show_lint 设置)）"
+        },
+        "Error while trying to parse {0}": {
+            "caption": "尝试解析 {0} 时出错",
+            "text": "由于以下错误，无法解析文档：\r\n{0}"
+        },
+        "Possible issue with remembering selections": {
+            "caption": "记住选择时可能存在问题",
+            "text": "JsonTools 正在使用指示器 {0} 和 {1} 来记住选择，但其中一个或两个可能与另一个插件冲突。\r\n如果您看到此消息，并且随后注意到 Notepad++ 或某个插件开始行为异常，请考虑在 JsonTools GitHub 存储库中创建一个 issue 来描述发生的情况。"
+        },
+        "Pretty-print JSON Lines document?": {
+            "caption": "美化 JSON Lines 文档？",
+            "text": "美化 JSON Lines 文档通常会导致其不再是有效的 JSON Lines 文档。仍然要美化吗？"
+        },
+        "Error while reformatting INI file": {
+            "caption": "重新格式化 INI 文件时出错",
+            "text": "重新格式化 INI 文件时出错：\r\n{0}"
+        },
+        "Programmatic error while reformatting JSON": {
+            "caption": "重新格式化 JSON 时出现程序错误",
+            "text": "尝试重新格式化文件的 JSON 时，出现程序错误（可能是源代码中的错误导致）：\r\n{0}"
+        },
+        "Failed to parse selected text as JSON": {
+            "caption": "未能将所选文本解析为 JSON",
+            "text": "所选文本不是 JSON 字符串"
+        },
+        "JSON to YAML feature has some bugs": {
+            "caption": "JSON 转 YAML 功能存在一些错误",
+            "text": "此功能存在已知错误，可能导致生成无效的 YAML。运行测试以查看示例。仍然要使用吗？"
+        },
+        "Error while trying to convert JSON to YAML": {
+            "caption": "尝试将 JSON 转换为 YAML 时出错",
+            "text": "由于以下错误，无法将 JSON 转换为 YAML：\r\n{0}"
+        },
+        "Only arrays can be converted to JSON Lines": {
+            "caption": "只有数组可以转换为 JSON Lines",
+            "text": "只有 JSON 数组可以转换为 JSON Lines 格式。"
+        },
+        "Could not change path_separator setting": {
+            "caption": "无法更改 path_separator 设置",
+            "text": "由于以下错误，无法将 path_separator 设置从 {0} 更改为 {1}：\r\n{2}"
+        },
+        "No JSON syntax errors for this file": {
+            "caption": "此文件没有 JSON 语法错误",
+            "text": "{1} 没有 JSON 语法错误（级别为 {0} 或更低）"
+        },
+        "Could not find a node at this position": {
+            "caption": "无法在此位置找到节点",
+            "text": "在此文件的位置 {0} 未找到节点"
+        },
+        "Error while formatting path to current position": {
+            "caption": "格式化到当前位置的路径时出错",
+            "text": "尝试格式化到当前位置的路径时，发生以下错误：\r\n{0}"
+        },
+        "No valid JSON elements found": {
+            "caption": "未找到有效的 JSON 元素",
+            "text": "在文档中未找到以字符 {0} 开头的有效 JSON 元素"
+        },
+        "Error while validating JSON against schema": {
+            "caption": "根据 schema 验证 JSON 时出错",
+            "text": "根据路径 {0} 处的 schema 验证 JSON 时，发生以下错误：\r\n{1}"
+        },
+        "Validation failed...": {
+            "caption": "验证失败...",
+            "text": "文件 {0} 中的 JSON 未能根据路径 {1} 处的 schema 进行验证。问题 {2} 中的第 1 个：\r\n{3}"
+        },
+        "Validation succeeded!": {
+            "caption": "验证成功！",
+            "text": "文件 {0} 中的 JSON 已根据路径 {1} 处的 schema 成功验证。"
+        },
+        "JSON schema generation error": {
+            "caption": "JSON schema 生成错误",
+            "text": "无法生成 JSON schema。遇到以下错误：\r\n{0}"
+        },
+        "Error while generating random JSON from schema": {
+            "caption": "从 schema 生成随机 JSON 时出错",
+            "text": "尝试从此 schema 生成随机 JSON 时，遇到错误：\r\n{0}"
+        },
+        "Couldn't parse schemasToFnamePatterns.json": {
+            "caption": "无法解析 schemasToFnamePatterns.json",
+            "text": "未能解析 schemasToFnamePatterns.json。遇到错误：\r\n{0}"
+        },
+        "schemasToFnamePatterns.json badly formatted": {
+            "caption": "schemasToFnamePatterns.json 格式错误",
+            "text": "schemasToFnamePatterns.json 必须是一个将文件名映射到非空有效正则表达式（字符串）数组的对象。\r\n存在以下验证问题：\r\n{0}"
+        },
+        "No schema exists at path {0}.": {
+            "caption": "路径 {0} 处不存在 schema。",
+            "text": "路径 {0} 处不存在 schema。"
+        },
+        "Regex did not compile (in schemasToFnamePatterns.json)": {
+            "caption": "正则表达式未编译（在 schemasToFnamePatterns.json 中）",
+            "text": "测试与文件 {0} 关联的所有正则表达式时，\r\n正则表达式 {1} 由于错误未能编译：\r\n{2}"
+        },
+        "Can't select all children": {
+            "caption": "无法选择所有子节点",
+            "text": "无法选择所有子节点，因为一个或多个子节点不对应文档中的 JSON 节点"
+        },
+        "Error while trying to parse schema": {
+            "caption": "尝试解析 schema 时出错",
+            "text": "尝试解析路径 {0} 处的 schema 时，发生以下错误：\r\n{1}"
+        },
+        "Error while compiling JSON schema": {
+            "caption": "编译 JSON schema 时出错",
+            "text": "编译文件 \"{0}\" 的 schema 时，遇到异常：\r\n{1}"
+        },
+        // ===== MessageBoxes in AboutForm.cs =====
+        "such error very sad": {
+            "caption": "非常悲伤的错误", 
+            "text": "无法将 JSON 转换为 DSON。遇到异常：\r\n{0}"
+        },
+        // ===== MessageBoxes in JsonToCsvForm.cs =====
+        "Exception while converting JSON to CSV": {
+            "caption": "将 JSON 转换为 CSV 时出现异常",
+            "text": "尝试从 JSON 创建 CSV 时，引发此异常：\r\n{0}"
+        },
+        // ===== MessageBoxes in GrepperForm.cs =====
+        "Json file search error": {
+            "caption": "Json 文件搜索错误",
+            "text": "搜索 JSON 文件时，遇到异常：\r\n{0}"
+        },
+        "No errors while searching documents": {
+            "caption": "搜索文档时无错误",
+            "text": "没有异常！{0}"
+        },
+        "Error while sending API requests": {
+            "caption": "发送 API 请求时出错" /* 文本只是一个异常 */
+        },
+        "Too much text to parse": {
+            "caption": "要解析的文本过多",
+            "text": "要解析的文本总长度 ({0}) 超过了最大长度 ({1})"
+        },
+        // ===== MessageBoxes in TreeViewer.cs =====
+        "Can't populate JSON tree": {
+            "caption": "无法填充 JSON 树",
+            "text": "无法填充 JSON 树，因为没有存储 JSON。"
+        },
+        "Error while populating tree": {
+            "caption": "填充树时出错",
+            "text": "由于以下错误，无法填充 JSON 树：\r\n{0}"
+        },
+        "Compilation error in RemesPath query": {
+            "caption": "RemesPath 查询编译错误",
+            "text": "由于编译错误，无法执行查询 {0}：\r\n{1}"
+        },
+        "Stop seeing errors?": {
+            "caption": "停止查看错误？",
+            "text": "选择“是”停止显示此查询的错误消息框"
+        },
+        "Runtime error while executing query on selection": {
+            "caption": "对选定内容执行查询时出现运行时错误",
+            "text": "在位置 {1} 和 {2} 之间的选定内容上执行查询 {0} 时，遇到运行时错误：\r\n{3}"
+        },
+        "Runtime error while executing query": {
+            "caption": "执行查询时出现运行时错误",
+            "text": "执行查询 {0} 时，遇到运行时错误：\r\n{1}"
+        },
+        "Error while formatting ini file values as strings after RemesPath mutation": {
+            "caption": "RemesPath 变动后将 INI 文件值格式化为字符串时出错",
+            "text": "尝试将所有值字符串化时出错，无法变动 INI 文件：\r\n{0}"
+        },
+        "path_separator setting not configured": {
+            "caption": "path_separator 设置未配置",
+            "text": "您选择了“键/索引到剪贴板”并启用了“使用 path_separator 设置”选项，但您的 path_separator 仍为默认值 {0}。将改用 {1} 样式。"
+        },
+        "Error while formatting key of tree node": {
+            "caption": "格式化树节点的键时出错",
+            "text": "尝试使用样式 {1} 格式化键 {0} 时，发生以下错误：\r\n{2}"
+        },
+        "Can't select object or array in non-JSON": {
+            "caption": "无法在非 JSON 中选择对象或数组",
+            "text": "无法在非 JSON 文档中选择对象或数组，因为它不对应特定的文本区域"
+        },
+        "Couldn't select associated JSON": {
+            "caption": "无法选择关联的 JSON",
+            "text": "所选树节点似乎不对应文档中的 JSON 元素。"
+        },
+        "Couldn't select children of JSON": {
+            "caption": "无法选择 JSON 的子节点",
+            "text": "所选树节点似乎不对应文档中的 JSON 元素。"
+        },
+        "Can only select children of object or array": {
+            "caption": "只能选择对象或数组的子节点",
+            "text": "所选 JSON 不是对象或数组，因此没有子节点。"
+        },
+        // ===== MessageBoxes in SettingsBase.cs =====
+        "Unknown error while parsing JsonTools config file": {
+            "caption": "解析 JsonTools 配置文件时出现未知错误",
+            "text": "解析 JsonTools 配置文件时，预期设置 \"{0}\" 的类型为 {1}，但发生错误。\r\n该设置已设为其默认值 {2}。\r\n由于未知原因，无法转换给定值 {3}。"
+        },
+        "Error while parsing JsonTools config file": {
+            "caption": "解析 JsonTools 配置文件时出错",
+            "text": "解析 JsonTools 配置文件时，预期设置 \"{0}\" 的类型为 {1}，但发生错误。\r\n该设置已设为其默认值 {2}。\r\n给定值 {3} 引发以下错误：\r\n{4}"
+        },
+        "Invalid value for setting {0}": {
+            "caption": "设置 {0} 的值无效",
+            "text": "无法将设置 {0} 更改为值 {1}，因此它将保持设置为 {2}。\r\n遇到以下异常：\r\n{3}"
+        },
+        // ===== MessageBoxes in Npp.cs =====
+        "Nothing to copy to clipboard": {
+            "caption": "没有可复制到剪贴板的内容",
+            "text": "找不到任何可复制到剪贴板的内容"
+        },
+        "File too long for JsonTools": {
+            "caption": "文件对于 JsonTools 过长",
+            "text": "JsonTools 无法对超过 2147483647 字节的文件执行此插件命令。\r\n是否要停止显示文件过长时的通知？"
+        },
+        // ===== MessageBoxes in SortForm.cs =====
+        "Could not find json at that path": {
+            "caption": "无法在该路径找到 JSON",
+            "text": "无法在指定路径 ({0}) 找到 JSON。\r\n遇到以下错误：\r\n{1}"
+        },
+        "Failed to compile query for sorting": {
+            "caption": "未能编译用于排序的查询",
+            "text": "根据所选排序方法，尝试编译查询 \"{0}\"，\r\n但遇到以下错误：\r\n{1}"
+        },
+        "JSON at specified path must be object or array": {
+            "caption": "指定路径处的 JSON 必须是对象或数组",
+            "text": "指定路径处的 JSON 必须是对象或数组，但获取到类型 {0}"
+        },
+        "Can only sort arrays": {
+            "caption": "只能对数组排序",
+            "text": "只能对数组排序，但获取到类型为 {0} 的 JSON"
+        },
+        "Error while sorting array": {
+            "caption": "对数组排序时出错",
+            "text": "对数组排序时，遇到以下错误：\r\n{0}"
+        },
+        // ===== MessageBoxes in RegexSearchForm.cs =====
+        "Columns to parse as number must be array of integers": {
+            "caption": "要解析为数字的列必须是整数数组",
+            "text": "要解析为数字的列必须是非空的 JSON 整数数组"
+        }
+    },
+    "fileComments": {
+        // schemasToFnamePatterns.json (and possibly other config files in the future)
+        //     can have comments at the beginning of the file.
+        // This object maps each filename to an array of single-line comments at the start of the file.
+        "schemasToFnamePatterns.json": [
+            "此文件确定何时应执行自动 JSON 验证", // this file determines when automatic JSON validation should be performed
+            "每个键必须是 JSON 模式文件的文件名", // each key must be the filename of a JSON schema file
+            "每个值必须是一个包含有效 C# 正则表达式的非空列表 (例如，[\"blah.*\\\\.txt\"])", // each value must be a non-empty list of valid C# regular expressions (e.g., ["blah.*\\.txt"])
+            "因此，如果此文件包含 {\"c:\\\\path\\\\to\\\\foo_schema.json\": [\"blah.*\\\\.txt\"]}", // thus, if this file contained {"c:\\path\\to\\foo_schema.json": ["blah.*\\.txt"]}
+            "那么，每当打开名称中包含子字符串 \"blah\" 的 \".txt\" 文件时，它将使用 \"c:\\\\path\\\\to\\\\foo_schema.json\" 自动执行验证。" // it would automatically perform validation using "c:\\path\\to\\foo_schema.json" whenever a ".txt" file with the substring "blah" in its name was opened.
+        ]
+    }
+    //, "exceptions": {
+    //     "DsonDumpException": {
+    //         // all exceptions of this type have this basic format.
+    //         // The {integer} parameters in the basicFormat string are filled by various parameters when the exception is thrown at runtime.
+    //         "basicFormat": "DSON dump error: {0}",
+    //         "messages": {
+    //             "message1": "translated message1"
+    //         }
+    //     }
+    // }
+}
