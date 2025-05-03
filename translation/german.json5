@@ -78,8 +78,8 @@
                 "titleIfReading": "Dateilesevorgang läuft",
                 "captionIfParsing": "Dateilesevorgang abgeschlossen.\r\nAnalysiere {0} Dokumente, Gesamtgröße ca. {1} MB",
                 "captionIfReading": "Lese {0} Dateien, Gesamtgröße ca. {1} MB",
-                "progressLabelIfParsing": "Analysiert 0 MB / {0} MB",
-                "progressLabelIfReading": "Gelesen 0 / {0} Dateien"
+                "progressLabelIfParsing": "Analysiert {0} MB / {1} MB",
+                "progressLabelIfReading": "Gelesen {0} / {1} Dateien"
             }
         },
         "JsonToCsvForm": {

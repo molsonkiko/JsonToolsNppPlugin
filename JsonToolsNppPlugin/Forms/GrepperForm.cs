@@ -29,6 +29,8 @@ namespace JSON_Tools.Forms
         private Button cancelButton;
         private MyLabel progressLabel;
         private static object progressReportLock = new object();
+        private static string progressLabelBaseText = "";
+        private static string progressLabelSecondParam = "";
         private static Dictionary<string, string> progressBarTranslatedStrings = null;
 
         public GrepperForm()
@@ -184,8 +186,8 @@ namespace JSON_Tools.Forms
             string titleIfReading = "File reading in progress";
             string captionIfParsing = "File reading complete.\r\nNow parsing {0} documents with combined length of about {1} MB";
             string captionIfReading = "Now reading {0} files with a combined length of about {1} MB";
-            string progressLabelIfParsing = "0 MB of {0} MB parsed";
-            string progressLabelIfReading = "0 of {0} files read";
+            string progressLabelIfParsing = "{0} MB of {1} MB parsed";
+            string progressLabelIfReading = "{0} of {1} files read";
             if (progressBarTranslatedStrings is null)
             {
                 progressBarTranslatedStrings = new Dictionary<string, string>
@@ -217,12 +219,18 @@ namespace JSON_Tools.Forms
                 Top = 20,
                 AutoSize = true,
             };
+            progressLabelBaseText = isParsing ? "{0} MB of {1} MB parsed" : "{0} of {1} files read";
+            progressLabelSecondParam = isParsing ? totLengthToParseMB : totalLengthToParse.ToString();
+            if (Translator.TryGetTranslationAtPath(new string[] {"forms", "GrepperFormProgressBar", "controls", isParsing ? "progressLabelIfParsing" : "progressLabelIfReading"},
+                    out JNode progressLabelNewTextNode)
+                && progressLabelNewTextNode.value is string progressLabelNewText)
+            {
+                progressLabelBaseText = progressLabelNewText;
+            }
             progressLabel = new MyLabel
             {
                 Name = "progressLabel",
-                Text = isParsing
-                        ? Translator.TryTranslateWithFormatting(progressLabelIfParsing, progressBarTranslatedStrings["progressLabelIfParsing"], totLengthToParseMB)
-                        : Translator.TryTranslateWithFormatting(progressLabelIfReading, progressBarTranslatedStrings["progressLabelIfReading"], totalLengthToParse),
+                Text = string.Format(progressLabelBaseText, 0, progressLabelSecondParam),
                 TextAlign = ContentAlignment.TopCenter,
                 Top = 85,
                 AutoSize = true,
@@ -294,6 +302,9 @@ namespace JSON_Tools.Forms
 
         private void ReportJsonParsingProgress(int lengthParsedSoFar, int __)
         {
+            string lengthParsedStr = isParsing ? (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP) : lengthParsedSoFar.ToString();
+            string progressLabelText = string.Format(progressLabelBaseText, lengthParsedStr, progressLabelSecondParam);
+            int progressBarValue = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
             if (isParsing)
             {
 #if PARSER_PARALLEL
@@ -302,8 +313,8 @@ namespace JSON_Tools.Forms
                 {
                     try
                     {
-                        progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
-                        progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                        progressLabel.Text = progressLabelText;
+                        progressBar.Value = progressBarValue;
                     }
                     finally
                     {
@@ -311,8 +322,8 @@ namespace JSON_Tools.Forms
                     }
                 }
 #else
-                progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+(?:\.\d+)?", _ => (lengthParsedSoFar / 1e6).ToString("F3", JNode.DOT_DECIMAL_SEP));
-                progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                progressLabel.Text = progressLabelText;
+                progressBar.Value = progressBarValue;
                 progressLabel.Refresh();
 #endif
 
@@ -320,8 +331,8 @@ namespace JSON_Tools.Forms
             else
             {
                 // don't need to use the lock when reading files, because that is single-threaded
-                progressLabel.Text = Regex.Replace(progressLabel.Text, @"^\d+", _ => lengthParsedSoFar.ToString());
-                progressBar.Value = lengthParsedSoFar > progressBar.Maximum ? progressBar.Maximum : lengthParsedSoFar;
+                progressLabel.Text = progressLabelText;
+                progressBar.Value = progressBarValue;
                 progressLabel.Refresh();
             }
         }

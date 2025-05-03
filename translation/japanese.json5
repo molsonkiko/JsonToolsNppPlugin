@@ -78,8 +78,8 @@
                 "titleIfReading": "ファイル読み込み中",
                 "captionIfParsing": "ファイル読み込み完了。\r\n{0} 個のドキュメントを解析中、合計サイズ約 {1} MB",
                 "captionIfReading": "{0} 個のファイルを読み込み中、合計サイズ約 {1} MB",
-                "progressLabelIfParsing": "解析済み 0 MB / {0} MB",
-                "progressLabelIfReading": "読み込み済み 0 / {0} 個のファイル"
+                "progressLabelIfParsing": "解析済み {0} MB / {1} MB",
+                "progressLabelIfReading": "読み込み済み {0} / {1} 個のファイル"
             }
         },
         "JsonToCsvForm": {

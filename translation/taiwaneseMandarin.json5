@@ -78,8 +78,8 @@
                 "titleIfReading": "檔案讀取進行中",
                 "captionIfParsing": "檔案讀取完成。\r\n正在解析 {0} 個文件，總大小約 {1} MB",
                 "captionIfReading": "正在讀取 {0} 個檔案，總大小約 {1} MB",
-                "progressLabelIfParsing": "已解析 0 MB / {0} MB",
-                "progressLabelIfReading": "已讀取 0 / {0} 個檔案"
+                "progressLabelIfParsing": "已解析 {0} MB / {1} MB",
+                "progressLabelIfReading": "已讀取 {0} / {1} 個檔案"
             }
         },
         "JsonToCsvForm": {

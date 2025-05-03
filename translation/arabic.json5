@@ -95,8 +95,8 @@
                 "titleIfReading": "قراءة الملفات قيد التقدم",
                 "captionIfParsing": "اكتملت قراءة الملفات.\r\nجاري تحليل {0} مستندات، الحجم الإجمالي حوالي {1} ميجابايت",
                 "captionIfReading": "جاري قراءة {0} ملفات، الحجم الإجمالي حوالي {1} ميجابايت",
-                "progressLabelIfParsing": "تم التحليل 0 ميجابايت / {0} ميجابايت",
-                "progressLabelIfReading": "تمت القراءة 0 / {0} ملفات"
+                "progressLabelIfParsing": "تم التحليل {0} ميجابايت / {1} ميجابايت",
+                "progressLabelIfReading": "تمت القراءة {0} / {1} ملفات"
             }
         },
         "JsonToCsvForm": {

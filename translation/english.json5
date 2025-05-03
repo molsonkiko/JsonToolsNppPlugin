@@ -127,8 +127,8 @@
                 "titleIfReading": "File reading in progress",
                 "captionIfParsing": "File reading complete.\r\nNow parsing {0} documents with combined length of about {1} MB",
                 "captionIfReading": "Now reading {0} files with a combined length of about {1} MB",
-                "progressLabelIfParsing": "0 MB of {0} MB parsed",
-                "progressLabelIfReading": "0 of {0} files read"
+                "progressLabelIfParsing": "{0} MB of {1} MB parsed",
+                "progressLabelIfReading": "{0} of {1} files read"
             }
         },
         "JsonToCsvForm": {

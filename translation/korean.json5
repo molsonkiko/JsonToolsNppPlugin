@@ -76,10 +76,10 @@
             "controls": {
                 "titleIfParsing": "JSON 구문 분석 진행 중",
                 "titleIfReading": "파일 읽기 진행 중",
-                "captionIfParsing": "파일 읽기 완료.\r\n문서 {0}개 구문 분석 중, 총 크기 약 {1}MB",
-                "captionIfReading": "파일 {0}개 읽는 중, 총 크기 약 {1}MB",
-                "progressLabelIfParsing": "구문 분석됨 0MB / {0}MB",
-                "progressLabelIfReading": "읽은 파일 0 / {0}개"
+                "captionIfParsing": "파일 읽기 완료.\r\n문서 {0}개 구문 분석 중, 총 크기 약 {1} MB",
+                "captionIfReading": "파일 {0}개 읽는 중, 총 크기 약 {1} MB",
+                "progressLabelIfParsing": "구문 분석됨 {0} MB / {1} MB",
+                "progressLabelIfReading": "읽은 파일 {0} / {1} 개"
             }
         },
         "JsonToCsvForm": {
