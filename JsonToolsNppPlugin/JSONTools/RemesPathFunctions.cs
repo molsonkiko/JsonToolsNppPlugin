@@ -84,6 +84,8 @@ namespace JSON_Tools.JSON_Tools
         //    }
         //}
 
+        // TODO: Consider adding bounds checks for integer addition and subtraction, and coercing any results to doubles if they would cause 64-bit int overflow
+
         public static JNode Add(JNode a, JNode b)
         {
             object aval = a.value; object bval = b.value;

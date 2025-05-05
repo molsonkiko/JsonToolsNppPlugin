@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#831---2024-12-22) to this project will be documented in this file.
+All [notable changes](#840---2025-05-04) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- Consider adding bounds checks for integer addition and subtraction in RemesPath, and coercing any results to doubles if they would cause 64-bit int overflow.
 - Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
@@ -48,7 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [8.4.0] - (UNRELEASED) YYYY-MM-DD
+## [8.4.0] - 2025-05-04
 
 ### Added
 

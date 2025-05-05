@@ -71,7 +71,7 @@ __NOTES__
 5. Beginning in [v4.4.0](/CHANGELOG.md#440---2022-11-23), you can have multiple tree views open.
 6. Beginning in [v8.1](/CHANGELOG.md#810---2024-08-23), JsonTools will refuse to perform plugin commands on files with more than 2147483647 bytes. This is the same size restriction that 32-bit Notepad++ has for opening files.
     - Prior to that release, JsonTools would cause Notepad++ to __crash__ if you attempted to execute plugin commands on files that large.
-7. Beginning in [v8.4](/CHANGELOG.md#840---unreleased-yyyy-mm-dd), you can use the `keyboard_shortcuts` setting to turn on/off all of the default keyboard shortcuts for JsonTools plugin commands.
+7. Beginning in [v8.4](/CHANGELOG.md#840---2025-05-04), you can use the `keyboard_shortcuts` setting to turn on/off all of the default keyboard shortcuts for JsonTools plugin commands.
     - Once `keyboard_shortcuts` is set to `False`, you can use the [Shortcut Mapper](https://npp-user-manual.org/docs/preferences/#shortcut-mapper) (`Macro->Modify Shortcut/Delete Macro...` from the Notepad++ main menu) to reassign keyboard shortcuts for any JsonTools plugin commands.
 
 If a node has a `+` or `-` sign next to it, you can click on that button to expand the children of the node, as shown here.

@@ -115,6 +115,10 @@ Starting in [5.4.0](/CHANGELOG.md#540---2023-07-04), the unary `+` operator has 
 
 The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-07-04) (which replaced [the older function of the same name](#vectorized-functions)) is very similar to the Python operator of the same name, in that `not x` returns `False` if x is ["truthy" (see below)](#truthiness), and `True` if x is "falsy".
 
+### WARNING about arithmetic with integers ###
+
+Since JsonTools stores integers as 64-bit integers, overflow and underflow are possible when doing arithmetic. For example, `int(4e18)*3` incorrectly returns `-6446744073709551616` because the true result would be greater than `2**63 - 1`, the largest 64-bit integer. Use caution when doing arithmetic on very large integers.
+
 ### Truthiness ###
 
 Similar to in JavaScript and Python, RemesPath has the concept of "truthiness" (and its opposite, "falsiness"), where in some cases a non-boolean is treated as a boolean.
