@@ -153,6 +153,8 @@ JsonTools infers your preferred language and attempts to translate in the follow
 
 JsonTools only attempts to find translation files once, when Notepad++ is starting up. If you change the UI language of Notepad++, you will have to close Notepad++ and reopen it before this change will apply to JsonTools.
 
+If you decide that you don't like the translation and prefer the original English, I recommend appending `_disabled` to the name of the translation file. For example, if your translation was based on `german.json5`, renaming that file to `german_disabled.json5` would cause JsonTools to default to English when the Notepad++ UI was in German.
+
 To be clear, *JsonTools may not be in the same language of the Notepad++ UI.* The steps described above represent my best effort to automatically translate JsonTools into a language that the user will find useful, without requiring the user to select their language from a list of available languages in the settings form.
 
 To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
