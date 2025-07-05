@@ -667,7 +667,7 @@ namespace JSON_Tools.Utils
                     {
                         if (ii == endOfHexChars)
                         {
-                            int hex = int.Parse(Rex.Substring(startOfCurrentState, ii + 1 - startOfCurrentState), System.Globalization.NumberStyles.HexNumber);
+                            int hex = int.Parse(Rex.Substring(startOfCurrentState, ii + 1 - startOfCurrentState), System.Globalization.NumberStyles.AllowHexSpecifier);
                             if (hex == 0)
                                 throw new RandomStringFromRegexException(regex, ii, RandomStringFromRegexException.ExceptionType.NulCharacter);
                             if (hex >= 128)

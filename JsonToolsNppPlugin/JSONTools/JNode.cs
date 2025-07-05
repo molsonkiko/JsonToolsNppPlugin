@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic; // for dictionary, list
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -20,7 +21,7 @@ namespace JSON_Tools.JSON_Tools
         TYPELESS = 0,
         /// <summary>represented as booleans</summary>
         BOOL = 1,
-        /// <summary>represented as longs</summary>
+        /// <summary>represented as <see cref="System.Numerics.BigInteger"/></summary>
         INT = 2,
         /// <summary>represented as doubles</summary>
         FLOAT = 4,
@@ -249,7 +250,7 @@ namespace JSON_Tools.JSON_Tools
             //extras = null;
         }
 
-        public JNode(long value, int position = 0)
+        public JNode(BigInteger value, int position = 0)
         {
             this.position = position;
             this.type = Dtype.INT;
@@ -403,6 +404,104 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        public static BigInteger ConvertToBigInteger(object val)
+        {
+            if (val is BigInteger bi)
+                return bi;
+            if (val is double d)
+                return (BigInteger)d;
+            if (val is bool b)
+                return b ? BigInteger.One : BigInteger.Zero;
+            if (val is string s)
+                return BigInteger.Parse(s);
+            // hope that it's convertible to a long
+            return (BigInteger)Convert.ToInt64(val);
+        }
+
+        public static double ConvertJNodeValueToDouble(object val)
+        {
+            if (val is BigInteger bi)
+                return (double)bi;
+            if (val is double d)
+                return d;
+            if (val is bool b)
+                return b ? 1D : 0D;
+            // hope it's convertible to a double
+            return Convert.ToDouble(val);
+        }
+
+        /// <summary>
+        /// return true and set d to (double)this.value if this.value is one of:<br></br>
+        /// - a BigInteger that could be converted to a double.<br></br>
+        /// - a double<br></br>
+        /// - a bool (and set d = 1 if this.value else 0)<br></br>
+        /// return false and set d to 0 otherwise.
+        /// </summary>
+        public bool TryGetValueAsDouble(out double d)
+        {
+            d = 0;
+            if (value is double dval)
+            {
+                d = dval;
+                return true;
+            }
+            if (value is bool b)
+            {
+                d = b ? 1D : 0D;
+                return true;
+            }
+            if (value is BigInteger bi && bi >= DoubleMinValueAsBigInt && bi <= DoubleMaxValueAsBigInt)
+            {
+                d = (double)bi;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// return true if this.value is one of:<br></br>
+        /// - a BigInteger (and set bi to this.value)<br></br>
+        /// - a bool (and set bi = 1 if this.value else 0)<br></br>
+        /// return false and set bi to 0 otherwise.
+        /// </summary>
+        public bool TryGetValueAsBigInteger(out BigInteger bi)
+        {
+            bi = BigInteger.Zero;
+            if (value is BigInteger biv)
+            {
+                bi = biv;
+                return true;
+            }
+            if (value is bool b)
+            {
+                if (b)
+                    bi = BigInteger.One;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// return true and set i to (int)this.value if this.value is a BigInteger that could be converted to an int.<br></br>
+        /// return false and set i to 0 otherwise.
+        /// </summary>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        public bool TryGetValueAsInt32(out int i)
+        {
+            i = 0;
+            if (value is BigInteger bi && bi >= int.MinValue && bi <= int.MaxValue)
+            {
+                i = (int)bi;
+                return true;
+            }
+            return false;
+        }
+
+        public static readonly BigInteger DoubleMaxValueAsBigInt = (BigInteger)double.MaxValue;
+
+        public static readonly BigInteger DoubleMinValueAsBigInt = (BigInteger)double.MinValue;
+
         /// <summary>
         /// Format a valid double as a string.<br></br>
         /// This method should not be used on NaN or number greater than <see cref="double.MaxValue"/> or less than <see cref="double.MinValue"/>,<br></br>
@@ -450,7 +549,7 @@ namespace JSON_Tools.JSON_Tools
                     if (double.IsNaN(v)) { return "NaN"; }
                     return DoubleToString(v);
                 }
-                case Dtype.INT: return Convert.ToInt64(value).ToString();
+                case Dtype.INT: return ((BigInteger)value).ToString();
                 case Dtype.NULL: return "null";
                 case Dtype.BOOL: return (bool)value ? "true" : "false";
                 case Dtype.REGEX: return StrToString(((JRegex)this).regex.ToString(), true);
@@ -699,23 +798,33 @@ namespace JSON_Tools.JSON_Tools
                 // we could simply say value.CompareTo(other) after checking if value is null.
                 // It is more user-friendly to attempt to allow comparison of different numeric types, so we do this instead
                 case Dtype.STR: return ((string)value).CompareTo(other);
-                case Dtype.INT: // Convert.ToInt64 has some weirdness where it rounds half-integers to the nearest even
+                case Dtype.INT: // JNode.ConvertToBigInteger has some weirdness where it rounds half-integers to the nearest even
                                 // so it is generally preferable to have ints and floats compared the same way
                                 // this way e.g. "3.5 < 4" will be treated the same as "4 > 3.5",
                                 // which is the same comparison but with different operand order.
-                                // The only downside of this approach is that integers between
-                                // 4.5036e15 (2 ^ 52) and 9.2234e18 (2 ^ 63)
-                                // can be precisely represented by longs but not by doubles,
-                                // so very large integers will have a loss of precision.
+                                // Obviously if value and other are both too big to be coerced to doubles we will compare them as BigIntegers
+                    BigInteger bi = (BigInteger)value;
+                    if (other is BigInteger obi)
+                        return bi.CompareTo(obi);
+                    if (other is double od)
+                    {
+                        if (bi > DoubleMaxValueAsBigInt)
+                            return 1;
+                        if (bi < DoubleMinValueAsBigInt)
+                            return -1;
+                        return ((double)bi).CompareTo(od);
+                    }
+                    if (other is bool b)
+                        return bi.CompareTo(b ? BigInteger.One : BigInteger.Zero);
+                    throw new ArgumentException("Can't compare numbers to non-numbers");
                 case Dtype.FLOAT:
-                    if (!(other is long || other is double || other is bool))
+                    if (!(other is BigInteger || other is double || other is bool))
                         throw new ArgumentException("Can't compare numbers to non-numbers");
-                    return Convert.ToDouble(value).CompareTo(Convert.ToDouble(other));
+                    return ((double)value).CompareTo(ConvertJNodeValueToDouble(other));
                 case Dtype.BOOL:
-                    if (!(other is long || other is double || other is bool))
+                    if (!(other is BigInteger || other is double || other is bool))
                         throw new ArgumentException("Can't compare numbers to non-numbers");
-                    if ((bool)value) return (1.0).CompareTo(Convert.ToDouble(other));
-                    return (0.0).CompareTo(Convert.ToDouble(other));
+                    return ((bool)value ? 1.0 : 0.0).CompareTo(ConvertJNodeValueToDouble(other));
                 case Dtype.NULL:
                     if (other != null)
                         throw new ArgumentException("Cannot compare null to non-null");

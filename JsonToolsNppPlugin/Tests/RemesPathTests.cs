@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using static JSON_Tools.Tests.RemesParserTester;
@@ -663,7 +664,7 @@ namespace JSON_Tools.Tests
                                         ", `^[\\x20\\t]*(\\d+)\\.\\s*(\\w+)?`,,0)",
                     "[[1, \"foo\"], [2, \"bar\"], [3, \"baz\"], [4, \"7\"], [5, \"\"]]"),
                 // no capture groups, capture and parse hex numbers
-                new Query_DesiredResult("s_fa(`-0x12345  0x000abcdef\\r\\n0x067890 -0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, `(?:INT)`,, 0)", "[-74565,11259375,424080,-11259375, \"0x123456789abcdefABCDEF\"]"),
+                new Query_DesiredResult("s_fa(`-0x12345  0x000abcdef\\r\\n0x067890 -0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, `(?:INT)`,, 0)", "[-74565,11259375,424080,-11259375, 1375488932539311409843695]"),
                 // no capture groups, capture hex numbers but do not parse as numbers
                 new Query_DesiredResult("s_fa(`0x12345  0x000abcdef\\r\\n0x067890 0x0ABCDEF\\r\\n0x123456789abcdefABCDEF`, g`(?:INT)`)", "[\"0x12345\",\"0x000abcdef\",\"0x067890\",\"0x0ABCDEF\",\"0x123456789abcdefABCDEF\"]"),
                 // no capture groups, include full match as first item, capture hex numbers but don't parse as numbers
@@ -792,15 +793,15 @@ namespace JSON_Tools.Tests
             try
             {
                 firstRandints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
-                if (!(firstRandints1arg.children.All(x => x.value is long l && l >= 0 && l < 1000) && firstRandints1arg.children.Any(x => x.value is long l && l != (long)firstRandints1arg[0].value)))
+                if (!(firstRandints1arg.children.All(x => x.value is BigInteger l && l >= 0 && l < 1000) && firstRandints1arg.children.Any(x => x.value is BigInteger l && l != (BigInteger)firstRandints1arg[0].value)))
                 {
                     Npp.AddLine($"Expected all values in result of \"{randints1argQuery}\" to be in [0, 1000), and some of them to not be equal to the first value in that array, got {firstRandints1arg.ToString()}");
                     testsFailed += 1;
                 }
                 firstRandints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
-                if (!(firstRandints2args.children.All(x => x.value is long l && l >= -700 && l < 800)
-                    && firstRandints2args.children.Any(x => x.value is long l && l > 0)
-                    && firstRandints2args.children.Any(x => x.value is long l && l < 0)))
+                if (!(firstRandints2args.children.All(x => x.value is BigInteger l && l >= -700 && l < 800)
+                    && firstRandints2args.children.Any(x => x.value is BigInteger l && l > 0)
+                    && firstRandints2args.children.Any(x => x.value is BigInteger l && l < 0)))
                 {
                     Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args.ToString()}");
                     testsFailed += 1;
@@ -926,11 +927,11 @@ namespace JSON_Tools.Tests
             string onetofiveStr = "[1,2,3,4,5]";
             JNode onetofive = jsonParser.Parse(onetofiveStr);
             (string query, JArray desiredResult)[] sliceTestcases = SliceTester.strTestcases
-                .Select(testcase => ( // convert int[] into JArray of JNode with long value and Dtype.INT
+                .Select(testcase => ( // convert int[] into JArray of JNode with BigInteger value and Dtype.INT
                     $"@[{testcase.slicer}]",
                     new JArray(0,
                         testcase.desired
-                        .Select(i => new JNode((long)i))
+                        .Select(i => new JNode((BigInteger)i))
                         .ToList())
                 ))
                 .ToArray();
@@ -1600,7 +1601,7 @@ namespace JSON_Tools.Tests
                 {
                     foreach (JNode child in arr.children)
                     {
-                        if (!(child.value is bool || child.value is long || child.value is double))
+                        if (!(child.value is bool || child.value is BigInteger || child.value is double))
                         {
                             failures++;
                             Npp.AddLine($"If result is an array, expected all members of result to be integers, floats, or bools, instead got {child}");
@@ -1610,7 +1611,7 @@ namespace JSON_Tools.Tests
                 }
                 else
                 {
-                    if (result is null || !(result.value is bool || result.value is long || result.value is double))
+                    if (result is null || !(result.value is bool || result.value is BigInteger || result.value is double))
                     {
                         failures++;
                         string resultStr = result is null ? "null" : result.ToString();

@@ -286,7 +286,6 @@
         "FATAL_INVALID_STARTSWITH_I": "期望以 'I' 開頭的文字是 Infinity",
         "FATAL_INVALID_STARTSWITH_N": "期望以 'N' 開頭的文字是 NaN 或 None",
         "FATAL_INVALID_STARTSWITH_i": "期望以 'i' 開頭的文字是 inf",
-        "FATAL_HEX_INT_OVERFLOW": "十六進位數對於 64 位元有符號整數類型來說太大了",
         "FATAL_SECOND_DECIMAL_POINT": "數字在錯誤的位置出現小數點",
         "FATAL_NUM_TRAILING_e_OR_E": "科學記號 'e' 後沒有數字",
         "FATAL_MAX_RECURSION_DEPTH": "達到最大遞迴深度 (512)",

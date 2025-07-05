@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Numerics;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -26,15 +28,32 @@ namespace JSON_Tools.JSON_Tools
 
         public static readonly string[] ArrayPairDelims = new string[] { "and", "also" };
 
-        private static string FormatInteger(long val)
+        private static string FormatInteger(BigInteger val)
         {
-            if (val == long.MinValue)
-                // converting to octal turns signed numbers into unsigned numbers
-                // this can be reversed for every negative number except long.MinValue
-                return "1000000000000000000000";
-            if (val < 0)
-                return "-" + Convert.ToString(-val, 8);
-            return Convert.ToString(val, 8);
+            if (val == 0)
+                return "0";
+            bool negative = val < 0;
+            if (negative)
+                val = -val;
+            // build the string representation backwards and then reverse it
+            var sb = new StringBuilder();
+            while (val > 0)
+            {
+                val = BigInteger.DivRem(val, 8, out BigInteger rem);
+                sb.Append((int)rem);
+            }
+            int sblenM1 = sb.Length - 1;
+            string s;
+            if (sblenM1 > 0)
+            {
+                var chars = new char[sblenM1 + 1];
+                for (int ii = 0; ii <= sblenM1; ii--)
+                    chars[ii] = sb[sblenM1 - ii];
+                s = new string(chars);
+            }
+            else
+                s = sb.ToString();
+            return negative ? "-" + s : s;
         }
 
         /// <summary>
@@ -88,7 +107,7 @@ namespace JSON_Tools.JSON_Tools
                 case Dtype.NULL:
                     return "empty";
                 case Dtype.INT:
-                    return FormatInteger((long)json.value);
+                    return FormatInteger((BigInteger)json.value);
                 case Dtype.FLOAT:
                     // floating point numbers are formatted
                     // such that fractional part, exponent, and integer part are all octal
@@ -99,7 +118,7 @@ namespace JSON_Tools.JSON_Tools
                         throw new DsonDumpException($"{valstr} is fake number, can't understand. So silly, wow");
                     StringBuilder partSb = new StringBuilder();
                     sb = new StringBuilder();
-                    long part;
+                    BigInteger part;
                     foreach (char c in valstr)
                     {
                         if ('0' <= c && c <= '9' || c == '+' || c == '-')
@@ -108,7 +127,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         else
                         {
-                            part = Convert.ToInt64(partSb.ToString());
+                            part = BigInteger.Parse(partSb.ToString());
                             partSb = new StringBuilder();
                             sb.Append(FormatInteger(part));
                             if (c == '.')
@@ -119,7 +138,7 @@ namespace JSON_Tools.JSON_Tools
                                 sb.Append("VERY");
                         }
                     }
-                    part = Convert.ToInt64(partSb.ToString());
+                    part = BigInteger.Parse(partSb.ToString());
                     sb.Append(FormatInteger(part));
                     return sb.ToString();
                 case Dtype.STR:

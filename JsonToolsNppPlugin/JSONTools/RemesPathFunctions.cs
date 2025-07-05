@@ -4,9 +4,11 @@ A library of built-in functions for the RemesPath query language.
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -84,25 +86,21 @@ namespace JSON_Tools.JSON_Tools
         //    }
         //}
 
-        // TODO: Consider adding bounds checks for integer addition and subtraction, and coercing any results to doubles if they would cause 64-bit int overflow
-
         public static JNode Add(JNode a, JNode b)
         {
-            object aval = a.value; object bval = b.value;
-            Dtype atype = a.type; Dtype btype = b.type;
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
+            if (a.TryGetValueAsBigInteger(out BigInteger aint) && b.TryGetValueAsBigInteger(out BigInteger bint))
             {
-                return new JNode(Convert.ToInt64(aval) + Convert.ToInt64(bval), Dtype.INT, 0);
+                return new JNode(aint + bint);
             }
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
             {
-                return new JNode(Convert.ToDouble(aval) + Convert.ToDouble(bval), Dtype.FLOAT, 0);
+                return new JNode(adub + bdub);
             }
-            if (atype == Dtype.STR && btype == Dtype.STR)
+            if (a.value is string astr && b.value is string bstr)
             {
-                return new JNode(Convert.ToString(aval) + Convert.ToString(bval), Dtype.STR, 0);
+                return new JNode(astr + bstr);
             }
-            throw new RemesPathException($"Can't add objects of types {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
+            throw new RemesPathException($"Can't add objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
 
         //// ADD VARIANTS WITH ONE SIDE CONSTANT
@@ -119,48 +117,48 @@ namespace JSON_Tools.JSON_Tools
         //    return new JNode(a + Convert.ToString(b.value));
         //}
 
-        //public static JNode AddRhsConstInt(JNode a, long b)
+        //public static JNode AddRhsConstInt(JNode a, BigInteger b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) + Convert.ToDouble(b));
-        //    return new JNode(Convert.ToInt64(a.value) + b);
+        //        return new JNode(ConvertToDouble(a.value) + ConvertToDouble(b));
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) + b);
         //}
 
-        //public static JNode AddLhsConstInt(long a, JNode b)
+        //public static JNode AddLhsConstInt(BigInteger a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(b.value) + Convert.ToDouble(a));
-        //    return new JNode(Convert.ToInt64(b.value) + a);
+        //        return new JNode(ConvertToDouble(b.value) + ConvertToDouble(a));
+        //    return new JNode(JNode.ConvertToBigInteger(b.value) + a);
         //}
 
         //public static JNode AddRhsConstBool(JNode a, bool b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) + (b ? 1d : 0d));
-        //    return new JNode(Convert.ToInt64(a.value) + (b ? 1L : 0L));
+        //        return new JNode(ConvertToDouble(a.value) + (b ? 1d : 0d));
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) + (b ? 1L : 0L));
         //}
 
         //public static JNode AddLhsConstBool(bool a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(b.value) + (a ? 1d : 0d));
-        //    return new JNode(Convert.ToInt64(b.value) + (a ? 1L : 0L));
+        //        return new JNode(ConvertToDouble(b.value) + (a ? 1d : 0d));
+        //    return new JNode(JNode.ConvertToBigInteger(b.value) + (a ? 1L : 0L));
         //}
 
         //public static JNode AddRhsConstFloat(JNode a, double b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "+");
-        //    return new JNode(Convert.ToDouble(a.value) + b);
+        //    return new JNode(ConvertToDouble(a.value) + b);
         //}
 
         //public static JNode AddLhsConstFloat(double a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "+");
-        //    return new JNode(Convert.ToDouble(b.value) + a);
+        //    return new JNode(ConvertToDouble(b.value) + a);
         //}
 
         public static JNode Sub(JNode a, JNode b)
@@ -169,73 +167,73 @@ namespace JSON_Tools.JSON_Tools
             Dtype atype = a.type, btype = b.type;
             if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
             {
-                return new JNode(Convert.ToInt64(aval) - Convert.ToInt64(bval), Dtype.INT, 0);
+                return new JNode(JNode.ConvertToBigInteger(aval) - JNode.ConvertToBigInteger(bval), Dtype.INT, 0);
             }
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
-                return new JNode(Convert.ToDouble(aval) - Convert.ToDouble(bval), Dtype.FLOAT, 0);
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
+                return new JNode(adub - bdub, Dtype.FLOAT, 0);
             throw new RemesPathException($"Can't subtract objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
 
         //// SUB VARIANTS WITH ONE SIDE CONSTANT
 
-        //public static JNode SubRhsConstInt(JNode a, long b)
+        //public static JNode SubRhsConstInt(JNode a, BigInteger b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) - Convert.ToDouble(b));
-        //    return new JNode(Convert.ToInt64(a.value) - b);
+        //        return new JNode(ConvertToDouble(a.value) - ConvertToDouble(b));
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) - b);
         //}
 
-        //public static JNode SubLhsConstInt(long a, JNode b)
+        //public static JNode SubLhsConstInt(BigInteger a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a) - Convert.ToDouble(b.value));
-        //    return new JNode(a - Convert.ToInt64(b.value));
+        //        return new JNode(ConvertToDouble(a) - ConvertToDouble(b.value));
+        //    return new JNode(a - JNode.ConvertToBigInteger(b.value));
         //}
 
         //public static JNode SubRhsConstBool(JNode a, bool b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) - (b ? 1d : 0d));
-        //    return new JNode(Convert.ToInt64(a.value) - (b ? 1L : 0L));
+        //        return new JNode(ConvertToDouble(a.value) - (b ? 1d : 0d));
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) - (b ? 1L : 0L));
         //}
 
         //public static JNode SubLhsConstBool(bool a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode((a ? 1d : 0d) - Convert.ToDouble(b.value));
-        //    return new JNode((a ? 1L : 0L) - Convert.ToInt64(b.value));
+        //        return new JNode((a ? 1d : 0d) - ConvertToDouble(b.value));
+        //    return new JNode((a ? 1L : 0L) - JNode.ConvertToBigInteger(b.value));
         //}
 
         //public static JNode SubRhsConstFloat(JNode a, double b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "-");
-        //    return new JNode(Convert.ToDouble(a.value) - b);
+        //    return new JNode(ConvertToDouble(a.value) - b);
         //}
 
         //public static JNode SubLhsConstFloat(double a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "-");
-        //    return new JNode(a - Convert.ToDouble(b.value));
+        //    return new JNode(a - ConvertToDouble(b.value));
         //}
 
         public static JNode Mul(JNode a, JNode b)
         {
-            object aval = a.value, bval = b.value;
             Dtype atype = a.type, btype = b.type;
-            if ((btype & Dtype.INT_OR_BOOL) != 0)
+            IComparable aval = a.value, bval = b.value;
+            if (aval is string s)
             {
-                if ((atype & Dtype.INT_OR_BOOL) != 0)
-                    return new JNode(Convert.ToInt64(aval) * Convert.ToInt64(bval), Dtype.INT, 0);
-                else if (atype == Dtype.STR) // can multiply string by int, but not int by string
-                    return new JNode(ArgFunction.StrMulHelper((string)a.value, Convert.ToInt32(b.value)));
+                if (bval is bool bb)
+                    return new JNode(bb ? s : "");
+                else if (bval is BigInteger bbi)
+                    return new JNode(ArgFunction.StrMulHelper(s, (int)bbi));
             }
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
-                return new JNode(Convert.ToDouble(aval) * Convert.ToDouble(bval), Dtype.FLOAT, 0);
-            throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
+            if (!JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
+                throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
+            return new JNode(JNode.ConvertJNodeValueToDouble(aval) * JNode.ConvertJNodeValueToDouble(bval));
         }
 
         //// MUL VARIANTS WITH ONE SIDE CONSTANT
@@ -245,113 +243,113 @@ namespace JSON_Tools.JSON_Tools
         //    ThrowIfTypeNotIntersects(b, Dtype.INT_OR_BOOL, false, "*");
         //    if (b.type == Dtype.BOOL)
         //        return new JNode(((bool)b.value) ? a : "");
-        //    return new JNode(ArgFunction.StrMulHelper(a, (long)b.value));
+        //    return new JNode(ArgFunction.StrMulHelper(a, (BigInteger)b.value));
         //}
 
-        //public static JNode MulRhsConstInt(JNode a, long b)
+        //public static JNode MulRhsConstInt(JNode a, BigInteger b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM |  Dtype.STR, true, "*");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) * Convert.ToDouble(b));
+        //        return new JNode(ConvertToDouble(a.value) * ConvertToDouble(b));
         //    if (a.type == Dtype.STR)
         //        return new JNode(ArgFunction.StrMulHelper((string)a.value, b));
-        //    return new JNode(Convert.ToInt64(a.value) * b);
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) * b);
         //}
 
-        //public static JNode MulLhsConstInt(long a, JNode b)
+        //public static JNode MulLhsConstInt(BigInteger a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a) * Convert.ToDouble(b.value));
-        //    return new JNode(a * Convert.ToInt64(b.value));
+        //        return new JNode(ConvertToDouble(a) * ConvertToDouble(b.value));
+        //    return new JNode(a * JNode.ConvertToBigInteger(b.value));
         //}
 
         //public static JNode MulRhsConstBool(JNode a, bool b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM | Dtype.STR, true, "*");
         //    if (a.type == Dtype.FLOAT)
-        //        return new JNode(Convert.ToDouble(a.value) * (b ? 1d : 0d));
+        //        return new JNode(ConvertToDouble(a.value) * (b ? 1d : 0d));
         //    if (a.type == Dtype.STR)
         //        return new JNode(b ? (string)a.value : "");
-        //    return new JNode(Convert.ToInt64(a.value) * (b ? 1L : 0L));
+        //    return new JNode(JNode.ConvertToBigInteger(a.value) * (b ? 1L : 0L));
         //}
 
         //public static JNode MulLhsConstBool(bool a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
         //    if (b.type == Dtype.FLOAT)
-        //        return new JNode((a ? 1d : 0d) * Convert.ToDouble(b.value));
-        //    return new JNode((a ? 1L : 0L) * Convert.ToInt64(b.value));
+        //        return new JNode((a ? 1d : 0d) * ConvertToDouble(b.value));
+        //    return new JNode((a ? 1L : 0L) * JNode.ConvertToBigInteger(b.value));
         //}
 
         //public static JNode MulRhsConstFloat(JNode a, double b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "*");
-        //    return new JNode(Convert.ToDouble(a.value) * b);
+        //    return new JNode(ConvertToDouble(a.value) * b);
         //}
 
         //public static JNode MulLhsConstFloat(double a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "*");
-        //    return new JNode(a * Convert.ToDouble(b.value));
+        //    return new JNode(a * ConvertToDouble(b.value));
         //}
 
         public static JNode Divide(JNode a, JNode b)
         {
-            if (JNode.BothTypesIntersect(a.type, b.type, Dtype.NUM))
-                return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b.value), Dtype.FLOAT, 0);
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
+                return new JNode(adub / bdub);
             throw new RemesPathException($"Can't divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
 
         //// DIVIDE VARIANTS WITH ONE SIDE CONSTANT
 
-        //public static JNode DivideRhsConstInt(JNode a, long b)
+        //public static JNode DivideRhsConstInt(JNode a, BigInteger b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
-        //    return new JNode(Convert.ToDouble(a.value) / Convert.ToDouble(b));
+        //    return new JNode(ConvertToDouble(a.value) / ConvertToDouble(b));
         //}
 
-        //public static JNode DivideLhsConstInt(long a, JNode b)
+        //public static JNode DivideLhsConstInt(BigInteger a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
-        //    return new JNode(Convert.ToDouble(a) / Convert.ToDouble(b.value));
+        //    return new JNode(ConvertToDouble(a) / ConvertToDouble(b.value));
         //}
 
         //public static JNode DivideRhsConstBool(JNode a, bool b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
-        //    return new JNode(Convert.ToDouble(a.value) / (b ? 1d : 0d));
+        //    return new JNode(ConvertToDouble(a.value) / (b ? 1d : 0d));
         //}
 
         //public static JNode DivideLhsConstBool(bool a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
-        //    return new JNode(a ? 1d/Convert.ToDouble(b.value) : 0d);
+        //    return new JNode(a ? 1d/ConvertToDouble(b.value) : 0d);
         //}
 
         //public static JNode DivideRhsConstFloat(JNode a, double b)
         //{
         //    ThrowIfTypeNotIntersects(a, Dtype.NUM, true, "/");
-        //    return new JNode(Convert.ToDouble(a.value) / b);
+        //    return new JNode(ConvertToDouble(a.value) / b);
         //}
 
         //public static JNode DivideLhsConstFloat(double a, JNode b)
         //{
         //    ThrowIfTypeNotIntersects(b, Dtype.NUM, true, "/");
-        //    return new JNode(a / Convert.ToDouble(b.value));
+        //    return new JNode(a / ConvertToDouble(b.value));
         //}
 
         public static JNode FloorDivide(JNode a, JNode b)
         {
-            if (JNode.BothTypesIntersect(a.type, b.type, Dtype.NUM))
-                return new JNode(Convert.ToInt64(Math.Floor(Convert.ToDouble(a.value) / Convert.ToDouble(b.value))), Dtype.INT, 0);
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
+                return new JNode(JNode.ConvertToBigInteger(Math.Floor(adub / bdub)));
             throw new RemesPathException($"Can't floor divide objects of types {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
 
         public static JNode Pow(JNode a, JNode b)
         {
-            if (JNode.BothTypesIntersect(a.type, b.type, Dtype.NUM))
-                return new JNode(Math.Pow(Convert.ToDouble(a.value), Convert.ToDouble(b.value)), Dtype.FLOAT, 0);
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
+                return new JNode(Math.Pow(adub, bdub));
             throw new RemesPathException($"Can't exponentiate objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
 
@@ -361,10 +359,10 @@ namespace JSON_Tools.JSON_Tools
             Dtype atype = a.type, btype = b.type;
             if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
             {
-                return new JNode(Convert.ToInt64(aval) % Convert.ToInt64(bval), Dtype.INT, 0);
+                return new JNode(JNode.ConvertToBigInteger(aval) % JNode.ConvertToBigInteger(bval));
             }
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
-                return new JNode(Convert.ToDouble(aval) % Convert.ToDouble(bval), Dtype.FLOAT, 0);
+            if (a.TryGetValueAsDouble(out double adub) && b.TryGetValueAsDouble(out double bdub))
+                return new JNode(adub % bdub);
             throw new RemesPathException($"Can't use modulo operator on objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
         }
 
@@ -373,9 +371,9 @@ namespace JSON_Tools.JSON_Tools
             Dtype atype = a.type, btype = b.type;
             if (a.value is bool abool && b.value is bool bbool)
                 return new JNode(abool || bbool, Dtype.BOOL, 0);
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
+            if (a.TryGetValueAsBigInteger(out BigInteger aval) && b.TryGetValueAsBigInteger(out BigInteger bval))
             {
-                return new JNode(Convert.ToInt64(a.value) | Convert.ToInt64(b.value), Dtype.INT, 0);
+                return new JNode(aval | bval);
             }
             throw new RemesPathException($"Can't bitwise OR objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
@@ -385,9 +383,9 @@ namespace JSON_Tools.JSON_Tools
             Dtype atype = a.type, btype = b.type;
             if (a.value is bool abool && b.value is bool bbool)
                 return new JNode(abool ^ bbool, Dtype.BOOL, 0);
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
+            if (a.TryGetValueAsBigInteger(out BigInteger aval) && b.TryGetValueAsBigInteger(out BigInteger bval))
             {
-                return new JNode(Convert.ToInt64(a.value) ^ Convert.ToInt64(b.value), Dtype.INT, 0);
+                return new JNode(aval ^ bval);
             }
             throw new RemesPathException($"Can't bitwise XOR objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
@@ -397,9 +395,9 @@ namespace JSON_Tools.JSON_Tools
             Dtype atype = a.type, btype = b.type;
             if (a.value is bool abool && b.value is bool bbool)
                 return new JNode(abool && bbool, Dtype.BOOL, 0);
-            if (JNode.BothTypesIntersect(atype, btype, Dtype.INT_OR_BOOL))
+            if (a.TryGetValueAsBigInteger(out BigInteger aval) && b.TryGetValueAsBigInteger(out BigInteger bval))
             {
-                return new JNode(Convert.ToInt64(a.value) & Convert.ToInt64(b.value), Dtype.INT, 0);
+                return new JNode(aval & bval);
             }
             throw new RemesPathException($"Can't bitwise AND objects of type {JNode.FormatDtype(a.type)} and {JNode.FormatDtype(b.type)}");
         }
@@ -922,12 +920,12 @@ namespace JSON_Tools.JSON_Tools
 
         public static JNode Uminus(JNode x)
         {
-            if (x.value is long l)
+            if (x.value is BigInteger l)
                 return new JNode(-l);
             if (x.value is double d)
                 return new JNode(-d);
             if (x.value is bool b)
-                return new JNode(b ? -1L : 0L);
+                return new JNode((BigInteger)(b ? -1 : 0));
             throw new RemesPathException("Unary '-' can only be applied to ints, bools and floats");
         }
 
@@ -942,8 +940,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Uplus(JNode x)
         {
             if (x.value is bool b)
-                return new JNode(b ? 1L : 0L);
-            if (x.value is long l)
+                return new JNode((BigInteger)(b ? 1 : 0));
+            if (x.value is BigInteger l)
                 return new JNode(l);
             if (x.value is double d)
                 return new JNode(d);
@@ -1203,12 +1201,10 @@ namespace JSON_Tools.JSON_Tools
             JNode elt = args[0];
             char printStyle = args[1].type == Dtype.NULL ? 'm' : ((string)args[1].value)[0];
             bool sortKeys = args[2].type == Dtype.NULL || (bool)args[2].value;
+            JNode arg3 = args[3];
             int indent = 4;
             char indentChar = ' ';
-            IComparable arg3val = args[3].value;
-            if (arg3val is long l)
-                indent = Convert.ToInt32(l);
-            else if (arg3val is string s && s[0] is char c && c == '\t')
+            if (!arg3.TryGetValueAsInt32(out indent) && arg3.value is string s && s[0] is char c && c == '\t')
             {
                 indent = 1;
                 indentChar = c;
@@ -1257,9 +1253,9 @@ namespace JSON_Tools.JSON_Tools
             var itbl = args[0];
             if (itbl is JArray arr)
             {
-                return new JNode(Convert.ToInt64(arr.Length));
+                return new JNode(JNode.ConvertToBigInteger(arr.Length));
             }
-            return new JNode(Convert.ToInt64(((JObject)itbl).Length));
+            return new JNode(JNode.ConvertToBigInteger(((JObject)itbl).Length));
         }
 
         /// <summary>
@@ -1271,11 +1267,11 @@ namespace JSON_Tools.JSON_Tools
             double tot = 0;
             foreach (JNode child in itbl.children)
             {
-                if ((child.type & Dtype.NUM) == 0)
+                if (!child.TryGetValueAsDouble(out double d))
                 {
-                    throw new RemesPathException("Function Sum requires an array of all numbers");
+                    throw new RemesPathException("Function 'sum' requires an array of all numbers");
                 }
-                tot += Convert.ToDouble(child.value);
+                tot += d;
             }
             return new JNode(tot);
         }
@@ -1289,11 +1285,11 @@ namespace JSON_Tools.JSON_Tools
             double tot = 0;
             foreach (JNode child in itbl.children)
             {
-                if ((child.type & Dtype.NUM) == 0)
+                if (!child.TryGetValueAsDouble(out double d))
                 {
-                    throw new RemesPathException("Function Mean requires an array of all numbers");
+                    throw new RemesPathException("Function 'mean' requires an array of all numbers");
                 }
-                tot += Convert.ToDouble(child.value);
+                tot += d;
             }
             return new JNode(tot / itbl.Length);
         }
@@ -1315,7 +1311,7 @@ namespace JSON_Tools.JSON_Tools
                 var subarr = new JArray(0,
                     new List<JNode>
                     {
-                        new JNode((long)ii),
+                        new JNode((BigInteger)ii),
                         arr[ii]
                     }
                 );
@@ -1337,7 +1333,7 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Flatten(List<JNode> args)
         {
             var itbl = (JArray)args[0];
-            var iterations = (long?)args[1].value;
+            var iterations = (BigInteger?)args[1].value;
             JArray flat;
             if (iterations is null || iterations == 1)
             {
@@ -1388,7 +1384,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (itbl[ii].CompareTo(elt) == 0)
                 { 
-                    return new JNode(Convert.ToInt64(ii));
+                    return new JNode(JNode.ConvertToBigInteger(ii));
                 }
             }
             throw new KeyNotFoundException($"Element {elt} not found in the array {itbl}");
@@ -1404,11 +1400,10 @@ namespace JSON_Tools.JSON_Tools
             double biggest = NanInf.neginf;
             foreach (JNode child in itbl.children)
             {
-                if ((child.type & Dtype.NUM) == 0)
+                if (!child.TryGetValueAsDouble(out double val))
                 {
-                    throw new RemesPathException("Function Max requires an array of all numbers");
+                    throw new RemesPathException("Function 'max' requires an array of all numbers");
                 }
-                double val = Convert.ToDouble(child.value);
                 if (val > biggest)
                     biggest = val;
             }
@@ -1425,11 +1420,10 @@ namespace JSON_Tools.JSON_Tools
             double smallest = NanInf.inf;
             foreach (JNode child in itbl.children)
             {
-                if ((child.type & Dtype.NUM) == 0)
+                if (!child.TryGetValueAsDouble(out double val))
                 {
-                    throw new RemesPathException("Function Min requires an array of all numbers");
+                    throw new RemesPathException("Function 'min' requires an array of all numbers");
                 }
-                double val = Convert.ToDouble(child.value);
                 if (val < smallest)
                     smallest = val;
             }
@@ -1493,11 +1487,13 @@ namespace JSON_Tools.JSON_Tools
                 {
                     sorted = arr.OrderBy(x => ((JObject)x).children[kstr]).ToList();
                 }
-                else
+                else if (key is BigInteger kbi)
                 {
-                    int kint = Convert.ToInt32(key);
+                    int kint = (int)kbi;
                     sorted = arr.OrderBy(x => AtIndex(x, kint)).ToList();
                 }
+                else
+                    throw new RemesPathArgumentException(null, 1, FUNCTIONS["sort_by"], keyNode.type);
             }
             if (reverse != null && (bool)reverse)
             {
@@ -1526,8 +1522,7 @@ namespace JSON_Tools.JSON_Tools
                 Func<JNode, JNode> fun = cj.function;
                 foreach (JNode x in itbl)
                 {
-                    var xval = Convert.ToDouble(fun(x).value);
-                    if (xval > maxval)
+                    if (fun(x).TryGetValueAsDouble(out double xval) && xval > maxval)
                     {
                         max = x;
                         maxval = xval;
@@ -1541,8 +1536,20 @@ namespace JSON_Tools.JSON_Tools
                 for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JObject)itbl[ii];
-                    var xval = Convert.ToDouble(x[keystr].value);
-                    if (xval > maxval)
+                    if (x[keystr].TryGetValueAsDouble(out double xval) && xval > maxval)
+                    {
+                        max = x;
+                        maxval = xval;
+                    }
+                }
+            }
+            else if (key is BigInteger kbi)
+            {
+                int kint = (int)kbi;
+                for (int ii = 0; ii < itbl.Count; ii++)
+                {
+                    var x = (JArray)itbl[ii];
+                    if (AtIndex(x, kint).TryGetValueAsDouble(out double xval) && xval > maxval)
                     {
                         max = x;
                         maxval = xval;
@@ -1550,19 +1557,7 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             else
-            {
-                int kint = Convert.ToInt32(key);
-                for (int ii = 0; ii < itbl.Count; ii++)
-                {
-                    var x = (JArray)itbl[ii];
-                    var xval = Convert.ToDouble(AtIndex(x, kint).value);
-                    if (xval > maxval)
-                    {
-                        max = x;
-                        maxval = xval;
-                    }
-                }
-            }
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["max_by"], keyNode.type);
             return max;
         }
 
@@ -1583,8 +1578,7 @@ namespace JSON_Tools.JSON_Tools
                 Func<JNode, JNode> fun = cj.function;
                 foreach (JNode x in itbl)
                 {
-                    var xval = Convert.ToDouble(fun(x).value);
-                    if (xval < minval)
+                    if (fun(x).TryGetValueAsDouble(out double xval) && xval < minval)
                     {
                         min = x;
                         minval = xval;
@@ -1598,8 +1592,20 @@ namespace JSON_Tools.JSON_Tools
                 for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JObject)itbl[ii];
-                    var xval = Convert.ToDouble(x[keystr].value);
-                    if (xval < minval)
+                    if (x[keystr].TryGetValueAsDouble(out double xval) && xval < minval)
+                    {
+                        min = x;
+                        minval = xval;
+                    }
+                }
+            }
+            else if (key is BigInteger kbi)
+            {
+                int kint = (int)key;
+                for (int ii = 0; ii < itbl.Count; ii++)
+                {
+                    var x = (JArray)itbl[ii];
+                    if (AtIndex(x, kint).TryGetValueAsDouble(out double xval) && xval < minval)
                     {
                         min = x;
                         minval = xval;
@@ -1607,19 +1613,7 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             else
-            {
-                int kint = Convert.ToInt32(key);
-                for (int ii = 0; ii < itbl.Count; ii++)
-                {
-                    var x = (JArray)itbl[ii];
-                    var xval = Convert.ToDouble(AtIndex(x, kint).value);
-                    if (xval < minval)
-                    {
-                        min = x;
-                        minval = xval;
-                    }
-                }
-            }
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["min_by"], keyNode.type);
             return min;
         }
 
@@ -1635,8 +1629,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode RandomFromSchema(List<JNode> args)
         {
             JNode node = args[0];
-            int minArrayLength = args.Count >= 2 && args[1].value is long l && l < int.MaxValue && l >= 0 ? (int)l : 0;
-            int maxArrayLength = args.Count >= 3 && args[2].value is long l2 && l2 < int.MaxValue && l2 >= 0 ? (int)l2 : 10;
+            int minArrayLength = args.Count >= 2 && args[1].value is BigInteger l && l < int.MaxValue && l >= 0 ? (int)l : 0;
+            int maxArrayLength = args.Count >= 3 && args[2].value is BigInteger l2 && l2 < int.MaxValue && l2 >= 0 ? (int)l2 : 10;
             bool extendedAsciiStrings = args.Count >= 4 && args[3].value is bool b && b;
             bool usePatterns = args.Count >= 5 && args[4].value is bool b2 && b2;
             return RandomJsonFromSchema.RandomJson(node, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
@@ -1650,16 +1644,14 @@ namespace JSON_Tools.JSON_Tools
         public static JNode RandomInteger(List<JNode> args)
         {
             JNode startNode = args[0];
-            if (startNode.type != Dtype.INT)
-                throw new RemesPathArgumentException("both args to randint must be integers", 0, FUNCTIONS["randint"]);
-            int start = Convert.ToInt32(startNode.value);
+            if (!startNode.TryGetValueAsInt32(out int start))
+                throw new RemesPathArgumentException("both args to 'randint' must be integers (if second arg is provided)", 0, FUNCTIONS["randint"]);
             JNode endNode = args[1];
             if (endNode.type == Dtype.NULL)
-                return new JNode((long)RandomJsonFromSchema.random.Next(start));
-            if (endNode.type != Dtype.INT)
-                throw new RemesPathArgumentException("both args to randint must be integers", 1, FUNCTIONS["randint"]);
-            int end = Convert.ToInt32(endNode.value);
-            return new JNode((long)RandomJsonFromSchema.random.Next(start, end));
+                return new JNode((BigInteger)RandomJsonFromSchema.random.Next(start));
+            if (!endNode.TryGetValueAsInt32(out int end))
+                throw new RemesPathArgumentException("both args to 'randint' must be integers (if second arg is provided)", 1, FUNCTIONS["randint"]);
+            return new JNode((BigInteger)RandomJsonFromSchema.random.Next(start, end));
         }
 
         /// <summary>
@@ -1672,7 +1664,7 @@ namespace JSON_Tools.JSON_Tools
         /// loopCountValue = loopCountBeforeCall + 1; // this ensures that the next time curjson.function(inp) is called,
         /// it sees loopCountValue = 1 + the last value it saw</b>
         /// </summary>
-        private static long loopCountValue = -1;
+        private static BigInteger loopCountValue = -1;
 
         /// <summary>
         /// loop() -> int<br></br>
@@ -1696,34 +1688,34 @@ namespace JSON_Tools.JSON_Tools
         /// If all three args provided: return all integers from args[0] to args[1],
         ///     incrementing by args[2] each time.<br></br>
         /// EXAMPLES:<br></br>
-        /// Range(3) -> List&lt;long&gt;({0, 1, 2})<br></br>
-        /// Range(3, 7) -> List&lt;long&gt;({3, 4, 5, 6})<br></br>
-        /// Range(10, 4, -2) -> List&lt;long&gt;({10, 8, 6})
+        /// Range(3) -> List&lt;BigInteger&gt;({0, 1, 2})<br></br>
+        /// Range(3, 7) -> List&lt;BigInteger&gt;({3, 4, 5, 6})<br></br>
+        /// Range(10, 4, -2) -> List&lt;BigInteger&gt;({10, 8, 6})
         /// </summary>
         public static JNode Range(List<JNode> args)
         {
-            var start = (long?)args[0].value;
-            var end = (long?)args[1].value;
-            var step = (long?)args[2].value;
+            var start = (BigInteger?)args[0].value;
+            var end = (BigInteger?)args[1].value;
+            var step = (BigInteger?)args[2].value;
             var nums = new JArray();
             if (start == null)
             {
-                throw new RemesPathException("First argument for range function cannot be null.");
+                throw new RemesPathException("First argument for 'range' function cannot be null.");
             }
             if (step == 0)
             {
-                throw new RemesPathException("Can't have a step size of 0 for the range function");
+                throw new RemesPathException("Can't have a step size of 0 for the 'range' function");
             }
             if (end == null && start > 0)
             {
-                for (long ii = 0; ii < start; ii++)
+                for (BigInteger ii = 0; ii < start; ii++)
                 {
                     nums.children.Add(new JNode(ii, Dtype.INT, 0));
                 }
             }
             else if (step == null && start < end)
             {
-                for (long ii = start.Value; ii < end; ii++)
+                for (BigInteger ii = start.Value; ii < end; ii++)
                 {
                     nums.children.Add(new JNode(ii, Dtype.INT, 0));
                 }
@@ -1732,14 +1724,14 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (start > end && step < 0)
                 {
-                    for (long ii = start.Value; ii > end; ii += step.Value)
+                    for (BigInteger ii = start.Value; ii > end; ii += step.Value)
                     {
                         nums.children.Add(new JNode(ii, Dtype.INT, 0));
                     }
                 }
                 else if (start < end && step > 0)
                 {
-                    for (long ii = start.Value; ii < end; ii += step.Value)
+                    for (BigInteger ii = start.Value; ii < end; ii += step.Value)
                     {
                         nums.children.Add(new JNode(ii, Dtype.INT, 0));
                     }
@@ -1752,7 +1744,7 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode node = args[0];
             if (!(args[1] is CurJson cj))
-                throw new RemesPathArgumentException("second argument must be a functiont that returns a boolean", 1, FUNCTIONS["recurse_until"], args[1].type);
+                throw new RemesPathArgumentException("second argument to 'recurse_until' must be a function that returns a boolean", 1, FUNCTIONS["recurse_until"], args[1].type);
             Func<JNode, JNode> func = cj.function;
             var results = new List<JNode>();
             RecurseUntilHelper(node, func, results);
@@ -1848,7 +1840,7 @@ namespace JSON_Tools.JSON_Tools
             foreach (JNode val in itbl.children)
             {
                 if ((val.type & Dtype.SCALAR) == 0)
-                    throw new RemesPathArgumentException("First argument to unique must be an array of all scalars.", 0, FUNCTIONS["unique"]);
+                    throw new RemesPathArgumentException("First argument to function 'unique' must be an array of all scalars.", 0, FUNCTIONS["unique"]);
                 uniq.Add(val.value);
             }
             var uniqList = new List<JNode>();
@@ -1877,13 +1869,14 @@ namespace JSON_Tools.JSON_Tools
             var sorted = new List<double>();
             foreach (JNode node in ((JArray)args[0]).children)
             {
-                if ((node.type & Dtype.NUM) == 0)
+                if (!node.TryGetValueAsDouble(out double d))
                 {
-                    throw new RemesPathException("Function Quantile requires an array of all numbers");
+                    throw new RemesPathException("Function 'quantile' requires an array of all numbers");
                 }
-                sorted.Add(Convert.ToDouble(node.value));
+                sorted.Add(d);
             }
-            double quantile = Convert.ToDouble(args[1].value);
+            if (!args[1].TryGetValueAsDouble(out double quantile))
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["quantile"], args[1].type);
             sorted.Sort();
             if (sorted.Count == 0)
             {
@@ -1923,13 +1916,13 @@ namespace JSON_Tools.JSON_Tools
             var arr = (JArray)args[0];
             var sortByCount = args.Count > 1 && (args[1].value is bool sbc)
                 && sbc;
-            var uniqs = new Dictionary<object, long>();
+            var uniqs = new Dictionary<object, BigInteger>();
             foreach (JNode child in arr.children)
             {
                 object val = child.value;
                 if (val == null)
                 {
-                    throw new RemesPathException("Can't count occurrences of objects with null values");
+                    throw new RemesPathException("Function 'value_counts' can't count occurrences of objects with null values");
                 }
                 if (!uniqs.ContainsKey(val))
                     uniqs[val] = 0L;
@@ -2016,9 +2009,8 @@ namespace JSON_Tools.JSON_Tools
             if (currentIdx == keys.Length - 1)
                 return GroupBySingleKey(itbl, key);
             var gb = new Dictionary<string, JNode>();
-            if (key.value is long l)
+            if (key.TryGetValueAsInt32(out int i))
             {
-                int i = Convert.ToInt32(l);
                 foreach (JNode child in itbl.children)
                 {
                     AddToGroupByDict(gb, i, child);
@@ -2053,14 +2045,14 @@ namespace JSON_Tools.JSON_Tools
         private static JNode GroupBySingleKey(JArray itbl, JNode keyNode)
         {
             object key = keyNode.value;
-            if (!(key is string || key is long))
+            if (!(key is string || key is BigInteger))
             {
                 throw new ArgumentException("The GroupBy function can only group by string keys or int indices");
             }
             var gb = new Dictionary<string, JNode>();
-            if (key is long l)
+            if (key is BigInteger bi)
             {
-                int ikey = Convert.ToInt32(l);
+                int ikey = (int)bi;
                 foreach (JNode child in itbl.children)
                 {
                     AddToGroupByDict(gb, ikey, child);
@@ -2074,7 +2066,7 @@ namespace JSON_Tools.JSON_Tools
                 }
             }
             else
-                throw new RemesPathArgumentException("group_by keys must be integers or strings (or an array thereof)", 1, FUNCTIONS["group_by"]);
+                throw new RemesPathArgumentException("'group_by' keys must be integers or strings (or an array thereof)", 1, FUNCTIONS["group_by"]);
             return new JObject(0, gb);
         }
 
@@ -2147,7 +2139,7 @@ namespace JSON_Tools.JSON_Tools
                 JNode key = pair[0];
                 JNode val = pair[1];
                 if (!(key.value is string k))
-                    throw new RemesPathException("The Dict function's argument must be an array of two-item subarrays where the first item of each subarray is a string.");
+                    throw new RemesPathException("The 'dict' function's argument must be an array of two-item subarrays where the first item of each subarray is a string.");
                 rst[k] = val;
             }
             return new JObject(0, rst);
@@ -2246,16 +2238,16 @@ namespace JSON_Tools.JSON_Tools
                     var atList = new List<JNode>();
                     foreach (JNode indNode in indArr.children)
                     {
-                        ind = Convert.ToInt32(indNode.value);
-                        if (ArrayExtensions.WrappedIndex(children, ind, out JNode atInd))
+                        if (indNode.TryGetValueAsInt32(out ind)
+                            && ArrayExtensions.WrappedIndex(children, ind, out JNode atInd))
                             atList.Add(atInd);
                         else
                             throw new RemesPathIndexOutOfRangeException(ind, arr);
                     }
                     return new JArray(0, atList);
                 }
-                ind = Convert.ToInt32(indsOrKeys.value);
-                if (ArrayExtensions.WrappedIndex(children, ind, out JNode atIndsOrKeys))
+                if (indsOrKeys.TryGetValueAsInt32(out ind)
+                    && ArrayExtensions.WrappedIndex(children, ind, out JNode atIndsOrKeys))
                     return atIndsOrKeys;
                 else
                     throw new RemesPathIndexOutOfRangeException(ind, arr);
@@ -2316,8 +2308,14 @@ namespace JSON_Tools.JSON_Tools
             var piv = new Dictionary<string, JNode>();
             if (arr[0] is JArray)
             {
-                int by = Convert.ToInt32(args[1].value);
-                int valCol = Convert.ToInt32(args[2].value);
+                void tryGetNthArgAsInt32(int n, out int res)
+                {
+                    JNode argn = args[n];
+                    if (!argn.TryGetValueAsInt32(out res))
+                        throw new RemesPathArgumentException("If the 1st argument to 'pivot' is an array, all subsequent arguments must be integers", n, FUNCTIONS["pivot"], argn.type);
+                }
+                tryGetNthArgAsInt32(1, out int by);
+                tryGetNthArgAsInt32(2, out int valCol);
                 foreach (JNode item in arr.children)
                 {
                     JArray subarr = (JArray)item;
@@ -2330,7 +2328,7 @@ namespace JSON_Tools.JSON_Tools
                 int uniqCt = piv.Count;
                 for (int ii = 3; ii < args.Count; ii++)
                 {
-                    int idxCol = Convert.ToInt32(args[ii].value);
+                    tryGetNthArgAsInt32(ii, out int idxCol);
                     var newSubarr = new List<JNode>();
                     for (int jj = 0; jj < arr.children.Count; jj += uniqCt)
                         newSubarr.Add(((JArray)arr[jj])[idxCol]);
@@ -2360,7 +2358,7 @@ namespace JSON_Tools.JSON_Tools
                     piv[idxCol] = new JArray(0, newSubarr);
                 }
             }
-            else throw new RemesPathException("First argument to Pivot must be an array of arrays or an array of objects");
+            else throw new RemesPathException("First argument to 'pivot' must be an array of arrays or an array of objects");
             return new JObject(0, piv);
         }
 
@@ -2406,7 +2404,7 @@ namespace JSON_Tools.JSON_Tools
         {
             JNode node = args[0];
             if (node.value is string str)
-                return new JNode(Convert.ToInt64(str.Length));
+                return new JNode(JNode.ConvertToBigInteger(str.Length));
             throw new RemesPathArgumentException(null, 0, FUNCTIONS["s_len"], node.type);
         }
 
@@ -2433,10 +2431,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static JNode StrMul(List<JNode> args)
         {
+            if (!(args[0].value is string s))
+                throw new RemesPathArgumentException(null, 0, FUNCTIONS["s_mul"], args[0].type);
             var arg2 = args[1];
-            if ((arg2.type & Dtype.INT_OR_BOOL) == 0)
-                throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_mul"], arg2.type);
-            return new JNode(StrMulHelper((string)args[0].value, Convert.ToInt32(arg2.value)));
+            if (arg2.value is bool b)
+                return new JNode(b ? s : "");
+            if (arg2.TryGetValueAsInt32(out int arg2int))
+                return new JNode(StrMulHelper(s, arg2int));
+            throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_mul"], arg2.type);
         }
 
         /// <summary>
@@ -2454,7 +2456,7 @@ namespace JSON_Tools.JSON_Tools
             int ct = (sub is JRegex jregex)
                 ? jregex.regex.Matches(s).Count
                 : Regex.Matches(s, (string)sub.value).Count;
-            return new JNode(Convert.ToInt64(ct));
+            return new JNode(JNode.ConvertToBigInteger(ct));
         }
 
         /// <summary>
@@ -2593,9 +2595,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode CsvRegexAsJNode(List<JNode> args)
         {
             JNode nColumnsNode = args[0];
-            if (nColumnsNode.type != Dtype.INT)
+            if (!nColumnsNode.TryGetValueAsInt32(out int nColumns))
                 throw new RemesPathArgumentException($"first arg to csv_regex must be integer, not {nColumnsNode.type}", 0, FUNCTIONS["csv_regex"]);
-            int nColumns = Convert.ToInt32(nColumnsNode.value);
             JNode delimNode = args[1];
             char delim = delimNode.value is string delimStr ? delimStr[0] : ',';
             JNode newlineNode = args[2];
@@ -2648,9 +2649,8 @@ namespace JSON_Tools.JSON_Tools
             return args.LazySlice($"{firstOptionalArgNum}:")
                 .Select(x =>
             {
-                if (x.type != Dtype.INT)
+                if (!x.TryGetValueAsInt32(out int xVal))
                     throw new RemesPathArgumentException($"Arguments {firstOptionalArgNum} onward to {funcName} must be integers", firstOptionalArgNum, FUNCTIONS[funcName]);
-                int xVal = Convert.ToInt32(x.value);
                 if (nColumns >= 1 && xVal < 0)
                     return nColumns + xVal;
                 return xVal;
@@ -2971,9 +2971,8 @@ namespace JSON_Tools.JSON_Tools
         {
             string text = (string)args[0].value;
             JNode arg2 = args[1];
-            if (arg2.type != Dtype.INT)
+            if (!arg2.TryGetValueAsInt32(out int nColumns))
                 throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_csv"], arg2.type);
-            int nColumns = Convert.ToInt32(arg2.value);
             char delim = args.Count > 2 ? ((string)args[2].value)[0] : ',';
             csvDelimiterInLastQuery = delim;
             string newline = args.Count > 3 ? (string)args[3].value : "\r\n";
@@ -3160,7 +3159,8 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(s.Slice(jslicer.slicer));
             }
-            int index = Convert.ToInt32(slicerOrInt.value);
+            if (!slicerOrInt.TryGetValueAsInt32(out int index))
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["s_slice"], slicerOrInt.type);
             // allow negative indices for consistency with slicing syntax
             if (!s.WrappedIndex(index, out string result))
                 throw new RemesPathIndexOutOfRangeException(index, args[0]);
@@ -3195,7 +3195,7 @@ namespace JSON_Tools.JSON_Tools
                 if (repl is CurJson cj)
                 {
                     Func<JNode, JNode> fun = cj.function;
-                    long previousLoopCountValue = loopCountValue;
+                    BigInteger previousLoopCountValue = loopCountValue;
                     loopCountValue = 0;
                     string replacementFunction(Match m)
                     {
@@ -3205,7 +3205,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             matchArrChildren.Add(new JNode(m.Groups[ii].Value));
                         }
-                        long loopCountBeforeCall = loopCountValue;
+                        BigInteger loopCountBeforeCall = loopCountValue;
                         var matchArr = new JArray(0, matchArrChildren);
                         loopCountValue = loopCountBeforeCall + 1;
                         return (string)fun(matchArr).value;
@@ -3233,13 +3233,13 @@ namespace JSON_Tools.JSON_Tools
         /// LeftPadHelper("foo", "0", 5) returns "00foo"<br></br>
         /// LeftPadHelper("ab", "01", 5) returns "0101ab"
         /// </summary>
-        public static string LeftPadHelper(string s, string padWith, long padToLen)
+        public static string LeftPadHelper(string s, string padWith, int padToLen)
         {
-            long lengthOfPad = padToLen - s.Length;
+            int lengthOfPad = padToLen - s.Length;
             var sb = new StringBuilder();
-            long padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out long mod);
+            int padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out int mod);
             padWithCount = mod == 0 ? padWithCount : padWithCount + 1;
-            for (long ii = 0; ii < padWithCount; ii++)
+            for (BigInteger ii = 0; ii < padWithCount; ii++)
             {
                 sb.Append(padWith);
             }
@@ -3255,7 +3255,8 @@ namespace JSON_Tools.JSON_Tools
         {
             string s = (string)args[0].value;
             string padWith = (string)args[1].value;
-            long padToLen = (long)args[2].value;
+            if (!args[2].TryGetValueAsInt32(out int padToLen))
+                throw new RemesPathArgumentException(null, 2, FUNCTIONS["s_lpad"], args[2].type);
             return new JNode(LeftPadHelper(s, padWith, padToLen));
         }
 
@@ -3272,7 +3273,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode ZFill(List<JNode> args)
         {
             string s = args[0].ValueOrToString();
-            int padToLen = Convert.ToInt32((long)args[1].value);
+            if (!args[1].TryGetValueAsInt32(out int padToLen))
+                throw new RemesPathArgumentException(null, 1, FUNCTIONS["zfill"], args[1].type);
             return new JNode(s.PadLeft(padToLen, '0'));
         }
 
@@ -3283,14 +3285,14 @@ namespace JSON_Tools.JSON_Tools
         /// RightPadHelper("foo", "0", 5) returns "foo00"<br></br>
         /// RightPadHelper("ab", "01", 5) returns "ab0101"
         /// </summary>
-        public static string RightPadHelper(string s, string padWith, long padToLen)
+        public static string RightPadHelper(string s, string padWith, int padToLen)
         {
-            long lengthOfPad = padToLen - s.Length;
+            int lengthOfPad = padToLen - s.Length;
             var sb = new StringBuilder();
-            long padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out long mod);
+            int padWithCount = Math.DivRem(lengthOfPad, padWith.Length, out int mod);
             padWithCount = mod == 0 ? padWithCount : padWithCount + 1;
             sb.Append(s);
-            for (long ii = 0; ii < padWithCount; ii++)
+            for (int ii = 0; ii < padWithCount; ii++)
             {
                 sb.Append(padWith);
             }
@@ -3305,7 +3307,8 @@ namespace JSON_Tools.JSON_Tools
         {
             string s = (string)args[0].value;
             string padWith = (string)args[1].value;
-            long padToLen = (long)args[2].value;
+            if (!args[2].TryGetValueAsInt32(out int padToLen))
+                throw new RemesPathArgumentException(null, 2, FUNCTIONS["s_rpad"], args[2].type);
             return new JNode(RightPadHelper(s, padWith, padToLen));
         }
 
@@ -3374,7 +3377,7 @@ namespace JSON_Tools.JSON_Tools
 
         /// <summary>
         /// is_num(x: anything) -> boolean<br></br>
-        /// returns true iff x is long, double, or bool
+        /// returns true iff x is BigInteger, double, or bool
         /// </summary>
         public static JNode IsNum(List<JNode> args)
         {
@@ -3424,15 +3427,13 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Log(List<JNode> args)
         {
             var arg1 = args[0];
-            if ((arg1.type & Dtype.FLOAT_OR_INT) == 0)
+            if (!arg1.TryGetValueAsDouble(out double num) || arg1.type == Dtype.BOOL)
                 throw new RemesPathArgumentException(null, 0, FUNCTIONS["log"], arg1.type);
-            double num = Convert.ToDouble(arg1.value);
-            object Base = args[1].value;
-            if (Base is null)
+            if (!args[1].TryGetValueAsDouble(out double Base))
             {
                 return new JNode(Math.Log(num));
             }
-            return new JNode(Math.Log(num, Convert.ToDouble(Base)));
+            return new JNode(Math.Log(num, Base));
         }
 
         /// <summary>
@@ -3442,9 +3443,9 @@ namespace JSON_Tools.JSON_Tools
         public static JNode Log2(List<JNode> args)
         {
             var arg1 = args[0];
-            if ((arg1.type & Dtype.FLOAT_OR_INT) == 0)
+            if (!arg1.TryGetValueAsDouble(out double num) || arg1.type == Dtype.BOOL)
                 throw new RemesPathArgumentException(null, 0, FUNCTIONS["log"], arg1.type);
-            return new JNode(Math.Log(Convert.ToDouble(arg1.value), 2));
+            return new JNode(Math.Log(num, 2));
         }
 
         /// <summary>
@@ -3453,16 +3454,18 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static JNode Abs(List<JNode> args)
         {
-            JNode val = args[0];
-            if ((val.type & Dtype.INT_OR_BOOL) != 0)
+            object val = args[0].value;
+            if (val is bool b)
             {
-                return new JNode(Math.Abs(Convert.ToInt64(val.value)));
+                return new JNode((BigInteger)(b ? 1 : 0));
             }
-            else if (val.type == Dtype.FLOAT)
+            else if (val is BigInteger bi)
+                return new JNode(bi < 0 ? -bi : bi);
+            else if (val is double d)
             {
-                return new JNode(Math.Abs(Convert.ToDouble(val.value)));
+                return new JNode(Math.Abs(d));
             }
-            throw new RemesPathArgumentException(null, 0, FUNCTIONS["abs"], val.type);
+            throw new RemesPathArgumentException(null, 0, FUNCTIONS["abs"], args[0].type);
         }
 
         /// <summary>
@@ -3471,7 +3474,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static JNode IsNa(List<JNode> args)
         {
-            return new JNode(double.IsNaN(Convert.ToDouble(args[0].value)));
+            return new JNode(double.IsNaN(JNode.ConvertJNodeValueToDouble(args[0].value)));
         }
 
         /// <summary>
@@ -3488,8 +3491,8 @@ namespace JSON_Tools.JSON_Tools
             switch (val.type)
             {
             case Dtype.BOOL:  return (bool)val.value;
-            case Dtype.INT:   return 0L != (long)val.value;
-            case Dtype.FLOAT: return 0d != (double)val.value;
+            case Dtype.INT:   return 0L != (BigInteger)val.value;
+            case Dtype.FLOAT: return 0d != JNode.ConvertJNodeValueToDouble(val.value);
             case Dtype.STR:   return 0 < ((string)val.value).Length;
             case Dtype.ARR:   return 0 < ((JArray)val).Length;
             case Dtype.OBJ:   return 0 < ((JObject)val).Length;
@@ -3529,7 +3532,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode(double.Parse(s, JNode.DOT_DECIMAL_SEP));
             }
-            return new JNode(Convert.ToDouble(val.value));
+            return new JNode(JNode.ConvertJNodeValueToDouble(val.value));
         }
 
         /// <summary>
@@ -3543,9 +3546,9 @@ namespace JSON_Tools.JSON_Tools
             JNode val = args[0];
             if (val.value is string s)
             {
-                return new JNode(long.Parse(s));
+                return new JNode(BigInteger.Parse(s));
             }
-            return new JNode(Convert.ToInt64(val.value));
+            return new JNode(JNode.ConvertToBigInteger(val.value));
         }
 
         /// <summary>
@@ -3559,7 +3562,7 @@ namespace JSON_Tools.JSON_Tools
             int xpos = hasLeadingSign ? 2 : 1;
             if (s.Length > xpos + 1 && s[xpos] == 'x')
             {
-                double d = long.Parse(s.Substring(xpos + 1), System.Globalization.NumberStyles.HexNumber);
+                double d = (double)JsonParser.ParseUnsignedHexNumberAsBigInt(s, xpos + 1, s.Length);
                 return startChar == '-' ? -d : d;
             }
             return double.Parse(s, JNode.DOT_DECIMAL_SEP);
@@ -3578,7 +3581,7 @@ namespace JSON_Tools.JSON_Tools
             var valvalue = args[0].value;
             if (valvalue is string s)
                 return new JNode(StrToNumHelper(s));
-            return new JNode(Convert.ToDouble(valvalue));
+            return new JNode(JNode.ConvertJNodeValueToDouble(valvalue));
         }
 
         /// <summary>
@@ -3594,7 +3597,7 @@ namespace JSON_Tools.JSON_Tools
             JNode val = args[0];
             IComparable valval = val.value;
             JNode sigfigs = args[1];
-            if (valval is long valInt)
+            if (valval is BigInteger valInt)
             {
                 return new JNode(valInt);
             }
@@ -3602,9 +3605,10 @@ namespace JSON_Tools.JSON_Tools
             {
                 if (sigfigs.type == Dtype.NULL)
                 {
-                    return new JNode(Convert.ToInt64(Math.Round(d)));
+                    return new JNode(JNode.ConvertToBigInteger(Math.Round(d)));
                 }
-                return new JNode(Math.Round(d, Convert.ToInt32(sigfigs.value)));
+                if (sigfigs.TryGetValueAsInt32(out int sigfigsVal))
+                    return new JNode(Math.Round(d, sigfigsVal));
             }
             throw new RemesPathArgumentException(null, 0, FUNCTIONS["round"], val.type);            
         }
@@ -3647,7 +3651,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 return new JNode();
             }
-            if (obj is long l)
+            if (obj is BigInteger l)
             {
                 return new JNode(l);
             }
@@ -3685,7 +3689,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 return new JObject(0, nodes);
             }
-            throw new ArgumentException("Cannot convert any objects to JNode except null, long, double, bool, string, List<object>, or Dictionary<string, object");
+            throw new ArgumentException("Cannot convert any objects to JNode except null, BigInteger, double, bool, string, List<object>, or Dictionary<string, object");
         }
 
         public static Dictionary<string, ArgFunction> FUNCTIONS =

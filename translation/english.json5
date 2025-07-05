@@ -364,7 +364,6 @@
         "FATAL_INVALID_STARTSWITH_I": "Expected literal starting with 'I' to be Infinity",
         "FATAL_INVALID_STARTSWITH_N": "Expected literal starting with 'N' to be NaN or None",
         "FATAL_INVALID_STARTSWITH_i": "Expected literal starting with 'i' to be inf",
-        "FATAL_HEX_INT_OVERFLOW": "Hex number too large for a 64-bit signed integer type",
         "FATAL_SECOND_DECIMAL_POINT": "Number with a decimal point in the wrong place",
         "FATAL_NUM_TRAILING_e_OR_E": "Scientific notation 'e' with no number following",
         "FATAL_MAX_RECURSION_DEPTH": "Maximum recursion depth (512) reached",

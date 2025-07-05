@@ -365,7 +365,6 @@
         "FATAL_INVALID_STARTSWITH_I": "期望以 'I' 开头的文字是 Infinity",
         "FATAL_INVALID_STARTSWITH_N": "期望以 'N' 开头的文字是 NaN 或 None",
         "FATAL_INVALID_STARTSWITH_i": "期望以 'i' 开头的文字是 inf",
-        "FATAL_HEX_INT_OVERFLOW": "十六进制数对于 64 位有符号整数类型来说太大了",
         "FATAL_SECOND_DECIMAL_POINT": "数字在错误的位置出现小数点",
         "FATAL_NUM_TRAILING_e_OR_E": "科学计数法 'e' 后没有数字",
         "FATAL_MAX_RECURSION_DEPTH": "达到最大递归深度 (512)",

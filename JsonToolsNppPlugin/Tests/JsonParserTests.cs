@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.JSON_Tools;
@@ -181,8 +182,6 @@ namespace JSON_Tools.Tests
                              NL + "    }" +
                              NL + "]",
                              "open issue in Kapilratnani's JSON-Viewer regarding forward slashes having '/' stripped" ),
-                ("111111111111111111111111111111", $"1.1111111111111111E+29", $"1.1111111111111111E+29",
-                    "auto-conversion of int64 overflow to double" ),
                 ("{ \"a\"\r\n:1, \"b\" : 1, \"c\"       :1}", "{\"a\": 1, \"b\": 1, \"c\": 1}",
                 "{"+ NL + "\"a\": 1,"+ NL + "\"b\": 1,"+ NL + "\"c\": 1" + NL + "}",
                 "weirdly placed colons"),
@@ -639,8 +638,6 @@ Got
                 new object[] { "{}", "{" + NL + "   }", true },
                 new object[] { "[]", "[ ]", true },
                 new object[] { "[]", "[1, 2]", false },
-                new object[] { "1" + new string('0', 400), "Infinity", true }, // really really big int representations
-                new object[] { "-2" + new string('3', 350), "-Infinity", true }, // really really big int representations (negative)
                 new object[] { "-2.1234567890e700", "-Infinity", true }, // really really big float representations (negative)
                 new object[] { "5.43433666464342343433341e4550", "Infinity", true }, // really really big float representations (positive)
             };
@@ -749,7 +746,7 @@ multiline comment
                 ("\"1956-11-13 25:56:17\"", new JNode("1956-11-13 25:56:17", Dtype.STR, 0)), // bad datetime- hour too high
                 ("\"1956-11-13 \"", new JNode("1956-11-13 ", Dtype.STR, 0)), // bad date- has space at end
                 ("['abc', 2, '1999-01-03']", // single-quoted strings 
-                    new JArray(0, new List<JNode>(new JNode[]{new JNode("abc"), new JNode(2L), new JNode("1999-01-03")}))),
+                    new JArray(0, new List<JNode>(new JNode[]{new JNode("abc"), new JNode((BigInteger)2), new JNode("1999-01-03")}))),
                 ("{'a': \"1\", \"b\": 2}", // single quotes and double quotes in same thing
                     simpleparser.Parse("{\"a\": \"1\", \"b\": 2}")),
                 (@"{'a':
@@ -833,6 +830,7 @@ multiline comment
         {
             JsonParser simpleparser = new JsonParser();
             JsonParser parser = new JsonParser(LoggerLevel.STRICT, false, false);
+            string fourHundredThrees = new string('3', 400);
             var testcases = new (string inp, string desiredOut, string[] desiredLint)[]
             {
                 ("[1, 2]", "[1, 2]", new string[]{ } ), // syntactically valid JSON
@@ -1016,8 +1014,6 @@ multiline comment
                     "False is not allowed in any JSON specification",
                     "None is not allowed in any JSON specification"
                 }),
-                ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only allowed in JSON5", "Hex number too large for a 64-bit signed integer type"}),
-                ("-0xFFFFFFFFFFFFFFFFFFFFFFFFFFF", "null", new string[]{ "Hexadecimal numbers are only allowed in JSON5", "Hex number too large for a 64-bit signed integer type"}),
                 ("{\"a\": [[1, 2], [3, 4, \"b\": [5 , \"c\": [, \"d\": 6}", "{\"a\": [[1, 2], [3, 4]], \"b\": [5], \"c\": [], \"d\": 6}",
                     new string[]{ "':' (key-value separator) where ',' between array members expected. Maybe you forgot to close the array?",
                                   "No comma between array members",
@@ -1090,13 +1086,12 @@ multiline comment
                     "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
                     "Numbers with an unnecessary leading 0 (like \"01\") are not allowed in any JSON specification",
                 }),
-                ("[9.7642E+857, -23e500, 3e-, +" + new string('3', 400) + "]", "[Infinity, -Infinity, NaN, Infinity]", new string[]
+                ($"[9.7642E+857, -23e500, 3e-, +{fourHundredThrees}]", $"[Infinity, -Infinity, NaN, {fourHundredThrees}]", new string[]
                 {
                     "Number string \"9.7642E+857\" is too large for a 64-bit floating point number",
                     "Number string \"-23e500\" is too large for a 64-bit floating point number",
                     "Number string \"3e-\" had bad format",
                     "Leading + signs in numbers are only allowed in JSON5",
-                    "Number string \"+" + new string('3', 400) + "\" is too large for a 64-bit floating point number",
                 }),
             };
 

@@ -5,6 +5,7 @@ equivalent (or very nearly equivalent) JSON.
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
@@ -39,7 +40,7 @@ namespace JSON_Tools.JSON_Tools
         //        value,
         //        @"\\u(?<Value>[a-zA-Z0-9]{4})",
         //        m => {
-        //            return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
+        //            return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.AllowHexSpecifier)).ToString();
         //        });
         //}
 
@@ -125,11 +126,12 @@ namespace JSON_Tools.JSON_Tools
 
         private string YamlValRepr(JNode v)
         {
-            if (v.value == null)
+            var vval = v.value;
+            if (vval is null)
             {
                 return "null";
             }
-            string strv = v.value.ToString();
+            string strv = v.ValueOrToString();
             if (v.type == Dtype.STR)
             {
                 try
@@ -149,10 +151,9 @@ namespace JSON_Tools.JSON_Tools
                     return EscapeBackslash(strv);
                 }
             }
-            else if (v.type == Dtype.FLOAT)
+            else if (vval is double d)
             {
                 // k is a number
-                double d = (double)v.value;
                 if (d == NanInf.inf) return ".inf";
                 if (d == NanInf.neginf) return "-.inf";
                 if (double.IsNaN(d))

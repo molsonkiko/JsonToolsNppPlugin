@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 
 namespace JSON_Tools.JSON_Tools
@@ -345,11 +346,11 @@ namespace JSON_Tools.JSON_Tools
             // validation logic for arrays
             if (dtype == Dtype.ARR)
             {
-                int maxItems = (schema.children.TryGetValue("maxItems", out JNode maxItemsNode))
-                    ? Convert.ToInt32(maxItemsNode.value)
+                int maxItems = (schema.children.TryGetValue("maxItems", out JNode maxItemsNode) && maxItemsNode.value is BigInteger bima)
+                    ? (int)bima
                     : int.MaxValue;
-                int minItems = (schema.children.TryGetValue("minItems", out JNode minItemsNode))
-                    ? Convert.ToInt32(minItemsNode.value)
+                int minItems = (schema.children.TryGetValue("minItems", out JNode minItemsNode) && minItemsNode.value is BigInteger bimi)
+                    ? (int)bimi
                     : 0;
                 Func<JArray, JsonLint?> ItemsRightLength;
                 if (minItems == 0 && maxItems == int.MaxValue)
@@ -396,11 +397,11 @@ namespace JSON_Tools.JSON_Tools
                         // "contains" keyword adds another schema that some members
                         // must match instead of the "items" schema
                         var containsValidator = CompileValidationHelperFunc(contains, definitions, recursions + 1, maxLintCount, translated);
-                        var minContains = schema.children.TryGetValue("minContains", out JNode minContainsNode)
-                            ? Convert.ToInt32(minContainsNode.value)
+                        var minContains = schema.children.TryGetValue("minContains", out JNode minContainsNode) && minContainsNode.TryGetValueAsInt32(out int minContainsVal)
+                            ? minContainsVal
                             : 1;
-                        var maxContains = schema.children.TryGetValue("maxContains", out JNode maxContainsNode)
-                            ? Convert.ToInt32(maxContainsNode.value)
+                        var maxContains = schema.children.TryGetValue("maxContains", out JNode maxContainsNode) && maxContainsNode.TryGetValueAsInt32(out int maxContainsVal)
+                            ? maxContainsVal
                             : int.MaxValue;
                         return (json, lints) =>
                         {
@@ -650,11 +651,11 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else regexValidator = (_, __, ___) => true;
                 // validation of string length
-                var minLength = schema.children.TryGetValue("minLength", out JNode minLengthNode)
-                    ? Convert.ToInt32(minLengthNode.value)
+                var minLength = schema.children.TryGetValue("minLength", out JNode minLengthNode) && minLengthNode.TryGetValueAsInt32(out int minLengthVal)
+                    ? minLengthVal
                     : 0;
-                var maxLength = schema.children.TryGetValue("maxLength", out JNode maxLengthNode)
-                    ? Convert.ToInt32(maxLengthNode.value)
+                var maxLength = schema.children.TryGetValue("maxLength", out JNode maxLengthNode) && maxLengthNode.TryGetValueAsInt32(out int maxLengthVal)
+                    ? maxLengthVal
                     : int.MaxValue;
                 Func<string, int, List<JsonLint>, bool> lengthValidator;
                 if (minLength == 0 && maxLength == int.MaxValue)
@@ -722,17 +723,17 @@ namespace JSON_Tools.JSON_Tools
 
             if ((dtype & Dtype.FLOAT_OR_INT) != 0)
             {
-                var minimum = schema.children.TryGetValue("minimum", out JNode minNode)
-                    ? Convert.ToDouble(minNode.value)
+                var minimum = schema.children.TryGetValue("minimum", out JNode minNode) && minNode.TryGetValueAsDouble(out double minVal)
+                    ? minVal
                     : NanInf.neginf;
-                var maximum = schema.children.TryGetValue("maximum", out JNode maxNode)
-                    ? Convert.ToDouble(maxNode.value)
+                var maximum = schema.children.TryGetValue("maximum", out JNode maxNode) && maxNode.TryGetValueAsDouble(out double maxVal)
+                    ? maxVal
                     : NanInf.inf;
-                var exclusiveMin = schema.children.TryGetValue("exclusiveMinimum", out JNode exclMinNode)
-                    ? Convert.ToDouble(exclMinNode.value)
+                var exclusiveMin = schema.children.TryGetValue("exclusiveMinimum", out JNode exclMinNode) && exclMinNode.TryGetValueAsDouble(out double exclMinVal)
+                    ? exclMinVal
                     : NanInf.neginf;
-                var exclusiveMax = schema.children.TryGetValue("exclusiveMaximum", out JNode exclMaxNode)
-                    ? Convert.ToDouble(exclMaxNode.value)
+                var exclusiveMax = schema.children.TryGetValue("exclusiveMaximum", out JNode exclMaxNode) && exclMaxNode.TryGetValueAsDouble(out double exclMaxVal)
+                    ? exclMaxVal
                     : NanInf.inf;
                 if (!double.IsInfinity(minimum) || !double.IsInfinity(maximum) ||
                     !double.IsInfinity(exclusiveMin) || !double.IsInfinity(exclusiveMax))
@@ -740,7 +741,7 @@ namespace JSON_Tools.JSON_Tools
                     // the user specified minimum and/or maximum values for numbers, so we need to check that
                     return (JNode json, List<JsonLint> lints) =>
                     {
-                        if (!TypeValidates(json.type, dtype))
+                        if (!json.TryGetValueAsDouble(out double floatedValue) || (dtype == Dtype.INT && json.type != Dtype.INT))
                         {
                             lints.Add(ValidationProblemToLint(JsonLintType.SCHEMA_TYPE_MISMATCH,
                                 new Dictionary<string, object>
@@ -753,7 +754,6 @@ namespace JSON_Tools.JSON_Tools
                             ));
                             return;
                         }
-                        var floatedValue = Convert.ToDouble(json.value);
                         if (floatedValue < minimum)
                             lints.Add(ValidationProblemToLint(
                                 JsonLintType.SCHEMA_NUMBER_LESS_THAN_MIN,

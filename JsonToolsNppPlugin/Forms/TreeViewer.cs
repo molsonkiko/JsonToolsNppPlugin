@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1259,12 +1260,13 @@ namespace JSON_Tools.Forms
                     return false;
                 }
                 IComparable value = jnode.value;
-                if (value is long || value is double)
+                
+                if (value is BigInteger || value is double)
                 {
                     // two equal numbers may have several valid representations
                     // we will try to find the length of the representation used in the document,
                     // but we will quit and use the JSON string length if our first attempt fails to find the length
-                    double d = Convert.ToDouble(value);
+                    double d = (double)value;
                     int nodepos = jnode.position;
                     if (documentText is null)
                         documentText = selectionEnd < 0

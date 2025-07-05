@@ -286,7 +286,6 @@
         "FATAL_INVALID_STARTSWITH_I": "Attendait que le littéral commençant par 'I' soit Infinity",
         "FATAL_INVALID_STARTSWITH_N": "Attendait que le littéral commençant par 'N' soit NaN ou None",
         "FATAL_INVALID_STARTSWITH_i": "Attendait que le littéral commençant par 'i' soit inf",
-        "FATAL_HEX_INT_OVERFLOW": "Le nombre hexadécimal est trop grand pour un type entier signé 64 bits",
         "FATAL_SECOND_DECIMAL_POINT": "Point décimal au mauvais endroit dans un nombre",
         "FATAL_NUM_TRAILING_e_OR_E": "Pas de chiffres après le 'e' de la notation scientifique",
         "FATAL_MAX_RECURSION_DEPTH": "Profondeur de récursion maximale atteinte (512)",

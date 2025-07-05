@@ -369,7 +369,6 @@
         "FATAL_NUL_CHAR": "'\\x00' è il carattere nullo, che non è valido in JsonTools",
         "FATAL_UNTERMINATED_KEY": "Chiave oggetto non terminata",
         "FATAL_PLUS_OR_MINUS_AT_EOF": "Segni '{0}' alla fine del documento",
-        "FATAL_HEX_INT_OVERFLOW": "Numero esadecimale troppo grande per un tipo intero con segno a 64 bit",
         "FATAL_SECOND_DECIMAL_POINT": "Numero con un punto decimale al posto sbagliato",
         "FATAL_NUM_TRAILING_e_OR_E": "Notazione scientifica 'e' senza numero seguito",
         "FATAL_MAX_RECURSION_DEPTH": "Profondità massima di ricorsione (512) raggiunta",

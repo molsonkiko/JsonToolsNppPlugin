@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
+using System.Numerics;
 using JSON_Tools.Utils;
 
 namespace JSON_Tools.JSON_Tools
@@ -64,7 +64,7 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private JNode RandomInt(JNode schema, JObject refs, int recursionDepth)
         {
-            return new JNode((long)random.Next(-1_000_000, 1_000_001), Dtype.INT, 0);
+            return new JNode((BigInteger)random.Next(-1_000_000, 1_000_001), Dtype.INT, 0);
         }
 
         private static JNode RandomNumberBetweenMinAndMax(double min, double max)
@@ -75,15 +75,15 @@ namespace JSON_Tools.JSON_Tools
             var randNumber = random.NextDouble() * (max - min) + min;
             if (random.NextDouble() < 0.5)
                 return new JNode(randNumber, Dtype.FLOAT, 0);
-            var rounded = Convert.ToInt64(randNumber);
+            var rounded = (BigInteger)randNumber;
             return new JNode(rounded, Dtype.INT, 0);
         }
 
         private static JNode RandomIntegerBetweenMinAndMax(double min, double max)
         {
             var rand = RandomNumberBetweenMinAndMax(min, max);
-            if (rand.type == Dtype.FLOAT)
-                return new JNode(Convert.ToInt64(rand.value), Dtype.INT, 0);
+            if (rand.value is double d)
+                return new JNode((BigInteger)d, Dtype.INT, 0);
             return rand;
         }
 
@@ -133,9 +133,9 @@ namespace JSON_Tools.JSON_Tools
                     }
                     catch { }
                 }
-                if (obj.children.TryGetValue("minLength", out JNode minLengthNode) && minLengthNode.value is long minLengthVal)
+                if (obj.children.TryGetValue("minLength", out JNode minLengthNode) && minLengthNode.value is BigInteger minLengthVal)
                     minLength = (int)minLengthVal;
-                if (obj.children.TryGetValue("maxLength", out JNode maxLengthNode) && maxLengthNode.value is long maxLengthVal)
+                if (obj.children.TryGetValue("maxLength", out JNode maxLengthNode) && maxLengthNode.value is BigInteger maxLengthVal)
                     exclusiveMaxLength = (int)maxLengthVal + 1;
             }
             int length = random.Next(minLength, exclusiveMaxLength);
@@ -161,11 +161,9 @@ namespace JSON_Tools.JSON_Tools
                 // anything, but we will just produce empty arrays for such schemas
             }
             int minlen = minArrayLength;
-            if (children.TryGetValue("minItems", out JNode minItemsNode))
-                minlen = Convert.ToInt32(minItemsNode.value);
+            if (children.TryGetValue("minItems", out JNode minItemsNode) && minItemsNode.TryGetValueAsInt32(out minlen)) { }
             int maxlen = maxArrayLength;
-            if (children.TryGetValue("maxItems", out JNode maxItemsNode))
-                maxlen = Convert.ToInt32(maxItemsNode.value);
+            if (children.TryGetValue("maxItems", out JNode maxItemsNode) && maxItemsNode.TryGetValueAsInt32(out maxlen)) { }
             int length = random.Next(minlen, maxlen + 1);
             var outItems = new List<JNode>();
             if (children.TryGetValue("contains", out JNode contains))
@@ -173,11 +171,9 @@ namespace JSON_Tools.JSON_Tools
                 // this is a separate schema from "items", for items that MUST be
                 // included in the array.
                 int minContains = 1;
-                if (children.TryGetValue("minContains", out JNode minContainsNode))
-                    minContains = Convert.ToInt32(minContainsNode.value);
+                if (children.TryGetValue("minContains", out JNode minContainsNode) && minContainsNode.TryGetValueAsInt32(out minContains)) { }
                 int maxContains = length;
-                if (children.TryGetValue("maxContains", out JNode maxContainsNode))
-                    maxContains = Convert.ToInt32(maxContainsNode.value);
+                if (children.TryGetValue("maxContains", out JNode maxContainsNode) && maxContainsNode.TryGetValueAsInt32(out maxContains)) { }
                 int ncontains = random.Next(minContains, maxContains + 1);
                 length -= ncontains;
                 for (int ii = 0; ii < ncontains; ii++)
@@ -365,11 +361,11 @@ namespace JSON_Tools.JSON_Tools
             bool typeInt = type[0] == 'i';  // "integer" is the only type that starts with 'i'
             if (typeInt || type == "number")
             {
-                var min = obj.children.TryGetValue("minimum", out JNode minNode)
-                    ? Convert.ToDouble(minNode.value)
+                var min = obj.children.TryGetValue("minimum", out JNode minNode) && minNode.TryGetValueAsDouble(out double minVal)
+                    ? minVal
                     : NanInf.neginf;
-                var max = obj.children.TryGetValue("maximum", out JNode maxNode)
-                    ? Convert.ToDouble(maxNode.value)
+                var max = obj.children.TryGetValue("maximum", out JNode maxNode) && maxNode.TryGetValueAsDouble(out double maxVal)
+                    ? maxVal
                     : NanInf.inf;
                 if (!double.IsInfinity(min) || !double.IsInfinity(max))
                 {

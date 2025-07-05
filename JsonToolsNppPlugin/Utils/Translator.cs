@@ -1,15 +1,15 @@
 ﻿using JSON_Tools.JSON_Tools;
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
-using System.IO;
-using Kbg.NppPluginNET.PluginInfrastructure;
-using System.Reflection;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Numerics;
+using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
-using System.Globalization;
+using System.Windows.Forms;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Utils
 {
@@ -329,11 +329,11 @@ namespace JSON_Tools.Utils
                     }
                     else if (ctrl is LinkLabel llbl
                         && ctrlDict.TryGetValue("text", out JNode textNode) && textNode.value is string textVal
-                        && ctrlDict.TryGetValue("linkStart", out JNode linkStartNode) && linkStartNode.value is long linkStartVal
-                        && ctrlDict.TryGetValue("linkLength", out JNode linkLengthNode) && linkLengthNode.value is long linkLengthVal)
+                        && ctrlDict.TryGetValue("linkStart", out JNode linkStartNode) && linkStartNode.TryGetValueAsInt32(out int linkStartVal)
+                        && ctrlDict.TryGetValue("linkLength", out JNode linkLengthNode) && linkLengthNode.TryGetValueAsInt32(out int linkLengthVal))
                     {
                         llbl.Text = textVal;
-                        llbl.LinkArea = new LinkArea(Convert.ToInt32(linkStartVal), Convert.ToInt32(linkLengthVal));
+                        llbl.LinkArea = new LinkArea(linkStartVal, linkLengthVal);
                     }
                 }
                 else if (ctrlNode is JArray ctrlArr && ctrlArr.children is List<JNode> ctrlList && ctrl is ComboBox comboBox)

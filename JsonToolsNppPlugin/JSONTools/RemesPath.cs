@@ -4,6 +4,7 @@ A query language for JSON.
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
 
@@ -570,7 +571,7 @@ namespace JSON_Tools.JSON_Tools
                         }
                         else
                         {
-                            int ii = Convert.ToInt32(ind);
+                            int ii = (int)ind;
                             if (xarr.children.WrappedIndex(ii, out JNode atII))
                                 yield return atII;
                         }
@@ -1428,11 +1429,11 @@ namespace JSON_Tools.JSON_Tools
                     Obj_Pos npo = ParseExprFunc(toks, pos, end, context);
                     JNode numtok = (JNode)npo.obj;
                     pos = npo.pos;
-                    if (numtok.type != Dtype.INT)
+                    if (!numtok.TryGetValueAsInt32(out int lastNumVal))
                     {
                         throw new ArgumentException();
                     }
-                    lastNum = Convert.ToInt32(numtok.value);
+                    lastNum = (int?)lastNumVal;
                 }
                 catch (Exception)
                 {
@@ -1453,7 +1454,7 @@ namespace JSON_Tools.JSON_Tools
             switch (ind.type)
             {
                 case Dtype.STR: return (string)ind.value;
-                case Dtype.INT: return Convert.ToInt32(ind.value);
+                case Dtype.INT: return ind.TryGetValueAsInt32(out int i) ? i : -1;
                 case Dtype.SLICE: return ((JSlicer)ind).slicer;
                 case Dtype.REGEX: return ((JRegex)ind).regex;
                 default: throw new RemesPathException("Entries in an indexer list must be string, regex, int, or slice.");
@@ -1641,12 +1642,12 @@ namespace JSON_Tools.JSON_Tools
                         else if (lastTok is JNode)
                         {
                             jlastTok = (JNode)lastTok;
-                            if (jlastTok.type != Dtype.INT)
+                            if (!jlastTok.TryGetValueAsInt32(out int jLastVal))
                             {
                                 throw new RemesPathException($"Expected token other than ':' after {jlastTok} " +
                                                              $"in an indexer");
                             }
-                            Obj_Pos opo = ParseSlicer(toks, pos, Convert.ToInt32(jlastTok.value), end, context);
+                            Obj_Pos opo = ParseSlicer(toks, pos, jLastVal, end, context);
                             lastTok = opo.obj;
                             pos = opo.pos;
                         }
@@ -2108,14 +2109,10 @@ namespace JSON_Tools.JSON_Tools
                         if (nt is char nd && nd == ':')
                         {
                             int? firstNum;
-                            if (curArg == null)
-                            {
-                                firstNum = null;
-                            }
+                            if (curArg != null && curArg.TryGetValueAsInt32(out int firstNumInt))
+                                firstNum = firstNumInt;
                             else
-                            {
-                                firstNum = Convert.ToInt32(curArg.value);
-                            }
+                                firstNum = null;
                             Obj_Pos opo = ParseSlicer(toks, pos, firstNum, end, context);
                             curArg = (JNode)opo.obj;
                             pos = opo.pos;

@@ -4,6 +4,7 @@ A parser and linter for JSON.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using JSON_Tools.Utils;
@@ -121,7 +122,7 @@ namespace JSON_Tools.JSON_Tools
             return new JObject(0, new Dictionary<string, JNode>
             {
                 ["message"] = new JNode(TranslateMessageIfDesired(translated)),
-                ["position"] = new JNode((long)pos),
+                ["position"] = new JNode((BigInteger)pos),
                 ["severity"] = new JNode(severity.ToString()),
             });
         }
@@ -197,7 +198,6 @@ namespace JSON_Tools.JSON_Tools
             case JsonLintType.FATAL_INVALID_STARTSWITH_I: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'I' to be Infinity");
             case JsonLintType.FATAL_INVALID_STARTSWITH_N: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'N' to be NaN or None");
             case JsonLintType.FATAL_INVALID_STARTSWITH_i: return Translator.TranslateLintMessage(translated, lintType, "Expected literal starting with 'i' to be inf");
-            case JsonLintType.FATAL_HEX_INT_OVERFLOW: return Translator.TranslateLintMessage(translated, lintType, "Hex number too large for a 64-bit signed integer type");
             case JsonLintType.FATAL_SECOND_DECIMAL_POINT: return Translator.TranslateLintMessage(translated, lintType, "Number with a decimal point in the wrong place");
             case JsonLintType.FATAL_NUM_TRAILING_e_OR_E: return Translator.TranslateLintMessage(translated, lintType, "Scientific notation 'e' with no number following");
             case JsonLintType.FATAL_MAX_RECURSION_DEPTH: return Translator.TranslateLintMessage(translated, lintType, $"Maximum recursion depth ({JsonParser.MAX_RECURSION_DEPTH}) reached");
@@ -375,7 +375,6 @@ namespace JSON_Tools.JSON_Tools
         FATAL_INVALID_STARTSWITH_I = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 6,
         FATAL_INVALID_STARTSWITH_N = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 7,
         FATAL_INVALID_STARTSWITH_i = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 8,
-        FATAL_HEX_INT_OVERFLOW = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 9,
         FATAL_SECOND_DECIMAL_POINT = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 10,
         FATAL_NUM_TRAILING_e_OR_E = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 11,
         FATAL_MAX_RECURSION_DEPTH = FATAL_EXPECTED_JAVASCRIPT_COMMENT + 12,
@@ -861,7 +860,7 @@ namespace JSON_Tools.JSON_Tools
             int charval;
             try
             {
-                charval = int.Parse(hexNum, NumberStyles.HexNumber);
+                charval = int.Parse(hexNum, NumberStyles.AllowHexSpecifier);
             }
             catch
             {
@@ -1129,7 +1128,7 @@ namespace JSON_Tools.JSON_Tools
                     {
                         sb.Append(result, start, m.Index - start - 2);
                     }
-                    char hexval = (char)int.Parse(m.Value, NumberStyles.HexNumber);
+                    char hexval = (char)int.Parse(m.Value, NumberStyles.AllowHexSpecifier);
                     if (HandleCharErrors(hexval, inp, ii))
                         return null;
                     sb.Append(hexval);
@@ -1141,6 +1140,21 @@ namespace JSON_Tools.JSON_Tools
                 result = sb.ToString();
             }
             return result;
+        }
+
+        /// <summary>
+        /// Assumes that inp.Substring(start, end) consists solely of the digits 0-9 or the letters a-f or A-F.<br></br>
+        /// Returns BigInteger.Parse("0" + inp.SubString(start, end), NumberStyles.AllowHexSpecifier), except with a performance optimization to avoid unnecessary memcopy.<br></br>
+        /// This method is useful because BigInteger.Parse(x, NumberStyles.AllowHexSpecifier) treats x as a negative number unless x has a leading 0.
+        /// </summary>
+        public static BigInteger ParseUnsignedHexNumberAsBigInt(string inp, int start, int end)
+        {
+            int length = end - start + 1;
+            var buf = new char[length];
+            buf[0] = '0';
+            for (int ii = 1; ii < length; ii++)
+                buf[ii] = inp[start - 1 + ii];
+            return BigInteger.Parse(new string(buf), NumberStyles.AllowHexSpecifier);
         }
 
         /// <summary>
@@ -1252,16 +1266,9 @@ namespace JSON_Tools.JSON_Tools
                             break;
                         ii++;
                     }
-                    try
-                    {
-                        var hexnum = long.Parse(inp.Substring(start, ii - start), NumberStyles.HexNumber);
-                        return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
-                    }
-                    catch
-                    {
-                        HandleError(JsonLintType.FATAL_HEX_INT_OVERFLOW, inp, start);
-                        return new JNode(null, Dtype.NULL, startUtf8Pos);
-                    }
+                    // BigInteger.Parse(.., AllowHexSpecifier) has a stupid feature where numbers without a leading 0 are treated as negative
+                    var hexnum = ParseUnsignedHexNumberAsBigInt(inp, start, ii);
+                    return new JNode(negative ? -hexnum : hexnum, Dtype.INT, startUtf8Pos);
                 }
                 else if (nextChar >= '0' && nextChar <= '9')
                     HandleError(JsonLintType.BAD_UNNECESSARY_LEADING_0, inp, ii);
@@ -1311,6 +1318,7 @@ namespace JSON_Tools.JSON_Tools
                 }
                 else if (c == '/' && ii < inp.Length - 1)
                 {
+                    int slashPosition = ii - start + startUtf8Pos;
                     char nextC = inp[ii + 1];
                     // make sure prospective denominator is also a number (we won't allow NaN or Infinity as denominator)
                     if (!((nextC >= '0' && nextC <= '9')
@@ -1327,8 +1335,11 @@ namespace JSON_Tools.JSON_Tools
                     {
                         return new JNode(numer, Dtype.FLOAT, startUtf8Pos);
                     }
-                    double denom = Convert.ToDouble(denomNode.value);
-                    return new JNode(numer / denom, Dtype.FLOAT, startUtf8Pos);
+                    if (denomNode.TryGetValueAsDouble(out double denom))
+                        return new JNode(numer / denom, Dtype.FLOAT, startUtf8Pos);
+                    // this should be unreachable because we already made sure that non-numbers can't come after the '/'
+                    HandleError(JsonLintType.FATAL_BADLY_LOCATED_CHAR, inp, slashPosition, "/");
+                    return new JNode(null, Dtype.NULL, startUtf8Pos);
                 }
                 else
                 {
@@ -1340,18 +1351,12 @@ namespace JSON_Tools.JSON_Tools
             {
                 try
                 {
-                    return new JNode(long.Parse(numstr), Dtype.INT, startUtf8Pos);
+                    return new JNode(BigInteger.Parse(numstr), Dtype.INT, startUtf8Pos);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    if (!(ex is OverflowException))
-                    {
-                        HandleError(JsonLintType.BAD_NUMBER_INVALID_FORMAT, inp, startUtf8Pos, JNode.StrToString(numstr, true));
-                        return new JNode(NanInf.nan, startUtf8Pos);
-                    }
-                    // overflow exceptions are OK,
-                    // because doubles can represent much larger numbers than 64-bit ints,
-                    // albeit with loss of precision
+                    HandleError(JsonLintType.BAD_NUMBER_INVALID_FORMAT, inp, startUtf8Pos, JNode.StrToString(numstr, true));
+                    return new JNode(NanInf.nan, startUtf8Pos);
                 }
             }
             double num;
@@ -1937,12 +1942,11 @@ namespace JSON_Tools.JSON_Tools
                 }
                 try
                 {
-                    var hexnum = long.Parse(inp.Substring(start, end - start), NumberStyles.HexNumber);
+                    BigInteger hexnum = ParseUnsignedHexNumberAsBigInt(inp, start, ii);
                     return new JNode(negative ? -hexnum : hexnum, jnodePosition);
                 }
                 catch
                 {
-                    // probably overflow error
                     return new JNode(SubstringUnlessAll(inp, ogStart, end), jnodePosition);
                 }
             }
@@ -1991,16 +1995,8 @@ namespace JSON_Tools.JSON_Tools
             }
             if (parsed == 1)
             {
-                try
-                {
-                    long l = long.Parse(numstr);
-                    return new JNode(l, jnodePosition);
-                }
-                catch (OverflowException)
-                {
-                    // doubles can represent much larger numbers than 64-bit ints,
-                    // albeit with loss of precision
-                }
+                BigInteger l = BigInteger.Parse(numstr);
+                return new JNode(l, jnodePosition);
             }
             try
             {

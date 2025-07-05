@@ -286,7 +286,6 @@
         "FATAL_INVALID_STARTSWITH_I": "'I'で始まるリテラルはInfinityであると期待されました",
         "FATAL_INVALID_STARTSWITH_N": "'N'で始まるリテラルはNaNまたはNoneであると期待されました",
         "FATAL_INVALID_STARTSWITH_i": "'i'で始まるリテラルはinfであると期待されました",
-        "FATAL_HEX_INT_OVERFLOW": "16進数は64ビット符号付き整数型には大きすぎます",
         "FATAL_SECOND_DECIMAL_POINT": "数値の誤った場所に小数点があります",
         "FATAL_NUM_TRAILING_e_OR_E": "科学表記の 'e' の後に数字がありません",
         "FATAL_MAX_RECURSION_DEPTH": "最大再帰深度（512）に達しました",

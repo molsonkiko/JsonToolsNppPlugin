@@ -4,6 +4,7 @@ Breaks a Remespath query into tokens.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Text;
 using JSON_Tools.Utils;
@@ -116,19 +117,12 @@ namespace JSON_Tools.JSON_Tools
                 switch (successfulGroup)
                 {
                 case 1: toks.Add(new CurJson()); break;
-                case 2: toks.Add(new JNode(long.Parse(m.Value.Substring(2), NumberStyles.HexNumber), Dtype.INT, 0)); break; // hex number
+                case 2: toks.Add(new JNode(JsonParser.ParseUnsignedHexNumberAsBigInt(m.Value, 2, m.Length))); break; // hex number
                 case 3: // number
                     if (!(m.Groups[4].Success || m.Groups[5].Success))
                     {
                         // base 10 integer
-                        try
-                        {
-                            toks.Add(new JNode(long.Parse(m.Value), Dtype.INT, 0));
-                        }
-                        catch (OverflowException)
-                        {
-                            toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
-                        }
+                        toks.Add(new JNode(BigInteger.Parse(m.Value), Dtype.INT, 0));
                     }
                     else toks.Add(new JNode(double.Parse(m.Value, JNode.DOT_DECIMAL_SEP), Dtype.FLOAT, 0));
                     break;
@@ -414,7 +408,7 @@ namespace JSON_Tools.JSON_Tools
             var sb = new StringBuilder();
             foreach (object tok in tokens)
             {
-                if (tok is int || tok is long || tok is double || tok is string || tok == null || tok is Regex)
+                if (tok is int || tok is BigInteger || tok is double || tok is string || tok == null || tok is Regex)
                 {
                     sb.Append(ArgFunction.ObjectsToJNode(tok).ToString());
                 }

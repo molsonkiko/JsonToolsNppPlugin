@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
@@ -313,6 +315,118 @@ Performance tests for RemesPath ({description})
             return sb.ToString();
         }
 
+        private static readonly char[] hexChars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+        private static string GenerateRandomIntegerStr(bool isHex)
+        {
+            char[] chars;
+            bool negative = RandomJsonFromSchema.random.Next(2) == 1;
+            if (isHex)
+            {
+                int numHexDigits = RandomJsonFromSchema.random.Next(1, 17);
+                int hexStartPos = negative ? 3 : 2; // 0xXX or -0xXX
+                chars = new char[numHexDigits + hexStartPos];
+                chars[hexStartPos - 2] = '0';
+                chars[hexStartPos - 1] = 'x';
+                // max long is 0x7fffffffffffffff, so for 16-digit numbers we only allow the first digit to be 1-6
+                chars[hexStartPos] = hexChars[RandomJsonFromSchema.random.Next(1, numHexDigits == 16 ? 7 : 16)];
+                for (int ii = hexStartPos + 1; ii < numHexDigits + hexStartPos; ii++)
+                    chars[ii] = hexChars[RandomJsonFromSchema.random.Next(16)];
+            }
+            else
+            {
+                int numDigits = RandomJsonFromSchema.random.Next(1, 20);
+                // max long is 9.2e19, so for 19-digit numbers we only allow the first digit to be 1-8
+                int startPos = negative ? 1 : 0; // XX or -XX
+                chars = new char[numDigits + startPos];
+                chars[startPos] = (char)RandomJsonFromSchema.random.Next('1', numDigits == 19 ? '9' : ':');
+                for (int ii = startPos + 1; ii < numDigits + startPos; ii++)
+                    chars[ii] = (char)RandomJsonFromSchema.random.Next('0', ':');
+            }
+            if (negative)
+                chars[0] = '-';
+            return new string(chars);
+        }
+
+        public static bool BenchmarkBigIntegerVersusLongParse(int numInts = 50, int numHexInts = 25, int trialsPerInt = 60)
+        {
+            var watch = new Stopwatch();
+            foreach (bool isHex in new bool[] { false, true })
+            {
+                int arraySize = isHex ? numHexInts : numInts;
+                long[] bigIntTicks = new long[arraySize];
+                long[] longTicks = new long[arraySize];
+                var longs = new long[arraySize];
+                var bigints = new BigInteger[arraySize];
+                var numstrs = new string[arraySize];
+                for (int ii = 0; ii < arraySize; ii++)
+                {
+                    string numstr = GenerateRandomIntegerStr(isHex);
+                    numstrs[ii] = numstr;
+                    long totTicksLong = 0;
+                    long totTicksBigInt = 0;
+                    for (int jj = 0; jj < trialsPerInt; jj++)
+                    {
+                        try
+                        {
+                            watch.Reset();
+                            watch.Start();
+                            long l;
+                            if (isHex)
+                                l = numstr[0] == '-' ? -long.Parse(numstr.Substring(3), NumberStyles.AllowHexSpecifier) : long.Parse(numstr.Substring(2), NumberStyles.AllowHexSpecifier);
+                            else
+                            {
+                                // we unnecessarily get the substring while the timer is running because the JsonParser has to get a substring even if integers are parsed as longs
+                                l = long.Parse(numstr.Substring(0));
+                            }
+                            watch.Stop();
+                            totTicksLong += watch.ElapsedTicks;
+                            watch.Reset();
+                            watch.Start();
+                            BigInteger bi;
+                            if (isHex)
+                                bi = numstr[0] == '-'
+                                    ? -JsonParser.ParseUnsignedHexNumberAsBigInt(numstr, 3, numstr.Length)
+                                    : JsonParser.ParseUnsignedHexNumberAsBigInt(numstr, 2, numstr.Length);
+                            else
+                                bi = BigInteger.Parse(numstr.Substring(0));
+                            watch.Stop();
+                            totTicksBigInt += watch.ElapsedTicks;
+                            if ((BigInteger)l != bi)
+                            {
+                                Npp.AddLine($"String {numstr} (isHex = {isHex}) was parsed as BigInteger {bi} but as unequal long {l}");
+                                return true;
+                            }
+                            if (jj == trialsPerInt - 1)
+                            {
+                                longs[ii] = l;
+                                bigints[ii] = bi;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Npp.AddLine($"While parsing numstr {numstr}, got exception {ex}");
+                            return true;
+                        }
+                    }
+                    bigIntTicks[ii] = totTicksBigInt;
+                    longTicks[ii] = totTicksLong;
+                }
+                string numJson = "[" + string.Join(", ", numstrs.LazySlice(":10")) + " ...]";
+                string descriptor = isHex ? "hex integers" : "integers";
+                Npp.AddLine($"Each of the following {arraySize} {descriptor} (the first 10 are shown) were parsed ({trialsPerInt} times per number) as both BigIntegers and longs:\r\n{numJson}");
+                (double meanLong, double sdLong) = GetMeanAndSd(longTicks);
+                meanLong /= trialsPerInt;
+                sdLong /= trialsPerInt;
+                Npp.AddLine($"Parsing as long took {ConvertTicks(meanLong, "mus")} +/- {ConvertTicks(sdLong, "mus")} μs");
+                (double meanBig, double sdBig) = GetMeanAndSd(bigIntTicks);
+                meanBig /= trialsPerInt;
+                sdBig /= trialsPerInt;
+                Npp.AddLine($"Parsing as BigInteger took {ConvertTicks(meanBig, "mus")} +/- {ConvertTicks(sdBig, "mus")} μs");
+            }
+            return false;
+        }
+
         public static bool BenchmarkJNodeToString(int numTrials, string fname)
         {
             // setup
@@ -425,8 +539,8 @@ Performance tests for RemesPath ({description})
             // restrict to exactly lengthOfArray items for consistency and 3 items per other array for consistency
             if (lengthOfRootArray >= 0)
             {
-                schema["minItems"] = new JNode((long)lengthOfRootArray, Dtype.INT, 0);
-                schema["maxItems"] = new JNode((long)lengthOfRootArray, Dtype.INT, 0);
+                schema["minItems"] = new JNode((BigInteger)lengthOfRootArray, Dtype.INT, 0);
+                schema["maxItems"] = new JNode((BigInteger)lengthOfRootArray, Dtype.INT, 0);
             }
             long[] makeRandomTimes = new long[numTrials];
             long[] validateTimes = new long[numTrials];

@@ -332,7 +332,6 @@
         "FATAL_INVALID_STARTSWITH_I": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'I' هو Infinity",
         "FATAL_INVALID_STARTSWITH_N": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'N' هو NaN أو None",
         "FATAL_INVALID_STARTSWITH_i": "كان متوقعًا أن يكون الحرف الذي يبدأ بـ 'i' هو inf",
-        "FATAL_HEX_INT_OVERFLOW": "الرقم السداسي العشري كبير جدًا بالنسبة لنوع عدد صحيح 64 بت ذي إشارة",
         "FATAL_SECOND_DECIMAL_POINT": "نقطة عشرية في مكان خاطئ في الرقم",
         "FATAL_NUM_TRAILING_e_OR_E": "لا توجد أرقام بعد 'e' في الترميز العلمي",
         "FATAL_MAX_RECURSION_DEPTH": "تم الوصول إلى أقصى عمق للتكرار (512)",

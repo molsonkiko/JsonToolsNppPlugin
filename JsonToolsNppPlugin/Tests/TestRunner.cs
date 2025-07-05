@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
 
@@ -112,6 +113,9 @@ namespace JSON_Tools.Tests
                     "JsonParser performance",
                     true, false
                 ),
+                (() => Benchmarker.BenchmarkBigIntegerVersusLongParse(),
+                    "performance of parsing longs versus BigIntegers",
+                    false, false),
                 (() => Benchmarker.BenchmarkAndFuzzParseAndFormatDoubles(40, 5500),
                     "performance and correctness of parsing and dumping arrays of non-integer numbers",
                     false, false),
