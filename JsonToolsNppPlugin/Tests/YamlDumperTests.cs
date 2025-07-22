@@ -56,7 +56,7 @@ Got
                 new string[] { "\"a \"", "\"a \"\n", "scalar string" },
                 new string[] { "9", "9\n", "scalar int" },
                 new string[] { "-940.3", "-940.3\n", "scalar float" },
-                new string[] { "[true, false]", "- True\n- False\n", "scalar bools" },
+                new string[] { "[true, false]", "- true\n- false\n", "scalar bools" },
                 new string[] { "[null, Infinity, -Infinity, NaN]", "- null\n- .inf\n- -.inf\n- .nan\n", "null, +/-infinity, NaN" },
                 // in the below case, there's actually a bit of an error;
                 // it is better to dump the float 2.0 as '2.0', but this algorithm dumps it

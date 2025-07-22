@@ -1235,10 +1235,11 @@ namespace JSON_Tools.Forms
         }
 
         /// <summary>
-        /// how long we think the UTF8-encoded representations of a list of JNodes is in regex mode.<br></br>
+        /// <paramref name="utf8Lengths"/> is populated with a list of how long we think the UTF8-encoded representations of a list of JNodes is in regex mode.<br></br>
         /// if delim is '\x00' (not in CSV mode) and nodes are all strings, these are just the lengths of their UTF8 reprs.<br></br>
         /// Otherwise, we do some special casing.<br></br>
-        /// returns true unless there was some error (e.g., probably b/c of nodes was a JObject or JArray)
+        /// Returns true unless there was some error (e.g., probably b/c of nodes was a JObject or JArray)<br></br>
+        /// If false was returned, the utf8Lengths array is useless.
         /// </summary>
         /// <param name="nodes">THESE MUST BE ORDERED BY POSITION ASCENDING</param>
         /// <param name="delim"></param>
@@ -1260,13 +1261,20 @@ namespace JSON_Tools.Forms
                     return false;
                 }
                 IComparable value = jnode.value;
+
+                bool isNum = value is double;
+                double d = isNum ? (double)value : 0;
+                if (value is BigInteger bi)
+                {
+                    isNum = true;
+                    d = (double)bi;
+                }
                 
-                if (value is BigInteger || value is double)
+                if (isNum)
                 {
                     // two equal numbers may have several valid representations
                     // we will try to find the length of the representation used in the document,
                     // but we will quit and use the JSON string length if our first attempt fails to find the length
-                    double d = (double)value;
                     int nodepos = jnode.position;
                     if (documentText is null)
                         documentText = selectionEnd < 0

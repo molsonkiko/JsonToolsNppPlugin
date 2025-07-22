@@ -6,6 +6,7 @@ Uses an algorithm to flatten nested JSON.
 */
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace JSON_Tools.JSON_Tools
@@ -307,7 +308,7 @@ namespace JSON_Tools.JSON_Tools
 				{
 					if (node is int && (int)node == 0)
 					{
-						patharr.children.Add(new JNode(0L, Dtype.INT, 0));
+						patharr.children.Add(new JNode(BigInteger.Zero, Dtype.INT, 0));
 					}
 					else
 					{

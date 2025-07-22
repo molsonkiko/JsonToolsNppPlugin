@@ -24,7 +24,7 @@ namespace JSON_Tools.Tests
                 ("{\"aჿ\":[true,false,{\"c\": 3},\"оa\",[1, -2]], \"b\\\"\": \"z\", \"c\": {\"d\": 1.13}, \"d\": 50, \"e\": 0.76, \"f\": null}",
                     "such \"aჿ\" is so yes and no also such \"c\" is 3 wow and \"оa\" also so 1 and -2 many many, \"b\\\"\" is \"z\". " +
                     "\"c\" is such \"d\" is 1.15 wow! \"d\" is 62? \"e\" is 0.114, \"f\" is empty wow"),
-                ("[-9223372036854775808, 9223372036854775807]", "so 1000000000000000000000 and 777777777777777777777 many"),
+                ("[-9223372036854775808, 9223372036854775807]", "so -1000000000000000000000 and 777777777777777777777 many"),
             };
             int testsFailed = 0;
             int ii = 0;

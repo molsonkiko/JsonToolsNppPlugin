@@ -490,13 +490,17 @@ namespace JSON_Tools.JSON_Tools
         public bool TryGetValueAsInt32(out int i)
         {
             i = 0;
-            if (value is BigInteger bi && bi >= int.MinValue && bi <= int.MaxValue)
+            if (value is BigInteger bi && bi >= Int32MinValueAsBigInt && bi <= Int32MaxValueAsBigInt)
             {
                 i = (int)bi;
                 return true;
             }
             return false;
         }
+
+        public static readonly BigInteger Int32MaxValueAsBigInt = (BigInteger)int.MaxValue;
+
+        public static readonly BigInteger Int32MinValueAsBigInt = (BigInteger)int.MinValue;
 
         public static readonly BigInteger DoubleMaxValueAsBigInt = (BigInteger)double.MaxValue;
 

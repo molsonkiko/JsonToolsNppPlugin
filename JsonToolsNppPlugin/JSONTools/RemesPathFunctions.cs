@@ -233,6 +233,8 @@ namespace JSON_Tools.JSON_Tools
             }
             if (!JNode.BothTypesIntersect(atype, btype, Dtype.NUM))
                 throw new RemesPathException($"Can't multiply objects of type {JNode.FormatDtype(atype)} and {JNode.FormatDtype(btype)}");
+            if (aval is BigInteger abi && bval is BigInteger bbi_)
+                return new JNode(abi * bbi_);
             return new JNode(JNode.ConvertJNodeValueToDouble(aval) * JNode.ConvertJNodeValueToDouble(bval));
         }
 
@@ -1202,9 +1204,9 @@ namespace JSON_Tools.JSON_Tools
             char printStyle = args[1].type == Dtype.NULL ? 'm' : ((string)args[1].value)[0];
             bool sortKeys = args[2].type == Dtype.NULL || (bool)args[2].value;
             JNode arg3 = args[3];
-            int indent = 4;
+            int indent = arg3.TryGetValueAsInt32(out int i) ? i : 4;
             char indentChar = ' ';
-            if (!arg3.TryGetValueAsInt32(out indent) && arg3.value is string s && s[0] is char c && c == '\t')
+            if (arg3.value is string s && s[0] is char c && c == '\t')
             {
                 indent = 1;
                 indentChar = c;
@@ -1601,7 +1603,7 @@ namespace JSON_Tools.JSON_Tools
             }
             else if (key is BigInteger kbi)
             {
-                int kint = (int)key;
+                int kint = (int)kbi;
                 for (int ii = 0; ii < itbl.Count; ii++)
                 {
                     var x = (JArray)itbl[ii];
@@ -1629,8 +1631,8 @@ namespace JSON_Tools.JSON_Tools
         public static JNode RandomFromSchema(List<JNode> args)
         {
             JNode node = args[0];
-            int minArrayLength = args.Count >= 2 && args[1].value is BigInteger l && l < int.MaxValue && l >= 0 ? (int)l : 0;
-            int maxArrayLength = args.Count >= 3 && args[2].value is BigInteger l2 && l2 < int.MaxValue && l2 >= 0 ? (int)l2 : 10;
+            int minArrayLength = args.Count > 1 && args[1].TryGetValueAsInt32(out int minArrLen) ? minArrLen : 0;
+            int maxArrayLength = args.Count > 2 && args[2].TryGetValueAsInt32(out int maxArrLen) ? maxArrLen : 10;
             bool extendedAsciiStrings = args.Count >= 4 && args[3].value is bool b && b;
             bool usePatterns = args.Count >= 5 && args[4].value is bool b2 && b2;
             return RandomJsonFromSchema.RandomJson(node, minArrayLength, maxArrayLength, extendedAsciiStrings, usePatterns);
@@ -1694,47 +1696,51 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static JNode Range(List<JNode> args)
         {
-            var start = (BigInteger?)args[0].value;
-            var end = (BigInteger?)args[1].value;
-            var step = (BigInteger?)args[2].value;
-            var nums = new JArray();
-            if (start == null)
+            if (!args[0].TryGetValueAsBigInteger(out BigInteger start))
             {
                 throw new RemesPathException("First argument for 'range' function cannot be null.");
             }
+            var stepNode = args[2];
+            int step = stepNode.TryGetValueAsInt32(out int step_) ? step_ : -1;
             if (step == 0)
             {
                 throw new RemesPathException("Can't have a step size of 0 for the 'range' function");
             }
-            if (end == null && start > 0)
+            var nums = new JArray();
+            if (args[1].TryGetValueAsBigInteger(out BigInteger end))
             {
+                if (stepNode.type == Dtype.NULL)
+                {
+                    // step is unspecified, so default to step size 1
+                    for (BigInteger ii = start; ii < end; ii++)
+                    {
+                        nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                    }
+                }
+                else
+                {
+                    if (start > end && step < 0)
+                    {
+                        for (BigInteger ii = start; ii > end; ii += step)
+                        {
+                            nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                        }
+                    }
+                    else if (start < end && step > 0)
+                    {
+                        for (BigInteger ii = start; ii < end; ii += step)
+                        {
+                            nums.children.Add(new JNode(ii, Dtype.INT, 0));
+                        }
+                    }
+                }
+            }
+            else if (start > 0)
+            {
+                // end is unspecified, so just list all integers in range [0, start)
                 for (BigInteger ii = 0; ii < start; ii++)
                 {
                     nums.children.Add(new JNode(ii, Dtype.INT, 0));
-                }
-            }
-            else if (step == null && start < end)
-            {
-                for (BigInteger ii = start.Value; ii < end; ii++)
-                {
-                    nums.children.Add(new JNode(ii, Dtype.INT, 0));
-                }
-            }
-            else
-            {
-                if (start > end && step < 0)
-                {
-                    for (BigInteger ii = start.Value; ii > end; ii += step.Value)
-                    {
-                        nums.children.Add(new JNode(ii, Dtype.INT, 0));
-                    }
-                }
-                else if (start < end && step > 0)
-                {
-                    for (BigInteger ii = start.Value; ii < end; ii += step.Value)
-                    {
-                        nums.children.Add(new JNode(ii, Dtype.INT, 0));
-                    }
                 }
             }
             return nums;
@@ -3523,7 +3529,7 @@ namespace JSON_Tools.JSON_Tools
         /// <summary>
         /// float(x: anything) -> float<br></br>
         /// converts all numeric JNodes to an equal double.<br></br>
-        /// Converts all decimal string representations of floating point numbers to the corresponding double.
+        /// Converts all base 10 string representations of floating point numbers to the corresponding double.
         /// </summary>
         public static JNode ToFloat(List<JNode> args)
         {

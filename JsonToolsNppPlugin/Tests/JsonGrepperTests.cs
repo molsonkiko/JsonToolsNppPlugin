@@ -147,7 +147,7 @@ namespace JSON_Tools.Tests
             int testsFailed = 0;
 
             string[] urls = new string[] {
-                "https://api.weather.gov",
+                "https://api.weather.gov/stations/KCCR",
                 "https://api.weather.gov/points/37.68333333333334,-121.92500000000001", // Alameda
                 "https://api.weather.gov/points/37.75833333333334,-122.43333333333334", // San Francisco
             };
@@ -156,7 +156,7 @@ namespace JSON_Tools.Tests
             ii = testResult[0];
             testsFailed = testResult[1];
             // test when requesting from only one url
-            string[] firstUrl = new string[] { "https://api.weather.gov" };
+            string[] firstUrl = new string[] { "https://api.weather.gov/stations/KCCR" };
             testResult = await TestApiRequesterHelper(firstUrl, ii, testsFailed, grepper);
             ii = testResult[0];
             testsFailed = testResult[1];

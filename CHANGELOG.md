@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
+## [9.0.0] - (UNRELEASED) YYYY-MM-DD
+
+### Changed
+
+1. Internally represent integers as BigIntegers instead of 64-bit integers, __meaning that JsonTools can correctly parse integers of unlimited size.__ 
+
 ## [8.4.0] - 2025-05-04
 
 ### Added

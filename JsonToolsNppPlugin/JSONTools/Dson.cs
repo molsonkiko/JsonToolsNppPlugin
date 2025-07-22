@@ -42,13 +42,13 @@ namespace JSON_Tools.JSON_Tools
                 val = BigInteger.DivRem(val, 8, out BigInteger rem);
                 sb.Append((int)rem);
             }
-            int sblenM1 = sb.Length - 1;
+            int sblen = sb.Length;
             string s;
-            if (sblenM1 > 0)
+            if (sblen > 1)
             {
-                var chars = new char[sblenM1 + 1];
-                for (int ii = 0; ii <= sblenM1; ii--)
-                    chars[ii] = sb[sblenM1 - ii];
+                var chars = new char[sblen];
+                for (int ii = 0; ii < sblen; ii++)
+                    chars[ii] = sb[sblen - 1 - ii];
                 s = new string(chars);
             }
             else
