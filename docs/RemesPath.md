@@ -117,7 +117,7 @@ The `not` operator introduced in [5.4.0](/CHANGELOG.md#540---2023-07-04) (which 
 
 ### WARNING about arithmetic with integers ###
 
-Since JsonTools stores integers as 64-bit integers, overflow and underflow are possible when doing arithmetic. For example, `int(4e18)*3` incorrectly returns `-6446744073709551616` because the true result would be greater than `2**63 - 1`, the largest 64-bit integer. Use caution when doing arithmetic on very large integers.
+*Prior to [v9.0.0](/CHANGELOG.md#900---unreleased-yyyy-mm-dd)*, JsonTools stored integers as 64-bit integers, overflow and underflow are possible when doing arithmetic. For example, `int(4e18)*3` incorrectly returns `-6446744073709551616` because the true result would be greater than `2**63 - 1`, the largest 64-bit integer. Use caution when doing arithmetic on very large integers.
 
 ### Truthiness ###
 
@@ -793,8 +793,8 @@ __Note:__
 ----
 `int(x: number | string) -> int`
 
-* If x is a boolean or integer: returns a 64-bit integer equal to x.
-* If x is a float: returns the closest 64-bit integer to x.
+* If x is a boolean or integer: returns an integer equal to x.
+* If x is a float: returns the closest integer to x.
    * Note that this is *NOT* the same as the Python `int` function, because __if x is halfway between two integers, the nearest *even integer* is returned.__
 * If x is a __*decimal* string representation of an integer__: returns the integer that is represented. *This means hex numbers can't be parsed by this function, and you should use `num` below instead for that.*
 
@@ -887,7 +887,7 @@ The query `parse(@)` will return
 
 `x` must be an integer or a floating-point number, *not* a boolean.
 
-* If sigfigs is 0: Returns the closest 64-bit integer to `x`.
+* If sigfigs is 0: Returns the closest integer to `x`.
 * If sigfigs > 0: Returns the closest 64-bit floating-point number to `x` rounded to `sigfigs` decimal places.
 
 ----
@@ -989,18 +989,18 @@ The fourth argument and any subsequent argument must all be the number of a capt
 
 __SPECIAL NOTES FOR `s_fa`:__
 1. *`s_fa` treats `^` as the beginning of a line and `$` as the end of a line*, but elsewhere in JsonTools (prior to [v7.0](/CHANGELOG.md#700---2024-02-09)) `^` matches only the beginning of the string and `$` matches only the end of the string.
-2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a hex integer preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
-3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number or (a hex integer preceded by `0x`). A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
+2. Every instance of `(INT)` in `pat` will be replaced by a regex that captures a decimal number or (a 64-bit hex integer preceded by `0x`), optionally preceded by a `+` or `-`. A noncapturing regex that matches the same thing is available through `(?:INT)`.
+3. Every instance of `(NUMBER)` in `pat` will be replaced by a regex that captures a decimal floating point number or (a 64-bit hex integer preceded by `0x`). A noncapturing regex that matches the same thing is available through `(?:NUMBER)`. *Neither `(NUMBER)` nor `(?:NUMBER)` matches `NaN` or `Infinity`, but those can be parsed if desired.*
 4. *`s_fa` may be very slow if `pat` is a function of input,* because the above described regex transformations need to be applied every time the function is called instead of just once at compile time.
 
 __Examples:__
 1. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B`, `(INT)`)`` will return `["1", "-1", "+2", "-0xF", "+0x1a", "0x2B"]`
-2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`,false, 0)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `0` as the fourth arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which stayed as a string because its numeric value was too big for the 64-bit integers used in JsonTools.
+2. ``s_fa(`1  -1 +2 -0xF +0x1a 0x2B 0x10000000000000000`, `(?:INT)`,false, 0)`` will return `[1, -1, 2, -15, 26, 43, "0x10000000000000000"]` because passing `0` as the fourth arg caused all the match results to be parsed as integers, except `0x10000000000000000`, which stayed as a string because __only 64-bit hex integers can be parsed in this way.__
 3. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`,false, 1)`` will return `[["a",1.5,"1"],["b",-30000.0,"2"],["c",-0.2,"6"]]`. Note that the second column but not the third will be parsed as a number, because only `1` was passed in as the number of a capture group to parse as a number.
 4. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (NUMBER) (INT)\r?$`,false, -2, 2)`` will return `[["a",1.5,1],["b",-30000.0,2],["c",-0.2,6]]`. This time the same input is parsed with numbers in the second-to-last and third columns because `-2` and `2` were passed as optional args.
 5. ``s_fa(`a 1.5 1\r\nb -3e4 2\r\nc -.2 6`, `^(\w+) (?:NUMBER) (INT)\r?$`,false, 1)`` will return `[["a",1],["b",2],["c",6]]`. This time the same input is parsed with only two columns, because we used a noncapturing version of the number-matching regex.
-6. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](INT)`, true, 1)`` will return `[["a1",1],["b+2",2],["c-0xF",-15],["d+0x1a",26]]` because the third argument is `true` and there is one capture group, meaning that the matches will be represented as two-element subarrays, with the first element being the full text of the match, and the second element being the captured integer parsed as a number.
-7. 1. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](?:INT)`, true)`` will return `["a1","b+2","c-0xF","d+0x1a"]` because the third argument is `true` but there are no capture groups, so an array of strings is returned instead of 1-element subarrays.
+6. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](INT)`, true, 1)`` will return `[["a1",1],["b+2",2],["c-0xF",-15],["d+0x1a",26]]` because the third argument is `true` and there is one capture group, meaning that the matches will be represented as two-element subarrays, with the first element being the full text of the match, and the second element being the captured integer parsed as a number.
+7. ``s_fa(`a1  b+2 c-0xF d+0x1a`, `[a-z](?:INT)`, true)`` will return `["a1","b+2","c-0xF","d+0x1a"]` because the third argument is `true` but there are no capture groups, so an array of strings is returned instead of 1-element subarrays.
 
 ----
 `s_find(x: string, sub: regex | string) -> array[string]`

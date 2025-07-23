@@ -36,7 +36,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
-- Consider adding bounds checks for integer addition and subtraction in RemesPath, and coercing any results to doubles if they would cause 64-bit int overflow.
 - Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.

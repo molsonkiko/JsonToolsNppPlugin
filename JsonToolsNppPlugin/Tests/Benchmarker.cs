@@ -348,6 +348,61 @@ Performance tests for RemesPath ({description})
             return new string(chars);
         }
 
+        public static bool BenchmarkParseIntegerArray(int numInts = 256, int numTrials = 100)
+        {
+            var watch = new Stopwatch();
+            var parser = new JsonParser();
+            foreach (bool greaterThanUintMax in new[] { true, false })
+            {
+                var ticksEachTrial = new long[numTrials];
+                string previewStr = "";
+                for (int ii = 0; ii < numTrials; ii++)
+                {
+                    var sb = new StringBuilder();
+                    sb.Append('[');
+                    for (int jj = 0; jj < numInts; jj++)
+                    {
+                        long val = RandomJsonFromSchema.random.Next(int.MaxValue);
+                        // The internal implementation of BigIntegers uses an array to store extra bits
+                        //     of any number with value greater than uint.MaxValue.
+                        // This array is only initialized if the number is greater than uint.MaxValue,
+                        //    so this test is bifurcated to see if big integers are significantly slower to parse
+                        //    than small integers.
+                        if (greaterThanUintMax)
+                            val <<= 32;
+                        if (RandomJsonFromSchema.random.Next(2) == 1)
+                            sb.Append('-');
+                        sb.Append(val);
+                        sb.Append(',');
+                        if (ii == 0 && jj == 7 && !greaterThanUintMax)
+                            previewStr = sb.ToString() + "...";
+                    }
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.Append(']');
+                    var s = sb.ToString();
+                    watch.Reset();
+                    watch.Start();
+                    try
+                    {
+                        var json = parser.Parse(s);
+                    }
+                    catch (Exception ex)
+                    {
+                        Npp.AddLine($"While parsing an array of integers, got exception {ex}");
+                        return true;
+                    }
+                    watch.Stop();
+                    ticksEachTrial[ii] = watch.ElapsedTicks;
+                }
+                var description = "integers with absolute value " + (greaterThanUintMax ? "greater" : "less") + " than 2**32 - 1";
+                (double mean, double sd) = GetMeanAndSd(ticksEachTrial);
+                Npp.AddLine($"In {numTrials} trials, it took {ConvertTicks(mean, "mus", 0)} +/- {ConvertTicks(sd, "mus", 0)} μs to parse an array of {numInts} {description}.");
+                if (previewStr.Length > 0)
+                    Npp.AddLine("Here is a preview of a representative example of the integer arrays parsed: " + previewStr);
+            }
+            return false;
+        }
+
         public static bool BenchmarkBigIntegerVersusLongParse(int numInts = 50, int numHexInts = 25, int trialsPerInt = 60)
         {
             var watch = new Stopwatch();

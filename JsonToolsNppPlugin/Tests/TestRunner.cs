@@ -113,8 +113,8 @@ namespace JSON_Tools.Tests
                     "JsonParser performance",
                     true, false
                 ),
-                (() => Benchmarker.BenchmarkBigIntegerVersusLongParse(),
-                    "performance of parsing longs versus BigIntegers",
+                (() => Benchmarker.BenchmarkParseIntegerArray(),
+                    "performance of parsing an array of integers",
                     false, false),
                 (() => Benchmarker.BenchmarkAndFuzzParseAndFormatDoubles(40, 5500),
                     "performance and correctness of parsing and dumping arrays of non-integer numbers",

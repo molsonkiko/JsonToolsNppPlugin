@@ -83,7 +83,7 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 * <span style="color:blue">Blue</span> square braces: __array__
 * <span style="color:green">Green</span> curly braces: __object__
 * ☯️ (yin-yang, half-black, half-white circle): __boolean__
-* <span style="color:red">123</span>: __integer__ (represented by 64-bit integer)
+* <span style="color:red">123</span>: __integer__ (*NOTE*: these can be arbitrarily large, but prior to [v9.0.0](/CHANGELOG.md#900---unreleased-yyyy-mm-dd), these were 64-bit integers)
 * <span style="color:red">-3.5</span>: __float__ (represented by 64-bit floating point number)
 * abc: __string__
 * <span style="color:grey">grey</span> square: __null__
