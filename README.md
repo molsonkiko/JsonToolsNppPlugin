@@ -67,6 +67,12 @@ If you also want to download the most recent [translation to another language](#
 2. Click the download icon near the top of the page.
 3. Put the downloaded raw `{yourLanguage}.json5` file into the `translation` folder of your JsonTools plugin directory, as discussed in [the documentation on translating JsonTools](#translating-jsontools-to-another-language).
 
+### Alternate version that supports arbitrarily large integers ###
+
+Unlike Python, JsonTools uses 64-bit integers, which can take on values between -9223372036854775808 and 9223372036854775807. If an integer literal larger than this is parsed, JsonTools tries to represent it as a 64-bit floating point number, which can only *precisely* represent integers with absolute value up to 9007199254740992 but can *imprecisely* reprsent numbers with absolute value up to 1.7976931348623157e+308. Any integer literal too large for a 64-bit floating point number would thus be represented as `Infinity` or `-Infinity`.
+
+If the 64-bit limit on integers is problematic for you, you may wish to download the [latest release from the `big_integer_for_Dtype_INT` branch](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v8.4.0.4), which is maintained separately from the main branch but is not available on the plugin manager. Feature requests on that branch will not be accepted, but Mark Olson will try to commit bugfix updates as needed.
+
 ## System Requirements ##
 
 Every version of the plugin works on Notepad++ 8.4.1 onward, although [some versions of Notepad++ have problems](#problematic-notepad-versions).
