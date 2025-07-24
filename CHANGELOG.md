@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [8.4.0.4] - 2025-07-24
 
+__WARNING:__ Although this version of JsonTools is more recent than [v8.4](https://github.com/molsonkiko/JsonToolsNppPlugin/releases/tag/v8.4), it has significantly worse performance. Do not update to this version of JsonTools unless you expect to be parsing integers larger than 9223372036854775808 or lower than -9223372036854775807.
+
 ### Changed
 
 1. Internally represent integers as BigIntegers instead of 64-bit integers, __meaning that JsonTools can correctly parse integers of unlimited size.__ 
