@@ -34,6 +34,7 @@ namespace JSON_Tools.Tests
             JsonParser jsonParser = new JsonParser();
             RemesParser remesparser = new RemesParser();
             Npp.AddLine($"The queried JSON in the RemesParser tests is named foo:{fooStr}");
+            string hugeIntegerStr = ArgFunction.StrMulHelper("10", 160);
             var testcases = new Query_DesiredResult[]
             {
                 // subtraction
@@ -164,6 +165,10 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("17 == 16.6", "false"),
                 new Query_DesiredResult("16.6 < 17", "true"),
                 new Query_DesiredResult("16.6 == 17", "false"),
+                new Query_DesiredResult($"{hugeIntegerStr} < Infinity", "true"), // integer bigger than largest double is less than Infinity
+                new Query_DesiredResult($"Infinity > {hugeIntegerStr}", "true"), // integer bigger than largest double is less than Infinity
+                new Query_DesiredResult($"-{hugeIntegerStr} > -Infinity", "true"), // integer lower than largest negative double is greater than -Infinity
+                new Query_DesiredResult($"-Infinity < -{hugeIntegerStr}", "true"), // integer lower than largest negative double is greater than -Infinity
                 // uminus tests
                 new Query_DesiredResult("-j`[1]`", "[-1]"),
                 new Query_DesiredResult("-j`[1,2]`**-3", "[-1.0, -0.125]"), // check uminus comes after exponentiation

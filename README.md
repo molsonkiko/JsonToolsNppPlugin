@@ -1,4 +1,4 @@
-# JsonToolsNppPlugin
+# JsonToolsNppPlugin (big integer version)
 
 [![Continuous Integration](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml/badge.svg)](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/workflows/CI_build.yml)
 
@@ -40,11 +40,11 @@ If you have any issues, see if [updating to the latest release](https://github.c
 
 Go to the [Releases page](https://github.com/molsonkiko/JsonToolsNppPlugin/releases) to see past releases.
 
-[Download latest 32-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x86.zip)
+[Download latest 32-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/big_integer_for_Dtype_INT/JsonToolsNppPlugin/Release_x86.zip)
 
 You can unzip the 32-bit download to `.\Program Files (x86)\Notepad++\plugins\JsonTools\JsonTools.dll`.
 
-[Download latest 64-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/main/JsonToolsNppPlugin/Release_x64.zip)
+[Download latest 64-bit version](https://github.com/molsonkiko/JsonToolsNppPlugin/raw/big_integer_for_Dtype_INT/JsonToolsNppPlugin/Release_x64.zip)
 
 You can unzip the 64-bit download to `C:\Program Files\Notepad++\plugins\JsonTools\JsonTools.dll`.
 
@@ -53,7 +53,7 @@ Alternatively, you can follow these [installation instructions](https://npp-user
 ### Downloading unreleased versions ###
 
 You can also download recently committed but unreleased versions of JsonTools by downloading the appropriate GitHub artifact in the following way:
-1. Go to the [commit history](https://github.com/molsonkiko/JsonToolsNppPlugin/commits/main/) of JsonTools.
+1. Go to the [commit history](https://github.com/molsonkiko/JsonToolsNppPlugin/commits/big_integer_for_Dtype_INT/) of JsonTools.
 2. Most commits will have a green checkmark and the text `4/4` next to their commit message. Click on it.
 3. A dropdown menu showing the CI tasks will appear. Click on one of the `Details` links. [Here's an example of a page that this leads to.](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/runs/9767448644/job/26962739908).
 4. Click the `Summary` link near the top-left corner of the page. [Here's an example of the page this leads to.](https://github.com/molsonkiko/JsonToolsNppPlugin/actions/runs/9767448644)
@@ -62,10 +62,14 @@ You can also download recently committed but unreleased versions of JsonTools by
 7. Close Notepad++, if it was open, because you can't modify the JsonTools DLL while it's in use.
 8. Copy the `JsonTools.dll` inside the extracted folder into the `Notepad++\plugins\JsonTools` folder under your Notepad++ installation, overwriting your old version of JsonTools (or rename the old version so that you can switch back to it)
 
-If you also want to download the most recent [translation to another language](#translating-jsontools-to-another-language), you will need to also download the most up-to-date translation file for that language from [the `translation` folder of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/tree/main/translation). To do that:
+If you also want to download the most recent [translation to another language](#translating-jsontools-to-another-language), you will need to also download the most up-to-date translation file for that language from [the `translation` folder of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/tree/big_integer_for_Dtype_INT/translation). To do that:
 1. Click on one of the files in the list.
 2. Click the download icon near the top of the page.
 3. Put the downloaded raw `{yourLanguage}.json5` file into the `translation` folder of your JsonTools plugin directory, as discussed in [the documentation on translating JsonTools](#translating-jsontools-to-another-language).
+
+### Alternate 64-bit integer version ###
+
+This is not the [main version of JsonTools](https://github.com/molsonkiko/JsonToolsNppPlugin/) available on the plugin manager. This version sacrifices performance to allow the parsing of arbitrarily large integers.
 
 ## System Requirements ##
 
@@ -73,7 +77,7 @@ Every version of the plugin works on Notepad++ 8.4.1 onward, although [some vers
 
 Versions of the plugin from [4.10.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/e2ffde3a5e529d94f018930dc5ba5e0b077e793c) onward are compatible with older Notepad++ (tested for [7.3.3](https://notepad-plus-plus.org/downloads/v7.3.3/), may be compatible with even older).
 
-Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#3721---2022-10-20) should work natively on Windows 8 or later (note: this is untested), or you must install [.NET Framework 4.0](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40). Every version beginning with [4.0.0](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/CHANGELOG.md#400---2022-10-24) works on [Windows 10 May 2019 update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) or later, or you must install [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48).
+Every version up to and including [3.7.2.1](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/CHANGELOG.md#3721---2022-10-20) should work natively on Windows 8 or later (note: this is untested), or you must install [.NET Framework 4.0](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40). Every version beginning with [4.0.0](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/CHANGELOG.md#400---2022-10-24) works on [Windows 10 May 2019 update](https://blogs.windows.com/windowsexperience/2019/05/21/how-to-get-the-windows-10-may-2019-update/) or later, or you must install [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48).
 
 ### Problematic Notepad++ versions ###
 
@@ -92,7 +96,7 @@ This is *not* a complete list of known issues with JsonTools. For that, see the 
 
 This plugin may consume huge amounts of memory when working with really huge JSON files (say 50+ megabytes). As of version `0.3.0`, my [HugeFiles](https://github.com/molsonkiko/HugeFiles) plugin can break a JSON file up into chunks such that every chunk is syntactically valid JSON. This way you don't need to read the entire file into the text editor, and you can look at one chunk at a time. You can also use this plugin to perform simple find/replace operations on the entire file (maybe eventually allowing control over which sections of the file to edit). Finally, the plugin allows a very large JSON file to be broken up into separate syntactically valid JSON files, which may be easier to use.
 
-[JSMinNPP](https://github.com/sunjw/jstoolnpp) is a reasonable alternative, although as of `v5.0.0`, JsonTools has comparable performance and parsing ability.
+[JSMinNPP](https://github.com/sunjw/jstoolnpp) is a reasonable alternative, although as of `v5.0.0`, JsonTools has comparable parsing ability. This version of JsonTools has worse performance, but the main version has comparable performance.
 
 While not a JSON plugin per se, [PythonScript](https://github.com/bruderstein/PythonScript) enables Notepad++ users to customize the editor with Python scripts. Since Python has an excellent native JSON library, you could easily use this plugin to create custom scripts for working with JSON.
 
@@ -157,19 +161,19 @@ If you decide that you don't like the translation and prefer the original Englis
 
 To be clear, *JsonTools may not be in the same language of the Notepad++ UI.* The steps described above represent my best effort to automatically translate JsonTools into a language that the user will find useful, without requiring the user to select their language from a list of available languages in the settings form.
 
-To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/english.json5) and follow the instructions in that file.
+To translate JsonTools to another language, just look at [`english.json5` in the translations directory of this repo](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/english.json5) and follow the instructions in that file.
 
 Currently JsonTools has been translated into the following languages:
 | Language | First version with translation | Translator(s) | Translator is native speaker?  |
 |----------|--------------------------------|---------------|--------------------------------|
-| [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `messageBoxes` and `fileComments` sections)  | Only conky77 |
-| [Arabic](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/arabic.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [Chinese (simplified)](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/chineseSimplified.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [French](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/french.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [German](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/german.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [Japanese](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/japanese.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [Korean](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/korean.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
-| [Taiwanese Mandarin](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation/taiwaneseMandarin.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Italian](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/italian.json5)  |   [v8.0](/CHANGELOG.md#800---2024-06-29) |  [conky77](https://github.com/conky77), [molsonkiko](https://github.com/molsonkiko) (only for `messageBoxes` and `fileComments` sections)  | Only conky77 |
+| [Arabic](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/arabic.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Chinese (simplified)](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/chineseSimplified.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [French](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/french.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [German](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/german.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Japanese](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/japanese.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Korean](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/korean.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
+| [Taiwanese Mandarin](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation/taiwaneseMandarin.json5)  |   [v8.4](/CHANGELOG.md#840---2025-05-04) |  [hydy100](https://github.com/hydy100) | Yes |
 
 
 The following aspects of JsonTools __can__ be translated:

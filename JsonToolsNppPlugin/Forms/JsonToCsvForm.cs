@@ -98,7 +98,7 @@ namespace JSON_Tools.Forms
 
         private void DocsButton_Click(object sender, EventArgs e)
         {
-            Main.OpenUrlInWebBrowser("https://github.com/molsonkiko/JSONToolsNppPlugin/tree/main/docs/json-to-csv.md");
+            Main.OpenUrlInWebBrowser("https://github.com/molsonkiko/JSONToolsNppPlugin/tree/big_integer_for_Dtype_INT/docs/json-to-csv.md");
         }
     }
 }

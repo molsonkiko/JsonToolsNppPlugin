@@ -812,6 +812,8 @@ namespace JSON_Tools.JSON_Tools
                         return bi.CompareTo(obi);
                     if (other is double od)
                     {
+                        if (double.IsInfinity(od))
+                            return od < 0 ? 1 : -1;
                         if (bi > DoubleMaxValueAsBigInt)
                             return 1;
                         if (bi < DoubleMinValueAsBigInt)
@@ -822,9 +824,13 @@ namespace JSON_Tools.JSON_Tools
                         return bi.CompareTo(b ? BigInteger.One : BigInteger.Zero);
                     throw new ArgumentException("Can't compare numbers to non-numbers");
                 case Dtype.FLOAT:
-                    if (!(other is BigInteger || other is double || other is bool))
+                    bool otherIsDouble = other is double;
+                    if (!(otherIsDouble || other is BigInteger || other is bool))
                         throw new ArgumentException("Can't compare numbers to non-numbers");
-                    return ((double)value).CompareTo(ConvertJNodeValueToDouble(other));
+                    var d = (double)value;
+                    if (!otherIsDouble && double.IsInfinity(d))
+                        return d < 0 ? -1 : 1; // need to address possibility that other is integer outside the range of doubles
+                    return d.CompareTo(ConvertJNodeValueToDouble(other));
                 case Dtype.BOOL:
                     if (!(other is BigInteger || other is double || other is bool))
                         throw new ArgumentException("Can't compare numbers to non-numbers");

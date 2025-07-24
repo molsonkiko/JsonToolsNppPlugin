@@ -43,9 +43,9 @@
             this.Title.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Title.Location = new System.Drawing.Point(110, 9);
             this.Title.Name = "Title";
-            this.Title.Size = new System.Drawing.Size(170, 20);
+            this.Title.Size = new System.Drawing.Size(179, 40);
             this.Title.TabIndex = 0;
-            this.Title.Text = "JsonTools vX.Y.Z.A";
+            this.Title.Text = "JsonTools vX.Y.Z.A\r\n(big integer version)";
             // 
             // GitHubLink
             // 
@@ -66,10 +66,9 @@
             this.Description.AutoSize = true;
             this.Description.Location = new System.Drawing.Point(28, 64);
             this.Description.Name = "Description";
-            this.Description.Size = new System.Drawing.Size(344, 48);
+            this.Description.Size = new System.Drawing.Size(362, 64);
             this.Description.TabIndex = 3;
-            this.Description.Text = "Query/editing tool for JSON including linting, reformatting, \r\na tree viewer with" +
-    " file navigation,\r\na JMESpath-like query language, and much more";
+            this.Description.Text = resources.GetString("Description.Text");
             // 
             // DebugInfoLabel
             // 
@@ -99,7 +98,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(399, 389);
+            this.ClientSize = new System.Drawing.Size(402, 389);
             this.Controls.Add(this.ThanksWowLinkLabel);
             this.Controls.Add(this.DebugInfoLabel);
             this.Controls.Add(this.Description);

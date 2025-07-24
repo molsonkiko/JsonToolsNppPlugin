@@ -1,5 +1,5 @@
 # Converting JSON to CSVs #
-This app uses an [algorithm](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/JsonToolsNppPlugin/JSONTools/JsonTabularize.cs) based on analysis of a JSON iterable's [schema](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/JsonToolsNppPlugin/JSONTools/JsonSchemaMaker.cs) (generated on the fly) to attempt to convert it into a table.
+This app uses an [algorithm](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/JsonToolsNppPlugin/JSONTools/JsonTabularize.cs) based on analysis of a JSON iterable's [schema](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/JsonToolsNppPlugin/JSONTools/JsonSchemaMaker.cs) (generated on the fly) to attempt to convert it into a table.
 
 
 ## How JSON nodes are represented in CSV ##

@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#840---2025-05-04) to this project will be documented in this file.
+All [notable changes](#8404---2025-07-24) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### To Be Fixed
 
+- Crash bugs described in issues [46](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/46) and [59](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/59).
+	- I don't think these issues are caused by the plugins config directory having a path length greater than `Win32.MAX_PATH`, because the error messages that people are seeing look different from the error message that I get when I deliberately create that issue.
+	- I also doubt that the issue is due to a race condition where the delayed-parse-after-editing thread tries to access `jsonFileInfos` when it's being deleted, because such an error would not appear at startup, and it would only appear sometimes on shutdown, not all the time.
 - Make sure there aren't any easily-triggered race conditions induced by [automatic parsing and validation after editing](/docs/README.md#automatically-check-for-errors-after-editing).
     - In 6.1.1.18, there is no longer a global shared JsonParser, which was the main potential source of race conditions.
 - Fix issue where pretty-printing or compressing causes tree view position tracking to be out of sync with the document until a query is issued or the `Refresh` button is hit.
@@ -48,7 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 
-## [9.0.0] - (UNRELEASED) YYYY-MM-DD
+## [8.4.0.4] - 2025-07-24
 
 ### Changed
 
@@ -60,7 +63,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Add [`recurse_until` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) to recursively search arrays and objects for anything inside that satisfies a condition.
 2. Add [`keyboard_shortcuts` setting](/docs/README.md#the-basics), allowing users to turn off default JsonTools keyboard shortcuts.
-3. Courtesy of user [hydy100](https://github.com/hydy100), [Translation](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/main/translation) to Arabic, Chinese (simplified), French, German, Japanese, Korean, and Taiwanese Mandarin.
+3. Courtesy of user [hydy100](https://github.com/hydy100), [Translation](https://github.com/molsonkiko/JsonToolsNppPlugin/blob/big_integer_for_Dtype_INT/translation) to Arabic, Chinese (simplified), French, German, Japanese, Korean, and Taiwanese Mandarin.
 
 ### Fixed
 

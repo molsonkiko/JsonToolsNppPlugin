@@ -24,7 +24,7 @@ namespace Kbg.NppPluginNET
         #region " Fields "
         internal const int UNDO_BUFFER_SIZE = 64;
         internal const string PluginName = "JsonTools";
-        public const string PluginRepoUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin";
+        public const string PluginRepoUrl = "https://github.com/molsonkiko/JsonToolsNppPlugin/tree/big_integer_for_Dtype_INT";
         // general stuff things
         public static Settings settings = new Settings();
         public static IniFileParser iniParser = new IniFileParser();
@@ -450,8 +450,13 @@ namespace Kbg.NppPluginNET
             shouldRenameGrepperForm = false;
         }
 
+        /// <summary>
+        /// called once when Notepad++ is shutting down normally (in response to <see cref="NppMsg.NPPN_SHUTDOWN"/>
+        /// </summary>
         static internal void PluginCleanUp()
         {
+            // turn off auto-validation because we're about to remove jsonFileInfos
+            settings.auto_validate = false;
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
                 grepperForm.Close();
