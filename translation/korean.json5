@@ -3,7 +3,7 @@
         "AboutForm": {
             "title": "JsonTools 정보",
             "controls": {
-                "Description": "구문 검사, 재포맷, 파일 탐색 기능이 있는 트리 뷰,\r\nJMESpath와 유사한 쿼리 언어 등을 포함한\r\nJSON용 쿼리/편집 도구",
+                "Description": "구문 검사, 재포맷, 파일 탐색 기능이 있는 트리 뷰,\r\nJMESpath와 유사한 쿼리 언어 등을 포함한\r\nJSON용 쿼리/편집 도구.\r\n이 버전의 JsonTools는 임의로 큰 정수를 지원합니다.",
                 "GitHubLink": {
                     "text": "[{\"need\": \"도움이 필요하신가요?\"}, \"여기에서 질문하세요:\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
                     "linkStart": 42, // Adjusted for Korean text length

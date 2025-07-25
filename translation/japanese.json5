@@ -3,7 +3,7 @@
         "AboutForm": {
             "title": "JsonToolsについて",
             "controls": {
-                "Description": "構文チェック、再フォーマット、\r\nファイルナビゲーション付きツリービュー、\r\nJMESpathのようなクエリ言語などを含む、JSON用のクエリ/編集ツール",
+                "Description": "構文チェック、再フォーマット、\r\nファイルナビゲーション付きツリービュー、\r\nJMESpathのようなクエリ言語などを含む、JSON用のクエリ/編集ツール。\r\nこのバージョンの JsonTools は、任意の大きさの整数をサポートします。",
                 "GitHubLink": {
                     "text": "[{\"need\": \"ヘルプが必要ですか？\"}, \"こちらで質問してください：\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
                     "linkStart": 43, // Adjusted for Japanese text length

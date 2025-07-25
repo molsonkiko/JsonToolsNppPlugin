@@ -3,7 +3,7 @@
         "AboutForm": {
             "title": "À propos de JsonTools",
             "controls": {
-                "Description": "Outils de requête/édition pour JSON, incluant la vérification de la syntaxe, le reformatage,\r\nla vue arborescente avec navigation de fichiers,\r\nun langage de requête de type JMESpath, et plus encore",
+                "Description": "Outils de requête/édition pour JSON, incluant la vérification de la syntaxe, le reformatage,\r\nla vue arborescente avec navigation de fichiers,\r\nun langage de requête de type JMESpath, et plus encore.\r\nCette version de JsonTools prend en charge des entiers arbitrairement grands.",
                 "GitHubLink": {
                     "text": "[{\"need\": \"Besoin d'aide ?\"}, \"Posez votre question ici :\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
                     "linkStart": 61, // Adjusted for French text length

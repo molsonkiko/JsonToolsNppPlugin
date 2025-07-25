@@ -40,7 +40,7 @@
             "controls": {
                 // If the value associated with a control name is a string,
                 //     that controls the text of the control.
-                "Description": "用于 JSON 的查询/编辑工具，包括语法检查、重新格式化、\r\n带文件导航的树状视图、\r\n类似 JMESpath 的查询语言等等",
+                "Description": "用于 JSON 的查询/编辑工具，包括语法检查、重新格式化、\r\n带文件导航的树状视图、\r\n类似 JMESpath 的查询语言等等。\r\n此版本的 JsonTools 支持任意大的整数。",
                 "GitHubLink": {
                     // This is a LinkLabel, meaning it has a clickable link (the JsonTools repo URL).
                     "text": "[{\"need\": \"需要帮助？\"}, \"请在这里提问：\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",

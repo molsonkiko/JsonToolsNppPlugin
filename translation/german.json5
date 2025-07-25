@@ -3,7 +3,7 @@
         "AboutForm": {
             "title": "Über JsonTools",
             "controls": {
-                "Description": "Abfrage-/Bearbeitungswerkzeuge für JSON, einschließlich Syntaxprüfung, Neuformatierung,\r\nBaumansicht mit Dateinavigation,\r\nJMESpath-ähnliche Abfragesprache und mehr",
+                "Description": "Abfrage-/Bearbeitungswerkzeuge für JSON, einschließlich Syntaxprüfung, Neuformatierung,\r\nBaumansicht mit Dateinavigation,\r\nJMESpath-ähnliche Abfragesprache und mehr.\r\nDiese Version von JsonTools unterstützt beliebig große Ganzzahlen.",
                 "GitHubLink": {
                     "text": "[{\"need\": \"Benötigen Sie Hilfe?\"}, \"Stellen Sie hier Ihre Frage:\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
                     "linkStart": 67, // Adjusted for German text length

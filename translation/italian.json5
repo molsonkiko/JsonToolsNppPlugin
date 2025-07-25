@@ -40,7 +40,7 @@
             "controls": {
                 // If the value associated with a control name is a string,
                 //     that controls the text of the control.
-                "Description": "Strumento di query/modifica per JSON che include linting, riformattazione, \r\n visualizzatore di alberi con navigazione tra file,\r\n linguaggio di query simile a JMESpath e molto altro",
+                "Description": "Strumento di query/modifica per JSON che include linting, riformattazione, \r\n visualizzatore di alberi con navigazione tra file,\r\n linguaggio di query simile a JMESpath e molto altro.\r\nQuesta versione di JsonTools supporta numeri interi arbitrariamente grandi.",
                 "GitHubLink": {
                     // This is a LinkLabel, meaning it has a clickable link (the JsonTools repo URL).
                     "text": "[{\"necessiti\": \"aiuto?\"}, \"chiedi a\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",

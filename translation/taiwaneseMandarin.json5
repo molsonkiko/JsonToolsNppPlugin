@@ -3,7 +3,7 @@
         "AboutForm": {
             "title": "關於JsonTools",
             "controls": {
-                "Description": "用於 JSON 的查詢/編輯工具，包括語法檢查、重新格式化、\r\n帶檔案導覽的樹狀檢視、\r\n類似 JMESpath 的查詢語言等等",
+                "Description": "用於 JSON 的查詢/編輯工具，包括語法檢查、重新格式化、\r\n帶檔案導覽的樹狀檢視、\r\n類似 JMESpath 的查詢語言等等。\r\n此版本的 JsonTools 支援任意大的整數。",
                 "GitHubLink": {
                     "text": "[{\"need\": \"需要幫助嗎？\"}, \"請在此處提問：\",\r\n\"https://github.com/molsonkiko/JsonToolsNppPlugin\"]",
                     "linkStart": 32,
