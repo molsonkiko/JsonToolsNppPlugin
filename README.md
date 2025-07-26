@@ -69,7 +69,7 @@ If you also want to download the most recent [translation to another language](#
 
 ### Alternate 64-bit integer version ###
 
-This is not the [main version of JsonTools](https://github.com/molsonkiko/JsonToolsNppPlugin/) available on the plugin manager. This version sacrifices performance to allow the parsing of arbitrarily large integers.
+This is not the [main version of JsonTools](https://github.com/molsonkiko/JsonToolsNppPlugin/) available on the plugin manager. This version sacrifices performance to allow the parsing of [arbitrarily large integers](https://learn.microsoft.com/en-us/dotnet/api/system.numerics.biginteger?view=netframework-4.8).
 
 ## System Requirements ##
 
