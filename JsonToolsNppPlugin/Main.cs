@@ -452,6 +452,8 @@ namespace Kbg.NppPluginNET
 
         static internal void PluginCleanUp()
         {
+            // turn off auto-validation because we're about to remove jsonFileInfos
+            settings.auto_validate = false;
             if (grepperForm != null && !grepperForm.IsDisposed)
             {
                 grepperForm.Close();

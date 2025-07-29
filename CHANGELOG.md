@@ -48,6 +48,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - GrepperForm loses its JSON permanently when the buffer associated with its treeview is deleted.
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
+- Hard-to-reproduce issue where sometimes clicking a treenode in regex search results does not navigate to the correct location in the document (should navigate to the start of the match). Appears to only happen when there is no capture group. It's an all-or-nothing issue; either none of the treenodes navigate to the correct location or all of them do.
+
+## [9.0.0] - (UNRELEASED) YYYY-MM-DD
+
+### Fixed
+
+1. Bug where JsonTools could not set the text of a file to end with the SOH character (ASCII code `\x01`)
+2. Bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
 
 ## [8.4.0] - 2025-05-04
 

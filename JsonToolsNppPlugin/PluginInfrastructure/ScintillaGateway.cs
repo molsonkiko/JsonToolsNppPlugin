@@ -47,6 +47,22 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             }
         }
 
+        /// <summary>
+        /// the same byte[] buffer that would be returned by Encoding.UTF8.GetBytes(text),
+        /// but with +1 length and a NULL byte at the end
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private byte[] GetNullTerminatedUTF8Bytes(string text)
+        {
+            int length = Encoding.UTF8.GetByteCount(text);
+            byte[] bytes = new byte[length + 1];
+            int lengthWritten = Encoding.UTF8.GetBytes(text, 0, text.Length, bytes, 0);
+            //if (lengthWritten != length)
+            //    throw new Exception("not sure what we would do here");
+            return bytes;
+        }
+
         public ScintillaGateway(IntPtr scintilla)
         {
             this.scintilla = scintilla;
@@ -131,7 +147,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <summary>Insert string at a position. (Scintilla feature 2003)</summary>
         public unsafe void InsertText(int pos, string text)
         {
-            fixed (byte* textPtr = Encoding.UTF8.GetBytes(text))
+            fixed (byte* textPtr = GetNullTerminatedUTF8Bytes(text))
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_INSERTTEXT, (IntPtr) pos, (IntPtr) textPtr);
             }
@@ -1781,12 +1797,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <summary>Replace the contents of the document with the argument text. (Scintilla feature 2181)</summary>
         public unsafe void SetText(string text)
         {
-            if (text.Length == 0)
-            {
-                ClearAll();
-                return;
-            }
-            fixed (byte* textPtr = Encoding.UTF8.GetBytes(text))
+            fixed (byte* textPtr = GetNullTerminatedUTF8Bytes(text))
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_SETTEXT, (IntPtr) Unused, (IntPtr) textPtr);
             }

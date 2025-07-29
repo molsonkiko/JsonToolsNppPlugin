@@ -778,6 +778,9 @@ namespace JSON_Tools.Tests
                 ("treenode_click", new object[]{new string[] { "3 : \"{\\\"5\\\": [6]}\"" } }),
                 ("tree_query", new object[]{"@ = ``"}), // test that using RemesPath to clear text of document works
                 ("compare_text", new object[]{""}),
+                // TEST DOC CAN END WITH SOH CHAR
+                ("tree_query", new object[]{"@ = j`\"foo\\r\\n\\u0001\"`"}),
+                ("compare_text", new object[]{"foo\r\n\x01"}),
                 // TEST SORT FORM ON JSON LINES
                 ("overwrite", new object[]{"[1,'foo',true]\n[2,'bar',false]"}),
                 ("set_document_type", new object[]{"JSONL"}),

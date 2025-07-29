@@ -235,6 +235,10 @@ namespace JSON_Tools.Utils
         /// </summary>
         public static void RemoveTrailingSOH()
         {
+            // hopefully using a NULL-terminated string in SetText and AppendText makes this method unnecessary
+            bool isNecessaryRemoveSOH = false;
+            if (!isNecessaryRemoveSOH)
+                return;
             if (!TryGetLengthAsInt(out int lastPos, false))
                 return;
             lastPos--;
