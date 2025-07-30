@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using JSON_Tools.Forms;
 using JSON_Tools.JSON_Tools;
@@ -65,7 +66,8 @@ namespace JSON_Tools.Tests
                 var start = (int)args[0];
                 text = (string)args[1];
                 messages.Add($"insert {JNode.StrToString(text, false)} at {start}");
-                Npp.editor.InsertText(start, text);
+                Encoding encoding = Npp.editor.GetCodePage();
+                Npp.editor.InsertText(start, text, encoding);
                 break;
             case "delete_text":
                 start = (int)args[0];

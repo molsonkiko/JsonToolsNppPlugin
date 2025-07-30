@@ -652,9 +652,10 @@ namespace Kbg.NppPluginNET
                 if (wasAutotriggered && combinedLength > sizeThreshold)
                     return (ParserState.OK, null, false, DocumentType.NONE);
                 stopUsingSelections = false;
+                Encoding encoding = Npp.editor.GetCodePage();
                 foreach ((int start, int end) in selRanges)
                 {
-                    string selRange = Npp.GetSlice(start, end);
+                    string selRange = Npp.GetSlice(start, end, encoding);
                     JNode subJson;
                     if (documentType == DocumentType.REGEX)
                     {
@@ -959,6 +960,7 @@ namespace Kbg.NppPluginNET
             Npp.editor.BeginUndoAction();
             if (usesSelections)
             {
+                Encoding encoding = Npp.editor.GetCodePage();
                 var obj = (JObject)json;
                 int delta = 0;
                 pluginIsEditing = true;
@@ -976,7 +978,7 @@ namespace Kbg.NppPluginNET
                     int newStart = start + delta;
                     int newCount = Encoding.UTF8.GetByteCount(printed);
                     Npp.editor.DeleteRange(newStart, oldLen);
-                    Npp.editor.InsertText(newStart, printed);
+                    Npp.editor.InsertText(newStart, printed, encoding);
                     currentIndicator = ApplyAndSwapIndicator(currentIndicator, newStart, newCount);
                     int newEnd = newStart + newCount;
                     delta = newEnd - end;
@@ -1071,9 +1073,10 @@ namespace Kbg.NppPluginNET
             else
             {
                 var sb = new StringBuilder();
+                Encoding encoding = Npp.editor.GetCodePage();
                 foreach ((int start, int end) in selections)
                 {
-                    string sel = Npp.GetSlice(start, end);
+                    string sel = Npp.GetSlice(start, end, encoding);
                     JNode selNode = new JNode(sel);
                     sb.Append(selNode.ToString());
                     sb.Append("\r\n");
@@ -1096,10 +1099,11 @@ namespace Kbg.NppPluginNET
             var selections = SelectionManager.GetSelectedRanges();
             selections.Sort(SelectionManager.StartEndCompareByStart);
             var sb = new StringBuilder();
+            Encoding encoding = Npp.editor.GetCodePage();
             JsonParser jsonParser = JsonParserFromSettings();
             if (SelectionManager.NoTextSelected(selections))
             {
-                string selStrValue = TryGetSelectedJsonStringValue(jsonParser);
+                string selStrValue = TryGetSelectedJsonStringValue(jsonParser, encoding);
                 if (selStrValue == null)
                     return;
                 sb.Append(selStrValue);
@@ -1108,7 +1112,7 @@ namespace Kbg.NppPluginNET
             {
                 foreach ((int start, int end) in selections)
                 {
-                    string selStrValue = TryGetSelectedJsonStringValue(jsonParser, start, end);
+                    string selStrValue = TryGetSelectedJsonStringValue(jsonParser, encoding, start, end);
                     if (selStrValue == null)
                         return;
                     sb.Append(selStrValue);
@@ -1119,11 +1123,11 @@ namespace Kbg.NppPluginNET
             Npp.editor.SetText(sb.ToString());
         }
 
-        public static string TryGetSelectedJsonStringValue(JsonParser jsonParser, int start = -1, int end = -1)
+        public static string TryGetSelectedJsonStringValue(JsonParser jsonParser, Encoding encoding, int start = -1, int end = -1)
         {
             string text = start < 0 || end < 0
                 ? Npp.editor.GetText()
-                : Npp.GetSlice(start, end);
+                : Npp.GetSlice(start, end, encoding);
             try
             {
                 JNode textNode = jsonParser.Parse(text);
@@ -1454,7 +1458,8 @@ namespace Kbg.NppPluginNET
                     (int start, int end) = SelectionManager.GetEnclosingRememberedSelection(pos, selectionRememberingIndicator1, selectionRememberingIndicator2);
                     if (start < 0)
                         return "";
-                    string selText = Npp.GetSlice(start, end);
+                    var encoding = Npp.editor.GetCodePage();
+                    string selText = Npp.GetSlice(start, end, encoding);
                     var parser = JsonParserFromSettings();
                     JNode selJson = parser.Parse(selText);
                     if (parser.fatal)
@@ -1496,9 +1501,10 @@ namespace Kbg.NppPluginNET
             var startEnds = new List<string>();
             int lastEnd = 0;
             Predicate<char> isTryParseStart = c => settings.try_parse_start_chars.IndexOf(c) >= 0;
+            var encoding = Npp.editor.GetCodePage();
             foreach ((int start, int end) in selections)
             {
-                string text = Npp.GetSlice(start, end);
+                string text = Npp.GetSlice(start, end, encoding);
                 int ii = 0;
                 int len = text.Length;
                 int utf8Pos = start;
@@ -2016,7 +2022,7 @@ namespace Kbg.NppPluginNET
         /// <returns></returns>
         public static int EndOfJNodeAtPos(int startUtf8Pos, int end)
         {
-            string slice = Npp.GetSlice(startUtf8Pos, end);
+            string slice = Npp.GetSlice(startUtf8Pos, end, Npp.editor.GetCodePage());
             var parser = new JsonParser(LoggerLevel.JSON5);
             try
             {
@@ -2055,7 +2061,8 @@ namespace Kbg.NppPluginNET
                     "Can't select all children", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            string slice = Npp.GetSlice(minPos, len);
+            Encoding encoding = Npp.editor.GetCodePage();
+            string slice = Npp.GetSlice(minPos, len,  encoding);
             var parser = new JsonParser(LoggerLevel.JSON5);
             int utf8ExtraBytes = 0;
             int positionsIdx = 0;

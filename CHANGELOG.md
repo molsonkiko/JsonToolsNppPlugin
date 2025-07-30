@@ -54,8 +54,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-1. Bug where JsonTools could not set the text of a file to end with the SOH character (ASCII code `\x01`)
-2. Bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
+1. __Correctly parse all ANSI files.__ Previously JsonTools assumed that Notepad++ used UTF8 to internally represent every document, and while that appears to have worked fine for most encodings, it would specifically fail on ANSI-encoded documents containing non-ASCII.
+    - __The following features are currently *still broken* on ANSI files with non-ASCII characters__ (because they rely on knowing the position of a JSON node):
+		* [path to current position](/docs/README.md#path-to-current-position)
+		* [clicking on a tree node to navigate to its position in the document](/docs/README.md#the-basics)
+		* [selecting a tree node or its children](/docs/README.md#select-tree-nodes-json-or-its-children-added-in-v57)
+		* [selecting all valid JSON in selection](/docs/README.md#selecting-all-valid-json)
+2. Minor bug where JsonTools could not set the text of a file to end with the SOH character (ASCII code `\x01`)
+3. Minor bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
 
 ## [8.4.0] - 2025-05-04
 

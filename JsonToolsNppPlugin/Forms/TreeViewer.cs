@@ -1248,6 +1248,7 @@ namespace JSON_Tools.Forms
             int startIndex = 0;
             string documentText = null;
             utf8Lengths = new int[nodes.Length];
+            Encoding encoding = Npp.editor.GetCodePage();
             for (int ii = 0; ii < nodes.Length; ii++)
             {
                 JNode jnode = nodes[ii];
@@ -1269,7 +1270,7 @@ namespace JSON_Tools.Forms
                     if (documentText is null)
                         documentText = selectionEnd < 0
                             ? Npp.editor.GetText()
-                            : Npp.GetSlice(selectionStart, selectionEnd);
+                            : Npp.GetSlice(selectionStart, selectionEnd, encoding);
                     int utf8Extra = 0;
                     for (; startIndex < documentText.Length && startIndex + utf8Extra < nodepos; startIndex++)
                         utf8Extra += JsonParser.ExtraUTF8Bytes(documentText[startIndex]);
@@ -1298,7 +1299,7 @@ namespace JSON_Tools.Forms
                         // even if a string doesn't *need* to be quoted, it could be quoted anyway, in which case we need to select the quotes
                         int nodeStart = selectionStart + jnode.position;
                         int quoteLen = 1 + JsonParser.ExtraUTF8Bytes(quote);
-                        string firstChar = Npp.GetSlice(nodeStart, nodeStart + quoteLen);
+                        string firstChar = Npp.GetSlice(nodeStart, nodeStart + quoteLen, encoding);
                         if (firstChar[0] == quote)
                             utf8Len += 2 * quoteLen;
                     }

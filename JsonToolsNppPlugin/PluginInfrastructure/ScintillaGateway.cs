@@ -25,7 +25,8 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// * if length is 0, return the length and have no side effects<br></br>
         /// * if length is greater than 0, return the length and fill the buffer with length characters<br></br>
         /// This method gets the length if the length is 0, uses the second mode to fill a buffer,<br></br>
-        /// and returns a string of the UTF8-decoded buffer with all trailing '\x00' chars stripped off.
+        /// figures out the document's encoding,<br></br>
+        /// and returns a string of the decoded buffer with all trailing '\x00' chars stripped off.
         /// </summary>
         /// <param name="msg">message to send</param>
         /// <param name="length">number of characters to retrieve (if 0, find out by sending message)</param>
@@ -35,6 +36,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             if (length < 1)
                 length = Win32.SendMessage(scintilla, msg, (IntPtr)Unused, (IntPtr)Unused).ToInt32();
             byte[] textBuffer = new byte[length];
+            var encoding = GetCodePage();
             fixed (byte* textPtr = textBuffer)
             {
                 Win32.SendMessage(scintilla, msg, (IntPtr)length, (IntPtr)textPtr);
@@ -43,21 +45,21 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
                 // other than NULL can have any 0-valued bytes in UTF-8.
                 // See https://en.wikipedia.org/wiki/UTF-8#Encoding
                 for (; lastNullCharPos >= 0 && textBuffer[lastNullCharPos] == '\x00'; lastNullCharPos--) { }
-                return Encoding.UTF8.GetString(textBuffer, 0, lastNullCharPos + 1);
+                return encoding.GetString(textBuffer, 0, lastNullCharPos + 1);
             }
         }
 
         /// <summary>
-        /// the same byte[] buffer that would be returned by Encoding.UTF8.GetBytes(text),
+        /// the same byte[] buffer that would be returned by encoding.GetBytes(text),<br></br>
         /// but with +1 length and a NULL byte at the end
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        private byte[] GetNullTerminatedUTF8Bytes(string text)
+        private byte[] GetNullTerminatedEncodedBytes(string text, Encoding encoding)
         {
-            int length = Encoding.UTF8.GetByteCount(text);
+            int length = encoding.GetByteCount(text);
             byte[] bytes = new byte[length + 1];
-            int lengthWritten = Encoding.UTF8.GetBytes(text, 0, text.Length, bytes, 0);
+            int lengthWritten = encoding.GetBytes(text, 0, text.Length, bytes, 0);
             //if (lengthWritten != length)
             //    throw new Exception("not sure what we would do here");
             return bytes;
@@ -80,10 +82,10 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             GotoPos(GetCurrentPos() + text.Length);
         }
 
-        public void InsertTextAndMoveCursor(string text)
+        public void InsertTextAndMoveCursor(string text, Encoding encoding)
         {
             var currentPos = GetCurrentPos();
-            InsertText(currentPos, text);
+            InsertText(currentPos, text, encoding);
             GotoPos(currentPos + text.Length);
         }
 
@@ -145,9 +147,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         }
 
         /// <summary>Insert string at a position. (Scintilla feature 2003)</summary>
-        public unsafe void InsertText(int pos, string text)
+        public unsafe void InsertText(int pos, string text, Encoding encoding)
         {
-            fixed (byte* textPtr = GetNullTerminatedUTF8Bytes(text))
+            fixed (byte* textPtr = GetNullTerminatedEncodedBytes(text, encoding))
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_INSERTTEXT, (IntPtr) pos, (IntPtr) textPtr);
             }
@@ -1505,9 +1507,17 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         }
 
         /// <summary>Get the code page used to interpret the bytes of the document as characters. (Scintilla feature 2137)</summary>
-        public int GetCodePage()
+        public Encoding GetCodePage()
         {
-            return (int)Win32.SendMessage(scintilla, SciMsg.SCI_GETCODEPAGE, (IntPtr) Unused, (IntPtr) Unused);
+            var cpNum = (int)Win32.SendMessage(scintilla, SciMsg.SCI_GETCODEPAGE, (IntPtr) Unused, (IntPtr) Unused);
+            try
+            {
+                return Encoding.GetEncoding(cpNum);
+            }
+            catch
+            {
+                return Encoding.UTF8;
+            }
         }
 
         /// <summary>Get the foreground colour of the caret. (Scintilla feature 2138)</summary>
@@ -1797,7 +1807,8 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <summary>Replace the contents of the document with the argument text. (Scintilla feature 2181)</summary>
         public unsafe void SetText(string text)
         {
-            fixed (byte* textPtr = GetNullTerminatedUTF8Bytes(text))
+            Encoding encoding = GetCodePage();
+            fixed (byte* textPtr = GetNullTerminatedEncodedBytes(text, encoding))
             {
                 Win32.SendMessage(scintilla, SciMsg.SCI_SETTEXT, (IntPtr) Unused, (IntPtr) textPtr);
             }

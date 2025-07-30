@@ -4,6 +4,7 @@ A test runner for all of this package.
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
@@ -198,10 +199,10 @@ Testing {name}
                         failures.Add(name);
                 }
             }
-
+            Encoding encoding = Npp.editor.GetCodePage();
             if (skipped.Count > 0)
-                Npp.editor.InsertText(header.Length + 2, "Tests skipped: " + string.Join(", ", skipped) + "\r\n");
-            Npp.editor.InsertText(header.Length + 2, "Tests failed: " + string.Join(", ", failures) + "\r\n");
+                Npp.editor.InsertText(header.Length + 2, "Tests skipped: " + string.Join(", ", skipped) + "\r\n", encoding);
+            Npp.editor.InsertText(header.Length + 2, "Tests failed: " + string.Join(", ", failures) + "\r\n", encoding);
         }
     }
 }

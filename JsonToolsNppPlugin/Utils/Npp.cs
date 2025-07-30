@@ -256,14 +256,14 @@ namespace JSON_Tools.Utils
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public static string GetSlice(int start, int end)
+        public static string GetSlice(int start, int end, Encoding encoding)
         {
             int len = end - start;
             IntPtr rangePtr = editor.GetRangePointer(start, len);
             string ansi = Marshal.PtrToStringAnsi(rangePtr, len);
             // TODO: figure out a way to do this that involves less memcopy for non-ASCII
-            if (ansi.Any(c => c >= 128))
-                return Encoding.UTF8.GetString(Encoding.Default.GetBytes(ansi));
+            if (encoding.CodePage != Encoding.Default.CodePage && ansi.Any(c => c >= 128))
+                return encoding.GetString(Encoding.Default.GetBytes(ansi));
             return ansi;
         }
 

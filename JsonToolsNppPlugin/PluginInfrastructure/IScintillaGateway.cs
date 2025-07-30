@@ -1,5 +1,6 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
 using System;
+using System.Text;
 using static Kbg.NppPluginNET.PluginInfrastructure.Win32;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
@@ -15,7 +16,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     {
         int GetSelectionLength();
         void AppendTextAndMoveCursor(string text);
-        void InsertTextAndMoveCursor(string text);
+        void InsertTextAndMoveCursor(string text, Encoding encoding);
         void SelectCurrentLine();
         void ClearSelectionToCursor();
 
@@ -40,7 +41,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         unsafe void AddStyledText(int length, Cells c);
 
         /// <summary>Insert string at a position. (Scintilla feature 2003)</summary>
-        unsafe void InsertText(int pos, string text);
+        unsafe void InsertText(int pos, string text, Encoding encoding);
 
         /// <summary>Change the text that is being inserted in response to SC_MOD_INSERTCHECK (Scintilla feature 2672)</summary>
         unsafe void ChangeInsertion(int length, string text);
@@ -761,7 +762,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         int GetLineEndPosition(int line);
 
         /// <summary>Get the code page used to interpret the bytes of the document as characters. (Scintilla feature 2137)</summary>
-        int GetCodePage();
+        Encoding GetCodePage();
 
         /// <summary>Get the foreground colour of the caret. (Scintilla feature 2138)</summary>
         Colour GetCaretFore();

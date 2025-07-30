@@ -1,0 +1,44 @@
+{ // this file has ALL the bad things
+\u0348z false, # yes, all of them
+"b": None /* so much bad */
+'9' :False,
+"??"
+      { 
+      "u\
+y":
+            [
+            1
+            "FO\x4fBAR
+   "         +2, 
+            NaN,
+            .75 
+-0xF            +0xabcde
+0xABCDE
+            , // missing ']' here
+      "y
+u":
+            [
+                  [
+                  -.5,
+                        {
+                        "y" : 'b\9\x0a':
+                        "m8": ["µüßÆ", "ØÅ", " nbsp", 9.],
+                        }
+                  ],
+            Infinity
+            -Infinity
+            ],
+      $unquoted_key\u00df "are *very naughty*"
+      _st\u1eb2tus_ : "juba?"
+      ],
+"9\"a\"	"    
+:null,
+"\u0042lutentharst":
+      [
+      "\n'\"DOOM\" BOOM, AND I CONSUME', said Bludd, the mighty Blood God.\n\t",
+      True,
+      undefined
+      [ // some unclosed things too
+      { /* 
+      and finally an unclosed multiline comment
+      
