@@ -23,8 +23,70 @@ namespace JSON_Tools.Tests
         private static JsonParser jsonParser = new JsonParser();
 
         /// <summary>
-        /// Run a command (see below switch statement for options) to manipulate the test file.
-        /// Returns true if one of the "compare" commands (compare_text, compare_selections, compare_treeview) fails the test
+        /// commands that can be used in these user interface tests<br></br>
+        /// If there is no description for a command, there are no associated arguments.
+        /// </summary>
+        public enum FileManipulation
+        {
+            /// <summary>
+            /// first arg: int (index of UI test file, where N corresponds to the Nth UI test file opened in this run)<br></br>
+            /// second arg (optional): string (extension to use for this file, if it hasn't already been opened)
+            /// </summary>
+            FILE_OPEN,
+            /// <summary>
+            /// first arg: string (text to overwrite file with)
+            /// </summary>
+            OVERWRITE,
+            /// <summary>
+            /// first arg: string[] (list of regions to select)
+            /// </summary>
+            SELECT,
+            SELECT_WHOLE_DOC,
+            SELECT_EVERY_VALID,
+            /// <summary>
+            /// first arg: int (position to insert)<br></br>
+            /// second arg: int (text to insert)
+            /// </summary>
+            INSERT_TEXT,
+            /// <summary>
+            /// first arg: int (start of region to delete)<br></br>
+            /// second arg: int (number of characters to delete)
+            /// </summary>
+            DELETE_TEXT,
+            /// <summary>
+            /// first arg (optional): bool (whether to use tab indentation)<br></br>
+            /// second arg (optional): bool (whether to remember comments)<br></br>
+            /// third arg (optional): <see cref="PrettyPrintStyle"/> (which style to use)
+            /// </summary>
+            PRETTY_PRINT,
+            COMPRESS,
+            /// <summary>
+            /// first arg: string[] (list of regions that should be selected)
+            /// </summary>
+            COMPARE_SELECTIONS,
+            /// <summary>
+            /// first arg: string (the complete text that the current file should have)
+            /// </summary>
+            COMPARE_TEXT,
+            TREE_OPEN,
+            /// <summary>
+            /// 
+            /// </summary>
+            TREENODE_CLICK,
+            TREE_QUERY,
+            SELECT_TREENODE_JSON,
+            SELECT_TREENODE_JSON_CHILDREN,
+            TREE_COMPARE_QUERY_RESULT,
+            SORT_FORM_OPEN,
+            SORT_FORM_RUN,
+            COMPARE_PATH_TO_POSITION,
+            REGEX_SEARCH,
+            SET_DOCUMENT_TYPE
+        }
+
+        /// <summary>
+        /// Run a command to manipulate the test file.<br></br>
+        /// Returns true if an error was raised or a test was failed.
         /// </summary>
         /// <param name="command"></param>
         /// <param name="messages"></param>
@@ -50,7 +112,7 @@ namespace JSON_Tools.Tests
                 break;
             case "select":
                 var startEndStrings = (string[])args[0];
-                messages.Add($"select {SelectionManager.StartEndListToJsonString(startEndStrings)}");
+                messages.Add($"select {SelectionManager.StartEndListToJsonString(startEndStrings, false)}");
                 SelectionManager.SetSelectionsFromStartEnds(startEndStrings);
                 break;
             case "select_whole_doc":
@@ -108,8 +170,8 @@ namespace JSON_Tools.Tests
                 var correctSelections = (string[])args[0]; // should be array of strings of the form "INTEGER1,INTEGER2"
                 Npp.editor.GrabFocus();
                 var gotSelections = SelectionManager.GetSelectedRanges();
-                string correctSelStr = SelectionManager.StartEndListToJsonString(correctSelections);
-                string gotSelStr = SelectionManager.StartEndListToJsonString(gotSelections);
+                string correctSelStr = SelectionManager.StartEndListToJsonString(correctSelections, true);
+                string gotSelStr = SelectionManager.StartEndListToJsonString(gotSelections, true);
                 if (correctSelStr != gotSelStr)
                 {
                     messages.Add($"FAIL: expected selections\r\n{correctSelStr}\r\nGOT\r\n{gotSelStr}");
@@ -163,7 +225,7 @@ namespace JSON_Tools.Tests
                         string previousNodes = new JArray(0, treeNodeTextArr.children.LazySlice(0, ii).ToList()).ToString();
                         messages.Add($"FAIL: Expected treeview to contain path {treeNodeTextArr.ToString()}, " +
                                      $"but did not contain {treeNodeText} after nodes {previousNodes}");
-                    return true;
+                        return true;
                     }
                 }
                 messages.Add($"click treenodes {treeNodeTextArr.ToString()}");
@@ -765,6 +827,34 @@ namespace JSON_Tools.Tests
                 ("tree_query", new object[]{ "@ = s_sub(@, g`(?:NUMBER)`, str(num(@[0])->ifelse(@ > 3, -@, @)))" }),
                 ("compare_text", new object[]{"1.0 2.0\r[3.0]ö-4.0\r\"\u00a0\r-5.5 -2671.0\r\"fo|\"" }),
                 ("compare_selections", new object[]{new string[] {"0,7", "8,19", "24,36", "37,42"} }),
+                // TEST THAT SELECTIONS ARE REMEMBERED WHEN THE SELECTIONS ARE NOT ORDERED BY THEIR START POSITION
+                ("overwrite", new object[]{"selection 1\r\n\r\nselection 2\r\nfoo\r\nbar"}),
+                // Notepad++ orders selections by the time they were first selected, but my selection-remembering strategy only works if selections are ordered by their start position
+                ("select", new object[]{ new string[]{ "15,26", "0,11" } }),
+                ("tree_query", new object[]{ "@" }),
+                ("treenode_click", new object[]{new string[] {"0,11 : \"selection 1\""} }),
+                ("treenode_click", new object[]{new string[] {"15,26 : \"selection 2\""} }),
+                ("select", new object[]{new string[] {"0,0"} }),
+                ("insert_text", new object[]{2, "ff"}),
+                ("tree_query", new object[]{"@"}),
+                ("compare_selections", new object[]{new string[] { "0,13", "17,28" } }),
+                ("treenode_click", new object[]{new string[] {"0,13 : \"sefflection 1\""} }),
+                ("treenode_click", new object[]{new string[] {"17,28 : \"selection 2\""} }),
+                // now test again that *more than 2 selections* are remembered when they're not ordered by start position
+                ("delete_text", new object[]{2, 2}),
+                ("select", new object[]{new string[]{"25,26", "10,11", "33,36", "28,31"} }),
+                ("tree_query", new object[]{ "@" }),
+                ("treenode_click", new object[]{new string[] {"10,11 : \"1\""} }),
+                ("treenode_click", new object[]{new string[] {"25,26 : \"2\""} }),
+                ("treenode_click", new object[]{new string[] {"28,31 : \"foo\""} }),
+                ("treenode_click", new object[]{new string[] {"33,36 : \"bar\""} }),
+                ("select", new object[]{new string[] {"0,0"} }),
+                ("insert_text", new object[]{29, "zz"}),
+                ("tree_query", new object[]{"@"}),
+                ("treenode_click", new object[]{new string[] {"10,11 : \"1\""} }),
+                ("treenode_click", new object[]{new string[] {"25,26 : \"2\""} }),
+                ("treenode_click", new object[]{new string[] {"28,33 : \"fzzoo\""} }),
+                ("treenode_click", new object[]{new string[] {"35,38 : \"bar\""} }),
                 // TEST DOCUMENT TYPE CHANGE BUTTON IN TREEVIEW
                 ("overwrite", new object[]{"[1, 2]\r\n{\"ö\": \"3 4\"}\r\n\"\"\r\n{\"5\": [6]}\r\n'foo'"}),
                 ("set_document_type", new object[]{"JSON"}),

@@ -26,9 +26,11 @@ namespace JSON_Tools.Utils
         public static List<string> GetRegionsWithIndicator(int indicator1, int indicator2)
         {
             var selList = new List<string>();
+            if (!Npp.TryGetLengthAsInt(out int len, false))
+                return selList;
             int indEnd = -1;
             int indicator = indicator1;
-            while (indEnd < Npp.editor.GetLength())
+            while (indEnd < len)
             {
                 int indStart = Npp.editor.IndicatorStart(indicator, indEnd);
                 indEnd = Npp.editor.IndicatorEnd(indicator, indStart);
@@ -60,6 +62,7 @@ namespace JSON_Tools.Utils
             int selCount = Npp.editor.GetSelections();
             for (int ii = 0; ii < selCount; ii++)
                 selList.Add((Npp.editor.GetSelectionNStart(ii), Npp.editor.GetSelectionNEnd(ii)));
+            selList.Sort((a, b) => a.start.CompareTo(b.start));
             return selList;
         }
 
@@ -135,18 +138,20 @@ namespace JSON_Tools.Utils
         /// Given selections (selstart1,selend1), (selstart2,selend2), ..., (selstartN,selendN)<br></br>
         /// returns JSON array string [[selstart1,selend1], [selstart2,selend2], ..., [selstartN,selendN]]
         /// </summary>
-        public static string StartEndListToJsonString(IEnumerable<(int start, int end)> selections)
+        public static string StartEndListToJsonString(IEnumerable<(int start, int end)> selections, bool sorted)
         {
-            return "[" + string.Join(", ", selections.OrderBy(x => x.start).Select(x => $"[{x.start},{x.end}]")) + "]";
+            IEnumerable<(int start, int end)> selectionsSorted = sorted ? selections.OrderBy(x => x.start) : selections;
+            return "[" + string.Join(", ", selectionsSorted.Select(x => $"[{x.start},{x.end}]")) + "]";
         }
 
         /// <summary>
         /// Given selection strings "selstart1,selend1", "selstart2,selend2", ..., "selstartN,selendN"<br></br>
         /// returns JSON array string [[selstart1,selend1], [selstart2,selend2], ..., [selstartN,selendN]]
         /// </summary>
-        public static string StartEndListToJsonString(IEnumerable<string> selections)
+        public static string StartEndListToJsonString(IEnumerable<string> selections, bool sorted)
         {
-            return "[" + string.Join(", ", selections.OrderBy(x => StartFromStartEnd(x)).Select(x => $"[{x}]")) + "]";
+            IEnumerable<string> selectionsSorted = sorted ? selections.OrderBy(x => StartFromStartEnd(x)) : selections;
+            return "[" + string.Join(", ", selectionsSorted.Select(x => $"[{x}]")) + "]";
         }
 
         /// <summary>
