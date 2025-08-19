@@ -93,7 +93,7 @@ You'll notice that icons appear next to the nodes in the tree. They are as follo
 Starting in [v5.0.0](/CHANGELOG.md#500---2023-05-26), the JSON parser can always parse any document with any allowed syntax errors, such as singleuqoted keys, comments, missing commas, and so forth.
 
 Error reporting can be customized with the `logger_level` setting, which has 5 levels, each a superset of the previous:
-1. __STRICT__: Parse only JSON that complies with the original JSON spec.
+1. __STRICT__: Parse only JSON that complies with the [original JSON specification](https://www.json.org).
 2. __OK__: Anything allowed with `STRICT`, plus unescaped control characters (e.g., `\t`, `\f`) in strings.
 3. __NAN_INF__: Everything at the `OK` level, plus the `NaN`, `Infinity`, and `-Infinity` literals.
 4. __JSONC__: Everything in the `NAN_INF` level is allowed, as well as JavaScript `//` and `/*...*/` comments.

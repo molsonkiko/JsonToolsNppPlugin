@@ -818,7 +818,7 @@ Returns true iff x is a string.
 
 Returns true iff x is the floating-point Not-A-Number (represented in some JSON by `NaN`).
 
-Recall that `NaN` is *NOT* in the original JSON specification.
+Recall that `NaN` is *NOT* in the [original JSON specification](https://www.json.org).
 
 ---
 `isnull(x: anything) -> bool`

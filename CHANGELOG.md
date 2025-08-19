@@ -107,7 +107,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 1. If a number string is too large or small for a 64-bit floating point number (for example, `-2e700`, `3.5e+450`), the JSON parser will now represent them as `-Infinity` (if they have a leading `-` sign) or `Infinity`, rather than representing them as `NaN`. The linter also has a new message for when this happens.
-2. If a [JSON lines document](/docs/README.md#json-lines-documents) is not compliant with the strict JSON specification, the [status bar](/docs/README.md#error-form-and-status-bar) will now reflect that it is JSON lines.
+2. If a [JSON lines document](/docs/README.md#json-lines-documents) is not compliant with the [original JSON specification](https://www.json.org), the [status bar](/docs/README.md#error-form-and-status-bar) will now reflect that it is JSON lines.
 3. Stop considering the user's Windows culture when determining the UI language for JsonTools (fix [issue 82](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/82)). Now JsonTools will be translated into language X if and only if Notepad++ is in language X.
 
 ### Fixed
