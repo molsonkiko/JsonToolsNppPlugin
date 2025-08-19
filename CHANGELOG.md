@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 		* [selecting all valid JSON in selection](/docs/README.md#selecting-all-valid-json)
 2. Minor bug where JsonTools could not set the text of a file to end with the SOH character (ASCII code `\x01`)
 3. Minor bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
-4. Bug where editing a document in [multi-selection mode](/docs/README.md#working-with-selections) would sometimes cause selections to be forgotten (fixed in v8.4.0.3)
+4. Bug where editing a document in [multi-selection mode](/docs/README.md#working-with-selections) would sometimes cause selections to be forgotten (fixed in [v8.4.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/16f0358274c662273a2015994c5ab22d22fd23ab))
 
 ## [8.4.0] - 2025-05-04
 
