@@ -1076,6 +1076,44 @@ This command checks JSON syntax and updates the [error form and status bar](/doc
 
 This command will *always* attempt to parse the document as JSON, unless the file extension is `.jsonl`, in which case it will attempt to parse the document as [JSON Lines](#json-lines-documents). This will override [regex mode](#regex-search-form) and [INI mode](#parsing-ini-files).
 
+## Escaping text as a JSON string ##
+
+*Added in version [5.5](/CHANGELOG.md#550---2023-08-13)*
+
+The `D&ump selected text as JSON string(s)` command opens a new document where each selection is converted to a JSON string (escaped) on a separate line. *If no text is selected, the new document will contain all the text in the current document converted to a JSON string.*
+
+Thus, if you had these three strings selected:
+```
+foonb
+"bar"
+y\zed
+```
+running the `D&ump selected text as JSON string(s)` command would open a new document with the following text:
+```
+"foonb"
+"\"bar\""
+"y\\zed"
+```
+
+## Unescaping a JSON string to raw text ##
+
+*Added in version [5.5](/CHANGELOG.md#550---2023-08-13)*
+
+The `Dump JSON string(s) as ra&w text` command is the reverse of the [`D&ump selected text as JSON string(s)` command](#escaping-text-as-a-json-string) described above. If each of your selections is a JSON string, a new document will be created with the unescaped versions of those strings, separated by `\r\n` newlines. *If no text is selected and the current document is a JSON string, the new document will contain the unescaped version of that string.*
+
+Thus, if you had these three JSON strings selected,
+```
+"f\x20fw"
+"\"bar\""
+"y\tzedd"
+```
+running the `Dump JSON string(s) as ra&w text` command would open a document with the following text:
+```
+f fw
+"bar"
+y	zedd
+```
+
 ## Styling of forms ##
 
 By default, the forms in JsonTools attempt to use the same color scheme as Notepad++. If you would prefer to have the forms always use the system defaults and ignore Notepad++, you can set the `use_npp_styling` setting to `False`.
