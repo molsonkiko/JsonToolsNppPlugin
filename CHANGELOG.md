@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 2. Minor bug where JsonTools could not set the text of a file to end with the SOH character (ASCII code `\x01`)
 3. Minor bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
 4. Bug where editing a document in [multi-selection mode](/docs/README.md#working-with-selections) would sometimes cause selections to be forgotten (fixed in [v8.4.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/16f0358274c662273a2015994c5ab22d22fd23ab))
+5. Bug ([issue 104](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/104)) where [error form](/docs/README.md#error-form-and-status-bar) would not always re-parse the document after the `Refresh with current errors` right-click context menu item on the error form was clicked.
 
 ## [8.4.0] - 2025-05-04
 

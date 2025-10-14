@@ -166,10 +166,39 @@ namespace JSON_Tools.Forms
             }
         }
 
+        /// <summary>
+        /// does the following:<br></br>
+        /// 1. temporarily suppress prompt asking if error form should be shown<br></br>
+        /// 2. if automatic schema validation is desired, re-validate<br></br>
+        /// 3. Re-parse the JSON<br></br>
+        /// 4. Re-display the error form with all the lints found in steps 2 and 3 
+        /// </summary>
+        private void RefreshWithContentsOfCurrentFile()
+        {
+            Main.errorFormTriggeredParse = true;
+            // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
+            bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
+            Main.settings.offer_to_show_lint = false;
+            Main.TryParseJson(preferPreviousDocumentType: true);
+            if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
+                && info.lints != null)
+            {
+                if (info.filenameOfMostRecentValidatingSchema is null)
+                    Reload(Main.activeFname, info.lints);
+                else
+                {
+                    Main.ValidateJson(info.filenameOfMostRecentValidatingSchema, false);
+                    if (Main.TryGetInfoForFile(Main.activeFname, out info) && info.lints != null && info.statusBarSection != null && info.statusBarSection.Contains("fatal errors"))
+                        Reload(Main.activeFname, info.lints);
+                }
+            }
+            Main.settings.offer_to_show_lint = previousOfferToShowLint;
+            Main.errorFormTriggeredParse = false;
+        }
+
         private void RefreshMenuItem_Click(object sender, EventArgs e)
         {
-            Npp.notepad.HideDockingForm(this);
-            Main.OpenErrorForm(Npp.notepad.GetCurrentFilePath(), false);
+            RefreshWithContentsOfCurrentFile();
         }
 
         private void ExportLintsToJsonMenuItem_Click(object sender, EventArgs e)
@@ -203,27 +232,8 @@ namespace JSON_Tools.Forms
         {
             if (e.KeyCode == Keys.Enter)
             {
-                // refresh error form based on current contents of current file
                 e.Handled = true;
-                Main.errorFormTriggeredParse = true;
-                // temporarily turn off offer_to_show_lint prompt, because the user obviously wants to see it
-                bool previousOfferToShowLint = Main.settings.offer_to_show_lint;
-                Main.settings.offer_to_show_lint = false;
-                Main.TryParseJson(preferPreviousDocumentType:true);
-                if (Main.TryGetInfoForFile(Main.activeFname, out JsonFileInfo info)
-                    && info.lints != null)
-                {
-                    if (info.filenameOfMostRecentValidatingSchema is null)
-                        Reload(Main.activeFname, info.lints);
-                    else
-                    {
-                        Main.ValidateJson(info.filenameOfMostRecentValidatingSchema, false);
-                        if (Main.TryGetInfoForFile(Main.activeFname, out info) && info.lints != null && info.statusBarSection != null && info.statusBarSection.Contains("fatal errors"))
-                            Reload(Main.activeFname, info.lints);
-                    }
-                }
-                Main.settings.offer_to_show_lint = previousOfferToShowLint;
-                Main.errorFormTriggeredParse = false;
+                RefreshWithContentsOfCurrentFile();
                 return;
             }
             else if (e.KeyCode == Keys.Escape)

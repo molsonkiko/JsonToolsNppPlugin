@@ -194,11 +194,11 @@ As the above example shows, this method *can* handle unmatched quotes/braces, bu
 
 ### Error form and status bar ###
 
-If you click "Yes", a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error.
+If you respond "Yes" to the prompt that appears after parsing JSON with errors, a docking form will open up at the bottom of the document. Each row in the document will correspond to a different syntax error.
 
 Clicking on or paging to a row in the error form with the arrow keys will move the caret to the location in the document where that error was found.
 
-Hitting `Enter` while in the form refreshes the form with the JSON in the current document. You can also seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
+Hitting `Enter` or choosing the `Refresh with current errors` right-click context menu item while in the form refreshes the form with the JSON in the current document. You can also seek the next syntax error with a description that starts with a letter by typing that letter while in the form. For example, typing `P` in the form might select the next `Python-style '#' comments are not part of any well-accepted JSON specification` error.
 
 Beginning in [v6.0](/CHANGELOG.md#600---2023-12-13), you can right-click on this form to gain the option of exporting all errors to JSON or refreshing the form.
 
