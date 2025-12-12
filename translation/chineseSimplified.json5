@@ -219,7 +219,8 @@
                 "OpenSortFormItem": "排序数组...",
                 "SelectAllChildrenItem": "选择所有子项",
                 "LanguageNameStyleItem": "{0} 风格",
-                "PathSeparatorStyleItem": "使用路径分隔符设置"
+                "PathSeparatorStyleItem": "使用路径分隔符设置",
+                "MakeThisVisibleItem": "使其可见"
             }
         }
     },

@@ -12,7 +12,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     ///
     /// See http://www.scintilla.org/ScintillaDoc.html for further details.
     /// </summary>
-    public class ScintillaGateway : IScintillaGateway
+    public class ScintillaGateway
     {
         private const int Unused = 0;
 

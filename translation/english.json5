@@ -218,7 +218,8 @@
                 "OpenSortFormItem": "Sort array...",
                 "SelectAllChildrenItem": "Select all children",
                 "LanguageNameStyleItem": "{0} style",
-                "PathSeparatorStyleItem": "Use path_separator setting"
+                "PathSeparatorStyleItem": "Use path_separator setting",
+                "MakeThisVisibleItem": "Make this visible"
             }
         }
     },

@@ -167,7 +167,8 @@
                 "OpenSortFormItem": "Trier le tableau...",
                 "SelectAllChildrenItem": "Sélectionner tous les enfants",
                 "LanguageNameStyleItem": "Style {0}",
-                "PathSeparatorStyleItem": "Utiliser le paramètre du séparateur de chemin"
+                "PathSeparatorStyleItem": "Utiliser le paramètre du séparateur de chemin",
+                "MakeThisVisibleItem": "Rendez cela visible"
             }
         }
     },

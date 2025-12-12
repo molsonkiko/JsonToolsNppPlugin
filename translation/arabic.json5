@@ -186,7 +186,8 @@
                 "OpenSortFormItem": "فرز المصفوفة...",
                 "SelectAllChildrenItem": "تحديد جميع العناصر الفرعية",
                 "LanguageNameStyleItem": "نمط {0}",
-                "PathSeparatorStyleItem": "استخدام إعداد فاصل المسار"
+                "PathSeparatorStyleItem": "استخدام إعداد فاصل المسار",
+                "MakeThisVisibleItem": "اجعل هذا مرئيًا"
             }
         }
     },

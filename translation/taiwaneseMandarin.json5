@@ -167,7 +167,8 @@
                 "OpenSortFormItem": "排序陣列...",
                 "SelectAllChildrenItem": "選擇所有子項",
                 "LanguageNameStyleItem": "{0} 風格",
-                "PathSeparatorStyleItem": "使用路徑分隔符設定"
+                "PathSeparatorStyleItem": "使用路徑分隔符設定",
+                "MakeThisVisibleItem": "使其可見"
             }
         }
     },

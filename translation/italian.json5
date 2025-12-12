@@ -218,7 +218,8 @@
                 "OpenSortFormItem": "Ordina array",
                 "SelectAllChildrenItem": "Seleziona tutti i figli",
                 "LanguageNameStyleItem": "Stile {0}",
-                "PathSeparatorStyleItem": "Usa l'impostazione path_separator"
+                "PathSeparatorStyleItem": "Usa l'impostazione path_separator",
+                "MakeThisVisibleItem": "Rendilo visibile"
             }
         }
     },

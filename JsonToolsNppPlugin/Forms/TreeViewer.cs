@@ -99,6 +99,7 @@ namespace JSON_Tools.Forms
         private static MouseEventHandler selectThisHandler = null;
         private static MouseEventHandler showSortFormHandler = null;
         private static MouseEventHandler selectAllChildrenHandler = null;
+        private static MouseEventHandler makeThisVisibleHandler = null;
 
         public TreeViewer(JNode json)
         {
@@ -1142,12 +1143,24 @@ namespace JSON_Tools.Forms
                     sortFormOpenItem.Visible = false;
                     selectAllChildrenItem.Visible = false;
                 }
+                var makeThisVisibleItem = NodeRightClickMenu.Items[7];
+                makeThisVisibleItem.MouseUp -= makeThisVisibleHandler;
+                makeThisVisibleHandler = new MouseEventHandler(
+                    (s2, e2) =>
+                    {
+                        int posOfNode = NodePosInJsonDoc(node);
+                        int lineOfNode = Npp.editor.LineFromPosition(posOfNode);
+                        Npp.editor.EnsureVisible(lineOfNode);
+                        Npp.editor.GotoPos(posOfNode);
+                    }
+                );
+                makeThisVisibleItem.MouseUp += makeThisVisibleHandler;
                 NodeRightClickMenu.Show(MousePosition);
             }
             if (Translator.TryGetTranslationAtPath(new string[] {"forms", "TreeViewer", "controls"}, out JNode controlsTranslationsNode)
                 && controlsTranslationsNode is JObject controlTranslations)
             {
-                string[] controlNames = new string[] { "CopyValueMenuItem", "CopyKeyItem", "CopyPathItem", "ToggleSubtreesItem", "SelectThisItem", "OpenSortFormItem", "SelectAllChildrenItem" };
+                string[] controlNames = new string[] { "CopyValueMenuItem", "CopyKeyItem", "CopyPathItem", "ToggleSubtreesItem", "SelectThisItem", "OpenSortFormItem", "SelectAllChildrenItem", "MakeThisVisibleItem" };
                 for (int ii = 0; ii < controlNames.Length; ii++)
                 {
                     string name = controlNames[ii];

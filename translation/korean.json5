@@ -167,7 +167,8 @@
                 "OpenSortFormItem": "배열 정렬...",
                 "SelectAllChildrenItem": "모든 하위 항목 선택",
                 "LanguageNameStyleItem": "{0} 스타일",
-                "PathSeparatorStyleItem": "경로 구분 기호 설정 사용"
+                "PathSeparatorStyleItem": "경로 구분 기호 설정 사용",
+                "MakeThisVisibleItem": "이것을 보이게 하세요"
             }
         }
     },

@@ -1979,7 +1979,9 @@ namespace JSON_Tools.JSON_Tools
             for (int ii = 1; ii < itbl.Length; ii++)
             {
                 sb.Append(sep);
-                sb.Append((string)itbl[ii].value);
+                if (!(itbl[ii].value is string s))
+                    throw new RemesPathException($"Element {ii} of the array had type {JNode.FormatDtype(itbl[ii].type)}, but the array must contain only strings.");
+                sb.Append(s);
             }
             return new JNode(sb.ToString(), Dtype.STR, 0);
         }

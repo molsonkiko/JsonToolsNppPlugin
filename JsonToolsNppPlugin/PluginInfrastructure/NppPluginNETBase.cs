@@ -53,9 +53,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         }
 
 
-        static readonly Func<IScintillaGateway> gatewayFactory = () => new ScintillaGateway(GetCurrentScintilla());
+        static readonly Func<ScintillaGateway> gatewayFactory = () => new ScintillaGateway(GetCurrentScintilla());
 
-        public static Func<IScintillaGateway> GetGatewayFactory()
+        public static Func<ScintillaGateway> GetGatewayFactory()
         {
             return gatewayFactory;
         }

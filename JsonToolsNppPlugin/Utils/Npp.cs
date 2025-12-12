@@ -23,7 +23,7 @@ namespace JSON_Tools.Utils
         /// <summary>
         /// connector to Scintilla
         /// </summary>
-        public static IScintillaGateway editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
+        public static ScintillaGateway editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
         /// <summary>
         /// connector to Notepad++
         /// </summary>
@@ -87,7 +87,7 @@ namespace JSON_Tools.Utils
         private static bool stopShowingFileTooLongNotifications = false;
 
         /// <summary>
-        /// if <see cref="IScintillaGateway.GetLength"/> returns a number greater than <see cref="int.MaxValue"/>, return false and set len to -1.<br></br>
+        /// if <see cref="ScintillaGateway.GetLength"/> returns a number greater than <see cref="int.MaxValue"/>, return false and set len to -1.<br></br>
         /// Otherwise, return true and set len to the length of the document.<br></br>
         /// If showMessageOnFail, show a message box warning the user that the command could not be executed.
         /// </summary>

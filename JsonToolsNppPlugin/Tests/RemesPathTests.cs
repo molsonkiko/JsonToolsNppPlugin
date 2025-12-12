@@ -1086,6 +1086,8 @@ namespace JSON_Tools.Tests
                 new []{"s_slice(*@)", "[\"abc\", 1, 2]"}, // * spread operator spreading an array that would cause function to have too many args
                 new []{"s_slice(*@)", "[\"abc\"]"}, // * spread operator spreading an array that would cause function to have too few args
                 new []{"s_slice(*@)", "[\"abc\", \"b\"]"}, // * spread operator spreading an array that would cause function to have arg of wrong type
+                new []{"s_join(``, j`[\"foo\", \"bar\", null])`", "\"\""}, // s_join operating on an array containing non-string elements
+                new []{"s_join(``, j`[\"baz\", {}])`", "\"\""}, // s_join operating on an array containing non-string elements
                 // disallowed negated indices (recursive, star, boolean, projection)
                 new []{"@!..a", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},
                 new []{"@!..[a, c]", "{\"a\": 1, \"b\": [{\"a\": 2, \"c\": 3}]}"},

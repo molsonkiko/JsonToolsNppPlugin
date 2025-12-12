@@ -167,7 +167,8 @@
                 "OpenSortFormItem": "Array sortieren...",
                 "SelectAllChildrenItem": "Alle Kindelemente auswählen",
                 "LanguageNameStyleItem": "{0}-Stil",
-                "PathSeparatorStyleItem": "Pfadtrennzeichen-Einstellung verwenden"
+                "PathSeparatorStyleItem": "Pfadtrennzeichen-Einstellung verwenden",
+                "MakeThisVisibleItem": "Machen Sie dies sichtbar"
             }
         }
     },

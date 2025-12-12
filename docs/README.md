@@ -435,6 +435,18 @@ This functionality can also be used to select regex search results or values fro
 
 Beginning in [v6.1](/CHANGELOG.md#610---2023-12-28), using this option from the root treenode selects all remembered selections when in [multi-selection mode](#working-with-selections), and selects every JSON line in [JSON lines](#json-lines-documents) mode.
 
+## Reveal tree nodes hidden by code folding *(added in v9)*
+
+Beginning in [v9](/CHANGELOG.md#900---unreleased-yyyy-mm-dd), the right click context menu for tree nodes has a `Make this visible` option that undoes code folding to make them visible.
+
+Below is an image of the tree for a document just before using this command. Note that the selected node is hidden by two layers of code folding.
+
+!["Make this visible" command example BEFORE CLICK](/docs/Make%20this%20visible%20example%20BEFORE.PNG)
+
+Below is an image after clicking the `Make this visible` option as shown in the preceding image.
+
+!["Make this visible" command example AFTER CLICK](/docs/Make%20this%20visible%20example%20AFTER.PNG)
+
 ## JSON formatting ##
 
 *Added in version 3.3.0*
@@ -1080,7 +1092,7 @@ This command will *always* attempt to parse the document as JSON, unless the fil
 
 *Added in version [5.5](/CHANGELOG.md#550---2023-08-13)*
 
-The `D&ump selected text as JSON string(s)` command opens a new document where each selection is converted to a JSON string (escaped) on a separate line. *If no text is selected, the new document will contain all the text in the current document converted to a JSON string.*
+The `Dump selected text as JSON string(s)` command opens a new document where each selection is converted to a JSON string (escaped) on a separate line. *If no text is selected, the new document will contain all the text in the current document converted to a JSON string.*
 
 Thus, if you had these three strings selected:
 ```
@@ -1088,7 +1100,7 @@ foonb
 "bar"
 y\zed
 ```
-running the `D&ump selected text as JSON string(s)` command would open a new document with the following text:
+running the `Dump selected text as JSON string(s)` command would open a new document with the following text:
 ```
 "foonb"
 "\"bar\""
@@ -1099,7 +1111,7 @@ running the `D&ump selected text as JSON string(s)` command would open a new doc
 
 *Added in version [5.5](/CHANGELOG.md#550---2023-08-13)*
 
-The `Dump JSON string(s) as ra&w text` command is the reverse of the [`D&ump selected text as JSON string(s)` command](#escaping-text-as-a-json-string) described above. If each of your selections is a JSON string, a new document will be created with the unescaped versions of those strings, separated by `\r\n` newlines. *If no text is selected and the current document is a JSON string, the new document will contain the unescaped version of that string.*
+The `Dump JSON string(s) as raw text` command is the reverse of the [`Dump selected text as JSON string(s)` command](#escaping-text-as-a-json-string) described above. If each of your selections is a JSON string, a new document will be created with the unescaped versions of those strings, separated by `\r\n` newlines. *If no text is selected and the current document is a JSON string, the new document will contain the unescaped version of that string.*
 
 Thus, if you had these three JSON strings selected,
 ```
@@ -1107,7 +1119,7 @@ Thus, if you had these three JSON strings selected,
 "\"bar\""
 "y\tzedd"
 ```
-running the `Dump JSON string(s) as ra&w text` command would open a document with the following text:
+running the `Dump JSON string(s) as raw text` command would open a document with the following text:
 ```
 f fw
 "bar"

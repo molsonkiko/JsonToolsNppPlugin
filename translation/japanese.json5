@@ -167,7 +167,8 @@
                 "OpenSortFormItem": "配列をソート...",
                 "SelectAllChildrenItem": "すべての子項目を選択",
                 "LanguageNameStyleItem": "{0} スタイル",
-                "PathSeparatorStyleItem": "パス区切り文字設定を使用"
+                "PathSeparatorStyleItem": "パス区切り文字設定を使用",
+                "MakeThisVisibleItem": "これを見えるようにしてみましょう"
             }
         }
     },

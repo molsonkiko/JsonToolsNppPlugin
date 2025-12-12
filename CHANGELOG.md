@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [9.0.0] - (UNRELEASED) YYYY-MM-DD
 
+### Added
+
+1. New [`Make this visible` option](/docs/README.md#reveal-tree-nodes-hidden-by-code-folding-added-in-v9) on the tree view's right click context menu to reveal nodes hidden by code folding. This was first requested in [issue 103](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/103).
+
 ### Fixed
 
 1. __Correctly parse all ANSI files.__ Previously JsonTools assumed that Notepad++ used UTF8 to internally represent every document, and while that appears to have worked fine for most encodings, it would specifically fail on ANSI-encoded documents containing non-ASCII.
@@ -64,6 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 3. Minor bug where some JsonGrepper tests would always fail because they queried an external API that had previously returned JSON but now returns HTML.
 4. Bug where editing a document in [multi-selection mode](/docs/README.md#working-with-selections) would sometimes cause selections to be forgotten (fixed in [v8.4.0.3](https://github.com/molsonkiko/JsonToolsNppPlugin/commit/16f0358274c662273a2015994c5ab22d22fd23ab))
 5. Bug ([issue 104](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/104)) where [error form](/docs/README.md#error-form-and-status-bar) would not always re-parse the document after the `Refresh with current errors` right-click context menu item on the error form was clicked.
+6. Bug where [`s_join` RemesPath function](/docs/RemesPath.md#non-vectorized-functions) would not throw an exception when the second argument was an array containing non-strings (previously it would silently treat nulls, objects and arrays as though they were empty strings).
 
 ## [8.4.0] - 2025-05-04
 

@@ -67,10 +67,12 @@ namespace JSON_Tools.Forms
             this.JavaScriptStyleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PythonStyleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStyleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.path_separatorStyleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CopyPathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.JavaScriptStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PythonStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemesPathStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.path_separatorStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToggleSubtreesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SelectThisItem = new System.Windows.Forms.ToolStripMenuItem();
             this.OpenSortFormItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -79,8 +81,7 @@ namespace JSON_Tools.Forms
             this.RefreshButton = new System.Windows.Forms.Button();
             this.FindReplaceButton = new System.Windows.Forms.Button();
             this.DocumentTypeComboBox = new System.Windows.Forms.ComboBox();
-            this.path_separatorStyleItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.path_separatorStylePathItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MakeThisVisibleItem = new System.Windows.Forms.ToolStripMenuItem();
             this.NodeRightClickMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -183,9 +184,10 @@ namespace JSON_Tools.Forms
             this.ToggleSubtreesItem,
             this.SelectThisItem,
             this.OpenSortFormItem,
-            this.SelectAllChildrenItem});
+            this.SelectAllChildrenItem,
+            this.MakeThisVisibleItem});
             this.NodeRightClickMenu.Name = "NodeRightClickMenu";
-            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 200);
+            this.NodeRightClickMenu.Size = new System.Drawing.Size(268, 224);
             // 
             // CopyValueMenuItem
             // 
@@ -222,6 +224,12 @@ namespace JSON_Tools.Forms
             this.RemesPathStyleItem.Size = new System.Drawing.Size(268, 26);
             this.RemesPathStyleItem.Text = "RemesPath style";
             // 
+            // path_separatorStyleItem
+            // 
+            this.path_separatorStyleItem.Name = "path_separatorStyleItem";
+            this.path_separatorStyleItem.Size = new System.Drawing.Size(268, 26);
+            this.path_separatorStyleItem.Text = "Use path_separator setting";
+            // 
             // CopyPathItem
             // 
             this.CopyPathItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -250,6 +258,12 @@ namespace JSON_Tools.Forms
             this.RemesPathStylePathItem.Name = "RemesPathStylePathItem";
             this.RemesPathStylePathItem.Size = new System.Drawing.Size(268, 26);
             this.RemesPathStylePathItem.Text = "RemesPath style";
+            // 
+            // path_separatorStylePathItem
+            // 
+            this.path_separatorStylePathItem.Name = "path_separatorStylePathItem";
+            this.path_separatorStylePathItem.Size = new System.Drawing.Size(268, 26);
+            this.path_separatorStylePathItem.Text = "Use path_separator setting";
             // 
             // ToggleSubtreesItem
             // 
@@ -331,17 +345,11 @@ namespace JSON_Tools.Forms
             this.DocumentTypeComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.QueryBox_KeyPress);
             this.DocumentTypeComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TreeViewer_KeyUp);
             // 
-            // path_separatorStyleItem
+            // MakeThisVisibleItem
             // 
-            this.path_separatorStyleItem.Name = "path_separatorStyleItem";
-            this.path_separatorStyleItem.Size = new System.Drawing.Size(268, 26);
-            this.path_separatorStyleItem.Text = "Use path_separator setting";
-            // 
-            // path_separatorStylePathItem
-            // 
-            this.path_separatorStylePathItem.Name = "path_separatorStylePathItem";
-            this.path_separatorStylePathItem.Size = new System.Drawing.Size(268, 26);
-            this.path_separatorStylePathItem.Text = "Use path_separator setting";
+            this.MakeThisVisibleItem.Name = "MakeThisVisibleItem";
+            this.MakeThisVisibleItem.Size = new System.Drawing.Size(267, 24);
+            this.MakeThisVisibleItem.Text = "Make this visible";
             // 
             // TreeViewer
             // 
@@ -395,5 +403,6 @@ namespace JSON_Tools.Forms
         private System.Windows.Forms.ComboBox DocumentTypeComboBox;
         private System.Windows.Forms.ToolStripMenuItem path_separatorStyleItem;
         private System.Windows.Forms.ToolStripMenuItem path_separatorStylePathItem;
+        private System.Windows.Forms.ToolStripMenuItem MakeThisVisibleItem;
     }
 }

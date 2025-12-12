@@ -121,7 +121,6 @@
     <Compile Include="PluginInfrastructure\DllExport\DllExportAttribute.cs" />
     <Compile Include="PluginInfrastructure\Docking_h.cs" />
     <Compile Include="PluginInfrastructure\GatewayDomain.cs" />
-    <Compile Include="PluginInfrastructure\IScintillaGateway.cs" />
     <Compile Include="PluginInfrastructure\MenuCmdID_h.cs" />
     <Compile Include="PluginInfrastructure\Msgs_h.cs" />
     <Compile Include="PluginInfrastructure\NotepadPPGateway.cs" />
