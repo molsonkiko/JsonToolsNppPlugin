@@ -1150,6 +1150,16 @@ namespace JSON_Tools.Forms
                     {
                         int posOfNode = NodePosInJsonDoc(node);
                         int lineOfNode = Npp.editor.LineFromPosition(posOfNode);
+                        // Notepad++ also has a "hide lines" interface separate from code folding
+                        // Counterintuitively, the EnsureVisible command undoes code folding
+                        //    but does not undo "hide lines"
+                        //    so we need to unhide them if they're hidden
+                        // TODO: If you run this command when the caret is hidden by both line hiding *and* code folding,
+                        //    it will result in a visual glitch where the folding button in the Notepad++ GUI displays as though the caret's enclosing block were still folded,
+                        //    even though the code will be unfolded.
+                        //    My guess is that this is due to a bug in Notepad++ itself, and in any case it is sufficiently minor that I do not intend to pursue it further now.
+                        //    Other than that little issue, this currently is able to reveal the caret if it is folded, line-hidden, or both.
+                        Npp.editor.UnhideEnclosingHiddenLineRange(lineOfNode);
                         Npp.editor.EnsureVisible(lineOfNode);
                         Npp.editor.GotoPos(posOfNode);
                     }
