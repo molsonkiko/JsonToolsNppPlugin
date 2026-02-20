@@ -463,7 +463,7 @@ namespace Kbg.NppPluginNET
             foreach (string key in keys)
             {
                 JsonFileInfo info = jsonFileInfos[key];
-                if (info == null || !info.IsDisposed)
+                if (info == null || info.IsDisposed)
                     continue;
                 info.Dispose();
                 jsonFileInfos.Remove(key);
