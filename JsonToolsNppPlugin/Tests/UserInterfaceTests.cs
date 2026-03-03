@@ -7,6 +7,7 @@ using JSON_Tools.Forms;
 using JSON_Tools.JSON_Tools;
 using JSON_Tools.Utils;
 using Kbg.NppPluginNET;
+using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace JSON_Tools.Tests
 {
@@ -365,6 +366,13 @@ namespace JSON_Tools.Tests
                 case "REGEX": Main.openTreeViewer.SetDocumentTypeComboBoxIndex(DocumentType.REGEX); break;
                 }
                 messages.Add($"Set document type to {newDocumentTypeName} with the treeview's combo box");
+                break;
+            case "set_buffer_encoding":
+                BufferEncoding newEncoding = (BufferEncoding)args[0];
+                if (newEncoding >= BufferEncoding.uniEnd || newEncoding < 0)
+                    newEncoding = BufferEncoding.invalid;
+                IntPtr curBuffID = Npp.notepad.GetCurrentBufferID();
+                Npp.notepad.SetBufferEncoding(curBuffID, newEncoding);
                 break;
             default:
                 throw new ArgumentException($"Unrecognized command {command}");
@@ -880,6 +888,14 @@ namespace JSON_Tools.Tests
                 ("compare_text", new object[]{"[2,\"bar\",false]\n[1,\"foo\",true]"}),
                 ("sort_form_run", new object[]{"[0]", false, true, 3, "s_len(str(@))"}),
                 ("compare_text", new object[]{"[false,\"bar\",2]\n[1,\"foo\",true]"}),
+                // TEST PARSE ANSI DOCUMENTS WITH NON-ASCII CHARACTERS
+                ("file_open", new object[]{3, "json"}),
+                ("set_buffer_encoding", new object[]{BufferEncoding.uni8Bit}),
+                ("overwrite", new object[]{"[\r\n    [\"µ ØÅ\", 1, \"a\"], // foo\r\n    [\"ü\", 2, \"b\"], // bÆr\r\n    [\"ß\", 3, \"c\"], // baz\r\n]//a"}),
+                ("pretty_print", new object[]{true, true, PrettyPrintStyle.Google}),
+                ("compare_text", new object[]{"[\r\n\t[\r\n\t\t\"µ ØÅ\",\r\n\t\t1,\r\n\t\t\"a\"\r\n\t],\r\n\t// foo\r\n\t[\r\n\t\t\"ü\",\r\n\t\t2,\r\n\t\t\"b\"\r\n\t],\r\n\t// bÆr\r\n\t[\r\n\t\t\"ß\",\r\n\t\t3,\r\n\t\t\"c\"\r\n\t]\r\n]\r\n// baz\r\n//a\r\n"}),
+                ("pretty_print", new object[]{true}),
+                ("compare_text", new object[]{"[\r\n\t[\"µ ØÅ\", 1, \"a\"],\r\n\t[\"ü\", 2, \"b\"],\r\n\t[\"ß\", 3, \"c\"]\r\n]"}),
             };
 
             var messages = new List<string>();
@@ -927,6 +943,7 @@ namespace JSON_Tools.Tests
                 string[] oneArray2000xPPrintSelections = ((JArray)remesParser.Search("(range(2000) * 13)[:]{@, @ + 11}{s_join(`,`, str(@))}[0]", new JNode())).children
                     .Select(x => (string)x.value)
                     .ToArray();
+                testcases.Add(("file_open", new object[] { 2 }));
                 testcases.Add(("overwrite", new object[] { oneArray2000xStr }));
                 testcases.Add(("select_every_valid", new object[] { }));
                 testcases.Add(("compare_selections", new object[] { oneArray2000xSelections }));

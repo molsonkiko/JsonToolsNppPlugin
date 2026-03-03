@@ -467,6 +467,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// The SC_CP_UTF8 value can be used to enter Unicode mode.
         /// (Scintilla feature 2037)
         /// </summary>
+        /// <remarks>WARNING: this method should probably <em>not</em> be used to set a document's encoding. Use <see cref="NotepadPPGateway.SetBufferEncoding(IntPtr, BufferEncoding)"/> instead.</remarks>
         public void SetCodePage(int codePage)
         {
             Win32.SendMessage(scintilla, SciMsg.SCI_SETCODEPAGE, (IntPtr) codePage, (IntPtr) Unused);

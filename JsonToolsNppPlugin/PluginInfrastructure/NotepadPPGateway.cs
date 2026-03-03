@@ -57,6 +57,12 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// <returns></returns>
         bool AllocateIndicators(int numberOfIndicators, out int[] indicators);
 
+		BufferEncoding GetBufferEncoding(IntPtr bufferID);
+
+		void SetBufferEncoding(IntPtr bufferID, BufferEncoding bufferEncoding);
+
+		IntPtr GetCurrentBufferID();
+
     }
 
 	/// <summary>
@@ -305,6 +311,26 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
                 return success != IntPtr.Zero;
             }
         }
+
+		public BufferEncoding GetBufferEncoding(IntPtr bufferID)
+		{
+			long result = (long)Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETBUFFERENCODING, bufferID, 0);
+			if (result >= (long)BufferEncoding.uniEnd || result < 0)
+				return BufferEncoding.invalid;
+			return (BufferEncoding)result;
+		}
+
+		public void SetBufferEncoding(IntPtr bufferID, BufferEncoding encoding)
+		{
+			if (encoding <= BufferEncoding.invalid || encoding >= BufferEncoding.uniEnd)
+				return;
+			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_SETBUFFERENCODING, bufferID, (int)encoding);
+		}
+
+		public IntPtr GetCurrentBufferID()
+		{
+			return Win32.SendMessage(PluginBase.nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
+		}
     }
 
 	/// <summary>

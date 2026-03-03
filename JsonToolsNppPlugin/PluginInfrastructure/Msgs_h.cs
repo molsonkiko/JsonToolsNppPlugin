@@ -873,4 +873,33 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         UnicodeType,
         TypingMode,
     }
+
+    /// <summary>
+    /// based on the UniMode enum in NppConstants.h
+    /// </summary>
+    public enum BufferEncoding
+    {
+        /// <summary>
+        /// returned when something was wrong in Notepad++
+        /// </summary>
+        invalid = -1,     
+        /// <summary>ANSI</summary>
+        uni8Bit = 0,
+        /// <summary>UTF-8 with BOM</summary>
+        uniUTF8 = 1,
+        /// <summary>UTF-16 Big Endian with BOM</summary>
+        uni16BE = 2,        
+        /// <summary>UTF-16 Little Endian with BOM</summary>
+        uni16LE = 3,        
+        /// <summary>UTF-8 without BOM</summary>
+        uniUTF8_NoBOM = 4,  
+        /// <summary>0 - 127 ASCII</summary>
+        uni7Bit = 5,
+        /// <summary>UTF-16 Big Endian without BOM</summary>
+        uni16BE_NoBOM = 6,
+        /// <summary>UTF-16 Little Endian without BOM</summary>
+        uni16LE_NoBOM = 7,
+        /// <summary>indicates the maximum BufferEncoding value, has no real meaning</summary>
+        uniEnd = 8
+    };
 }
