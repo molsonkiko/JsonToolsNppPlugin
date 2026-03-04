@@ -437,7 +437,7 @@ Beginning in [v6.1](/CHANGELOG.md#610---2023-12-28), using this option from the 
 
 ## Reveal tree nodes hidden by code folding *(added in v8.5)*
 
-Beginning in [v8.5](/CHANGELOG.md#850---2026-03-03), the right click context menu for tree nodes has a `Make this visible` option that undoes code folding to make them visible.
+Beginning in [v8.5](/CHANGELOG.md#850---2026-03-04), the right click context menu for tree nodes has a `Make this visible` option that undoes code folding to make them visible.
 
 Below is an image of the tree for a document just before using this command. Note that the selected node is hidden by two layers of code folding.
 

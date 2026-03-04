@@ -1,5 +1,5 @@
 # Change Log
-All [notable changes](#840---2025-05-04) to this project will be documented in this file.
+All [notable changes](#850---2026-03-04) to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
@@ -49,13 +49,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Since v7.0, holding down `Enter` in a multiline textbox (like the [tree viewer query box](/docs/README.md#remespath)) only adds one newline when the key is lifted.
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 - Hard-to-reproduce issue where sometimes clicking a treenode in regex search results does not navigate to the correct location in the document (should navigate to the start of the match). Appears to only happen when there is no capture group. It's an all-or-nothing issue; either none of the treenodes navigate to the correct location or all of them do.
-- Add warning to users when they attempt to use features like [Path to current position](/docs/README.md#path-to-current-position) on a non-UTF8 file with non-ASCII characters (see release notes for [8.5.0](#850---2026-03-03) below), since those features currently will simply not work correctly and the user will only understand why if they read the documentation.
+- Add warning to users when they attempt to use features like [Path to current position](/docs/README.md#path-to-current-position) on a non-UTF8 file with non-ASCII characters (see release notes for [8.5.0](#850---2026-03-04) below), since those features currently will simply not work correctly and the user will only understand why if they read the documentation.
 
-## [8.5.0] - 2026-03-03
+## [8.5.0] - 2026-03-04
 
 ### Added
 
-1. New [`Make this visible` option](/docs/README.md#reveal-tree-nodes-hidden-by-code-folding-added-in-v8.5) on the tree view's right click context menu to reveal nodes hidden by code folding. This was first requested in [issue 103](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/103).
+1. New [`Make this visible` option](/docs/README.md#reveal-tree-nodes-hidden-by-code-folding-added-in-v85) on the tree view's right click context menu to reveal nodes hidden by code folding. This was first requested in [issue 103](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/103).
 
 ### Fixed
 
