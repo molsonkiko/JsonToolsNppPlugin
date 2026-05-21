@@ -1,20 +1,21 @@
 ﻿// NPP plugin platform for .Net v0.91.57 by Kasper B. Graversen etc.
+using JSON_Tools.Forms;
+using JSON_Tools.JSON_Tools;
+using JSON_Tools.Tests;
+using JSON_Tools.Utils;
+using Kbg.NppPluginNET.PluginInfrastructure;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
-using System.Windows.Forms;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using Kbg.NppPluginNET.PluginInfrastructure;
-using JSON_Tools.JSON_Tools;
-using JSON_Tools.Utils;
-using JSON_Tools.Forms;
-using JSON_Tools.Tests;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using PluginNetResources = JSON_Tools.Properties.Resources;
 
 namespace Kbg.NppPluginNET
@@ -177,7 +178,7 @@ namespace Kbg.NppPluginNET
             }
             HideSelectionRememberingIndicators();
         }
-        
+
         /// <summary>
         /// selection-remembering indicators should be hidden
         /// </summary>

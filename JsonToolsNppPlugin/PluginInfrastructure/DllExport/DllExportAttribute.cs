@@ -2,8 +2,15 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace NppPlugin.DllExport
+namespace RGiesecke.DllExport
 {
+    /// <summary>
+    /// The fully qualified type name must be <c>RGiesecke.DllExport.DllExportAttribute</c> in order to work with the pre-configured task in <c>UnmanagedExports.Repack.Upgrade.targets</c>.
+    /// This implementation could be avoided if we referenced the <c>RGiesecke.DllExport.Metadata</c> assembly, but then it will look like a runtime dependency, and be copied to the build output directory.
+    /// <para>
+    /// See <seealso href="https://github.com/stevenengland/UnmanagedExports.Repack.Upgrade/blob/master/nuget/build/UnmanagedExports.Repack.Upgrade.targets"/>
+    /// </para>
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     partial class DllExportAttribute : Attribute
     {

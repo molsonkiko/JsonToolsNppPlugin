@@ -2,13 +2,13 @@
 using System;
 using System.Runtime.InteropServices;
 using Kbg.NppPluginNET.PluginInfrastructure;
-using NppPlugin.DllExport;
+using RGiesecke.DllExport;
 
 namespace Kbg.NppPluginNET
 {
     class UnmanagedExports
     {
-        [DllExport(CallingConvention=CallingConvention.Cdecl)]
+        [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static bool isUnicode()
         {
             return true;
@@ -59,7 +59,7 @@ namespace Kbg.NppPluginNET
             }
             else
             {
-	            Main.OnNotification(notification);
+                Main.OnNotification(notification);
             }
         }
     }

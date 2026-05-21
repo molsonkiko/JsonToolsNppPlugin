@@ -24,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>none</DebugType>
@@ -35,6 +36,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,6 +48,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DebugType>none</DebugType>
@@ -57,14 +60,25 @@
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Default values for debugging so it start correct version of Notepad++
          $(ProgramW6432) and $(MSBuildProgramFiles32) points to the 64 and 32 bit "Program Files" directories -->
+    <NppPath64 Condition="'$(NppPath64)' == ''">$(ProgramW6432)\Notepad++</NppPath64>
+    <NppPath32 Condition="'$(NppPath32)' == ''">$(MSBuildProgramFiles32)\Notepad++</NppPath32>
     <StartAction>Program</StartAction>
-    <StartProgram Condition="'$(Platform)'=='x64'">$(ProgramW6432)\Notepad++\notepad++.exe</StartProgram>
-    <StartProgram Condition="'$(Platform)'=='x86'">$(MSBuildProgramFiles32)\Notepad++\notepad++.exe</StartProgram>
+    <StartProgram Condition="'$(Platform)'=='x64'">$(NppPath64)\notepad++.exe</StartProgram>
+    <StartProgram Condition="'$(Platform)'=='x86'">$(NppPath32)\notepad++.exe</StartProgram>
   </PropertyGroup>
+  <PropertyGroup>
+    <RestorePackagesPath>$(MSBuildProjectDirectory)\packages</RestorePackagesPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="UnmanagedExports.Repack.Upgrade" Version="1.2.1" GeneratePathProperty="true">
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
   <ItemGroup>
     <!-- infrastructure -->
     <Compile Include="Forms\AboutForm.cs">
@@ -272,14 +286,29 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(MSBuildProjectDirectory)\PluginInfrastructure\DllExport\NppPlugin.DllExport.targets" />
-  <Target Name="CopyTranslation" AfterTargets="Build" DependsOnTargets="Build">
+  <Import Condition="Exists($(PkgUnmanagedExports_Repack_Upgrade))" Project="$(PkgUnmanagedExports_Repack_Upgrade)\build\UnmanagedExports.Repack.Upgrade.targets" />
+  <Target Name="CopyBin" AfterTargets="Build" DependsOnTargets="Build">
+    <!-- copy over the appropriate DLL, translation, and test files to the Notepad++ directory.
+    Otherwise Notepad++ will just load without the plugin. -->
     <ItemGroup>
-      <NPP32BIT Include="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools" />
-      <NPP64BIT Include="$(ProgramW6432)\Notepad++\plugins\JsonTools" />
+      <RELEASE64 Include="bin\Release-x64\*.*" />
+      <DEBUG64 Include="bin\Debug-x64\*.*" />
+      <RELEASE32 Include="bin\Release\*.*" />
+      <DEBUG32 Include="bin\Debug\*.*" />
+      <NPP64BIT Include="$(NppPath64)\plugins\JsonTools" />
+      <NPP32BIT Include="$(NppPath32)\plugins\JsonTools" />
       <TRANSLATION_ORIGIN Include="..\translation\*.json5" />
-      <TRANSLATION32 Include="$(MSBuildProgramFiles32)\Notepad++\plugins\JsonTools\translation" />
-      <TRANSLATION64 Include="$(ProgramW6432)\Notepad++\plugins\JsonTools\translation" />
+      <TRANSLATION32 Include="$(NppPath32)\plugins\JsonTools\translation" />
+      <TRANSLATION64 Include="$(NppPath64)\plugins\JsonTools\translation" />
+      <TESTFILES_ORIGIN Include="..\testfiles\*.*" />
+      <TESTFILES_ORIGIN_SMALL Include="..\testfiles\small\*.*" />
+      <TESTFILES_ORIGIN_SUBSMALL Include="..\testfiles\small\subsmall\*.*" />
+      <TESTFILES32 Include="$(NppPath32)\plugins\JsonTools\testfiles" />
+      <TESTFILES32_SMALL Include="$(NppPath32)\plugins\JsonTools\testfiles\small" />
+      <TESTFILES32_SUBSMALL Include="$(NppPath32)\plugins\JsonTools\testfiles\small\subsmall" />
+      <TESTFILES64 Include="$(NppPath64)\plugins\JsonTools\testfiles" />
+      <TESTFILES64_SMALL Include="$(NppPath64)\plugins\JsonTools\testfiles\small" />
+      <TESTFILES64_SUBSMALL Include="$(NppPath64)\plugins\JsonTools\testfiles\small\subsmall" />
     </ItemGroup>
     <MakeDir Directories="@(NPP64BIT)" Condition=" '$(Platform)' == 'x64' " />
     <MakeDir Directories="@(NPP32BIT)" Condition=" '$(Platform)' == 'x86' " />
@@ -288,5 +317,23 @@
     <MakeDir Directories="@(TRANSLATION32)" Condition=" '$(Platform)' == 'x86' " />
     <Copy Condition=" '$(Platform)' == 'x64' " SourceFiles="@(TRANSLATION_ORIGIN)" DestinationFolder="@(TRANSLATION64)" SkipUnchangedFiles="true" />
     <Copy Condition=" '$(Platform)' == 'x86' " SourceFiles="@(TRANSLATION_ORIGIN)" DestinationFolder="@(TRANSLATION32)" SkipUnchangedFiles="true" />
+    <!-- copy all test files to NPP plugin dir's subdirectory -->
+    <MakeDir Directories="@(TESTFILES64)" Condition=" '$(Platform)' == 'x64' " />
+    <MakeDir Directories="@(TESTFILES64_SMALL)" Condition=" '$(Platform)' == 'x64' " />
+    <MakeDir Directories="@(TESTFILES64_SUBSMALL)" Condition=" '$(Platform)' == 'x64' " />
+    <MakeDir Directories="@(TESTFILES32)" Condition=" '$(Platform)' == 'x86' " />
+    <MakeDir Directories="@(TESTFILES32_SMALL)" Condition=" '$(Platform)' == 'x86' " />
+    <MakeDir Directories="@(TESTFILES32_SUBSMALL)" Condition=" '$(Platform)' == 'x86' " />
+    <Copy Condition=" '$(Platform)' == 'x64' " SourceFiles="@(TESTFILES_ORIGIN)" DestinationFolder="@(TESTFILES64)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x64' " SourceFiles="@(TESTFILES_ORIGIN_SMALL)" DestinationFolder="@(TESTFILES64_SMALL)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x64' " SourceFiles="@(TESTFILES_ORIGIN_SUBSMALL)" DestinationFolder="@(TESTFILES64_SUBSMALL)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x86' " SourceFiles="@(TESTFILES_ORIGIN)" DestinationFolder="@(TESTFILES32)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x86' " SourceFiles="@(TESTFILES_ORIGIN_SMALL)" DestinationFolder="@(TESTFILES32_SMALL)" SkipUnchangedFiles="true" />
+    <Copy Condition=" '$(Platform)' == 'x86' " SourceFiles="@(TESTFILES_ORIGIN_SUBSMALL)" DestinationFolder="@(TESTFILES32_SUBSMALL)" SkipUnchangedFiles="true" />
+    <!-- copy all files in current bin directory to NPP plugin dir -->
+    <Copy SourceFiles="@(RELEASE64)" Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' " DestinationFolder="@(NPP64BIT)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RELEASE32)" Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " DestinationFolder="@(NPP32BIT)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DEBUG64)" Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' " DestinationFolder="@(NPP64BIT)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DEBUG32)" Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " DestinationFolder="@(NPP32BIT)" SkipUnchangedFiles="true" />
   </Target>
 </Project>
