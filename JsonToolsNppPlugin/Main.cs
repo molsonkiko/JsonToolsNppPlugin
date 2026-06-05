@@ -72,6 +72,7 @@ namespace Kbg.NppPluginNET
                 "\".+\":{\"items\":{\"type\":\"string\"},\"minItems\":1,\"type\":\"array\"}," + // nonzero-length keys must be mapped to non-empty string arrays
                 "\"^$\":false" + // zero-length keys are not allowed
             "}}"), 0, false);
+        private static bool EMERGENCY_SHUTOFF_schemasToFnamePatterns = false;
         // stuff for periodically parsing and possibly validating a file
         public static DateTime lastEditedTime = DateTime.MaxValue;
         private static long millisecondsAfterLastEditToParse = 1000 * settings.inactivity_seconds_before_parse;
@@ -1850,9 +1851,13 @@ namespace Kbg.NppPluginNET
             }
             using (var fp = new StreamWriter(schemasToFnamePatternsFname, false, Encoding.UTF8))
             {
+                if (EMERGENCY_SHUTOFF_schemasToFnamePatterns)
+                {
+                    fp.WriteLine("// IMPORTANT WARNING: The last time Notepad++ opened, JsonTools parsed a version of this file that may have been maliciously crafted. This may indicate a deeper problem with your computer's security.");
+                }
                 foreach (string comment in commentsAtStartOfFile)
                     fp.WriteLine(comment);
-                fp.Write(schemasToPatterns.PrettyPrint());
+                fp.Write(EMERGENCY_SHUTOFF_schemasToFnamePatterns ? "{\r\n}" : schemasToFnamePatterns.PrettyPrint());
                 fp.Flush();
             }
         }
@@ -1936,7 +1941,8 @@ namespace Kbg.NppPluginNET
                     string pattern = (string)patternNode.value;
                     try
                     {
-                        var regex = new Regex(pattern);
+                        // use a timeout becuase the regex will exclusively parse filenames (short strings)
+                        var regex = new Regex(pattern, RegexOptions.None, JRegex.DEFAULT_MATCH_TIMEOUT);
                         regexes.children.Add(new JRegex(regex));
                     }
                     catch (Exception ex)
@@ -1983,7 +1989,9 @@ namespace Kbg.NppPluginNET
         /// <param name="fname"></param>
         static bool ValidateIfFilenameMatches(string fname, bool wasAutotriggered = false)
         {
-            if (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6)
+            if (fname == null ||
+                EMERGENCY_SHUTOFF_schemasToFnamePatterns ||
+                (wasAutotriggered && Npp.editor.GetLength() > Main.settings.max_file_size_MB_slow_actions * 1e6))
                 return false;
             foreach (string schemaFname in schemasToFnamePatterns.children.Keys.ToArray())
             {
@@ -1991,8 +1999,29 @@ namespace Kbg.NppPluginNET
                     continue;
                 foreach (JNode pat in fnamePatterns.children.ToArray())
                 {
-                    if (!(pat is JRegex jregex && jregex.regex.IsMatch(fname)))
+                    if (!(pat is JRegex jregex && jregex.regex is Regex regex))
                         continue;
+                    try
+                    {
+                        if (!regex.IsMatch(fname))
+                            continue;
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        Translator.ShowTranslatedMessageBox(
+                            "When JsonTools tried to execute regex {0} on filename {1}, the match timed out after 2 seconds.\r\n\r\n" +
+                            "The most likely reason for this match timeout is that the regex was maliciously crafted to cause exponential backtracking on this filename, " +
+                            "which would in turn cause Notepad++ to hang indefinitely whenever you attempt to open that file.\r\n\r\n" +
+                            "To prevent this from happening again, JsonTools will no longer attempt to automatically parse any files with JSON schema based on filename patterns.\r\n\r\n" +
+                            "If you see this happening, your installation may have been corrupted, and the (probable) source of the corruption can be viewed by clicking the \"Validate files with JSON schema if name matches pattern\" option and reading the file opened this way.",
+                            "Timeout when testing pattern on filename (from schemasToFnamePatterns.json)",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error,
+                            2, regex.ToString(), fname
+                        );
+                        EMERGENCY_SHUTOFF_schemasToFnamePatterns = true;
+                        return false;
+                    }
                     // the filename matches a pattern for this schema, so we'll try to validate it.
                     ValidateJson(schemaFname, false, true, wasAutotriggered);
                     return true;

@@ -1822,6 +1822,18 @@ namespace JSON_Tools.JSON_Tools
         // has to be a separate property because Regex objects do not implement IComparable
         public Regex regex;
 
+        /// <summary>
+        /// In most cases, I believe JsonTools regexes should <b>NOT</b> use a match timeout,
+        /// because each regex is run on the user's own machine and it's their business
+        /// if they want to run a complex regex on a very long string.
+        /// This is not a webapp, where one user running an incredibly resource-intensive query could tank performance for all users.
+        /// Thus, I would argue that concerns of ReDOS vulnerability are mostly misplaced.<br></br><br></br>
+        /// However, if the user is running an untrusted regex on a string that is known to be short,
+        /// such as a filename, a maliciously crafted regex-string combination triggering exponential backtracking
+        /// is by far the most likely reason the regex match would take more than two seconds. 
+        /// </summary>
+        public static readonly TimeSpan DEFAULT_MATCH_TIMEOUT = TimeSpan.FromSeconds(2);
+
         public JRegex(Regex regex) : base(null, Dtype.REGEX, 0)
         {
             this.regex = regex;
