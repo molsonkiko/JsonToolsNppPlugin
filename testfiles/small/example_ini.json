@@ -43,7 +43,7 @@
 	"special\\_chars": {
 		"equals": "inside value=fine",
 		"colon": "inside value : also fine\r\n    :even on separate line (if indented)",
-		"squarebraces, semicolons, and hashtags *in values*": "#define INLINE_COMMENTS 0\n    const arr = [1];",
+		"squarebraces, semicolons, and hashtags *in values*": "#define INLINE_COMMENTS 0\r\n    const arr = [1];",
 		// but obviously hashtags
 		// and semicolons as first non-whitespace are treated as comments
 		"non-colon, non-equals special chars in [\"#keys\"];": "a-OK"

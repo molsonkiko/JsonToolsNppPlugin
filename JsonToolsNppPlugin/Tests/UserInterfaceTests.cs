@@ -608,14 +608,16 @@ namespace JSON_Tools.Tests
                 ("compare_selections", new object[]{new string[] {"39,39"} }),
                 ("compare_path_to_position", new object[]{32, "[1].b[1]"}),
                 // TEST PARSE INI FILE
-                ("overwrite", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\n  bar=2\r\n  [дaz]\r\n  baz=3\r\n  ;b\r\n  baz2 = 7 \r\n[quz]\r\nquz=4\r\n;c"}),
+                ("overwrite", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\n  bar=2\r\n  [дaz]\n  baz=3\r\n  ;b\n  baz2 = 7 \r\n[quz]\r\nquz=4\n 5\r\n;c"}),
                 ("set_document_type", new object[]{"INI"}),
                 ("tree_query", new object[]{"@..g`z`"}),
                 ("treenode_click", new object[]{new string[] {"0 : {2}", "baz2 : \"7 \""} }),
-                ("compare_selections", new object[]{new string[]{"63,63" } }),
+                ("compare_selections", new object[]{new string[]{"61,61" } }),
+                ("tree_query", new object[]{"@"}),
+                ("treenode_click", new object[]{new string[] {"quz : {1}", "quz : \"4\\n 5\""} }),
                 ("compare_path_to_position", new object[]{81, ".quz.quz"}),
                 ("tree_query", new object[]{"@.bar.bar = @ * int(@)"}), // edit one value
-                ("compare_text", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\nbar=22\r\n[дaz]\r\nbaz=3\r\n;b\r\nbaz2=7 \r\n[quz]\r\nquz=4\r\n;c\r\n"}),
+                ("compare_text", new object[]{"[foồ]\r\n;a\r\nfoo=1\r\n[bar]\r\nbar=22\r\n[дaz]\r\nbaz=3\r\n;b\r\nbaz2=7 \r\n[quz]\r\nquz=4\n 5\r\n;c\r\n"}),
                 // TEST RUNNING SAME QUERY MULTIPLE TIMES ON SAME INPUT DOES NOT HAVE DIFFERENT RESULTS
                 // test when mutating a compile-time constant array
                 ("tree_query", new object[]{"var onetwo = j`[1,1]`; onetwo[1] = @ + 1; onetwo"}),

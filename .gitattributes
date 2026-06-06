@@ -14,7 +14,4 @@
 *.ico binary
 *.dll binary
 
-# some non-binary files should be marked as binary because they deliberately have mixed line endings.
-example_ini.ini binary
-
 

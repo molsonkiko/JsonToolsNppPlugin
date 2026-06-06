@@ -784,7 +784,7 @@ namespace JSON_Tools.Tests
                 }
             }
             // the rand() and randint() functions require a special test because their outputs are nondeterministic
-            ii += 7;
+            ii += 10;
             string randints1argQuery = "flatten(@.foo)[:]->randint(1000)";
             string randints2argQuery = "range(9)[:]->randint(-700, 800)";
             string randintsIfElseQuery = "var stuff = j`[\"foo\", \"bar\", \"baz\", \"quz\"]`; range(17)[:]->at(stuff, abs(randint(-20, 20) % 4))";
@@ -802,7 +802,7 @@ namespace JSON_Tools.Tests
                     && firstRandints2args.children.Any(x => x.value is long l && l > 0)
                     && firstRandints2args.children.Any(x => x.value is long l && l < 0)))
                 {
-                    Npp.AddLine($"Expected all values in result of \"{randintsIfElseQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args.ToString()}");
+                    Npp.AddLine($"Expected all values in result of \"{randints2argQuery}\" to be in [-700, 800), at least one to be less than 0, and at least one to be greater than 0, got {firstRandints2args.ToString()}");
                     testsFailed += 1;
                 }
                 firstRandintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
@@ -848,14 +848,14 @@ namespace JSON_Tools.Tests
                     {
                         allRandTestsFailed = true;
                         testsFailed++;
-                        Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\", but instead got {result.ToString()}");
+                        Npp.AddLine($"Expected remesparser.Search(ifelse(rand() < 0.5, a, b), foo) to return \"a\" or \"b\", but instead got {result.ToString()}");
                     }
                 }
                 catch (Exception ex)
                 {
                     allRandTestsFailed = true;
                     testsFailed++;
-                    Npp.AddLine($"Expected remesparser.Search(ifelse(rand(), a, b), foo) to return \"a\" or \"b\" but instead threw" +
+                    Npp.AddLine($"Expected remesparser.Search(ifelse(rand() < 0.5, a, b), foo) to return \"a\" or \"b\" but instead threw" +
                                       $" an exception:\n{RemesParser.PrettifyException(ex)}");
                 }
                 // rand() in projection (make sure not all doubles are equal)
@@ -904,25 +904,33 @@ namespace JSON_Tools.Tests
                     JArray randints1arg =   (JArray)remesparser.Search(randints1argQuery, foo);
                     if (randints1arg.Equals(firstRandints1arg))
                     {
+                        allRandTestsFailed = true;
                         Npp.AddLine($"Expected running {randints1argQuery} to not return the same thing twice, but got {randints1arg.ToString()} twice");
+                        testsFailed++;
                     }
                     JArray randints2args =  (JArray)remesparser.Search(randints2argQuery, foo);
-                    if (randints1arg.Equals(firstRandints1arg))
+                    if (randints2args.Equals(firstRandints2args))
                     {
+                        allRandTestsFailed = true;
                         Npp.AddLine($"Expected running {randints2argQuery} to not return the same thing twice, but got {randints2args.ToString()} twice");
+                        testsFailed++;
                     }
                     JArray randintsIfElse = (JArray)remesparser.Search(randintsIfElseQuery, foo);
-                    if (randints1arg.Equals(firstRandints1arg))
+                    if (randintsIfElse.Equals(firstRandintsIfElse))
                     {
+                        allRandTestsFailed = true;
                         Npp.AddLine($"Expected running {randintsIfElseQuery} to not return the same thing twice, but got {randintsIfElse.ToString()} twice");
+                        testsFailed++;
                     }
                 }
                 catch (Exception ex)
                 {
+                    allRandTestsFailed = true;
                     testsFailed += 3;
                     Npp.AddLine($"While testing randint, got error {RemesParser.PrettifyException(ex)}");
                 }
             }
+            // test python-style slices.
             string onetofiveStr = "[1,2,3,4,5]";
             JNode onetofive = jsonParser.Parse(onetofiveStr);
             (string query, JArray desiredResult)[] sliceTestcases = SliceTester.strTestcases
