@@ -2035,6 +2035,10 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         private List<VarAssign> loopVariableAssignmentStack;
         private Dictionary<int, string> tokenIndicesOfVariableReferences;
+        /// <summary>
+        /// false if the context contains a nondeterministic function like rand or randint
+        /// </summary>
+        public bool isDeterministic = true;
 
         public JQueryContext() : base(null, Dtype.UNKNOWN, 0)
         {

@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Hard-to-reproduce issue where sometimes clicking a treenode in regex search results does not navigate to the correct location in the document (should navigate to the start of the match). Appears to only happen when there is no capture group. It's an all-or-nothing issue; either none of the treenodes navigate to the correct location or all of them do.
 - Add warning to users when they attempt to use features like [Path to current position](/docs/README.md#path-to-current-position) on a non-UTF8 file with non-ASCII characters (see release notes for [8.5.0](#850---2026-03-04) below), since those features currently will simply not work correctly and the user will only understand why if they read the documentation.
 
+## [8.5.1] - (UNRELEASED) YYYY-MM-DD
+
+### Fixed
+
+1. Ensure that maliciously crafted regexes in `schemasToFnamePatterns.json` cannot be used to make Notepad++ hang indefinitely when opening files with maliciously crafted names.
+2. Eliminate caching of random RemesPath queries, ensuring that queries with random functions like `rand()` or `randint(a,b)` will generate new random values each time they're executed.
+
 ## [8.5.0] - 2026-03-04
 
 ### Added
