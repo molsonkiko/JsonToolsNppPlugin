@@ -412,7 +412,13 @@ namespace JSON_Tools.JSON_Tools
                 return oldResult;
             List<object> toks = lexer.Tokenize(query);
             JNode result = ParseQuery(toks);
-            cache.SetDefault(query, result);
+            // Queries containing nondeterministic functions are *supposed* to return a function
+            // (either a CurJson or a JMutator), so that repeated calls produce different values.
+            // However, the constant propagation machinery previously caused
+            // some nondeterministic queries to get their return values cached,
+            // so we just won't cache any nondeterminstic queries.
+            if (!(result is JQueryContext context) || context.isDeterministic)
+                cache.SetDefault(query, result);
             return result;
         }
 
@@ -1231,7 +1237,7 @@ namespace JSON_Tools.JSON_Tools
                 context.AddStatement(statement);
                 pos = endOfStatement + 1;
             }
-            return context.GetQuery();
+            return context.isDeterministic ? context.GetQuery() : context;
         }
 
         /// <summary>
@@ -2053,6 +2059,8 @@ namespace JSON_Tools.JSON_Tools
             pos++;
             int argNum = 0;
             List<JNode> args = new List<JNode>(fun.minArgs);
+            if (!fun.isDeterministic)
+                context.isDeterministic = false;
             if (fun.maxArgs == 0)
             {
                 t = toks[pos];
