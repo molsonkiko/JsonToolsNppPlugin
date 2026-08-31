@@ -738,6 +738,12 @@ namespace JSON_Tools.JSON_Tools
             }
         }
 
+        public static void ThrowIfRecursionLimitReached(int depth)
+        {
+            if (depth > JsonParser.MAX_RECURSION_DEPTH)
+                throw new RemesPathException($"Max recursion depth ({JsonParser.MAX_RECURSION_DEPTH}) reached while recursively flattening iterable.");
+        }
+
         /// <summary>
         /// Yield all *scalars* that are descendents of node, no matter their depth<br></br>
         /// Does not yield keys or indices, only the nodes themselves.
@@ -747,8 +753,9 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static IEnumerable<object> RecursivelyFlattenIterable(JNode node)
+        private static IEnumerable<object> RecursivelyFlattenIterable(JNode node, int depth = 0)
         {
+            ThrowIfRecursionLimitReached(depth);
             if (node is JObject obj)
             {
                 foreach (JNode val in obj.children.Values)
@@ -759,7 +766,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else
                     {
-                        foreach (object child in RecursivelyFlattenIterable(val))
+                        foreach (object child in RecursivelyFlattenIterable(val, depth + 1))
                             yield return child;
                     }
                 }
@@ -774,7 +781,7 @@ namespace JSON_Tools.JSON_Tools
                     }
                     else
                     {
-                        foreach (object child in RecursivelyFlattenIterable(val))
+                        foreach (object child in RecursivelyFlattenIterable(val, depth + 1))
                             yield return child;
                     }
                 }
@@ -1875,7 +1882,7 @@ namespace JSON_Tools.JSON_Tools
                         {
                             if (keepChainingReturnType)
                                 returnType = Dtype.ARR;
-                            idxrs.Add(new IndexerFunc(RecursivelyFlattenIterable, false, false, false, true));
+                            idxrs.Add(new IndexerFunc(x => RecursivelyFlattenIterable(x, 0), false, false, false, true));
                         }
                         else
                             idxrs.Add(new IndexerFunc(ApplyStarIndexer, hasOneOption, isProjection, isDict, false));

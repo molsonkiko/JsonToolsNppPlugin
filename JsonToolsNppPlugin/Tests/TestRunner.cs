@@ -18,6 +18,8 @@ namespace JSON_Tools.Tests
         public static async Task RunAll()
         {
             Npp.notepad.FileNew();
+            DateTime startDateTime = DateTime.Now;
+            string startDateTimeStr = startDateTime.ToString("yyyy-MM-dd HH:mm:ss");
             string header = $"Test results for JsonTools v{Npp.AssemblyVersionString()} on Notepad++ {Npp.nppVersionStr}\r\nNOTE: Ctrl-F (regular expressions *on*) for \"Failed [1-9]\\d*\" to find all failed tests";
             Npp.AddLine(header);
 
@@ -199,10 +201,12 @@ Testing {name}
                         failures.Add(name);
                 }
             }
+            double testDurationSeconds = DateTime.Now.Subtract(startDateTime).Ticks;
             Encoding encoding = Npp.editor.GetCodePage();
             if (skipped.Count > 0)
-                Npp.editor.InsertText(header.Length + 2, "Tests skipped: " + string.Join(", ", skipped) + "\r\n", encoding);
-            Npp.editor.InsertText(header.Length + 2, "Tests failed: " + string.Join(", ", failures) + "\r\n", encoding);
+                Npp.editor.InsertText(header.Length + 2, "TESTS SKIPPED: " + string.Join(", ", skipped) + "\r\n", encoding);
+            string failedList = failures.Count == 0 ? "ALL TESTS PASSED!" : "TESTS FAILED: " + string.Join(", ", failures);
+            Npp.editor.InsertText(header.Length + 2, $"{failedList}\r\nTests started at {startDateTimeStr} and lasted {Benchmarker.ConvertTicks(testDurationSeconds, "s")} seconds\r\n", encoding);
         }
     }
 }

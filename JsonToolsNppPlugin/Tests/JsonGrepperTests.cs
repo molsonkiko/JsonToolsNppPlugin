@@ -162,6 +162,23 @@ namespace JSON_Tools.Tests
             testResult = await TestApiRequesterHelper(firstUrl, ii, testsFailed, grepper);
             ii = testResult[0];
             testsFailed = testResult[1];
+            // test with a max response size, and verify that the max response size is enforced
+            ii++;
+            grepper.fnameJsons.children.Clear();
+            grepper.exceptions.children.Clear();
+            grepper.maxApiResponseLength = 1;
+            string[] secondUrl = new string[] { urls[1] };
+            Npp.AddLine("Testing that maxApiResponseLength is honored with 1 url");
+            await grepper.GetJsonFromApis(secondUrl);
+            if (!(grepper.fnameJsons.Length == 0 &&
+                  grepper.exceptions.Length == 1 &&
+                  grepper.exceptions.TryGetValue(urls[1], out JNode responseTooLongExceptionText) &&
+                  responseTooLongExceptionText.value is string responseTooLongExceptionStr &&
+                  responseTooLongExceptionStr.Contains("Response too large:")))
+            {
+                testsFailed++;
+                Npp.AddLine("Grepper should have thrown an exception when maxApiResponseLength was set to 1, but no exception was thrown");
+            }
             Npp.AddLine($"Failed {testsFailed} tests.");
             Npp.AddLine($"Passed {ii - testsFailed} tests.");
             return testsFailed > 0;

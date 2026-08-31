@@ -664,7 +664,8 @@ namespace JSON_Tools.Forms
         private void SaveQueryResultButton_Click(object sender, EventArgs e)
         {
             if (queryResult == null) return;
-            Main.PrettyPrintJsonInNewFile(queryResult);
+            if (!ShowMessageIfJsonTooDeep(queryResult, "Could not display query result"))
+                Main.PrettyPrintJsonInNewFile(queryResult);
         }
 
         private void FindReplaceButton_Click(object sender, EventArgs e)
@@ -1097,6 +1098,8 @@ namespace JSON_Tools.Forms
                                 node.Collapse();
                             else
                             {
+                                if (ShowMessageIfJsonTooDeep(nodeJson, "Could not expand tree node"))
+                                    return;
                                 // node.ExpandAll() is VERY VERY SLOW if we don't do it this way
                                 Tree.BeginUpdate();
                                 isExpandingAllSubtrees = true;
@@ -1551,6 +1554,26 @@ namespace JSON_Tools.Forms
             Marshal.Copy(new byte[MAX_LEN_TITLE_BUFFER], 0, ptrTitleBuf, MAX_LEN_TITLE_BUFFER);
             Marshal.Copy(fullTitle.ToCharArray(), 0, ptrTitleBuf, fullTitle.Length);
             return ptrTitleBuf;
+        }
+
+        /// <summary>
+        /// Show a message box and return true if json has depth greater than <see cref="JsonParser.MAX_RECURSION_DEPTH"/>.<br></br>
+        /// Else return false.
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="messagePrefix"></param>
+        /// <returns></returns>
+        public bool ShowMessageIfJsonTooDeep(JNode json, string messagePrefix)
+        {
+            if (json.IsTooDeep())
+            {
+                MessageBox.Show($"{messagePrefix}: JSON has recursion depth greater than max recursion depth ({JsonParser.MAX_RECURSION_DEPTH})",
+                    "Max recursion depth reached",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return true;
+            }
+            return false;
         }
     }
 }

@@ -50,13 +50,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Maybe use pre-7.1 (dictionary-based rather than indicator-based) [selection remembering](/docs/README.md#working-with-selections) for Notepad++ 8.5.5 and earlier? Indicators are risky with those older NPP's because of the lack of `NPPM_ALLOCATEINDICATOR`.
 - Hard-to-reproduce issue where sometimes clicking a treenode in regex search results does not navigate to the correct location in the document (should navigate to the start of the match). Appears to only happen when there is no capture group. It's an all-or-nothing issue; either none of the treenodes navigate to the correct location or all of them do.
 - Add warning to users when they attempt to use features like [Path to current position](/docs/README.md#path-to-current-position) on a non-UTF8 file with non-ASCII characters (see release notes for [8.5.0](#850---2026-03-04) below), since those features currently will simply not work correctly and the user will only understand why if they read the documentation.
+- Hard-to-reproduce issue where GrepperForm occasionally just completely loses its JSON. Appears to be triggered *sometimes* when clicking the "Submit query" button in the GrepperForm's tree view or when clicking the "View results in buffer" button
+- Hard-to-reproduce issue where sometimes clicking on the root treenode in the tree viewer just makes the node disappear rather than expanding it
 
 ## [8.5.1] - (UNRELEASED) YYYY-MM-DD
+
+### Changed
+
+1. Added a max length for API responses in the [grepper form](/docs/README.md#get-json-from-files-and-apis). This is set to 80 MB for a 64-bit installation and 14 MB for a 32-bit installation, so it should not be triggered in most cases.
 
 ### Fixed
 
 1. Ensure that maliciously crafted regexes in `schemasToFnamePatterns.json` cannot be used to make Notepad++ hang indefinitely when opening files with maliciously crafted names.
 2. Eliminate caching of random RemesPath queries, ensuring that queries with random functions like `rand()` or `randint(a,b)` will generate new random values each time they're executed.
+3. Ensure that users cannot get a stack overflow by recursively expanding a tree view or using the "Save query result button" for JSON that is too deep. As far as I know, such too-deep JSON could only be obtained in a rather roundabout way through a RemesPath query.
 
 ## [8.5.0] - 2026-03-04
 

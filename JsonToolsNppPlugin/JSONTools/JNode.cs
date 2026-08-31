@@ -1104,6 +1104,39 @@ namespace JSON_Tools.JSON_Tools
             type = vnew.type;
             value = vnew.value;
         }
+
+        /// <summary>
+        /// returns true iff this is an iterable with max depth greater than <see cref="JsonParser.MAX_RECURSION_DEPTH"/>
+        /// </summary>
+        /// <param name="j"></param>
+        public bool IsTooDeep()
+        {
+            return IsTooDeepHelper(this, 0);
+        }
+
+        private static bool IsTooDeepHelper(JNode j, int depth)
+        {
+            if (depth > JsonParser.MAX_RECURSION_DEPTH)
+                return true;
+            if (j is JArray jarr && jarr.children is List<JNode> arr)
+            {
+                for (int ii = 0; ii < arr.Count; ii++)
+                {
+                    if (IsTooDeepHelper(arr[ii], depth + 1))
+                        return true;
+                }
+                return false;
+            }
+            else if (j is JObject jobj && jobj.children is Dictionary<string, JNode> obj)
+            {
+                foreach (JNode child in obj.Values)
+                {
+                    if (IsTooDeepHelper(child, depth + 1))
+                        return true;
+                }
+            }
+            return false;
+        }
         #endregion
     }
 

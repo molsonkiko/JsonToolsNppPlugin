@@ -33,6 +33,14 @@ namespace JSON_Tools.JSON_Tools
         /// </summary>
         public static readonly int MAX_COMBINED_LENGTH_TEXT_TO_PARSE = IntPtr.Size == 4 ? 70_000_000 : 400_000_000;
         /// <summary>
+        /// Don't allow a single API response to consume more than 1/5 of the grepper text budget.
+        /// </summary>
+        public static readonly int MAX_LENGTH_SINGLE_API_RESPONSE = MAX_COMBINED_LENGTH_TEXT_TO_PARSE / 5;
+        /// <summary>
+        /// Cancel API requests after 30 seconds.
+        /// </summary>
+        public static readonly TimeSpan DEFAULT_API_RESPONSE_TIMEOUT = TimeSpan.FromSeconds(30);
+        /// <summary>
         /// Do not report progress while reading files unless there are at least this many files
         /// </summary>
         private const int PROGRESS_REPORT_FILE_READING_MIN_COUNT = 64;
@@ -56,11 +64,12 @@ namespace JSON_Tools.JSON_Tools
         public JObject exceptions;
         public Dictionary<string, string> fnameStrings;
 		public JsonParser jsonParser;
+        public int maxApiResponseLength;
         /// <summary>
         /// True while this is running <see cref="Grep"/> or <see cref="GetJsonFromApis(string[])"/>
         /// </summary>
         public bool isBusy { get; private set; }
-        private static readonly HttpClient httpClient = new HttpClient();
+        private static readonly HttpClient httpClient = new HttpClient { Timeout = DEFAULT_API_RESPONSE_TIMEOUT };
         /// <summary>
         /// the combined length of all files to be parsed
         /// </summary>
@@ -96,7 +105,8 @@ namespace JSON_Tools.JSON_Tools
         /// <param name="progressReportSetup">Anything that must be done before progress reporting starts</param>
         /// <param name="progressReportCallback">A function that is called at each progress report checkpoint</param>
         /// <param name="progressReportTeardown">Anything that must be done after progress reporting is complete</param>
-		public JsonGrepper(JsonParser jsonParser = null, bool reportProgress = false, int progressReportCheckpoints = -1, ProgressReportSetup progressReportSetup = null, ProgressReportCallback progressReportCallback = null, Action progressReportTeardown = null)
+        /// <param name="maxApiResponseLength">max length of an API response. Default value is <see cref="MAX_LENGTH_SINGLE_API_RESPONSE"/></param>
+		public JsonGrepper(JsonParser jsonParser = null, bool reportProgress = false, int progressReportCheckpoints = -1, ProgressReportSetup progressReportSetup = null, ProgressReportCallback progressReportCallback = null, Action progressReportTeardown = null, int maxApiResponseLength = -1)
 		{
             fnameStrings = new Dictionary<string, string>();
 			fnameJsons = new JObject();
@@ -111,6 +121,7 @@ namespace JSON_Tools.JSON_Tools
             }
             this.jsonParser.throwIfFatal = true;
             this.jsonParser.throwIfLogged = true;
+            this.maxApiResponseLength = maxApiResponseLength <= 0 ? MAX_LENGTH_SINGLE_API_RESPONSE : maxApiResponseLength;
             // security protocol addresses issue: https://learn.microsoft.com/en-us/answers/questions/173758/the-request-was-aborted-could-not-create-ssltls-se.html
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             // configure progress reporting
@@ -429,8 +440,43 @@ namespace JSON_Tools.JSON_Tools
             InitializeHttpClient(httpClient);
             try
             {
-                Task<string> stringTask = httpClient.GetStringAsync(url);
-                fnameStrings[url] = await stringTask;
+                using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+                using (var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    // quick check using Content-Length (if provided)
+                    var contentLength = response.Content.Headers.ContentLength;
+                    if (contentLength.HasValue && contentLength.Value > maxApiResponseLength)
+                    {
+                        exceptions[url] = new JNode($"Response too large: Content-Length = {contentLength.Value}", Dtype.STR, 0);
+                        return;
+                    }
+
+                    // stream and enforce max length while reading
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        int max = maxApiResponseLength;
+                        var sb = new System.Text.StringBuilder();
+                        char[] buffer = new char[8192];
+                        int read;
+                        int total = 0;
+
+                        while ((read = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            total += read;
+                            if (total > max)
+                            {
+                                exceptions[url] = new JNode($"Response too large: exceeded {max} characters", Dtype.STR, 0);
+                                return;
+                            }
+                            sb.Append(buffer, 0, read);
+                        }
+
+                        fnameStrings[url] = sb.ToString();
+                    }
+                }
             }
             catch (Exception ex)
             {
