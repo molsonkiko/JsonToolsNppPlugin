@@ -649,6 +649,13 @@ namespace JSON_Tools.Forms
                 queryResult = queryFunc;
                 treeFunc = queryResult;
             }
+            // cache query in the LRU query cache (unless it's just "@", which is not worth caching)
+            if (query.Trim(' ', '\t') != "@")
+            {
+                if (!Main.remesPathQueryCacheLoaded)
+                    Main.remesPathQueryCache = Main.LoadRemesPathQueryCache();
+                Main.remesPathQueryCache[query] = query.Length;
+            }
             csvDelim = ArgFunction.csvDelimiterInLastQuery;
             csvQuote = ArgFunction.csvQuoteCharInLastQuery;
             JsonTreePopulate(treeFunc);

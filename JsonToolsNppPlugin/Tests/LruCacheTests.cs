@@ -16,7 +16,7 @@ namespace JSON_Tools.Tests
                 int failures = 0;
                 int ii = 0;
                 int testCount = size * 3;
-                LruCache<char, char> cache = new LruCache<char, char>(size);
+                var cache = new LruCache<char, int>(size);
                 StringBuilder keysUsed = new StringBuilder();
                 for (; ii < testCount && failures < 10; ii++)
                 {
@@ -25,7 +25,13 @@ namespace JSON_Tools.Tests
                     bool wasAtCap = cache.isFull;
                     char oldest = cache.OldestKey();
                     bool keyAlreadyIn = cache.ContainsKey(key);
-                    cache.SetDefault(key, key);
+                    int oldValue = keyAlreadyIn ? cache[key] : -1;
+                    int newValue = RemesPathFuzzTester.random.Next();
+                    bool useSetDefault = ii % 2 == 0;
+                    if (useSetDefault)
+                        cache.SetDefault(key, newValue);
+                    else
+                        cache[key] = newValue;
                     if (cache.cache.Count != cache.useOrder.Count)
                     {
                         failures++;
@@ -46,6 +52,13 @@ namespace JSON_Tools.Tests
                     {
                         failures++;
                         Npp.AddLine($"After reaching capacity {size}, LruCache did not evict oldest key '{oldest}' after adding key '{key}'");
+                    }
+                    // verify that cache.SetDefault(k, v) does not set cache[k] to v, but that cache[k] = v does set cache[k] to v
+
+                    if (keyAlreadyIn && ((useSetDefault && cache[key] != oldValue) || (!useSetDefault && cache[key] != newValue)))
+                    {
+                        failures++;
+                        Npp.AddLine(useSetDefault ? "cache.SetDefault(k, v) changed cache[k] when cache had already contained k" : "cache[k] was not changed by cache[k] = v");
                     }
                 }
                 Npp.AddLine($"Ran {testCount} tests for LruCache with size {size} and failed {failures}");

@@ -320,6 +320,8 @@ Prior to [v6.0](/CHANGELOG.md#600---2023-12-13), submitting a query automaticall
 
 ![JSON viewer open query result in new buffer](/docs/json%20viewer%20query%20save.PNG)
 
+Beginning in [v8.5.1](/CHANGELOG.md#851---unreleased-yyyy-mm-dd), the "Get recent RemesPath queries" command on the plugin menu can be used to review past RemesPath queries (stored as a JSON array). Up to 16 queries are stored this way, sorted in reverse chronological order.
+
 ## Find and Replace Form ##
 
 *Added in version 3.7.0*

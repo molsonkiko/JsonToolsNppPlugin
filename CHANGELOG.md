@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [8.5.1] - (UNRELEASED) YYYY-MM-DD
 
+### Added
+
+1. Plugin menu command to read past [RemesPath queries](/docs/README.md#remespath).
+
 ### Changed
 
 1. Added a max length for API responses in the [grepper form](/docs/README.md#get-json-from-files-and-apis). This is set to 80 MB for a 64-bit installation and 14 MB for a 32-bit installation, so it should not be triggered in most cases.

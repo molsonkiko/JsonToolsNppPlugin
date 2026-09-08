@@ -64,10 +64,13 @@ namespace JSON_Tools.Utils
             /// Check if the key is already in the cache.<br></br>
             /// If it isn't, and capacity is full,
             /// purge the oldest key and then add the key-value pair.<br></br>
+            /// If it is in the cache, update the value associated with it.
             /// </summary>
             set
             {
-                if (useOrder.Count == capacity)
+                if (cache.ContainsKey(key))
+                    useOrder.Remove(key);
+                else if (useOrder.Count == capacity)
                 {
                     K oldestQuery = useOrder.First();
                     useOrder.RemoveFirst();

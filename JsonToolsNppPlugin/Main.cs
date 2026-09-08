@@ -36,6 +36,10 @@ namespace Kbg.NppPluginNET
         // tree view stuff
         public static TreeViewer openTreeViewer = null;
         private static Dictionary<IntPtr, string> jsonFilesRenamed = new Dictionary<IntPtr, string>();
+
+        private const int remesPathQueryCacheSize = 16;
+        public static LruCache<string, int> remesPathQueryCache = new LruCache<string, int>(remesPathQueryCacheSize);
+        public static bool remesPathQueryCacheLoaded = false;
         // grepper form stuff
         private static bool shouldRenameGrepperForm = false;
         public static GrepperForm grepperForm = null;
@@ -161,6 +165,9 @@ namespace Kbg.NppPluginNET
             PluginBase.SetCommand(28, Translator.GetTranslatedMenuItem("Open tree for &INI file"), () => OpenJsonTree(DocumentType.INI));
             PluginBase.SetCommand(29, "---", null);
             PluginBase.SetCommand(30, Translator.GetTranslatedMenuItem("Rege&x search to JSON"), RegexSearchToJson);
+            PluginBase.SetCommand(31, "---", null);
+            PluginBase.SetCommand(32, Translator.GetTranslatedMenuItem("Get recent RemesPath queries"), GetRecentRemesPathQueries);
+            
 
             // write the schema to fname patterns file if it doesn't exist, then parse it
             SetSchemasToFnamePatternsFname();
@@ -481,6 +488,7 @@ namespace Kbg.NppPluginNET
                 regexSearchForm.Dispose();
             }
             WriteSchemasToFnamePatternsFile(schemasToFnamePatterns);
+            StoreRemesPathQueryCache();
             parseTimer.Dispose();
         }
         #endregion
@@ -2150,6 +2158,62 @@ namespace Kbg.NppPluginNET
                         regexSearchForm.SetCsvSettingsFromEolNColumnsDelim(csvBoxShouldBeChecked, eol, delim, nColumns);
                     }
                 }
+            }
+        }
+
+        private const string remesPathQueriesBaseFname = "recentRemesPathQueries.json5";
+        private static string remesPathQueriesFullFname => Path.Combine(Npp.notepad.GetConfigDirectory(), PluginName, remesPathQueriesBaseFname);
+
+        private static void GetRecentRemesPathQueries()
+        {
+            StoreRemesPathQueryCache();
+            Npp.notepad.OpenFile(remesPathQueriesFullFname);
+        }
+
+        public static LruCache<string, int> LoadRemesPathQueryCache()
+        {
+            remesPathQueryCacheLoaded = true;
+            var remesPathQueryFile = new FileInfo(remesPathQueriesFullFname);
+            var queryCache = new LruCache<string, int>(remesPathQueryCacheSize);
+            if (!remesPathQueryFile.Exists)
+                return queryCache;
+            using (var fp = new StreamReader(remesPathQueryFile.OpenRead(), Encoding.UTF8, true))
+            {
+                try
+                {
+                    JsonParser jParser = new JsonParser(LoggerLevel.JSON5);
+                    var remesPathQueryCacheArr = (JArray)jParser.Parse(fp.ReadToEnd());
+                    remesPathQueryCacheArr.children.Reverse();
+                    foreach (JNode query in remesPathQueryCacheArr.children)
+                    {
+                        string queryStr = (string)query.value;
+                        queryCache[queryStr] = queryStr.Length;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Translator.ShowTranslatedMessageBox(
+                        $"Failed to parse {remesPathQueriesFullFname}. Got error\r\n{0}",
+                        $"Couldn't parse {remesPathQueriesFullFname}",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error,
+                        1, ex);
+                }
+            }
+            return queryCache;
+        }
+
+        private static void StoreRemesPathQueryCache()
+        {
+            if (!remesPathQueryCacheLoaded)
+                remesPathQueryCache = LoadRemesPathQueryCache();
+            var remesPathQueryArr = (!(remesPathQueryCache is null || remesPathQueryCache.useOrder is null))
+                ? new JArray(0, remesPathQueryCache.useOrder.Reverse().Select(x => new JNode(x)).ToList())
+                : new JArray();
+            using (var fp = new StreamWriter(remesPathQueriesFullFname, false, Encoding.UTF8))
+            {
+                fp.Write($"// This array contains the last {remesPathQueryCacheSize} RemesPath queries made in any tree view, in reverse chronological order.\r\n");
+                fp.Write(remesPathQueryArr.PrettyPrint());
+                fp.Flush();
             }
         }
         #endregion // moreHelperFunctions
