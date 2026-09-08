@@ -475,6 +475,8 @@ This means that for example, if the input is `3`, `or(is_num(@), s_len(@) < 3)` 
 ---
 `path_map(x: object | array) -> object[str, scalar]`
 
+[*Added in v8.5.1*](/CHANGELOG.md#851---unreleased-yyyy-mm-dd)
+
 Similar to `x..*`, drills down to find every scalar in x regardless of depth, but instead of returning an array of all the scalars, returns an object where each key-value pair (k, v) is (RemesPath style path to v, v).
 
 __Example:__
