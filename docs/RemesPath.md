@@ -473,6 +473,30 @@ Unlike the [`|` binary operator](#binary-operators-unary-operators-and-arithmeti
 This means that for example, if the input is `3`, `or(is_num(@), s_len(@) < 3)` will return `true`, because *`s_len(@) < 3` will only be evaluated if `is_num(@)` evaluates to `false`.*
 
 ---
+`path_map(x: object | array) -> object[str, scalar]`
+
+Similar to `x..*`, drills down to find every scalar in x regardless of depth, but instead of returning an array of all the scalars, returns an object where each key-value pair (k, v) is (RemesPath style path to v, v).
+
+__Example:__
+With
+```json
+{
+    "foo": [1, 2.5, [null, {"a$": true}]],
+    "bar": "baz"
+}
+```
+as input, `path_map(@)` returns
+```json
+{
+    ".foo[0]": 1,
+    ".foo[1]": 2.5,
+    ".foo[2][0]": null,
+    ".foo[2][1][`a$`]": true,
+    ".bar": "baz"
+}
+```
+
+---
 `pivot(x: array[object | array], by: str | int, val_col: str | int, ...: str | int) -> object[str, array]`
 
 There must be at least 3 arguments to this function.

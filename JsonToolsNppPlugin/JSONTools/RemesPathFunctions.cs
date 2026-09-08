@@ -2397,6 +2397,46 @@ namespace JSON_Tools.JSON_Tools
             }
             return new JNode(false);
         }
+
+        /// <summary>
+        /// path_map(x: iterable) -> object[string, scalar]<br></br>
+        /// Similar to x..*, recursively searches x for all scalar, but instead of returning an array,<br></br>
+        /// returns an object where each key-value pair (k, v) is (RemesPath-style path to v, v)<br></br>
+        /// EXAMPLES<br></br>
+        /// path_map({"foo": [1, 2.5, [null, {"a": true}]], "bar": "baz"} would return<br></br>
+        /// {".foo[0]": 1, ".foo[1]": 2.5, ".foo[2][0]": null, ".foo[2][1].a": true, ".bar": "baz"}
+        /// </summary>
+        public static JNode PathMap(List<JNode> args)
+        {
+            var x = args[0];
+            if ((x.type & Dtype.ITERABLE) == 0)
+                throw new RemesPathArgumentException(null, 0, FUNCTIONS["path_map"], x.type);
+            var pathMap = new JObject();
+            PathMapHelper(x, "", pathMap);
+            return pathMap;
+        }
+
+        private static void PathMapHelper(JNode x, string pathSoFar, JObject pathMap)
+        {
+            if (x is JArray arr)
+            {
+                var children = arr.children;
+                for (int ii = 0; ii < children.Count; ii++)
+                {
+                    PathMapHelper(children[ii], $"{pathSoFar}[{ii}]", pathMap);
+                }
+            }
+            else if (x is JObject obj)
+            {
+                var children = obj.children;
+                foreach (string k in children.Keys)
+                {
+                    PathMapHelper(children[k], pathSoFar + JNode.FormatKey(k, KeyStyle.RemesPath), pathMap);
+                }
+            }
+            else
+                pathMap[pathSoFar] = x;
+        }
         #endregion
         #region VECTORIZED_ARG_FUNCTIONS
         /// <summary>
@@ -3720,6 +3760,7 @@ namespace JSON_Tools.JSON_Tools
             ["min"] = new ArgFunction(Min, "min", Dtype.FLOAT, 1, 1, false, new Dtype[] {Dtype.ARR}),
             ["min_by"] = new ArgFunction(MinBy, "min_by", Dtype.ANYTHING, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.STR | Dtype.INT | Dtype.FUNCTION}),
             ["or"] = new ArgFunction(Or, "or", Dtype.BOOL, 2, int.MaxValue, false, new Dtype[] {Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION, Dtype.ANYTHING | Dtype.FUNCTION}, conditionalExecution: true),
+            ["path_map"] = new ArgFunction(PathMap, "path_map", Dtype.OBJ, 1, 1, false, new Dtype[] {Dtype.ITERABLE}),
             ["pivot"] = new ArgFunction(Pivot, "pivot", Dtype.OBJ, 3, int.MaxValue, false, new Dtype[] { Dtype.ARR, Dtype.STR | Dtype.INT, Dtype.STR | Dtype.INT, /* any # of args */ Dtype.STR | Dtype.INT }),
             ["quantile"] = new ArgFunction(Quantile, "quantile", Dtype.FLOAT, 2, 2, false, new Dtype[] {Dtype.ARR, Dtype.FLOAT}),
             ["rand"] = new ArgFunction(RandomFrom0To1, "rand", Dtype.FLOAT, 0, 0, false, new Dtype[] {}, false),

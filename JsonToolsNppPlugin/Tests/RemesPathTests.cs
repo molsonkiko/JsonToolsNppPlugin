@@ -527,6 +527,8 @@ namespace JSON_Tools.Tests
                 new Query_DesiredResult("to_csv(@.foo[:][0],,`\\n`)", "\"0\\n3.0\\n6.0\""),
                 new Query_DesiredResult("to_csv(@.foo[:]{a: @[1]})", "\"a\\r\\n1\\r\\n4.0\\r\\n7.0\""),
                 new Query_DesiredResult("set(concat(@.foo[0], @.foo[1][:1], j`[\"a\", \"a\"]`))", "{\"0\": null, \"1\": null, \"2\": null, \"3.0\": null, \"a\": null}"),
+                new Query_DesiredResult("path_map(j`{\"foo\": [1, 2.5, [null, {\"a$\": true}]], \"bar\": \"baz\"}`)", "{\".foo[0]\": 1, \".foo[1]\": 2.5, \".foo[2][0]\": null, \".foo[2][1][`a$`]\": true, \".bar\": \"baz\"}"),
+                new Query_DesiredResult("path_map(@.foo[0, 2][1:])", "{\"[0][0]\": 1, \"[0][1]\": 2, \"[1][0]\": 7.0, \"[1][1]\": 8.0}"),
                 // ===================== f-strings ===============================
                 new Query_DesiredResult("f`foo bar baz`", "\"foo bar baz\""), // f-string with no interpolations
                 new Query_DesiredResult("f`Foo start is {@.foo[0]}}}, (bar.b zip self) is {{{dict(zip(@.bar.b, @.bar.b))}.\\r\\n" +
