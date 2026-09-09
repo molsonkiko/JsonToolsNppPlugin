@@ -287,6 +287,10 @@
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Condition="Exists($(PkgUnmanagedExports_Repack_Upgrade))" Project="$(PkgUnmanagedExports_Repack_Upgrade)\build\UnmanagedExports.Repack.Upgrade.targets" />
+  <Target Name="EnsureDllExportRestored" BeforeTargets="Build">
+    <Error Condition="!Exists($(PkgUnmanagedExports_Repack_Upgrade))"
+    Text="UnmanagedExports.Repack.Upgrade package was not restored — plugin exports will not be injected. Run a NuGet restore before building." />
+  </Target>
   <Target Name="CopyBin" AfterTargets="Build" DependsOnTargets="Build">
     <!-- copy over the appropriate DLL, translation, and test files to the Notepad++ directory.
     Otherwise Notepad++ will just load without the plugin. -->
