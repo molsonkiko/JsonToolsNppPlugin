@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Plugin menu command to read past [RemesPath queries](/docs/README.md#remespath).
 2. RemesPath function [`path_map(x)`](/docs/RemesPath.md#non-vectorized-functions), which does the thing requested in [issue 122](https://github.com/molsonkiko/JsonToolsNppPlugin/issues/122).
+3. Add new option to preserve column name order in [JSON to CSV form](/docs/json-to-csv.md#options)
 
 ### Changed
 

@@ -625,6 +625,58 @@ namespace JSON_Tools.Tests
 					Npp.AddLine($"{baseMessage}Instead threw exception\n{ex}");
 				}
 			}
+			// TEST useFirstRowKeysAsHeader parameter in TableToCsv
+			var firstRowKeysHeaderTestcases = new (string inp, string desiredOut)[]
+			{
+				(
+					"[{\"b\": \"foo\", \"a\": 1, \"c\": true}, {\"b\": \"bar\", \"c\": false, \"a\": 2.5}]",
+                    "b,a,c\nfoo,1,true\nbar,2.5,false\n"
+                ),
+				(
+					"[" +
+						"{\"foo\": 1, \"a.b\": null}," +
+						"{\"2ndExtra\": 1.5, \"foo\": 2, \"a.b\": \"zkk\"}," +
+						"{\"a.b\": \"benw\", \"foo\": 3, \"1stExtra\": -73.1}" +
+					"]",
+					"foo,a.b,1stExtra,2ndExtra\n" +
+					"1,,,\n" +
+					"2,zkk,,1.5\n" +
+					"3,benw,-73.1,\n"
+				),
+				(
+					"[{\"foo\": 1, \"bar\": null, \"baz\": -0.3}, {\"baz\": 0.2, \"foo\": 2}, {\"foo\": 3, \"bar\": \"zug\", \"quz\": false}]",
+					"foo,bar,baz,quz\n1,,-0.3,\n2,,0.2,\n3,zug,,false\n"
+				)
+			};
+			foreach ((string inp, string desiredOut) in firstRowKeysHeaderTestcases)
+			{
+				ii++;
+				JNode table;
+				try
+				{
+					table = jsonParser.Parse(inp);
+				}
+				catch (Exception ex)
+				{
+					testsFailed++;
+					Npp.AddLine($"Failed to parse string {inp} as JSON, got exception\n{ex}");
+					continue;
+				}
+				try
+				{
+					string result = tabularizer.TableToCsv((JArray)table, useFirstRowKeysAsHeader: true);
+					if (result != desiredOut)
+					{
+						testsFailed++;
+						Npp.AddLine($"Expected\n{desiredOut}\nInstead got\n{result}");
+					}
+				}
+				catch (Exception ex)
+				{
+					testsFailed++;
+					Npp.AddLine($"While trying to convert table {inp} to CSV, got exception\n{ex}");
+				}
+			}
 			// TEST NO_RECURSION setting
 			var noRecursionTabularizer = new JsonTabularizer(JsonTabularizerStrategy.NO_RECURSION);
 			var noRecursionTestcases = new string[][]

@@ -854,13 +854,26 @@ namespace JSON_Tools.JSON_Tools
 			ApplyQuotesIfNeeded(sb, val, delim, quote);
 		}
 
-		public string TableToCsv(JArray table, char delim = ',', char quote = '"', string newline = "\n", string[] header = null, bool boolsAsInts = false)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="table">an array of objects where each value in each child object is a scalar.</param>
+		/// <param name="delim">the delimiter between columns</param>
+		/// <param name="quote">the quote character</param>
+		/// <param name="newline">the line terminator</param>
+		/// <param name="header">the list of keys to use, in the order in which they are to be used</param>
+		/// <param name="boolsAsInts">convert true to 1 and false to 0</param>
+		/// <param name="useFirstRowKeysAsHeader">use the keys in the first row of the table as the header (honoring their order)</param>
+		/// <returns></returns>
+		public string TableToCsv(JArray table, char delim = ',', char quote = '"', string newline = "\n", string[] header = null, bool boolsAsInts = false, bool useFirstRowKeysAsHeader = false)
 		{
-			// allow the user to supply their own column order. If they don't, just alphabetically sort colnames
+			// allow the user to supply their own column order, or use the first row keys as header.
+			// If they don't, just alphabetically sort colnames
+			List<JNode> rows = table.children;
 			if (header == null)
 			{
 				HashSet<string> allKeys = new HashSet<string>();
-				foreach (JNode child in table.children)
+				foreach (JNode child in rows)
 				{
 					foreach (string key in ((JObject)child).children.Keys)
 					{
@@ -869,11 +882,25 @@ namespace JSON_Tools.JSON_Tools
 				}
 				header = new string[allKeys.Count];
 				int ii = 0;
+				if (useFirstRowKeysAsHeader)
+				{
+					// even if useFirstRowKeysAsHeader, we needed to search all the rows
+					//    for keys that were missing in the first row.
+					// any keys not in the first row will be sorted alphabetically and added after the keys in the first row
+					foreach(string key in ((JObject)rows[0]).children.Keys)
+					{
+						header[ii++] = key;
+						allKeys.Remove(key);
+					}
+				}
+				int startOfSortRange = ii;
+				int lengthOfSortRange = header.Length - ii;
 				foreach (string key in allKeys)
 				{
 					header[ii++] = key;
 				}
-				Array.Sort(header);
+				if (lengthOfSortRange > 0)
+					Array.Sort(header, startOfSortRange, lengthOfSortRange);
 			}
 			StringBuilder sb = new StringBuilder();
 			for (int ii = 0; ii < header.Length; ii++)
@@ -882,7 +909,7 @@ namespace JSON_Tools.JSON_Tools
 				if (ii < header.Length - 1) sb.Append(delim);
 			}
 			sb.Append(newline);
-			foreach (JNode row in table.children)
+			foreach (JNode row in rows)
 			{
 				JObject orow = (JObject)row;
 				for (int ii = 0; ii < header.Length; ii++)
