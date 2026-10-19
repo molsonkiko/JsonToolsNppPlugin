@@ -189,13 +189,7 @@ namespace JSON_Tools.JSON_Tools
             {
                 // shuffle the array to randomize the order in which
                 // the "contains" items and the "items" items appear
-                for (int ii = 0; ii < outItems.Count; ii++)
-                {
-                    int jj = random.Next(0, ii + 1);
-                    JNode temp = outItems[jj];
-                    outItems[jj] = outItems[ii];
-                    outItems[ii] = temp;
-                }
+                outItems.Shuffle();
             }
             return new JArray(0, outItems);
         }
@@ -238,37 +232,28 @@ namespace JSON_Tools.JSON_Tools
                 // as with an array with no "items" keyword,
                 // an object with no "properties" keyword could contain anything
             }
-            var propertiesObj = (JObject)properties;
-            HashSet<string> optionalKeys = new HashSet<string>(propertiesObj.children.Keys);
-            HashSet<string> requiredKeys = new HashSet<string>();
+            var propertiesObj = ((JObject)properties).children;
+            var requiredKeys = new HashSet<string>();
             if (children.TryGetValue("required", out JNode requiredNode) && requiredNode is JArray requiredArr)
             {
                 foreach (JNode req in requiredArr.children)
                 {
                     string reqKey = (string)req.value;
-                    optionalKeys.Remove(reqKey);
                     requiredKeys.Add(reqKey);
                 }
             }
-            var optionalIncluded = new List<string>();
-            if (optionalKeys.Count > 0)
+            var keyOrder = propertiesObj.Keys.ToArray();
+            keyOrder.Shuffle();
+            int totalCount = keyOrder.Length;
+            int requiredCount = requiredKeys.Count;
+            int optionalCount = totalCount - requiredCount;
+            int optionalIncludedCount = random.Next(optionalCount + 1);
+            int optionalII = 0;
+            for (int ii = 0; ii < totalCount; ii++)
             {
-                int numOptionalIncluded = random.Next(optionalKeys.Count + 1);
-                var allOptional = optionalKeys.ToArray();
-                HashSet<int> indicesChosen = new HashSet<int>();
-                // choose a random subset of the optional keys to include in the object
-                // This may mean choosing no optional keys at all.
-                for (int ii = 0; ii < numOptionalIncluded; ii++)
-                {
-                    int idx = random.Next(allOptional.Length);
-                    while (indicesChosen.Contains(idx))
-                        idx = random.Next(allOptional.Length);
-                    indicesChosen.Add(idx);
-                    optionalIncluded.Add(allOptional[idx]);
-                }
-            }
-            foreach (string k in requiredKeys.Concat(optionalIncluded))
-            {
+                string k = keyOrder[ii];
+                if (!requiredKeys.Contains(k) && optionalII++ >= optionalIncludedCount)
+                    continue;
                 JNode subschema = propertiesObj[k];
                 result[k] = RandomJsonHelper(subschema, refs, recursionDepth + 1);
             }
@@ -328,8 +313,8 @@ namespace JSON_Tools.JSON_Tools
                 }
                 if ((bool)schema.value)
                     return RandomAnything(new JObject(), new JObject(), recursionDepth);
-                // the true schema validates everything, so we'll make a
-                // random instance of a random type
+                    // the true schema validates everything, so we'll make a
+                    // random instance of a random type
                 return new JNode();
                 // the false schema validates nothing,
                 // and the null JNode is the closest we can get to nothing

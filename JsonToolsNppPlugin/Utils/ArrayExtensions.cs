@@ -287,11 +287,13 @@ namespace JSON_Tools.Utils
         }
 
         /// <summary>
-        /// randomize the order of the elements in arr
+        /// randomize the order of the elements in arr, from startIndex to endIndex
         /// </summary>
-        public static void Shuffle<T>(this IList<T> arr)
+        public static void Shuffle<T>(this IList<T> arr, int startIndex = 0, int endIndex = -1)
         {
-            for (int ii = 1; ii < arr.Count; ii++)
+            if (endIndex < 0)
+                endIndex = arr.Count;
+            for (int ii = startIndex + 1; ii < endIndex; ii++)
             {
                 int swapWith = RandomJsonFromSchema.random.Next(0, ii + 1);
                 if (swapWith < ii)
