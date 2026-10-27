@@ -2280,9 +2280,10 @@ namespace JSON_Tools.JSON_Tools
             }
             int endOfLoop = va.IndexOfLoopEnd > statements.Count ? statements.Count : va.IndexOfLoopEnd;
             int startOfLoop = va.IndexOfDeclaration + 1;
-            if (startOfLoop >= endOfLoop)
+            if (startOfLoop >= endOfLoop || arr.children.Count == 0)
             {
-                // no loop body; just return toLoopOver and don't waste time looping over its values
+                // no loop body (or empty array)
+                // just return toLoopOver and don't waste time looping over its values
                 indexInStatements = endOfLoop;
                 return toLoopOver;
             }

@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Hard-to-reproduce issue where GrepperForm occasionally just completely loses its JSON. Appears to be triggered *sometimes* when clicking the "Submit query" button in the GrepperForm's tree view or when clicking the "View results in buffer" button
 - Hard-to-reproduce issue where sometimes clicking on the root treenode in the tree viewer just makes the node disappear rather than expanding it
 
-## [8.5.1] - (UNRELEASED) YYYY-MM-DD
+## [8.6.0] - 2026-10-26
 
 ### Added
 
@@ -69,7 +69,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 1. Ensure that maliciously crafted regexes in `schemasToFnamePatterns.json` cannot be used to make Notepad++ hang indefinitely when opening files with maliciously crafted names.
 2. Eliminate caching of random RemesPath queries, ensuring that queries with random functions like `rand()` or `randint(a,b)` will generate new random values each time they're executed.
-3. Ensure that users cannot get a stack overflow by recursively expanding a tree view or using the "Save query result button" for JSON that is too deep. As far as I know, such too-deep JSON could only be obtained in a rather roundabout way through a RemesPath query.
+3. Ensure that users cannot get a stack overflow by recursively expanding a tree view, opening the JSON to CSV form, or using the "Save query result button" for JSON that is too deep. As far as I know, such too-deep JSON could only be obtained in a rather roundabout way through a RemesPath query.
+4. Eliminate infinite loop that would freeze Notepad++ when evaluating a [RemesPath query with a for loop](/docs/RemesPath.md#for-loopsloop-variables-added-in-v60) on an empty array.
 
 ## [8.5.0] - 2026-03-04
 

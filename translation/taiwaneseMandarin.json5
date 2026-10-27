@@ -97,6 +97,7 @@
                     "字串化可迭代物件"
                 ],
                 "StrategyBoxLabel": "策略",
+                "SortColNamesCheckBox": "按字母順序對列名進行排序",
                 "GenerateCSVButton": "產生 CSV",
                 "DocsButton": "文件"
             }

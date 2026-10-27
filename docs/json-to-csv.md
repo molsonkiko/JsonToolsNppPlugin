@@ -45,7 +45,7 @@ b_a
 
 4. __Convert booleans to integers__ takes all instances of `true` and `false` and replaces them with `1` and `0`, respectively. Can be useful sometimes.
 
-5. __The *Sort column names alphabetically*__ setting (*added in [v8.5.1](/CHANGELOG.md#851---unreleased-yyyy-mm-dd)*) determines whether the column names are sorted alphabetically. If unchecked, the column names will be in the same order as the keys of the first row in the table.
+5. __The *Sort column names alphabetically*__ setting (*added in [v8.6](/CHANGELOG.md#86---2026-10-26)*) determines whether the column names are sorted alphabetically. If unchecked, the column names will be in the same order as the keys of the first row in the table.
 
 For example, suppose you have the JSON `[{"id":1,"name":"Alice","age":20}, {"id":2,"name":"Bob","age":30}]`
 If *Sort column names alphabetically* is __checked__, you will get

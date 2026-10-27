@@ -146,6 +146,7 @@
                     "Stringify iterables"
                 ],
                 "StrategyBoxLabel": "Strategy",
+                "SortColNamesCheckBox": "Sort column names alphabetically",
                 "GenerateCSVButton": "Generate CSV",
                 "DocsButton": "Docs"
             }

@@ -1403,6 +1403,12 @@ namespace JSON_Tools.Tests
                                         "end for;" +
                                         "zut",
                     "[\"Step 1 = [0, 0, 0];\", \"Step 2 = [0, 1, 2];\", \"Step 3 = [0, 2, 4];\"]"),
+                new Query_DesiredResult("var blah = j`[1, 2, 3]`;" + 
+                                        "for x = blah[:][is_str(@)];" + 
+                                        "    x = x * 2;" +
+                                        "end for;" +
+                                        "blah", // for loop over an empty array
+                    "[1, 2, 3]"),
             };
             int ii = 0;
             int testsFailed = 0;

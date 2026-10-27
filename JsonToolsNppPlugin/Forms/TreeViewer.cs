@@ -663,7 +663,8 @@ namespace JSON_Tools.Forms
 
         private void QueryToCsvButton_Click(object sender, EventArgs e)
         {
-            if (queryResult == null) return;
+            if (queryResult == null || ShowMessageIfJsonTooDeep(queryResult, "Could not open JSON to CSV form"))
+                return;
             using (var jsonToCsv = new JsonToCsvForm(queryResult))
                 jsonToCsv.ShowDialog();
         }

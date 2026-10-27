@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Xml.Serialization;
 
 namespace JSON_Tools.JSON_Tools
 {
@@ -438,7 +435,8 @@ namespace JSON_Tools.JSON_Tools
         /// A list of multiple schemas should be ordered as follows:<br></br>
         /// 1. Scalars (in alphabetical order)<br></br>
         /// 2. Arrays<br></br>
-        /// 3. Objects
+        /// 3. Objects<br></br>
+        /// 4. anyOf schemas
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
@@ -447,11 +445,17 @@ namespace JSON_Tools.JSON_Tools
         {
             JObject xobj = (JObject)x;
             JObject yobj = (JObject)y;
-            if (!xobj.children.TryGetValue("type", out JNode xtype)
-                || !yobj.children.TryGetValue("type", out JNode ytype))
+            bool xHasType = xobj.children.TryGetValue("type", out JNode xtype);
+            bool yHasType = yobj.children.TryGetValue("type", out JNode ytype);
+            if (!xHasType)
             {
-                return 0;
+                // x is anyOf
+                if (!yHasType)
+                    return 0; // both anyOfs
+                return 1; // y is not anyOf, so x comes after
             }
+            else if (!yHasType)
+                return -1; // y is anyOf and x is not, so y comes after
             // x type is array of scalars
             if (xtype is JArray)
             {

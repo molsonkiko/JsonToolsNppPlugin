@@ -475,7 +475,7 @@ This means that for example, if the input is `3`, `or(is_num(@), s_len(@) < 3)` 
 ---
 `path_map(x: object | array) -> object[str, scalar]`
 
-[*Added in v8.5.1*](/CHANGELOG.md#851---unreleased-yyyy-mm-dd)
+[*Added in v8.6*](/CHANGELOG.md#86---2026-10-26)
 
 Similar to `x..*`, drills down to find every scalar in x regardless of depth, but instead of returning an array of all the scalars, returns an object where each key-value pair (k, v) is (RemesPath style path to v, v).
 
@@ -1421,6 +1421,8 @@ for each value of toLoopOver:
     x = value
     execute each statement between start of loop and end of loop
 ```
+
+**WARNING: Prior to JsonTools v8.6, attempting to evaluate a `for` loop on an empty array would cause Notepad++ to freeze because it would lead to an infinite loop. Whoops.**
 
 ### Notes on loop variables ###
 

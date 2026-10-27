@@ -249,10 +249,13 @@ namespace JSON_Tools.JSON_Tools
             int optionalCount = totalCount - requiredCount;
             int optionalIncludedCount = random.Next(optionalCount + 1);
             int optionalII = 0;
-            for (int ii = 0; ii < totalCount; ii++)
+            int requiredII = 0;
+            for (int ii = 0; ii < totalCount && requiredII < requiredCount; ii++)
             {
                 string k = keyOrder[ii];
-                if (!requiredKeys.Contains(k) && optionalII++ >= optionalIncludedCount)
+                if (requiredKeys.Contains(k))
+                    requiredII++;
+                else if (optionalII++ >= optionalIncludedCount)
                     continue;
                 JNode subschema = propertiesObj[k];
                 result[k] = RandomJsonHelper(subschema, refs, recursionDepth + 1);

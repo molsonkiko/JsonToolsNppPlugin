@@ -114,6 +114,7 @@
                     "تسلسل الكائنات القابلة للتكرار"
                 ],
                 "StrategyBoxLabel": "الاستراتيجية",
+                "SortColNamesCheckBox": "رتِّب أسماء الأعمدة أبجديًا",
                 "GenerateCSVButton": "إنشاء CSV",
                 "DocsButton": "الوثائق"
             }

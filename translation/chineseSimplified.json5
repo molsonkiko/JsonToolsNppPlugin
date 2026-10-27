@@ -147,6 +147,7 @@
                     "字符串化可迭代对象"
                 ],
                 "StrategyBoxLabel": "策略",
+                "SortColNamesCheckBox": "按字母顺序排列列名",
                 "GenerateCSVButton": "生成 CSV",
                 "DocsButton": "文档"
             }

@@ -97,6 +97,7 @@
                     "Chaînifier les itérables"
                 ],
                 "StrategyBoxLabel": "Stratégie",
+                "SortColNamesCheckBox": "Trier les noms de colonne par ordre alphabétique",
                 "GenerateCSVButton": "Générer le CSV",
                 "DocsButton": "Documentation"
             }

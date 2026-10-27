@@ -97,6 +97,7 @@
                     "반복 가능 객체 문자열화"
                 ],
                 "StrategyBoxLabel": "전략",
+                "SortColNamesCheckBox": "열 이름을 알파벳순으로 정렬하세요",
                 "GenerateCSVButton": "CSV 생성",
                 "DocsButton": "문서"
             }

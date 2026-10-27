@@ -97,6 +97,7 @@
                     "イテラブルを文字列化"
                 ],
                 "StrategyBoxLabel": "戦略",
+                "SortColNamesCheckBox": "列名をアルファベット順に並べ替える",
                 "GenerateCSVButton": "CSVを生成",
                 "DocsButton": "ドキュメント"
             }

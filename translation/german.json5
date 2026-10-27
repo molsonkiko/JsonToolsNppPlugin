@@ -97,6 +97,7 @@
                     "Iterierbare Objekte als String"
                 ],
                 "StrategyBoxLabel": "Strategie",
+                "SortColNamesCheckBox": "Spaltennamen alphabetisch sortieren",
                 "GenerateCSVButton": "CSV generieren",
                 "DocsButton": "Dokumentation"
             }

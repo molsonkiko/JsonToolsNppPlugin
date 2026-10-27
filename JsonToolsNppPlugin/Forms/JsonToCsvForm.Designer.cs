@@ -231,8 +231,8 @@
             this.Controls.Add(this.eolComboBox);
             this.Controls.Add(this.BoolsToIntsCheckBox);
             this.Controls.Add(this.SortColNamesCheckBox);
-            this.Controls.Add(this.GenerateCSVButton);
             this.Controls.Add(this.StrategyBox);
+            this.Controls.Add(this.GenerateCSVButton);
             this.Controls.Add(this.DocsButton);
             this.Controls.Add(this.JsonToCsvFormTitle);
             this.Controls.Add(this.KeySepBoxLabel);

@@ -145,7 +145,8 @@
                     "No ricorsione",
                     "Stringify iterables"
                 ],
-                "StrategyBoxLabel": "Strategy",
+                "StrategyBoxLabel": "Strategia",
+                "SortColNamesCheckBox": "Ordina i nomi delle colonne in ordine alfabetico",
                 "GenerateCSVButton": "Genera CSV",
                 "DocsButton": "Docs"
             }
